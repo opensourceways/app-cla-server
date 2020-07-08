@@ -30,6 +30,11 @@ func init() {
 				&controllers.LoginController{},
 			),
 		),
+		beego.NSNamespace("/cla",
+			beego.NSInclude(
+				&controllers.CLAController{},
+			),
+		),
 	)
 	beego.AddNamespace(ns)
 }

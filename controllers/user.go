@@ -1,10 +1,11 @@
 package controllers
 
 import (
-	"github.com/zengchen1024/cla/models"
 	"encoding/json"
 
 	"github.com/astaxie/beego"
+
+	"github.com/zengchen1024/cla-server/models"
 )
 
 // Operations about Users
@@ -116,4 +117,3 @@ func (u *UserController) Logout() {
 	u.Data["json"] = "logout success"
 	u.ServeJSON()
 }
-

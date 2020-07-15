@@ -5,7 +5,7 @@ import (
 
 	"github.com/astaxie/beego"
 
-	"github.com/zengchen1024/cla/models"
+	"github.com/zengchen1024/cla-server/models"
 )
 
 type CLAController struct {
@@ -36,4 +36,24 @@ func (this *CLAController) Post() {
 	}
 
 	this.Data["json"] = cla1
+}
+
+// @Title GetAllCLA
+// @Description get all clas
+// @Success 200 {object} models.CLA
+// @router / [get]
+func (this *CLAController) GetAll() {
+	defer func() {
+		this.ServeJSON()
+	}()
+
+	var clas models.CLAs
+	r, err := clas.Get()
+	if err != nil {
+		this.Data["json"] = err.Error()
+		return
+	}
+
+	this.Data["json"] = r
+	this.ServeJSON()
 }

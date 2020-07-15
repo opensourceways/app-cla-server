@@ -3,9 +3,9 @@ package main
 import (
 	"github.com/astaxie/beego"
 
-	"github.com/zengchen1024/cla/models"
-	"github.com/zengchen1024/cla/mongodb"
-	_ "github.com/zengchen1024/cla/routers"
+	"github.com/zengchen1024/cla-server/models"
+	"github.com/zengchen1024/cla-server/mongodb"
+	_ "github.com/zengchen1024/cla-server/routers"
 )
 
 func main() {

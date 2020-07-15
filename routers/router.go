@@ -8,9 +8,9 @@
 package routers
 
 import (
-	"github.com/zengchen1024/cla/controllers"
-
 	"github.com/astaxie/beego"
+
+	"github.com/zengchen1024/cla-server/controllers"
 )
 
 func init() {

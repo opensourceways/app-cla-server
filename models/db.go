@@ -8,9 +8,14 @@ func RegisterDB(idb IDB) {
 
 type IDB interface {
 	ICLA
+	IOrgRepo
 }
 
 type ICLA interface {
 	CreateCLA(CLA) (CLA, error)
 	ListCLA() ([]CLA, error)
+}
+
+type IOrgRepo interface {
+	CreateOrgRepo(OrgRepo) (string, error)
 }

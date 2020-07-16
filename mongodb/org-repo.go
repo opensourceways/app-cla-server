@@ -34,5 +34,21 @@ func (c *client) CreateOrgRepo(orgRepo models.OrgRepo) (string, error) {
 		return "", fmt.Errorf("retrieve id failed")
 	}
 
-	return v.String(), nil
+	return toUID(v), nil
+}
+
+func (c *client) DisableOrgRepo(uid string) error {
+	oid, err := toObjectID(uid)
+	if err != nil {
+		return err
+	}
+
+	f := func(ctx context.Context) error {
+		col := c.collection(orgRepoCollection)
+
+		_, err := col.UpdateOne(ctx, bson.M{"_id": oid}, bson.M{"$set": bson.M{"enabled": false}})
+		return err
+	}
+
+	return withContext(f)
 }

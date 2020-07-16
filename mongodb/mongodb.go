@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 
@@ -19,8 +20,10 @@ type client struct {
 
 func RegisterDatabase(conn, db string) (*client, error) {
 	c, err := mongo.NewClient(options.Client().ApplyURI(conn))
-	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
-	err = c.Connect(ctx)
+	if err != nil {
+		return nil, err
+	}
+	err = withContext(c.Connect)
 	if err != nil {
 		return nil, err
 	}
@@ -30,4 +33,22 @@ func RegisterDatabase(conn, db string) (*client, error) {
 		db: c.Database(db),
 	}
 	return cli, nil
+}
+
+func (c *client) collection(name string) *mongo.Collection {
+	return c.db.Collection(name)
+}
+
+func toObjectID(uid string) (primitive.ObjectID, error) {
+	return primitive.ObjectIDFromHex(uid)
+}
+
+func toUID(oid primitive.ObjectID) string {
+	return oid.Hex()
+}
+
+func withContext(f func(context.Context) error) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	return f(ctx)
 }

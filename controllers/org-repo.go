@@ -38,3 +38,27 @@ func (this *OrgRepoController) Post() {
 
 	this.Data["json"] = r
 }
+
+// @Title Unbind CLA to Org/Repo
+// @Description unbind cla
+// @Param	uid		path 	string	true		"The uid of binding"
+// @Success 200 {string} delete success!
+// @Failure 403 uid is empty
+// @router /:uid [delete]
+func (this *OrgRepoController) Delete() {
+	defer func() {
+		this.ServeJSON()
+	}()
+
+	uid := this.GetString(":uid")
+
+	orgRepo := models.OrgRepo{ID: uid}
+
+	err := orgRepo.Delete()
+	if err != nil {
+		this.Data["json"] = err.Error()
+		return
+	}
+
+	this.Data["json"] = "unbinding successfully"
+}

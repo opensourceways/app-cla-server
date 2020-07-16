@@ -22,3 +22,7 @@ func (this OrgRepo) Create() (OrgRepo, error) {
 
 	return this, err
 }
+
+func (this OrgRepo) Delete() error {
+	return db.DisableOrgRepo(this.ID)
+}

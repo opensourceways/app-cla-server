@@ -13,15 +13,15 @@ type OrgRepo struct {
 	Submitter   string `json:"submitter" required:"true"`
 }
 
-func (this OrgRepo) Create() (OrgRepo, error) {
+func (this *OrgRepo) Create() error {
 	this.Enabled = true
 
-	v, err := db.CreateOrgRepo(this)
+	v, err := db.CreateOrgRepo(*this)
 	if err == nil {
 		this.ID = v
 	}
 
-	return this, err
+	return err
 }
 
 func (this OrgRepo) Delete() error {

@@ -36,8 +36,8 @@ func (this *OrgRepoController) Post() {
 	}
 
 	cla := &models.CLA{ID: orgRepo.CLAID}
-	err := cla.Get()
-	if err != nil {
+
+	if err := cla.Get(); err != nil {
 		reason = fmt.Errorf("error finding the cla(id:%s), err: %v", cla.ID, err)
 		statusCode = 400
 		return
@@ -50,14 +50,14 @@ func (this *OrgRepoController) Post() {
 	}
 
 	orgRepo.CLALanguage = cla.Language
-	r, err := orgRepo.Create()
-	if err != nil {
+
+	if err := (&orgRepo).Create(); err != nil {
 		reason = err
 		statusCode = 500
 		return
 	}
 
-	this.Data["json"] = r
+	this.Data["json"] = orgRepo
 }
 
 // @Title Unbind CLA to Org/Repo
@@ -83,8 +83,7 @@ func (this *OrgRepoController) Delete() {
 
 	orgRepo := models.OrgRepo{ID: uid}
 
-	err := orgRepo.Delete()
-	if err != nil {
+	if err := orgRepo.Delete(); err != nil {
 		reason = err
 		statusCode = 500
 		return

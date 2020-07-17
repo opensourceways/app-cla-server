@@ -8,13 +8,20 @@ type CLA struct {
 	Submitter string `json:"submitter" required:"true"`
 }
 
-func (c CLA) Create() (CLA, error) {
-	return db.CreateCLA(c)
+func (this *CLA) Create() error {
+	v, err := db.CreateCLA(*this)
+	if err == nil {
+		this.ID = v
+	}
+
+	return err
 }
 
-func (c *CLA) Get() error {
-	v, err := db.GetCLA(c.ID)
-	*c = v
+func (this *CLA) Get() error {
+	v, err := db.GetCLA(this.ID)
+	if err == nil {
+		*this = v
+	}
 	return err
 }
 

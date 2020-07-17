@@ -33,14 +33,13 @@ func (this *CLAController) Post() {
 		return
 	}
 
-	r, err := cla.Create()
-	if err != nil {
+	if err := (&cla).Create(); err != nil {
 		reason = err
 		statusCode = 500
 		return
 	}
 
-	this.Data["json"] = r
+	this.Data["json"] = cla
 }
 
 // @Title GetAllCLA

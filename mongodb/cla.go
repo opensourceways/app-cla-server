@@ -25,28 +25,30 @@ type CLA struct {
 	Submitter string             `bson:"submitter"`
 }
 
-func (c *client) CreateCLA(cla models.CLA) (models.CLA, error) {
+func (c *client) CreateCLA(cla models.CLA) (string, error) {
 	body, err := golangsdk.BuildRequestBody(cla, "")
 	if err != nil {
-		return cla, fmt.Errorf("build body failed, err:%v", err)
+		return "", fmt.Errorf("build body failed, err:%v", err)
 	}
 
-	col := c.db.Collection(claCollection)
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
+	var r *mongo.InsertOneResult
 
-	r, err := col.InsertOne(ctx, bson.M(body))
+	f := func(ctx context.Context) error {
+		col := c.db.Collection(claCollection)
+
+		r, err = col.InsertOne(ctx, bson.M(body))
+		if err != nil {
+			return fmt.Errorf("write db failed, err:%v", err)
+		}
+		return nil
+	}
+
+	err = withContext(f)
 	if err != nil {
-		return cla, fmt.Errorf("write db failed, err:%v", err)
+		return "", err
 	}
 
-	v, ok := r.InsertedID.(primitive.ObjectID)
-	if !ok {
-		return cla, fmt.Errorf("retrieve id failed")
-	}
-
-	cla.ID = v.String()
-	return cla, nil
+	return toUID(r.InsertedID)
 }
 
 func (c *client) ListCLA() ([]models.CLA, error) {

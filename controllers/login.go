@@ -15,41 +15,45 @@ type LoginController struct {
 }
 
 // @Title Get
-// @Description get all Users
-// @Success 200 {object} models.User
+// @Description get login info
+// @Success 200
 // @router / [get]
-func (u *LoginController) Get() {
-	code := u.GetString("code")
-	platform := u.GetString("platform")
-	beego.Info("code: ", code, "platform: ", platform)
+func (this *LoginController) Get() {
+	code := this.GetString("code")
+	platform := this.GetString("platform")
+
 	if code == "" {
-		u.Data["json"] = "received an empty code"
-		u.ServeJSON()
+		err := fmt.Errorf("missing code")
+		sendResponse(&this.Controller, 400, err)
+		return
+	}
+
+	if platform == "" {
+		err := fmt.Errorf("missing platform")
+		sendResponse(&this.Controller, 400, err)
 		return
 	}
 
 	token, err := getToken(code, platform)
 	if err != nil {
-		beego.Info("get token:", err.Error())
-
-		u.Data["json"] = fmt.Sprintf("get token failed: %s", err.Error())
-		u.ServeJSON()
+		err = fmt.Errorf("get token failed: %s", err.Error())
+		sendResponse(&this.Controller, 500, err)
 		return
 	}
 
 	user, err := getUser(platform, token.AccessToken)
 	if err != nil {
-		u.Data["json"] = fmt.Sprintf("get user failed: %s", err.Error())
-		u.ServeJSON()
+		err = fmt.Errorf("get %s user failed: %s", platform, err.Error())
+		sendResponse(&this.Controller, 500, err)
 		return
 	}
 
-	setCookie(u.Ctx.ResponseWriter, "access_token", token.AccessToken)
-	setCookie(u.Ctx.ResponseWriter, "refresh_token", token.RefreshToken)
-	setCookie(u.Ctx.ResponseWriter, "user", user)
+	setCookie(this.Ctx.ResponseWriter, "access_token", token.AccessToken)
+	setCookie(this.Ctx.ResponseWriter, "refresh_token", token.RefreshToken)
+	setCookie(this.Ctx.ResponseWriter, "user", user)
 
 	redirectUrl := beego.AppConfig.String("client_redirect_url")
-	http.Redirect(u.Ctx.ResponseWriter, u.Ctx.Request, redirectUrl, http.StatusFound)
+	http.Redirect(this.Ctx.ResponseWriter, this.Ctx.Request, redirectUrl, http.StatusFound)
 }
 
 func setCookie(w http.ResponseWriter, key string, value string) {

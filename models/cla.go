@@ -12,6 +12,12 @@ func (c CLA) Create() (CLA, error) {
 	return db.CreateCLA(c)
 }
 
+func (c *CLA) Get() error {
+	v, err := db.GetCLA(c.ID)
+	*c = v
+	return err
+}
+
 type CLAs struct{}
 
 func (c CLAs) Get() ([]CLA, error) {

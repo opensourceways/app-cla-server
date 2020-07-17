@@ -15,27 +15,32 @@ type CLAController struct {
 // @Title CreateCLA
 // @Description create cla
 // @Param	body		body 	models.CLA	true		"body for cla content"
-// @Success 200 {int} models.CLA
+// @Success 201 {int} models.CLA
 // @Failure 403 body is empty
 // @router / [post]
 func (this *CLAController) Post() {
+	var statusCode = 201
+	var reason error
+
 	defer func() {
-		this.ServeJSON()
+		sendResponse(&this.Controller, statusCode, reason)
 	}()
 
 	var cla models.CLA
 	if err := json.Unmarshal(this.Ctx.Input.RequestBody, &cla); err != nil {
-		this.Data["json"] = err.Error()
+		reason = err
+		statusCode = 400
 		return
 	}
 
-	cla1, err := cla.Create()
+	r, err := cla.Create()
 	if err != nil {
-		this.Data["json"] = err.Error()
+		reason = err
+		statusCode = 500
 		return
 	}
 
-	this.Data["json"] = cla1
+	this.Data["json"] = r
 }
 
 // @Title GetAllCLA
@@ -43,17 +48,20 @@ func (this *CLAController) Post() {
 // @Success 200 {object} models.CLA
 // @router / [get]
 func (this *CLAController) GetAll() {
+	var statusCode = 200
+	var reason error
+
 	defer func() {
-		this.ServeJSON()
+		sendResponse(&this.Controller, statusCode, reason)
 	}()
 
 	var clas models.CLAs
 	r, err := clas.Get()
 	if err != nil {
-		this.Data["json"] = err.Error()
+		reason = err
+		statusCode = 500
 		return
 	}
 
 	this.Data["json"] = r
-	this.ServeJSON()
 }

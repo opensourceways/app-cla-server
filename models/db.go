@@ -14,6 +14,7 @@ type IDB interface {
 type ICLA interface {
 	CreateCLA(CLA) (CLA, error)
 	ListCLA() ([]CLA, error)
+	GetCLA(uid string) (CLA, error)
 }
 
 type IOrgRepo interface {

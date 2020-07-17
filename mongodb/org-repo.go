@@ -3,11 +3,11 @@ package mongodb
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"github.com/huaweicloud/golangsdk"
 	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 
 	"github.com/zengchen1024/cla-server/models"
 )
@@ -20,21 +20,39 @@ func (c *client) CreateOrgRepo(orgRepo models.OrgRepo) (string, error) {
 		return "", fmt.Errorf("build body failed, err:%v", err)
 	}
 
-	col := c.db.Collection(orgRepoCollection)
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
+	var r *mongo.UpdateResult
 
-	r, err := col.InsertOne(ctx, bson.M(body))
+	f := func(ctx context.Context) error {
+		col := c.collection(orgRepoCollection)
+
+		filter := bson.M{
+			"platform":     orgRepo.Platform,
+			"org_id":       orgRepo.OrgID,
+			"repo_id":      orgRepo.RepoID,
+			"cla_language": orgRepo.CLALanguage,
+		}
+
+		upsert := true
+
+		r, err = col.UpdateOne(ctx, filter, bson.M{"$setOnInsert": bson.M(body)}, &options.UpdateOptions{Upsert: &upsert})
+		if err != nil {
+			return fmt.Errorf("write db failed, err:%v", err)
+		}
+
+		return nil
+	}
+
+	err = withContext(f)
 	if err != nil {
-		return "", fmt.Errorf("write db failed, err:%v", err)
+		return "", err
 	}
 
-	v, ok := r.InsertedID.(primitive.ObjectID)
-	if !ok {
-		return "", fmt.Errorf("retrieve id failed")
+	if r.UpsertedID == nil {
+		return "", fmt.Errorf("the org/repo:%s/%s/%s has already been bound a cla with language:%s",
+			orgRepo.Platform, orgRepo.OrgID, orgRepo.RepoID, orgRepo.CLALanguage)
 	}
 
-	return toUID(v), nil
+	return toUID(r.UpsertedID)
 }
 
 func (c *client) DisableOrgRepo(uid string) error {

@@ -8,6 +8,7 @@ import (
 	"github.com/huaweicloud/golangsdk"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
 
 	"github.com/zengchen1024/cla-server/models"
 )
@@ -49,33 +50,69 @@ func (c *client) CreateCLA(cla models.CLA) (models.CLA, error) {
 }
 
 func (c *client) ListCLA() ([]models.CLA, error) {
-	col := c.db.Collection(claCollection)
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
+	var v []CLA
 
-	cursor, err := col.Find(ctx, bson.D{})
-	if err != nil {
-		return nil, err
+	f := func(ctx context.Context) error {
+		col := c.db.Collection(claCollection)
+
+		cursor, err := col.Find(ctx, bson.D{})
+		if err != nil {
+			return fmt.Errorf("error find clas: %v", err)
+		}
+
+		err = cursor.All(ctx, &v)
+		if err != nil {
+			return fmt.Errorf("error decoding to bson struct of CLA: %v", err)
+		}
+		return nil
 	}
 
-	var v []CLA
-	err = cursor.All(ctx, &v)
+	err := withContext(f)
 	if err != nil {
 		return nil, err
 	}
 
 	r := make([]models.CLA, 0, len(v))
 	for _, item := range v {
-		cla := models.CLA{
-			ID:        item.ID.String(),
-			Name:      item.Name,
-			Text:      item.Text,
-			Language:  item.Language,
-			Submitter: item.Submitter,
-		}
-
-		r = append(r, cla)
+		r = append(r, toModelCLA(item))
 	}
 
 	return r, nil
+}
+
+func (c *client) GetCLA(uid string) (models.CLA, error) {
+	var r models.CLA
+
+	oid, err := toObjectID(uid)
+	if err != nil {
+		return r, err
+	}
+
+	var sr *mongo.SingleResult
+
+	f := func(ctx context.Context) error {
+		col := c.db.Collection(claCollection)
+		sr = col.FindOne(ctx, bson.M{"_id": oid})
+		return nil
+	}
+
+	withContext(f)
+
+	var v CLA
+	err = sr.Decode(&v)
+	if err != nil {
+		return r, fmt.Errorf("error decoding to bson struct of CLA: %v", err)
+	}
+
+	return toModelCLA(v), nil
+}
+
+func toModelCLA(item CLA) models.CLA {
+	return models.CLA{
+		ID:        objectIDToUID(item.ID),
+		Name:      item.Name,
+		Text:      item.Text,
+		Language:  item.Language,
+		Submitter: item.Submitter,
+	}
 }

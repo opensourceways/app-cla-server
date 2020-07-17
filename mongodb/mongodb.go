@@ -2,6 +2,7 @@ package mongodb
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -43,8 +44,16 @@ func toObjectID(uid string) (primitive.ObjectID, error) {
 	return primitive.ObjectIDFromHex(uid)
 }
 
-func toUID(oid primitive.ObjectID) string {
+func objectIDToUID(oid primitive.ObjectID) string {
 	return oid.Hex()
+}
+
+func toUID(oid interface{}) (string, error) {
+	v, ok := oid.(primitive.ObjectID)
+	if !ok {
+		return "", fmt.Errorf("retrieve id failed")
+	}
+	return v.Hex(), nil
 }
 
 func withContext(f func(context.Context) error) error {

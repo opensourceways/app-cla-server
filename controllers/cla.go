@@ -54,7 +54,8 @@ func (this *CLAController) GetAll() {
 		sendResponse(&this.Controller, statusCode, reason)
 	}()
 
-	var clas models.CLAs
+	clas := models.CLAs{BelongTo: []string{getHeader(&this.Controller, headerUser)}}
+
 	r, err := clas.Get()
 	if err != nil {
 		reason = err

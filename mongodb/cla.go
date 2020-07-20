@@ -39,7 +39,7 @@ func (c *client) CreateCLA(cla models.CLA) (string, error) {
 
 		filter := bson.M{
 			"name":      cla.Name,
-			"Submitter": cla.Submitter,
+			"submitter": cla.Submitter,
 		}
 
 		upsert := true
@@ -64,13 +64,22 @@ func (c *client) CreateCLA(cla models.CLA) (string, error) {
 	return toUID(r.UpsertedID)
 }
 
-func (c *client) ListCLA() ([]models.CLA, error) {
+func (c *client) ListCLA(belongingTo []string) ([]models.CLA, error) {
 	var v []CLA
 
 	f := func(ctx context.Context) error {
 		col := c.db.Collection(claCollection)
 
-		cursor, err := col.Find(ctx, bson.D{})
+		a := make(bson.A, 0, len(belongingTo))
+		for _, v := range belongingTo {
+			a = append(a, v)
+		}
+
+		filter := bson.M{
+			"submitter": bson.M{"$in": a},
+		}
+
+		cursor, err := col.Find(ctx, filter)
 		if err != nil {
 			return fmt.Errorf("error find clas: %v", err)
 		}

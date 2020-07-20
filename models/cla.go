@@ -25,8 +25,10 @@ func (this *CLA) Get() error {
 	return err
 }
 
-type CLAs struct{}
+type CLAs struct {
+	BelongTo []string
+}
 
-func (c CLAs) Get() ([]CLA, error) {
-	return db.ListCLA()
+func (this CLAs) Get() ([]CLA, error) {
+	return db.ListCLA(this.BelongTo)
 }

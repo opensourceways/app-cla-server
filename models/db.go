@@ -13,7 +13,7 @@ type IDB interface {
 
 type ICLA interface {
 	CreateCLA(CLA) (string, error)
-	ListCLA() ([]CLA, error)
+	ListCLA([]string) ([]CLA, error)
 	GetCLA(string) (CLA, error)
 }
 

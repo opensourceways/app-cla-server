@@ -9,6 +9,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 
 	"github.com/zengchen1024/cla-server/models"
 )
@@ -31,15 +32,23 @@ func (c *client) CreateCLA(cla models.CLA) (string, error) {
 		return "", fmt.Errorf("build body failed, err:%v", err)
 	}
 
-	var r *mongo.InsertOneResult
+	var r *mongo.UpdateResult
 
 	f := func(ctx context.Context) error {
-		col := c.db.Collection(claCollection)
+		col := c.collection(claCollection)
 
-		r, err = col.InsertOne(ctx, bson.M(body))
+		filter := bson.M{
+			"name":      cla.Name,
+			"Submitter": cla.Submitter,
+		}
+
+		upsert := true
+
+		r, err = col.UpdateOne(ctx, filter, bson.M{"$setOnInsert": bson.M(body)}, &options.UpdateOptions{Upsert: &upsert})
 		if err != nil {
 			return fmt.Errorf("write db failed, err:%v", err)
 		}
+
 		return nil
 	}
 
@@ -48,7 +57,11 @@ func (c *client) CreateCLA(cla models.CLA) (string, error) {
 		return "", err
 	}
 
-	return toUID(r.InsertedID)
+	if r.UpsertedID == nil {
+		return "", fmt.Errorf("the cla(%s) is already existing", cla.Name)
+	}
+
+	return toUID(r.UpsertedID)
 }
 
 func (c *client) ListCLA() ([]models.CLA, error) {

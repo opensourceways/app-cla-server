@@ -33,6 +33,9 @@ func (this *CLAController) Post() {
 		return
 	}
 
+	submitter := getHeader(&this.Controller, headerUser)
+	cla.Submitter = submitter
+
 	if err := (&cla).Create(); err != nil {
 		reason = err
 		statusCode = 500

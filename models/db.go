@@ -20,4 +20,5 @@ type ICLA interface {
 type IOrgRepo interface {
 	CreateOrgRepo(OrgRepo) (string, error)
 	DisableOrgRepo(string) error
+	ListOrgRepo(OrgRepos) ([]OrgRepo, error)
 }

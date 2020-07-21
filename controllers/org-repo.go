@@ -6,6 +6,7 @@ import (
 
 	"github.com/astaxie/beego"
 
+	"github.com/zengchen1024/cla-server/controllers/platforms"
 	"github.com/zengchen1024/cla-server/models"
 )
 
@@ -90,4 +91,43 @@ func (this *OrgRepoController) Delete() {
 	}
 
 	this.Data["json"] = "unbinding successfully"
+}
+
+// @Title GetAll
+// @Description get all bindings
+// @Success 200 {object} models.OrgRepo
+// @router / [get]
+func (this *OrgRepoController) GetAll() {
+	var statusCode = 200
+	var reason error
+
+	defer func() {
+		sendResponse(&this.Controller, statusCode, reason)
+	}()
+
+	h := parseHeader(&this.Controller)
+	p, err := platforms.NewPlatform(h.accessToken, h.refreshToken, h.platform)
+	if err != nil {
+		reason = err
+		statusCode = 400
+		return
+	}
+
+	orgs, err := p.ListOrg()
+	if err != nil {
+		reason = fmt.Errorf("list org failed: %v", err)
+		statusCode = 500
+		return
+	}
+
+	opt := models.OrgRepos{Org: map[string][]string{h.platform: orgs}}
+
+	r, err := opt.List()
+	if err != nil {
+		reason = err
+		statusCode = 500
+		return
+	}
+
+	this.Data["json"] = r
 }

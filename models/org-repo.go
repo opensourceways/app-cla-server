@@ -27,3 +27,11 @@ func (this *OrgRepo) Create() error {
 func (this OrgRepo) Delete() error {
 	return db.DisableOrgRepo(this.ID)
 }
+
+type OrgRepos struct {
+	Org map[string][]string
+}
+
+func (this OrgRepos) List() ([]OrgRepo, error) {
+	return db.ListOrgRepo(this)
+}

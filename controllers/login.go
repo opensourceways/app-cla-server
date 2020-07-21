@@ -5,9 +5,10 @@ import (
 	"fmt"
 	"net/http"
 
-	"gitee.com/openeuler/go-gitee/gitee"
 	"github.com/astaxie/beego"
 	"golang.org/x/oauth2"
+
+	"github.com/zengchen1024/cla-server/controllers/platforms"
 )
 
 type LoginController struct {
@@ -41,7 +42,13 @@ func (this *LoginController) Get() {
 		return
 	}
 
-	user, err := getUser(platform, token.AccessToken)
+	p, err := platforms.NewPlatform(token.AccessToken, "", platform)
+	if err != nil {
+		sendResponse(&this.Controller, 500, err)
+		return
+	}
+
+	user, err := p.GetUser()
 	if err != nil {
 		err = fmt.Errorf("get %s user failed: %s", platform, err.Error())
 		sendResponse(&this.Controller, 500, err)
@@ -61,50 +68,21 @@ func setCookie(w http.ResponseWriter, key string, value string) {
 	http.SetCookie(w, &cookie)
 }
 
-func getUser(platform, ak string) (string, error) {
-	switch platform {
-	case "gitee":
-		return getGiteeUser(ak)
-	}
-	return "", nil
-}
-
-func getGiteeUser(ak string) (string, error) {
-	ctx := context.Background()
-	ts := oauth2.StaticTokenSource(&oauth2.Token{AccessToken: ak})
-	conf := gitee.NewConfiguration()
-	conf.HTTPClient = oauth2.NewClient(ctx, ts)
-	cli := gitee.NewAPIClient(conf)
-
-	u, _, err := cli.UsersApi.GetV5User(ctx, nil)
-	if err != nil {
-		return "", err
-	}
-	return u.Login, err
-}
-
 func getToken(code, platform string) (*oauth2.Token, error) {
+	endpoint, err := platforms.GetOauthEndpoint(platform)
+	if err != nil {
+		return nil, err
+	}
+
 	url := fmt.Sprintf("%s?platform=%s", beego.AppConfig.String("server_redirect_url"), platform)
 
 	cfg := oauth2.Config{
 		ClientID:     beego.AppConfig.String(fmt.Sprintf("%s::cla_client_id", platform)),
 		ClientSecret: beego.AppConfig.String(fmt.Sprintf("%s::cla_secret_id", platform)),
 		Scopes:       []string{"emails", "user_info"},
-		Endpoint:     oauthEndpoint(platform),
+		Endpoint:     endpoint,
 		RedirectURL:  url,
 	}
 
 	return cfg.Exchange(context.Background(), code)
-}
-
-func oauthEndpoint(platform string) oauth2.Endpoint {
-	switch platform {
-	case "gitee":
-		return oauth2.Endpoint{
-			AuthURL:  "https://gitee.com/oauth/authorize",
-			TokenURL: "https://gitee.com/oauth/token",
-		}
-	}
-
-	return oauth2.Endpoint{}
 }

@@ -64,6 +64,36 @@ func (c *client) CreateCLA(cla models.CLA) (string, error) {
 	return toUID(r.UpsertedID)
 }
 
+func (this *client) DeleteCLA(uid string) error {
+	oid, err := toObjectID(uid)
+	if err != nil {
+		return err
+	}
+
+	f := func(ctx mongo.SessionContext) error {
+		col := this.collection(orgRepoCollection)
+
+		sr := col.FindOne(ctx, bson.M{"cla_id": uid})
+		err := sr.Err()
+
+		if err != nil {
+			if err.Error() == mongo.ErrNoDocuments.Error() {
+				col = this.collection(claCollection)
+
+				_, err := col.DeleteOne(ctx, bson.M{"_id": oid})
+				return err
+
+			}
+			return fmt.Errorf("failed to check whether the cla(%s) is bound: %v", uid, err)
+		}
+
+		return fmt.Errorf("can't delete the cla which has already been bound to org")
+
+	}
+
+	return this.doTransaction(f)
+}
+
 func (c *client) ListCLA(belongingTo []string) ([]models.CLA, error) {
 	var v []CLA
 

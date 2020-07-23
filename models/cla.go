@@ -25,6 +25,10 @@ func (this *CLA) Get() error {
 	return err
 }
 
+func (this *CLA) Delete() error {
+	return db.DeleteCLA(this.ID)
+}
+
 type CLAs struct {
 	BelongTo []string
 }

@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"encoding/json"
+	"fmt"
 
 	"github.com/astaxie/beego"
 
@@ -43,6 +44,38 @@ func (this *CLAController) Post() {
 	}
 
 	this.Data["json"] = cla
+}
+
+// @Title Delete CLA
+// @Description delete cla
+// @Param	uid		path 	string	true		"cla id"
+// @Success 204 {string} delete success!
+// @Failure 403 uid is empty
+// @router /:uid [delete]
+func (this *CLAController) Delete() {
+	var statusCode = 204
+	var reason error
+
+	defer func() {
+		sendResponse(&this.Controller, statusCode, reason)
+	}()
+
+	uid := this.GetString(":uid")
+	if uid == "" {
+		reason = fmt.Errorf("missing cla id")
+		statusCode = 400
+		return
+	}
+
+	cla := models.CLA{ID: uid}
+
+	if err := (&cla).Delete(); err != nil {
+		reason = err
+		statusCode = 500
+		return
+	}
+
+	this.Data["json"] = "delete cla successfully"
 }
 
 // @Title GetAllCLA

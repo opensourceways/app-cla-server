@@ -36,8 +36,30 @@ func RegisterDatabase(conn, db string) (*client, error) {
 	return cli, nil
 }
 
+func (this *client) Close() error {
+	return withContext(this.c.Disconnect)
+}
+
 func (c *client) collection(name string) *mongo.Collection {
 	return c.db.Collection(name)
+}
+
+func (this *client) doTransaction(f func(mongo.SessionContext) error) error {
+
+	callback := func(sc mongo.SessionContext) (interface{}, error) {
+		return nil, f(sc)
+	}
+
+	s, err := this.c.StartSession()
+	if err != nil {
+		return fmt.Errorf("failed to start mongodb session: %s", err.Error())
+	}
+
+	ctx := context.Background()
+	defer s.EndSession(ctx)
+
+	_, err = s.WithTransaction(ctx, callback)
+	return err
 }
 
 func toObjectID(uid string) (primitive.ObjectID, error) {

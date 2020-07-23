@@ -14,7 +14,10 @@ import (
 	"github.com/zengchen1024/cla-server/models"
 )
 
-const orgRepoCollection = "org_repos"
+const (
+	orgRepoCollection = "org_repos"
+	orgIdentifierName = "org_identifier"
+)
 
 type OrgRepo struct {
 	ID primitive.ObjectID `bson:"_id"`
@@ -32,11 +35,8 @@ type OrgRepo struct {
 	Submitter   string    `bson:"submitter"`
 }
 
-func repoIdentifier(platform, org, repo string) string {
-	if repo == "" {
-		return fmt.Sprintf("%s:%s", platform, org)
-	}
-	return fmt.Sprintf("%s:%s:%s", platform, org, repo)
+func orgIdentifier(platform, org string) string {
+	return fmt.Sprintf("%s:%s", platform, org)
 }
 
 func (c *client) CreateOrgRepo(orgRepo models.OrgRepo) (string, error) {
@@ -44,7 +44,7 @@ func (c *client) CreateOrgRepo(orgRepo models.OrgRepo) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("build body failed, err:%v", err)
 	}
-	body["repo_identifier"] = repoIdentifier(orgRepo.Platform, orgRepo.OrgID, orgRepo.RepoID)
+	body[orgIdentifierName] = orgIdentifier(orgRepo.Platform, orgRepo.OrgID)
 
 	var r *mongo.UpdateResult
 
@@ -106,11 +106,11 @@ func (c *client) ListOrgRepo(opt models.OrgRepos) ([]models.OrgRepo, error) {
 		var ids bson.A
 		for platform, orgs := range opt.Org {
 			for _, org := range orgs {
-				ids = append(ids, fmt.Sprintf("/%s.*/", repoIdentifier(platform, org, "")))
+				ids = append(ids, orgIdentifier(platform, org))
 			}
 		}
 
-		filter := bson.M{"repo_identifier": bson.M{"$in": ids}}
+		filter := bson.M{orgIdentifierName: bson.M{"$in": ids}}
 
 		cursor, err := col.Find(ctx, filter)
 		if err != nil {

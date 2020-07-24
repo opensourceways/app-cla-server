@@ -16,6 +16,11 @@ type ICLA interface {
 	ListCLA([]string) ([]CLA, error)
 	GetCLA(string) (CLA, error)
 	DeleteCLA(string) error
+
+	CreateCLAMetadata(CLAMetadata) (string, error)
+	ListCLAMetadata([]string) ([]CLAMetadata, error)
+	GetCLAMetadata(string) (CLAMetadata, error)
+	DeleteCLAMetadata(string) error
 }
 
 type IOrgRepo interface {

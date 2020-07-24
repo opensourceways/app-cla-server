@@ -22,9 +22,10 @@ type CLAController struct {
 func (this *CLAController) Post() {
 	var statusCode = 201
 	var reason error
+	var body interface{}
 
 	defer func() {
-		sendResponse(&this.Controller, statusCode, reason)
+		sendResponse(&this.Controller, statusCode, reason, body)
 	}()
 
 	var cla models.CLA
@@ -43,7 +44,7 @@ func (this *CLAController) Post() {
 		return
 	}
 
-	this.Data["json"] = cla
+	body = cla
 }
 
 // @Title Delete CLA
@@ -55,9 +56,10 @@ func (this *CLAController) Post() {
 func (this *CLAController) Delete() {
 	var statusCode = 204
 	var reason error
+	var body string
 
 	defer func() {
-		sendResponse(&this.Controller, statusCode, reason)
+		sendResponse(&this.Controller, statusCode, reason, body)
 	}()
 
 	uid := this.GetString(":uid")
@@ -75,7 +77,7 @@ func (this *CLAController) Delete() {
 		return
 	}
 
-	this.Data["json"] = "delete cla successfully"
+	body = "delete cla successfully"
 }
 
 // @Title GetAllCLA
@@ -85,9 +87,10 @@ func (this *CLAController) Delete() {
 func (this *CLAController) GetAll() {
 	var statusCode = 200
 	var reason error
+	var body interface{}
 
 	defer func() {
-		sendResponse(&this.Controller, statusCode, reason)
+		sendResponse(&this.Controller, statusCode, reason, body)
 	}()
 
 	clas := models.CLAs{BelongTo: []string{getHeader(&this.Controller, headerUser)}}
@@ -99,5 +102,5 @@ func (this *CLAController) GetAll() {
 		return
 	}
 
-	this.Data["json"] = r
+	body = r
 }

@@ -22,9 +22,10 @@ type CLAMetadataController struct {
 func (this *CLAMetadataController) Post() {
 	var statusCode = 201
 	var reason error
+	var body interface{}
 
 	defer func() {
-		sendResponse(&this.Controller, statusCode, reason)
+		sendResponse(&this.Controller, statusCode, reason, body)
 	}()
 
 	var data models.CLAMetadata
@@ -43,7 +44,7 @@ func (this *CLAMetadataController) Post() {
 		return
 	}
 
-	this.Data["json"] = data
+	body = data
 }
 
 // @Title Delete CLAMetadata
@@ -55,9 +56,10 @@ func (this *CLAMetadataController) Post() {
 func (this *CLAMetadataController) Delete() {
 	var statusCode = 204
 	var reason error
+	var body string
 
 	defer func() {
-		sendResponse(&this.Controller, statusCode, reason)
+		sendResponse(&this.Controller, statusCode, reason, body)
 	}()
 
 	uid := this.GetString(":uid")
@@ -75,7 +77,7 @@ func (this *CLAMetadataController) Delete() {
 		return
 	}
 
-	this.Data["json"] = "delete cla metadata successfully"
+	body = "delete cla metadata successfully"
 }
 
 // @Title GetAllCLAMetadata
@@ -85,9 +87,10 @@ func (this *CLAMetadataController) Delete() {
 func (this *CLAMetadataController) GetAll() {
 	var statusCode = 200
 	var reason error
+	var body interface{}
 
 	defer func() {
-		sendResponse(&this.Controller, statusCode, reason)
+		sendResponse(&this.Controller, statusCode, reason, body)
 	}()
 
 	datas := models.CLAMetadatas{BelongTo: []string{getHeader(&this.Controller, headerUser)}}
@@ -99,5 +102,5 @@ func (this *CLAMetadataController) GetAll() {
 		return
 	}
 
-	this.Data["json"] = r
+	body = r
 }

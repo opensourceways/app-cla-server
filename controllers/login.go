@@ -25,33 +25,33 @@ func (this *LoginController) Get() {
 
 	if code == "" {
 		err := fmt.Errorf("missing code")
-		sendResponse(&this.Controller, 400, err)
+		sendResponse(&this.Controller, 400, err, nil)
 		return
 	}
 
 	if platform == "" {
 		err := fmt.Errorf("missing platform")
-		sendResponse(&this.Controller, 400, err)
+		sendResponse(&this.Controller, 400, err, nil)
 		return
 	}
 
 	token, err := getToken(code, platform)
 	if err != nil {
 		err = fmt.Errorf("get token failed: %s", err.Error())
-		sendResponse(&this.Controller, 500, err)
+		sendResponse(&this.Controller, 500, err, nil)
 		return
 	}
 
 	p, err := platforms.NewPlatform(token.AccessToken, "", platform)
 	if err != nil {
-		sendResponse(&this.Controller, 500, err)
+		sendResponse(&this.Controller, 500, err, nil)
 		return
 	}
 
 	user, err := p.GetUser()
 	if err != nil {
 		err = fmt.Errorf("get %s user failed: %s", platform, err.Error())
-		sendResponse(&this.Controller, 500, err)
+		sendResponse(&this.Controller, 500, err, nil)
 		return
 	}
 

@@ -12,11 +12,15 @@ const (
 	headerUser         = "User"
 )
 
-func sendResponse(c *beego.Controller, statusCode int, reason error) {
+func sendResponse(c *beego.Controller, statusCode int, reason error, body interface{}) {
 	c.Ctx.ResponseWriter.WriteHeader(statusCode)
 
 	if reason != nil {
 		c.Data["json"] = reason.Error()
+	} else {
+		if body != nil {
+			c.Data["json"] = body
+		}
 	}
 
 	c.ServeJSON()

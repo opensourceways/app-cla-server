@@ -23,9 +23,10 @@ type OrgRepoController struct {
 func (this *OrgRepoController) Post() {
 	var statusCode = 201
 	var reason error
+	var body interface{}
 
 	defer func() {
-		sendResponse(&this.Controller, statusCode, reason)
+		sendResponse(&this.Controller, statusCode, reason, body)
 	}()
 
 	var orgRepo models.OrgRepo
@@ -58,7 +59,7 @@ func (this *OrgRepoController) Post() {
 		return
 	}
 
-	this.Data["json"] = orgRepo
+	body = orgRepo
 }
 
 // @Title Unbind CLA to Org/Repo
@@ -70,9 +71,10 @@ func (this *OrgRepoController) Post() {
 func (this *OrgRepoController) Delete() {
 	var statusCode = 204
 	var reason error
+	var body string
 
 	defer func() {
-		sendResponse(&this.Controller, statusCode, reason)
+		sendResponse(&this.Controller, statusCode, reason, body)
 	}()
 
 	uid := this.GetString(":uid")
@@ -90,7 +92,7 @@ func (this *OrgRepoController) Delete() {
 		return
 	}
 
-	this.Data["json"] = "unbinding successfully"
+	body = "unbinding successfully"
 }
 
 // @Title GetAll
@@ -100,9 +102,10 @@ func (this *OrgRepoController) Delete() {
 func (this *OrgRepoController) GetAll() {
 	var statusCode = 200
 	var reason error
+	var body interface{}
 
 	defer func() {
-		sendResponse(&this.Controller, statusCode, reason)
+		sendResponse(&this.Controller, statusCode, reason, body)
 	}()
 
 	h := parseHeader(&this.Controller)
@@ -129,5 +132,5 @@ func (this *OrgRepoController) GetAll() {
 		return
 	}
 
-	this.Data["json"] = r
+	body = r
 }

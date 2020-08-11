@@ -40,6 +40,11 @@ func init() {
 				&controllers.OrgRepoController{},
 			),
 		),
+		beego.NSNamespace("/cla-metadata",
+			beego.NSInclude(
+				&controllers.CLAMetadataController{},
+			),
+		),
 	)
 	beego.AddNamespace(ns)
 }

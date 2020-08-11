@@ -80,6 +80,39 @@ func (this *CLAMetadataController) Delete() {
 	body = "delete cla metadata successfully"
 }
 
+// @Title Get
+// @Description get cla metadata by uid
+// @Param	uid		path 	string	true		"The key for cla metadata"
+// @Success 200 {object} models.CLAMetadata
+// @Failure 403 :uid is empty
+// @router /:uid [get]
+func (this *CLAMetadataController) Get() {
+	var statusCode = 200
+	var reason error
+	var body interface{}
+
+	defer func() {
+		sendResponse(&this.Controller, statusCode, reason, body)
+	}()
+
+	uid := this.GetString(":uid")
+	if uid == "" {
+		reason = fmt.Errorf("missing cla metadata id")
+		statusCode = 400
+		return
+	}
+
+	data := models.CLAMetadata{ID: uid}
+
+	if err := (&data).Get(); err != nil {
+		reason = err
+		statusCode = 500
+		return
+	}
+
+	body = data
+}
+
 // @Title GetAllCLAMetadata
 // @Description get all cla metadatas
 // @Success 200 {object} models.CLAMetadata

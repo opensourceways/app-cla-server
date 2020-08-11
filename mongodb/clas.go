@@ -14,7 +14,7 @@ import (
 	"github.com/zengchen1024/cla-server/models"
 )
 
-const claCollection = "clas"
+const clasCollection = "clas"
 
 type CLA struct {
 	ID        primitive.ObjectID `bson:"_id,omitempty"`
@@ -24,6 +24,14 @@ type CLA struct {
 	Text      string             `bson:"text"`
 	Language  string             `bson:"language"`
 	Submitter string             `bson:"submitter"`
+	Fields    []Field            `bson:"fields,omitempty"`
+}
+
+type Field struct {
+	Title       string `bson:"title"`
+	Type        string `bson:"type"`
+	Description string `bson:"description,omitempty"`
+	Required    bool   `bson:"required"`
 }
 
 func (c *client) CreateCLA(cla models.CLA) (string, error) {
@@ -35,7 +43,7 @@ func (c *client) CreateCLA(cla models.CLA) (string, error) {
 	var r *mongo.UpdateResult
 
 	f := func(ctx context.Context) error {
-		col := c.collection(claCollection)
+		col := c.collection(clasCollection)
 
 		filter := bson.M{
 			"name":      cla.Name,
@@ -78,7 +86,7 @@ func (this *client) DeleteCLA(uid string) error {
 
 		if err != nil {
 			if err.Error() == mongo.ErrNoDocuments.Error() {
-				col = this.collection(claCollection)
+				col = this.collection(clasCollection)
 
 				_, err := col.DeleteOne(ctx, bson.M{"_id": oid})
 				return err
@@ -98,7 +106,7 @@ func (c *client) ListCLA(belongingTo []string) ([]models.CLA, error) {
 	var v []CLA
 
 	f := func(ctx context.Context) error {
-		col := c.db.Collection(claCollection)
+		col := c.db.Collection(clasCollection)
 
 		a := make(bson.A, 0, len(belongingTo))
 		for _, v := range belongingTo {
@@ -145,7 +153,7 @@ func (c *client) GetCLA(uid string) (models.CLA, error) {
 	var sr *mongo.SingleResult
 
 	f := func(ctx context.Context) error {
-		col := c.db.Collection(claCollection)
+		col := c.db.Collection(clasCollection)
 		sr = col.FindOne(ctx, bson.M{"_id": oid})
 		return nil
 	}
@@ -162,11 +170,26 @@ func (c *client) GetCLA(uid string) (models.CLA, error) {
 }
 
 func toModelCLA(item CLA) models.CLA {
-	return models.CLA{
+	cla := models.CLA{
 		ID:        objectIDToUID(item.ID),
 		Name:      item.Name,
 		Text:      item.Text,
 		Language:  item.Language,
 		Submitter: item.Submitter,
 	}
+
+	if item.Fields != nil {
+		fs := make([]models.Field, 0, len(item.Fields))
+		for _, v := range item.Fields {
+			fs = append(fs, models.Field{
+				Title:       v.Title,
+				Type:        v.Type,
+				Description: v.Description,
+				Required:    v.Required,
+			})
+		}
+		cla.Fields = fs
+	}
+
+	return cla
 }

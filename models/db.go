@@ -9,6 +9,7 @@ func RegisterDB(idb IDB) {
 type IDB interface {
 	ICLA
 	IOrgRepo
+	ICLAOrg
 }
 
 type ICLA interface {
@@ -27,4 +28,10 @@ type IOrgRepo interface {
 	CreateOrgRepo(OrgRepo) (string, error)
 	DisableOrgRepo(string) error
 	ListOrgRepo(OrgRepos) ([]OrgRepo, error)
+}
+
+type ICLAOrg interface {
+	BindCLAToOrg(CLAOrg) (string, error)
+	UnbindCLAFromOrg(string) error
+	ListBindingOfCLAAndOrg(CLAOrgs) ([]CLAOrg, error)
 }

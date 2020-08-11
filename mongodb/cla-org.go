@@ -15,10 +15,11 @@ import (
 )
 
 const (
-	orgRepoCollection = "org_repos"
+	claOrgCollection  = "cla_orgs"
+	orgIdentifierName = "org_identifier"
 )
 
-type OrgRepo struct {
+type CLAOrg struct {
 	ID primitive.ObjectID `bson:"_id"`
 
 	CreatedAt   time.Time `bson:"created_at,omitempty"`
@@ -28,29 +29,33 @@ type OrgRepo struct {
 	RepoID      string    `bson:"repo_id"`
 	CLAID       string    `bson:"cla_id"`
 	CLALanguage string    `bson:"cla_language"`
-	MetadataID  string    `bson:"metadata_id,omitempty"`
 	OrgEmail    string    `bson:"org_email,omitempty"`
 	Enabled     bool      `bson:"enabled"`
 	Submitter   string    `bson:"submitter"`
 }
 
-func (c *client) CreateOrgRepo(orgRepo models.OrgRepo) (string, error) {
-	body, err := golangsdk.BuildRequestBody(orgRepo, "")
+func orgIdentifier(platform, org string) string {
+	return fmt.Sprintf("%s:%s", platform, org)
+}
+
+func (c *client) BindCLAToOrg(claOrg models.CLAOrg) (string, error) {
+	body, err := golangsdk.BuildRequestBody(claOrg, "")
 	if err != nil {
 		return "", fmt.Errorf("build body failed, err:%v", err)
 	}
-	body[orgIdentifierName] = orgIdentifier(orgRepo.Platform, orgRepo.OrgID)
+	body[orgIdentifierName] = orgIdentifier(claOrg.Platform, claOrg.OrgID)
 
 	var r *mongo.UpdateResult
 
 	f := func(ctx context.Context) error {
-		col := c.collection(orgRepoCollection)
+		col := c.collection(claOrgCollection)
 
 		filter := bson.M{
-			"platform":     orgRepo.Platform,
-			"org_id":       orgRepo.OrgID,
-			"repo_id":      orgRepo.RepoID,
-			"cla_language": orgRepo.CLALanguage,
+			"platform":     claOrg.Platform,
+			"org_id":       claOrg.OrgID,
+			"repo_id":      claOrg.RepoID,
+			"cla_language": claOrg.CLALanguage,
+			"enabled":      true,
 		}
 
 		upsert := true
@@ -70,33 +75,34 @@ func (c *client) CreateOrgRepo(orgRepo models.OrgRepo) (string, error) {
 
 	if r.UpsertedID == nil {
 		return "", fmt.Errorf("the org/repo:%s/%s/%s has already been bound a cla with language:%s",
-			orgRepo.Platform, orgRepo.OrgID, orgRepo.RepoID, orgRepo.CLALanguage)
+			claOrg.Platform, claOrg.OrgID, claOrg.RepoID, claOrg.CLALanguage)
 	}
 
 	return toUID(r.UpsertedID)
 }
 
-func (c *client) DisableOrgRepo(uid string) error {
+func (c *client) UnbindCLAFromOrg(uid string) error {
 	oid, err := toObjectID(uid)
 	if err != nil {
 		return err
 	}
 
 	f := func(ctx context.Context) error {
-		col := c.collection(orgRepoCollection)
+		col := c.collection(claOrgCollection)
 
-		_, err := col.UpdateOne(ctx, bson.M{"_id": oid}, bson.M{"$set": bson.M{"enabled": false}})
+		v := bson.M{"enabled": false, "updated_at": time.Now()}
+		_, err := col.UpdateOne(ctx, bson.M{"_id": oid}, bson.M{"$set": v})
 		return err
 	}
 
 	return withContext(f)
 }
 
-func (c *client) ListOrgRepo(opt models.OrgRepos) ([]models.OrgRepo, error) {
-	var v []OrgRepo
+func (c *client) ListBindingOfCLAAndOrg(opt models.CLAOrgs) ([]models.CLAOrg, error) {
+	var v []CLAOrg
 
 	f := func(ctx context.Context) error {
-		col := c.db.Collection(orgRepoCollection)
+		col := c.db.Collection(claOrgCollection)
 
 		var ids bson.A
 		for platform, orgs := range opt.Org {
@@ -114,7 +120,7 @@ func (c *client) ListOrgRepo(opt models.OrgRepos) ([]models.OrgRepo, error) {
 
 		err = cursor.All(ctx, &v)
 		if err != nil {
-			return fmt.Errorf("error decoding to bson struct of OrgRepo: %v", err)
+			return fmt.Errorf("error decoding to bson struct of CLAOrg: %v", err)
 		}
 		return nil
 	}
@@ -124,25 +130,26 @@ func (c *client) ListOrgRepo(opt models.OrgRepos) ([]models.OrgRepo, error) {
 		return nil, err
 	}
 
-	r := make([]models.OrgRepo, 0, len(v))
+	r := make([]models.CLAOrg, 0, len(v))
 	for _, item := range v {
-		r = append(r, toModelOrgRepo(item))
+		r = append(r, toModelCLAOrg(item))
 	}
 
 	return r, nil
 }
 
-func toModelOrgRepo(item OrgRepo) models.OrgRepo {
-	return models.OrgRepo{
+func toModelCLAOrg(item CLAOrg) models.CLAOrg {
+	return models.CLAOrg{
 		ID:          objectIDToUID(item.ID),
 		Platform:    item.Platform,
 		OrgID:       item.OrgID,
 		RepoID:      item.RepoID,
 		CLAID:       item.CLAID,
 		CLALanguage: item.CLALanguage,
-		MetadataID:  item.MetadataID,
 		OrgEmail:    item.OrgEmail,
 		Enabled:     item.Enabled,
 		Submitter:   item.Submitter,
+		CreatedAt:   item.CreatedAt,
+		UpdatedAt:   item.UpdatedAt,
 	}
 }

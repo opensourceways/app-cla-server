@@ -40,6 +40,11 @@ func init() {
 				&controllers.OrgRepoController{},
 			),
 		),
+		beego.NSNamespace("/cla-org",
+			beego.NSInclude(
+				&controllers.CLAOrgController{},
+			),
+		),
 		beego.NSNamespace("/cla-metadata",
 			beego.NSInclude(
 				&controllers.CLAMetadataController{},

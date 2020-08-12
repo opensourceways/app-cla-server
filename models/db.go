@@ -10,6 +10,7 @@ type IDB interface {
 	ICLA
 	IOrgRepo
 	ICLAOrg
+	IIndividualSigning
 }
 
 type ICLA interface {
@@ -34,4 +35,8 @@ type ICLAOrg interface {
 	BindCLAToOrg(CLAOrg) (string, error)
 	UnbindCLAFromOrg(string) error
 	ListBindingOfCLAAndOrg(CLAOrgs) ([]CLAOrg, error)
+}
+
+type IIndividualSigning interface {
+	SignAsIndividual(IndividualSigning) error
 }

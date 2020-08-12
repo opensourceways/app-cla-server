@@ -32,6 +32,10 @@ type CLAOrg struct {
 	OrgEmail    string    `bson:"org_email,omitempty"`
 	Enabled     bool      `bson:"enabled"`
 	Submitter   string    `bson:"submitter"`
+
+	// Individuals is the cla signed information of ordinary contributors
+	// key is the email of contributor
+	Individuals map[string]models.IndividualSigning `bson:"individuals,omitempty"`
 }
 
 func orgIdentifier(platform, org string) string {

@@ -12,13 +12,12 @@ type CLAOrg struct {
 	OrgEmail    string    `json:"org_email,omitempty"`
 	Enabled     bool      `json:"enabled,omitempty"`
 	Submitter   string    `json:"submitter" required:"true"`
-	CreatedAt   time.Time `json:"created_at,omitempty"`
-	UpdatedAt   time.Time `json:"updated_at,omitempty"`
+	CreatedAt   time.Time `json:"-"`
+	UpdatedAt   time.Time `json:"-"`
 }
 
 func (this *CLAOrg) Create() error {
 	this.Enabled = true
-	this.CreatedAt = time.Now()
 
 	v, err := db.BindCLAToOrg(*this)
 	if err == nil {

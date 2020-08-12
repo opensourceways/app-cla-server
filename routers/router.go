@@ -50,6 +50,11 @@ func init() {
 				&controllers.CLAMetadataController{},
 			),
 		),
+		beego.NSNamespace("/individual-signing",
+			beego.NSInclude(
+				&controllers.IndividualSigningController{},
+			),
+		),
 	)
 	beego.AddNamespace(ns)
 }

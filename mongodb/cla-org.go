@@ -29,6 +29,7 @@ type CLAOrg struct {
 	RepoID      string    `bson:"repo_id"`
 	CLAID       string    `bson:"cla_id"`
 	CLALanguage string    `bson:"cla_language"`
+	ApplyTo     string    `bson:"apply_to" required:"true"`
 	OrgEmail    string    `bson:"org_email,omitempty"`
 	Enabled     bool      `bson:"enabled"`
 	Submitter   string    `bson:"submitter"`
@@ -59,6 +60,7 @@ func (c *client) BindCLAToOrg(claOrg models.CLAOrg) (string, error) {
 			"org_id":       claOrg.OrgID,
 			"repo_id":      claOrg.RepoID,
 			"cla_language": claOrg.CLALanguage,
+			"apply_to":     claOrg.ApplyTo,
 			"enabled":      true,
 		}
 
@@ -150,6 +152,7 @@ func toModelCLAOrg(item CLAOrg) models.CLAOrg {
 		RepoID:      item.RepoID,
 		CLAID:       item.CLAID,
 		CLALanguage: item.CLALanguage,
+		ApplyTo:     item.ApplyTo,
 		OrgEmail:    item.OrgEmail,
 		Enabled:     item.Enabled,
 		Submitter:   item.Submitter,

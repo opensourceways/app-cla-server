@@ -9,6 +9,7 @@ type CLAOrg struct {
 	RepoID      string    `json:"repo_id" required:"true"`
 	CLAID       string    `json:"cla_id" required:"true"`
 	CLALanguage string    `json:"cla_language" required:"true"`
+	ApplyTo     string    `json:"apply_to" required:"true"`
 	OrgEmail    string    `json:"org_email,omitempty"`
 	Enabled     bool      `json:"enabled,omitempty"`
 	Submitter   string    `json:"submitter" required:"true"`

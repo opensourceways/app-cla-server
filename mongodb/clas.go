@@ -24,10 +24,12 @@ type CLA struct {
 	Text      string             `bson:"text"`
 	Language  string             `bson:"language"`
 	Submitter string             `bson:"submitter"`
+	ApplyTo   string             `bson:"apply_to" required:"true"`
 	Fields    []Field            `bson:"fields,omitempty"`
 }
 
 type Field struct {
+	ID          int    `bson:"id" required:"true"`
 	Title       string `bson:"title"`
 	Type        string `bson:"type"`
 	Description string `bson:"description,omitempty"`
@@ -175,6 +177,7 @@ func toModelCLA(item CLA) models.CLA {
 		Name:      item.Name,
 		Text:      item.Text,
 		Language:  item.Language,
+		ApplyTo:   item.ApplyTo,
 		Submitter: item.Submitter,
 	}
 
@@ -182,6 +185,7 @@ func toModelCLA(item CLA) models.CLA {
 		fs := make([]models.Field, 0, len(item.Fields))
 		for _, v := range item.Fields {
 			fs = append(fs, models.Field{
+				ID:          v.ID,
 				Title:       v.Title,
 				Type:        v.Type,
 				Description: v.Description,

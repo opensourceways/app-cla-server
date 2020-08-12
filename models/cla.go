@@ -6,10 +6,12 @@ type CLA struct {
 	Text      string  `json:"text" required:"true"`
 	Language  string  `json:"language" required:"true"`
 	Submitter string  `json:"submitter" required:"true"`
+	ApplyTo   string  `json:"apply_to" required:"true"`
 	Fields    []Field `json:"fields,omitempty"`
 }
 
 type Field struct {
+	ID          int    `json:"id" required:"true"`
 	Title       string `json:"title" required:"true"`
 	Type        string `json:"type" required:"true"`
 	Description string `json:"description,omitempty"`

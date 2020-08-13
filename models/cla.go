@@ -39,10 +39,13 @@ func (this *CLA) Delete() error {
 	return db.DeleteCLA(this.ID)
 }
 
-type CLAs struct {
-	BelongTo []string
+type CLAListOptions struct {
+	Submitter string `json:"submitter" required:"true"`
+	Name      string `json:"name,omitempty"`
+	Language  string `json:"language,omitempty"`
+	ApplyTo   string `json:"apply_to,omitempty"`
 }
 
-func (this CLAs) Get() ([]CLA, error) {
-	return db.ListCLA(this.BelongTo)
+func (this CLAListOptions) Get() ([]CLA, error) {
+	return db.ListCLA(this)
 }

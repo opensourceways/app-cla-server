@@ -126,7 +126,12 @@ func (this *CLAController) GetAll() {
 		sendResponse(&this.Controller, statusCode, reason, body)
 	}()
 
-	clas := models.CLAs{BelongTo: []string{getHeader(&this.Controller, headerUser)}}
+	clas := models.CLAListOptions{
+		Submitter: getHeader(&this.Controller, headerUser),
+		Name:      this.GetString("name"),
+		ApplyTo:   this.GetString("apply_to"),
+		Language:  this.GetString("language"),
+	}
 
 	r, err := clas.Get()
 	if err != nil {

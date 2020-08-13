@@ -104,20 +104,17 @@ func (this *client) DeleteCLA(uid string) error {
 	return this.doTransaction(f)
 }
 
-func (c *client) ListCLA(belongingTo []string) ([]models.CLA, error) {
+func (c *client) ListCLA(opts models.CLAListOptions) ([]models.CLA, error) {
+	body, err := golangsdk.BuildRequestBody(opts, "")
+	if err != nil {
+		return nil, fmt.Errorf("build options to list cla failed, err:%v", err)
+	}
+
 	var v []CLA
 
 	f := func(ctx context.Context) error {
 		col := c.db.Collection(clasCollection)
-
-		a := make(bson.A, 0, len(belongingTo))
-		for _, v := range belongingTo {
-			a = append(a, v)
-		}
-
-		filter := bson.M{
-			"submitter": bson.M{"$in": a},
-		}
+		filter := bson.M(body)
 
 		cursor, err := col.Find(ctx, filter)
 		if err != nil {
@@ -131,7 +128,7 @@ func (c *client) ListCLA(belongingTo []string) ([]models.CLA, error) {
 		return nil
 	}
 
-	err := withContext(f)
+	err = withContext(f)
 	if err != nil {
 		return nil, err
 	}

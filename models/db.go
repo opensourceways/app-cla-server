@@ -11,6 +11,7 @@ type IDB interface {
 	IOrgRepo
 	ICLAOrg
 	IIndividualSigning
+	IEmployeeSigning
 }
 
 type ICLA interface {
@@ -39,4 +40,8 @@ type ICLAOrg interface {
 
 type IIndividualSigning interface {
 	SignAsIndividual(IndividualSigning) error
+}
+
+type IEmployeeSigning interface {
+	SignAsEmployee(EmployeeSigning) error
 }

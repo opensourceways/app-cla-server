@@ -29,7 +29,7 @@ type CLA struct {
 }
 
 type Field struct {
-	ID          int    `bson:"id" required:"true"`
+	ID          string `bson:"id" required:"true"`
 	Title       string `bson:"title"`
 	Type        string `bson:"type"`
 	Description string `bson:"description,omitempty"`

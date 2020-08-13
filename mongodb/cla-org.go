@@ -19,6 +19,8 @@ const (
 	orgIdentifierName = "org_identifier"
 )
 
+type signingInfo map[string]interface{}
+
 type CLAOrg struct {
 	ID primitive.ObjectID `bson:"_id"`
 
@@ -34,9 +36,13 @@ type CLAOrg struct {
 	Enabled     bool      `bson:"enabled"`
 	Submitter   string    `bson:"submitter"`
 
-	// Individuals is the cla signed information of ordinary contributors
+	// Individuals is the cla signing information of ordinary contributors
 	// key is the email of contributor
-	Individuals map[string]models.IndividualSigning `bson:"individuals,omitempty"`
+	Individuals map[string]signingInfo `bson:"individuals,omitempty"`
+
+	// Employees is the cla signing information of employees and grouped by corporation
+	// key is the email suffix of corporation
+	Employees map[string]map[string]employeeSigning `bson:"employees,omitempty"`
 }
 
 func orgIdentifier(platform, org string) string {

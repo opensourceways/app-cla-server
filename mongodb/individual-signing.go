@@ -24,6 +24,7 @@ func (c *client) SignAsIndividual(info models.IndividualSigning) error {
 		col := c.collection(claOrgCollection)
 
 		k := individualSigningKey(info.Email)
+		info.Info["email"] = info.Email
 		v := bson.M{k: info.Info}
 
 		r, err := col.UpdateOne(ctx, bson.M{"_id": oid, k: bson.M{"$exists": false}}, bson.M{"$set": v})

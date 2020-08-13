@@ -11,7 +11,7 @@ type CLA struct {
 }
 
 type Field struct {
-	ID          int    `json:"id" required:"true"`
+	ID          string `json:"id" required:"true"`
 	Title       string `json:"title" required:"true"`
 	Type        string `json:"type" required:"true"`
 	Description string `json:"description,omitempty"`

@@ -12,6 +12,7 @@ type IDB interface {
 	ICLAOrg
 	IIndividualSigning
 	IEmployeeSigning
+	ICorporationSigning
 }
 
 type ICLA interface {
@@ -44,4 +45,8 @@ type IIndividualSigning interface {
 
 type IEmployeeSigning interface {
 	SignAsEmployee(EmployeeSigning) error
+}
+
+type ICorporationSigning interface {
+	SignAsCorporation(CorporationSigning) error
 }

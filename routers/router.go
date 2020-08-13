@@ -60,6 +60,11 @@ func init() {
 				&controllers.EmployeeSigningController{},
 			),
 		),
+		beego.NSNamespace("/corporation-signing",
+			beego.NSInclude(
+				&controllers.CorporationSigningController{},
+			),
+		),
 	)
 	beego.AddNamespace(ns)
 }

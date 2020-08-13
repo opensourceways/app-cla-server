@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/zengchen1024/cla-server/models"
-
 	"go.mongodb.org/mongo-driver/bson"
+
+	"github.com/zengchen1024/cla-server/models"
 )
 
 type employeeSignings struct {

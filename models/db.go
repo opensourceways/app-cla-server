@@ -36,7 +36,7 @@ type IOrgRepo interface {
 type ICLAOrg interface {
 	BindCLAToOrg(CLAOrg) (string, error)
 	UnbindCLAFromOrg(string) error
-	ListBindingOfCLAAndOrg(CLAOrgs) ([]CLAOrg, error)
+	ListBindingOfCLAAndOrg(CLAOrgListOption) ([]CLAOrg, error)
 	GetCLAOrg(string) (CLAOrg, error)
 }
 

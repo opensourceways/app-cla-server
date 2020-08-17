@@ -141,12 +141,14 @@ func (c *client) GetCLAOrg(uid string) (models.CLAOrg, error) {
 	return toModelCLAOrg(v), nil
 }
 
-func (c *client) ListBindingOfCLAAndOrg(opt models.CLAOrgs) ([]models.CLAOrg, error) {
-	var v []CLAOrg
+func (c *client) ListBindingOfCLAAndOrg(opt models.CLAOrgListOption) ([]models.CLAOrg, error) {
+	body, err := golangsdk.BuildRequestBody(opt, "")
+	if err != nil {
+		return nil, fmt.Errorf("build options to list cla-org failed, err:%v", err)
+	}
+	filter := bson.M(body)
 
-	f := func(ctx context.Context) error {
-		col := c.db.Collection(claOrgCollection)
-
+	if opt.Org != nil {
 		var ids bson.A
 		for platform, orgs := range opt.Org {
 			for _, org := range orgs {
@@ -154,7 +156,13 @@ func (c *client) ListBindingOfCLAAndOrg(opt models.CLAOrgs) ([]models.CLAOrg, er
 			}
 		}
 
-		filter := bson.M{orgIdentifierName: bson.M{"$in": ids}}
+		filter[orgIdentifierName] = bson.M{"$in": ids}
+	}
+
+	var v []CLAOrg
+
+	f := func(ctx context.Context) error {
+		col := c.db.Collection(claOrgCollection)
 
 		cursor, err := col.Find(ctx, filter)
 		if err != nil {
@@ -168,7 +176,7 @@ func (c *client) ListBindingOfCLAAndOrg(opt models.CLAOrgs) ([]models.CLAOrg, er
 		return nil
 	}
 
-	err := withContext(f)
+	err = withContext(f)
 	if err != nil {
 		return nil, err
 	}

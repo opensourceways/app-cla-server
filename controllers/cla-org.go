@@ -130,7 +130,37 @@ func (this *CLAOrgController) GetAll() {
 		return
 	}
 
-	opt := models.CLAOrgs{Org: map[string][]string{h.platform: orgs}}
+	opt := models.CLAOrgListOption{Org: map[string][]string{h.platform: orgs}}
+
+	r, err := opt.List()
+	if err != nil {
+		reason = err
+		statusCode = 500
+		return
+	}
+
+	body = r
+}
+
+// @Title Get signing page info
+// @Description get signing page info
+// @Success 200 {object} models.CLAOrg
+// @router /signing-page [get]
+func (this *CLAOrgController) GetSigningPageInfo() {
+	var statusCode = 200
+	var reason error
+	var body interface{}
+
+	defer func() {
+		sendResponse(&this.Controller, statusCode, reason, body)
+	}()
+
+	opt := models.CLAOrgListOption{
+		Platform: this.GetString("platform"),
+		OrgID:    this.GetString("org_id"),
+		RepoID:   this.GetString("repo_id"),
+		ApplyTo:  this.GetString("apply_to"),
+	}
 
 	r, err := opt.List()
 	if err != nil {

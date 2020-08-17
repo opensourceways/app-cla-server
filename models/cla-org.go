@@ -40,10 +40,15 @@ func (this *CLAOrg) Get() error {
 	return err
 }
 
-type CLAOrgs struct {
-	Org map[string][]string
+type CLAOrgListOption struct {
+	Org map[string][]string `json:"-"`
+
+	Platform string `json:"platform,omitempty"`
+	OrgID    string `json:"org_id,omitempty"`
+	RepoID   string `json:"repo_id,omitempty"`
+	ApplyTo  string `json:"apply_to,omitempty"`
 }
 
-func (this CLAOrgs) List() ([]CLAOrg, error) {
+func (this CLAOrgListOption) List() ([]CLAOrg, error) {
 	return db.ListBindingOfCLAAndOrg(this)
 }

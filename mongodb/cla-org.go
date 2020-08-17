@@ -114,6 +114,33 @@ func (c *client) UnbindCLAFromOrg(uid string) error {
 	return withContext(f)
 }
 
+func (c *client) GetCLAOrg(uid string) (models.CLAOrg, error) {
+	var r models.CLAOrg
+
+	oid, err := toObjectID(uid)
+	if err != nil {
+		return r, err
+	}
+
+	var sr *mongo.SingleResult
+
+	f := func(ctx context.Context) error {
+		col := c.db.Collection(claOrgCollection)
+		sr = col.FindOne(ctx, bson.M{"_id": oid})
+		return nil
+	}
+
+	withContext(f)
+
+	var v CLAOrg
+	err = sr.Decode(&v)
+	if err != nil {
+		return r, fmt.Errorf("error decoding to bson struct of CLA: %v", err)
+	}
+
+	return toModelCLAOrg(v), nil
+}
+
 func (c *client) ListBindingOfCLAAndOrg(opt models.CLAOrgs) ([]models.CLAOrg, error) {
 	var v []CLAOrg
 

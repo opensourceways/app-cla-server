@@ -32,6 +32,14 @@ func (this CLAOrg) Delete() error {
 	return db.UnbindCLAFromOrg(this.ID)
 }
 
+func (this *CLAOrg) Get() error {
+	v, err := db.GetCLAOrg(this.ID)
+	if err == nil {
+		*this = v
+	}
+	return err
+}
+
 type CLAOrgs struct {
 	Org map[string][]string
 }

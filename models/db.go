@@ -37,6 +37,7 @@ type ICLAOrg interface {
 	BindCLAToOrg(CLAOrg) (string, error)
 	UnbindCLAFromOrg(string) error
 	ListBindingOfCLAAndOrg(CLAOrgs) ([]CLAOrg, error)
+	GetCLAOrg(string) (CLAOrg, error)
 }
 
 type IIndividualSigning interface {

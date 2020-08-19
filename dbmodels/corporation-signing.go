@@ -16,3 +16,7 @@ type CorporationSigningListOption struct {
 	CLALanguage string `json:"cla_language,omitempty"`
 	ApplyTo     string `json:"apply_to" required:"true"`
 }
+
+type CorporationSigningUpdateInfo struct {
+	Enabled *bool `json:"enabled,omitempty"`
+}

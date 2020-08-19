@@ -72,3 +72,34 @@ func (this *CorporationSigningController) GetAll() {
 
 	body = r
 }
+
+// @Title Enable corporation signing
+// @Description enable corporation
+// @Param	body		body 	models.CorporationSigning	true		"body for corporation signing"
+// @Success 201 {int} map
+// @Failure 403 body is empty
+// @router / [put]
+func (this *CorporationSigningController) Update() {
+	var statusCode = 202
+	var reason error
+	var body interface{}
+
+	defer func() {
+		sendResponse(&this.Controller, statusCode, reason, body)
+	}()
+
+	var info models.CorporationSigningUdateInfo
+	if err := json.Unmarshal(this.Ctx.Input.RequestBody, &info); err != nil {
+		reason = err
+		statusCode = 400
+		return
+	}
+
+	if err := (&info).Update(); err != nil {
+		reason = err
+		statusCode = 500
+		return
+	}
+
+	body = "enabled corporation successfully"
+}

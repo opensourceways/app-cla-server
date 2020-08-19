@@ -23,6 +23,19 @@ func (this *CorporationSigning) Create() error {
 	return dbmodels.GetDB().SignAsCorporation(this.CLAOrgID, p)
 }
 
+type CorporationSigningUdateInfo struct {
+	CLAOrgID        string `json:"cla_org_id"`
+	AdminEmail      string `json:"admin_email"`
+	CorporationName string `json:"corporation_name"`
+	Enabled         bool   `json:"enabled"`
+}
+
+func (this *CorporationSigningUdateInfo) Update() error {
+	return dbmodels.GetDB().UpdateCorporationOfOrg(
+		this.CLAOrgID, this.AdminEmail, this.CorporationName,
+		dbmodels.CorporationSigningUpdateInfo{Enabled: &this.Enabled})
+}
+
 type CorporationSigningListOption struct {
 	Platform    string `json:"platform"`
 	OrgID       string `json:"org_id"`

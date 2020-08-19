@@ -78,6 +78,10 @@ func (c *client) SignAsCorporation(claOrgID string, info dbmodels.CorporationSig
 			return err
 		}
 
+		if r.MatchedCount == 0 {
+			return fmt.Errorf("Failed to add info when signing as corporation, doesn't match any record")
+		}
+
 		if r.ModifiedCount == 0 {
 			return fmt.Errorf("Failed to add info when signing as corporation, impossible")
 		}
@@ -141,6 +145,55 @@ func (c *client) ListCorporationsOfOrg(opt dbmodels.CorporationSigningListOption
 	}
 
 	return r, nil
+}
+
+func (c *client) UpdateCorporationOfOrg(claOrgID, adminEmail, corporationName string, opt dbmodels.CorporationSigningUpdateInfo) error {
+	body, err := golangsdk.BuildRequestBody(opt, "")
+	if err != nil {
+		return fmt.Errorf("Failed to build options for updating corporation signing, err:%v", err)
+	}
+	if len(body) == 0 {
+		return nil
+	}
+
+	info := bson.M{}
+	for k, v := range body {
+		info[fmt.Sprintf("%s.$.%s", corporationsID, k)] = v
+	}
+
+	oid, err := toObjectID(claOrgID)
+	if err != nil {
+		return err
+	}
+
+	f := func(ctx context.Context) error {
+		col := c.collection(claOrgCollection)
+
+		filter := bson.M{
+			"_id": oid,
+
+			corpoSigningKey("corporation_name"): corporationName,
+			corpoSigningKey("admin_email"):      adminEmail,
+		}
+
+		update := bson.M{"$set": info}
+
+		r, err := col.UpdateOne(ctx, filter, update)
+		if err != nil {
+			return err
+		}
+
+		if r.MatchedCount == 0 {
+			return fmt.Errorf("Failed to update corporation signing, doesn't match any record")
+		}
+
+		if r.ModifiedCount == 0 {
+			return fmt.Errorf("Failed to update corporation signing, impossible")
+		}
+		return nil
+	}
+
+	return withContext(f)
 }
 
 func toDBModelCorporationSigningInfo(info corporationSigning) dbmodels.CorporationSigningInfo {

@@ -16,5 +16,5 @@ type IDB interface {
 
 type ICorporationSigning interface {
 	SignAsCorporation(string, CorporationSigningInfo) error
-	ListCorporationsOfOrg(CorporationSigningListOption) ([]CorporationSigningInfo, error)
+	ListCorporationsOfOrg(CorporationSigningListOption) (map[string][]CorporationSigningInfo, error)
 }

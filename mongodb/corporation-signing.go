@@ -87,7 +87,7 @@ func (c *client) SignAsCorporation(claOrgID string, info dbmodels.CorporationSig
 	return c.doTransaction(f)
 }
 
-func (c *client) ListCorporationsOfOrg(opt dbmodels.CorporationSigningListOption) ([]dbmodels.CorporationSigningInfo, error) {
+func (c *client) ListCorporationsOfOrg(opt dbmodels.CorporationSigningListOption) (map[string][]dbmodels.CorporationSigningInfo, error) {
 	body, err := golangsdk.BuildRequestBody(opt, "")
 	if err != nil {
 		return nil, fmt.Errorf("build options to list corporation signing failed, err:%v", err)
@@ -125,18 +125,19 @@ func (c *client) ListCorporationsOfOrg(opt dbmodels.CorporationSigningListOption
 		return nil, err
 	}
 
-	n := 0
-	for i := 0; i < len(v); i++ {
-		if v[i].Corporations != nil {
-			n += len(v[i].Corporations)
-		}
-	}
+	r := map[string][]dbmodels.CorporationSigningInfo{}
 
-	r := make([]dbmodels.CorporationSigningInfo, 0, n)
 	for i := 0; i < len(v); i++ {
-		for _, item := range v[i].Corporations {
-			r = append(r, toDBModelCorporationSigningInfo(item))
+		cs := v[i].Corporations
+		if cs == nil || len(cs) == 0 {
+			continue
 		}
+
+		cs1 := make([]dbmodels.CorporationSigningInfo, 0, len(cs))
+		for _, item := range cs {
+			cs1 = append(cs1, toDBModelCorporationSigningInfo(item))
+		}
+		r[objectIDToUID(v[i].ID)] = cs1
 	}
 
 	return r, nil

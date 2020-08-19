@@ -7,7 +7,9 @@ type CorporationSigning struct {
 	AdminEmail      string `json:"admin_email"`
 	AdminName       string `json:"admin_name"`
 	CorporationName string `json:"corporation_name"`
-	Info            map[string]interface{}
+	Enabled         bool   `json:"enabled"`
+
+	Info map[string]interface{} `json:"info"`
 }
 
 func (this *CorporationSigning) Create() error {
@@ -28,7 +30,7 @@ type CorporationSigningListOption struct {
 	CLALanguage string `json:"cla_language"`
 }
 
-func (this CorporationSigningListOption) List() ([]dbmodels.CorporationSigningInfo, error) {
+func (this CorporationSigningListOption) List() ([]CorporationSigning, error) {
 	opt := dbmodels.CorporationSigningListOption{
 		Platform:    this.Platform,
 		OrgID:       this.OrgID,
@@ -36,5 +38,27 @@ func (this CorporationSigningListOption) List() ([]dbmodels.CorporationSigningIn
 		CLALanguage: this.CLALanguage,
 		ApplyTo:     ApplyToCorporation,
 	}
-	return dbmodels.GetDB().ListCorporationsOfOrg(opt)
+	v, err := dbmodels.GetDB().ListCorporationsOfOrg(opt)
+	if err != nil {
+		return nil, err
+	}
+
+	n := 0
+	for _, items := range v {
+		n += len(items)
+	}
+
+	r := make([]CorporationSigning, 0, n)
+	for k, items := range v {
+		for _, item := range items {
+			r = append(r, CorporationSigning{
+				CLAOrgID:        k,
+				AdminEmail:      item.AdminEmail,
+				AdminName:       item.AdminName,
+				CorporationName: item.CorporationName,
+				Enabled:         item.Enabled,
+			})
+		}
+	}
+	return r, nil
 }

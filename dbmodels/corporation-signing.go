@@ -18,5 +18,6 @@ type CorporationSigningListOption struct {
 }
 
 type CorporationSigningUpdateInfo struct {
-	Enabled *bool `json:"enabled,omitempty"`
+	Enabled  *bool  `json:"enabled,omitempty"`
+	Password string `json:"password,omitempty"`
 }

@@ -46,7 +46,7 @@ type CLAOrg struct {
 
 	// Corporations is the cla signing information of corporation
 	// key is the email suffix of corporation
-	Corporations map[string]corporationSigning `bson:"corporations,omitempty"`
+	Corporations []corporationSigning `bson:"corporations,omitempty"`
 }
 
 func orgIdentifier(platform, org string) string {

@@ -12,7 +12,6 @@ type IDB interface {
 	ICLAOrg
 	IIndividualSigning
 	IEmployeeSigning
-	ICorporationSigning
 }
 
 type ICLA interface {

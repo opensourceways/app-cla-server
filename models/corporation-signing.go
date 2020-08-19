@@ -1,11 +1,23 @@
 package models
 
+import "github.com/zengchen1024/cla-server/dbmodels"
+
 type CorporationSigning struct {
-	CLAOrgID string                 `json:"cla_org_id" required:"true"`
-	Email    string                 `json:"email" required:"true"`
-	Info     map[string]interface{} `json:"info,omitempty"`
+	CLAOrgID        string `json:"cla_org_id"`
+	AdminEmail      string `json:"admin_email"`
+	AdminName       string `json:"admin_name"`
+	CorporationName string `json:"corporation_name"`
+	Info            map[string]interface{}
 }
 
 func (this *CorporationSigning) Create() error {
-	return db.SignAsCorporation(*this)
+	p := dbmodels.CorporationSigningCreateOption{
+		CLAOrgID:        this.CLAOrgID,
+		AdminEmail:      this.AdminEmail,
+		AdminName:       this.AdminName,
+		CorporationName: this.CorporationName,
+		Enabled:         false,
+		Info:            this.Info,
+	}
+	return dbmodels.GetDB().SignAsCorporation(p)
 }

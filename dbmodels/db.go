@@ -12,10 +12,15 @@ func GetDB() IDB {
 
 type IDB interface {
 	ICorporationSigning
+	ICorporationManager
 }
 
 type ICorporationSigning interface {
 	SignAsCorporation(string, CorporationSigningInfo) error
 	ListCorporationsOfOrg(CorporationSigningListOption) (map[string][]CorporationSigningInfo, error)
 	UpdateCorporationOfOrg(claOrgID, adminEmail, corporationName string, opt CorporationSigningUpdateInfo) error
+}
+
+type ICorporationManager interface {
+	CheckCorporationManagerExist(CorporationManagerCheckInfo) (CorporationManagerCheckResult, error)
 }

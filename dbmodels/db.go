@@ -23,4 +23,5 @@ type ICorporationSigning interface {
 
 type ICorporationManager interface {
 	CheckCorporationManagerExist(CorporationManagerCheckInfo) (CorporationManagerCheckResult, error)
+	AddCorporationManager(claOrgID string, opt CorporationManagerCreateOption, managerNumber int) error
 }

@@ -129,7 +129,16 @@ func (c *client) GetCLAOrg(uid string) (models.CLAOrg, error) {
 
 	f := func(ctx context.Context) error {
 		col := c.db.Collection(claOrgCollection)
-		sr = col.FindOne(ctx, bson.M{"_id": oid})
+		opt := options.FindOneOptions{
+			Projection: bson.M{
+				"individuals":          0,
+				"employees":            0,
+				"corporations":         0,
+				"corporation_managers": 0,
+			},
+		}
+
+		sr = col.FindOne(ctx, bson.M{"_id": oid}, &opt)
 		return nil
 	}
 

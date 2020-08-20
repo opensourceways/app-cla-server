@@ -2,18 +2,25 @@ package models
 
 import "github.com/zengchen1024/cla-server/dbmodels"
 
+const (
+	RoleAdmin   = "admin"
+	RoleManager = "manager"
+)
+
 type CorporationManagerCreateOption struct {
-	CLAOrgID        string `json:"cla_org_id"`
-	AdminEmail      string `json:"admin_email"`
-	AdminName       string `json:"admin_name"`
-	CorporationName string `json:"corporation_name"`
+	CLAOrgID string `json:"cla_org_id"`
+	Email    string `json:"email"`
 }
 
 func (this *CorporationManagerCreateOption) Create() error {
 	pw := "123456"
-	return dbmodels.GetDB().UpdateCorporationOfOrg(
-		this.CLAOrgID, this.AdminEmail, this.CorporationName,
-		dbmodels.CorporationSigningUpdateInfo{Password: pw})
+	opt := dbmodels.CorporationManagerCreateOption{
+		Role:          RoleAdmin,
+		Email:         this.Email,
+		Password:      pw,
+		CorporationID: emailSuffixToKey(this.Email),
+	}
+	return dbmodels.GetDB().AddCorporationManager(this.CLAOrgID, opt, 1)
 }
 
 type CorporationManagerAuthentication struct {

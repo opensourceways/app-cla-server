@@ -6,8 +6,10 @@ import (
 
 	"github.com/huaweicloud/golangsdk"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
 
 	"github.com/zengchen1024/cla-server/dbmodels"
+	"github.com/zengchen1024/cla-server/models"
 )
 
 const fieldManagersID = "corporation_managers"
@@ -21,7 +23,104 @@ type corporationManager struct {
 }
 
 func corpoManagerKey(field string) string {
-	return fmt.Sprintf("%s.%s", corporationsID, field)
+	return fmt.Sprintf("%s.%s", fieldManagersID, field)
+}
+
+func checkPipelineForAddingCorporationManager(claOrg models.CLAOrg, opt dbmodels.CorporationManagerCreateOption) bson.A {
+	return bson.A{
+		bson.M{"$match": bson.M{
+			"platform": claOrg.Platform,
+			"org_id":   claOrg.OrgID,
+			"repo_id":  claOrg.RepoID,
+			"apply_to": claOrg.ApplyTo,
+			"enabled":  true,
+		}},
+		bson.M{"$project": bson.M{
+			"role_count": bson.M{"$cond": bson.A{
+				bson.M{"$isArray": fmt.Sprintf("$%s", fieldManagersID)},
+				bson.M{"$size": bson.M{"$filter": bson.M{
+					"input": fmt.Sprintf("$%s", fieldManagersID),
+					"cond": bson.M{"$and": bson.A{
+						bson.M{"$eq": bson.A{"$$this.corporation_id", opt.CorporationID}},
+						bson.M{"$eq": bson.A{"$$this.role", opt.Role}},
+					}},
+				}}},
+				0,
+			}},
+			"email_count": bson.M{"$cond": bson.A{
+				bson.M{"$isArray": fmt.Sprintf("$%s", fieldManagersID)},
+				bson.M{"$size": bson.M{"$filter": bson.M{
+					"input": fmt.Sprintf("$%s", fieldManagersID),
+					"cond":  bson.M{"$eq": bson.A{"$$this.email", opt.Email}},
+				}}},
+				0,
+			}},
+		}},
+	}
+
+}
+
+func (c *client) AddCorporationManager(claOrgID string, opt dbmodels.CorporationManagerCreateOption, managerNumber int) error {
+	claOrg, err := c.GetCLAOrg(claOrgID)
+	if err != nil {
+		return err
+	}
+
+	body, err := golangsdk.BuildRequestBody(opt, "")
+	if err != nil {
+		return fmt.Errorf("Failed to build body for adding corporation manager, err:%v", err)
+	}
+
+	oid, err := toObjectID(claOrgID)
+	if err != nil {
+		return err
+	}
+
+	f := func(ctx mongo.SessionContext) error {
+		col := c.collection(claOrgCollection)
+
+		pipeline := checkPipelineForAddingCorporationManager(claOrg, opt)
+
+		cursor, err := col.Aggregate(ctx, pipeline)
+		if err != nil {
+			return err
+		}
+
+		var count []struct {
+			RoleCount  int `bson:"role_count"`
+			EmailCount int `bson:"email_count"`
+		}
+		err = cursor.All(ctx, &count)
+		if err != nil {
+			return err
+		}
+
+		roleCount := 0
+		emailCount := 0
+		for _, item := range count {
+			roleCount += item.RoleCount
+			emailCount += item.EmailCount
+		}
+
+		if roleCount >= managerNumber {
+			return fmt.Errorf("Failed to add corporation manager: there are already %d managers", managerNumber)
+		}
+		if emailCount != 0 {
+			return fmt.Errorf("Failed to add corporation manager: there are already %d same emails", emailCount)
+		}
+
+		v, err := col.UpdateOne(ctx, bson.M{"_id": oid}, bson.M{"$push": bson.M{fieldManagersID: bson.M(body)}})
+		if err != nil {
+			return fmt.Errorf("Failed to add corporation manager: %s", err.Error())
+		}
+
+		if v.ModifiedCount != 1 {
+			return fmt.Errorf("Failed to add corporation manager: impossible")
+		}
+		return nil
+	}
+
+	return c.doTransaction(f)
 }
 
 func (c *client) CheckCorporationManagerExist(opt dbmodels.CorporationManagerCheckInfo) (dbmodels.CorporationManagerCheckResult, error) {

@@ -16,8 +16,9 @@ type CorporationManagerCheckInfo struct {
 }
 
 type CorporationManagerResetPassword struct {
-	CorporationManagerCheckInfo
-	NewPassword string `json:"-"`
+	Email       string
+	OldPassword string
+	NewPassword string
 }
 
 type CorporationManagerCheckResult struct {

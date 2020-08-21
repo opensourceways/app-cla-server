@@ -47,21 +47,18 @@ func (this CorporationManagerAuthentication) Authenticate() error {
 }
 
 type CorporationManagerResetPassword struct {
-	CorporationManagerAuthentication
+	CLAOrgID    string `json:"cla_org_id"`
+	Email       string `json:"email"`
+	OldPassword string `json:"old_password"`
 	NewPassword string `json:"new_password"`
 }
 
 func (this CorporationManagerResetPassword) Reset() error {
 	opt := dbmodels.CorporationManagerResetPassword{
-		CorporationManagerCheckInfo: dbmodels.CorporationManagerCheckInfo{
-			Platform: this.Platform,
-			OrgID:    this.OrgID,
-			RepoID:   this.RepoID,
-			User:     this.User,
-			Password: this.Password,
-		},
+		Email:       this.Email,
+		OldPassword: this.OldPassword,
 		NewPassword: this.NewPassword,
 	}
 
-	return dbmodels.GetDB().ResetCorporationManagerPassword(opt)
+	return dbmodels.GetDB().ResetCorporationManagerPassword(this.CLAOrgID, opt)
 }

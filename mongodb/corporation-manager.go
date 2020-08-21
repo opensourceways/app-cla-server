@@ -7,6 +7,7 @@ import (
 	"github.com/huaweicloud/golangsdk"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 
 	"github.com/zengchen1024/cla-server/dbmodels"
 	"github.com/zengchen1024/cla-server/models"
@@ -152,7 +153,8 @@ func (c *client) CheckCorporationManagerExist(opt dbmodels.CorporationManagerChe
 			bson.M{corpoManagerKey("email"): opt.User},
 			bson.M{corpoManagerKey("name"): opt.User},
 		},
-		"enabled": true,
+		"apply_to": models.ApplyToCorporation,
+		"enabled":  true,
 	}
 	for k, v := range body {
 		filter[k] = v
@@ -201,39 +203,46 @@ func (c *client) CheckCorporationManagerExist(opt dbmodels.CorporationManagerChe
 	return result, nil
 }
 
-func (c *client) ResetCorporationManagerPassword(opt dbmodels.CorporationManagerResetPassword) error {
-	body, err := golangsdk.BuildRequestBody(opt, "")
+func (c *client) ResetCorporationManagerPassword(claOrgID string, opt dbmodels.CorporationManagerResetPassword) error {
+	oid, err := toObjectID(claOrgID)
 	if err != nil {
-		return fmt.Errorf("Failed to build options to list corporation manager, err:%v", err)
+		return err
 	}
+
 	filter := bson.M{
-		corpoManagerKey("password"): opt.Password,
-		"$or": bson.A{
-			bson.M{corpoManagerKey("email"): opt.User},
-			bson.M{corpoManagerKey("name"): opt.User},
-		},
-		"enabled": true,
-	}
-	for k, v := range body {
-		filter[k] = v
+		"_id":      oid,
+		"apply_to": models.ApplyToCorporation,
+		"enabled":  true,
 	}
 
 	f := func(ctx context.Context) error {
 		col := c.collection(claOrgCollection)
 
-		update := bson.M{"$set": bson.M{fmt.Sprintf("%s.$.password", fieldManagersID): opt.NewPassword}}
-		v, err := col.UpdateOne(ctx, filter, update)
+		update := bson.M{"$set": bson.M{fmt.Sprintf("%s.$[ms].password", fieldManagersID): opt.NewPassword}}
+
+		updateOpt := options.UpdateOptions{
+			ArrayFilters: &options.ArrayFilters{
+				Filters: bson.A{
+					bson.M{
+						"ms.password": opt.OldPassword,
+						"ms.email":    opt.Email,
+					},
+				},
+			},
+		}
+
+		v, err := col.UpdateOne(ctx, filter, update, &updateOpt)
 
 		if err != nil {
 			return fmt.Errorf("Failed to reset password for corporation manager: %s", err.Error())
 		}
 
 		if v.MatchedCount == 0 {
-			return fmt.Errorf("Failed to reset password for corporation manager: user name or old password is not correct.")
+			return fmt.Errorf("Failed to reset password for corporation manager: maybe input wrong cla_org_id.")
 		}
 
 		if v.ModifiedCount != 1 {
-			return fmt.Errorf("Failed to reset password for corporation manager: impossible.")
+			return fmt.Errorf("Failed to reset password for corporation manager: user name or old password is not correct.")
 		}
 
 		return nil

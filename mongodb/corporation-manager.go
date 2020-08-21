@@ -26,8 +26,13 @@ func corpoManagerKey(field string) string {
 	return fmt.Sprintf("%s.%s", fieldManagersID, field)
 }
 
-func checkPipelineForAddingCorporationManager(claOrg models.CLAOrg, opt dbmodels.CorporationManagerCreateOption) bson.A {
-	return bson.A{
+func checkBeforeAddingCorporationManager(c *client, ctx mongo.SessionContext, claOrg models.CLAOrg, opt []dbmodels.CorporationManagerCreateOption) (int, int, error) {
+	emails := make(bson.A, 0, len(opt))
+	for _, item := range opt {
+		emails = append(emails, item.Email)
+	}
+
+	pipeline := bson.A{
 		bson.M{"$match": bson.M{
 			"platform": claOrg.Platform,
 			"org_id":   claOrg.OrgID,
@@ -41,8 +46,8 @@ func checkPipelineForAddingCorporationManager(claOrg models.CLAOrg, opt dbmodels
 				bson.M{"$size": bson.M{"$filter": bson.M{
 					"input": fmt.Sprintf("$%s", fieldManagersID),
 					"cond": bson.M{"$and": bson.A{
-						bson.M{"$eq": bson.A{"$$this.corporation_id", opt.CorporationID}},
-						bson.M{"$eq": bson.A{"$$this.role", opt.Role}},
+						bson.M{"$eq": bson.A{"$$this.corporation_id", opt[0].CorporationID}},
+						bson.M{"$eq": bson.A{"$$this.role", opt[0].Role}},
 					}},
 				}}},
 				0,
@@ -51,24 +56,50 @@ func checkPipelineForAddingCorporationManager(claOrg models.CLAOrg, opt dbmodels
 				bson.M{"$isArray": fmt.Sprintf("$%s", fieldManagersID)},
 				bson.M{"$size": bson.M{"$filter": bson.M{
 					"input": fmt.Sprintf("$%s", fieldManagersID),
-					"cond":  bson.M{"$eq": bson.A{"$$this.email", opt.Email}},
+					"cond":  bson.M{"$in": bson.A{"$$this.email", emails}},
 				}}},
 				0,
 			}},
 		}},
 	}
 
+	col := c.collection(claOrgCollection)
+	cursor, err := col.Aggregate(ctx, pipeline)
+	if err != nil {
+		return 0, 0, err
+	}
+
+	var count []struct {
+		RoleCount  int `bson:"role_count"`
+		EmailCount int `bson:"email_count"`
+	}
+	err = cursor.All(ctx, &count)
+	if err != nil {
+		return 0, 0, err
+	}
+
+	roleCount := 0
+	emailCount := 0
+	for _, item := range count {
+		roleCount += item.RoleCount
+		emailCount += item.EmailCount
+	}
+	return roleCount, emailCount, nil
 }
 
-func (c *client) AddCorporationManager(claOrgID string, opt dbmodels.CorporationManagerCreateOption, managerNumber int) error {
+func (c *client) AddCorporationManager(claOrgID string, opt []dbmodels.CorporationManagerCreateOption, managerNumber int) error {
 	claOrg, err := c.GetCLAOrg(claOrgID)
 	if err != nil {
 		return err
 	}
 
-	body, err := golangsdk.BuildRequestBody(opt, "")
-	if err != nil {
-		return fmt.Errorf("Failed to build body for adding corporation manager, err:%v", err)
+	updates := make(bson.A, 0, len(opt))
+	for _, item := range opt {
+		body, err := golangsdk.BuildRequestBody(item, "")
+		if err != nil {
+			return fmt.Errorf("Failed to build body for adding corporation manager, err:%v", err)
+		}
+		updates = append(updates, bson.M(body))
 	}
 
 	oid, err := toObjectID(claOrgID)
@@ -77,41 +108,26 @@ func (c *client) AddCorporationManager(claOrgID string, opt dbmodels.Corporation
 	}
 
 	f := func(ctx mongo.SessionContext) error {
-		col := c.collection(claOrgCollection)
-
-		pipeline := checkPipelineForAddingCorporationManager(claOrg, opt)
-
-		cursor, err := col.Aggregate(ctx, pipeline)
+		roleCount, emailCount, err := checkBeforeAddingCorporationManager(c, ctx, claOrg, opt)
 		if err != nil {
-			return err
+			return fmt.Errorf("Failed to add corporation manager: check failed: %s", err.Error())
 		}
 
-		var count []struct {
-			RoleCount  int `bson:"role_count"`
-			EmailCount int `bson:"email_count"`
-		}
-		err = cursor.All(ctx, &count)
-		if err != nil {
-			return err
-		}
-
-		roleCount := 0
-		emailCount := 0
-		for _, item := range count {
-			roleCount += item.RoleCount
-			emailCount += item.EmailCount
-		}
-
-		if roleCount >= managerNumber {
-			return fmt.Errorf("Failed to add corporation manager: there are already %d managers", managerNumber)
+		if roleCount+len(opt) > managerNumber {
+			return fmt.Errorf("Failed to add corporation manager: it will exceed %d managers allowed", managerNumber)
 		}
 		if emailCount != 0 {
 			return fmt.Errorf("Failed to add corporation manager: there are already %d same emails", emailCount)
 		}
 
-		v, err := col.UpdateOne(ctx, bson.M{"_id": oid}, bson.M{"$push": bson.M{fieldManagersID: bson.M(body)}})
+		col := c.collection(claOrgCollection)
+
+		v, err := col.UpdateOne(
+			ctx, bson.M{"_id": oid},
+			bson.M{"$push": bson.M{fieldManagersID: bson.M{"$each": updates}}},
+		)
 		if err != nil {
-			return fmt.Errorf("Failed to add corporation manager: %s", err.Error())
+			return fmt.Errorf("Failed to add corporation manager: add record failed: %s", err.Error())
 		}
 
 		if v.ModifiedCount != 1 {

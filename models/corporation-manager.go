@@ -14,11 +14,13 @@ type CorporationManagerCreateOption struct {
 
 func (this *CorporationManagerCreateOption) Create() error {
 	pw := "123456"
-	opt := dbmodels.CorporationManagerCreateOption{
-		Role:          RoleAdmin,
-		Email:         this.Email,
-		Password:      pw,
-		CorporationID: emailSuffixToKey(this.Email),
+	opt := []dbmodels.CorporationManagerCreateOption{
+		{
+			Role:          RoleAdmin,
+			Email:         this.Email,
+			Password:      pw,
+			CorporationID: emailSuffixToKey(this.Email),
+		},
 	}
 	return dbmodels.GetDB().AddCorporationManager(this.CLAOrgID, opt, 1)
 }

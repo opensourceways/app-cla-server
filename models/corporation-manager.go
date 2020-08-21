@@ -43,3 +43,23 @@ func (this CorporationManagerAuthentication) Authenticate() error {
 	_, err := dbmodels.GetDB().CheckCorporationManagerExist(opt)
 	return err
 }
+
+type CorporationManagerResetPassword struct {
+	CorporationManagerAuthentication
+	NewPassword string `json:"new_password"`
+}
+
+func (this CorporationManagerResetPassword) Reset() error {
+	opt := dbmodels.CorporationManagerResetPassword{
+		CorporationManagerCheckInfo: dbmodels.CorporationManagerCheckInfo{
+			Platform: this.Platform,
+			OrgID:    this.OrgID,
+			RepoID:   this.RepoID,
+			User:     this.User,
+			Password: this.Password,
+		},
+		NewPassword: this.NewPassword,
+	}
+
+	return dbmodels.GetDB().ResetCorporationManagerPassword(opt)
+}

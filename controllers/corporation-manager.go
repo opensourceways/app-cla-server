@@ -73,3 +73,34 @@ func (this *CorporationManagerController) Authenticate() {
 
 	body = "authenticate successfully"
 }
+
+// @Title Reset password
+// @Description reset password
+// @Param	body		body 	models.CorporationManagerResetPassword	true		"body for corporation manager info"
+// @Success 201 {int} map
+// @Failure 403 body is empty
+// @router / [put]
+func (this *CorporationManagerController) Update() {
+	var statusCode = 202
+	var reason error
+	var body interface{}
+
+	defer func() {
+		sendResponse(&this.Controller, statusCode, reason, body)
+	}()
+
+	var info models.CorporationManagerResetPassword
+	if err := json.Unmarshal(this.Ctx.Input.RequestBody, &info); err != nil {
+		reason = err
+		statusCode = 400
+		return
+	}
+
+	if err := (&info).Reset(); err != nil {
+		reason = err
+		statusCode = 500
+		return
+	}
+
+	body = "reset password successfully"
+}

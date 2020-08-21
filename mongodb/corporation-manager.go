@@ -184,3 +184,44 @@ func (c *client) CheckCorporationManagerExist(opt dbmodels.CorporationManagerChe
 	result.CLAOrgID = objectIDToUID(v[0].ID)
 	return result, nil
 }
+
+func (c *client) ResetCorporationManagerPassword(opt dbmodels.CorporationManagerResetPassword) error {
+	body, err := golangsdk.BuildRequestBody(opt, "")
+	if err != nil {
+		return fmt.Errorf("Failed to build options to list corporation manager, err:%v", err)
+	}
+	filter := bson.M{
+		corpoManagerKey("password"): opt.Password,
+		"$or": bson.A{
+			bson.M{corpoManagerKey("email"): opt.User},
+			bson.M{corpoManagerKey("name"): opt.User},
+		},
+		"enabled": true,
+	}
+	for k, v := range body {
+		filter[k] = v
+	}
+
+	f := func(ctx context.Context) error {
+		col := c.collection(claOrgCollection)
+
+		update := bson.M{"$set": bson.M{fmt.Sprintf("%s.$.password", fieldManagersID): opt.NewPassword}}
+		v, err := col.UpdateOne(ctx, filter, update)
+
+		if err != nil {
+			return fmt.Errorf("Failed to reset password for corporation manager: %s", err.Error())
+		}
+
+		if v.MatchedCount == 0 {
+			return fmt.Errorf("Failed to reset password for corporation manager: user name or old password is not correct.")
+		}
+
+		if v.ModifiedCount != 1 {
+			return fmt.Errorf("Failed to reset password for corporation manager: impossible.")
+		}
+
+		return nil
+	}
+
+	return withContext(f)
+}

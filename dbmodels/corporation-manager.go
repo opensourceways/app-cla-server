@@ -15,6 +15,11 @@ type CorporationManagerCheckInfo struct {
 	User     string `json:"-"`
 }
 
+type CorporationManagerResetPassword struct {
+	CorporationManagerCheckInfo
+	NewPassword string `json:"-"`
+}
+
 type CorporationManagerCheckResult struct {
 	CLAOrgID      string `json:"-"`
 	Role          string `json:"-"`

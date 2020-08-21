@@ -147,18 +147,9 @@ func (c *client) CheckCorporationManagerExist(opt dbmodels.CorporationManagerChe
 	if err != nil {
 		return result, fmt.Errorf("Failed to build options to list corporation manager, err:%v", err)
 	}
-	filter := bson.M{
-		corpoManagerKey("password"): opt.Password,
-		"$or": bson.A{
-			bson.M{corpoManagerKey("email"): opt.User},
-			bson.M{corpoManagerKey("name"): opt.User},
-		},
-		"apply_to": models.ApplyToCorporation,
-		"enabled":  true,
-	}
-	for k, v := range body {
-		filter[k] = v
-	}
+	filter := bson.M(body)
+	filter["apply_to"] = models.ApplyToCorporation
+	filter["enabled"] = true
 
 	var v []CLAOrg
 
@@ -167,6 +158,18 @@ func (c *client) CheckCorporationManagerExist(opt dbmodels.CorporationManagerChe
 
 		pipeline := bson.A{
 			bson.M{"$match": filter},
+			bson.M{"$project": bson.M{
+				fieldManagersID: bson.M{"$filter": bson.M{
+					"input": fmt.Sprintf("$%s", fieldManagersID),
+					"cond": bson.M{"$and": bson.A{
+						bson.M{"$eq": bson.A{"$$this.password", opt.Password}},
+						bson.M{"$or": bson.A{
+							bson.M{"$eq": bson.A{"$$this.email", opt.User}},
+							bson.M{"$eq": bson.A{"$$this.name", opt.User}},
+						}},
+					}},
+				}}},
+			},
 			bson.M{"$project": bson.M{
 				corpoManagerKey("role"):           1,
 				corpoManagerKey("corporation_id"): 1,
@@ -186,20 +189,28 @@ func (c *client) CheckCorporationManagerExist(opt dbmodels.CorporationManagerChe
 		return result, err
 	}
 
-	if len(v) != 1 {
-		return result, fmt.Errorf(
-			"Failed to check corporation manager: there isn't only one cla orgonization binding which was signed by this corporation")
+	ms := []CLAOrg{}
+	for _, item := range v {
+		cm := item.CorporationManagers
+		if cm == nil || len(cm) == 0 {
+			continue
+		}
+
+		if len(cm) != 1 {
+			return result, fmt.Errorf(
+				"Failed to check corporation manager: there isn't only one corporation manager")
+		}
+		ms = append(ms, item)
 	}
 
-	ms := v[0].CorporationManagers
-	if ms == nil || len(ms) != 1 {
+	if len(ms) != 1 {
 		return result, fmt.Errorf(
-			"Failed to check corporation manager: there isn't only one corporation manager")
+			"Failed to check corporation manager: there isn't only one clas which was signed by this corporation")
 	}
 
-	result.CorporationID = ms[0].CorporationID
-	result.Role = ms[0].Role
-	result.CLAOrgID = objectIDToUID(v[0].ID)
+	result.CorporationID = ms[0].CorporationManagers[0].CorporationID
+	result.Role = ms[0].CorporationManagers[0].Role
+	result.CLAOrgID = objectIDToUID(ms[0].ID)
 	return result, nil
 }
 

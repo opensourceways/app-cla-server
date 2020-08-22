@@ -15,3 +15,7 @@ type EmployeeSigningListOption struct {
 	CLALanguage      string `json:"cla_language,omitempty"`
 	CorporationEmail string `json:"-"`
 }
+
+type EmployeeSigningUpdateInfo struct {
+	Enabled bool
+}

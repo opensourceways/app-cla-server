@@ -8,6 +8,7 @@ import (
 	"github.com/huaweicloud/golangsdk"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 
 	"github.com/zengchen1024/cla-server/dbmodels"
 	"github.com/zengchen1024/cla-server/models"
@@ -196,6 +197,50 @@ func (c *client) ListEmployeeSigning(opt dbmodels.EmployeeSigningListOption) (ma
 	}
 
 	return r, nil
+}
+func (c *client) UpdateEmployeeSigning(claOrgID, email string, opt dbmodels.EmployeeSigningUpdateInfo) error {
+	oid, err := toObjectID(claOrgID)
+	if err != nil {
+		return err
+	}
+
+	f := func(ctx context.Context) error {
+		col := c.collection(claOrgCollection)
+
+		filter := bson.M{"_id": oid}
+		additionalConditionForIndividualSigningDoc(filter, email)
+
+		field := employeeSigningField(email)
+
+		update := bson.M{"$set": bson.M{fmt.Sprintf("%s.$[ms].enabled", field): opt.Enabled}}
+
+		updateOpt := options.UpdateOptions{
+			ArrayFilters: &options.ArrayFilters{
+				Filters: bson.A{
+					bson.M{
+						"ms.enabled": !opt.Enabled,
+						"ms.email":   email,
+					},
+				},
+			},
+		}
+
+		r, err := col.UpdateOne(ctx, filter, update, &updateOpt)
+		if err != nil {
+			return fmt.Errorf("Failed to update employee signing: %s", err.Error())
+		}
+
+		if r.MatchedCount == 0 {
+			return fmt.Errorf("Failed to update employee signing, the cla which employee had signed is not exist")
+		}
+
+		if r.ModifiedCount == 0 {
+			return fmt.Errorf("Failed to update employee signing, impossible")
+		}
+		return nil
+	}
+
+	return withContext(f)
 }
 
 func toDBModelEmployeeSigningInfo(item employeeSigning) dbmodels.EmployeeSigningInfo {

@@ -59,3 +59,16 @@ func (this EmployeeSigningListOption) List() ([]EmployeeSigning, error) {
 	}
 	return r, nil
 }
+
+type EmployeeSigningUdateInfo struct {
+	CLAOrgID string `json:"cla_org_id"`
+	Email    string `json:"email"`
+	Enabled  bool   `json:"enabled"`
+}
+
+func (this *EmployeeSigningUdateInfo) Update() error {
+	return dbmodels.GetDB().UpdateEmployeeSigning(
+		this.CLAOrgID, this.Email,
+		dbmodels.EmployeeSigningUpdateInfo{Enabled: this.Enabled},
+	)
+}

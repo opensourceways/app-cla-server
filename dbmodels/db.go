@@ -33,4 +33,5 @@ type ICorporationManager interface {
 type IEmployeeSigning interface {
 	SignAsEmployee(claOrgID string, info EmployeeSigningInfo) error
 	ListEmployeeSigning(EmployeeSigningListOption) (map[string][]EmployeeSigningInfo, error)
+	UpdateEmployeeSigning(claOrgID, email string, opt EmployeeSigningUpdateInfo) error
 }

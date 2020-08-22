@@ -42,7 +42,7 @@ type CLAOrg struct {
 
 	// Employees is the cla signing information of employees and grouped by corporation
 	// key is the email suffix of corporation
-	Employees map[string]map[string]employeeSigning `bson:"employees,omitempty"`
+	Employees map[string]employeeSigning `bson:"employees,omitempty"`
 
 	// Corporations is the cla signing information of corporation
 	// key is the email suffix of corporation

@@ -26,3 +26,14 @@ type CorporationManagerCheckResult struct {
 	Role          string `json:"-"`
 	CorporationID string `json:"-"`
 }
+
+type CorporationManagerListOption struct {
+	Role          string `json:"role"`
+	CorporationID string `json:"corporation_id"`
+}
+
+type CorporationManagerListResult struct {
+	Name  string `json:"name"`
+	Email string `json:"email"`
+	Role  string `json:"role"`
+}

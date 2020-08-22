@@ -48,3 +48,32 @@ func (this *EmployeeManagerController) Post() {
 
 	body = "add employee manager successfully"
 }
+
+// @Title GetAll
+// @Description get all employee managers
+// @Success 200 {object} dbmodels.CorporationManagerListResult
+// @router / [get]
+func (this *EmployeeManagerController) GetAll() {
+	var statusCode = 200
+	var reason error
+	var body interface{}
+
+	defer func() {
+		sendResponse(&this.Controller, statusCode, reason, body)
+	}()
+
+	opt := models.CorporationManagerListOption{
+		CLAOrgID: this.GetString("cla_org_id"),
+		Email:    this.GetString("email"),
+		Role:     models.RoleManager,
+	}
+
+	r, err := opt.List()
+	if err != nil {
+		reason = err
+		statusCode = 500
+		return
+	}
+
+	body = r
+}

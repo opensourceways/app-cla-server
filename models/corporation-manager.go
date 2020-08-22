@@ -62,3 +62,17 @@ func (this CorporationManagerResetPassword) Reset() error {
 
 	return dbmodels.GetDB().ResetCorporationManagerPassword(this.CLAOrgID, opt)
 }
+
+type CorporationManagerListOption struct {
+	CLAOrgID string `json:"cla_org_id"`
+	Role     string `json:"role"`
+	Email    string `json:"email"`
+}
+
+func (this CorporationManagerListOption) List() ([]dbmodels.CorporationManagerListResult, error) {
+	opt := dbmodels.CorporationManagerListOption{
+		Role:          this.Role,
+		CorporationID: emailSuffixToKey(this.Email),
+	}
+	return dbmodels.GetDB().ListCorporationManager(this.CLAOrgID, opt)
+}

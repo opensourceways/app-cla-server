@@ -25,4 +25,5 @@ type ICorporationManager interface {
 	CheckCorporationManagerExist(CorporationManagerCheckInfo) (CorporationManagerCheckResult, error)
 	AddCorporationManager(claOrgID string, opt []CorporationManagerCreateOption, managerNumber int) error
 	ResetCorporationManagerPassword(string, CorporationManagerResetPassword) error
+	ListCorporationManager(claOrgID string, opt CorporationManagerListOption) ([]CorporationManagerListResult, error)
 }

@@ -77,3 +77,40 @@ func (this *EmployeeManagerController) GetAll() {
 
 	body = r
 }
+
+// @Title Delete
+// @Description delete employee manager
+// @Param	body		body 	models.EmployeeManagerCreateOption	true		"body for employee manager"
+// @Success 204 {string} delete success!
+// @Failure 403 uid is empty
+// @router / [delete]
+func (this *EmployeeManagerController) Delete() {
+	var statusCode = 204
+	var reason error
+	var body string
+
+	defer func() {
+		sendResponse(&this.Controller, statusCode, reason, body)
+	}()
+
+	var info models.EmployeeManagerCreateOption
+	if err := json.Unmarshal(this.Ctx.Input.RequestBody, &info); err != nil {
+		reason = err
+		statusCode = 400
+		return
+	}
+
+	if err := (&info).Validate(); err != nil {
+		reason = err
+		statusCode = 400
+		return
+	}
+
+	if err := (&info).Delete(); err != nil {
+		reason = err
+		statusCode = 500
+		return
+	}
+
+	body = "delete cla successfully"
+}

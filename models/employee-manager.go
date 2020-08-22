@@ -51,3 +51,16 @@ func (this *EmployeeManagerCreateOption) Create() error {
 
 	return dbmodels.GetDB().AddCorporationManager(this.CLAOrgID, opt, 5)
 }
+
+func (this *EmployeeManagerCreateOption) Delete() error {
+	opt := make([]dbmodels.CorporationManagerCreateOption, 0, len(this.Emails))
+
+	for _, item := range this.Emails {
+		opt = append(opt, dbmodels.CorporationManagerCreateOption{
+			Role:  RoleManager,
+			Email: item,
+		})
+	}
+
+	return dbmodels.GetDB().DeleteCorporationManager(this.CLAOrgID, opt)
+}

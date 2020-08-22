@@ -6,6 +6,7 @@ import (
 
 	"github.com/huaweicloud/golangsdk"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 
@@ -324,4 +325,91 @@ func (c *client) ListCorporationManager(claOrgID string, opt dbmodels.Corporatio
 		})
 	}
 	return r, nil
+}
+
+func (c *client) DeleteCorporationManager(claOrgID string, opt []dbmodels.CorporationManagerCreateOption) error {
+	oid, err := toObjectID(claOrgID)
+	if err != nil {
+		return err
+	}
+
+	f := func(ctx mongo.SessionContext) error {
+		err := checkBeforeDeletingCorporationManager(c, ctx, oid, opt)
+		if err != nil {
+			return fmt.Errorf("Failed to delete corporation manager: check failed: %s", err.Error())
+		}
+
+		col := c.collection(claOrgCollection)
+
+		emails := make(bson.A, 0, len(opt))
+		for _, item := range opt {
+			emails = append(emails, item.Email)
+		}
+
+		update := bson.M{"$pull": bson.M{
+			fieldCorpoManagersID: bson.M{
+				"email": bson.M{"$in": emails},
+			},
+		}}
+
+		v, err := col.UpdateOne(ctx, bson.M{"_id": oid}, update)
+		if err != nil {
+			return fmt.Errorf("Failed to delete corporation manager: %s", err.Error())
+		}
+
+		if v.ModifiedCount != 1 {
+			return fmt.Errorf("Failed to delete corporation manager: impossible.")
+		}
+
+		return nil
+	}
+
+	return c.doTransaction(f)
+}
+
+func checkBeforeDeletingCorporationManager(c *client, ctx mongo.SessionContext, claOrgID primitive.ObjectID, opt []dbmodels.CorporationManagerCreateOption) error {
+	emails := make(bson.A, 0, len(opt))
+	for _, item := range opt {
+		emails = append(emails, item.Email)
+	}
+
+	pipeline := bson.A{
+		bson.M{"$match": bson.M{
+			"_id":      claOrgID,
+			"apply_to": models.ApplyToCorporation,
+			"enabled":  true,
+		}},
+		bson.M{"$project": bson.M{
+			"email_count": bson.M{"$cond": bson.A{
+				bson.M{"$isArray": fmt.Sprintf("$%s", fieldCorpoManagersID)},
+				bson.M{"$size": bson.M{"$filter": bson.M{
+					"input": fmt.Sprintf("$%s", fieldCorpoManagersID),
+					"cond": bson.M{"$and": bson.A{
+						bson.M{"$eq": bson.A{"$$this.role", opt[0].Role}},
+						bson.M{"$in": bson.A{"$$this.email", emails}},
+					}},
+				}}},
+				0,
+			}},
+		}},
+	}
+
+	col := c.collection(claOrgCollection)
+	cursor, err := col.Aggregate(ctx, pipeline)
+	if err != nil {
+		return err
+	}
+
+	var count []struct {
+		EmailCount int `bson:"email_count"`
+	}
+	err = cursor.All(ctx, &count)
+	if err != nil {
+		return err
+	}
+
+	if len(count) == 0 || count[0].EmailCount != len(emails) {
+		return fmt.Errorf("the managers to be deleted are not all the ones registered")
+	}
+	return nil
 }

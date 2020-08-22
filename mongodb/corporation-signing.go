@@ -46,14 +46,22 @@ func (c *client) SignAsCorporation(claOrgID string, info dbmodels.CorporationSig
 
 		pipeline := bson.A{
 			bson.M{"$match": bson.M{
-				corpoSigningKey("admin_email"): info.AdminEmail,
-				"platform":                     claOrg.Platform,
-				"org_id":                       claOrg.OrgID,
-				"repo_id":                      claOrg.RepoID,
-				"apply_to":                     claOrg.ApplyTo,
-				"enabled":                      true,
+				"platform": claOrg.Platform,
+				"org_id":   claOrg.OrgID,
+				"repo_id":  claOrg.RepoID,
+				"apply_to": claOrg.ApplyTo,
+				"enabled":  true,
 			}},
-			bson.M{"$group": bson.M{"_id": nil, "count": bson.M{"$sum": 1}}},
+			bson.M{"$project": bson.M{
+				"count": bson.M{"$cond": bson.A{
+					bson.M{"$isArray": fmt.Sprintf("$%s", corporationsID)},
+					bson.M{"$size": bson.M{"$filter": bson.M{
+						"input": fmt.Sprintf("$%s", corporationsID),
+						"cond":  bson.M{"$eq": bson.A{"$$this.corporation_id", info.CorporationID}},
+					}}},
+					0,
+				}},
+			}},
 		}
 
 		cursor, err := col.Aggregate(ctx, pipeline)
@@ -69,8 +77,10 @@ func (c *client) SignAsCorporation(claOrgID string, info dbmodels.CorporationSig
 			return err
 		}
 
-		if len(count) > 0 && count[0].Count != 0 {
-			return fmt.Errorf("Failed to add info when signing as corporation, maybe it has signed")
+		for _, item := range count {
+			if item.Count != 0 {
+				return fmt.Errorf("Failed to add info when signing as corporation, it has signed")
+			}
 		}
 
 		r, err := col.UpdateOne(ctx, bson.M{"_id": oid}, bson.M{"$push": bson.M{corporationsID: bson.M(body)}})
@@ -79,7 +89,7 @@ func (c *client) SignAsCorporation(claOrgID string, info dbmodels.CorporationSig
 		}
 
 		if r.MatchedCount == 0 {
-			return fmt.Errorf("Failed to add info when signing as corporation, doesn't match any record")
+			return fmt.Errorf("Failed to add info when signing as corporation, the cla bound to org is not exist")
 		}
 
 		if r.ModifiedCount == 0 {

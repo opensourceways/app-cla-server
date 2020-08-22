@@ -17,6 +17,7 @@ func (this *CorporationSigning) Create() error {
 		AdminEmail:      this.AdminEmail,
 		AdminName:       this.AdminName,
 		CorporationName: this.CorporationName,
+		CorporationID:   emailSuffixToKey(this.AdminEmail),
 		Enabled:         false,
 		Info:            this.Info,
 	}

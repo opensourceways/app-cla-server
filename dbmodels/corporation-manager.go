@@ -22,9 +22,9 @@ type CorporationManagerResetPassword struct {
 }
 
 type CorporationManagerCheckResult struct {
-	CLAOrgID      string `json:"-"`
-	Role          string `json:"-"`
-	CorporationID string `json:"-"`
+	CLAOrgID string `json:"cla_org_id"`
+	Role     string `json:"role"`
+	Email    string `json:"email"`
 }
 
 type CorporationManagerListOption struct {

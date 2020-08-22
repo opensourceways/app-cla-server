@@ -65,13 +65,14 @@ func (this *CorporationManagerController) Authenticate() {
 		return
 	}
 
-	if err := (&info).Authenticate(); err != nil {
+	if v, err := (&info).Authenticate(); err != nil {
 		reason = err
 		statusCode = 500
 		return
+	} else {
+		// body = "authenticate successfully"
+		body = v
 	}
-
-	body = "authenticate successfully"
 }
 
 // @Title Reset password

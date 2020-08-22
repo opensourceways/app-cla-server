@@ -171,8 +171,8 @@ func (c *client) CheckCorporationManagerExist(opt dbmodels.CorporationManagerChe
 				}}},
 			},
 			bson.M{"$project": bson.M{
-				corpoManagerElemKey("role"):           1,
-				corpoManagerElemKey("corporation_id"): 1,
+				corpoManagerElemKey("role"):  1,
+				corpoManagerElemKey("email"): 1,
 			}},
 		}
 
@@ -208,7 +208,7 @@ func (c *client) CheckCorporationManagerExist(opt dbmodels.CorporationManagerChe
 			"Failed to check corporation manager: there isn't only one clas which was signed by this corporation")
 	}
 
-	result.CorporationID = ms[0].CorporationManagers[0].CorporationID
+	result.Email = ms[0].CorporationManagers[0].Email
 	result.Role = ms[0].CorporationManagers[0].Role
 	result.CLAOrgID = objectIDToUID(ms[0].ID)
 	return result, nil

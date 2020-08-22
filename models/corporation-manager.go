@@ -33,7 +33,7 @@ type CorporationManagerAuthentication struct {
 	Password string `json:"password"`
 }
 
-func (this CorporationManagerAuthentication) Authenticate() error {
+func (this CorporationManagerAuthentication) Authenticate() (dbmodels.CorporationManagerCheckResult, error) {
 	opt := dbmodels.CorporationManagerCheckInfo{
 		Platform: this.Platform,
 		OrgID:    this.OrgID,
@@ -42,8 +42,7 @@ func (this CorporationManagerAuthentication) Authenticate() error {
 		Password: this.Password,
 	}
 
-	_, err := dbmodels.GetDB().CheckCorporationManagerExist(opt)
-	return err
+	return dbmodels.GetDB().CheckCorporationManagerExist(opt)
 }
 
 type CorporationManagerResetPassword struct {

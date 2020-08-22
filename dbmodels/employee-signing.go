@@ -7,3 +7,11 @@ type EmployeeSigningInfo struct {
 
 	Info map[string]interface{} `json:"info,omitempty"`
 }
+
+type EmployeeSigningListOption struct {
+	Platform         string `json:"platform" required:"true"`
+	OrgID            string `json:"org_id" required:"true"`
+	RepoID           string `json:"repo_id,omitempty"`
+	CLALanguage      string `json:"cla_language,omitempty"`
+	CorporationEmail string `json:"-"`
+}

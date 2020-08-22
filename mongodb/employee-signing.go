@@ -1,6 +1,7 @@
 package mongodb
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -9,9 +10,18 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 
 	"github.com/zengchen1024/cla-server/dbmodels"
+	"github.com/zengchen1024/cla-server/models"
 )
 
 const fieldEmployeeSigningsID = "employees"
+
+func additionalConditionForIndividualSigningDoc(filter bson.M, email string) {
+	filter["apply_to"] = models.ApplyToIndividual
+	filter["enabled"] = true
+
+	filter[employeeSigningField(email)] = bson.M{"$exists": true}
+
+}
 
 func emailToKey(email string) string {
 	return strings.ReplaceAll(email, ".", "_")
@@ -65,14 +75,15 @@ func (c *client) SignAsEmployee(claOrgID string, info dbmodels.EmployeeSigningIn
 	f := func(ctx mongo.SessionContext) error {
 		col := c.collection(claOrgCollection)
 
+		filter := bson.M{
+			"platform": claOrg.Platform,
+			"org_id":   claOrg.OrgID,
+			"repo_id":  claOrg.RepoID,
+		}
+		additionalConditionForIndividualSigningDoc(filter, info.Email)
+
 		pipeline := bson.A{
-			bson.M{"$match": bson.M{
-				"platform": claOrg.Platform,
-				"org_id":   claOrg.OrgID,
-				"repo_id":  claOrg.RepoID,
-				"apply_to": claOrg.ApplyTo,
-				"enabled":  true,
-			}},
+			bson.M{"$match": filter},
 			bson.M{"$project": bson.M{
 				"count": bson.M{"$cond": bson.A{
 					bson.M{"$isArray": fmt.Sprintf("$%s", field)},
@@ -120,4 +131,77 @@ func (c *client) SignAsEmployee(claOrgID string, info dbmodels.EmployeeSigningIn
 	}
 
 	return c.doTransaction(f)
+}
+
+func (c *client) ListEmployeeSigning(opt dbmodels.EmployeeSigningListOption) (map[string][]dbmodels.EmployeeSigningInfo, error) {
+	body, err := golangsdk.BuildRequestBody(opt, "")
+	if err != nil {
+		return nil, fmt.Errorf("build options to list employee signing failed, err:%v", err)
+	}
+	filter := bson.M(body)
+	additionalConditionForIndividualSigningDoc(filter, opt.CorporationEmail)
+
+	var v []CLAOrg
+
+	f := func(ctx context.Context) error {
+		col := c.collection(claOrgCollection)
+
+		fieldFunc := employeeSigningElemField(opt.CorporationEmail)
+
+		pipeline := bson.A{
+			bson.M{"$match": filter},
+			bson.M{"$project": bson.M{
+				fieldFunc("email"):   1,
+				fieldFunc("name"):    1,
+				fieldFunc("enabled"): 1,
+			}},
+		}
+		cursor, err := col.Aggregate(ctx, pipeline)
+		if err != nil {
+			return fmt.Errorf("error find bindings: %v", err)
+		}
+
+		err = cursor.All(ctx, &v)
+		if err != nil {
+			return fmt.Errorf("error decoding to bson struct of employee signing: %v", err)
+		}
+		return nil
+	}
+
+	err = withContext(f)
+	if err != nil {
+		return nil, err
+	}
+
+	r := map[string][]dbmodels.EmployeeSigningInfo{}
+
+	suffix := emailSuffixToKey(opt.CorporationEmail)
+
+	for i := 0; i < len(v); i++ {
+		m := v[i].Employees
+		if m == nil || len(m) == 0 {
+			continue
+		}
+
+		es, ok := m[suffix]
+		if !ok || len(es) == 0 {
+			continue
+		}
+
+		es1 := make([]dbmodels.EmployeeSigningInfo, 0, len(es))
+		for _, item := range es {
+			es1 = append(es1, toDBModelEmployeeSigningInfo(item))
+		}
+		r[objectIDToUID(v[i].ID)] = es1
+	}
+
+	return r, nil
+}
+
+func toDBModelEmployeeSigningInfo(item employeeSigning) dbmodels.EmployeeSigningInfo {
+	return dbmodels.EmployeeSigningInfo{
+		Email:   item.Email,
+		Name:    item.Name,
+		Enabled: item.Enabled,
+	}
 }

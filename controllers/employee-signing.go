@@ -42,3 +42,34 @@ func (this *EmployeeSigningController) Post() {
 
 	body = "sign successfully"
 }
+
+// @Title GetAll
+// @Description get all the employees
+// @Success 200 {object} models.EmployeeSigning
+// @router / [get]
+func (this *EmployeeSigningController) GetAll() {
+	var statusCode = 200
+	var reason error
+	var body interface{}
+
+	defer func() {
+		sendResponse(&this.Controller, statusCode, reason, body)
+	}()
+
+	opt := models.EmployeeSigningListOption{
+		Platform:         this.GetString("platform"),
+		OrgID:            this.GetString("org_id"),
+		RepoID:           this.GetString("repo_id"),
+		CLALanguage:      this.GetString("cla_language"),
+		CorporationEmail: this.GetString("corporation_email"),
+	}
+
+	r, err := opt.List()
+	if err != nil {
+		reason = err
+		statusCode = 500
+		return
+	}
+
+	body = r
+}

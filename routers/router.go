@@ -75,6 +75,11 @@ func init() {
 				&controllers.EmployeeManagerController{},
 			),
 		),
+		beego.NSNamespace("/email",
+			beego.NSInclude(
+				&controllers.EmailController{},
+			),
+		),
 	)
 	beego.AddNamespace(ns)
 }

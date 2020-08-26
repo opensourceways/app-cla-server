@@ -1,11 +1,11 @@
 package controllers
 
 import (
-	"context"
 	"fmt"
 
 	"github.com/astaxie/beego"
-	"golang.org/x/oauth2"
+
+	"github.com/zengchen1024/cla-server/email"
 )
 
 const authURLState = "state-token-cla"
@@ -40,9 +40,13 @@ func (this *EmailController) CallBack() {
 		return
 	}
 
-	path := beego.AppConfig.String("gmail::credentials")
+	e, err := email.GetEmailClient("gmail")
+	if err != nil {
+		sendResponse(&this.Controller, 400, err, nil)
+		return
+	}
 
-	opt, err := gmailInfo{}.GenOrgEmail(code, path, scope)
+	opt, err := e.GetAuthorizedEmail(code, scope)
 	if err != nil {
 		sendResponse(&this.Controller, 400, err, nil)
 		return
@@ -76,7 +80,7 @@ func (this *EmailController) Get() {
 		return
 	}
 
-	cfg, err := this.getOauth2Config(platform)
+	e, err := email.GetEmailClient(platform)
 	if err != nil {
 		reason = err
 		statusCode = 500
@@ -84,27 +88,6 @@ func (this *EmailController) Get() {
 	}
 
 	body = map[string]string{
-		"url": getAuthCodeURL(cfg),
+		"url": e.GetOauth2CodeURL(authURLState),
 	}
-}
-
-func (this *EmailController) getOauth2Config(platform string) (*oauth2.Config, error) {
-	if platform != "gmail" {
-		return nil, fmt.Errorf("it only supports gmail platform currently")
-	}
-
-	path := beego.AppConfig.String("gmail::credentials")
-	return gmailInfo{}.GetOauth2Config(path)
-}
-
-func getAuthCodeURL(cfg *oauth2.Config) string {
-	return cfg.AuthCodeURL(authURLState, oauth2.AccessTypeOffline)
-}
-
-func fetchOauth2Token(cfg *oauth2.Config, code string) (*oauth2.Token, error) {
-	token, err := cfg.Exchange(context.Background(), code)
-	if err != nil {
-		return nil, fmt.Errorf("Unable to retrieve token: %v", err)
-	}
-	return token, nil
 }

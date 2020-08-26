@@ -39,4 +39,5 @@ type IEmployeeSigning interface {
 
 type IOrgEmail interface {
 	CreateOrgEmail(opt OrgEmailCreateInfo) error
+	GetOrgEmailInfo(email string) (OrgEmailCreateInfo, error)
 }

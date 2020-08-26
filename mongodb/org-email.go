@@ -6,6 +6,7 @@ import (
 
 	"github.com/huaweicloud/golangsdk"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 
@@ -13,6 +14,13 @@ import (
 )
 
 const orgEmailCollection = "org_emails"
+
+type OrgEmail struct {
+	ID       primitive.ObjectID `bson:"_id,omitempty"`
+	Email    string             `bson:"email"`
+	Platform string             `bson:"platform"`
+	Token    []byte             `bson:"token"`
+}
 
 func (c *client) CreateOrgEmail(opt dbmodels.OrgEmailCreateInfo) error {
 	body, err := golangsdk.BuildRequestBody(opt, "")
@@ -49,4 +57,35 @@ func (c *client) CreateOrgEmail(opt dbmodels.OrgEmailCreateInfo) error {
 	}
 
 	return nil
+}
+
+func (c *client) GetOrgEmailInfo(email string) (dbmodels.OrgEmailCreateInfo, error) {
+	var sr *mongo.SingleResult
+
+	f := func(ctx context.Context) error {
+		col := c.db.Collection(orgEmailCollection)
+		opt := options.FindOneOptions{
+			Projection: bson.M{"email": 0},
+		}
+
+		sr = col.FindOne(ctx, bson.M{"email": email}, &opt)
+		return nil
+	}
+
+	withContext(f)
+
+	var v OrgEmail
+
+	if err := sr.Decode(&v); err != nil {
+		return dbmodels.OrgEmailCreateInfo{}, fmt.Errorf("error decoding to bson struct: %s", err.Error())
+	}
+
+	return toDBModelOrgEmail(v), nil
+}
+
+func toDBModelOrgEmail(item OrgEmail) dbmodels.OrgEmailCreateInfo {
+	return dbmodels.OrgEmailCreateInfo{
+		Platform: item.Platform,
+		Token:    item.Token,
+	}
 }

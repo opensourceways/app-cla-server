@@ -9,8 +9,10 @@ import (
 )
 
 type OrgEmail struct {
-	Email string        `json:"email"`
-	Token *oauth2.Token `json:"token"`
+	Email string `json:"email"`
+	// Platform is the email platform, such as gmail
+	Platform string        `json:"platform"`
+	Token    *oauth2.Token `json:"token"`
 }
 
 func (this *OrgEmail) Create() error {
@@ -20,8 +22,28 @@ func (this *OrgEmail) Create() error {
 	}
 
 	opt := dbmodels.OrgEmailCreateInfo{
-		Email: this.Email,
-		Token: b,
+		Email:    this.Email,
+		Platform: this.Platform,
+		Token:    b,
 	}
 	return dbmodels.GetDB().CreateOrgEmail(opt)
+}
+
+func (this *OrgEmail) Get() error {
+	info, err := dbmodels.GetDB().GetOrgEmailInfo(this.Email)
+	if err != nil {
+		return nil
+	}
+
+	this.Platform = info.Platform
+
+	var token oauth2.Token
+
+	err = json.Unmarshal(info.Token, &token)
+	if err != nil {
+		return err
+	}
+
+	this.Token = &token
+	return nil
 }

@@ -80,6 +80,11 @@ func init() {
 				&controllers.EmailController{},
 			),
 		),
+		beego.NSNamespace("/auth",
+			beego.NSInclude(
+				&controllers.AuthController{},
+			),
+		),
 	)
 	beego.AddNamespace(ns)
 }

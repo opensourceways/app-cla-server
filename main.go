@@ -7,6 +7,7 @@ import (
 	"github.com/zengchen1024/cla-server/email"
 	"github.com/zengchen1024/cla-server/models"
 	"github.com/zengchen1024/cla-server/mongodb"
+	"github.com/zengchen1024/cla-server/oauth2"
 	_ "github.com/zengchen1024/cla-server/routers"
 )
 
@@ -28,6 +29,13 @@ func main() {
 
 	path := beego.AppConfig.String("gmail::credentials")
 	if err = email.NewGmailClient(path); err != nil {
+		beego.Info(err)
+		return
+	}
+
+	path = beego.AppConfig.String("gitee::credentials")
+	if err := oauth2.RegisterPlatform("gitee", path); err != nil {
+		beego.Info(err)
 		return
 	}
 

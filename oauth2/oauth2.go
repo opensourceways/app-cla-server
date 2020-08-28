@@ -7,38 +7,58 @@ import (
 	liboauth2 "golang.org/x/oauth2"
 )
 
-var client = map[string]Oauth2Interface{}
+var clients = map[string]map[string]Oauth2Interface{}
 
 type Oauth2Interface interface {
-	GetToken(code, scope, target string) (*liboauth2.Token, error)
-	GetOauth2CodeURL(state, target string) (string, error)
-	Initialize(credentialFile string) error
+	GetToken(code, scope string) (*liboauth2.Token, error)
+	GetOauth2CodeURL(state string) string
+	WebRedirectDir() string
+}
+
+type client struct {
+	cfg *liboauth2.Config
+
+	webRedirectDir string
+}
+
+func (this *client) GetToken(code, scope string) (*liboauth2.Token, error) {
+	return fetchOauth2Token(this.cfg, code)
+}
+
+func (this *client) GetOauth2CodeURL(state string) string {
+	return getOauth2CodeURL(state, this.cfg)
+}
+
+func (this *client) WebRedirectDir() string {
+	return this.webRedirectDir
 }
 
 func RegisterPlatform(platform, credentialFile string) error {
-	c, ok := client[platform]
-	if !ok {
-		return fmt.Errorf("Failed to register a platform: %s is unknown", platform)
+	cfg, err := loadFromYaml(credentialFile)
+	if err != nil {
+		return err
 	}
 
-	return c.Initialize(credentialFile)
-}
-
-func GetOauth2Instance(platform string) Oauth2Interface {
-	c, ok := client[platform]
-	if ok {
-		return c
+	m := map[string]Oauth2Interface{}
+	for _, item := range cfg.Config {
+		m[item.Purpose] = &client{
+			cfg:            buildOauth2Config(item.oauth2Config),
+			webRedirectDir: item.WebRedirectDir,
+		}
 	}
+	clients[platform] = m
 	return nil
 }
 
-type oauth2Config struct {
-	ClientID     string   `json:"client_id" required:"true"`
-	ClientSecret string   `json:"client_secret" required:"true"`
-	AuthURL      string   `json:"auth_url" required:"true"`
-	TokenURL     string   `json:"token_url" required:"true"`
-	RedirectURL  string   `json:"redirect_url" required:"true"`
-	Scope        []string `json:"scope" required:"true"`
+func GetOauth2Instance(platform, purpose string) (Oauth2Interface, error) {
+	c, ok := clients[platform]
+	if ok {
+		if i, ok1 := c[purpose]; ok1 {
+			return i, nil
+		}
+		return nil, fmt.Errorf("Failed to get oauth2 instance: unknown purpose: %s", purpose)
+	}
+	return nil, fmt.Errorf("Failed to get oauth2 instance: unknown platform: %s", platform)
 }
 
 func buildOauth2Config(cfg oauth2Config) *liboauth2.Config {

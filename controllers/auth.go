@@ -17,8 +17,15 @@ type AuthController struct {
 // @Title Get
 // @Description get login info
 // @Success 200
-// @router /login [get]
+// @router /:purpose [get]
 func (this *AuthController) Login() {
+	purpose := this.GetString(":purpose")
+	if purpose == "" {
+		err := fmt.Errorf("missing purpose")
+		sendResponse(&this.Controller, 400, err, nil)
+		return
+	}
+
 	code := this.GetString("code")
 	if code == "" {
 		err := fmt.Errorf("missing code")
@@ -43,14 +50,13 @@ func (this *AuthController) Login() {
 		return
 	}
 
-	cp := oauth2.GetOauth2Instance(platform)
-	if cp == nil {
-		err := fmt.Errorf("invalide platform")
+	cp, err := oauth2.GetOauth2Instance(platform, purpose)
+	if err != nil {
 		sendResponse(&this.Controller, 400, err, nil)
 		return
 	}
 
-	token, err := cp.GetToken(code, scope, "login")
+	token, err := cp.GetToken(code, scope)
 	if err != nil {
 		err = fmt.Errorf("Get token failed: %s", err.Error())
 		sendResponse(&this.Controller, 500, err, nil)
@@ -71,18 +77,14 @@ func (this *AuthController) Login() {
 	}
 
 	setCookie(this.Ctx.ResponseWriter, "access_token", token.AccessToken)
-	setCookie(this.Ctx.ResponseWriter, "refresh_token", token.RefreshToken)
 	setCookie(this.Ctx.ResponseWriter, "user", user)
 
-	redirectUrl := beego.AppConfig.String("web_redirect_dir_login")
-	http.Redirect(this.Ctx.ResponseWriter, this.Ctx.Request, redirectUrl, http.StatusFound)
+	http.Redirect(this.Ctx.ResponseWriter, this.Ctx.Request, cp.WebRedirectDir(), http.StatusFound)
 }
 
 // @Title Get
 // @Description get auth code url
-// @Param	platform		path 	string	true		"The email platform"
 // @Success 200 {object}
-// @Failure 403 :platform is empty
 // @router /authcodeurl [get]
 func (this *AuthController) Get() {
 	var statusCode = 200
@@ -100,30 +102,22 @@ func (this *AuthController) Get() {
 		return
 	}
 
-	// target: login, individual signing
-	target := this.GetString("target")
-	if target == "" {
-		reason = fmt.Errorf("missing parameter target")
+	// purpose: login, sign
+	purpose := this.GetString("purpose")
+	if purpose == "" {
+		reason = fmt.Errorf("missing parameter purpose")
 		statusCode = 400
 		return
 	}
 
-	cp := oauth2.GetOauth2Instance(platform)
+	cp, err := oauth2.GetOauth2Instance(platform, purpose)
 	if cp == nil {
-		reason = fmt.Errorf("invalide platform")
-		statusCode = 400
-		return
-	}
-
-	url, err := cp.GetOauth2CodeURL(authURLState, target)
-	if err != nil {
 		reason = err
-		statusCode = 500
+		statusCode = 400
 		return
 	}
 
 	body = map[string]string{
-		"url": url,
+		"url": cp.GetOauth2CodeURL(authURLState),
 	}
-	beego.Info(body)
 }

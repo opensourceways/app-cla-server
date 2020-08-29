@@ -11,7 +11,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 
-	"github.com/zengchen1024/cla-server/models"
+	"github.com/zengchen1024/cla-server/dbmodels"
 )
 
 const clasCollection = "clas"
@@ -36,7 +36,7 @@ type Field struct {
 	Required    bool   `bson:"required"`
 }
 
-func (c *client) CreateCLA(cla models.CLA) (string, error) {
+func (c *client) CreateCLA(cla dbmodels.CLA) (string, error) {
 	body, err := golangsdk.BuildRequestBody(cla, "")
 	if err != nil {
 		return "", fmt.Errorf("build body failed, err:%v", err)
@@ -104,7 +104,7 @@ func (this *client) DeleteCLA(uid string) error {
 	return this.doTransaction(f)
 }
 
-func (c *client) ListCLA(opts models.CLAListOptions) ([]models.CLA, error) {
+func (c *client) ListCLA(opts dbmodels.CLAListOptions) ([]dbmodels.CLA, error) {
 	body, err := golangsdk.BuildRequestBody(opts, "")
 	if err != nil {
 		return nil, fmt.Errorf("build options to list cla failed, err:%v", err)
@@ -133,7 +133,7 @@ func (c *client) ListCLA(opts models.CLAListOptions) ([]models.CLA, error) {
 		return nil, err
 	}
 
-	r := make([]models.CLA, 0, len(v))
+	r := make([]dbmodels.CLA, 0, len(v))
 	for _, item := range v {
 		r = append(r, toModelCLA(item))
 	}
@@ -141,8 +141,8 @@ func (c *client) ListCLA(opts models.CLAListOptions) ([]models.CLA, error) {
 	return r, nil
 }
 
-func (c *client) GetCLA(uid string) (models.CLA, error) {
-	var r models.CLA
+func (c *client) GetCLA(uid string) (dbmodels.CLA, error) {
+	var r dbmodels.CLA
 
 	oid, err := toObjectID(uid)
 	if err != nil {
@@ -168,8 +168,8 @@ func (c *client) GetCLA(uid string) (models.CLA, error) {
 	return toModelCLA(v), nil
 }
 
-func toModelCLA(item CLA) models.CLA {
-	cla := models.CLA{
+func toModelCLA(item CLA) dbmodels.CLA {
+	cla := dbmodels.CLA{
 		ID:        objectIDToUID(item.ID),
 		Name:      item.Name,
 		Text:      item.Text,
@@ -179,9 +179,9 @@ func toModelCLA(item CLA) models.CLA {
 	}
 
 	if item.Fields != nil {
-		fs := make([]models.Field, 0, len(item.Fields))
+		fs := make([]dbmodels.Field, 0, len(item.Fields))
 		for _, v := range item.Fields {
-			fs = append(fs, models.Field{
+			fs = append(fs, dbmodels.Field{
 				ID:          v.ID,
 				Title:       v.Title,
 				Type:        v.Type,

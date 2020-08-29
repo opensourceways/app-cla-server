@@ -1,30 +1,36 @@
 package models
 
+import "github.com/zengchen1024/cla-server/dbmodels"
+
 const (
 	ApplyToCorporation = "corporation"
 	ApplyToIndividual  = "individual"
 )
 
 type CLA struct {
-	ID        string  `json:"id,omitempty"`
-	Name      string  `json:"name" required:"true"`
-	Text      string  `json:"text" required:"true"`
-	Language  string  `json:"language" required:"true"`
-	Submitter string  `json:"submitter" required:"true"`
-	ApplyTo   string  `json:"apply_to" required:"true"`
-	Fields    []Field `json:"fields,omitempty"`
+	ID        string  `json:"id"`
+	Name      string  `json:"name"`
+	Text      string  `json:"text"`
+	Language  string  `json:"language"`
+	Submitter string  `json:"submitter"`
+	ApplyTo   string  `json:"apply_to"`
+	Fields    []Field `json:"fields"`
 }
 
 type Field struct {
-	ID          string `json:"id" required:"true"`
-	Title       string `json:"title" required:"true"`
-	Type        string `json:"type" required:"true"`
-	Description string `json:"description,omitempty"`
-	Required    bool   `json:"required" required:"true"`
+	ID          string `json:"id"`
+	Title       string `json:"title"`
+	Type        string `json:"type"`
+	Description string `json:"description"`
+	Required    bool   `json:"required"`
 }
 
 func (this *CLA) Create() error {
-	v, err := db.CreateCLA(*this)
+	p := dbmodels.CLA{}
+	if err := copyBetweenStructs(this, &p); err != nil {
+		return err
+	}
+	v, err := dbmodels.GetDB().CreateCLA(p)
 	if err == nil {
 		this.ID = v
 	}
@@ -33,24 +39,28 @@ func (this *CLA) Create() error {
 }
 
 func (this *CLA) Get() error {
-	v, err := db.GetCLA(this.ID)
+	v, err := dbmodels.GetDB().GetCLA(this.ID)
 	if err == nil {
-		*this = v
+		return copyBetweenStructs(&v, this)
 	}
 	return err
 }
 
 func (this *CLA) Delete() error {
-	return db.DeleteCLA(this.ID)
+	return dbmodels.GetDB().DeleteCLA(this.ID)
 }
 
 type CLAListOptions struct {
-	Submitter string `json:"submitter" required:"true"`
-	Name      string `json:"name,omitempty"`
-	Language  string `json:"language,omitempty"`
-	ApplyTo   string `json:"apply_to,omitempty"`
+	Submitter string `json:"submitter"`
+	Name      string `json:"name"`
+	Language  string `json:"language"`
+	ApplyTo   string `json:"apply_to"`
 }
 
-func (this CLAListOptions) Get() ([]CLA, error) {
-	return db.ListCLA(this)
+func (this CLAListOptions) Get() ([]dbmodels.CLA, error) {
+	p := dbmodels.CLAListOptions{}
+	if err := copyBetweenStructs(&this, &p); err != nil {
+		return nil, err
+	}
+	return dbmodels.GetDB().ListCLA(p)
 }

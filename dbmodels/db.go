@@ -17,6 +17,7 @@ type IDB interface {
 	IOrgEmail
 	ICLAOrg
 	IIndividualSigning
+	ICLA
 }
 
 type ICorporationSigning interface {
@@ -53,4 +54,11 @@ type ICLAOrg interface {
 
 type IIndividualSigning interface {
 	SignAsIndividual(string, IndividualSigningInfo) error
+}
+
+type ICLA interface {
+	CreateCLA(CLA) (string, error)
+	ListCLA(CLAListOptions) ([]CLA, error)
+	GetCLA(string) (CLA, error)
+	DeleteCLA(string) error
 }

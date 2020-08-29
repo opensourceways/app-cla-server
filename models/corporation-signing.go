@@ -36,7 +36,7 @@ type CorporationSigningUdateInfo struct {
 }
 
 func (this *CorporationSigningUdateInfo) Update() error {
-	return dbmodels.GetDB().UpdateCorporationOfOrg(
+	return dbmodels.GetDB().UpdateCorporationSigning(
 		this.CLAOrgID, this.AdminEmail, this.CorporationName,
 		dbmodels.CorporationSigningUpdateInfo{Enabled: &this.Enabled})
 }
@@ -54,9 +54,8 @@ func (this CorporationSigningListOption) List() ([]CorporationSigningDetails, er
 		OrgID:       this.OrgID,
 		RepoID:      this.RepoID,
 		CLALanguage: this.CLALanguage,
-		ApplyTo:     ApplyToCorporation,
 	}
-	v, err := dbmodels.GetDB().ListCorporationsOfOrg(opt)
+	v, err := dbmodels.GetDB().ListCorporationSigning(opt)
 	if err != nil {
 		return nil, err
 	}

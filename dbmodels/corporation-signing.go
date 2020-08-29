@@ -20,7 +20,6 @@ type CorporationSigningListOption struct {
 	OrgID       string `json:"org_id" required:"true"`
 	RepoID      string `json:"repo_id" required:"true"`
 	CLALanguage string `json:"cla_language,omitempty"`
-	ApplyTo     string `json:"apply_to" required:"true"`
 }
 
 type CorporationSigningUpdateInfo struct {

@@ -21,7 +21,6 @@ func additionalConditionForIndividualSigningDoc(filter bson.M, email string) {
 	filter["enabled"] = true
 
 	filter[employeeSigningField(email)] = bson.M{"$exists": true}
-
 }
 
 func emailToKey(email string) string {

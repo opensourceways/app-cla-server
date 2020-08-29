@@ -2,6 +2,10 @@ package models
 
 import "github.com/zengchen1024/cla-server/dbmodels"
 
+type CorporationSigningDetails struct {
+	CorporationSigning
+	AdministratorEnabled bool `json:"administrator_enabled"`
+}
 type CorporationSigning struct {
 	CLAOrgID        string `json:"cla_org_id"`
 	AdminEmail      string `json:"admin_email"`
@@ -44,7 +48,7 @@ type CorporationSigningListOption struct {
 	CLALanguage string `json:"cla_language"`
 }
 
-func (this CorporationSigningListOption) List() ([]CorporationSigning, error) {
+func (this CorporationSigningListOption) List() ([]CorporationSigningDetails, error) {
 	opt := dbmodels.CorporationSigningListOption{
 		Platform:    this.Platform,
 		OrgID:       this.OrgID,
@@ -62,15 +66,18 @@ func (this CorporationSigningListOption) List() ([]CorporationSigning, error) {
 		n += len(items)
 	}
 
-	r := make([]CorporationSigning, 0, n)
+	r := make([]CorporationSigningDetails, 0, n)
 	for k, items := range v {
 		for _, item := range items {
-			r = append(r, CorporationSigning{
-				CLAOrgID:        k,
-				AdminEmail:      item.AdminEmail,
-				AdminName:       item.AdminName,
-				CorporationName: item.CorporationName,
-				Enabled:         item.Enabled,
+			r = append(r, CorporationSigningDetails{
+				CorporationSigning: CorporationSigning{
+					CLAOrgID:        k,
+					AdminEmail:      item.AdminEmail,
+					AdminName:       item.AdminName,
+					CorporationName: item.CorporationName,
+					Enabled:         item.Enabled,
+				},
+				AdministratorEnabled: item.AdministratorEnabled,
 			})
 		}
 	}

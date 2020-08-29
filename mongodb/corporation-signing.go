@@ -9,6 +9,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 
 	"github.com/zengchen1024/cla-server/dbmodels"
+	"github.com/zengchen1024/cla-server/models"
 )
 
 const corporationsID = "corporations"
@@ -101,7 +102,7 @@ func (c *client) SignAsCorporation(claOrgID string, info dbmodels.CorporationSig
 	return c.doTransaction(f)
 }
 
-func (c *client) ListCorporationsOfOrg(opt dbmodels.CorporationSigningListOption) (map[string][]dbmodels.CorporationSigningInfo, error) {
+func (c *client) ListCorporationsOfOrg(opt dbmodels.CorporationSigningListOption) (map[string][]dbmodels.CorporationSigningDetails, error) {
 	body, err := golangsdk.BuildRequestBody(opt, "")
 	if err != nil {
 		return nil, fmt.Errorf("build options to list corporation signing failed, err:%v", err)
@@ -116,10 +117,20 @@ func (c *client) ListCorporationsOfOrg(opt dbmodels.CorporationSigningListOption
 		pipeline := bson.A{
 			bson.M{"$match": filter},
 			bson.M{"$project": bson.M{
+				corporationsID: 1,
+
+				fieldCorpoManagersID: bson.M{"$filter": bson.M{
+					"input": fmt.Sprintf("$%s", fieldCorpoManagersID),
+					"cond":  bson.M{"$eq": bson.A{"$$this.role", models.RoleAdmin}},
+				}},
+			}},
+			bson.M{"$project": bson.M{
 				corpoSigningKey("corporation_name"): 1,
 				corpoSigningKey("admin_email"):      1,
 				corpoSigningKey("admin_name"):       1,
 				corpoSigningKey("enabled"):          1,
+
+				corpoManagerElemKey("email"): 1,
 			}},
 		}
 		cursor, err := col.Aggregate(ctx, pipeline)
@@ -139,7 +150,7 @@ func (c *client) ListCorporationsOfOrg(opt dbmodels.CorporationSigningListOption
 		return nil, err
 	}
 
-	r := map[string][]dbmodels.CorporationSigningInfo{}
+	r := map[string][]dbmodels.CorporationSigningDetails{}
 
 	for i := 0; i < len(v); i++ {
 		cs := v[i].Corporations
@@ -147,9 +158,18 @@ func (c *client) ListCorporationsOfOrg(opt dbmodels.CorporationSigningListOption
 			continue
 		}
 
-		cs1 := make([]dbmodels.CorporationSigningInfo, 0, len(cs))
+		admins := map[string]bool{}
+		for _, m := range v[i].CorporationManagers {
+			admins[m.Email] = true
+		}
+
+		cs1 := make([]dbmodels.CorporationSigningDetails, 0, len(cs))
 		for _, item := range cs {
-			cs1 = append(cs1, toDBModelCorporationSigningInfo(item))
+
+			cs1 = append(cs1, dbmodels.CorporationSigningDetails{
+				CorporationSigningInfo: toDBModelCorporationSigningInfo(item),
+				AdministratorEnabled:   admins[item.AdminEmail],
+			})
 		}
 		r[objectIDToUID(v[i].ID)] = cs1
 	}

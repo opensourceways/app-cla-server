@@ -1,5 +1,10 @@
 package dbmodels
 
+type CorporationSigningDetails struct {
+	CorporationSigningInfo
+	AdministratorEnabled bool
+}
+
 type CorporationSigningInfo struct {
 	AdminEmail      string `json:"admin_email" required:"true"`
 	AdminName       string `json:"admin_name" required:"true"`
@@ -19,6 +24,5 @@ type CorporationSigningListOption struct {
 }
 
 type CorporationSigningUpdateInfo struct {
-	Enabled  *bool  `json:"enabled,omitempty"`
-	Password string `json:"password,omitempty"`
+	Enabled *bool `json:"enabled,omitempty"`
 }

@@ -6,7 +6,6 @@ import (
 
 	"github.com/astaxie/beego"
 
-	"github.com/zengchen1024/cla-server/controllers/platforms"
 	"github.com/zengchen1024/cla-server/models"
 )
 
@@ -107,46 +106,6 @@ func (this *CLAOrgController) Delete() {
 // @Success 200 {object} models.CLAOrg
 // @router / [get]
 func (this *CLAOrgController) GetAll() {
-	var statusCode = 200
-	var reason error
-	var body interface{}
-
-	defer func() {
-		sendResponse(&this.Controller, statusCode, reason, body)
-	}()
-
-	h := parseHeader(&this.Controller)
-	p, err := platforms.NewPlatform(h.accessToken, h.refreshToken, h.platform)
-	if err != nil {
-		reason = err
-		statusCode = 400
-		return
-	}
-
-	orgs, err := p.ListOrg()
-	if err != nil {
-		reason = fmt.Errorf("list org failed: %v", err)
-		statusCode = 500
-		return
-	}
-
-	opt := models.CLAOrgListOption{Org: map[string][]string{h.platform: orgs}}
-
-	r, err := opt.List()
-	if err != nil {
-		reason = err
-		statusCode = 500
-		return
-	}
-
-	body = r
-}
-
-// @Title Get signing page info
-// @Description get signing page info
-// @Success 200 {object} models.CLAOrg
-// @router /signing-page [get]
-func (this *CLAOrgController) GetSigningPageInfo() {
 	var statusCode = 200
 	var reason error
 	var body interface{}

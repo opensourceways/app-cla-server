@@ -11,13 +11,17 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 
-	"github.com/zengchen1024/cla-server/models"
+	"github.com/zengchen1024/cla-server/dbmodels"
 )
 
 const (
 	claOrgCollection  = "cla_orgs"
 	orgIdentifierName = "org_identifier"
 )
+
+func additionalConditionForCLAOrgDoc(filter bson.M) {
+	filter["enabled"] = true
+}
 
 type signingInfo map[string]interface{}
 
@@ -56,7 +60,7 @@ func orgIdentifier(platform, org string) string {
 	return fmt.Sprintf("%s:%s", platform, org)
 }
 
-func (c *client) BindCLAToOrg(claOrg models.CLAOrg) (string, error) {
+func (c *client) CreateBindingBetweenCLAAndOrg(claOrg dbmodels.CLAOrg) (string, error) {
 	body, err := golangsdk.BuildRequestBody(claOrg, "")
 	if err != nil {
 		return "", fmt.Errorf("build body failed, err:%v", err)
@@ -100,7 +104,7 @@ func (c *client) BindCLAToOrg(claOrg models.CLAOrg) (string, error) {
 	return toUID(r.UpsertedID)
 }
 
-func (c *client) UnbindCLAFromOrg(uid string) error {
+func (c *client) DeleteBindingBetweenCLAAndOrg(uid string) error {
 	oid, err := toObjectID(uid)
 	if err != nil {
 		return err
@@ -117,8 +121,8 @@ func (c *client) UnbindCLAFromOrg(uid string) error {
 	return withContext(f)
 }
 
-func (c *client) GetCLAOrg(uid string) (models.CLAOrg, error) {
-	var r models.CLAOrg
+func (c *client) GetBindingBetweenCLAAndOrg(uid string) (dbmodels.CLAOrg, error) {
+	var r dbmodels.CLAOrg
 
 	oid, err := toObjectID(uid)
 	if err != nil {
@@ -153,30 +157,28 @@ func (c *client) GetCLAOrg(uid string) (models.CLAOrg, error) {
 	return toModelCLAOrg(v), nil
 }
 
-func (c *client) ListBindingOfCLAAndOrg(opt models.CLAOrgListOption) ([]models.CLAOrg, error) {
+func (c *client) ListBindingBetweenCLAAndOrg(opt dbmodels.CLAOrgListOption) ([]dbmodels.CLAOrg, error) {
 	body, err := golangsdk.BuildRequestBody(opt, "")
 	if err != nil {
 		return nil, fmt.Errorf("build options to list cla-org failed, err:%v", err)
 	}
 	filter := bson.M(body)
-
-	if opt.Org != nil {
-		var ids bson.A
-		for platform, orgs := range opt.Org {
-			for _, org := range orgs {
-				ids = append(ids, orgIdentifier(platform, org))
-			}
-		}
-
-		filter[orgIdentifierName] = bson.M{"$in": ids}
-	}
+	additionalConditionForCLAOrgDoc(filter)
 
 	var v []CLAOrg
 
 	f := func(ctx context.Context) error {
 		col := c.db.Collection(claOrgCollection)
 
-		cursor, err := col.Find(ctx, filter)
+		opts := options.FindOptions{
+			Projection: bson.M{
+				"individuals":          0,
+				"employees":            0,
+				"corporations":         0,
+				"corporation_managers": 0,
+			},
+		}
+		cursor, err := col.Find(ctx, filter, &opts)
 		if err != nil {
 			return fmt.Errorf("error find bindings: %v", err)
 		}
@@ -193,16 +195,28 @@ func (c *client) ListBindingOfCLAAndOrg(opt models.CLAOrgListOption) ([]models.C
 		return nil, err
 	}
 
-	r := make([]models.CLAOrg, 0, len(v))
+	n := len(v)
+	r := make([]dbmodels.CLAOrg, 0, n)
 	for _, item := range v {
 		r = append(r, toModelCLAOrg(item))
 	}
 
+	if opt.RepoID != "" {
+		r1 := make([]dbmodels.CLAOrg, 0, n)
+		for i := 0; i < n; i++ {
+			if r[i].RepoID == opt.RepoID {
+				r1 = append(r1, r[i])
+			}
+		}
+		if len(r1) != 0 {
+			return r1, nil
+		}
+	}
 	return r, nil
 }
 
-func toModelCLAOrg(item CLAOrg) models.CLAOrg {
-	return models.CLAOrg{
+func toModelCLAOrg(item CLAOrg) dbmodels.CLAOrg {
+	return dbmodels.CLAOrg{
 		ID:          objectIDToUID(item.ID),
 		Platform:    item.Platform,
 		OrgID:       item.OrgID,
@@ -213,7 +227,5 @@ func toModelCLAOrg(item CLAOrg) models.CLAOrg {
 		OrgEmail:    item.OrgEmail,
 		Enabled:     item.Enabled,
 		Submitter:   item.Submitter,
-		CreatedAt:   item.CreatedAt,
-		UpdatedAt:   item.UpdatedAt,
 	}
 }

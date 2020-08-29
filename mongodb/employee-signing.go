@@ -55,7 +55,7 @@ type employeeSigning struct {
 }
 
 func (c *client) SignAsEmployee(claOrgID string, info dbmodels.EmployeeSigningInfo) error {
-	claOrg, err := c.GetCLAOrg(claOrgID)
+	claOrg, err := c.GetBindingBetweenCLAAndOrg(claOrgID)
 	if err != nil {
 		return err
 	}

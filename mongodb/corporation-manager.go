@@ -11,7 +11,6 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 
 	"github.com/zengchen1024/cla-server/dbmodels"
-	"github.com/zengchen1024/cla-server/models"
 )
 
 const fieldCorpoManagersID = "corporation_managers"
@@ -28,20 +27,20 @@ func corpoManagerElemKey(field string) string {
 	return fmt.Sprintf("%s.%s", fieldCorpoManagersID, field)
 }
 
-func checkBeforeAddingCorporationManager(c *client, ctx mongo.SessionContext, claOrg models.CLAOrg, opt []dbmodels.CorporationManagerCreateOption) (int, int, error) {
+func checkBeforeAddingCorporationManager(c *client, ctx mongo.SessionContext, claOrg dbmodels.CLAOrg, opt []dbmodels.CorporationManagerCreateOption) (int, int, error) {
 	emails := make(bson.A, 0, len(opt))
 	for _, item := range opt {
 		emails = append(emails, item.Email)
 	}
 
+	filter := bson.M{
+		"platform": claOrg.Platform,
+		"org_id":   claOrg.OrgID,
+		"repo_id":  claOrg.RepoID,
+	}
+	additionalConditionForCorpoCLADoc(filter)
 	pipeline := bson.A{
-		bson.M{"$match": bson.M{
-			"platform": claOrg.Platform,
-			"org_id":   claOrg.OrgID,
-			"repo_id":  claOrg.RepoID,
-			"apply_to": claOrg.ApplyTo,
-			"enabled":  true,
-		}},
+		bson.M{"$match": filter},
 		bson.M{"$project": bson.M{
 			"role_count": bson.M{"$cond": bson.A{
 				bson.M{"$isArray": fmt.Sprintf("$%s", fieldCorpoManagersID)},
@@ -90,7 +89,7 @@ func checkBeforeAddingCorporationManager(c *client, ctx mongo.SessionContext, cl
 }
 
 func (c *client) AddCorporationManager(claOrgID string, opt []dbmodels.CorporationManagerCreateOption, managerNumber int) error {
-	claOrg, err := c.GetCLAOrg(claOrgID)
+	claOrg, err := c.GetBindingBetweenCLAAndOrg(claOrgID)
 	if err != nil {
 		return err
 	}
@@ -149,8 +148,7 @@ func (c *client) CheckCorporationManagerExist(opt dbmodels.CorporationManagerChe
 		return result, fmt.Errorf("Failed to build options to list corporation manager, err:%v", err)
 	}
 	filter := bson.M(body)
-	filter["apply_to"] = models.ApplyToCorporation
-	filter["enabled"] = true
+	additionalConditionForCorpoCLADoc(filter)
 
 	var v []CLAOrg
 
@@ -221,11 +219,8 @@ func (c *client) ResetCorporationManagerPassword(claOrgID string, opt dbmodels.C
 		return err
 	}
 
-	filter := bson.M{
-		"_id":      oid,
-		"apply_to": models.ApplyToCorporation,
-		"enabled":  true,
-	}
+	filter := bson.M{"_id": oid}
+	additionalConditionForCorpoCLADoc(filter)
 
 	f := func(ctx context.Context) error {
 		col := c.collection(claOrgCollection)
@@ -269,11 +264,8 @@ func (c *client) ListCorporationManager(claOrgID string, opt dbmodels.Corporatio
 		return nil, err
 	}
 
-	filter := bson.M{
-		"_id":      oid,
-		"apply_to": models.ApplyToCorporation,
-		"enabled":  true,
-	}
+	filter := bson.M{"_id": oid}
+	additionalConditionForCorpoCLADoc(filter)
 
 	var v []CLAOrg
 
@@ -373,12 +365,11 @@ func checkBeforeDeletingCorporationManager(c *client, ctx mongo.SessionContext, 
 		emails = append(emails, item.Email)
 	}
 
+	filter := bson.M{"_id": claOrgID}
+	additionalConditionForCorpoCLADoc(filter)
+
 	pipeline := bson.A{
-		bson.M{"$match": bson.M{
-			"_id":      claOrgID,
-			"apply_to": models.ApplyToCorporation,
-			"enabled":  true,
-		}},
+		bson.M{"$match": filter},
 		bson.M{"$project": bson.M{
 			"email_count": bson.M{"$cond": bson.A{
 				bson.M{"$isArray": fmt.Sprintf("$%s", fieldCorpoManagersID)},

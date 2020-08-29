@@ -23,7 +23,7 @@ type corporationSigning struct {
 	SigningInfo     signingInfo `bson:"info"`
 }
 
-func additionalConditionForCorpoSigningDoc(filter bson.M) {
+func additionalConditionForCorpoCLADoc(filter bson.M) {
 	filter["apply_to"] = models.ApplyToCorporation
 	filter["enabled"] = true
 }
@@ -33,7 +33,7 @@ func corporationsElemKey(field string) string {
 }
 
 func (c *client) SignAsCorporation(claOrgID string, info dbmodels.CorporationSigningInfo) error {
-	claOrg, err := c.GetCLAOrg(claOrgID)
+	claOrg, err := c.GetBindingBetweenCLAAndOrg(claOrgID)
 	if err != nil {
 		return err
 	}
@@ -56,7 +56,7 @@ func (c *client) SignAsCorporation(claOrgID string, info dbmodels.CorporationSig
 			"org_id":   claOrg.OrgID,
 			"repo_id":  claOrg.RepoID,
 		}
-		additionalConditionForCorpoSigningDoc(filter)
+		additionalConditionForCorpoCLADoc(filter)
 
 		pipeline := bson.A{
 			bson.M{"$match": filter},
@@ -115,7 +115,7 @@ func (c *client) ListCorporationSigning(opt dbmodels.CorporationSigningListOptio
 		return nil, fmt.Errorf("build options to list corporation signing failed, err:%v", err)
 	}
 	filter := bson.M(body)
-	additionalConditionForCorpoSigningDoc(filter)
+	additionalConditionForCorpoCLADoc(filter)
 
 	var v []CLAOrg
 
@@ -208,7 +208,7 @@ func (c *client) UpdateCorporationSigning(claOrgID, adminEmail, corporationName 
 		col := c.collection(claOrgCollection)
 
 		filter := bson.M{"_id": oid}
-		additionalConditionForCorpoSigningDoc(filter)
+		additionalConditionForCorpoCLADoc(filter)
 
 		update := bson.M{"$set": info}
 

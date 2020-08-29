@@ -15,6 +15,7 @@ type IDB interface {
 	ICorporationManager
 	IEmployeeSigning
 	IOrgEmail
+	ICLAOrg
 }
 
 type ICorporationSigning interface {
@@ -40,4 +41,11 @@ type IEmployeeSigning interface {
 type IOrgEmail interface {
 	CreateOrgEmail(opt OrgEmailCreateInfo) error
 	GetOrgEmailInfo(email string) (OrgEmailCreateInfo, error)
+}
+
+type ICLAOrg interface {
+	ListBindingBetweenCLAAndOrg(CLAOrgListOption) ([]CLAOrg, error)
+	GetBindingBetweenCLAAndOrg(string) (CLAOrg, error)
+	CreateBindingBetweenCLAAndOrg(CLAOrg) (string, error)
+	DeleteBindingBetweenCLAAndOrg(string) error
 }

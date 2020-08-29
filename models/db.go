@@ -9,7 +9,6 @@ func RegisterDB(idb IDB) {
 type IDB interface {
 	ICLA
 	IOrgRepo
-	ICLAOrg
 	IIndividualSigning
 }
 
@@ -29,13 +28,6 @@ type IOrgRepo interface {
 	CreateOrgRepo(OrgRepo) (string, error)
 	DisableOrgRepo(string) error
 	ListOrgRepo(OrgRepos) ([]OrgRepo, error)
-}
-
-type ICLAOrg interface {
-	BindCLAToOrg(CLAOrg) (string, error)
-	UnbindCLAFromOrg(string) error
-	ListBindingOfCLAAndOrg(CLAOrgListOption) ([]CLAOrg, error)
-	GetCLAOrg(string) (CLAOrg, error)
 }
 
 type IIndividualSigning interface {

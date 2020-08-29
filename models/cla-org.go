@@ -1,26 +1,35 @@
 package models
 
-import "time"
+import (
+	"time"
+
+	"github.com/zengchen1024/cla-server/dbmodels"
+)
 
 type CLAOrg struct {
-	ID          string    `json:"id,omitempty"`
-	Platform    string    `json:"platform" required:"true"`
-	OrgID       string    `json:"org_id" required:"true"`
-	RepoID      string    `json:"repo_id" required:"true"`
-	CLAID       string    `json:"cla_id" required:"true"`
-	CLALanguage string    `json:"cla_language" required:"true"`
-	ApplyTo     string    `json:"apply_to" required:"true"`
-	OrgEmail    string    `json:"org_email,omitempty"`
-	Enabled     bool      `json:"enabled,omitempty"`
-	Submitter   string    `json:"submitter" required:"true"`
-	CreatedAt   time.Time `json:"-"`
-	UpdatedAt   time.Time `json:"-"`
+	ID          string    `json:"id"`
+	Platform    string    `json:"platform"`
+	OrgID       string    `json:"org_id"`
+	RepoID      string    `json:"repo_id"`
+	CLAID       string    `json:"cla_id"`
+	CLALanguage string    `json:"cla_language"`
+	ApplyTo     string    `json:"apply_to"`
+	OrgEmail    string    `json:"org_email"`
+	Enabled     bool      `json:"enabled"`
+	Submitter   string    `json:"submitter"`
+	CreatedAt   time.Time `json:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at"`
 }
 
 func (this *CLAOrg) Create() error {
 	this.Enabled = true
 
-	v, err := db.BindCLAToOrg(*this)
+	p := dbmodels.CLAOrg{}
+	if err := copyBetweenStructs(this, &p); err != nil {
+		return err
+	}
+
+	v, err := dbmodels.GetDB().CreateBindingBetweenCLAAndOrg(p)
 	if err == nil {
 		this.ID = v
 	}
@@ -29,26 +38,28 @@ func (this *CLAOrg) Create() error {
 }
 
 func (this CLAOrg) Delete() error {
-	return db.UnbindCLAFromOrg(this.ID)
+	return dbmodels.GetDB().DeleteBindingBetweenCLAAndOrg(this.ID)
 }
 
 func (this *CLAOrg) Get() error {
-	v, err := db.GetCLAOrg(this.ID)
-	if err == nil {
-		*this = v
+	v, err := dbmodels.GetDB().GetBindingBetweenCLAAndOrg(this.ID)
+	if err != nil {
+		return err
 	}
-	return err
+	return copyBetweenStructs(&v, this)
 }
 
 type CLAOrgListOption struct {
-	Org map[string][]string `json:"-"`
-
-	Platform string `json:"platform,omitempty"`
-	OrgID    string `json:"org_id,omitempty"`
-	RepoID   string `json:"repo_id,omitempty"`
-	ApplyTo  string `json:"apply_to,omitempty"`
+	Platform string `json:"platform"`
+	OrgID    string `json:"org_id"`
+	RepoID   string `json:"repo_id"`
+	ApplyTo  string `json:"apply_to"`
 }
 
-func (this CLAOrgListOption) List() ([]CLAOrg, error) {
-	return db.ListBindingOfCLAAndOrg(this)
+func (this CLAOrgListOption) List() ([]dbmodels.CLAOrg, error) {
+	p := dbmodels.CLAOrgListOption{}
+	if err := copyBetweenStructs(&this, &p); err != nil {
+		return nil, err
+	}
+	return dbmodels.GetDB().ListBindingBetweenCLAAndOrg(p)
 }

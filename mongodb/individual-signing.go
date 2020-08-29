@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/zengchen1024/cla-server/models"
+	"github.com/zengchen1024/cla-server/dbmodels"
 
 	"go.mongodb.org/mongo-driver/bson"
 )
@@ -14,8 +14,8 @@ func individualSigningKey(email string) string {
 	return fmt.Sprintf("individuals.%s", strings.ReplaceAll(email, ".", "_"))
 }
 
-func (c *client) SignAsIndividual(info models.IndividualSigning) error {
-	oid, err := toObjectID(info.CLAOrgID)
+func (c *client) SignAsIndividual(claOrgID string, info dbmodels.IndividualSigningInfo) error {
+	oid, err := toObjectID(claOrgID)
 	if err != nil {
 		return err
 	}
@@ -24,7 +24,6 @@ func (c *client) SignAsIndividual(info models.IndividualSigning) error {
 		col := c.collection(claOrgCollection)
 
 		k := individualSigningKey(info.Email)
-		info.Info["email"] = info.Email
 		v := bson.M{k: info.Info}
 
 		r, err := col.UpdateOne(ctx, bson.M{"_id": oid, k: bson.M{"$exists": false}}, bson.M{"$set": v})
@@ -34,6 +33,11 @@ func (c *client) SignAsIndividual(info models.IndividualSigning) error {
 
 		if r.MatchedCount == 0 {
 			return fmt.Errorf("Failed to add info when signing as individual, maybe he/she has signed")
+		}
+
+		if r.ModifiedCount == 0 {
+			return fmt.Errorf("Failed to add info when signing as individual, impossible")
+
 		}
 		return nil
 	}

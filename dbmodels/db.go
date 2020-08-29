@@ -16,6 +16,7 @@ type IDB interface {
 	IEmployeeSigning
 	IOrgEmail
 	ICLAOrg
+	IIndividualSigning
 }
 
 type ICorporationSigning interface {
@@ -48,4 +49,8 @@ type ICLAOrg interface {
 	GetBindingBetweenCLAAndOrg(string) (CLAOrg, error)
 	CreateBindingBetweenCLAAndOrg(CLAOrg) (string, error)
 	DeleteBindingBetweenCLAAndOrg(string) error
+}
+
+type IIndividualSigning interface {
+	SignAsIndividual(string, IndividualSigningInfo) error
 }

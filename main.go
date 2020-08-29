@@ -28,7 +28,8 @@ func main() {
 	dbmodels.RegisterDB(c)
 
 	path := beego.AppConfig.String("gmail::credentials")
-	if err = email.NewGmailClient(path); err != nil {
+	webRedirectDir := beego.AppConfig.String("gmail::web_redirect_dir")
+	if err = email.RegisterPlatform("gmail", path, webRedirectDir); err != nil {
 		beego.Info(err)
 		return
 	}

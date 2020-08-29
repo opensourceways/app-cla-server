@@ -18,7 +18,7 @@ type AuthController struct {
 // @Description get login info
 // @Success 200
 // @router /:purpose [get]
-func (this *AuthController) Login() {
+func (this *AuthController) Auth() {
 	purpose := this.GetString(":purpose")
 	if purpose == "" {
 		err := fmt.Errorf("missing purpose")

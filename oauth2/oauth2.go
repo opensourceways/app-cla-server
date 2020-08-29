@@ -22,11 +22,11 @@ type client struct {
 }
 
 func (this *client) GetToken(code, scope string) (*liboauth2.Token, error) {
-	return fetchOauth2Token(this.cfg, code)
+	return FetchOauth2Token(this.cfg, code)
 }
 
 func (this *client) GetOauth2CodeURL(state string) string {
-	return getOauth2CodeURL(state, this.cfg)
+	return GetOauth2CodeURL(state, this.cfg)
 }
 
 func (this *client) WebRedirectDir() string {
@@ -74,11 +74,11 @@ func buildOauth2Config(cfg oauth2Config) *liboauth2.Config {
 	}
 }
 
-func getOauth2CodeURL(state string, cfg *liboauth2.Config) string {
+func GetOauth2CodeURL(state string, cfg *liboauth2.Config) string {
 	return cfg.AuthCodeURL(state, liboauth2.AccessTypeOffline)
 }
 
-func fetchOauth2Token(cfg *liboauth2.Config, code string) (*liboauth2.Token, error) {
+func FetchOauth2Token(cfg *liboauth2.Config, code string) (*liboauth2.Token, error) {
 	token, err := cfg.Exchange(context.Background(), code)
 	if err != nil {
 		return nil, fmt.Errorf("Unable to retrieve token: %v", err)

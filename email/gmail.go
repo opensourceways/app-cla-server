@@ -10,24 +10,32 @@ import (
 	"google.golang.org/api/gmail/v1"
 
 	"github.com/zengchen1024/cla-server/models"
+	myoauth2 "github.com/zengchen1024/cla-server/oauth2"
 )
 
-var gmailCli *gmailClient
-
-func NewGmailClient(path string) error {
-	gmailCli = &gmailClient{}
-
-	cfg, err := gmailCli.getOauth2Config(path)
-	if err != nil {
-		return err
-	}
-
-	gmailCli.cfg = cfg
-	return nil
+func init() {
+	emails["gmail"] = &gmailClient{}
 }
 
 type gmailClient struct {
 	cfg *oauth2.Config
+
+	webRedirectDir string
+}
+
+func (this *gmailClient) initialize(path, webRedirectDir string) error {
+	cfg, err := this.getOauth2Config(path)
+	if err != nil {
+		return err
+	}
+
+	this.cfg = cfg
+	this.webRedirectDir = webRedirectDir
+	return nil
+}
+
+func (this *gmailClient) WebRedirectDir() string {
+	return this.webRedirectDir
 }
 
 func (this *gmailClient) GetAuthorizedEmail(code, scope string) (*models.OrgEmail, error) {
@@ -35,7 +43,7 @@ func (this *gmailClient) GetAuthorizedEmail(code, scope string) (*models.OrgEmai
 		return nil, fmt.Errorf("gmail has not been initialized")
 	}
 
-	token, err := fetchOauth2Token(this.cfg, code)
+	token, err := myoauth2.FetchOauth2Token(this.cfg, code)
 	if err != nil {
 		return nil, err
 	}
@@ -58,7 +66,7 @@ func (this *gmailClient) GetAuthorizedEmail(code, scope string) (*models.OrgEmai
 }
 
 func (this *gmailClient) GetOauth2CodeURL(state string) string {
-	return getOauth2CodeURL(state, this.cfg)
+	return myoauth2.GetOauth2CodeURL(state, this.cfg)
 }
 
 func (this *gmailClient) SendEmail(token oauth2.Token) error {

@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"fmt"
+	"net/http"
 
 	"github.com/astaxie/beego"
 
@@ -17,8 +18,8 @@ type EmailController struct {
 // @Title Get
 // @Description get login info
 // @Success 200
-// @router /orgemail-gmail [get]
-func (this *EmailController) CallBack() {
+// @router /auth [get]
+func (this *EmailController) Auth() {
 	code := this.GetString("code")
 	if code == "" {
 		err := fmt.Errorf("missing code")
@@ -40,7 +41,14 @@ func (this *EmailController) CallBack() {
 		return
 	}
 
-	e, err := email.GetEmailClient("gmail")
+	platform := this.GetString("platform")
+	if platform == "" {
+		err := fmt.Errorf("missing platform")
+		sendResponse(&this.Controller, 400, err, nil)
+		return
+	}
+
+	e, err := email.GetEmailClient(platform)
 	if err != nil {
 		sendResponse(&this.Controller, 400, err, nil)
 		return
@@ -56,6 +64,10 @@ func (this *EmailController) CallBack() {
 		sendResponse(&this.Controller, 500, err, nil)
 		return
 	}
+
+	setCookie(this.Ctx.ResponseWriter, "email", opt.Email)
+
+	http.Redirect(this.Ctx.ResponseWriter, this.Ctx.Request, e.WebRedirectDir(), http.StatusFound)
 }
 
 // @Title Get
@@ -63,7 +75,7 @@ func (this *EmailController) CallBack() {
 // @Param	platform		path 	string	true		"The email platform"
 // @Success 200 {object}
 // @Failure 403 :platform is empty
-// @router /code-url/:platform [get]
+// @router /authcodeurl/:platform [get]
 func (this *EmailController) Get() {
 	var statusCode = 200
 	var reason error

@@ -2,6 +2,7 @@ package mongodb
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 
 	"github.com/huaweicloud/golangsdk"
@@ -27,6 +28,12 @@ func (c *client) CreateOrgEmail(opt dbmodels.OrgEmailCreateInfo) error {
 	if err != nil {
 		return fmt.Errorf("Failed to create org email info: build body err:%v", err)
 	}
+
+	token, err := json.Marshal(opt.Token)
+	if err != nil {
+		return fmt.Errorf("Failed to create org email info: marshal token err:%v", err)
+	}
+	body["token"] = string(token)
 
 	var r *mongo.UpdateResult
 
@@ -72,13 +79,24 @@ func (c *client) GetOrgEmailInfo(email string) (dbmodels.OrgEmailCreateInfo, err
 		return nil
 	}
 
-	withContext(f)
+	r := dbmodels.OrgEmailCreateInfo{}
+	err := withContext(f)
+	if err != nil {
+		return r, err
+	}
 
 	var v OrgEmail
 
 	if err := sr.Decode(&v); err != nil {
-		return dbmodels.OrgEmailCreateInfo{}, fmt.Errorf("error decoding to bson struct: %s", err.Error())
+		return r, fmt.Errorf("error decoding to bson struct: %s", err.Error())
 	}
+
+	// Must Unmarshal, because the token in the db is marshaled.
+	var t []byte
+	if err := json.Unmarshal(v.Token, &t); err != nil {
+		return r, fmt.Errorf("error decoding to token: %s", err.Error())
+	}
+	v.Token = t
 
 	return toDBModelOrgEmail(v), nil
 }

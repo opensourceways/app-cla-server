@@ -18,7 +18,7 @@ type OrgEmail struct {
 func (this *OrgEmail) Create() error {
 	b, err := json.Marshal(this.Token)
 	if err != nil {
-		return fmt.Errorf("marshal oauth2 token failed: %s", err.Error())
+		return fmt.Errorf("Failed to marshal oauth2 token: %s", err.Error())
 	}
 
 	opt := dbmodels.OrgEmailCreateInfo{
@@ -32,7 +32,7 @@ func (this *OrgEmail) Create() error {
 func (this *OrgEmail) Get() error {
 	info, err := dbmodels.GetDB().GetOrgEmailInfo(this.Email)
 	if err != nil {
-		return nil
+		return err
 	}
 
 	this.Platform = info.Platform
@@ -41,7 +41,7 @@ func (this *OrgEmail) Get() error {
 
 	err = json.Unmarshal(info.Token, &token)
 	if err != nil {
-		return err
+		return fmt.Errorf("Failed to unmarshal oauth2 token: %s", err.Error())
 	}
 
 	this.Token = &token

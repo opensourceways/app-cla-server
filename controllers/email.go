@@ -1,12 +1,14 @@
 package controllers
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 
 	"github.com/astaxie/beego"
 
 	"github.com/zengchen1024/cla-server/email"
+	"github.com/zengchen1024/cla-server/models"
 )
 
 const authURLState = "state-token-cla"
@@ -15,10 +17,54 @@ type EmailController struct {
 	beego.Controller
 }
 
+// @Title Send Email by org
+// @Description send email byal org
+// @Param	body		body 	emails.EmailMessage	true		"body for email"
+// @Failure 403 body is empty
+// @router / [post]
+func (this *EmailController) Post() {
+	var statusCode = 201
+	var reason error
+	var body interface{}
+
+	defer func() {
+		sendResponse(&this.Controller, statusCode, reason, body)
+	}()
+
+	var msg email.EmailMessage
+	if err := json.Unmarshal(this.Ctx.Input.RequestBody, &msg); err != nil {
+		reason = fmt.Errorf("Parse email parameter failed: %s", err.Error())
+		statusCode = 400
+		return
+	}
+
+	cfg := &models.OrgEmail{Email: msg.From}
+	if err := cfg.Get(); err != nil {
+		reason = fmt.Errorf("Failed to get email cfg: %s", err.Error())
+		statusCode = 400
+		return
+	}
+
+	e, err := email.GetEmailClient(cfg.Platform)
+	if err != nil {
+		reason = fmt.Errorf("Failtd to get email client: %s", err.Error())
+		statusCode = 500
+		return
+	}
+
+	if err := e.SendEmail(*cfg.Token, msg); err != nil {
+		reason = fmt.Errorf("Failed to send email: %s", err.Error())
+		statusCode = 500
+		return
+	}
+
+	body = "send email successfully"
+}
+
 // @Title Get
 // @Description get login info
 // @Success 200
-// @router /auth [get]
+// @router /auth/:platform [get]
 func (this *EmailController) Auth() {
 	code := this.GetString("code")
 	if code == "" {
@@ -41,7 +87,7 @@ func (this *EmailController) Auth() {
 		return
 	}
 
-	platform := this.GetString("platform")
+	platform := this.GetString(":platform")
 	if platform == "" {
 		err := fmt.Errorf("missing platform")
 		sendResponse(&this.Controller, 400, err, nil)
@@ -59,6 +105,7 @@ func (this *EmailController) Auth() {
 		sendResponse(&this.Controller, 400, err, nil)
 		return
 	}
+	opt.Platform = platform
 
 	if err = opt.Create(); err != nil {
 		sendResponse(&this.Controller, 500, err, nil)

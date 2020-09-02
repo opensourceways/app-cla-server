@@ -61,5 +61,7 @@ func (this CLAOrgListOption) List() ([]dbmodels.CLAOrg, error) {
 	if err := copyBetweenStructs(&this, &p); err != nil {
 		return nil, err
 	}
+	p.RepoID = this.RepoID
+
 	return dbmodels.GetDB().ListBindingBetweenCLAAndOrg(p)
 }

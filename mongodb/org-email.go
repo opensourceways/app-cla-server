@@ -35,35 +35,26 @@ func (c *client) CreateOrgEmail(opt dbmodels.OrgEmailCreateInfo) error {
 	}
 	body["token"] = string(token)
 
-	var r *mongo.UpdateResult
-
 	f := func(ctx context.Context) error {
 		col := c.collection(orgEmailCollection)
 
 		filter := bson.M{"email": opt.Email}
-
 		upsert := true
-
 		update := bson.M{"$setOnInsert": bson.M(body)}
 
-		r, err = col.UpdateOne(ctx, filter, update, &options.UpdateOptions{Upsert: &upsert})
+		r, err := col.UpdateOne(ctx, filter, update, &options.UpdateOptions{Upsert: &upsert})
 		if err != nil {
 			return fmt.Errorf("Failed to create org email info: write db err:%v", err)
+		}
+
+		if r.MatchedCount == 0 && r.UpsertedCount == 0 {
+			return fmt.Errorf("Failed to create org email info: impossible")
 		}
 
 		return nil
 	}
 
-	err = withContext(f)
-	if err != nil {
-		return err
-	}
-
-	if r.MatchedCount == 0 && r.UpsertedCount == 0 {
-		return fmt.Errorf("Failed to create org email info: impossible")
-	}
-
-	return nil
+	return withContext(f)
 }
 
 func (c *client) GetOrgEmailInfo(email string) (dbmodels.OrgEmailCreateInfo, error) {
@@ -86,7 +77,6 @@ func (c *client) GetOrgEmailInfo(email string) (dbmodels.OrgEmailCreateInfo, err
 	}
 
 	var v OrgEmail
-
 	if err := sr.Decode(&v); err != nil {
 		return r, fmt.Errorf("error decoding to bson struct: %s", err.Error())
 	}

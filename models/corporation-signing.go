@@ -1,6 +1,7 @@
 package models
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/zengchen1024/cla-server/dbmodels"
@@ -23,7 +24,30 @@ type CorporationSigning struct {
 	Info map[string]interface{} `json:"info"`
 }
 
-func (this *CorporationSigning) Create() error {
+type CorporationSigningCreateOption struct {
+	CorporationSigning
+
+	VerifiCode string `json:"verifi_code"`
+}
+
+func (this *CorporationSigningCreateOption) Validate() error {
+	vc := dbmodels.VerificationCode{
+		Email:   this.AdminEmail,
+		Code:    this.VerifiCode,
+		Purpose: ActionCorporationSigning,
+	}
+
+	v, err := dbmodels.GetDB().CheckVerificationCode(vc)
+	if err != nil {
+		return err
+	}
+	if !v {
+		return fmt.Errorf("Verification Code is expired or wrong")
+	}
+	return nil
+}
+
+func (this *CorporationSigningCreateOption) Create() error {
 	p := dbmodels.CorporationSigningInfo{
 		AdminEmail:      this.AdminEmail,
 		AdminName:       this.AdminName,

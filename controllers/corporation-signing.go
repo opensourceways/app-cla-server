@@ -16,7 +16,7 @@ type CorporationSigningController struct {
 
 // @Title Corporation signing
 // @Description sign as corporation
-// @Param	body		body 	models.CorporationSigning	true		"body for corporation signing"
+// @Param	body		body 	models.CorporationSigningCreateOption	true		"body for corporation signing"
 // @Success 201 {int} map
 // @Failure 403 body is empty
 // @router / [post]
@@ -29,8 +29,14 @@ func (this *CorporationSigningController) Post() {
 		sendResponse(&this.Controller, statusCode, reason, body)
 	}()
 
-	var info models.CorporationSigning
+	var info models.CorporationSigningCreateOption
 	if err := json.Unmarshal(this.Ctx.Input.RequestBody, &info); err != nil {
+		reason = err
+		statusCode = 400
+		return
+	}
+
+	if err := (&info).Validate(); err != nil {
 		reason = err
 		statusCode = 400
 		return

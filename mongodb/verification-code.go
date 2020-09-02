@@ -68,10 +68,14 @@ func (c *client) CheckVerificationCode(opt dbmodels.VerificationCode) (bool, err
 			Expiry int64 `bson:"expiry"`
 		}
 		if err := r.Decode(&v); err != nil {
+			if err.Error() == mongo.ErrNoDocuments.Error() {
+				return nil
+			}
+
 			return fmt.Errorf("Failed to check verification code: %s", r.Err().Error())
 		}
 
-		valid = v.Expiry >= time.Now().Unix()
+		valid = (v.Expiry >= time.Now().Unix())
 		return nil
 	}
 

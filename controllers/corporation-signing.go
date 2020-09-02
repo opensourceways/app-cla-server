@@ -2,9 +2,11 @@ package controllers
 
 import (
 	"encoding/json"
+	"fmt"
 
 	"github.com/astaxie/beego"
 
+	"github.com/zengchen1024/cla-server/email"
 	"github.com/zengchen1024/cla-server/models"
 )
 
@@ -102,4 +104,75 @@ func (this *CorporationSigningController) Update() {
 	}
 
 	body = "enabled corporation successfully"
+}
+
+// @Title send verification code when signing as Corporation
+// @Description send verification code
+// @Param	body		body 	models.CorporationSigningVerifCode	true		"body for sending verification code"
+// @Success 201 {int} map
+// @Failure 403 body is empty
+// @router /verifi-code [post]
+func (this *CorporationSigningController) SendVerifiCode() {
+	var statusCode = 201
+	var reason error
+	var body interface{}
+
+	defer func() {
+		sendResponse(&this.Controller, statusCode, reason, body)
+	}()
+
+	var info models.CorporationSigningVerifCode
+	if err := json.Unmarshal(this.Ctx.Input.RequestBody, &info); err != nil {
+		reason = err
+		statusCode = 400
+		return
+	}
+
+	claOrg := &models.CLAOrg{ID: info.CLAOrgID}
+	if err := claOrg.Get(); err != nil {
+		reason = err
+		statusCode = 400
+		return
+	}
+
+	emailCfg := &models.OrgEmail{Email: claOrg.OrgEmail}
+	if err := emailCfg.Get(); err != nil {
+		reason = err
+		statusCode = 400
+		return
+	}
+
+	ec, err := email.GetEmailClient(emailCfg.Platform)
+	if err != nil {
+		reason = fmt.Errorf("Failtd to get email client: %s", err.Error())
+		statusCode = 500
+		return
+	}
+
+	expiry, err := beego.AppConfig.Int64("verification_vode_expiry")
+	if err != nil {
+		reason = err
+		statusCode = 400
+		return
+	}
+
+	code, err := info.Create(expiry)
+	if err != nil {
+		reason = err
+		statusCode = 500
+		return
+	}
+
+	msg := email.EmailMessage{
+		To:      info.Email,
+		Content: code,
+		Subject: "verification code",
+	}
+	if err := ec.SendEmail(*emailCfg.Token, msg); err != nil {
+		reason = fmt.Errorf("Failed to send verification code by email: %s", err.Error())
+		statusCode = 500
+		return
+	}
+
+	body = "verification code has been sent successfully"
 }

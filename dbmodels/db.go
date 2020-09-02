@@ -18,6 +18,7 @@ type IDB interface {
 	ICLAOrg
 	IIndividualSigning
 	ICLA
+	IVerifiCode
 }
 
 type ICorporationSigning interface {
@@ -61,4 +62,8 @@ type ICLA interface {
 	ListCLA(CLAListOptions) ([]CLA, error)
 	GetCLA(string) (CLA, error)
 	DeleteCLA(string) error
+}
+
+type IVerifiCode interface {
+	CreateVerificationCode(opt VerificationCode) error
 }

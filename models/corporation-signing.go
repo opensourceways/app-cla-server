@@ -1,11 +1,18 @@
 package models
 
-import "github.com/zengchen1024/cla-server/dbmodels"
+import (
+	"time"
+
+	"github.com/zengchen1024/cla-server/dbmodels"
+)
+
+const ActionCorporationSigning = "corporation-signing"
 
 type CorporationSigningDetails struct {
 	CorporationSigning
 	AdministratorEnabled bool `json:"administrator_enabled"`
 }
+
 type CorporationSigning struct {
 	CLAOrgID        string `json:"cla_org_id"`
 	AdminEmail      string `json:"admin_email"`
@@ -81,4 +88,25 @@ func (this CorporationSigningListOption) List() ([]CorporationSigningDetails, er
 		}
 	}
 	return r, nil
+}
+
+type CorporationSigningVerifCode struct {
+	CLAOrgID string `json:"cla_org_id"`
+
+	// Email is the email address of corporation
+	Email string `json:"email"`
+}
+
+func (this CorporationSigningVerifCode) Create(expiry int64) (string, error) {
+	code := "123456"
+
+	vc := dbmodels.VerificationCode{
+		Email:   this.Email,
+		Code:    code,
+		Purpose: ActionCorporationSigning,
+		Expiry:  time.Now().Unix() + expiry,
+	}
+
+	err := dbmodels.GetDB().CreateVerificationCode(vc)
+	return code, err
 }

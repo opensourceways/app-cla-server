@@ -13,6 +13,10 @@ type CLAController struct {
 	beego.Controller
 }
 
+func (this *CLAController) Prepare() {
+	apiPrepare(&this.Controller, []string{PermissionOwnerOfOrg})
+}
+
 // @Title CreateCLA
 // @Description create cla
 // @Param	body		body 	models.CLA	true		"body for cla content"
@@ -35,8 +39,13 @@ func (this *CLAController) Post() {
 		return
 	}
 
-	submitter := getHeader(&this.Controller, headerUser)
-	cla.Submitter = submitter
+	user, err := getApiAccessUser(&this.Controller)
+	if err != nil {
+		reason = err
+		statusCode = 400
+		return
+	}
+	cla.Submitter = user
 
 	if err := (&cla).Create(); err != nil {
 		reason = err
@@ -126,8 +135,15 @@ func (this *CLAController) GetAll() {
 		sendResponse(&this.Controller, statusCode, reason, body)
 	}()
 
+	user, err := getApiAccessUser(&this.Controller)
+	if err != nil {
+		reason = err
+		statusCode = 400
+		return
+	}
+
 	clas := models.CLAListOptions{
-		Submitter: getHeader(&this.Controller, headerUser),
+		Submitter: user,
 		Name:      this.GetString("name"),
 		ApplyTo:   this.GetString("apply_to"),
 		Language:  this.GetString("language"),

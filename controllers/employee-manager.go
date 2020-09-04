@@ -12,6 +12,10 @@ type EmployeeManagerController struct {
 	beego.Controller
 }
 
+func (this *EmployeeManagerController) Prepare() {
+	apiPrepare(&this.Controller, []string{PermissionCorporAdmin})
+}
+
 // @Title add employee manager
 // @Description add employee manager
 // @Param	body		body 	models.EmployeeManagerCreateOption	true		"body for employee manager"

@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"encoding/json"
+	"net/http"
 
 	"github.com/astaxie/beego"
 
@@ -10,6 +11,14 @@ import (
 
 type EmployeeSigningController struct {
 	beego.Controller
+}
+
+func (this *EmployeeSigningController) Prepare() {
+	if this.Ctx.Request.Method == http.MethodPost {
+		apiPrepare(&this.Controller, []string{PermissionIndividualSigner})
+	} else {
+		apiPrepare(&this.Controller, []string{PermissionEmployeeManager})
+	}
 }
 
 // @Title Employee signing

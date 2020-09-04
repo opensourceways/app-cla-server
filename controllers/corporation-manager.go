@@ -2,14 +2,31 @@ package controllers
 
 import (
 	"encoding/json"
+	"fmt"
+	"net/http"
+	"strings"
 
 	"github.com/astaxie/beego"
+	"github.com/huaweicloud/golangsdk"
 
 	"github.com/zengchen1024/cla-server/models"
 )
 
 type CorporationManagerController struct {
 	beego.Controller
+}
+
+func (this *CorporationManagerController) Prepare() {
+	method := this.Ctx.Request.Method
+
+	if method == http.MethodPost {
+		if strings.Contains(this.Ctx.Request.RequestURI, "/auth") {
+			return
+		}
+		apiPrepare(&this.Controller, []string{PermissionOwnerOfOrg})
+	} else {
+		apiPrepare(&this.Controller, []string{PermissionCorporAdmin, PermissionEmployeeManager})
+	}
 }
 
 // @Title add corporation manager
@@ -49,7 +66,7 @@ func (this *CorporationManagerController) Post() {
 // @Success 201 {int} map
 // @Failure 403 body is empty
 // @router /auth [post]
-func (this *CorporationManagerController) Authenticate() {
+func (this *CorporationManagerController) Auth() {
 	var statusCode = 201
 	var reason error
 	var body interface{}
@@ -65,14 +82,34 @@ func (this *CorporationManagerController) Authenticate() {
 		return
 	}
 
-	if v, err := (&info).Authenticate(); err != nil {
+	v, err := (&info).Authenticate()
+	if err != nil {
 		reason = err
 		statusCode = 500
 		return
-	} else {
-		// body = "authenticate successfully"
-		body = v
 	}
+	if len(v) == 0 {
+		reason = fmt.Errorf("the user or password is not correct")
+		statusCode = 500
+		return
+	}
+
+	result := make([]map[string]interface{}, 0, len(v))
+	for _, item := range v {
+		token, err := createApiAccessToken(item.Email, corporRoleToPermission(item.Role))
+		if err != nil {
+			continue
+		}
+
+		m, err := golangsdk.BuildRequestBody(item, "")
+		if err != nil {
+			continue
+		}
+
+		m["token"] = token
+		result = append(result, m)
+	}
+	body = result
 }
 
 // @Title Reset password

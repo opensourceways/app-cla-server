@@ -26,18 +26,12 @@ func (this *CorporationManagerCreateOption) Create() error {
 }
 
 type CorporationManagerAuthentication struct {
-	Platform string `json:"platform"`
-	OrgID    string `json:"org_id"`
-	RepoID   string `json:"repo_id"`
 	User     string `json:"user"`
 	Password string `json:"password"`
 }
 
-func (this CorporationManagerAuthentication) Authenticate() (dbmodels.CorporationManagerCheckResult, error) {
+func (this CorporationManagerAuthentication) Authenticate() ([]dbmodels.CorporationManagerCheckResult, error) {
 	opt := dbmodels.CorporationManagerCheckInfo{
-		Platform: this.Platform,
-		OrgID:    this.OrgID,
-		RepoID:   this.RepoID,
 		User:     this.User,
 		Password: this.Password,
 	}

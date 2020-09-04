@@ -3,11 +3,11 @@ package main
 import (
 	"github.com/astaxie/beego"
 
+	platformAuth "github.com/zengchen1024/cla-server/code-platform-auth"
 	"github.com/zengchen1024/cla-server/dbmodels"
 	"github.com/zengchen1024/cla-server/email"
 	"github.com/zengchen1024/cla-server/models"
 	"github.com/zengchen1024/cla-server/mongodb"
-	"github.com/zengchen1024/cla-server/oauth2"
 	_ "github.com/zengchen1024/cla-server/routers"
 )
 
@@ -35,7 +35,7 @@ func main() {
 	}
 
 	path = beego.AppConfig.String("gitee::credentials")
-	if err := oauth2.RegisterPlatform("gitee", path); err != nil {
+	if err := platformAuth.RegisterPlatform("gitee", path); err != nil {
 		beego.Info(err)
 		return
 	}

@@ -8,11 +8,8 @@ type CorporationManagerCreateOption struct {
 }
 
 type CorporationManagerCheckInfo struct {
-	Platform string `json:"platform" required:"true"`
-	OrgID    string `json:"org_id" required:"true"`
-	RepoID   string `json:"repo_id" required:"true"`
-	Password string `json:"-"`
-	User     string `json:"-"`
+	Password string
+	User     string
 }
 
 type CorporationManagerResetPassword struct {
@@ -25,6 +22,9 @@ type CorporationManagerCheckResult struct {
 	CLAOrgID string `json:"cla_org_id"`
 	Role     string `json:"role"`
 	Email    string `json:"email"`
+	Platform string `json:"platform"`
+	OrgID    string `json:"org_id"`
+	RepoID   string `json:"repo_id"`
 }
 
 type CorporationManagerListOption struct {

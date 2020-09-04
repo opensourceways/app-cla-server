@@ -112,7 +112,7 @@ func (this *EmailController) Auth() {
 		return
 	}
 
-	setCookie(this.Ctx.ResponseWriter, "email", opt.Email)
+	this.Ctx.SetCookie("email", opt.Email, "3600", "/")
 
 	http.Redirect(this.Ctx.ResponseWriter, this.Ctx.Request, e.WebRedirectDir(), http.StatusFound)
 }
@@ -131,6 +131,13 @@ func (this *EmailController) Get() {
 	defer func() {
 		sendResponse(&this.Controller, statusCode, reason, body)
 	}()
+
+	_, err := checkApiAccessToken(&this.Controller, []string{PermissionOwnerOfOrg})
+	if err != nil {
+		reason = err
+		statusCode = 400
+		return
+	}
 
 	platform := this.GetString(":platform")
 	if platform == "" {

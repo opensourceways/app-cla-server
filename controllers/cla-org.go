@@ -3,6 +3,7 @@ package controllers
 import (
 	"encoding/json"
 	"fmt"
+	"net/http"
 
 	"github.com/astaxie/beego"
 
@@ -11,6 +12,16 @@ import (
 
 type CLAOrgController struct {
 	beego.Controller
+}
+
+func (this *CLAOrgController) Prepare() {
+	if this.Ctx.Request.Method == http.MethodGet {
+		if len(this.Ctx.Request.RequestURI) > len("/v1/cla-org/") {
+			return
+		}
+	}
+
+	apiPrepare(&this.Controller, []string{PermissionOwnerOfOrg})
 }
 
 // @Title Bind CLA to Org/Repo
@@ -119,6 +130,44 @@ func (this *CLAOrgController) GetAll() {
 		OrgID:    this.GetString("org_id"),
 		RepoID:   this.GetString("repo_id"),
 		ApplyTo:  this.GetString("apply_to"),
+	}
+
+	r, err := opt.List()
+	if err != nil {
+		reason = err
+		statusCode = 500
+		return
+	}
+
+	body = r
+}
+
+// @Title GetSigningPageInfo
+// @Description get signing page info
+// @Success 200 {object} models.CLAOrg
+// @router /:platform/:org_id/:apply_to [get]
+func (this *CLAOrgController) GetSigningPageInfo() {
+	var statusCode = 200
+	var reason error
+	var body interface{}
+
+	defer func() {
+		sendResponse(&this.Controller, statusCode, reason, body)
+	}()
+
+	for _, p := range []string{":platform", ":org_id", ":apply_to"} {
+		if this.GetString(p) == "" {
+			reason = fmt.Errorf("missing parameter of %s", p)
+			statusCode = 400
+			return
+		}
+	}
+
+	opt := models.CLAOrgListOption{
+		Platform: this.GetString(":platform"),
+		OrgID:    this.GetString(":org_id"),
+		RepoID:   this.GetString("repo_id"),
+		ApplyTo:  this.GetString(":apply_to"),
 	}
 
 	r, err := opt.List()

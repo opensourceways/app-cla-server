@@ -6,8 +6,7 @@ import (
 
 	"github.com/astaxie/beego"
 
-	"github.com/zengchen1024/cla-server/controllers/platforms"
-	"github.com/zengchen1024/cla-server/oauth2"
+	platformAuth "github.com/zengchen1024/cla-server/code-platform-auth"
 )
 
 type AuthController struct {
@@ -17,7 +16,7 @@ type AuthController struct {
 // @Title Get
 // @Description get login info
 // @Success 200
-// @router /:purpose [get]
+// @router /:platform/:purpose [get]
 func (this *AuthController) Auth() {
 	purpose := this.GetString(":purpose")
 	if purpose == "" {
@@ -33,7 +32,7 @@ func (this *AuthController) Auth() {
 		return
 	}
 
-	platform := this.GetString("platform")
+	platform := this.GetString(":platform")
 	if platform == "" {
 		err := fmt.Errorf("missing platform")
 		sendResponse(&this.Controller, 400, err, nil)
@@ -50,34 +49,30 @@ func (this *AuthController) Auth() {
 		return
 	}
 
-	cp, err := oauth2.GetOauth2Instance(platform, purpose)
+	cp, err := platformAuth.GetAuthInstance(platform, purpose)
 	if err != nil {
 		sendResponse(&this.Controller, 400, err, nil)
 		return
 	}
 
-	token, err := cp.GetToken(code, scope)
+	token, user, err := cp.Auth(code, scope)
 	if err != nil {
-		err = fmt.Errorf("Get token failed: %s", err.Error())
+		err = fmt.Errorf("Failed to auth: %s", err.Error())
 		sendResponse(&this.Controller, 500, err, nil)
 		return
 	}
 
-	p, err := platforms.NewPlatform(token.AccessToken, "", platform)
+	at, err := createApiAccessToken(
+		fmt.Sprintf("%s/%s", platform, user),
+		actionToPermission(purpose),
+	)
 	if err != nil {
 		sendResponse(&this.Controller, 500, err, nil)
 		return
 	}
 
-	user, err := p.GetUser()
-	if err != nil {
-		err = fmt.Errorf("get %s user failed: %s", platform, err.Error())
-		sendResponse(&this.Controller, 500, err, nil)
-		return
-	}
-
-	setCookie(this.Ctx.ResponseWriter, "access_token", token.AccessToken)
-	setCookie(this.Ctx.ResponseWriter, "user", user)
+	this.Ctx.SetCookie("access_token", at, "3600", "/")
+	this.Ctx.SetCookie("platform_token", token, "3600", "/")
 
 	http.Redirect(this.Ctx.ResponseWriter, this.Ctx.Request, cp.WebRedirectDir(), http.StatusFound)
 }
@@ -85,7 +80,7 @@ func (this *AuthController) Auth() {
 // @Title Get
 // @Description get auth code url
 // @Success 200 {object}
-// @router /authcodeurl [get]
+// @router /authcodeurl/:platform/:purpose [get]
 func (this *AuthController) Get() {
 	var statusCode = 200
 	var reason error
@@ -95,7 +90,7 @@ func (this *AuthController) Get() {
 		sendResponse(&this.Controller, statusCode, reason, body)
 	}()
 
-	platform := this.GetString("platform")
+	platform := this.GetString(":platform")
 	if platform == "" {
 		reason = fmt.Errorf("missing parameter platform")
 		statusCode = 400
@@ -103,14 +98,14 @@ func (this *AuthController) Get() {
 	}
 
 	// purpose: login, sign
-	purpose := this.GetString("purpose")
+	purpose := this.GetString(":purpose")
 	if purpose == "" {
 		reason = fmt.Errorf("missing parameter purpose")
 		statusCode = 400
 		return
 	}
 
-	cp, err := oauth2.GetOauth2Instance(platform, purpose)
+	cp, err := platformAuth.GetAuthInstance(platform, purpose)
 	if cp == nil {
 		reason = err
 		statusCode = 400
@@ -118,6 +113,6 @@ func (this *AuthController) Get() {
 	}
 
 	body = map[string]string{
-		"url": cp.GetOauth2CodeURL(authURLState),
+		"url": cp.GetAuthCodeURL(authURLState),
 	}
 }

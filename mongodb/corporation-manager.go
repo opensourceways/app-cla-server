@@ -140,14 +140,8 @@ func (c *client) AddCorporationManager(claOrgID string, opt []dbmodels.Corporati
 	return c.doTransaction(f)
 }
 
-func (c *client) CheckCorporationManagerExist(opt dbmodels.CorporationManagerCheckInfo) (dbmodels.CorporationManagerCheckResult, error) {
-	result := dbmodels.CorporationManagerCheckResult{}
-
-	body, err := golangsdk.BuildRequestBody(opt, "")
-	if err != nil {
-		return result, fmt.Errorf("Failed to build options to list corporation manager, err:%v", err)
-	}
-	filter := bson.M(body)
+func (c *client) CheckCorporationManagerExist(opt dbmodels.CorporationManagerCheckInfo) ([]dbmodels.CorporationManagerCheckResult, error) {
+	filter := bson.M{}
 	additionalConditionForCorpoCLADoc(filter)
 
 	var v []CLAOrg
@@ -158,6 +152,9 @@ func (c *client) CheckCorporationManagerExist(opt dbmodels.CorporationManagerChe
 		pipeline := bson.A{
 			bson.M{"$match": filter},
 			bson.M{"$project": bson.M{
+				"platform": 1,
+				"org_id":   1,
+				"repo_id":  1,
 				fieldCorpoManagersID: bson.M{"$filter": bson.M{
 					"input": fmt.Sprintf("$%s", fieldCorpoManagersID),
 					"cond": bson.M{"$and": bson.A{
@@ -170,6 +167,9 @@ func (c *client) CheckCorporationManagerExist(opt dbmodels.CorporationManagerChe
 				}}},
 			},
 			bson.M{"$project": bson.M{
+				"platform":                   1,
+				"org_id":                     1,
+				"repo_id":                    1,
 				corpoManagerElemKey("role"):  1,
 				corpoManagerElemKey("email"): 1,
 			}},
@@ -183,9 +183,8 @@ func (c *client) CheckCorporationManagerExist(opt dbmodels.CorporationManagerChe
 		return cursor.All(ctx, &v)
 	}
 
-	err = withContext(f)
-	if err != nil {
-		return result, err
+	if err := withContext(f); err != nil {
+		return nil, err
 	}
 
 	ms := []CLAOrg{}
@@ -196,20 +195,23 @@ func (c *client) CheckCorporationManagerExist(opt dbmodels.CorporationManagerChe
 		}
 
 		if len(cm) != 1 {
-			return result, fmt.Errorf(
+			return nil, fmt.Errorf(
 				"Failed to check corporation manager: there isn't only one corporation manager")
 		}
 		ms = append(ms, item)
 	}
 
-	if len(ms) != 1 {
-		return result, fmt.Errorf(
-			"Failed to check corporation manager: there isn't only one clas which was signed by this corporation")
+	result := make([]dbmodels.CorporationManagerCheckResult, 0, len(ms))
+	for _, item := range ms {
+		result = append(result, dbmodels.CorporationManagerCheckResult{
+			Email:    item.CorporationManagers[0].Email,
+			Role:     item.CorporationManagers[0].Role,
+			CLAOrgID: objectIDToUID(item.ID),
+			Platform: item.Platform,
+			OrgID:    item.OrgID,
+			RepoID:   item.RepoID,
+		})
 	}
-
-	result.Email = ms[0].CorporationManagers[0].Email
-	result.Role = ms[0].CorporationManagers[0].Role
-	result.CLAOrgID = objectIDToUID(ms[0].ID)
 	return result, nil
 }
 

@@ -3,6 +3,7 @@ package controllers
 import (
 	"encoding/json"
 	"fmt"
+	"net/http"
 
 	"github.com/astaxie/beego"
 
@@ -12,6 +13,14 @@ import (
 
 type CorporationSigningController struct {
 	beego.Controller
+}
+
+func (this *CorporationSigningController) Prepare() {
+	method := this.Ctx.Request.Method
+
+	if method == http.MethodGet || method == http.MethodPut {
+		apiPrepare(&this.Controller, []string{PermissionOwnerOfOrg})
+	}
 }
 
 // @Title Corporation signing

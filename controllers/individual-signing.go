@@ -12,6 +12,10 @@ type IndividualSigningController struct {
 	beego.Controller
 }
 
+func (this *IndividualSigningController) Prepare() {
+	apiPrepare(&this.Controller, []string{PermissionIndividualSigner})
+}
+
 // @Title Individual signing
 // @Description sign as individual
 // @Param	body		body 	models.IndividualSigning	true		"body for individual signing"

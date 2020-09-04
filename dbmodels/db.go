@@ -28,7 +28,7 @@ type ICorporationSigning interface {
 }
 
 type ICorporationManager interface {
-	CheckCorporationManagerExist(CorporationManagerCheckInfo) (CorporationManagerCheckResult, error)
+	CheckCorporationManagerExist(CorporationManagerCheckInfo) ([]CorporationManagerCheckResult, error)
 	AddCorporationManager(claOrgID string, opt []CorporationManagerCreateOption, managerNumber int) error
 	DeleteCorporationManager(claOrgID string, opt []CorporationManagerCreateOption) error
 	ResetCorporationManagerPassword(string, CorporationManagerResetPassword) error

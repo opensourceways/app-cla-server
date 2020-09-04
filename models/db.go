@@ -8,7 +8,6 @@ func RegisterDB(idb IDB) {
 
 type IDB interface {
 	ICLA
-	IOrgRepo
 }
 
 type ICLA interface {
@@ -16,10 +15,4 @@ type ICLA interface {
 	ListCLAMetadata([]string) ([]CLAMetadata, error)
 	GetCLAMetadata(string) (CLAMetadata, error)
 	DeleteCLAMetadata(string) error
-}
-
-type IOrgRepo interface {
-	CreateOrgRepo(OrgRepo) (string, error)
-	DisableOrgRepo(string) error
-	ListOrgRepo(OrgRepos) ([]OrgRepo, error)
 }

@@ -15,29 +15,14 @@ import (
 
 func init() {
 	ns := beego.NewNamespace("/v1",
-		beego.NSNamespace("/login",
-			beego.NSInclude(
-				&controllers.LoginController{},
-			),
-		),
 		beego.NSNamespace("/cla",
 			beego.NSInclude(
 				&controllers.CLAController{},
 			),
 		),
-		beego.NSNamespace("/org-repo",
-			beego.NSInclude(
-				&controllers.OrgRepoController{},
-			),
-		),
 		beego.NSNamespace("/cla-org",
 			beego.NSInclude(
 				&controllers.CLAOrgController{},
-			),
-		),
-		beego.NSNamespace("/cla-metadata",
-			beego.NSInclude(
-				&controllers.CLAMetadataController{},
 			),
 		),
 		beego.NSNamespace("/individual-signing",

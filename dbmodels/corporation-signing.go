@@ -1,18 +1,19 @@
 package dbmodels
 
+type TypeSigningInfo map[string]string
+
 type CorporationSigningDetails struct {
 	CorporationSigningInfo
 	AdministratorEnabled bool
 }
 
 type CorporationSigningInfo struct {
-	AdminEmail      string `json:"admin_email" required:"true"`
-	AdminName       string `json:"admin_name" required:"true"`
-	CorporationName string `json:"corporation_name" required:"true"`
-	CorporationID   string `json:"corporation_id" required:"true"`
-	Enabled         bool   `json:"enabled"`
-
-	Info map[string]interface{} `json:"info,omitempty"`
+	AdminEmail      string          `json:"admin_email" required:"true"`
+	AdminName       string          `json:"admin_name" required:"true"`
+	CorporationName string          `json:"corporation_name" required:"true"`
+	CorporationID   string          `json:"corporation_id" required:"true"`
+	Enabled         bool            `json:"enabled"`
+	Info            TypeSigningInfo `json:"info,omitempty"`
 }
 
 type CorporationSigningListOption struct {

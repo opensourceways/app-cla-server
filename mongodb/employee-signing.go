@@ -14,8 +14,6 @@ import (
 	"github.com/zengchen1024/cla-server/models"
 )
 
-const fieldEmployeeSigningsID = "employees"
-
 func additionalConditionForIndividualSigningDoc(filter bson.M, email string) {
 	filter["apply_to"] = models.ApplyToIndividual
 	filter["enabled"] = true
@@ -32,7 +30,7 @@ func emailSuffixToKey(email string) string {
 }
 
 func employeeSigningField(email string) string {
-	return fmt.Sprintf("%s.%s", fieldEmployeeSigningsID, emailSuffixToKey(email))
+	return fmt.Sprintf("%s.%s", fieldEmployees, emailSuffixToKey(email))
 }
 
 func employeeSigningElemField(email string) func(string) string {
@@ -48,10 +46,10 @@ type employeeSignings struct {
 }
 
 type employeeSigning struct {
-	Name        string      `bson:"name"`
-	Email       string      `bson:"email"`
-	Enabled     bool        `bson:"enabled"`
-	SigningInfo signingInfo `bson:"signing_info"`
+	Name        string                   `bson:"name"`
+	Email       string                   `bson:"email"`
+	Enabled     bool                     `bson:"enabled"`
+	SigningInfo dbmodels.TypeSigningInfo `bson:"signing_info"`
 }
 
 func (c *client) SignAsEmployee(claOrgID string, info dbmodels.EmployeeSigningInfo) error {

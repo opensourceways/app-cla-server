@@ -13,14 +13,12 @@ import (
 	"github.com/zengchen1024/cla-server/models"
 )
 
-const fieldCorporationsID = "corporations"
-
 type corporationSigning struct {
-	AdminEmail      string      `bson:"admin_email"`
-	AdminName       string      `bson:"admin_name"`
-	CorporationName string      `bson:"corporation_name"`
-	Enabled         bool        `bson:"enabled"`
-	SigningInfo     signingInfo `bson:"info"`
+	AdminEmail      string                   `bson:"admin_email"`
+	AdminName       string                   `bson:"admin_name"`
+	CorporationName string                   `bson:"corporation_name"`
+	Enabled         bool                     `bson:"enabled"`
+	SigningInfo     dbmodels.TypeSigningInfo `bson:"info"`
 }
 
 func additionalConditionForCorpoCLADoc(filter bson.M) {
@@ -29,7 +27,7 @@ func additionalConditionForCorpoCLADoc(filter bson.M) {
 }
 
 func corporationsElemKey(field string) string {
-	return fmt.Sprintf("%s.%s", fieldCorporationsID, field)
+	return fmt.Sprintf("%s.%s", fieldCorporations, field)
 }
 
 func (c *client) SignAsCorporation(claOrgID string, info dbmodels.CorporationSigningInfo) error {
@@ -62,9 +60,9 @@ func (c *client) SignAsCorporation(claOrgID string, info dbmodels.CorporationSig
 			bson.M{"$match": filter},
 			bson.M{"$project": bson.M{
 				"count": bson.M{"$cond": bson.A{
-					bson.M{"$isArray": fmt.Sprintf("$%s", fieldCorporationsID)},
+					bson.M{"$isArray": fmt.Sprintf("$%s", fieldCorporations)},
 					bson.M{"$size": bson.M{"$filter": bson.M{
-						"input": fmt.Sprintf("$%s", fieldCorporationsID),
+						"input": fmt.Sprintf("$%s", fieldCorporations),
 						"cond":  bson.M{"$eq": bson.A{"$$this.corporation_id", info.CorporationID}},
 					}}},
 					0,
@@ -91,7 +89,7 @@ func (c *client) SignAsCorporation(claOrgID string, info dbmodels.CorporationSig
 			}
 		}
 
-		r, err := col.UpdateOne(ctx, bson.M{"_id": oid}, bson.M{"$push": bson.M{fieldCorporationsID: bson.M(body)}})
+		r, err := col.UpdateOne(ctx, bson.M{"_id": oid}, bson.M{"$push": bson.M{fieldCorporations: bson.M(body)}})
 		if err != nil {
 			return err
 		}
@@ -125,10 +123,10 @@ func (c *client) ListCorporationSigning(opt dbmodels.CorporationSigningListOptio
 		pipeline := bson.A{
 			bson.M{"$match": filter},
 			bson.M{"$project": bson.M{
-				fieldCorporationsID: 1,
+				fieldCorporations: 1,
 
-				fieldCorpoManagersID: bson.M{"$filter": bson.M{
-					"input": fmt.Sprintf("$%s", fieldCorpoManagersID),
+				fieldCorpoManagers: bson.M{"$filter": bson.M{
+					"input": fmt.Sprintf("$%s", fieldCorpoManagers),
 					"cond":  bson.M{"$eq": bson.A{"$$this.role", models.RoleAdmin}},
 				}},
 			}},
@@ -196,7 +194,7 @@ func (c *client) UpdateCorporationSigning(claOrgID, adminEmail, corporationName 
 
 	info := bson.M{}
 	for k, v := range body {
-		info[fmt.Sprintf("%s.$[elem].%s", fieldCorporationsID, k)] = v
+		info[fmt.Sprintf("%s.$[elem].%s", fieldCorporations, k)] = v
 	}
 
 	oid, err := toObjectID(claOrgID)

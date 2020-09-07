@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"strings"
 
 	"github.com/astaxie/beego"
 	"github.com/huaweicloud/golangsdk"
@@ -20,7 +19,7 @@ func (this *CorporationManagerController) Prepare() {
 	method := this.Ctx.Request.Method
 
 	if method == http.MethodPost {
-		if strings.Contains(this.Ctx.Request.RequestURI, "/auth") {
+		if this.Data["RouterPattern"] == "/v1/corporation-manager/auth" {
 			return
 		}
 		apiPrepare(&this.Controller, []string{PermissionOwnerOfOrg})

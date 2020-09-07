@@ -11,7 +11,7 @@ import (
 )
 
 func individualSigningKey(email string) string {
-	return fmt.Sprintf("individuals.%s", strings.ReplaceAll(email, ".", "_"))
+	return fmt.Sprintf("%s.%s", fieldIndividuals, strings.ReplaceAll(email, ".", "_"))
 }
 
 func (c *client) SignAsIndividual(claOrgID string, info dbmodels.IndividualSigningInfo) error {

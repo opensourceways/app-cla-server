@@ -13,8 +13,6 @@ import (
 	"github.com/zengchen1024/cla-server/dbmodels"
 )
 
-const fieldCorpoManagersID = "corporation_managers"
-
 type corporationManager struct {
 	Name          string `bson:"name"`
 	Role          string `bson:"role"`
@@ -24,7 +22,7 @@ type corporationManager struct {
 }
 
 func corpoManagerElemKey(field string) string {
-	return fmt.Sprintf("%s.%s", fieldCorpoManagersID, field)
+	return fmt.Sprintf("%s.%s", fieldCorpoManagers, field)
 }
 
 func checkBeforeAddingCorporationManager(c *client, ctx mongo.SessionContext, claOrg dbmodels.CLAOrg, opt []dbmodels.CorporationManagerCreateOption) (int, int, error) {
@@ -43,9 +41,9 @@ func checkBeforeAddingCorporationManager(c *client, ctx mongo.SessionContext, cl
 		bson.M{"$match": filter},
 		bson.M{"$project": bson.M{
 			"role_count": bson.M{"$cond": bson.A{
-				bson.M{"$isArray": fmt.Sprintf("$%s", fieldCorpoManagersID)},
+				bson.M{"$isArray": fmt.Sprintf("$%s", fieldCorpoManagers)},
 				bson.M{"$size": bson.M{"$filter": bson.M{
-					"input": fmt.Sprintf("$%s", fieldCorpoManagersID),
+					"input": fmt.Sprintf("$%s", fieldCorpoManagers),
 					"cond": bson.M{"$and": bson.A{
 						bson.M{"$eq": bson.A{"$$this.corporation_id", opt[0].CorporationID}},
 						bson.M{"$eq": bson.A{"$$this.role", opt[0].Role}},
@@ -54,9 +52,9 @@ func checkBeforeAddingCorporationManager(c *client, ctx mongo.SessionContext, cl
 				0,
 			}},
 			"email_count": bson.M{"$cond": bson.A{
-				bson.M{"$isArray": fmt.Sprintf("$%s", fieldCorpoManagersID)},
+				bson.M{"$isArray": fmt.Sprintf("$%s", fieldCorpoManagers)},
 				bson.M{"$size": bson.M{"$filter": bson.M{
-					"input": fmt.Sprintf("$%s", fieldCorpoManagersID),
+					"input": fmt.Sprintf("$%s", fieldCorpoManagers),
 					"cond":  bson.M{"$in": bson.A{"$$this.email", emails}},
 				}}},
 				0,
@@ -125,7 +123,7 @@ func (c *client) AddCorporationManager(claOrgID string, opt []dbmodels.Corporati
 
 		v, err := col.UpdateOne(
 			ctx, bson.M{"_id": oid},
-			bson.M{"$push": bson.M{fieldCorpoManagersID: bson.M{"$each": updates}}},
+			bson.M{"$push": bson.M{fieldCorpoManagers: bson.M{"$each": updates}}},
 		)
 		if err != nil {
 			return fmt.Errorf("Failed to add corporation manager: add record failed: %s", err.Error())
@@ -155,8 +153,8 @@ func (c *client) CheckCorporationManagerExist(opt dbmodels.CorporationManagerChe
 				"platform": 1,
 				"org_id":   1,
 				"repo_id":  1,
-				fieldCorpoManagersID: bson.M{"$filter": bson.M{
-					"input": fmt.Sprintf("$%s", fieldCorpoManagersID),
+				fieldCorpoManagers: bson.M{"$filter": bson.M{
+					"input": fmt.Sprintf("$%s", fieldCorpoManagers),
 					"cond": bson.M{"$and": bson.A{
 						bson.M{"$eq": bson.A{"$$this.password", opt.Password}},
 						bson.M{"$or": bson.A{
@@ -227,7 +225,7 @@ func (c *client) ResetCorporationManagerPassword(claOrgID string, opt dbmodels.C
 	f := func(ctx context.Context) error {
 		col := c.collection(claOrgCollection)
 
-		update := bson.M{"$set": bson.M{fmt.Sprintf("%s.$[ms].password", fieldCorpoManagersID): opt.NewPassword}}
+		update := bson.M{"$set": bson.M{fmt.Sprintf("%s.$[ms].password", fieldCorpoManagers): opt.NewPassword}}
 
 		updateOpt := options.UpdateOptions{
 			ArrayFilters: &options.ArrayFilters{
@@ -277,8 +275,8 @@ func (c *client) ListCorporationManager(claOrgID string, opt dbmodels.Corporatio
 		pipeline := bson.A{
 			bson.M{"$match": filter},
 			bson.M{"$project": bson.M{
-				fieldCorpoManagersID: bson.M{"$filter": bson.M{
-					"input": fmt.Sprintf("$%s", fieldCorpoManagersID),
+				fieldCorpoManagers: bson.M{"$filter": bson.M{
+					"input": fmt.Sprintf("$%s", fieldCorpoManagers),
 					"cond": bson.M{"$and": bson.A{
 						bson.M{"$eq": bson.A{"$$this.role", opt.Role}},
 						bson.M{"$eq": bson.A{"$$this.corporation_id", opt.CorporationID}},
@@ -341,7 +339,7 @@ func (c *client) DeleteCorporationManager(claOrgID string, opt []dbmodels.Corpor
 		}
 
 		update := bson.M{"$pull": bson.M{
-			fieldCorpoManagersID: bson.M{
+			fieldCorpoManagers: bson.M{
 				"email": bson.M{"$in": emails},
 			},
 		}}
@@ -374,9 +372,9 @@ func checkBeforeDeletingCorporationManager(c *client, ctx mongo.SessionContext, 
 		bson.M{"$match": filter},
 		bson.M{"$project": bson.M{
 			"email_count": bson.M{"$cond": bson.A{
-				bson.M{"$isArray": fmt.Sprintf("$%s", fieldCorpoManagersID)},
+				bson.M{"$isArray": fmt.Sprintf("$%s", fieldCorpoManagers)},
 				bson.M{"$size": bson.M{"$filter": bson.M{
-					"input": fmt.Sprintf("$%s", fieldCorpoManagersID),
+					"input": fmt.Sprintf("$%s", fieldCorpoManagers),
 					"cond": bson.M{"$and": bson.A{
 						bson.M{"$eq": bson.A{"$$this.role", opt[0].Role}},
 						bson.M{"$in": bson.A{"$$this.email", emails}},

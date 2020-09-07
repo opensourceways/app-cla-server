@@ -21,7 +21,7 @@ type CorporationSigning struct {
 	CorporationName string `json:"corporation_name"`
 	Enabled         bool   `json:"enabled"`
 
-	Info map[string]interface{} `json:"info"`
+	Info dbmodels.TypeSigningInfo `json:"info"`
 }
 
 type CorporationSigningCreateOption struct {

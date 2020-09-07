@@ -60,6 +60,11 @@ func init() {
 				&controllers.AuthController{},
 			),
 		),
+		beego.NSNamespace("/org-signature",
+			beego.NSInclude(
+				&controllers.OrgSignatureController{},
+			),
+		),
 	)
 	beego.AddNamespace(ns)
 }

@@ -15,15 +15,18 @@ import (
 )
 
 const (
-	claOrgCollection  = "cla_orgs"
-	orgIdentifierName = "org_identifier"
+	claOrgCollection   = "cla_orgs"
+	orgIdentifierName  = "org_identifier"
+	fieldIndividuals   = "individuals"
+	fieldEmployees     = "employees"
+	fieldCorporations  = "corporations"
+	fieldCorpoManagers = "corporation_managers"
+	fieldOrgSignature  = "org_signature"
 )
 
 func additionalConditionForCLAOrgDoc(filter bson.M) {
 	filter["enabled"] = true
 }
-
-type signingInfo map[string]interface{}
 
 type CLAOrg struct {
 	ID primitive.ObjectID `bson:"_id"`
@@ -42,7 +45,7 @@ type CLAOrg struct {
 
 	// Individuals is the cla signing information of ordinary contributors
 	// key is the email of contributor
-	Individuals map[string]signingInfo `bson:"individuals,omitempty"`
+	Individuals map[string]dbmodels.TypeSigningInfo `bson:"individuals,omitempty"`
 
 	// Employees is the cla signing information of employees and grouped by corporation
 	// key is the email suffix of corporation
@@ -54,6 +57,8 @@ type CLAOrg struct {
 
 	// CorporationManagers is the managers of corporation who can manage the employee
 	CorporationManagers []corporationManager `bson:"corporation_managers,omitempty"`
+
+	OrgSignature []byte `bson:"org_signature"`
 }
 
 func orgIdentifier(platform, org string) string {
@@ -134,12 +139,7 @@ func (c *client) GetBindingBetweenCLAAndOrg(uid string) (dbmodels.CLAOrg, error)
 	f := func(ctx context.Context) error {
 		col := c.db.Collection(claOrgCollection)
 		opt := options.FindOneOptions{
-			Projection: bson.M{
-				"individuals":          0,
-				"employees":            0,
-				"corporations":         0,
-				"corporation_managers": 0,
-			},
+			Projection: projectOfClaOrg(),
 		}
 
 		sr = col.FindOne(ctx, bson.M{"_id": oid}, &opt)
@@ -171,12 +171,7 @@ func (c *client) ListBindingBetweenCLAAndOrg(opt dbmodels.CLAOrgListOption) ([]d
 		col := c.db.Collection(claOrgCollection)
 
 		opts := options.FindOptions{
-			Projection: bson.M{
-				"individuals":          0,
-				"employees":            0,
-				"corporations":         0,
-				"corporation_managers": 0,
-			},
+			Projection: projectOfClaOrg(),
 		}
 		cursor, err := col.Find(ctx, filter, &opts)
 		if err != nil {
@@ -227,5 +222,15 @@ func toModelCLAOrg(item CLAOrg) dbmodels.CLAOrg {
 		OrgEmail:    item.OrgEmail,
 		Enabled:     item.Enabled,
 		Submitter:   item.Submitter,
+	}
+}
+
+func projectOfClaOrg() bson.M {
+	return bson.M{
+		fieldIndividuals:   0,
+		fieldEmployees:     0,
+		fieldCorporations:  0,
+		fieldCorpoManagers: 0,
+		fieldOrgSignature:  0,
 	}
 }

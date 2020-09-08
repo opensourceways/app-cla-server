@@ -17,6 +17,7 @@ type corporationSigning struct {
 	AdminEmail      string                   `bson:"admin_email"`
 	AdminName       string                   `bson:"admin_name"`
 	CorporationName string                   `bson:"corporation_name"`
+	CorporationID   string                   `bson:"corporation_id"`
 	Enabled         bool                     `bson:"enabled"`
 	SigningInfo     dbmodels.TypeSigningInfo `bson:"info"`
 }

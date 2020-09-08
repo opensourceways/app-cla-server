@@ -34,6 +34,7 @@ type ICorporationManager interface {
 	DeleteCorporationManager(claOrgID string, opt []CorporationManagerCreateOption) error
 	ResetCorporationManagerPassword(string, CorporationManagerResetPassword) error
 	ListCorporationManager(claOrgID string, opt CorporationManagerListOption) ([]CorporationManagerListResult, error)
+	ListManagersWhenEmployeeSigning(claOrgIDs []string, corporID string) ([]CorporationManagerListResult, error)
 }
 
 type IEmployeeSigning interface {

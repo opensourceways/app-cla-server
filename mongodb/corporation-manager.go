@@ -319,6 +319,69 @@ func (c *client) ListCorporationManager(claOrgID string, opt dbmodels.Corporatio
 	return r, nil
 }
 
+func (c *client) ListManagersWhenEmployeeSigning(claOrgIDs []string, corporID string) ([]dbmodels.CorporationManagerListResult, error) {
+	ids := make(bson.A, 0, len(claOrgIDs))
+	for _, id := range claOrgIDs {
+		oid, err := toObjectID(id)
+		if err != nil {
+			return nil, err
+		}
+		ids = append(ids, oid)
+	}
+
+	filter := bson.M{"_id": bson.M{"$in": ids}}
+
+	var v []CLAOrg
+
+	f := func(ctx context.Context) error {
+		col := c.collection(claOrgCollection)
+
+		pipeline := bson.A{
+			bson.M{"$match": filter},
+			bson.M{"$project": bson.M{
+				fieldCorpoManagers: bson.M{"$filter": bson.M{
+					"input": fmt.Sprintf("$%s", fieldCorpoManagers),
+					"cond":  bson.M{"$eq": bson.A{"$$this.corporation_id", corporID}},
+				}}},
+			},
+			bson.M{"$project": bson.M{
+				corpoManagerElemKey("name"):  1,
+				corpoManagerElemKey("email"): 1,
+				corpoManagerElemKey("role"):  1,
+			}},
+		}
+
+		cursor, err := col.Aggregate(ctx, pipeline)
+		if err != nil {
+			return fmt.Errorf("error find bindings: %v", err)
+		}
+
+		return cursor.All(ctx, &v)
+	}
+
+	if err := withContext(f); err != nil {
+		return nil, err
+	}
+
+	if len(v) == 0 {
+		return nil, nil
+	}
+	if len(v) != 1 {
+		return nil, fmt.Errorf("Failed to list corporation managers when employeee signing: impossible")
+	}
+
+	ms := v[0].CorporationManagers
+	r := make([]dbmodels.CorporationManagerListResult, 0, len(ms))
+	for _, item := range ms {
+		r = append(r, dbmodels.CorporationManagerListResult{
+			Name:  item.Name,
+			Email: item.Email,
+			Role:  item.Role,
+		})
+	}
+	return r, nil
+}
+
 func (c *client) DeleteCorporationManager(claOrgID string, opt []dbmodels.CorporationManagerCreateOption) error {
 	oid, err := toObjectID(claOrgID)
 	if err != nil {

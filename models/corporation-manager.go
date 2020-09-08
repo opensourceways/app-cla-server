@@ -1,6 +1,9 @@
 package models
 
-import "github.com/zengchen1024/cla-server/dbmodels"
+import (
+	"github.com/zengchen1024/cla-server/dbmodels"
+	"github.com/zengchen1024/cla-server/util"
+)
 
 const (
 	RoleAdmin   = "admin"
@@ -68,4 +71,8 @@ func (this CorporationManagerListOption) List() ([]dbmodels.CorporationManagerLi
 		CorporationID: emailSuffixToKey(this.Email),
 	}
 	return dbmodels.GetDB().ListCorporationManager(this.CLAOrgID, opt)
+}
+
+func ListManagersWhenEmployeeSigning(claOrgIDs []string, employeeEmail string) ([]dbmodels.CorporationManagerListResult, error) {
+	return dbmodels.GetDB().ListManagersWhenEmployeeSigning(claOrgIDs, util.EmailSuffixToKey(employeeEmail))
 }

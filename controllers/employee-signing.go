@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 
 	"github.com/astaxie/beego"
@@ -40,6 +41,47 @@ func (this *EmployeeSigningController) Post() {
 	if err := json.Unmarshal(this.Ctx.Input.RequestBody, &info); err != nil {
 		reason = err
 		statusCode = 400
+		return
+	}
+
+	claOrg := &models.CLAOrg{ID: info.CLAOrgID}
+	if err := claOrg.Get(); err != nil {
+		reason = err
+		statusCode = 400
+		return
+	}
+
+	opt := models.CLAOrgListOption{
+		Platform: claOrg.Platform,
+		OrgID:    claOrg.OrgID,
+		RepoID:   claOrg.RepoID,
+		ApplyTo:  models.ApplyToCorporation,
+	}
+	claOrgs, err := opt.List()
+	if err != nil {
+		reason = err
+		statusCode = 500
+		return
+	}
+	if len(claOrgs) == 0 {
+		reason = fmt.Errorf("this org has not been bound any cla to be signed as corporation")
+		statusCode = 400
+		return
+	}
+
+	ids := make([]string, 0, len(claOrgs))
+	for _, i := range claOrgs {
+		ids = append(ids, i.ID)
+	}
+	managers, err := models.ListManagersWhenEmployeeSigning(ids, info.Email)
+	if err != nil {
+		reason = err
+		statusCode = 500
+		return
+	}
+	if managers == nil || len(managers) == 0 {
+		reason = fmt.Errorf("the corporation has not signed")
+		statusCode = 500
 		return
 	}
 

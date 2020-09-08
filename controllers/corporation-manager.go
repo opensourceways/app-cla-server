@@ -19,7 +19,7 @@ func (this *CorporationManagerController) Prepare() {
 	method := this.Ctx.Request.Method
 
 	if method == http.MethodPost {
-		if this.Data["RouterPattern"] == "/v1/corporation-manager/auth" {
+		if getRouterPattern(&this.Controller) == "/v1/corporation-manager/auth" {
 			return
 		}
 		apiPrepare(&this.Controller, []string{PermissionOwnerOfOrg})

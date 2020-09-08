@@ -15,13 +15,14 @@ import (
 )
 
 const (
-	claOrgCollection   = "cla_orgs"
-	orgIdentifierName  = "org_identifier"
-	fieldIndividuals   = "individuals"
-	fieldEmployees     = "employees"
-	fieldCorporations  = "corporations"
-	fieldCorpoManagers = "corporation_managers"
-	fieldOrgSignature  = "org_signature"
+	claOrgCollection     = "cla_orgs"
+	orgIdentifierName    = "org_identifier"
+	fieldIndividuals     = "individuals"
+	fieldEmployees       = "employees"
+	fieldCorporations    = "corporations"
+	fieldCorpoManagers   = "corporation_managers"
+	fieldOrgSignature    = "org_signature"
+	fieldOrgSignatureTag = "org_signature_uploaded"
 )
 
 func additionalConditionForCLAOrgDoc(filter bson.M) {
@@ -58,7 +59,8 @@ type CLAOrg struct {
 	// CorporationManagers is the managers of corporation who can manage the employee
 	CorporationManagers []corporationManager `bson:"corporation_managers,omitempty"`
 
-	OrgSignature []byte `bson:"org_signature"`
+	OrgSignatureUploaded bool   `bson:"org_signature_uploaded"`
+	OrgSignature         []byte `bson:"org_signature"`
 }
 
 func orgIdentifier(platform, org string) string {

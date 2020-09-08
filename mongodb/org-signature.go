@@ -18,7 +18,10 @@ func (c *client) UploadOrgSignature(claOrgID string, pdf []byte) error {
 	f := func(ctx context.Context) error {
 		col := c.collection(claOrgCollection)
 
-		v := bson.M{fieldOrgSignature: pdf}
+		v := bson.M{
+			fieldOrgSignature:    pdf,
+			fieldOrgSignatureTag: true,
+		}
 		_, err := col.UpdateOne(ctx, bson.M{"_id": oid}, bson.M{"$set": v})
 		return err
 	}
@@ -43,7 +46,7 @@ func (c *client) DownloadOrgSignature(claOrgID string) ([]byte, error) {
 			},
 		}
 
-		sr = col.FindOne(ctx, bson.M{"_id": oid}, &opt)
+		sr = col.FindOne(ctx, bson.M{"_id": oid, fieldOrgSignatureTag: true}, &opt)
 		return nil
 	}
 

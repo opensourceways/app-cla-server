@@ -64,3 +64,7 @@ func (this CLAListOptions) Get() ([]dbmodels.CLA, error) {
 	}
 	return dbmodels.GetDB().ListCLA(p)
 }
+
+func ListCLAByIDs(ids []string) ([]dbmodels.CLA, error) {
+	return dbmodels.GetDB().ListCLAByIDs(ids)
+}

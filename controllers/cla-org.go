@@ -3,7 +3,6 @@ package controllers
 import (
 	"encoding/json"
 	"fmt"
-	"net/http"
 
 	"github.com/astaxie/beego"
 
@@ -15,10 +14,8 @@ type CLAOrgController struct {
 }
 
 func (this *CLAOrgController) Prepare() {
-	if this.Ctx.Request.Method == http.MethodGet {
-		if len(this.Ctx.Request.RequestURI) > len("/v1/cla-org/") {
-			return
-		}
+	if getRouterPattern(&this.Controller) == "/v1/cla-org/:platform/:org_id/:apply_to" {
+		return
 	}
 
 	apiPrepare(&this.Controller, []string{PermissionOwnerOfOrg})
@@ -170,12 +167,42 @@ func (this *CLAOrgController) GetSigningPageInfo() {
 		ApplyTo:  this.GetString(":apply_to"),
 	}
 
-	r, err := opt.List()
+	claOrgs, err := opt.List()
+	if err != nil {
+		reason = err
+		statusCode = 500
+		return
+	}
+	if len(claOrgs) == 0 {
+		reason = fmt.Errorf("this org has no bound cla")
+		statusCode = 500
+		return
+	}
+
+	ids := make([]string, 0, len(claOrgs))
+	m := map[string]string{}
+	for _, i := range claOrgs {
+		if i.ApplyTo == models.ApplyToCorporation && !i.OrgSignatureUploaded {
+			reason = fmt.Errorf("this org is not ready to sign cla")
+			statusCode = 500
+			return
+		}
+
+		ids = append(ids, i.CLAID)
+		m[i.CLAID] = i.ID
+	}
+
+	clas, err := models.ListCLAByIDs(ids)
 	if err != nil {
 		reason = err
 		statusCode = 500
 		return
 	}
 
-	body = r
+	result := map[string]interface{}{}
+	for _, i := range clas {
+		result[m[i.ID]] = i
+	}
+
+	body = result
 }

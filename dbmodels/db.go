@@ -63,6 +63,7 @@ type ICLA interface {
 	ListCLA(CLAListOptions) ([]CLA, error)
 	GetCLA(string) (CLA, error)
 	DeleteCLA(string) error
+	ListCLAByIDs(ids []string) ([]CLA, error)
 }
 
 type IVerifiCode interface {

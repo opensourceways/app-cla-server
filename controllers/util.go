@@ -125,3 +125,11 @@ func actionToPermission(action string) string {
 	}
 	return ""
 }
+
+func getRouterPattern(c *beego.Controller) string {
+	v, ok := c.Data["RouterPattern"]
+	if ok {
+		return v.(string)
+	}
+	return ""
+}

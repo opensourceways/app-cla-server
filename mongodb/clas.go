@@ -141,6 +141,48 @@ func (c *client) ListCLA(opts dbmodels.CLAListOptions) ([]dbmodels.CLA, error) {
 	return r, nil
 }
 
+func (c *client) ListCLAByIDs(ids []string) ([]dbmodels.CLA, error) {
+	ids1 := make(bson.A, 0, len(ids))
+	for _, id := range ids {
+		id1, err := toObjectID(id)
+		if err != nil {
+			return nil, err
+		}
+		ids1 = append(ids1, id1)
+	}
+
+	var v []CLA
+
+	f := func(ctx context.Context) error {
+		col := c.db.Collection(clasCollection)
+		filter := bson.M{
+			"_id": bson.M{"$in": ids1},
+		}
+
+		cursor, err := col.Find(ctx, filter)
+		if err != nil {
+			return fmt.Errorf("error find clas: %v", err)
+		}
+
+		err = cursor.All(ctx, &v)
+		if err != nil {
+			return fmt.Errorf("error decoding to bson struct of CLA: %v", err)
+		}
+		return nil
+	}
+
+	if err := withContext(f); err != nil {
+		return nil, err
+	}
+
+	r := make([]dbmodels.CLA, 0, len(v))
+	for _, item := range v {
+		r = append(r, toModelCLA(item))
+	}
+
+	return r, nil
+}
+
 func (c *client) GetCLA(uid string) (dbmodels.CLA, error) {
 	var r dbmodels.CLA
 

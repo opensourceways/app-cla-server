@@ -6,7 +6,7 @@ import (
 
 	"golang.org/x/oauth2"
 
-	"github.com/zengchen1024/cla-server/models"
+	"github.com/opensourceways/app-cla-server/models"
 )
 
 var emails = map[string]IEmail{}

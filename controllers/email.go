@@ -7,8 +7,8 @@ import (
 
 	"github.com/astaxie/beego"
 
-	"github.com/zengchen1024/cla-server/email"
-	"github.com/zengchen1024/cla-server/models"
+	"github.com/opensourceways/app-cla-server/email"
+	"github.com/opensourceways/app-cla-server/models"
 )
 
 const authURLState = "state-token-cla"

@@ -7,8 +7,8 @@ import (
 
 	"github.com/astaxie/beego"
 
-	"github.com/zengchen1024/cla-server/models"
-	"github.com/zengchen1024/cla-server/util"
+	"github.com/opensourceways/app-cla-server/models"
+	"github.com/opensourceways/app-cla-server/util"
 )
 
 type OrgSignatureController struct {

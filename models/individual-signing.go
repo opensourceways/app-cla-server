@@ -1,6 +1,9 @@
 package models
 
-import "github.com/zengchen1024/cla-server/dbmodels"
+import (
+	"github.com/opensourceways/app-cla-server/dbmodels"
+	"github.com/opensourceways/app-cla-server/util"
+)
 
 type IndividualSigning struct {
 	CLAOrgID string                   `json:"cla_org_id"`
@@ -10,7 +13,7 @@ type IndividualSigning struct {
 
 func (this *IndividualSigning) Create() error {
 	p := dbmodels.IndividualSigningInfo{}
-	if err := copyBetweenStructs(this, &p); err != nil {
+	if err := util.CopyBetweenStructs(this, &p); err != nil {
 		return err
 	}
 

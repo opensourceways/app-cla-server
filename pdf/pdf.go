@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"io/ioutil"
 
-	"github.com/zengchen1024/cla-server/dbmodels"
-	"github.com/zengchen1024/cla-server/models"
+	"github.com/opensourceways/app-cla-server/dbmodels"
+	"github.com/opensourceways/app-cla-server/models"
 )
 
 type IPDFGenerator interface {

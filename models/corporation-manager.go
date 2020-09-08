@@ -1,13 +1,8 @@
 package models
 
 import (
-	"github.com/zengchen1024/cla-server/dbmodels"
-	"github.com/zengchen1024/cla-server/util"
-)
-
-const (
-	RoleAdmin   = "admin"
-	RoleManager = "manager"
+	"github.com/opensourceways/app-cla-server/dbmodels"
+	"github.com/opensourceways/app-cla-server/util"
 )
 
 type CorporationManagerCreateOption struct {
@@ -19,10 +14,10 @@ func (this *CorporationManagerCreateOption) Create() error {
 	pw := "123456"
 	opt := []dbmodels.CorporationManagerCreateOption{
 		{
-			Role:          RoleAdmin,
+			Role:          dbmodels.RoleAdmin,
 			Email:         this.Email,
 			Password:      pw,
-			CorporationID: emailSuffixToKey(this.Email),
+			CorporationID: util.EmailSuffixToKey(this.Email),
 		},
 	}
 	return dbmodels.GetDB().AddCorporationManager(this.CLAOrgID, opt, 1)
@@ -68,7 +63,7 @@ type CorporationManagerListOption struct {
 func (this CorporationManagerListOption) List() ([]dbmodels.CorporationManagerListResult, error) {
 	opt := dbmodels.CorporationManagerListOption{
 		Role:          this.Role,
-		CorporationID: emailSuffixToKey(this.Email),
+		CorporationID: util.EmailSuffixToKey(this.Email),
 	}
 	return dbmodels.GetDB().ListCorporationManager(this.CLAOrgID, opt)
 }

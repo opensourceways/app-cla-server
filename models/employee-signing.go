@@ -1,6 +1,6 @@
 package models
 
-import "github.com/zengchen1024/cla-server/dbmodels"
+import "github.com/opensourceways/app-cla-server/dbmodels"
 
 type EmployeeSigning struct {
 	CLAOrgID string                   `json:"cla_org_id"`

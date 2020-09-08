@@ -1,3 +1,4 @@
-cla-server
+app-cla-server
 commentsRouter_controllers.go
 lastupdate.tmp
+conf/*

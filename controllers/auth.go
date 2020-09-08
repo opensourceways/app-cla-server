@@ -6,7 +6,7 @@ import (
 
 	"github.com/astaxie/beego"
 
-	platformAuth "github.com/zengchen1024/cla-server/code-platform-auth"
+	platformAuth "github.com/opensourceways/app-cla-server/code-platform-auth"
 )
 
 type AuthController struct {

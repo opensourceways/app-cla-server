@@ -7,8 +7,8 @@ import (
 	"sort"
 	"strconv"
 
-	"github.com/zengchen1024/cla-server/models"
-	"github.com/zengchen1024/cla-server/util"
+	"github.com/opensourceways/app-cla-server/models"
+	"github.com/opensourceways/app-cla-server/util"
 )
 
 func (this *pdfGenerator) GenCLAPDFForCorporation(claOrg *models.CLAOrg, signing *models.CorporationSigning, cla *models.CLA) (string, error) {

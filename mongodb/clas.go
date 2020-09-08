@@ -11,7 +11,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 
-	"github.com/zengchen1024/cla-server/dbmodels"
+	"github.com/opensourceways/app-cla-server/dbmodels"
 )
 
 const clasCollection = "clas"

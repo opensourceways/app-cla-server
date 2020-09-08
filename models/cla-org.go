@@ -3,7 +3,8 @@ package models
 import (
 	"time"
 
-	"github.com/zengchen1024/cla-server/dbmodels"
+	"github.com/opensourceways/app-cla-server/dbmodels"
+	"github.com/opensourceways/app-cla-server/util"
 )
 
 type CLAOrg struct {
@@ -26,7 +27,7 @@ func (this *CLAOrg) Create() error {
 	this.Enabled = true
 
 	p := dbmodels.CLAOrg{}
-	if err := copyBetweenStructs(this, &p); err != nil {
+	if err := util.CopyBetweenStructs(this, &p); err != nil {
 		return err
 	}
 
@@ -47,7 +48,7 @@ func (this *CLAOrg) Get() error {
 	if err != nil {
 		return err
 	}
-	return copyBetweenStructs(&v, this)
+	return util.CopyBetweenStructs(&v, this)
 }
 
 type CLAOrgListOption struct {
@@ -59,7 +60,7 @@ type CLAOrgListOption struct {
 
 func (this CLAOrgListOption) List() ([]dbmodels.CLAOrg, error) {
 	p := dbmodels.CLAOrgListOption{}
-	if err := copyBetweenStructs(&this, &p); err != nil {
+	if err := util.CopyBetweenStructs(&this, &p); err != nil {
 		return nil, err
 	}
 	p.RepoID = this.RepoID

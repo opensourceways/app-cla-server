@@ -5,7 +5,7 @@ import (
 
 	"github.com/astaxie/beego"
 
-	"github.com/zengchen1024/cla-server/models"
+	"github.com/opensourceways/app-cla-server/models"
 )
 
 type IndividualSigningController struct {

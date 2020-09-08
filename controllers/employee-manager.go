@@ -5,7 +5,8 @@ import (
 
 	"github.com/astaxie/beego"
 
-	"github.com/zengchen1024/cla-server/models"
+	"github.com/opensourceways/app-cla-server/dbmodels"
+	"github.com/opensourceways/app-cla-server/models"
 )
 
 type EmployeeManagerController struct {
@@ -69,7 +70,7 @@ func (this *EmployeeManagerController) GetAll() {
 	opt := models.CorporationManagerListOption{
 		CLAOrgID: this.GetString("cla_org_id"),
 		Email:    this.GetString("email"),
-		Role:     models.RoleManager,
+		Role:     dbmodels.RoleManager,
 	}
 
 	r, err := opt.List()

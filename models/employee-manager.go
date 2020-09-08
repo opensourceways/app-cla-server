@@ -3,7 +3,8 @@ package models
 import (
 	"fmt"
 
-	"github.com/zengchen1024/cla-server/dbmodels"
+	"github.com/opensourceways/app-cla-server/dbmodels"
+	"github.com/opensourceways/app-cla-server/util"
 )
 
 type EmployeeManagerCreateOption struct {
@@ -17,12 +18,12 @@ func (this *EmployeeManagerCreateOption) Validate() error {
 	}
 
 	em := map[string]bool{}
-	suffix := emailSuffixToKey(this.Emails[0])
+	suffix := util.EmailSuffixToKey(this.Emails[0])
 
 	for _, item := range this.Emails {
 		em[item] = true
 
-		s := emailSuffixToKey(item)
+		s := util.EmailSuffixToKey(item)
 		if s != suffix {
 			return fmt.Errorf("parameter error: the email suffixes are not same")
 		}
@@ -42,10 +43,10 @@ func (this *EmployeeManagerCreateOption) Create() error {
 
 	for _, item := range this.Emails {
 		opt = append(opt, dbmodels.CorporationManagerCreateOption{
-			Role:          RoleManager,
+			Role:          dbmodels.RoleManager,
 			Email:         item,
 			Password:      pw,
-			CorporationID: emailSuffixToKey(this.Emails[0]),
+			CorporationID: util.EmailSuffixToKey(this.Emails[0]),
 		})
 	}
 
@@ -57,7 +58,7 @@ func (this *EmployeeManagerCreateOption) Delete() error {
 
 	for _, item := range this.Emails {
 		opt = append(opt, dbmodels.CorporationManagerCreateOption{
-			Role:  RoleManager,
+			Role:  dbmodels.RoleManager,
 			Email: item,
 		})
 	}

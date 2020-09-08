@@ -14,8 +14,8 @@ import (
 	"golang.org/x/oauth2/google"
 	"google.golang.org/api/gmail/v1"
 
-	"github.com/zengchen1024/cla-server/models"
-	myoauth2 "github.com/zengchen1024/cla-server/oauth2"
+	"github.com/opensourceways/app-cla-server/models"
+	myoauth2 "github.com/opensourceways/app-cla-server/oauth2"
 )
 
 func init() {

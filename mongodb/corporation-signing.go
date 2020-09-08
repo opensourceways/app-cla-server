@@ -9,8 +9,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 
-	"github.com/zengchen1024/cla-server/dbmodels"
-	"github.com/zengchen1024/cla-server/models"
+	"github.com/opensourceways/app-cla-server/dbmodels"
 )
 
 type corporationSigning struct {
@@ -23,7 +22,7 @@ type corporationSigning struct {
 }
 
 func additionalConditionForCorpoCLADoc(filter bson.M) {
-	filter["apply_to"] = models.ApplyToCorporation
+	filter["apply_to"] = dbmodels.ApplyToCorporation
 	filter["enabled"] = true
 }
 
@@ -128,7 +127,7 @@ func (c *client) ListCorporationSigning(opt dbmodels.CorporationSigningListOptio
 
 				fieldCorpoManagers: bson.M{"$filter": bson.M{
 					"input": fmt.Sprintf("$%s", fieldCorpoManagers),
-					"cond":  bson.M{"$eq": bson.A{"$$this.role", models.RoleAdmin}},
+					"cond":  bson.M{"$eq": bson.A{"$$this.role", dbmodels.RoleAdmin}},
 				}},
 			}},
 			bson.M{"$project": bson.M{

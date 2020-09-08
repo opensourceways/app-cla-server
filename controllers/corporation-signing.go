@@ -7,9 +7,9 @@ import (
 
 	"github.com/astaxie/beego"
 
-	"github.com/zengchen1024/cla-server/email"
-	"github.com/zengchen1024/cla-server/models"
-	"github.com/zengchen1024/cla-server/worker"
+	"github.com/opensourceways/app-cla-server/email"
+	"github.com/opensourceways/app-cla-server/models"
+	"github.com/opensourceways/app-cla-server/worker"
 )
 
 type CorporationSigningController struct {

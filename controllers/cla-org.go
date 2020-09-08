@@ -6,7 +6,8 @@ import (
 
 	"github.com/astaxie/beego"
 
-	"github.com/zengchen1024/cla-server/models"
+	"github.com/opensourceways/app-cla-server/dbmodels"
+	"github.com/opensourceways/app-cla-server/models"
 )
 
 type CLAOrgController struct {
@@ -182,7 +183,7 @@ func (this *CLAOrgController) GetSigningPageInfo() {
 	ids := make([]string, 0, len(claOrgs))
 	m := map[string]string{}
 	for _, i := range claOrgs {
-		if i.ApplyTo == models.ApplyToCorporation && !i.OrgSignatureUploaded {
+		if i.ApplyTo == dbmodels.ApplyToCorporation && !i.OrgSignatureUploaded {
 			reason = fmt.Errorf("this org is not ready to sign cla")
 			statusCode = 500
 			return

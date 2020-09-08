@@ -3,34 +3,25 @@ package mongodb
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	"github.com/huaweicloud/golangsdk"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 
-	"github.com/zengchen1024/cla-server/dbmodels"
-	"github.com/zengchen1024/cla-server/models"
+	"github.com/opensourceways/app-cla-server/dbmodels"
+	"github.com/opensourceways/app-cla-server/util"
 )
 
 func additionalConditionForIndividualSigningDoc(filter bson.M, email string) {
-	filter["apply_to"] = models.ApplyToIndividual
+	filter["apply_to"] = dbmodels.ApplyToIndividual
 	filter["enabled"] = true
 
 	filter[employeeSigningField(email)] = bson.M{"$exists": true}
 }
 
-func emailToKey(email string) string {
-	return strings.ReplaceAll(email, ".", "_")
-}
-
-func emailSuffixToKey(email string) string {
-	return emailToKey(strings.Split(email, "@")[1])
-}
-
 func employeeSigningField(email string) string {
-	return fmt.Sprintf("%s.%s", fieldEmployees, emailSuffixToKey(email))
+	return fmt.Sprintf("%s.%s", fieldEmployees, util.EmailSuffixToKey(email))
 }
 
 func employeeSigningElemField(email string) func(string) string {
@@ -173,7 +164,7 @@ func (c *client) ListEmployeeSigning(opt dbmodels.EmployeeSigningListOption) (ma
 
 	r := map[string][]dbmodels.EmployeeSigningInfo{}
 
-	suffix := emailSuffixToKey(opt.CorporationEmail)
+	suffix := util.EmailSuffixToKey(opt.CorporationEmail)
 
 	for i := 0; i < len(v); i++ {
 		m := v[i].Employees

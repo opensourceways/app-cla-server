@@ -4,7 +4,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/zengchen1024/cla-server/dbmodels"
+	"github.com/opensourceways/app-cla-server/dbmodels"
+	"github.com/opensourceways/app-cla-server/util"
 )
 
 const ActionCorporationSigning = "corporation-signing"
@@ -52,7 +53,7 @@ func (this *CorporationSigningCreateOption) Create() error {
 		AdminEmail:      this.AdminEmail,
 		AdminName:       this.AdminName,
 		CorporationName: this.CorporationName,
-		CorporationID:   emailSuffixToKey(this.AdminEmail),
+		CorporationID:   util.EmailSuffixToKey(this.AdminEmail),
 		Enabled:         false,
 		Info:            this.Info,
 	}

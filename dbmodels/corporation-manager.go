@@ -1,5 +1,10 @@
 package dbmodels
 
+const (
+	RoleAdmin   = "admin"
+	RoleManager = "manager"
+)
+
 type CorporationManagerCreateOption struct {
 	Role          string `json:"role" required:"true"`
 	Email         string `json:"email" required:"true"`

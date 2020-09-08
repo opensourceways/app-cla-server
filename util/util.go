@@ -1,6 +1,7 @@
 package util
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -27,4 +28,15 @@ func OrgSignaturePDFFILE(out, claOrgID string) string {
 func IsFileNotExist(file string) bool {
 	_, err := os.Stat(file)
 	return os.IsNotExist(err)
+}
+
+// CopyBetweenStructs copy between two structs. Note: if some elements
+// of 'to' are set tag of `json:"-'`, these elements will not be copied
+// and should copy them manually.
+func CopyBetweenStructs(from, to interface{}) error {
+	d, err := json.Marshal(from)
+	if err != nil {
+		return err
+	}
+	return json.Unmarshal(d, to)
 }

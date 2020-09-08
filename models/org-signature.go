@@ -1,7 +1,7 @@
 package models
 
 import (
-	"github.com/zengchen1024/cla-server/dbmodels"
+	"github.com/opensourceways/app-cla-server/dbmodels"
 )
 
 func UploadOrgSignature(claOrgID string, pdf []byte) error {

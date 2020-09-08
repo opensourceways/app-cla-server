@@ -3,14 +3,13 @@ package main
 import (
 	"github.com/astaxie/beego"
 
-	platformAuth "github.com/zengchen1024/cla-server/code-platform-auth"
-	"github.com/zengchen1024/cla-server/dbmodels"
-	"github.com/zengchen1024/cla-server/email"
-	"github.com/zengchen1024/cla-server/models"
-	"github.com/zengchen1024/cla-server/mongodb"
-	"github.com/zengchen1024/cla-server/pdf"
-	_ "github.com/zengchen1024/cla-server/routers"
-	"github.com/zengchen1024/cla-server/worker"
+	platformAuth "github.com/opensourceways/app-cla-server/code-platform-auth"
+	"github.com/opensourceways/app-cla-server/dbmodels"
+	"github.com/opensourceways/app-cla-server/email"
+	"github.com/opensourceways/app-cla-server/mongodb"
+	"github.com/opensourceways/app-cla-server/pdf"
+	_ "github.com/opensourceways/app-cla-server/routers"
+	"github.com/opensourceways/app-cla-server/worker"
 )
 
 func main() {
@@ -26,7 +25,6 @@ func main() {
 		return
 	}
 
-	models.RegisterDB(c)
 	dbmodels.RegisterDB(c)
 
 	path := beego.AppConfig.String("gmail::credentials")

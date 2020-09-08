@@ -9,10 +9,10 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 
-	"github.com/zengchen1024/cla-server/models"
+	"github.com/opensourceways/app-cla-server/dbmodels"
 )
 
-var _ models.IDB = (*client)(nil)
+var _ dbmodels.IDB = (*client)(nil)
 
 type client struct {
 	c  *mongo.Client

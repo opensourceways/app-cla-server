@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/zengchen1024/cla-server/dbmodels"
-
 	"go.mongodb.org/mongo-driver/bson"
+
+	"github.com/opensourceways/app-cla-server/dbmodels"
 )
 
 func individualSigningKey(email string) string {

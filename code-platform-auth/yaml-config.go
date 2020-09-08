@@ -6,7 +6,7 @@ import (
 	"github.com/huaweicloud/golangsdk"
 	"sigs.k8s.io/yaml"
 
-	"github.com/zengchen1024/cla-server/oauth2"
+	"github.com/opensourceways/app-cla-server/oauth2"
 )
 
 type authConfigs struct {

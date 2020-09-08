@@ -10,7 +10,7 @@ package routers
 import (
 	"github.com/astaxie/beego"
 
-	"github.com/zengchen1024/cla-server/controllers"
+	"github.com/opensourceways/app-cla-server/controllers"
 )
 
 func init() {

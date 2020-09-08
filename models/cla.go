@@ -1,10 +1,8 @@
 package models
 
-import "github.com/zengchen1024/cla-server/dbmodels"
-
-const (
-	ApplyToCorporation = "corporation"
-	ApplyToIndividual  = "individual"
+import (
+	"github.com/opensourceways/app-cla-server/dbmodels"
+	"github.com/opensourceways/app-cla-server/util"
 )
 
 type CLA struct {
@@ -27,7 +25,7 @@ type Field struct {
 
 func (this *CLA) Create() error {
 	p := dbmodels.CLA{}
-	if err := copyBetweenStructs(this, &p); err != nil {
+	if err := util.CopyBetweenStructs(this, &p); err != nil {
 		return err
 	}
 	v, err := dbmodels.GetDB().CreateCLA(p)
@@ -41,7 +39,7 @@ func (this *CLA) Create() error {
 func (this *CLA) Get() error {
 	v, err := dbmodels.GetDB().GetCLA(this.ID)
 	if err == nil {
-		return copyBetweenStructs(&v, this)
+		return util.CopyBetweenStructs(&v, this)
 	}
 	return err
 }
@@ -59,7 +57,7 @@ type CLAListOptions struct {
 
 func (this CLAListOptions) Get() ([]dbmodels.CLA, error) {
 	p := dbmodels.CLAListOptions{}
-	if err := copyBetweenStructs(&this, &p); err != nil {
+	if err := util.CopyBetweenStructs(&this, &p); err != nil {
 		return nil, err
 	}
 	return dbmodels.GetDB().ListCLA(p)

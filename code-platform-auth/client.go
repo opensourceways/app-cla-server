@@ -3,8 +3,8 @@ package oauth
 import (
 	"fmt"
 
-	"github.com/zengchen1024/cla-server/code-platform-auth/platforms"
-	"github.com/zengchen1024/cla-server/oauth2"
+	"github.com/opensourceways/app-cla-server/code-platform-auth/platforms"
+	"github.com/opensourceways/app-cla-server/oauth2"
 )
 
 type client struct {

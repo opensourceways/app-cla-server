@@ -2,19 +2,15 @@ package controllers
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/astaxie/beego"
 
-	"github.com/zengchen1024/cla-server/models"
+	"github.com/opensourceways/app-cla-server/dbmodels"
 )
 
 const (
-	headerAccessToken  = "Access-Token"
-	headerRefreshToken = "Refresh-Token"
-	headerUser         = "User"
-	headerToken        = "Token"
-	apiAccessUser      = "access_user"
+	headerToken   = "Token"
+	apiAccessUser = "access_user"
 )
 
 func sendResponse(c *beego.Controller, statusCode int, reason error, body interface{}) {
@@ -33,28 +29,6 @@ func sendResponse(c *beego.Controller, statusCode int, reason error, body interf
 
 func getHeader(c *beego.Controller, h string) string {
 	return c.Ctx.Input.Header(h)
-}
-
-type requestHeader struct {
-	accessToken  string
-	refreshToken string
-	platform     string
-	user         string
-}
-
-func parseHeader(c *beego.Controller) requestHeader {
-	h := requestHeader{
-		accessToken:  c.Ctx.Input.Header(headerAccessToken),
-		refreshToken: c.Ctx.Input.Header(headerRefreshToken),
-		user:         c.Ctx.Input.Header(headerUser),
-	}
-
-	v := strings.Split(h.user, "/")
-	if len(v) == 2 {
-		h.platform = v[0]
-	}
-
-	return h
 }
 
 func createApiAccessToken(user, permission string) (string, error) {
@@ -108,9 +82,9 @@ func getApiAccessUser(c *beego.Controller) (string, error) {
 
 func corporRoleToPermission(role string) string {
 	switch role {
-	case models.RoleAdmin:
+	case dbmodels.RoleAdmin:
 		return PermissionCorporAdmin
-	case models.RoleManager:
+	case dbmodels.RoleManager:
 		return PermissionEmployeeManager
 	}
 	return ""

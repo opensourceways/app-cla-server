@@ -7,7 +7,8 @@ import (
 
 	"github.com/astaxie/beego"
 
-	"github.com/zengchen1024/cla-server/models"
+	"github.com/opensourceways/app-cla-server/dbmodels"
+	"github.com/opensourceways/app-cla-server/models"
 )
 
 type EmployeeSigningController struct {
@@ -55,7 +56,7 @@ func (this *EmployeeSigningController) Post() {
 		Platform: claOrg.Platform,
 		OrgID:    claOrg.OrgID,
 		RepoID:   claOrg.RepoID,
-		ApplyTo:  models.ApplyToCorporation,
+		ApplyTo:  dbmodels.ApplyToCorporation,
 	}
 	claOrgs, err := opt.List()
 	if err != nil {

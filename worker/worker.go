@@ -7,10 +7,10 @@ import (
 
 	"github.com/astaxie/beego"
 
-	"github.com/zengchen1024/cla-server/email"
-	"github.com/zengchen1024/cla-server/models"
-	"github.com/zengchen1024/cla-server/pdf"
-	"github.com/zengchen1024/cla-server/util"
+	"github.com/opensourceways/app-cla-server/email"
+	"github.com/opensourceways/app-cla-server/models"
+	"github.com/opensourceways/app-cla-server/pdf"
+	"github.com/opensourceways/app-cla-server/util"
 )
 
 var worker IEmailWorker

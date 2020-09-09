@@ -22,26 +22,27 @@ func main() {
 		beego.AppConfig.String("mongodb_conn"),
 		beego.AppConfig.String("mongodb_db"))
 	if err != nil {
+		beego.Error(err)
 		return
 	}
 	dbmodels.RegisterDB(c)
 
 	path := beego.AppConfig.String("email_platforms")
 	if err = email.RegisterPlatform(path); err != nil {
-		beego.Info(err)
+		beego.Error(err)
 		return
 	}
 
 	path = beego.AppConfig.String("code_platforms")
 	if err := platformAuth.RegisterPlatform(path); err != nil {
-		beego.Info(err)
+		beego.Error(err)
 		return
 	}
 
 	language := beego.AppConfig.String("blank_signature::language")
 	path = beego.AppConfig.String("blank_signature::pdf")
 	if err := pdf.UploadBlankSignature(language, path); err != nil {
-		beego.Info(err)
+		beego.Error(err)
 		return
 	}
 
@@ -52,7 +53,7 @@ func main() {
 		beego.AppConfig.String("pdf_template_corporation::welcome"),
 		beego.AppConfig.String("pdf_template_corporation::declaration"),
 	); err != nil {
-		beego.Info(err)
+		beego.Error(err)
 		return
 	}
 

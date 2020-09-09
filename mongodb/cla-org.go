@@ -214,16 +214,17 @@ func (c *client) ListBindingBetweenCLAAndOrg(opt dbmodels.CLAOrgListOption) ([]d
 
 func toModelCLAOrg(item CLAOrg) dbmodels.CLAOrg {
 	return dbmodels.CLAOrg{
-		ID:          objectIDToUID(item.ID),
-		Platform:    item.Platform,
-		OrgID:       item.OrgID,
-		RepoID:      item.RepoID,
-		CLAID:       item.CLAID,
-		CLALanguage: item.CLALanguage,
-		ApplyTo:     item.ApplyTo,
-		OrgEmail:    item.OrgEmail,
-		Enabled:     item.Enabled,
-		Submitter:   item.Submitter,
+		ID:                   objectIDToUID(item.ID),
+		Platform:             item.Platform,
+		OrgID:                item.OrgID,
+		RepoID:               item.RepoID,
+		CLAID:                item.CLAID,
+		CLALanguage:          item.CLALanguage,
+		ApplyTo:              item.ApplyTo,
+		OrgEmail:             item.OrgEmail,
+		Enabled:              item.Enabled,
+		Submitter:            item.Submitter,
+		OrgSignatureUploaded: item.OrgSignatureUploaded,
 	}
 }
 

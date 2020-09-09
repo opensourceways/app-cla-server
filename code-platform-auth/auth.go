@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/opensourceways/app-cla-server/oauth2"
+	"github.com/opensourceways/app-cla-server/util"
 )
 
 var clients = map[string]map[string]AuthInterface{}
@@ -14,27 +15,28 @@ type AuthInterface interface {
 	Auth(code, scope string) (string, string, error)
 }
 
-func RegisterPlatform(platform, credentialFile string) error {
-	cfg, err := loadFromYaml(credentialFile)
-	if err != nil {
+func RegisterPlatform(credentialFile string) error {
+	cfg := authConfigs{}
+	if err := util.LoadFromYaml(credentialFile, &cfg); err != nil {
 		return err
 	}
 
-	m1 := map[string]authConfig{
-		"login": cfg.Login,
-		"sign":  cfg.Sign,
-	}
-
-	m := map[string]AuthInterface{}
-	for k, item := range m1 {
-		m[k] = &client{
-			c:              oauth2.NewOauth2Client(item.Oauth2Config),
+	f := func(ac actionConfig, platform string) AuthInterface {
+		return &client{
+			c:              oauth2.NewOauth2Client(ac.Oauth2Config),
 			platform:       platform,
-			webRedirectDir: item.WebRedirectDir,
+			webRedirectDir: ac.WebRedirectDir,
 		}
 	}
 
-	clients[platform] = m
+	for _, item := range cfg.Configs {
+		platform := item.Platform
+
+		clients[platform] = map[string]AuthInterface{
+			"login": f(item.Login, platform),
+			"sign":  f(item.Sign, platform),
+		}
+	}
 	return nil
 }
 

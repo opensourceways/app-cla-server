@@ -24,18 +24,16 @@ func main() {
 	if err != nil {
 		return
 	}
-
 	dbmodels.RegisterDB(c)
 
-	path := beego.AppConfig.String("gmail::credentials")
-	webRedirectDir := beego.AppConfig.String("gmail::web_redirect_dir")
-	if err = email.RegisterPlatform("gmail", path, webRedirectDir); err != nil {
+	path := beego.AppConfig.String("email_platforms")
+	if err = email.RegisterPlatform(path); err != nil {
 		beego.Info(err)
 		return
 	}
 
-	path = beego.AppConfig.String("gitee::credentials")
-	if err := platformAuth.RegisterPlatform("gitee", path); err != nil {
+	path = beego.AppConfig.String("code_platforms")
+	if err := platformAuth.RegisterPlatform(path); err != nil {
 		beego.Info(err)
 		return
 	}

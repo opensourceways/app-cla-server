@@ -7,6 +7,7 @@ import (
 	"golang.org/x/oauth2"
 
 	"github.com/opensourceways/app-cla-server/models"
+	"github.com/opensourceways/app-cla-server/util"
 )
 
 var emails = map[string]IEmail{}
@@ -28,12 +29,20 @@ func GetEmailClient(platform string) (IEmail, error) {
 	return e, nil
 }
 
-func RegisterPlatform(platform, credentialFile, webRedirectDir string) error {
-	e, err := GetEmailClient(platform)
-	if err != nil {
+func RegisterPlatform(configFile string) error {
+	cfg := emailConfigs{}
+	if err := util.LoadFromYaml(configFile, &cfg); err != nil {
 		return err
 	}
-	return e.initialize(credentialFile, webRedirectDir)
+
+	for _, item := range cfg.Configs {
+		e, err := GetEmailClient(item.Platform)
+		if err != nil {
+			return err
+		}
+		return e.initialize(item.Credentials, cfg.WebRedirectDir)
+	}
+	return nil
 }
 
 type EmailMessage struct {

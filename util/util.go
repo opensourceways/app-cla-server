@@ -3,9 +3,13 @@ package util
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/huaweicloud/golangsdk"
+	"sigs.k8s.io/yaml"
 )
 
 func emailToKey(email string) string {
@@ -39,4 +43,18 @@ func CopyBetweenStructs(from, to interface{}) error {
 		return err
 	}
 	return json.Unmarshal(d, to)
+}
+
+func LoadFromYaml(path string, cfg interface{}) error {
+	b, err := ioutil.ReadFile(path)
+	if err != nil {
+		return err
+	}
+
+	if err := yaml.Unmarshal(b, cfg); err != nil {
+		return err
+	}
+
+	_, err = golangsdk.BuildRequestBody(cfg, "")
+	return err
 }

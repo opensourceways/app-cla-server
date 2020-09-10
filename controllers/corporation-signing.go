@@ -200,7 +200,7 @@ func (this *CorporationSigningController) SendVerifiCode() {
 	}
 
 	msg := email.EmailMessage{
-		To:      info.Email,
+		To:      []string{info.Email},
 		Content: code,
 		Subject: "verification code",
 	}

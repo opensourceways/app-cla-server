@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"path"
+	"strings"
 	"text/template"
 
 	"golang.org/x/oauth2"
@@ -122,10 +123,7 @@ func (this *gmailClient) getScope() []string {
 func (this *gmailClient) createGmailMessage(msg EmailMessage) (*gmail.Message, error) {
 	attachment := msg.Attachment
 	if attachment == "" {
-		raw := fmt.Sprintf("To: %s\r\nSubject: %s\r\n\r\n%s", msg.To, msg.Subject, msg.Content)
-		return &gmail.Message{
-			Raw: base64.URLEncoding.EncodeToString([]byte(raw)),
-		}, nil
+		return simpleGmailMessage(msg), nil
 	}
 
 	fileBytes, err := ioutil.ReadFile(attachment)
@@ -142,7 +140,7 @@ func (this *gmailClient) createGmailMessage(msg EmailMessage) (*gmail.Message, e
 		FileData     string
 		FileMIMEType string
 	}{
-		To:           msg.To,
+		To:           msg.To[0],
 		Subject:      msg.Subject,
 		Content:      msg.Content,
 		Boundary:     randStr(32, "alphanum"),
@@ -160,6 +158,15 @@ func (this *gmailClient) createGmailMessage(msg EmailMessage) (*gmail.Message, e
 	return &gmail.Message{
 		Raw: base64.URLEncoding.EncodeToString(buf.Bytes()),
 	}, nil
+}
+
+func simpleGmailMessage(msg EmailMessage) *gmail.Message {
+	to := strings.Join(msg.To, "; ")
+	raw := fmt.Sprintf("To: %s\r\nSubject: %s\r\n\r\n%s", to, msg.Subject, msg.Content)
+
+	return &gmail.Message{
+		Raw: base64.URLEncoding.EncodeToString([]byte(raw)),
+	}
 }
 
 func emailTempWithAttachmentForGmail() string {

@@ -8,7 +8,9 @@ import (
 	"github.com/astaxie/beego"
 
 	"github.com/opensourceways/app-cla-server/dbmodels"
+	"github.com/opensourceways/app-cla-server/email"
 	"github.com/opensourceways/app-cla-server/models"
+	"github.com/opensourceways/app-cla-server/worker"
 )
 
 type EmployeeSigningController struct {
@@ -47,6 +49,13 @@ func (this *EmployeeSigningController) Post() {
 
 	claOrg := &models.CLAOrg{ID: info.CLAOrgID}
 	if err := claOrg.Get(); err != nil {
+		reason = err
+		statusCode = 400
+		return
+	}
+
+	emailInfo := &models.OrgEmail{Email: claOrg.OrgEmail}
+	if err := emailInfo.Get(); err != nil {
 		reason = err
 		statusCode = 400
 		return
@@ -92,6 +101,19 @@ func (this *EmployeeSigningController) Post() {
 		return
 	}
 
+	msg := email.EmailMessage{
+		To:      []string{},
+		Subject: "Notification",
+		Content: "somebody has signed",
+	}
+	for _, item := range managers {
+		if item.Role == dbmodels.RoleManager {
+			msg.To = append(msg.To, item.Email)
+		}
+	}
+	if len(msg.To) > 0 {
+		worker.GetEmailWorker().SendSimpleMessage(emailInfo, msg)
+	}
 	body = "sign successfully"
 }
 

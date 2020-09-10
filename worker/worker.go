@@ -17,6 +17,7 @@ var worker IEmailWorker
 
 type IEmailWorker interface {
 	GenCLAPDFForCorporationAndSendIt(claOrg *models.CLAOrg, signing *models.CorporationSigning, cla *models.CLA, emailCfg *models.OrgEmail)
+	SendSimpleMessage(emailCfg *models.OrgEmail, msg email.EmailMessage)
 }
 
 func GetEmailWorker() IEmailWorker {
@@ -46,12 +47,10 @@ func (this *emailWorker) GenCLAPDFForCorporationAndSendIt(claOrg *models.CLAOrg,
 			this.wg.Done()
 		}()
 
-		wait := func() { time.Sleep(time.Minute * time.Duration(1)) }
-
 		file := ""
 		for {
 			if this.shutdown {
-				beego.Info("exit email worker forcedly")
+				beego.Info("email worker exits forcedly")
 				break
 			}
 
@@ -73,7 +72,7 @@ func (this *emailWorker) GenCLAPDFForCorporationAndSendIt(claOrg *models.CLAOrg,
 			}
 
 			msg := email.EmailMessage{
-				To:         signing.AdminEmail,
+				To:         []string{signing.AdminEmail},
 				Subject:    "pdf signing",
 				Content:    "pdf",
 				Attachment: file,
@@ -91,4 +90,41 @@ func (this *emailWorker) GenCLAPDFForCorporationAndSendIt(claOrg *models.CLAOrg,
 
 	this.wg.Add(1)
 	go f()
+}
+
+func (this *emailWorker) SendSimpleMessage(emailCfg *models.OrgEmail, msg email.EmailMessage) {
+	f := func() {
+		defer func() {
+			this.wg.Done()
+		}()
+
+		for {
+			if this.shutdown {
+				beego.Info("email worker exits forcedly")
+				break
+			}
+
+			e, err := email.GetEmailClient(emailCfg.Platform)
+			if err != nil {
+				beego.Info(err)
+				wait()
+				continue
+			}
+
+			if err := e.SendEmail(*emailCfg.Token, msg); err != nil {
+				beego.Info(err)
+				wait()
+				continue
+			}
+
+			break
+		}
+	}
+
+	this.wg.Add(1)
+	go f()
+}
+
+func wait() {
+	time.Sleep(time.Minute * time.Duration(1))
 }

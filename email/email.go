@@ -46,11 +46,11 @@ func RegisterPlatform(configFile string) error {
 }
 
 type EmailMessage struct {
-	From       string `json:"from"`
-	To         string `json:"to"`
-	Subject    string `json:"subject"`
-	Content    string `json:"content"`
-	Attachment string `json:"attachment"`
+	From       string   `json:"from"`
+	To         []string `json:"to"`
+	Subject    string   `json:"subject"`
+	Content    string   `json:"content"`
+	Attachment string   `json:"attachment"`
 }
 
 func randStr(strSize int, randType string) string {

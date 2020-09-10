@@ -4,7 +4,7 @@ type CLAOrg struct {
 	ID                   string `json:"id,omitempty"`
 	Platform             string `json:"platform" required:"true"`
 	OrgID                string `json:"org_id" required:"true"`
-	RepoID               string `json:"repo_id" required:"true"`
+	RepoID               string `json:"repo_id"`
 	CLAID                string `json:"cla_id" required:"true"`
 	CLALanguage          string `json:"cla_language" required:"true"`
 	ApplyTo              string `json:"apply_to" required:"true"`

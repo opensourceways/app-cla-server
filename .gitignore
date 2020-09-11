@@ -2,3 +2,4 @@ app-cla-server
 commentsRouter_controllers.go
 lastupdate.tmp
 conf/*
+.idea

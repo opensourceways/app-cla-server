@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"encoding/json"
+	"fmt"
 
 	"github.com/astaxie/beego"
 
@@ -21,7 +22,7 @@ func (this *IndividualSigningController) Prepare() {
 // @Param	body		body 	models.IndividualSigning	true		"body for individual signing"
 // @Success 201 {int} map
 // @Failure 403 body is empty
-// @router / [post]
+// @router /:cla_org_id [post]
 func (this *IndividualSigningController) Post() {
 	var statusCode = 201
 	var reason error
@@ -31,6 +32,13 @@ func (this *IndividualSigningController) Post() {
 		sendResponse(&this.Controller, statusCode, reason, body)
 	}()
 
+	claOrgID := this.GetString(":cla_org_id")
+	if claOrgID == "" {
+		reason = fmt.Errorf("missing cla_org_id")
+		statusCode = 400
+		return
+	}
+
 	var info models.IndividualSigning
 	if err := json.Unmarshal(this.Ctx.Input.RequestBody, &info); err != nil {
 		reason = err
@@ -38,7 +46,7 @@ func (this *IndividualSigningController) Post() {
 		return
 	}
 
-	if err := (&info).Create(); err != nil {
+	if err := (&info).Create(claOrgID); err != nil {
 		reason = err
 		statusCode = 500
 		return

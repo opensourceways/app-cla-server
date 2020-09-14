@@ -21,6 +21,7 @@ const (
 	fieldEmployees       = "employees"
 	fieldCorporations    = "corporations"
 	fieldCorpoManagers   = "corporation_managers"
+	fieldCorporationID   = "corporation_id"
 	fieldOrgSignature    = "org_signature"
 	fieldOrgSignatureTag = "org_signature_uploaded"
 )
@@ -46,7 +47,7 @@ type CLAOrg struct {
 
 	// Individuals is the cla signing information of ordinary contributors
 	// key is the email of contributor
-	Individuals map[string]dbmodels.TypeSigningInfo `bson:"individuals,omitempty"`
+	Individuals []employeeSigning `bson:"individuals,omitempty"`
 
 	// Employees is the cla signing information of employees and grouped by corporation
 	// key is the email suffix of corporation

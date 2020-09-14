@@ -97,6 +97,15 @@ func init() {
             Filters: nil,
             Params: nil})
 
+    beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:CLAOrgController"] = append(beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:CLAOrgController"],
+        beego.ControllerComments{
+            Method: "GetBlankPdf",
+            Router: "/blank-pdf/:cla_org_id",
+            AllowHTTPMethods: []string{"get"},
+            MethodParams: param.Make(),
+            Filters: nil,
+            Params: nil})
+
     beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:CorporationManagerController"] = append(beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:CorporationManagerController"],
         beego.ControllerComments{
             Method: "Post",
@@ -241,10 +250,19 @@ func init() {
             Filters: nil,
             Params: nil})
 
+    beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:EmployeeSigningController"] = append(beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:EmployeeSigningController"],
+        beego.ControllerComments{
+            Method: "Delete",
+            Router: "/",
+            AllowHTTPMethods: []string{"delete"},
+            MethodParams: param.Make(),
+            Filters: nil,
+            Params: nil})
+
     beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:IndividualSigningController"] = append(beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:IndividualSigningController"],
         beego.ControllerComments{
             Method: "Post",
-            Router: "/",
+            Router: "/:cla_org_id",
             AllowHTTPMethods: []string{"post"},
             MethodParams: param.Make(),
             Filters: nil,

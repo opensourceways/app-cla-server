@@ -22,6 +22,14 @@ func EmailSuffixToKey(email string) string {
 	return emailToKey(strings.Split(email, "@")[1])
 }
 
+func EmailSuffix(email string) string {
+	v := strings.Split(email, "@")
+	if len(v) == 2 {
+		return v[1]
+	}
+	return email
+}
+
 func CorporCLAPDFFile(out, claOrgID, email, other string) string {
 	f := fmt.Sprintf("%s_%s%s.pdf", claOrgID, EmailSuffixToKey(email), other)
 	return filepath.Join(out, f)

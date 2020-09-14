@@ -1,11 +1,8 @@
 package pdf
 
 import (
-	"fmt"
-	"io/ioutil"
-
-	"github.com/opensourceways/app-cla-server/dbmodels"
 	"github.com/opensourceways/app-cla-server/models"
+	"github.com/opensourceways/app-cla-server/util"
 )
 
 type IPDFGenerator interface {
@@ -22,12 +19,12 @@ type pdfGenerator struct {
 }
 
 func InitPDFGenerator(pythonBin, pdfOutDir, pdfOrgSigDir, welcome, declPath string) error {
-	welTemp, err := newTemplate("wel", welcome)
+	welTemp, err := util.NewTemplate("wel", welcome)
 	if err != nil {
 		return err
 	}
 
-	declTemp, err := newTemplate("wel", declPath)
+	declTemp, err := util.NewTemplate("wel", declPath)
 	if err != nil {
 		return err
 	}
@@ -47,17 +44,4 @@ func InitPDFGenerator(pythonBin, pdfOutDir, pdfOrgSigDir, welcome, declPath stri
 
 func GetPDFGenerator() IPDFGenerator {
 	return generator
-}
-
-func UploadBlankSignature(language, path string) error {
-	data, err := ioutil.ReadFile(path)
-	if err != nil {
-		return fmt.Errorf("Failed to update blank siganture: %s", err.Error())
-	}
-
-	err = dbmodels.GetDB().UploadBlankSignature(language, data)
-	if err != nil {
-		return fmt.Errorf("Failed to update blank siganture: %s", err.Error())
-	}
-	return nil
 }

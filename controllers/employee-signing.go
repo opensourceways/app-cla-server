@@ -178,3 +178,33 @@ func (this *EmployeeSigningController) Update() {
 
 	body = "enabled employee successfully"
 }
+
+// @Title Delete
+// @Description delete employee
+// @Param	body		body 	models.EmployeeSigning	true		"body for employee signing"
+// @Success 204 {string} delete success!
+// @router / [delete]
+func (this *EmployeeSigningController) Delete() {
+	var statusCode = 204
+	var reason error
+	var body string
+
+	defer func() {
+		sendResponse(&this.Controller, statusCode, reason, body)
+	}()
+
+	var info models.EmployeeSigningUdateInfo
+	if err := json.Unmarshal(this.Ctx.Input.RequestBody, &info); err != nil {
+		reason = err
+		statusCode = 400
+		return
+	}
+
+	if err := models.DeleteEmployeeSigning(info.CLAOrgID, info.Email); err != nil {
+		reason = err
+		statusCode = 500
+		return
+	}
+
+	body = "delete employee successfully"
+}

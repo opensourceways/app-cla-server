@@ -17,7 +17,7 @@ func additionalConditionForIndividualSigningDoc(filter bson.M, email string) {
 	filter["apply_to"] = dbmodels.ApplyToIndividual
 	filter["enabled"] = true
 
-	filter[employeeSigningField(email)] = bson.M{"$exists": true}
+	filter[employeeSigningField(email)] = bson.M{"$type": "array"}
 }
 
 func employeeSigningField(email string) string {
@@ -225,6 +225,33 @@ func (c *client) UpdateEmployeeSigning(claOrgID, email string, opt dbmodels.Empl
 		if r.ModifiedCount == 0 {
 			return fmt.Errorf("Failed to update employee signing, impossible")
 		}
+		return nil
+	}
+
+	return withContext(f)
+}
+
+func (c *client) DeleteEmployeeSigning(claOrgID, email string) error {
+	oid, err := toObjectID(claOrgID)
+	if err != nil {
+		return err
+	}
+
+	f := func(ctx context.Context) error {
+		col := c.collection(claOrgCollection)
+
+		field := employeeSigningField(email)
+
+		filter := bson.M{"_id": oid}
+		additionalConditionForIndividualSigningDoc(filter, email)
+
+		update := bson.M{"$pull": bson.M{field: bson.M{"email": email}}}
+
+		_, err := col.UpdateOne(ctx, filter, update)
+		if err != nil {
+			return fmt.Errorf("Failed to update employee signing: %s", err.Error())
+		}
+
 		return nil
 	}
 

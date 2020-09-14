@@ -24,6 +24,7 @@ const (
 	fieldCorporationID   = "corporation_id"
 	fieldOrgSignature    = "org_signature"
 	fieldOrgSignatureTag = "org_signature_uploaded"
+	fieldRepo            = "repo_id"
 )
 
 func additionalConditionForCLAOrgDoc(filter bson.M) {
@@ -83,7 +84,7 @@ func (c *client) CreateBindingBetweenCLAAndOrg(claOrg dbmodels.CLAOrg) (string, 
 		filter := bson.M{
 			"platform":     claOrg.Platform,
 			"org_id":       claOrg.OrgID,
-			"repo_id":      claOrg.RepoID,
+			fieldRepo:      claOrg.RepoID,
 			"cla_language": claOrg.CLALanguage,
 			"apply_to":     claOrg.ApplyTo,
 			"enabled":      true,
@@ -167,6 +168,13 @@ func (c *client) ListBindingBetweenCLAAndOrg(opt dbmodels.CLAOrgListOption) ([]d
 	}
 	filter := bson.M(body)
 	additionalConditionForCLAOrgDoc(filter)
+	if opt.RepoID == "" {
+		// only fetch cla bound to org
+		filter[fieldRepo] = ""
+	} else {
+		// if the repo has not been bound any clas, return clas bound to org
+		filter[fieldRepo] = bson.M{"$in": bson.A{"", opt.RepoID}}
+	}
 
 	var v []CLAOrg
 

@@ -72,3 +72,7 @@ func (this *EmployeeSigningUdateInfo) Update() error {
 		dbmodels.EmployeeSigningUpdateInfo{Enabled: this.Enabled},
 	)
 }
+
+func DeleteEmployeeSigning(claOrgID, email string) error {
+	return dbmodels.GetDB().DeleteEmployeeSigning(claOrgID, email)
+}

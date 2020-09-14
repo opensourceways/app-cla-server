@@ -52,7 +52,7 @@ func (this *EmailController) Post() {
 		return
 	}
 
-	if err := e.SendEmail(*cfg.Token, msg); err != nil {
+	if err := e.SendEmail(cfg.Token, &msg); err != nil {
 		reason = fmt.Errorf("Failed to send email: %s", err.Error())
 		statusCode = 500
 		return

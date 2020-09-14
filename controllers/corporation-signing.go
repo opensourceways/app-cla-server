@@ -204,7 +204,7 @@ func (this *CorporationSigningController) SendVerifiCode() {
 		Content: code,
 		Subject: "verification code",
 	}
-	if err := ec.SendEmail(*emailCfg.Token, msg); err != nil {
+	if err := ec.SendEmail(emailCfg.Token, &msg); err != nil {
 		reason = fmt.Errorf("Failed to send verification code by email: %s", err.Error())
 		statusCode = 500
 		return

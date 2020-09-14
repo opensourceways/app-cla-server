@@ -17,7 +17,7 @@ var worker IEmailWorker
 
 type IEmailWorker interface {
 	GenCLAPDFForCorporationAndSendIt(claOrg *models.CLAOrg, signing *models.CorporationSigning, cla *models.CLA, emailCfg *models.OrgEmail)
-	SendSimpleMessage(emailCfg *models.OrgEmail, msg email.EmailMessage)
+	SendSimpleMessage(emailCfg *models.OrgEmail, msg *email.EmailMessage)
 }
 
 func GetEmailWorker() IEmailWorker {
@@ -57,8 +57,7 @@ func (this *emailWorker) GenCLAPDFForCorporationAndSendIt(claOrg *models.CLAOrg,
 			if file == "" || util.IsFileNotExist(file) {
 				file1, err := this.pdfGenerator.GenCLAPDFForCorporation(claOrg, signing, cla)
 				if err != nil {
-					beego.Info(err)
-					wait()
+					next(err)
 					continue
 				}
 				file = file1
@@ -66,20 +65,21 @@ func (this *emailWorker) GenCLAPDFForCorporationAndSendIt(claOrg *models.CLAOrg,
 
 			e, err := email.GetEmailClient(emailCfg.Platform)
 			if err != nil {
-				beego.Info(err)
-				wait()
+				next(err)
 				continue
 			}
 
-			msg := email.EmailMessage{
-				To:         []string{signing.AdminEmail},
-				Subject:    "pdf signing",
-				Content:    "pdf",
-				Attachment: file,
+			msg, err := email.GenCorporationSigningNotificationMsg(email.CorporationSigning{})
+			if err != nil {
+				next(err)
+				continue
 			}
-			if err := e.SendEmail(*emailCfg.Token, msg); err != nil {
-				beego.Info(err)
-				wait()
+
+			msg.To = []string{signing.AdminEmail}
+			msg.Attachment = file
+
+			if err := e.SendEmail(emailCfg.Token, msg); err != nil {
+				next(err)
 				continue
 			}
 
@@ -92,7 +92,7 @@ func (this *emailWorker) GenCLAPDFForCorporationAndSendIt(claOrg *models.CLAOrg,
 	go f()
 }
 
-func (this *emailWorker) SendSimpleMessage(emailCfg *models.OrgEmail, msg email.EmailMessage) {
+func (this *emailWorker) SendSimpleMessage(emailCfg *models.OrgEmail, msg *email.EmailMessage) {
 	f := func() {
 		defer func() {
 			this.wg.Done()
@@ -106,14 +106,12 @@ func (this *emailWorker) SendSimpleMessage(emailCfg *models.OrgEmail, msg email.
 
 			e, err := email.GetEmailClient(emailCfg.Platform)
 			if err != nil {
-				beego.Info(err)
-				wait()
+				next(err)
 				continue
 			}
 
-			if err := e.SendEmail(*emailCfg.Token, msg); err != nil {
-				beego.Info(err)
-				wait()
+			if err := e.SendEmail(emailCfg.Token, msg); err != nil {
+				next(err)
 				continue
 			}
 
@@ -125,6 +123,8 @@ func (this *emailWorker) SendSimpleMessage(emailCfg *models.OrgEmail, msg email.
 	go f()
 }
 
-func wait() {
+func next(err error) {
+	beego.Info(err)
 	time.Sleep(time.Minute * time.Duration(1))
+
 }

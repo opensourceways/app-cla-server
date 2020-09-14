@@ -112,7 +112,7 @@ func (this *EmployeeSigningController) Post() {
 		}
 	}
 	if len(msg.To) > 0 {
-		worker.GetEmailWorker().SendSimpleMessage(emailInfo, msg)
+		worker.GetEmailWorker().SendSimpleMessage(emailInfo, &msg)
 	}
 	body = "sign successfully"
 }

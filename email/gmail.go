@@ -85,8 +85,8 @@ func (this *gmailClient) GetOauth2CodeURL(state string) string {
 	return myoauth2.GetOauth2CodeURL(state, this.cfg)
 }
 
-func (this *gmailClient) SendEmail(token oauth2.Token, msg EmailMessage) error {
-	client := this.cfg.Client(context.Background(), &token)
+func (this *gmailClient) SendEmail(token *oauth2.Token, msg *EmailMessage) error {
+	client := this.cfg.Client(context.Background(), token)
 	srv, err := gmail.New(client)
 	if err != nil {
 		return err
@@ -120,7 +120,7 @@ func (this *gmailClient) getScope() []string {
 	return []string{gmail.GmailReadonlyScope, gmail.GmailSendScope}
 }
 
-func (this *gmailClient) createGmailMessage(msg EmailMessage) (*gmail.Message, error) {
+func (this *gmailClient) createGmailMessage(msg *EmailMessage) (*gmail.Message, error) {
 	attachment := msg.Attachment
 	if attachment == "" {
 		return simpleGmailMessage(msg), nil
@@ -160,7 +160,7 @@ func (this *gmailClient) createGmailMessage(msg EmailMessage) (*gmail.Message, e
 	}, nil
 }
 
-func simpleGmailMessage(msg EmailMessage) *gmail.Message {
+func simpleGmailMessage(msg *EmailMessage) *gmail.Message {
 	to := strings.Join(msg.To, "; ")
 	raw := fmt.Sprintf("To: %s\r\nSubject: %s\r\n\r\n%s", to, msg.Subject, msg.Content)
 

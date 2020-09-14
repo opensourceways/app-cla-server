@@ -15,7 +15,7 @@ var emails = map[string]IEmail{}
 type IEmail interface {
 	GetOauth2CodeURL(state string) string
 	GetAuthorizedEmail(code, scope string) (*models.OrgEmail, error)
-	SendEmail(token oauth2.Token, msg EmailMessage) error
+	SendEmail(token *oauth2.Token, msg *EmailMessage) error
 	WebRedirectDir() string
 	initialize(credentials, webRedirectDir string) error
 }
@@ -30,6 +30,10 @@ func GetEmailClient(platform string) (IEmail, error) {
 }
 
 func RegisterPlatform(configFile string) error {
+	if err := initTemplate(); err != nil {
+		return err
+	}
+
 	cfg := emailConfigs{}
 	if err := util.LoadFromYaml(configFile, &cfg); err != nil {
 		return err

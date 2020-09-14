@@ -3,45 +3,43 @@ package pdf
 import (
 	"fmt"
 	"io/ioutil"
-	"text/template"
 
 	"github.com/jung-kurt/gofpdf"
+
+	"github.com/opensourceways/app-cla-server/dbmodels"
 )
 
-func addSignatureItem(pdf *gofpdf.Fpdf, gh float64, title, value string) {
+func addSignatureItem(pdf *gofpdf.Fpdf, gh float64, ltitle, rtitle, lvalue, rvalue string) {
+	w := 92.5
+
 	b := ""
-	if title != "" {
+	if ltitle != "" {
 		b = "B"
 	}
 
-	w := 92.5
-	pdf.Cell(w, gh, title)
+	pdf.Cell(w, gh, ltitle)
 	pdf.Cell(5, gh, "")
-	pdf.CellFormat(w, gh, title, "", 1, "L", false, 0, "")
-
+	pdf.CellFormat(w, gh, rtitle, "", 1, "L", false, 0, "")
 	pdf.Ln(-1)
 
-	pdf.CellFormat(w, gh, value, b, 0, "L", false, 0, "")
+	pdf.CellFormat(w, gh, lvalue, b, 0, "L", false, 0, "")
 	pdf.Cell(5, gh, "")
-	pdf.CellFormat(w, gh, value, b, 1, "L", false, 0, "")
-
+	pdf.CellFormat(w, gh, rvalue, b, 1, "L", false, 0, "")
 	pdf.Ln(-1)
 }
 
-func signature(pdf *gofpdf.Fpdf, gh float64, guidances string, items []string) {
+func genSignatureItems(pdf *gofpdf.Fpdf, gh float64, ltips, rtips string, items [][]string) {
+	pdf.AddPage()
 	pdf.SetFont("Arial", "", 12)
 
-	b := ""
-	if guidances != "" {
-		b = "B"
-	}
-
-	pdf.CellFormat(0, 10, guidances, b, 1, "", false, 0, "")
-
-	pdf.Ln(5)
+	w := 92.5
+	pdf.CellFormat(w, gh, ltips, "", 0, "C", false, 0, "")
+	pdf.Cell(5, gh, "")
+	pdf.CellFormat(w, gh, rtips, "", 1, "C", false, 0, "")
+	pdf.Ln(10)
 
 	for _, item := range items {
-		addSignatureItem(pdf, gh, item, "")
+		addSignatureItem(pdf, gh, item[0], item[1], "", "")
 	}
 }
 
@@ -70,16 +68,36 @@ func initializePdf(pdf *gofpdf.Fpdf) {
 	})
 }
 
-func newTemplate(name, path string) (*template.Template, error) {
-	txtStr, err := ioutil.ReadFile(path)
-	if err != nil {
-		return nil, fmt.Errorf("Failed to new template: read template file failed: %s", err.Error())
+func GenBlankSignaturePage() error {
+	corporation := &corporationCLAPDF{gh: 5.0}
+
+	pdf := gofpdf.New("P", "mm", "A4", "") // 210mm x 297mm
+
+	items := [][]string{
+		{"Signature", "Signature"},
+		{"Title", "Title"},
+		{"Community", "Corporation"},
 	}
 
-	tmpl, err := template.New(name).Parse(string(txtStr))
-	if err != nil {
-		return nil, fmt.Errorf("Failed to new template: build template failed: %s", err.Error())
+	genSignatureItems(pdf, corporation.gh, "Community Sign", "Corporation Sign", items)
+
+	path := "./conf/blank_signature/english_blank_signature.pdf"
+	if err := corporation.end(pdf, path); err != nil {
+		return err
 	}
 
-	return tmpl, nil
+	return uploadBlankSignature("english", path)
+}
+
+func uploadBlankSignature(language, path string) error {
+	data, err := ioutil.ReadFile(path)
+	if err != nil {
+		return fmt.Errorf("Failed to update blank siganture: %s", err.Error())
+	}
+
+	err = dbmodels.GetDB().UploadBlankSignature(language, data)
+	if err != nil {
+		return fmt.Errorf("Failed to update blank siganture: %s", err.Error())
+	}
+	return nil
 }

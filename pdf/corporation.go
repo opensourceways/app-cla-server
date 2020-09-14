@@ -46,11 +46,11 @@ func (this *pdfGenerator) genCorporPDFMissingSig(claOrg *models.CLAOrg, signing 
 	c.firstPage(pdf, fmt.Sprintf("The %s Project", project))
 	c.welcome(pdf, project, claOrg.OrgEmail)
 
-	orders, err := buildCorporContact(cla)
+	orders, keys, err := buildCorporContact(cla)
 	if err != nil {
 		return "", err
 	}
-	c.contact(pdf, signing.Info, orders)
+	c.contact(pdf, signing.Info, orders, keys)
 
 	c.declare(pdf, project)
 	c.cla(pdf, cla.Text)
@@ -78,18 +78,20 @@ func (this *pdfGenerator) mergeCorporPDFSignaturePage(pdfFile, sigFile, outfile 
 	return nil
 }
 
-func buildCorporContact(cla *models.CLA) ([]string, error) {
+func buildCorporContact(cla *models.CLA) ([]string, map[string]string, error) {
 	ids := make(sort.IntSlice, 0, len(cla.Fields))
 	m := map[int]string{}
+	mk := map[string]string{}
 
 	for _, item := range cla.Fields {
 		v, err := strconv.Atoi(item.ID)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 
 		ids = append(ids, v)
 		m[v] = item.ID
+		mk[item.ID] = item.Title
 	}
 
 	ids.Sort()
@@ -98,5 +100,5 @@ func buildCorporContact(cla *models.CLA) ([]string, error) {
 	for _, k := range ids {
 		r = append(r, m[k])
 	}
-	return r, nil
+	return r, mk, nil
 }

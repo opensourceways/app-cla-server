@@ -8,6 +8,7 @@ import (
 
 	"github.com/opensourceways/app-cla-server/dbmodels"
 	"github.com/opensourceways/app-cla-server/models"
+	"github.com/opensourceways/app-cla-server/pdf"
 )
 
 type CLAOrgController struct {
@@ -206,4 +207,51 @@ func (this *CLAOrgController) GetSigningPageInfo() {
 	}
 
 	body = result
+}
+
+// @Title GetBlankPdf
+// @Description get blank pdf of signature
+// @router /blank-pdf/:cla_org_id [get]
+func (this *CLAOrgController) GetBlankPdf() {
+	var statusCode = 200
+	var reason error
+	var body interface{}
+
+	defer func() {
+		sendResponse(&this.Controller, statusCode, reason, body)
+	}()
+
+	claOrgID := this.GetString(":cla_org_id")
+
+	claOrg := &models.CLAOrg{ID: claOrgID}
+	if err := claOrg.Get(); err != nil {
+		reason = err
+		statusCode = 400
+		return
+	}
+
+	if claOrg.ApplyTo != dbmodels.ApplyToCorporation {
+		reason = fmt.Errorf("Only can review blank pdf of corporation")
+		statusCode = 400
+		return
+	}
+
+	cla := &models.CLA{ID: claOrg.CLAID}
+	if err := cla.Get(); err != nil {
+		reason = err
+		statusCode = 400
+		return
+	}
+
+	value := map[string]string{}
+	for _, item := range cla.Fields {
+		value[item.ID] = ""
+	}
+
+	signing := models.CorporationSigning{
+		AdminEmail: "abc@black_pef.com",
+		Info:       dbmodels.TypeSigningInfo(value),
+	}
+
+	pdf.GetPDFGenerator().GenCLAPDFForCorporation(claOrg, &signing, cla)
 }

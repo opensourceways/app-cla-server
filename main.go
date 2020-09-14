@@ -41,11 +41,9 @@ func main() {
 		os.Exit(1)
 	}
 
-	language := beego.AppConfig.String("blank_signature::language")
-	path = beego.AppConfig.String("blank_signature::pdf")
-	if err := pdf.UploadBlankSignature(language, path); err != nil {
-		beego.Error(err)
-		os.Exit(1)
+	if err := pdf.GenBlankSignaturePage(); err != nil {
+		beego.Info(err)
+		return
 	}
 
 	if err := pdf.InitPDFGenerator(

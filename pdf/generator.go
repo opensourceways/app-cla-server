@@ -62,7 +62,7 @@ func (this *corporationCLAPDF) welcome(pdf *gofpdf.Fpdf, project, email string) 
 	multlines(pdf, this.gh, buf.String())
 }
 
-func (this *corporationCLAPDF) contact(pdf *gofpdf.Fpdf, items map[string]string, orders []string) {
+func (this *corporationCLAPDF) contact(pdf *gofpdf.Fpdf, items map[string]string, orders []string, keys map[string]string) {
 	gh := this.gh
 
 	f := func(title, value string) {
@@ -73,8 +73,8 @@ func (this *corporationCLAPDF) contact(pdf *gofpdf.Fpdf, items map[string]string
 		pdf.MultiCell(130, gh, value, "B", "L", false)
 	}
 
-	for _, title := range orders {
-		f(title, items[title])
+	for _, i := range orders {
+		f(keys[i], items[i])
 		pdf.Ln(-1)
 	}
 }
@@ -102,10 +102,10 @@ func (this *corporationCLAPDF) cla(pdf *gofpdf.Fpdf, content string) {
 }
 
 func (this *corporationCLAPDF) secondPage(pdf *gofpdf.Fpdf) {
-	pdf.AddPage()
-
-	signature(pdf, this.gh, "", []string{"", "", ""})
+	item := []string{"", ""}
+	items := [][]string{item, item, item}
+	genSignatureItems(pdf, this.gh, "", "", items)
 
 	y, m, d := time.Now().Date()
-	addSignatureItem(pdf, this.gh, "Date", fmt.Sprintf("%d-%d-%d", y, m, d))
+	addSignatureItem(pdf, this.gh, "Date", "Date", fmt.Sprintf("%d-%d-%d", y, m, d), "")
 }

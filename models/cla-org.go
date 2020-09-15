@@ -58,12 +58,27 @@ type CLAOrgListOption struct {
 	ApplyTo  string `json:"apply_to"`
 }
 
-func (this CLAOrgListOption) List() ([]dbmodels.CLAOrg, error) {
+func (this CLAOrgListOption) buildListOpt() (dbmodels.CLAOrgListOption, error) {
 	p := dbmodels.CLAOrgListOption{}
 	if err := util.CopyBetweenStructs(&this, &p); err != nil {
-		return nil, err
+		return p, err
 	}
 	p.RepoID = this.RepoID
+	return p, nil
+}
 
+func (this CLAOrgListOption) ListForSigningPage() ([]dbmodels.CLAOrg, error) {
+	p, err := this.buildListOpt()
+	if err != nil {
+		return nil, err
+	}
+	return dbmodels.GetDB().ListBindingForSigningPage(p)
+}
+
+func (this CLAOrgListOption) List() ([]dbmodels.CLAOrg, error) {
+	p, err := this.buildListOpt()
+	if err != nil {
+		return nil, err
+	}
 	return dbmodels.GetDB().ListBindingBetweenCLAAndOrg(p)
 }

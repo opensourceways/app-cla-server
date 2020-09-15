@@ -10,14 +10,14 @@ type EmployeeSigning struct {
 	Info     dbmodels.TypeSigningInfo `json:"info,omitempty"`
 }
 
-func (this *EmployeeSigning) Create() error {
+func (this *EmployeeSigning) Create(claOrgID string) error {
 	p := dbmodels.EmployeeSigningInfo{
 		Email:   this.Email,
 		Name:    this.Name,
 		Enabled: false,
 		Info:    this.Info,
 	}
-	return dbmodels.GetDB().SignAsEmployee(this.CLAOrgID, p)
+	return dbmodels.GetDB().SignAsEmployee(claOrgID, p)
 }
 
 type EmployeeSigningListOption struct {

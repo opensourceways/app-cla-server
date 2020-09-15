@@ -2,7 +2,6 @@ package pdf
 
 import (
 	"github.com/opensourceways/app-cla-server/models"
-	"github.com/opensourceways/app-cla-server/util"
 )
 
 type IPDFGenerator interface {
@@ -18,26 +17,16 @@ type pdfGenerator struct {
 	corporation  *corporationCLAPDF
 }
 
-func InitPDFGenerator(pythonBin, pdfOutDir, pdfOrgSigDir, welcome, declPath string) error {
-	welTemp, err := util.NewTemplate("wel", welcome)
+func InitPDFGenerator(pythonBin, pdfOutDir, pdfOrgSigDir string) error {
+	c, err := newCorporationPDF()
 	if err != nil {
 		return err
 	}
-
-	declTemp, err := util.NewTemplate("wel", declPath)
-	if err != nil {
-		return err
-	}
-
 	generator = &pdfGenerator{
 		pythonBin:    pythonBin,
 		pdfOutDir:    pdfOutDir,
 		pdfOrgSigDir: pdfOrgSigDir,
-		corporation: &corporationCLAPDF{
-			welcomeTemp: welTemp,
-			declaration: declTemp,
-			gh:          5.0,
-		},
+		corporation:  c,
 	}
 	return nil
 }

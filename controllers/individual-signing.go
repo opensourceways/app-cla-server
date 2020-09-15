@@ -14,7 +14,7 @@ type IndividualSigningController struct {
 }
 
 func (this *IndividualSigningController) Prepare() {
-	apiPrepare(&this.Controller, []string{PermissionIndividualSigner})
+	apiPrepare(&this.Controller, []string{PermissionIndividualSigner}, nil)
 }
 
 // @Title Individual signing

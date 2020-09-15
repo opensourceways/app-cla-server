@@ -8,6 +8,7 @@ import (
 	"github.com/astaxie/beego"
 	"github.com/huaweicloud/golangsdk"
 
+	"github.com/opensourceways/app-cla-server/conf"
 	"github.com/opensourceways/app-cla-server/models"
 )
 
@@ -22,9 +23,9 @@ func (this *CorporationManagerController) Prepare() {
 		if getRouterPattern(&this.Controller) == "/v1/corporation-manager/auth" {
 			return
 		}
-		apiPrepare(&this.Controller, []string{PermissionOwnerOfOrg})
+		apiPrepare(&this.Controller, []string{PermissionOwnerOfOrg}, nil)
 	} else {
-		apiPrepare(&this.Controller, []string{PermissionCorporAdmin, PermissionEmployeeManager})
+		apiPrepare(&this.Controller, []string{PermissionCorporAdmin, PermissionEmployeeManager}, nil)
 	}
 }
 
@@ -95,7 +96,13 @@ func (this *CorporationManagerController) Auth() {
 
 	result := make([]map[string]interface{}, 0, len(v))
 	for _, item := range v {
-		token, err := createApiAccessToken(item.Email, corporRoleToPermission(item.Role))
+		ac := &accessController{
+			User:       item.Email,
+			Permission: corporRoleToPermission(item.Role),
+			Expiry:     conf.AppConfig.APITokenExpiry,
+		}
+
+		token, err := ac.CreateToken(conf.AppConfig.APITokenKey)
 		if err != nil {
 			continue
 		}

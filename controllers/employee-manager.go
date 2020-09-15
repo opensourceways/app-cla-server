@@ -14,7 +14,7 @@ type EmployeeManagerController struct {
 }
 
 func (this *EmployeeManagerController) Prepare() {
-	apiPrepare(&this.Controller, []string{PermissionCorporAdmin})
+	apiPrepare(&this.Controller, []string{PermissionCorporAdmin}, nil)
 }
 
 // @Title add employee manager

@@ -16,14 +16,25 @@ const (
 	PermissionEmployeeManager  = "employee manager"
 )
 
-type accessControler struct {
+type accessControllerInterface interface {
+	CheckToken(token, secret string, permission []string) error
+	GetUser() string
+}
+
+type accessController struct {
 	Expiry     int64  `json:"expiry"`
 	User       string `json:"user"`
 	Permission string `json:"permission"`
 }
 
-func (this *accessControler) CreateToken(expiry int64, secret string) (string, error) {
-	this.Expiry = time.Now().Add(time.Second * time.Duration(expiry)).Unix()
+type codePlatformAuth struct {
+	accessController
+
+	PlatformToken string `json:"platform_token"`
+}
+
+func (this *accessController) CreateToken(secret string) (string, error) {
+	this.Expiry = time.Now().Add(time.Second * time.Duration(this.Expiry)).Unix()
 
 	body, err := golangsdk.BuildRequestBody(this, "")
 	if err != nil {
@@ -36,7 +47,7 @@ func (this *accessControler) CreateToken(expiry int64, secret string) (string, e
 	return token.SignedString([]byte(secret))
 }
 
-func (this *accessControler) CheckToken(token, secret string, permission []string) error {
+func (this *accessController) CheckToken(token, secret string, permission []string) error {
 	t, err := jwt.Parse(token, func(t1 *jwt.Token) (interface{}, error) {
 		if _, ok := t1.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("Unexpected signing method")
@@ -75,4 +86,8 @@ func (this *accessControler) CheckToken(token, secret string, permission []strin
 		}
 	}
 	return fmt.Errorf("Not allowed permission")
+}
+
+func (this *accessController) GetUser() string {
+	return this.User
 }

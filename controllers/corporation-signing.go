@@ -20,7 +20,7 @@ func (this *CorporationSigningController) Prepare() {
 	method := this.Ctx.Request.Method
 
 	if method == http.MethodGet || method == http.MethodPut {
-		apiPrepare(&this.Controller, []string{PermissionOwnerOfOrg})
+		apiPrepare(&this.Controller, []string{PermissionOwnerOfOrg}, nil)
 	}
 }
 

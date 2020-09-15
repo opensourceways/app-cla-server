@@ -73,7 +73,7 @@ func init() {
     beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:CLAOrgController"] = append(beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:CLAOrgController"],
         beego.ControllerComments{
             Method: "GetAll",
-            Router: "/",
+            Router: "/:platform/:org_id",
             AllowHTTPMethods: []string{"get"},
             MethodParams: param.Make(),
             Filters: nil,
@@ -225,15 +225,6 @@ func init() {
 
     beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:EmployeeSigningController"] = append(beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:EmployeeSigningController"],
         beego.ControllerComments{
-            Method: "Post",
-            Router: "/",
-            AllowHTTPMethods: []string{"post"},
-            MethodParams: param.Make(),
-            Filters: nil,
-            Params: nil})
-
-    beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:EmployeeSigningController"] = append(beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:EmployeeSigningController"],
-        beego.ControllerComments{
             Method: "GetAll",
             Router: "/",
             AllowHTTPMethods: []string{"get"},
@@ -255,6 +246,15 @@ func init() {
             Method: "Delete",
             Router: "/",
             AllowHTTPMethods: []string{"delete"},
+            MethodParams: param.Make(),
+            Filters: nil,
+            Params: nil})
+
+    beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:EmployeeSigningController"] = append(beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:EmployeeSigningController"],
+        beego.ControllerComments{
+            Method: "Post",
+            Router: "/:cla_org_id",
+            AllowHTTPMethods: []string{"post"},
             MethodParams: param.Make(),
             Filters: nil,
             Params: nil})

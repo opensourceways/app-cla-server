@@ -16,7 +16,7 @@ type CLAOrg struct {
 
 type CLAOrgListOption struct {
 	Platform string `json:"platform" required:"true"`
-	OrgID    string `json:"org_id,omitempty"`
+	OrgID    string `json:"org_id" required:"true"`
 	RepoID   string `json:"-"`
 	ApplyTo  string `json:"apply_to,omitempty"`
 }

@@ -44,6 +44,14 @@ func IsFileNotExist(file string) bool {
 	return os.IsNotExist(err)
 }
 
+func IsNotDir(dir string) bool {
+	v, err := os.Stat(dir)
+	if err != nil {
+		return false
+	}
+	return !v.IsDir()
+}
+
 // CopyBetweenStructs copy between two structs. Note: if some elements
 // of 'to' are set tag of `json:"-'`, these elements will not be copied
 // and should copy them manually.
@@ -86,7 +94,7 @@ func NewTemplate(name, path string) (*template.Template, error) {
 func RenderTemplate(tmpl *template.Template, data interface{}) (string, error) {
 	buf := new(bytes.Buffer)
 	if err := tmpl.Execute(buf, data); err != nil {
-		return "", fmt.Errorf("Failed to execute template(%s): %s", tmpl.Name, err.Error())
+		return "", fmt.Errorf("Failed to execute template(%s): %s", tmpl.Name(), err.Error())
 	}
 
 	return buf.String(), nil

@@ -51,6 +51,7 @@ type IOrgEmail interface {
 
 type ICLAOrg interface {
 	ListBindingBetweenCLAAndOrg(CLAOrgListOption) ([]CLAOrg, error)
+	ListBindingForSigningPage(CLAOrgListOption) ([]CLAOrg, error)
 	GetBindingBetweenCLAAndOrg(string) (CLAOrg, error)
 	CreateBindingBetweenCLAAndOrg(CLAOrg) (string, error)
 	DeleteBindingBetweenCLAAndOrg(string) error

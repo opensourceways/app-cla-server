@@ -5,12 +5,14 @@ import (
 
 	"github.com/astaxie/beego"
 
+	"github.com/opensourceways/app-cla-server/conf"
 	"github.com/opensourceways/app-cla-server/dbmodels"
 )
 
 const (
-	headerToken   = "Token"
-	apiAccessUser = "access_user"
+	headerToken          = "Token"
+	apiAccessUser        = "access_user"
+	apiCodePlatformToken = "code_platform_token"
 )
 
 func sendResponse(c *beego.Controller, statusCode int, reason error, body interface{}) {
@@ -31,45 +33,26 @@ func getHeader(c *beego.Controller, h string) string {
 	return c.Ctx.Input.Header(h)
 }
 
-func createApiAccessToken(user, permission string) (string, error) {
-	expiry, err := beego.AppConfig.Int64("api_token_expiry")
-	if err != nil {
-		return "", fmt.Errorf("Failed to create access token: parsing token expiry was failed")
-	}
-	ac := &accessControler{
-		User:       user,
-		Permission: permission,
-	}
-	return ac.CreateToken(
-		expiry,
-		beego.AppConfig.String("api_token_key"),
-	)
-}
-
-func checkApiAccessToken(c *beego.Controller, permission []string) (string, error) {
+func checkApiAccessToken(c *beego.Controller, permission []string, ac accessControllerInterface) error {
 	token := getHeader(c, headerToken)
 	if token == "" {
-		return "", fmt.Errorf("no token passed")
+		return fmt.Errorf("no token passed")
 	}
 
-	ac := &accessControler{}
-
-	err := ac.CheckToken(token, beego.AppConfig.String("api_token_key"), permission)
-	if err != nil {
-		return "", err
-	}
-
-	return ac.User, nil
+	return ac.CheckToken(token, conf.AppConfig.APITokenKey, permission)
 }
 
-func apiPrepare(c *beego.Controller, permission []string) {
-	user, err := checkApiAccessToken(c, permission)
-	if err != nil {
+func apiPrepare(c *beego.Controller, permission []string, ac accessControllerInterface) {
+	if ac == nil {
+		ac = &accessController{}
+	}
+
+	if err := checkApiAccessToken(c, permission, ac); err != nil {
 		sendResponse(c, 400, err, nil)
 		c.StopRun()
 	}
 
-	c.Data[apiAccessUser] = user
+	c.Data[apiAccessUser] = ac.GetUser()
 }
 
 func getApiAccessUser(c *beego.Controller) (string, error) {

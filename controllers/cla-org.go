@@ -20,7 +20,10 @@ func (this *CLAOrgController) Prepare() {
 		return
 	}
 
-	apiPrepare(&this.Controller, []string{PermissionOwnerOfOrg})
+	ac := &codePlatformAuth{}
+	apiPrepare(&this.Controller, []string{PermissionOwnerOfOrg}, ac)
+
+	this.Data[apiCodePlatformToken] = ac.PlatformToken
 }
 
 // @Title Bind CLA to Org/Repo
@@ -114,7 +117,7 @@ func (this *CLAOrgController) Delete() {
 // @Title GetAll
 // @Description get all bindings
 // @Success 200 {object} models.CLAOrg
-// @router / [get]
+// @router /:platform/:org_id [get]
 func (this *CLAOrgController) GetAll() {
 	var statusCode = 200
 	var reason error
@@ -124,9 +127,16 @@ func (this *CLAOrgController) GetAll() {
 		sendResponse(&this.Controller, statusCode, reason, body)
 	}()
 
+	for _, p := range []string{":platform", ":org_id"} {
+		if this.GetString(p) == "" {
+			reason = fmt.Errorf("missing parameter of %s", p)
+			statusCode = 400
+			return
+		}
+	}
 	opt := models.CLAOrgListOption{
-		Platform: this.GetString("platform"),
-		OrgID:    this.GetString("org_id"),
+		Platform: this.GetString(":platform"),
+		OrgID:    this.GetString(":org_id"),
 		RepoID:   this.GetString("repo_id"),
 		ApplyTo:  this.GetString("apply_to"),
 	}
@@ -169,7 +179,7 @@ func (this *CLAOrgController) GetSigningPageInfo() {
 		ApplyTo:  this.GetString(":apply_to"),
 	}
 
-	claOrgs, err := opt.List()
+	claOrgs, err := opt.ListForSigningPage()
 	if err != nil {
 		reason = err
 		statusCode = 500

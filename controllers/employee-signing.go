@@ -19,9 +19,9 @@ type EmployeeSigningController struct {
 
 func (this *EmployeeSigningController) Prepare() {
 	if this.Ctx.Request.Method == http.MethodPost {
-		apiPrepare(&this.Controller, []string{PermissionIndividualSigner})
+		apiPrepare(&this.Controller, []string{PermissionIndividualSigner}, nil)
 	} else {
-		apiPrepare(&this.Controller, []string{PermissionEmployeeManager})
+		apiPrepare(&this.Controller, []string{PermissionEmployeeManager}, nil)
 	}
 }
 
@@ -30,7 +30,7 @@ func (this *EmployeeSigningController) Prepare() {
 // @Param	body		body 	models.EmployeeSigning	true		"body for employee signing"
 // @Success 201 {int} map
 // @Failure 403 body is empty
-// @router / [post]
+// @router /:cla_org_id [post]
 func (this *EmployeeSigningController) Post() {
 	var statusCode = 201
 	var reason error
@@ -40,12 +40,20 @@ func (this *EmployeeSigningController) Post() {
 		sendResponse(&this.Controller, statusCode, reason, body)
 	}()
 
+	claOrgID := this.GetString(":cla_org_id")
+	if claOrgID == "" {
+		reason = fmt.Errorf("missing cla_org_id")
+		statusCode = 400
+		return
+	}
+
 	var info models.EmployeeSigning
 	if err := json.Unmarshal(this.Ctx.Input.RequestBody, &info); err != nil {
 		reason = err
 		statusCode = 400
 		return
 	}
+	info.CLAOrgID = claOrgID
 
 	claOrg := &models.CLAOrg{ID: info.CLAOrgID}
 	if err := claOrg.Get(); err != nil {
@@ -95,7 +103,7 @@ func (this *EmployeeSigningController) Post() {
 		return
 	}
 
-	if err := (&info).Create(); err != nil {
+	if err := (&info).Create(claOrgID); err != nil {
 		reason = err
 		statusCode = 500
 		return

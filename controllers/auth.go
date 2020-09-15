@@ -7,6 +7,7 @@ import (
 	"github.com/astaxie/beego"
 
 	platformAuth "github.com/opensourceways/app-cla-server/code-platform-auth"
+	"github.com/opensourceways/app-cla-server/conf"
 )
 
 type AuthController struct {
@@ -62,10 +63,16 @@ func (this *AuthController) Auth() {
 		return
 	}
 
-	at, err := createApiAccessToken(
-		fmt.Sprintf("%s/%s", platform, user),
-		actionToPermission(purpose),
-	)
+	tc := &codePlatformAuth{
+		accessController: accessController{
+			User:       fmt.Sprintf("%s/%s", platform, user),
+			Permission: actionToPermission(purpose),
+			Expiry:     conf.AppConfig.APITokenExpiry,
+		},
+		PlatformToken: token,
+	}
+
+	at, err := tc.CreateToken(conf.AppConfig.APITokenKey)
 	if err != nil {
 		sendResponse(&this.Controller, 500, err, nil)
 		return

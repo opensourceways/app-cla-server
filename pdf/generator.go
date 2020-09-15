@@ -7,12 +7,34 @@ import (
 	"time"
 
 	"github.com/jung-kurt/gofpdf"
+
+	"github.com/opensourceways/app-cla-server/util"
 )
 
 type corporationCLAPDF struct {
 	welcomeTemp *template.Template
 	declaration *template.Template
 	gh          float64
+}
+
+func newCorporationPDF() (*corporationCLAPDF, error) {
+	path := "./conf/pdf_template_corporation/welcome.tmpl"
+	welTemp, err := util.NewTemplate("wel", path)
+	if err != nil {
+		return nil, err
+	}
+
+	path = "./conf/pdf_template_corporation/declaration.tmpl"
+	declTemp, err := util.NewTemplate("decl", path)
+	if err != nil {
+		return nil, err
+	}
+
+	return &corporationCLAPDF{
+		welcomeTemp: welTemp,
+		declaration: declTemp,
+		gh:          5.0,
+	}, nil
 }
 
 func (this *corporationCLAPDF) begin() *gofpdf.Fpdf {

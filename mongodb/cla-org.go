@@ -168,6 +168,51 @@ func (c *client) ListBindingBetweenCLAAndOrg(opt dbmodels.CLAOrgListOption) ([]d
 	}
 	filter := bson.M(body)
 	additionalConditionForCLAOrgDoc(filter)
+	if opt.RepoID != "" {
+		filter[fieldRepo] = opt.RepoID
+	}
+
+	var v []CLAOrg
+
+	f := func(ctx context.Context) error {
+		col := c.db.Collection(claOrgCollection)
+
+		opts := options.FindOptions{
+			Projection: projectOfClaOrg(),
+		}
+		cursor, err := col.Find(ctx, filter, &opts)
+		if err != nil {
+			return fmt.Errorf("error find bindings: %v", err)
+		}
+
+		err = cursor.All(ctx, &v)
+		if err != nil {
+			return fmt.Errorf("error decoding to bson struct of CLAOrg: %v", err)
+		}
+		return nil
+	}
+
+	err = withContext(f)
+	if err != nil {
+		return nil, err
+	}
+
+	n := len(v)
+	r := make([]dbmodels.CLAOrg, 0, n)
+	for _, item := range v {
+		r = append(r, toModelCLAOrg(item))
+	}
+
+	return r, nil
+}
+
+func (c *client) ListBindingForSigningPage(opt dbmodels.CLAOrgListOption) ([]dbmodels.CLAOrg, error) {
+	body, err := golangsdk.BuildRequestBody(opt, "")
+	if err != nil {
+		return nil, fmt.Errorf("build options to list cla-org failed, err:%v", err)
+	}
+	filter := bson.M(body)
+	additionalConditionForCLAOrgDoc(filter)
 	if opt.RepoID == "" {
 		// only fetch cla bound to org
 		filter[fieldRepo] = ""

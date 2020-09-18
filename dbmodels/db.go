@@ -59,6 +59,7 @@ type ICLAOrg interface {
 
 type IIndividualSigning interface {
 	SignAsIndividual(string, IndividualSigningInfo) error
+	IsIndividualSigned(IndividualSigningCheckInfo) (bool, error)
 }
 
 type ICLA interface {

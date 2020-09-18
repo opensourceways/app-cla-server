@@ -14,6 +14,10 @@ type IndividualSigningController struct {
 }
 
 func (this *IndividualSigningController) Prepare() {
+	if getRouterPattern(&this.Controller) == "/v1/individual-signing/:platform/:org/:repo" {
+		return
+	}
+
 	apiPrepare(&this.Controller, []string{PermissionIndividualSigner}, nil)
 }
 
@@ -53,4 +57,46 @@ func (this *IndividualSigningController) Post() {
 	}
 
 	body = "sign successfully"
+}
+
+// @Title Check
+// @Description check whether contributor has signed cla
+// @Param	platform	path 	string	true		"code platform"
+// @Param	org		path 	string	true		"org"
+// @Param	repo		path 	string	true		"repo"
+// @Param	email		query 	string	true		"email"
+// @Success 200
+// @router /:platform/:org/:repo [get]
+func (this *IndividualSigningController) Check() {
+	var statusCode = 200
+	var reason error
+	var body interface{}
+
+	defer func() {
+		sendResponse(&this.Controller, statusCode, reason, body)
+	}()
+
+	for _, i := range []string{":platform", ":org", ":repo", "email"} {
+		if this.GetString(i) == "" {
+			reason = fmt.Errorf("missing %s", i)
+			statusCode = 400
+			return
+		}
+	}
+
+	v, err := models.IsIndividualSigned(
+		this.GetString(":platform"),
+		this.GetString(":org"),
+		this.GetString(":repo"),
+		this.GetString("email"),
+	)
+	if err != nil {
+		reason = fmt.Errorf("Failed to check signing: %s", err.Error())
+		statusCode = 500
+		return
+	}
+
+	body = map[string]bool{
+		"signed": v,
+	}
 }

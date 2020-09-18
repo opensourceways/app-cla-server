@@ -1,6 +1,7 @@
 package mongodb
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -82,7 +83,7 @@ func (c *client) SignAsIndividual(claOrgID string, info dbmodels.IndividualSigni
 
 		for _, item := range count {
 			if item.Count != 0 {
-				return fmt.Errorf("Failed to sign as individual, it has signed")
+				return fmt.Errorf("Failed to sign as individual, he/she has signed")
 			}
 		}
 
@@ -102,4 +103,61 @@ func (c *client) SignAsIndividual(claOrgID string, info dbmodels.IndividualSigni
 	}
 
 	return c.doTransaction(f)
+}
+
+func (c *client) IsIndividualSigned(info dbmodels.IndividualSigningCheckInfo) (bool, error) {
+	body, err := golangsdk.BuildRequestBody(info, "")
+	if err != nil {
+		return false, fmt.Errorf("Failed to build body for signing as corporation, err:%v", err)
+	}
+
+	signed := false
+
+	f := func(ctx context.Context) error {
+		col := c.collection(claOrgCollection)
+
+		filter := bson.M(body)
+		filter[fieldRepo] = bson.M{"$in": bson.A{"", info.RepoID}}
+		additionalConditionForIndividualSigningDoc1(filter, info.Email)
+
+		pipeline := bson.A{
+			bson.M{"$match": filter},
+			bson.M{"$project": bson.M{
+				"count": bson.M{"$cond": bson.A{
+					bson.M{"$isArray": fmt.Sprintf("$%s", fieldIndividuals)},
+					bson.M{"$size": bson.M{"$filter": bson.M{
+						"input": fmt.Sprintf("$%s", fieldIndividuals),
+						"cond": bson.M{"$and": bson.A{
+							bson.M{"$eq": bson.A{"$$this.email", info.Email}},
+							bson.M{"$eq": bson.A{"$$this.enabled", true}},
+						}},
+					}}},
+					0,
+				}},
+			}},
+		}
+
+		cursor, err := col.Aggregate(ctx, pipeline)
+		if err != nil {
+			return err
+		}
+
+		var count []struct {
+			Count int `bson:"count"`
+		}
+		err = cursor.All(ctx, &count)
+		if err != nil {
+			return err
+		}
+
+		for _, item := range count {
+			if item.Count != 0 {
+				signed = true
+				return nil
+			}
+		}
+		return nil
+	}
+
+	return signed, withContext(f)
 }

@@ -20,3 +20,14 @@ func (this *IndividualSigning) Create(claOrgID string) error {
 
 	return dbmodels.GetDB().SignAsIndividual(claOrgID, p)
 }
+
+func IsIndividualSigned(platform, orgID, repoId, email string) (bool, error) {
+	opt := dbmodels.IndividualSigningCheckInfo{
+		Platform: platform,
+		OrgID:    orgID,
+		RepoID:   repoId,
+		Email:    email,
+	}
+
+	return dbmodels.GetDB().IsIndividualSigned(opt)
+}

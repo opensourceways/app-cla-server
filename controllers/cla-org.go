@@ -164,12 +164,11 @@ func (this *CLAOrgController) GetSigningPageInfo() {
 		sendResponse(&this.Controller, statusCode, reason, body)
 	}()
 
-	for _, p := range []string{":platform", ":org_id", ":apply_to"} {
-		if this.GetString(p) == "" {
-			reason = fmt.Errorf("missing parameter of %s", p)
-			statusCode = 400
-			return
-		}
+	params := []string{":platform", ":org_id", ":apply_to"}
+	if err := checkAPIStringParameter(&this.Controller, params); err != nil {
+		reason = err
+		statusCode = 400
+		return
 	}
 
 	opt := models.CLAOrgListOption{
@@ -195,8 +194,12 @@ func (this *CLAOrgController) GetSigningPageInfo() {
 	m := map[string]string{}
 	for _, i := range claOrgs {
 		if i.ApplyTo == dbmodels.ApplyToCorporation && !i.OrgSignatureUploaded {
-			reason = fmt.Errorf("this org is not ready to sign cla")
-			statusCode = 500
+			s := opt.OrgID
+			if opt.RepoID != "" {
+				s = fmt.Sprintf("%s/%s", s, opt.RepoID)
+			}
+			reason = fmt.Errorf("The project of '%s' is not ready to sign cla as corporation", s)
+			statusCode = 501
 			return
 		}
 

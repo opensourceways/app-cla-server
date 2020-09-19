@@ -38,7 +38,7 @@ func (this *IndividualSigningController) Post() {
 
 	claOrgID := this.GetString(":cla_org_id")
 	if claOrgID == "" {
-		reason = fmt.Errorf("missing cla_org_id")
+		reason = fmt.Errorf("missing :cla_org_id")
 		statusCode = 400
 		return
 	}
@@ -76,12 +76,11 @@ func (this *IndividualSigningController) Check() {
 		sendResponse(&this.Controller, statusCode, reason, body)
 	}()
 
-	for _, i := range []string{":platform", ":org", ":repo", "email"} {
-		if this.GetString(i) == "" {
-			reason = fmt.Errorf("missing %s", i)
-			statusCode = 400
-			return
-		}
+	params := []string{":platform", ":org", ":repo", "email"}
+	if err := checkAPIStringParameter(&this.Controller, params); err != nil {
+		reason = err
+		statusCode = 400
+		return
 	}
 
 	v, err := models.IsIndividualSigned(

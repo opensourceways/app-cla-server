@@ -18,36 +18,17 @@ type AuthController struct {
 // @Success 200
 // @router /:platform/:purpose [get]
 func (this *AuthController) Auth() {
+	params := map[string]string{":platform": "", "code": "", ":purpose": "", "state": authURLState}
+	if err := checkAndVerifyAPIStringParameter(&this.Controller, params); err != nil {
+		sendResponse(&this.Controller, 400, err, nil)
+		return
+	}
+
 	purpose := this.GetString(":purpose")
-	if purpose == "" {
-		err := fmt.Errorf("missing purpose")
-		sendResponse(&this.Controller, 400, err, nil)
-		return
-	}
-
 	code := this.GetString("code")
-	if code == "" {
-		err := fmt.Errorf("missing code")
-		sendResponse(&this.Controller, 400, err, nil)
-		return
-	}
-
 	platform := this.GetString(":platform")
-	if platform == "" {
-		err := fmt.Errorf("missing platform")
-		sendResponse(&this.Controller, 400, err, nil)
-		return
-	}
-
 	//TODO: gitee don't pass the scope parameter
 	scope := this.GetString("scope")
-
-	state := this.GetString("state")
-	if state != authURLState {
-		err := fmt.Errorf("invalid state")
-		sendResponse(&this.Controller, 400, err, nil)
-		return
-	}
 
 	cp, err := platformAuth.GetAuthInstance(platform, purpose)
 	if err != nil {
@@ -91,21 +72,16 @@ func (this *AuthController) Get() {
 		sendResponse(&this.Controller, statusCode, reason, body)
 	}()
 
-	platform := this.GetString(":platform")
-	if platform == "" {
-		reason = fmt.Errorf("missing parameter platform")
+	params := []string{":platform", ":purpose"}
+	if err := checkAPIStringParameter(&this.Controller, params); err != nil {
+		reason = err
 		statusCode = 400
 		return
 	}
 
+	platform := this.GetString(":platform")
 	// purpose: login, sign
 	purpose := this.GetString(":purpose")
-	if purpose == "" {
-		reason = fmt.Errorf("missing parameter purpose")
-		statusCode = 400
-		return
-	}
-
 	cp, err := platformAuth.GetAuthInstance(platform, purpose)
 	if cp == nil {
 		reason = err

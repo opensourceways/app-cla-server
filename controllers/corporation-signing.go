@@ -7,6 +7,7 @@ import (
 
 	"github.com/astaxie/beego"
 
+	"github.com/opensourceways/app-cla-server/conf"
 	"github.com/opensourceways/app-cla-server/email"
 	"github.com/opensourceways/app-cla-server/models"
 	"github.com/opensourceways/app-cla-server/worker"
@@ -185,14 +186,7 @@ func (this *CorporationSigningController) SendVerifiCode() {
 		return
 	}
 
-	expiry, err := beego.AppConfig.Int64("verification_vode_expiry")
-	if err != nil {
-		reason = err
-		statusCode = 400
-		return
-	}
-
-	code, err := info.Create(expiry)
+	code, err := info.Create(conf.AppConfig.VerificationCodeExpiry)
 	if err != nil {
 		reason = err
 		statusCode = 500

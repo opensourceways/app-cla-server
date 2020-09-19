@@ -141,3 +141,26 @@ func getRouterPattern(c *beego.Controller) string {
 	}
 	return ""
 }
+
+func checkAPIStringParameter(c *beego.Controller, params []string) error {
+	for _, p := range params {
+		if c.GetString(p) == "" {
+			return fmt.Errorf("missing parameter of %s", p)
+		}
+	}
+	return nil
+}
+
+func checkAndVerifyAPIStringParameter(c *beego.Controller, params map[string]string) error {
+	for p, v := range params {
+		v1 := c.GetString(p)
+
+		if v1 == "" {
+			return fmt.Errorf("missing parameter of %s", p)
+		}
+		if v != "" && v1 != v {
+			return fmt.Errorf("invalid parameter of %s", p)
+		}
+	}
+	return nil
+}

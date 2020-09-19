@@ -11,8 +11,8 @@ import (
 
 const (
 	headerToken          = "Token"
-	apiAccessUser        = "access_user"
 	apiCodePlatformToken = "code_platform_token"
+	apiAccessController  = "access_controller"
 )
 
 func sendResponse(c *beego.Controller, statusCode int, reason error, body interface{}) {
@@ -33,13 +33,43 @@ func getHeader(c *beego.Controller, h string) string {
 	return c.Ctx.Input.Header(h)
 }
 
-func checkApiAccessToken(c *beego.Controller, permission []string, ac accessControllerInterface) error {
-	token := getHeader(c, headerToken)
-	if token == "" {
-		return fmt.Errorf("no token passed")
+func newAccessToken(user, permission string) (string, error) {
+	ac := &accessController{
+		User:       user,
+		Permission: permission,
+		secret:     conf.AppConfig.APITokenKey,
 	}
 
-	return ac.CheckToken(token, conf.AppConfig.APITokenKey, permission)
+	return ac.NewToken(conf.AppConfig.APITokenExpiry)
+}
+
+func newAccessTokenAuthorizedByCodePlatform(user, permission, platformToken string) (string, error) {
+	ac := &codePlatformAuth{
+		accessController: accessController{
+			User:       user,
+			Permission: permission,
+			secret:     conf.AppConfig.APITokenKey,
+		},
+		PlatformToken: platformToken,
+	}
+
+	return ac.NewToken(conf.AppConfig.APITokenExpiry)
+}
+
+func checkApiAccessToken(c *beego.Controller, permission []string, ac accessControllerInterface) (int, error) {
+	token := getHeader(c, headerToken)
+	if token == "" {
+		return 401, fmt.Errorf("no token passed")
+	}
+
+	if err := ac.ParseToken(token, conf.AppConfig.APITokenKey); err != nil {
+		return 401, err
+	}
+
+	if err := ac.Verify(permission); err != nil {
+		return 403, err
+	}
+	return 0, nil
 }
 
 func apiPrepare(c *beego.Controller, permission []string, ac accessControllerInterface) {
@@ -47,20 +77,41 @@ func apiPrepare(c *beego.Controller, permission []string, ac accessControllerInt
 		ac = &accessController{}
 	}
 
-	if err := checkApiAccessToken(c, permission, ac); err != nil {
-		sendResponse(c, 400, err, nil)
+	if code, err := checkApiAccessToken(c, permission, ac); err != nil {
+		sendResponse(c, code, err, nil)
 		c.StopRun()
 	}
 
-	c.Data[apiAccessUser] = ac.GetUser()
+	c.Data[apiAccessController] = ac
+}
+
+func getAccessController(c *beego.Controller) (accessControllerInterface, error) {
+	ac, ok := c.Data[apiAccessController]
+	if !ok {
+		return nil, fmt.Errorf("no access controller")
+	}
+
+	if v, ok := ac.(accessControllerInterface); ok {
+		return v, nil
+	}
+
+	return nil, fmt.Errorf("can't convert to access controller instance")
 }
 
 func getApiAccessUser(c *beego.Controller) (string, error) {
-	user, ok := c.Data[apiAccessUser].(string)
-	if !ok {
-		return "", fmt.Errorf("no user")
+	ac, err := getAccessController(c)
+	if err != nil {
+		return "", err
 	}
-	return user, nil
+	return ac.GetUser(), nil
+}
+
+func refreshAccessToken(c *beego.Controller) (string, error) {
+	ac, err := getAccessController(c)
+	if err != nil {
+		return "", err
+	}
+	return ac.NewToken(conf.AppConfig.APITokenExpiry)
 }
 
 func corporRoleToPermission(role string) string {

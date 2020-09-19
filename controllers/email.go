@@ -132,10 +132,10 @@ func (this *EmailController) Get() {
 		sendResponse(&this.Controller, statusCode, reason, body)
 	}()
 
-	err := checkApiAccessToken(&this.Controller, []string{PermissionOwnerOfOrg}, &accessController{})
+	code, err := checkApiAccessToken(&this.Controller, []string{PermissionOwnerOfOrg}, &accessController{})
 	if err != nil {
 		reason = err
-		statusCode = 400
+		statusCode = code
 		return
 	}
 

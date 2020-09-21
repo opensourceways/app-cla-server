@@ -32,7 +32,12 @@ func sendResponse(c *beego.Controller, statusCode int, reason error, body interf
 	}
 
 	if reason != nil {
-		f(reason.Error())
+		es := reason.Error()
+		if statusCode >= 500 {
+			beego.Error(es)
+			es = "internal error"
+		}
+		f(es)
 
 		// if success, don't set status code, otherwise the header set in c.ServeJSON
 		// will not work. The reason maybe the same as above.

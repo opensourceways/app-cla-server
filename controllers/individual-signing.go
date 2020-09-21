@@ -50,7 +50,7 @@ func (this *IndividualSigningController) Post() {
 		return
 	}
 
-	if err := (&info).Create(claOrgID); err != nil {
+	if err := (&info).Create(claOrgID, true); err != nil {
 		reason = err
 		statusCode = 500
 		return

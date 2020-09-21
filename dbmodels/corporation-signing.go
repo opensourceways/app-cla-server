@@ -13,6 +13,7 @@ type CorporationSigningInfo struct {
 	CorporationName string          `json:"corporation_name" required:"true"`
 	CorporationID   string          `json:"corporation_id" required:"true"`
 	Enabled         bool            `json:"enabled"`
+	Date            string          `json:"date" required:"true"`
 	Info            TypeSigningInfo `json:"info,omitempty"`
 }
 

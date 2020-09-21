@@ -6,17 +6,20 @@ import (
 )
 
 type IndividualSigning struct {
-	Email string                   `json:"email"`
-	Name  string                   `json:"name"`
-	Info  dbmodels.TypeSigningInfo `json:"info"`
+	Email   string                   `json:"email"`
+	Name    string                   `json:"name"`
+	Date    string                   `json:"date"`
+	Enabled bool                     `json:"enabled"`
+	Info    dbmodels.TypeSigningInfo `json:"info"`
 }
 
-func (this *IndividualSigning) Create(claOrgID string) error {
+func (this *IndividualSigning) Create(claOrgID string, enabled bool) error {
+	this.Date = util.Date()
+	this.Enabled = enabled
 	p := dbmodels.IndividualSigningInfo{}
 	if err := util.CopyBetweenStructs(this, &p); err != nil {
 		return err
 	}
-	p.Enabled = true
 
 	return dbmodels.GetDB().SignAsIndividual(claOrgID, p)
 }

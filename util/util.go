@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 	"text/template"
+	"time"
 
 	"github.com/huaweicloud/golangsdk"
 	"sigs.k8s.io/yaml"
@@ -98,4 +99,8 @@ func RenderTemplate(tmpl *template.Template, data interface{}) (string, error) {
 	}
 
 	return buf.String(), nil
+}
+
+func Date() string {
+	return time.Now().Format("2006-01-02")
 }

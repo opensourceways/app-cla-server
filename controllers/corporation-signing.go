@@ -50,24 +50,17 @@ func (this *CorporationSigningController) Post() {
 	if err := (&info).Validate(); err != nil {
 	}
 
-	claOrg := &models.CLAOrg{ID: info.CLAOrgID}
-	if err := claOrg.Get(); err != nil {
+	claOrg, emailCfg, err := getEmailConfig(info.CLAOrgID)
+	if err != nil {
 		reason = err
-		statusCode = 400
+		statusCode = 500
 		return
 	}
 
 	cla := &models.CLA{ID: claOrg.CLAID}
 	if err := cla.Get(); err != nil {
 		reason = err
-		statusCode = 400
-		return
-	}
-
-	emailInfo := &models.OrgEmail{Email: claOrg.OrgEmail}
-	if err := emailInfo.Get(); err != nil {
-		reason = err
-		statusCode = 400
+		statusCode = 500
 		return
 	}
 
@@ -79,7 +72,7 @@ func (this *CorporationSigningController) Post() {
 
 	body = "sign successfully"
 
-	worker.GetEmailWorker().GenCLAPDFForCorporationAndSendIt(claOrg, &info.CorporationSigning, cla, emailInfo)
+	worker.GetEmailWorker().GenCLAPDFForCorporationAndSendIt(claOrg, &info.CorporationSigning, cla, emailCfg)
 }
 
 // @Title GetAll

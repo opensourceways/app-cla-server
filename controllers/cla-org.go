@@ -17,13 +17,11 @@ type CLAOrgController struct {
 
 func (this *CLAOrgController) Prepare() {
 	if getRouterPattern(&this.Controller) == "/v1/cla-org/:platform/:org_id/:apply_to" {
+		apiPrepare(&this.Controller, []string{PermissionIndividualSigner}, nil)
 		return
 	}
 
-	ac := &codePlatformAuth{}
-	apiPrepare(&this.Controller, []string{PermissionOwnerOfOrg}, ac)
-
-	this.Data[apiCodePlatformToken] = ac.PlatformToken
+	apiPrepare(&this.Controller, []string{PermissionOwnerOfOrg}, &codePlatformAuth{})
 }
 
 // @Title Bind CLA to Org/Repo

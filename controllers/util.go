@@ -10,19 +10,36 @@ import (
 )
 
 const (
-	headerToken          = "Token"
-	apiCodePlatformToken = "code_platform_token"
-	apiAccessController  = "access_controller"
+	headerToken         = "Token"
+	apiAccessController = "access_controller"
 )
 
 func sendResponse(c *beego.Controller, statusCode int, reason error, body interface{}) {
-	c.Ctx.ResponseWriter.WriteHeader(statusCode)
+	if token, err := refreshAccessToken(c); err == nil {
+		// this code must run before `c.Ctx.ResponseWriter.WriteHeader`
+		// otherwise the header can't be set successfully.
+		// The reason is relevant to the variable of 'Response.Started' at
+		// beego/context/context.go
+		c.Ctx.Output.Header(headerToken, token)
+	}
+
+	f := func(data interface{}) {
+		c.Data["json"] = struct {
+			Data interface{} `json:"data"`
+		}{
+			Data: data,
+		}
+	}
 
 	if reason != nil {
-		c.Data["json"] = reason.Error()
+		f(reason.Error())
+
+		// if success, don't set status code, otherwise the header set in c.ServeJSON
+		// will not work. The reason maybe the same as above.
+		c.Ctx.ResponseWriter.WriteHeader(statusCode)
 	} else {
 		if body != nil {
-			c.Data["json"] = body
+			f(body)
 		}
 	}
 

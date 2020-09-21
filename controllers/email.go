@@ -20,33 +20,14 @@ type EmailController struct {
 // @Success 200
 // @router /auth/:platform [get]
 func (this *EmailController) Auth() {
+	params := map[string]string{":platform": "", "code": "", "scope": "", "state": authURLState}
+	if err := checkAndVerifyAPIStringParameter(&this.Controller, params); err != nil {
+		sendResponse(&this.Controller, 400, err, nil)
+		return
+	}
 	code := this.GetString("code")
-	if code == "" {
-		err := fmt.Errorf("missing code")
-		sendResponse(&this.Controller, 400, err, nil)
-		return
-	}
-
 	scope := this.GetString("scope")
-	if scope == "" {
-		err := fmt.Errorf("missing scope")
-		sendResponse(&this.Controller, 400, err, nil)
-		return
-	}
-
-	state := this.GetString("state")
-	if state != authURLState {
-		err := fmt.Errorf("invalid state")
-		sendResponse(&this.Controller, 400, err, nil)
-		return
-	}
-
 	platform := this.GetString(":platform")
-	if platform == "" {
-		err := fmt.Errorf("missing platform")
-		sendResponse(&this.Controller, 400, err, nil)
-		return
-	}
 
 	e, err := email.GetEmailClient(platform)
 	if err != nil {

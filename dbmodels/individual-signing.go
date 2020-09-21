@@ -4,6 +4,7 @@ type IndividualSigningInfo struct {
 	Email   string          `json:"email" required:"true"`
 	Name    string          `json:"name" required:"true"`
 	Enabled bool            `json:"enabled"`
+	Date    string          `json:"date" required:"true"`
 	Info    TypeSigningInfo `json:"info,omitempty"`
 }
 

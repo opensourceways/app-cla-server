@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	"text/template"
-	"time"
 
 	"github.com/jung-kurt/gofpdf"
 
@@ -123,11 +122,10 @@ func (this *corporationCLAPDF) cla(pdf *gofpdf.Fpdf, content string) {
 	multlines(pdf, this.gh, content)
 }
 
-func (this *corporationCLAPDF) secondPage(pdf *gofpdf.Fpdf) {
+func (this *corporationCLAPDF) secondPage(pdf *gofpdf.Fpdf, date string) {
 	item := []string{"", ""}
 	items := [][]string{item, item, item}
 	genSignatureItems(pdf, this.gh, "", "", items)
 
-	y, m, d := time.Now().Date()
-	addSignatureItem(pdf, this.gh, "Date", "Date", fmt.Sprintf("%d-%d-%d", y, m, d), "")
+	addSignatureItem(pdf, this.gh, "Date", "Date", date, "")
 }

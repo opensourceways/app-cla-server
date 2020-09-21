@@ -21,6 +21,7 @@ type CorporationSigning struct {
 	AdminName       string `json:"admin_name"`
 	CorporationName string `json:"corporation_name"`
 	Enabled         bool   `json:"enabled"`
+	Date            string `json:"date"`
 
 	Info dbmodels.TypeSigningInfo `json:"info"`
 }
@@ -49,14 +50,13 @@ func (this *CorporationSigningCreateOption) Validate() error {
 }
 
 func (this *CorporationSigningCreateOption) Create() error {
-	p := dbmodels.CorporationSigningInfo{
-		AdminEmail:      this.AdminEmail,
-		AdminName:       this.AdminName,
-		CorporationName: this.CorporationName,
-		CorporationID:   util.EmailSuffixToKey(this.AdminEmail),
-		Enabled:         false,
-		Info:            this.Info,
+	this.Date = util.Date()
+	p := dbmodels.CorporationSigningInfo{}
+	if err := util.CopyBetweenStructs(&this.CorporationSigning, &p); err != nil {
+		return err
 	}
+	p.CorporationID = util.EmailSuffixToKey(this.AdminEmail)
+
 	return dbmodels.GetDB().SignAsCorporation(this.CLAOrgID, p)
 }
 

@@ -18,6 +18,7 @@ type corporationSigning struct {
 	CorporationName string                   `bson:"corporation_name"`
 	CorporationID   string                   `bson:"corporation_id"`
 	Enabled         bool                     `bson:"enabled"`
+	Date            string                   `bson:"date"`
 	SigningInfo     dbmodels.TypeSigningInfo `bson:"info"`
 }
 

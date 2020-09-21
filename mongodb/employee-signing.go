@@ -40,6 +40,7 @@ type employeeSigning struct {
 	Name        string                   `bson:"name"`
 	Email       string                   `bson:"email"`
 	Enabled     bool                     `bson:"enabled"`
+	Date        string                   `bson:"date"`
 	SigningInfo dbmodels.TypeSigningInfo `bson:"signing_info"`
 }
 

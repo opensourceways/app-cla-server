@@ -56,7 +56,7 @@ func (this *pdfGenerator) genCorporPDFMissingSig(claOrg *models.CLAOrg, signing 
 	c.cla(pdf, cla.Text)
 
 	// second page
-	c.secondPage(pdf)
+	c.secondPage(pdf, signing.Date)
 
 	path := util.CorporCLAPDFFile(this.pdfOutDir, claOrg.ID, signing.AdminEmail, "_missing_sig")
 	if err := c.end(pdf, path); err != nil {

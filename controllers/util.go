@@ -1,12 +1,14 @@
 package controllers
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"github.com/astaxie/beego"
 
 	"github.com/opensourceways/app-cla-server/conf"
 	"github.com/opensourceways/app-cla-server/dbmodels"
+	"github.com/opensourceways/app-cla-server/models"
 )
 
 const (
@@ -185,4 +187,33 @@ func checkAndVerifyAPIStringParameter(c *beego.Controller, params map[string]str
 		}
 	}
 	return nil
+}
+
+func fetchInputPayload(c *beego.Controller, info interface{}) error {
+	if err := json.Unmarshal(c.Ctx.Input.RequestBody, info); err != nil {
+		return fmt.Errorf("Failed to fetch input parameter: %s", err.Error())
+	}
+	return nil
+}
+
+func fetchStringParameter(c *beego.Controller, param string) (string, error) {
+	v := c.GetString(param)
+	if v == "" {
+		return "", fmt.Errorf("missing parameter of %s", param)
+	}
+	return v, nil
+}
+
+func getEmailConfig(claOrgID string) (*models.CLAOrg, *models.OrgEmail, error) {
+	claOrg := &models.CLAOrg{ID: claOrgID}
+	if err := claOrg.Get(); err != nil {
+		return nil, nil, err
+	}
+
+	emailInfo := &models.OrgEmail{Email: claOrg.OrgEmail}
+	if err := emailInfo.Get(); err != nil {
+		return nil, nil, err
+	}
+
+	return claOrg, emailInfo, nil
 }

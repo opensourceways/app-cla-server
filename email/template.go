@@ -9,6 +9,7 @@ import (
 
 const (
 	TmplCorporationSigning = "corporation signing"
+	TmplIndividualSigning  = "individual signing"
 )
 
 var msgTmpl = map[string]*template.Template{}
@@ -16,6 +17,7 @@ var msgTmpl = map[string]*template.Template{}
 func initTemplate() error {
 	items := map[string]string{
 		TmplCorporationSigning: "./conf/email-template/corporation-signing.tmpl",
+		TmplIndividualSigning:  "./conf/email-template/individual-signing.tmpl",
 	}
 
 	for name, path := range items {
@@ -54,4 +56,11 @@ type CorporationSigning struct{}
 
 func GenCorporationSigningNotificationMsg(data CorporationSigning) (*EmailMessage, error) {
 	return genEmailMsg(TmplCorporationSigning, data)
+}
+
+type IndividualSigning struct{}
+
+func GenIndividualSigningNotificationMsg(data *IndividualSigning) (*EmailMessage, error) {
+	// msg returned should include content and subject
+	return genEmailMsg(TmplIndividualSigning, data)
 }

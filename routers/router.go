@@ -30,26 +30,28 @@ func init() {
 				&controllers.IndividualSigningController{},
 			),
 		),
-		beego.NSNamespace("/employee-signing",
-			beego.NSInclude(
-				&controllers.EmployeeSigningController{},
+		/*
+			beego.NSNamespace("/employee-signing",
+				beego.NSInclude(
+					&controllers.EmployeeSigningController{},
+				),
 			),
-		),
-		beego.NSNamespace("/corporation-signing",
-			beego.NSInclude(
-				&controllers.CorporationSigningController{},
+			beego.NSNamespace("/corporation-signing",
+				beego.NSInclude(
+					&controllers.CorporationSigningController{},
+				),
 			),
-		),
-		beego.NSNamespace("/corporation-manager",
-			beego.NSInclude(
-				&controllers.CorporationManagerController{},
+			beego.NSNamespace("/corporation-manager",
+				beego.NSInclude(
+					&controllers.CorporationManagerController{},
+				),
 			),
-		),
-		beego.NSNamespace("/employee-manager",
-			beego.NSInclude(
-				&controllers.EmployeeManagerController{},
+			beego.NSNamespace("/employee-manager",
+				beego.NSInclude(
+					&controllers.EmployeeManagerController{},
+				),
 			),
-		),
+		*/
 		beego.NSNamespace("/email",
 			beego.NSInclude(
 				&controllers.EmailController{},
@@ -60,11 +62,13 @@ func init() {
 				&controllers.AuthController{},
 			),
 		),
-		beego.NSNamespace("/org-signature",
-			beego.NSInclude(
-				&controllers.OrgSignatureController{},
+		/*
+			beego.NSNamespace("/org-signature",
+				beego.NSInclude(
+					&controllers.OrgSignatureController{},
+				),
 			),
-		),
+		*/
 	)
 	beego.AddNamespace(ns)
 }

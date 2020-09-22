@@ -5,9 +5,10 @@ import (
 
 	"github.com/astaxie/beego"
 
-	"github.com/opensourceways/app-cla-server/email"
+	"github.com/opensourceways/app-cla-server/dbmodels"
+	// "github.com/opensourceways/app-cla-server/email"
 	"github.com/opensourceways/app-cla-server/models"
-	"github.com/opensourceways/app-cla-server/worker"
+	// "github.com/opensourceways/app-cla-server/worker"
 )
 
 type IndividualSigningController struct {
@@ -50,30 +51,34 @@ func (this *IndividualSigningController) Post() {
 		return
 	}
 
-	_, emailCfg, err := getEmailConfig(claOrgID)
-	if err != nil {
-		reason = err
-		statusCode = 500
-		return
-	}
+	/*
+		_, emailCfg, err := getEmailConfig(claOrgID)
+		if err != nil {
+			reason = err
+			statusCode = 500
+			return
+		}
 
-	msg, err := email.GenIndividualSigningNotificationMsg(nil)
-	if err != nil {
-		reason = err
-		statusCode = 500
-		return
-	}
-	msg.To = []string{info.Email}
-
+		msg, err := email.GenIndividualSigningNotificationMsg(nil)
+		if err != nil {
+			reason = err
+			statusCode = 500
+			return
+		}
+		msg.To = []string{info.Email}
+	*/
 	if err := (&info).Create(claOrgID, true); err != nil {
 		reason = err
 		statusCode = 500
+		if dbmodels.IsHasSigned(err) {
+			statusCode = 400
+		}
 		return
 	}
 
 	body = "sign successfully"
 
-	worker.GetEmailWorker().SendSimpleMessage(emailCfg, msg)
+	// worker.GetEmailWorker().SendSimpleMessage(emailCfg, msg)
 }
 
 // @Title Check

@@ -184,7 +184,7 @@ func (this *CLAOrgController) GetSigningPageInfo() {
 	}
 	if len(claOrgs) == 0 {
 		reason = fmt.Errorf("this org has no bound cla")
-		statusCode = 500
+		statusCode = 404
 		return
 	}
 

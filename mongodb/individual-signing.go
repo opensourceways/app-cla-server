@@ -83,7 +83,9 @@ func (c *client) SignAsIndividual(claOrgID string, info dbmodels.IndividualSigni
 
 		for _, item := range count {
 			if item.Count != 0 {
-				return fmt.Errorf("Failed to sign as individual, he/she has signed")
+				return dbmodels.ErrHasSigned{
+					Err: fmt.Errorf("Failed to sign as individual, he/she has signed"),
+				}
 			}
 		}
 

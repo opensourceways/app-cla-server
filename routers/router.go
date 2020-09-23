@@ -15,11 +15,13 @@ import (
 
 func init() {
 	ns := beego.NewNamespace("/v1",
-		beego.NSNamespace("/cla",
-			beego.NSInclude(
-				&controllers.CLAController{},
+		/*
+			beego.NSNamespace("/cla",
+				beego.NSInclude(
+					&controllers.CLAController{},
+				),
 			),
-		),
+		*/
 		beego.NSNamespace("/cla-org",
 			beego.NSInclude(
 				&controllers.CLAOrgController{},
@@ -51,12 +53,12 @@ func init() {
 					&controllers.EmployeeManagerController{},
 				),
 			),
-		*/
-		beego.NSNamespace("/email",
-			beego.NSInclude(
-				&controllers.EmailController{},
+			beego.NSNamespace("/email",
+				beego.NSInclude(
+					&controllers.EmailController{},
+				),
 			),
-		),
+		*/
 		beego.NSNamespace("/auth",
 			beego.NSInclude(
 				&controllers.AuthController{},

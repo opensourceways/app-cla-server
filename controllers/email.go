@@ -22,7 +22,7 @@ type EmailController struct {
 func (this *EmailController) Auth() {
 	params := map[string]string{":platform": "", "code": "", "scope": "", "state": authURLState}
 	if err := checkAndVerifyAPIStringParameter(&this.Controller, params); err != nil {
-		sendResponse(&this.Controller, 400, err, nil)
+		sendResponse1(&this.Controller, 400, err, nil)
 		return
 	}
 	code := this.GetString("code")
@@ -31,19 +31,19 @@ func (this *EmailController) Auth() {
 
 	e, err := email.GetEmailClient(platform)
 	if err != nil {
-		sendResponse(&this.Controller, 400, err, nil)
+		sendResponse1(&this.Controller, 400, err, nil)
 		return
 	}
 
 	opt, err := e.GetAuthorizedEmail(code, scope)
 	if err != nil {
-		sendResponse(&this.Controller, 400, err, nil)
+		sendResponse1(&this.Controller, 400, err, nil)
 		return
 	}
 	opt.Platform = platform
 
 	if err = opt.Create(); err != nil {
-		sendResponse(&this.Controller, 500, err, nil)
+		sendResponse1(&this.Controller, 500, err, nil)
 		return
 	}
 
@@ -64,10 +64,10 @@ func (this *EmailController) Get() {
 	var body interface{}
 
 	defer func() {
-		sendResponse(&this.Controller, statusCode, reason, body)
+		sendResponse1(&this.Controller, statusCode, reason, body)
 	}()
 
-	code, err := checkApiAccessToken(&this.Controller, []string{PermissionOwnerOfOrg}, &accessController{})
+	code, _, err := checkApiAccessToken(&this.Controller, []string{PermissionOwnerOfOrg}, &accessController{})
 	if err != nil {
 		reason = err
 		statusCode = code

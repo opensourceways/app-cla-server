@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/huaweicloud/golangsdk"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 
@@ -38,9 +37,9 @@ func (c *client) SignAsIndividual(claOrgID string, info dbmodels.IndividualSigni
 		return err
 	}
 
-	body, err := golangsdk.BuildRequestBody(info, "")
+	body, err := structToMap(info)
 	if err != nil {
-		return fmt.Errorf("Failed to build body for signing as corporation, err:%v", err)
+		return err
 	}
 	addCorporationID(info.Email, body)
 
@@ -83,8 +82,9 @@ func (c *client) SignAsIndividual(claOrgID string, info dbmodels.IndividualSigni
 
 		for _, item := range count {
 			if item.Count != 0 {
-				return dbmodels.ErrHasSigned{
-					Err: fmt.Errorf("Failed to sign as individual, he/she has signed"),
+				return dbmodels.DBError{
+					ErrCode: dbmodels.ErrHasSigned,
+					Err:     fmt.Errorf("he/she has signed"),
 				}
 			}
 		}
@@ -95,11 +95,11 @@ func (c *client) SignAsIndividual(claOrgID string, info dbmodels.IndividualSigni
 		}
 
 		if r.MatchedCount == 0 {
-			return fmt.Errorf("Failed to sign as individual, the cla bound to org is not exist")
+			return fmt.Errorf("the cla bound to org is not exist")
 		}
 
 		if r.ModifiedCount == 0 {
-			return fmt.Errorf("Failed to sign as individual, impossible")
+			return fmt.Errorf("impossible")
 		}
 		return nil
 	}
@@ -108,9 +108,9 @@ func (c *client) SignAsIndividual(claOrgID string, info dbmodels.IndividualSigni
 }
 
 func (c *client) IsIndividualSigned(info dbmodels.IndividualSigningCheckInfo) (bool, error) {
-	body, err := golangsdk.BuildRequestBody(info, "")
+	body, err := structToMap(info)
 	if err != nil {
-		return false, fmt.Errorf("Failed to build body for signing as corporation, err:%v", err)
+		return false, err
 	}
 
 	signed := false

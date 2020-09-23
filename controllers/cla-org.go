@@ -36,7 +36,7 @@ func (this *CLAOrgController) Post() {
 	var body interface{}
 
 	defer func() {
-		sendResponse(&this.Controller, statusCode, reason, body)
+		sendResponse1(&this.Controller, statusCode, reason, body)
 	}()
 
 	var claOrg models.CLAOrg
@@ -91,7 +91,7 @@ func (this *CLAOrgController) Delete() {
 	var body string
 
 	defer func() {
-		sendResponse(&this.Controller, statusCode, reason, body)
+		sendResponse1(&this.Controller, statusCode, reason, body)
 	}()
 
 	uid := this.GetString(":uid")
@@ -122,7 +122,7 @@ func (this *CLAOrgController) GetAll() {
 	var body interface{}
 
 	defer func() {
-		sendResponse(&this.Controller, statusCode, reason, body)
+		sendResponse1(&this.Controller, statusCode, reason, body)
 	}()
 
 	for _, p := range []string{":platform", ":org_id"} {
@@ -159,7 +159,7 @@ func (this *CLAOrgController) GetSigningPageInfo() {
 	var body interface{}
 
 	defer func() {
-		sendResponse(&this.Controller, statusCode, reason, body)
+		sendResponse1(&this.Controller, statusCode, reason, body)
 	}()
 
 	params := []string{":platform", ":org_id", ":apply_to"}
@@ -229,7 +229,7 @@ func (this *CLAOrgController) GetBlankPdf() {
 	var body interface{}
 
 	defer func() {
-		sendResponse(&this.Controller, statusCode, reason, body)
+		sendResponse1(&this.Controller, statusCode, reason, body)
 	}()
 
 	claOrgID := this.GetString(":cla_org_id")

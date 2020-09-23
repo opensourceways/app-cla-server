@@ -37,7 +37,7 @@ func (this *EmployeeSigningController) Post() {
 	var body interface{}
 
 	defer func() {
-		sendResponse(&this.Controller, statusCode, reason, body)
+		sendResponse1(&this.Controller, statusCode, reason, body)
 	}()
 
 	claOrgID := this.GetString(":cla_org_id")
@@ -135,7 +135,7 @@ func (this *EmployeeSigningController) GetAll() {
 	var body interface{}
 
 	defer func() {
-		sendResponse(&this.Controller, statusCode, reason, body)
+		sendResponse1(&this.Controller, statusCode, reason, body)
 	}()
 
 	opt := models.EmployeeSigningListOption{
@@ -168,7 +168,7 @@ func (this *EmployeeSigningController) Update() {
 	var body interface{}
 
 	defer func() {
-		sendResponse(&this.Controller, statusCode, reason, body)
+		sendResponse1(&this.Controller, statusCode, reason, body)
 	}()
 
 	var info models.EmployeeSigningUdateInfo
@@ -198,7 +198,7 @@ func (this *EmployeeSigningController) Delete() {
 	var body string
 
 	defer func() {
-		sendResponse(&this.Controller, statusCode, reason, body)
+		sendResponse1(&this.Controller, statusCode, reason, body)
 	}()
 
 	var info models.EmployeeSigningUdateInfo

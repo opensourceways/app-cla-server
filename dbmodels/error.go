@@ -1,14 +1,26 @@
 package dbmodels
 
-type ErrHasSigned struct {
-	Err error
+const (
+	ErrorStart = iota
+	ErrInvalidParameter
+	ErrHasSigned
+)
+
+type DBError struct {
+	ErrCode int
+	Err     error
 }
 
-func (this ErrHasSigned) Error() string {
+func (this DBError) Error() string {
 	return this.Err.Error()
 }
 
 func IsHasSigned(err error) bool {
-	_, ok := err.(ErrHasSigned)
-	return ok
+	e, ok := err.(DBError)
+	return ok && e.ErrCode == ErrHasSigned
+}
+
+func IsInvalidParameter(err error) bool {
+	e, ok := err.(DBError)
+	return ok && e.ErrCode == ErrInvalidParameter
 }

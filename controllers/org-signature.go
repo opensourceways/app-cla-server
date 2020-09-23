@@ -30,7 +30,7 @@ func (this *OrgSignatureController) Post() {
 	var body interface{}
 
 	defer func() {
-		sendResponse(&this.Controller, statusCode, reason, body)
+		sendResponse1(&this.Controller, statusCode, reason, body)
 	}()
 
 	claOrgID := this.GetString(":cla_org_id")
@@ -89,7 +89,7 @@ func (this *OrgSignatureController) Get() {
 	var body interface{}
 
 	defer func() {
-		sendResponse(&this.Controller, statusCode, reason, body)
+		sendResponse1(&this.Controller, statusCode, reason, body)
 	}()
 
 	claOrgID := this.GetString(":cla_org_id")
@@ -122,7 +122,7 @@ func (this *OrgSignatureController) BlankSignature() {
 	var body interface{}
 
 	defer func() {
-		sendResponse(&this.Controller, statusCode, reason, body)
+		sendResponse1(&this.Controller, statusCode, reason, body)
 	}()
 
 	language := this.GetString(":language")

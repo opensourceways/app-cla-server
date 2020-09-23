@@ -16,7 +16,52 @@ const (
 	apiAccessController = "access_controller"
 )
 
-func sendResponse(c *beego.Controller, statusCode int, reason error, body interface{}) {
+func sendResponse(c *beego.Controller, statusCode, errCode int, reason error, body interface{}) {
+	if token, err := refreshAccessToken(c); err == nil {
+		// this code must run before `c.Ctx.ResponseWriter.WriteHeader`
+		// otherwise the header can't be set successfully.
+		// The reason is relevant to the variable of 'Response.Started' at
+		// beego/context/context.go
+		c.Ctx.Output.Header(headerToken, token)
+	}
+
+	f := func(data interface{}) {
+		c.Data["json"] = struct {
+			Data interface{} `json:"data"`
+		}{
+			Data: data,
+		}
+	}
+
+	if reason != nil {
+		if statusCode >= 500 {
+			beego.Error(reason.Error())
+			reason = fmt.Errorf("System error")
+		}
+
+		d := struct {
+			ErrCode string `json:"error_code"`
+			ErrMsg  string `json:"error_message"`
+		}{
+			ErrCode: fmt.Sprintf("cla.%04d", errCode),
+			ErrMsg:  reason.Error(),
+		}
+
+		f(d)
+
+		// if success, don't set status code, otherwise the header set in c.ServeJSON
+		// will not work. The reason maybe the same as above.
+		c.Ctx.ResponseWriter.WriteHeader(statusCode)
+	} else {
+		if body != nil {
+			f(body)
+		}
+	}
+
+	c.ServeJSON()
+}
+
+func sendResponse1(c *beego.Controller, statusCode int, reason error, body interface{}) {
 	if token, err := refreshAccessToken(c); err == nil {
 		// this code must run before `c.Ctx.ResponseWriter.WriteHeader`
 		// otherwise the header can't be set successfully.
@@ -80,20 +125,20 @@ func newAccessTokenAuthorizedByCodePlatform(user, permission, platformToken stri
 	return ac.NewToken(conf.AppConfig.APITokenExpiry)
 }
 
-func checkApiAccessToken(c *beego.Controller, permission []string, ac accessControllerInterface) (int, error) {
+func checkApiAccessToken(c *beego.Controller, permission []string, ac accessControllerInterface) (int, int, error) {
 	token := getHeader(c, headerToken)
 	if token == "" {
-		return 401, fmt.Errorf("no token passed")
+		return 401, ErrMissingToken, fmt.Errorf("no token passed")
 	}
 
 	if err := ac.ParseToken(token, conf.AppConfig.APITokenKey); err != nil {
-		return 401, err
+		return 401, ErrUnknownToken, err
 	}
 
 	if err := ac.Verify(permission); err != nil {
-		return 403, err
+		return 403, ErrInvalidToken, err
 	}
-	return 0, nil
+	return 0, 0, nil
 }
 
 func apiPrepare(c *beego.Controller, permission []string, ac accessControllerInterface) {
@@ -101,8 +146,8 @@ func apiPrepare(c *beego.Controller, permission []string, ac accessControllerInt
 		ac = &accessController{}
 	}
 
-	if code, err := checkApiAccessToken(c, permission, ac); err != nil {
-		sendResponse(c, code, err, nil)
+	if statusCode, errCode, err := checkApiAccessToken(c, permission, ac); err != nil {
+		sendResponse(c, statusCode, errCode, err, nil)
 		c.StopRun()
 	}
 
@@ -191,7 +236,7 @@ func checkAndVerifyAPIStringParameter(c *beego.Controller, params map[string]str
 
 func fetchInputPayload(c *beego.Controller, info interface{}) error {
 	if err := json.Unmarshal(c.Ctx.Input.RequestBody, info); err != nil {
-		return fmt.Errorf("Failed to fetch input parameter: %s", err.Error())
+		return fmt.Errorf("invalid parameter: %s", err.Error())
 	}
 	return nil
 }

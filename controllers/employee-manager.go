@@ -29,7 +29,7 @@ func (this *EmployeeManagerController) Post() {
 	var body interface{}
 
 	defer func() {
-		sendResponse(&this.Controller, statusCode, reason, body)
+		sendResponse1(&this.Controller, statusCode, reason, body)
 	}()
 
 	var info models.EmployeeManagerCreateOption
@@ -64,7 +64,7 @@ func (this *EmployeeManagerController) GetAll() {
 	var body interface{}
 
 	defer func() {
-		sendResponse(&this.Controller, statusCode, reason, body)
+		sendResponse1(&this.Controller, statusCode, reason, body)
 	}()
 
 	opt := models.CorporationManagerListOption{
@@ -95,7 +95,7 @@ func (this *EmployeeManagerController) Delete() {
 	var body string
 
 	defer func() {
-		sendResponse(&this.Controller, statusCode, reason, body)
+		sendResponse1(&this.Controller, statusCode, reason, body)
 	}()
 
 	var info models.EmployeeManagerCreateOption

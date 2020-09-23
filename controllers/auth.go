@@ -20,7 +20,7 @@ type AuthController struct {
 func (this *AuthController) Auth() {
 	params := map[string]string{":platform": "", "code": "", ":purpose": "", "state": authURLState}
 	if err := checkAndVerifyAPIStringParameter(&this.Controller, params); err != nil {
-		sendResponse(&this.Controller, 400, err, nil)
+		sendResponse1(&this.Controller, 400, err, nil)
 		return
 	}
 
@@ -32,14 +32,14 @@ func (this *AuthController) Auth() {
 
 	cp, err := platformAuth.GetAuthInstance(platform, purpose)
 	if err != nil {
-		sendResponse(&this.Controller, 400, err, nil)
+		sendResponse1(&this.Controller, 400, err, nil)
 		return
 	}
 
 	token, user, err := cp.Auth(code, scope)
 	if err != nil {
 		err = fmt.Errorf("Failed to auth: %s", err.Error())
-		sendResponse(&this.Controller, 500, err, nil)
+		sendResponse1(&this.Controller, 500, err, nil)
 		return
 	}
 
@@ -49,7 +49,7 @@ func (this *AuthController) Auth() {
 		token,
 	)
 	if err != nil {
-		sendResponse(&this.Controller, 500, err, nil)
+		sendResponse1(&this.Controller, 500, err, nil)
 		return
 	}
 
@@ -69,7 +69,7 @@ func (this *AuthController) Get() {
 	var body interface{}
 
 	defer func() {
-		sendResponse(&this.Controller, statusCode, reason, body)
+		sendResponse1(&this.Controller, statusCode, reason, body)
 	}()
 
 	params := []string{":platform", ":purpose"}

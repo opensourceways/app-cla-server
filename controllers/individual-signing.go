@@ -5,7 +5,6 @@ import (
 
 	"github.com/astaxie/beego"
 
-	"github.com/opensourceways/app-cla-server/dbmodels"
 	// "github.com/opensourceways/app-cla-server/email"
 	"github.com/opensourceways/app-cla-server/models"
 	// "github.com/opensourceways/app-cla-server/worker"
@@ -30,16 +29,18 @@ func (this *IndividualSigningController) Prepare() {
 // @router /:cla_org_id [post]
 func (this *IndividualSigningController) Post() {
 	var statusCode = 201
+	var errCode = 0
 	var reason error
 	var body interface{}
 
 	defer func() {
-		sendResponse(&this.Controller, statusCode, reason, body)
+		sendResponse(&this.Controller, statusCode, errCode, reason, body)
 	}()
 
 	claOrgID, err := fetchStringParameter(&this.Controller, ":cla_org_id")
 	if err != nil {
 		reason = err
+		errCode = ErrInvalidParameter
 		statusCode = 400
 		return
 	}
@@ -47,6 +48,7 @@ func (this *IndividualSigningController) Post() {
 	var info models.IndividualSigning
 	if err := fetchInputPayload(&this.Controller, &info); err != nil {
 		reason = err
+		errCode = ErrInvalidParameter
 		statusCode = 400
 		return
 	}
@@ -68,11 +70,9 @@ func (this *IndividualSigningController) Post() {
 		msg.To = []string{info.Email}
 	*/
 	if err := (&info).Create(claOrgID, true); err != nil {
-		reason = err
-		statusCode = 500
-		if dbmodels.IsHasSigned(err) {
-			statusCode = 400
-		}
+		reason = fmt.Errorf("Failed to sign as individual, err:%s", err.Error())
+		statusCode, errCode = convertDBError(err)
+
 		return
 	}
 
@@ -91,16 +91,18 @@ func (this *IndividualSigningController) Post() {
 // @router /:platform/:org/:repo [get]
 func (this *IndividualSigningController) Check() {
 	var statusCode = 200
+	var errCode = 0
 	var reason error
 	var body interface{}
 
 	defer func() {
-		sendResponse(&this.Controller, statusCode, reason, body)
+		sendResponse(&this.Controller, statusCode, errCode, reason, body)
 	}()
 
 	params := []string{":platform", ":org", ":repo", "email"}
 	if err := checkAPIStringParameter(&this.Controller, params); err != nil {
 		reason = err
+		errCode = ErrInvalidParameter
 		statusCode = 400
 		return
 	}
@@ -112,8 +114,8 @@ func (this *IndividualSigningController) Check() {
 		this.GetString("email"),
 	)
 	if err != nil {
-		reason = fmt.Errorf("Failed to check signing: %s", err.Error())
-		statusCode = 500
+		reason = fmt.Errorf("Failed to check individual signing, err:%s", err.Error())
+		statusCode, errCode = convertDBError(err)
 		return
 	}
 

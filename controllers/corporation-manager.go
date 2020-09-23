@@ -40,7 +40,7 @@ func (this *CorporationManagerController) Post() {
 	var body interface{}
 
 	defer func() {
-		sendResponse(&this.Controller, statusCode, reason, body)
+		sendResponse1(&this.Controller, statusCode, reason, body)
 	}()
 
 	var info models.CorporationManagerCreateOption
@@ -71,7 +71,7 @@ func (this *CorporationManagerController) Auth() {
 	var body interface{}
 
 	defer func() {
-		sendResponse(&this.Controller, statusCode, reason, body)
+		sendResponse1(&this.Controller, statusCode, reason, body)
 	}()
 
 	var info models.CorporationManagerAuthentication
@@ -123,7 +123,7 @@ func (this *CorporationManagerController) Update() {
 	var body interface{}
 
 	defer func() {
-		sendResponse(&this.Controller, statusCode, reason, body)
+		sendResponse1(&this.Controller, statusCode, reason, body)
 	}()
 
 	var info models.CorporationManagerResetPassword

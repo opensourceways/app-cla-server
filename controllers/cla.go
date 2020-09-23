@@ -29,7 +29,7 @@ func (this *CLAController) Post() {
 	var body interface{}
 
 	defer func() {
-		sendResponse(&this.Controller, statusCode, reason, body)
+		sendResponse1(&this.Controller, statusCode, reason, body)
 	}()
 
 	var cla models.CLA
@@ -68,7 +68,7 @@ func (this *CLAController) Delete() {
 	var body string
 
 	defer func() {
-		sendResponse(&this.Controller, statusCode, reason, body)
+		sendResponse1(&this.Controller, statusCode, reason, body)
 	}()
 
 	uid := this.GetString(":uid")
@@ -101,7 +101,7 @@ func (this *CLAController) Get() {
 	var body interface{}
 
 	defer func() {
-		sendResponse(&this.Controller, statusCode, reason, body)
+		sendResponse1(&this.Controller, statusCode, reason, body)
 	}()
 
 	uid := this.GetString(":uid")
@@ -132,7 +132,7 @@ func (this *CLAController) GetAll() {
 	var body interface{}
 
 	defer func() {
-		sendResponse(&this.Controller, statusCode, reason, body)
+		sendResponse1(&this.Controller, statusCode, reason, body)
 	}()
 
 	user, err := getApiAccessUser(&this.Controller)

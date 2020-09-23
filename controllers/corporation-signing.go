@@ -37,7 +37,7 @@ func (this *CorporationSigningController) Post() {
 	var body interface{}
 
 	defer func() {
-		sendResponse(&this.Controller, statusCode, reason, body)
+		sendResponse1(&this.Controller, statusCode, reason, body)
 	}()
 
 	var info models.CorporationSigningCreateOption
@@ -85,7 +85,7 @@ func (this *CorporationSigningController) GetAll() {
 	var body interface{}
 
 	defer func() {
-		sendResponse(&this.Controller, statusCode, reason, body)
+		sendResponse1(&this.Controller, statusCode, reason, body)
 	}()
 
 	opt := models.CorporationSigningListOption{
@@ -117,7 +117,7 @@ func (this *CorporationSigningController) Update() {
 	var body interface{}
 
 	defer func() {
-		sendResponse(&this.Controller, statusCode, reason, body)
+		sendResponse1(&this.Controller, statusCode, reason, body)
 	}()
 
 	var info models.CorporationSigningUdateInfo
@@ -148,7 +148,7 @@ func (this *CorporationSigningController) SendVerifiCode() {
 	var body interface{}
 
 	defer func() {
-		sendResponse(&this.Controller, statusCode, reason, body)
+		sendResponse1(&this.Controller, statusCode, reason, body)
 	}()
 
 	var info models.CorporationSigningVerifCode

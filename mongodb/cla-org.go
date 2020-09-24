@@ -248,20 +248,20 @@ func (c *client) ListBindingForSigningPage(opt dbmodels.CLAOrgListOption) ([]dbm
 
 	n := len(v)
 	r := make([]dbmodels.CLAOrg, 0, n)
-	for _, item := range v {
-		r = append(r, toModelCLAOrg(item))
-	}
 
 	if opt.RepoID != "" {
-		r1 := make([]dbmodels.CLAOrg, 0, n)
-		for i := 0; i < n; i++ {
-			if r[i].RepoID == opt.RepoID {
-				r1 = append(r1, r[i])
+		for _, item := range v {
+			if item.RepoID == opt.RepoID {
+				r = append(r, toModelCLAOrg(item))
 			}
 		}
-		if len(r1) != 0 {
-			return r1, nil
+		if len(r) != 0 {
+			return r, nil
 		}
+	}
+
+	for _, item := range v {
+		r = append(r, toModelCLAOrg(item))
 	}
 	return r, nil
 }

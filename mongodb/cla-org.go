@@ -20,8 +20,8 @@ const (
 	fieldIndividuals     = "individuals"
 	fieldEmployees       = "employees"
 	fieldCorporations    = "corporations"
-	fieldCorpoManagers   = "corporation_managers"
-	fieldCorporationID   = "corporation_id"
+	fieldCorpoManagers   = "corp_managers"
+	fieldCorporationID   = "corp_id"
 	fieldOrgSignature    = "org_signature"
 	fieldOrgSignatureTag = "org_signature_uploaded"
 	fieldRepo            = "repo_id"
@@ -59,7 +59,7 @@ type CLAOrg struct {
 	Corporations []corporationSigning `bson:"corporations,omitempty"`
 
 	// CorporationManagers is the managers of corporation who can manage the employee
-	CorporationManagers []corporationManager `bson:"corporation_managers,omitempty"`
+	CorporationManagers []corporationManager `bson:"corp_managers,omitempty"`
 
 	OrgSignatureUploaded bool   `bson:"org_signature_uploaded"`
 	OrgSignature         []byte `bson:"org_signature"`

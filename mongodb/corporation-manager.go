@@ -18,7 +18,7 @@ type corporationManager struct {
 	Role          string `bson:"role"`
 	Email         string `bson:"email"`
 	Password      string `bson:"password"`
-	CorporationID string `bson:"corporation_id"`
+	CorporationID string `bson:"corp_id"`
 }
 
 func corpoManagerElemKey(field string) string {
@@ -45,7 +45,7 @@ func checkBeforeAddingCorporationManager(c *client, ctx mongo.SessionContext, cl
 				bson.M{"$size": bson.M{"$filter": bson.M{
 					"input": fmt.Sprintf("$%s", fieldCorpoManagers),
 					"cond": bson.M{"$and": bson.A{
-						bson.M{"$eq": bson.A{"$$this.corporation_id", opt[0].CorporationID}},
+						bson.M{"$eq": bson.A{"$$this.corp_id", opt[0].CorporationID}},
 						bson.M{"$eq": bson.A{"$$this.role", opt[0].Role}},
 					}},
 				}}},
@@ -279,7 +279,7 @@ func (c *client) ListCorporationManager(claOrgID string, opt dbmodels.Corporatio
 					"input": fmt.Sprintf("$%s", fieldCorpoManagers),
 					"cond": bson.M{"$and": bson.A{
 						bson.M{"$eq": bson.A{"$$this.role", opt.Role}},
-						bson.M{"$eq": bson.A{"$$this.corporation_id", opt.CorporationID}},
+						bson.M{"$eq": bson.A{"$$this.corp_id", opt.CorporationID}},
 					}},
 				}}},
 			},
@@ -341,7 +341,7 @@ func (c *client) ListManagersWhenEmployeeSigning(claOrgIDs []string, corporID st
 			bson.M{"$project": bson.M{
 				fieldCorpoManagers: bson.M{"$filter": bson.M{
 					"input": fmt.Sprintf("$%s", fieldCorpoManagers),
-					"cond":  bson.M{"$eq": bson.A{"$$this.corporation_id", corporID}},
+					"cond":  bson.M{"$eq": bson.A{"$$this.corp_id", corporID}},
 				}}},
 			},
 			bson.M{"$project": bson.M{

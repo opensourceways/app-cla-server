@@ -15,8 +15,8 @@ import (
 type corporationSigning struct {
 	AdminEmail      string                   `bson:"admin_email"`
 	AdminName       string                   `bson:"admin_name"`
-	CorporationName string                   `bson:"corporation_name"`
-	CorporationID   string                   `bson:"corporation_id"`
+	CorporationName string                   `bson:"corp_name"`
+	CorporationID   string                   `bson:"corp_id"`
 	Enabled         bool                     `bson:"enabled"`
 	Date            string                   `bson:"date"`
 	SigningInfo     dbmodels.TypeSigningInfo `bson:"info"`
@@ -64,7 +64,7 @@ func (c *client) SignAsCorporation(claOrgID string, info dbmodels.CorporationSig
 					bson.M{"$isArray": fmt.Sprintf("$%s", fieldCorporations)},
 					bson.M{"$size": bson.M{"$filter": bson.M{
 						"input": fmt.Sprintf("$%s", fieldCorporations),
-						"cond":  bson.M{"$eq": bson.A{"$$this.corporation_id", info.CorporationID}},
+						"cond":  bson.M{"$eq": bson.A{"$$this.corp_id", info.CorporationID}},
 					}}},
 					0,
 				}},
@@ -132,10 +132,10 @@ func (c *client) ListCorporationSigning(opt dbmodels.CorporationSigningListOptio
 				}},
 			}},
 			bson.M{"$project": bson.M{
-				corporationsElemKey("corporation_name"): 1,
-				corporationsElemKey("admin_email"):      1,
-				corporationsElemKey("admin_name"):       1,
-				corporationsElemKey("enabled"):          1,
+				corporationsElemKey("corp_name"):   1,
+				corporationsElemKey("admin_email"): 1,
+				corporationsElemKey("admin_name"):  1,
+				corporationsElemKey("enabled"):     1,
 
 				corpoManagerElemKey("email"): 1,
 			}},
@@ -215,8 +215,8 @@ func (c *client) UpdateCorporationSigning(claOrgID, adminEmail, corporationName 
 			ArrayFilters: &options.ArrayFilters{
 				Filters: bson.A{
 					bson.M{
-						"elem.corporation_name": corporationName,
-						"elem.admin_email":      adminEmail,
+						"elem.corp_name":   corporationName,
+						"elem.admin_email": adminEmail,
 					},
 				},
 			},

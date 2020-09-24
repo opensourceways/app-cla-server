@@ -125,6 +125,7 @@ func (c *client) IsIndividualSigned(info dbmodels.IndividualSigningCheckInfo) (b
 		pipeline := bson.A{
 			bson.M{"$match": filter},
 			bson.M{"$project": bson.M{
+				fieldRepo: 1,
 				"count": bson.M{"$cond": bson.A{
 					bson.M{"$isArray": fmt.Sprintf("$%s", fieldIndividuals)},
 					bson.M{"$size": bson.M{"$filter": bson.M{
@@ -145,11 +146,32 @@ func (c *client) IsIndividualSigned(info dbmodels.IndividualSigningCheckInfo) (b
 		}
 
 		var count []struct {
-			Count int `bson:"count"`
+			RepoID string `bson:"repo_id"`
+			Count  int    `bson:"count"`
 		}
 		err = cursor.All(ctx, &count)
 		if err != nil {
 			return err
+		}
+
+		if info.RepoID != "" {
+			bingo := false
+
+			for _, item := range count {
+				if item.RepoID == info.RepoID {
+					if !bingo {
+						bingo = true
+					}
+
+					if item.Count != 0 {
+						signed = true
+						return nil
+					}
+				}
+			}
+			if bingo {
+				return nil
+			}
 		}
 
 		for _, item := range count {

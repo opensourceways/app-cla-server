@@ -37,5 +37,5 @@ func (this *EmployeeSigningUdateInfo) Update(claOrgID, email string) error {
 }
 
 func DeleteEmployeeSigning(claOrgID, email string) error {
-	return dbmodels.GetDB().DeleteEmployeeSigning(claOrgID, email)
+	return dbmodels.GetDB().DeleteIndividualSigning(claOrgID, email)
 }

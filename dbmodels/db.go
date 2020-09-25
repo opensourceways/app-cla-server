@@ -59,7 +59,7 @@ type ICLAOrg interface {
 
 type IIndividualSigning interface {
 	SignAsIndividual(string, IndividualSigningInfo) error
-	IsIndividualSigned(IndividualSigningCheckInfo) (bool, error)
+	IsIndividualSigned(platform, orgID, repoId, email string) (bool, error)
 }
 
 type ICLA interface {

@@ -9,18 +9,21 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 
 	"github.com/opensourceways/app-cla-server/dbmodels"
-	"github.com/opensourceways/app-cla-server/util"
 )
 
 func individualSigningKey(email string) string {
 	return fmt.Sprintf("%s.%s", fieldIndividuals, strings.ReplaceAll(email, ".", "_"))
 }
 
-func addCorporationID(email string, body map[string]interface{}) {
-	body[fieldCorporationID] = util.EmailSuffix(email)
+type individualSigning struct {
+	Name        string                   `bson:"name" json:"name" required:"true"`
+	Email       string                   `bson:"email" json:"email" required:"true"`
+	Enabled     bool                     `bson:"enabled" json:"enabled"`
+	Date        string                   `bson:"date" json:"date" required:"true"`
+	SigningInfo dbmodels.TypeSigningInfo `bson:"info" json:"info,omitempty"`
 }
 
-func additionalConditionForIndividualSigningDoc1(filter bson.M, email string) {
+func additionalConditionForIndividualSigningDoc1(filter bson.M) {
 	filter["apply_to"] = dbmodels.ApplyToIndividual
 	filter["enabled"] = true
 	filter[fieldIndividuals] = bson.M{"$type": "array"}
@@ -32,12 +35,16 @@ func (c *client) SignAsIndividual(claOrgID string, info dbmodels.IndividualSigni
 		return err
 	}
 
-	oid, err := toObjectID(claOrgID)
-	if err != nil {
-		return err
-	}
+	oid, _ := toObjectID(claOrgID)
 
-	body, err := structToMap(info)
+	signing := individualSigning{
+		Email:       info.Email,
+		Name:        info.Name,
+		Enabled:     info.Enabled,
+		Date:        info.Date,
+		SigningInfo: info.Info,
+	}
+	body, err := structToMap(signing)
 	if err != nil {
 		return err
 	}
@@ -51,7 +58,7 @@ func (c *client) SignAsIndividual(claOrgID string, info dbmodels.IndividualSigni
 			"org_id":   claOrg.OrgID,
 			"repo_id":  claOrg.RepoID,
 		}
-		additionalConditionForIndividualSigningDoc1(filter, info.Email)
+		additionalConditionForIndividualSigningDoc1(filter)
 
 		pipeline := bson.A{
 			bson.M{"$match": filter},
@@ -94,10 +101,6 @@ func (c *client) SignAsIndividual(claOrgID string, info dbmodels.IndividualSigni
 			return err
 		}
 
-		if r.MatchedCount == 0 {
-			return fmt.Errorf("the cla bound to org is not exist")
-		}
-
 		if r.ModifiedCount == 0 {
 			return fmt.Errorf("impossible")
 		}
@@ -107,8 +110,20 @@ func (c *client) SignAsIndividual(claOrgID string, info dbmodels.IndividualSigni
 	return c.doTransaction(f)
 }
 
-func (c *client) IsIndividualSigned(info dbmodels.IndividualSigningCheckInfo) (bool, error) {
-	body, err := structToMap(info)
+func (c *client) IsIndividualSigned(platform, orgID, repoID, email string) (bool, error) {
+	opt := struct {
+		Platform string `json:"platform" required:"true"`
+		OrgID    string `json:"org_id" required:"true"`
+		RepoID   string `json:"-" required:"true"`
+		Email    string `json:"-" required:"true"`
+	}{
+		Platform: platform,
+		OrgID:    orgID,
+		RepoID:   repoID,
+		Email:    email,
+	}
+
+	body, err := structToMap(opt)
 	if err != nil {
 		return false, err
 	}
@@ -119,8 +134,8 @@ func (c *client) IsIndividualSigned(info dbmodels.IndividualSigningCheckInfo) (b
 		col := c.collection(claOrgCollection)
 
 		filter := bson.M(body)
-		filter[fieldRepo] = bson.M{"$in": bson.A{"", info.RepoID}}
-		additionalConditionForIndividualSigningDoc1(filter, info.Email)
+		filter[fieldRepo] = bson.M{"$in": bson.A{"", repoID}}
+		additionalConditionForIndividualSigningDoc1(filter)
 
 		pipeline := bson.A{
 			bson.M{"$match": filter},
@@ -131,7 +146,7 @@ func (c *client) IsIndividualSigned(info dbmodels.IndividualSigningCheckInfo) (b
 					bson.M{"$size": bson.M{"$filter": bson.M{
 						"input": fmt.Sprintf("$%s", fieldIndividuals),
 						"cond": bson.M{"$and": bson.A{
-							bson.M{"$eq": bson.A{"$$this.email", info.Email}},
+							bson.M{"$eq": bson.A{"$$this.email", email}},
 							bson.M{"$eq": bson.A{"$$this.enabled", true}},
 						}},
 					}}},
@@ -154,11 +169,11 @@ func (c *client) IsIndividualSigned(info dbmodels.IndividualSigningCheckInfo) (b
 			return err
 		}
 
-		if info.RepoID != "" {
+		if repoID != "" {
 			bingo := false
 
 			for _, item := range count {
-				if item.RepoID == info.RepoID {
+				if item.RepoID == repoID {
 					if !bingo {
 						bingo = true
 					}

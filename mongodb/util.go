@@ -4,6 +4,7 @@ import (
 	"github.com/huaweicloud/golangsdk"
 
 	"github.com/opensourceways/app-cla-server/dbmodels"
+	"github.com/opensourceways/app-cla-server/util"
 )
 
 func structToMap(info interface{}) (map[string]interface{}, error) {
@@ -15,4 +16,8 @@ func structToMap(info interface{}) (map[string]interface{}, error) {
 		}
 	}
 	return body, nil
+}
+
+func addCorporationID(email string, body map[string]interface{}) {
+	body[fieldCorporationID] = util.EmailSuffix(email)
 }

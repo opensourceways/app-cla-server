@@ -48,7 +48,7 @@ type CLAOrg struct {
 
 	// Individuals is the cla signing information of ordinary contributors
 	// key is the email of contributor
-	Individuals []employeeSigning `bson:"individuals,omitempty"`
+	Individuals []individualSigning `bson:"individuals,omitempty"`
 
 	// Employees is the cla signing information of employees and grouped by corporation
 	// key is the email suffix of corporation

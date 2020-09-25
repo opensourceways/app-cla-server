@@ -1,7 +1,6 @@
 package controllers
 
 import (
-	"encoding/json"
 	"fmt"
 	"net/http"
 
@@ -25,47 +24,41 @@ func (this *EmployeeSigningController) Prepare() {
 	}
 }
 
-// @Title Employee signing
+// @Title Post
 // @Description sign as employee
-// @Param	body		body 	models.EmployeeSigning	true		"body for employee signing"
+// @Param	body		body 	models.IndividualSigning	true		"body for employee signing"
 // @Success 201 {int} map
-// @Failure 403 body is empty
 // @router /:cla_org_id [post]
 func (this *EmployeeSigningController) Post() {
 	var statusCode = 201
+	var errCode = 0
 	var reason error
 	var body interface{}
 
 	defer func() {
-		sendResponse1(&this.Controller, statusCode, reason, body)
+		sendResponse(&this.Controller, statusCode, errCode, reason, body)
 	}()
 
-	claOrgID := this.GetString(":cla_org_id")
-	if claOrgID == "" {
-		reason = fmt.Errorf("missing cla_org_id")
+	claOrgID, err := fetchStringParameter(&this.Controller, ":cla_org_id")
+	if err != nil {
+		reason = err
+		errCode = ErrInvalidParameter
 		statusCode = 400
 		return
 	}
 
-	var info models.EmployeeSigning
-	if err := json.Unmarshal(this.Ctx.Input.RequestBody, &info); err != nil {
+	var info models.IndividualSigning
+	if err := fetchInputPayload(&this.Controller, &info); err != nil {
 		reason = err
-		statusCode = 400
-		return
-	}
-	info.CLAOrgID = claOrgID
-
-	claOrg := &models.CLAOrg{ID: info.CLAOrgID}
-	if err := claOrg.Get(); err != nil {
-		reason = err
+		errCode = ErrInvalidParameter
 		statusCode = 400
 		return
 	}
 
-	emailInfo := &models.OrgEmail{Email: claOrg.OrgEmail}
-	if err := emailInfo.Get(); err != nil {
-		reason = err
-		statusCode = 400
+	claOrg, emailCfg, err := getEmailConfig(claOrgID)
+	if err != nil {
+		reason = fmt.Errorf("Failed to sign as employee, err:%s", err.Error())
+		statusCode, errCode = convertDBError(err)
 		return
 	}
 
@@ -103,7 +96,7 @@ func (this *EmployeeSigningController) Post() {
 		return
 	}
 
-	if err := (&info).Create(claOrgID); err != nil {
+	if err := (&info).Create(claOrgID, false); err != nil {
 		reason = err
 		statusCode = 500
 		return
@@ -120,7 +113,7 @@ func (this *EmployeeSigningController) Post() {
 		}
 	}
 	if len(msg.To) > 0 {
-		worker.GetEmailWorker().SendSimpleMessage(emailInfo, &msg)
+		worker.GetEmailWorker().SendSimpleMessage(emailCfg, &msg)
 	}
 	body = "sign successfully"
 }

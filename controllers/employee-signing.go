@@ -127,7 +127,6 @@ func (this *EmployeeSigningController) Post() {
 
 // @Title GetAll
 // @Description get all the employees
-// @Success 200 {object} models.EmployeeSigning
 // @router / [get]
 func (this *EmployeeSigningController) GetAll() {
 	var statusCode = 200
@@ -157,31 +156,42 @@ func (this *EmployeeSigningController) GetAll() {
 	body = r
 }
 
-// @Title Enable employee signing
-// @Description enable employee
-// @Param	body		body 	models.EmployeeSigning	true		"body for employee signing"
-// @Success 201 {int} map
-// @Failure 403 body is empty
-// @router / [put]
+// @Title Update
+// @Description enable/unable employee signing
+// @Param	:cla_org_id	path 	string	true		"cla org id"
+// @Param	:email		path 	string	true		"email"
+// @Success 202 {int} map
+// @router /:cla_org_id/:email [put]
 func (this *EmployeeSigningController) Update() {
 	var statusCode = 202
+	var errCode = 0
 	var reason error
 	var body interface{}
 
 	defer func() {
-		sendResponse1(&this.Controller, statusCode, reason, body)
+		sendResponse(&this.Controller, statusCode, errCode, reason, body)
 	}()
 
-	var info models.EmployeeSigningUdateInfo
-	if err := json.Unmarshal(this.Ctx.Input.RequestBody, &info); err != nil {
+	if err := checkAPIStringParameter(&this.Controller, []string{":cla_org_id", ":email"}); err != nil {
 		reason = err
+		errCode = ErrInvalidParameter
+		statusCode = 400
+		return
+
+	}
+
+	var info models.EmployeeSigningUdateInfo
+	if err := fetchInputPayload(&this.Controller, &info); err != nil {
+		reason = err
+		errCode = ErrInvalidParameter
 		statusCode = 400
 		return
 	}
 
-	if err := (&info).Update(); err != nil {
-		reason = err
-		statusCode = 500
+	err := (&info).Update(this.GetString(":cla_org_id"), this.GetString(":email"))
+	if err != nil {
+		reason = fmt.Errorf("Failed to update employee signing, err:%s", err.Error())
+		statusCode, errCode = convertDBError(err)
 		return
 	}
 
@@ -189,29 +199,33 @@ func (this *EmployeeSigningController) Update() {
 }
 
 // @Title Delete
-// @Description delete employee
-// @Param	body		body 	models.EmployeeSigning	true		"body for employee signing"
+// @Description delete employee signing
+// @Param	:cla_org_id	path 	string	true		"cla org id"
+// @Param	:email		path 	string	true		"email"
 // @Success 204 {string} delete success!
-// @router / [delete]
+// @router /:cla_org_id/:email [delete]
 func (this *EmployeeSigningController) Delete() {
 	var statusCode = 204
+	var errCode = 0
 	var reason error
 	var body string
 
 	defer func() {
-		sendResponse1(&this.Controller, statusCode, reason, body)
+		sendResponse(&this.Controller, statusCode, errCode, reason, body)
 	}()
 
-	var info models.EmployeeSigningUdateInfo
-	if err := json.Unmarshal(this.Ctx.Input.RequestBody, &info); err != nil {
+	if err := checkAPIStringParameter(&this.Controller, []string{":cla_org_id", ":email"}); err != nil {
 		reason = err
+		errCode = ErrInvalidParameter
 		statusCode = 400
 		return
+
 	}
 
-	if err := models.DeleteEmployeeSigning(info.CLAOrgID, info.Email); err != nil {
-		reason = err
-		statusCode = 500
+	err := models.DeleteEmployeeSigning(this.GetString(":cla_org_id"), this.GetString(":email"))
+	if err != nil {
+		reason = fmt.Errorf("Failed to delete employee signing, err:%s", err.Error())
+		statusCode, errCode = convertDBError(err)
 		return
 	}
 

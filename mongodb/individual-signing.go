@@ -6,6 +6,7 @@ import (
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 
 	"github.com/opensourceways/app-cla-server/dbmodels"
 	"github.com/opensourceways/app-cla-server/util"
@@ -108,6 +109,56 @@ func (c *client) SignAsIndividual(claOrgID string, info dbmodels.IndividualSigni
 	}
 
 	return c.doTransaction(f)
+}
+
+func (c *client) UpdateIndividualSigning(claOrgID, email string, enabled bool) error {
+	oid, err := toObjectID(claOrgID)
+	if err != nil {
+		return err
+	}
+
+	f := func(ctx context.Context) error {
+		col := c.collection(claOrgCollection)
+
+		filter := bson.M{"_id": oid}
+		filterForIndividualSigning(filter)
+
+		update := bson.M{"$set": bson.M{fmt.Sprintf("%s.$[ms].enabled", fieldIndividuals): enabled}}
+
+		updateOpt := options.UpdateOptions{
+			ArrayFilters: &options.ArrayFilters{
+				Filters: bson.A{
+					bson.M{
+						"ms.corp_id": util.EmailSuffix(email),
+						"ms.email":   email,
+						"ms.enabled": !enabled,
+					},
+				},
+			},
+		}
+
+		r, err := col.UpdateOne(ctx, filter, update, &updateOpt)
+		if err != nil {
+			return err
+		}
+
+		if r.MatchedCount == 0 {
+			return dbmodels.DBError{
+				ErrCode: dbmodels.ErrInvalidParameter,
+				Err:     fmt.Errorf("can't find the cla"),
+			}
+		}
+
+		if r.ModifiedCount == 0 {
+			return dbmodels.DBError{
+				ErrCode: dbmodels.ErrInvalidParameter,
+				Err:     fmt.Errorf("can't find the corresponding signing info"),
+			}
+		}
+		return nil
+	}
+
+	return withContext(f)
 }
 
 func (c *client) IsIndividualSigned(platform, orgID, repoID, email string) (bool, error) {

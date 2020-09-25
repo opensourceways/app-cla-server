@@ -59,6 +59,7 @@ type ICLAOrg interface {
 
 type IIndividualSigning interface {
 	SignAsIndividual(string, IndividualSigningInfo) error
+	UpdateIndividualSigning(claOrgID, email string, enabled bool) error
 	IsIndividualSigned(platform, orgID, repoId, email string) (bool, error)
 	ListIndividualSigning(opt IndividualSigningListOption) (map[string][]IndividualSigningBasicInfo, error)
 }

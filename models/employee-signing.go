@@ -27,15 +27,12 @@ func (this EmployeeSigningListOption) List() (map[string][]dbmodels.IndividualSi
 }
 
 type EmployeeSigningUdateInfo struct {
-	CLAOrgID string `json:"cla_org_id"`
-	Email    string `json:"email"`
-	Enabled  bool   `json:"enabled"`
+	Enabled bool `json:"enabled"`
 }
 
-func (this *EmployeeSigningUdateInfo) Update() error {
-	return dbmodels.GetDB().UpdateEmployeeSigning(
-		this.CLAOrgID, this.Email,
-		dbmodels.EmployeeSigningUpdateInfo{Enabled: this.Enabled},
+func (this *EmployeeSigningUdateInfo) Update(claOrgID, email string) error {
+	return dbmodels.GetDB().UpdateIndividualSigning(
+		claOrgID, email, this.Enabled,
 	)
 }
 

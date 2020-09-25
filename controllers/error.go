@@ -12,10 +12,15 @@ const (
 )
 
 func convertDBError(err error) (int, int) {
-	if dbmodels.IsInvalidParameter(err) {
+	e, ok := dbmodels.IsDBError(err)
+	if !ok {
+		return 500, 0
+	}
+
+	if dbmodels.IsInvalidParameter(e) {
 		return 400, ErrInvalidParameter
 
-	} else if dbmodels.IsHasSigned(err) {
+	} else if dbmodels.IsHasSigned(e) {
 		return 400, ErrHasSigned
 	}
 

@@ -20,44 +20,10 @@ func (this *EmployeeSigning) Create(claOrgID string) error {
 	return dbmodels.GetDB().SignAsEmployee(claOrgID, p)
 }
 
-type EmployeeSigningListOption struct {
-	Platform         string `json:"platform"`
-	OrgID            string `json:"org_id"`
-	RepoID           string `json:"repo_id"`
-	CLALanguage      string `json:"cla_language"`
-	CorporationEmail string `json:"corporation_email"`
-}
+type EmployeeSigningListOption dbmodels.IndividualSigningListOption
 
-func (this EmployeeSigningListOption) List() ([]EmployeeSigning, error) {
-	opt := dbmodels.EmployeeSigningListOption{
-		Platform:         this.Platform,
-		OrgID:            this.OrgID,
-		RepoID:           this.RepoID,
-		CLALanguage:      this.CLALanguage,
-		CorporationEmail: this.CorporationEmail,
-	}
-	v, err := dbmodels.GetDB().ListEmployeeSigning(opt)
-	if err != nil {
-		return nil, err
-	}
-
-	n := 0
-	for _, items := range v {
-		n += len(items)
-	}
-
-	r := make([]EmployeeSigning, 0, n)
-	for k, items := range v {
-		for _, item := range items {
-			r = append(r, EmployeeSigning{
-				CLAOrgID: k,
-				Email:    item.Email,
-				Name:     item.Name,
-				Enabled:  item.Enabled,
-			})
-		}
-	}
-	return r, nil
+func (this EmployeeSigningListOption) List() (map[string][]dbmodels.IndividualSigningBasicInfo, error) {
+	return dbmodels.GetDB().ListIndividualSigning(dbmodels.IndividualSigningListOption(this))
 }
 
 type EmployeeSigningUdateInfo struct {

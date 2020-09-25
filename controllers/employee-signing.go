@@ -131,11 +131,12 @@ func (this *EmployeeSigningController) Post() {
 // @router / [get]
 func (this *EmployeeSigningController) GetAll() {
 	var statusCode = 200
+	var errCode = 0
 	var reason error
 	var body interface{}
 
 	defer func() {
-		sendResponse1(&this.Controller, statusCode, reason, body)
+		sendResponse(&this.Controller, statusCode, errCode, reason, body)
 	}()
 
 	opt := models.EmployeeSigningListOption{
@@ -148,8 +149,8 @@ func (this *EmployeeSigningController) GetAll() {
 
 	r, err := opt.List()
 	if err != nil {
-		reason = err
-		statusCode = 500
+		reason = fmt.Errorf("Failed to list employees, err:%s", err.Error())
+		statusCode, errCode = convertDBError(err)
 		return
 	}
 

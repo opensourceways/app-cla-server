@@ -68,7 +68,10 @@ func (c *client) SignAsIndividual(claOrgID string, info dbmodels.IndividualSigni
 					bson.M{"$isArray": fmt.Sprintf("$%s", fieldIndividuals)},
 					bson.M{"$size": bson.M{"$filter": bson.M{
 						"input": fmt.Sprintf("$%s", fieldIndividuals),
-						"cond":  bson.M{"$eq": bson.A{"$$this.email", info.Email}},
+						"cond": bson.M{"$and": bson.A{
+							bson.M{"$eq": bson.A{"$$this.corp_id", util.EmailSuffix(info.Email)}},
+							bson.M{"$in": bson.A{"$$this.email", info.Email}},
+						}},
 					}}},
 					0,
 				}},
@@ -109,6 +112,41 @@ func (c *client) SignAsIndividual(claOrgID string, info dbmodels.IndividualSigni
 	}
 
 	return c.doTransaction(f)
+}
+
+func (c *client) DeleteIndividualSigning(claOrgID, email string) error {
+	oid, err := toObjectID(claOrgID)
+	if err != nil {
+		return err
+	}
+
+	f := func(ctx context.Context) error {
+		col := c.collection(claOrgCollection)
+
+		filter := bson.M{"_id": oid}
+		filterForIndividualSigning(filter)
+
+		update := bson.M{"$pull": bson.M{fieldIndividuals: bson.M{
+			fieldCorporationID: util.EmailSuffix(email),
+			"email":            email,
+		}}}
+
+		r, err := col.UpdateOne(ctx, filter, update)
+		if err != nil {
+			return err
+		}
+
+		if r.MatchedCount == 0 {
+			return dbmodels.DBError{
+				ErrCode: dbmodels.ErrInvalidParameter,
+				Err:     fmt.Errorf("can't find the cla"),
+			}
+		}
+
+		return nil
+	}
+
+	return withContext(f)
 }
 
 func (c *client) UpdateIndividualSigning(claOrgID, email string, enabled bool) error {
@@ -197,6 +235,7 @@ func (c *client) IsIndividualSigned(platform, orgID, repoID, email string) (bool
 					bson.M{"$size": bson.M{"$filter": bson.M{
 						"input": fmt.Sprintf("$%s", fieldIndividuals),
 						"cond": bson.M{"$and": bson.A{
+							bson.M{"$eq": bson.A{"$$this.corp_id", util.EmailSuffix(email)}},
 							bson.M{"$eq": bson.A{"$$this.email", email}},
 							bson.M{"$eq": bson.A{"$$this.enabled", true}},
 						}},

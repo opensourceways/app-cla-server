@@ -15,12 +15,15 @@ func (this DBError) Error() string {
 	return this.Err.Error()
 }
 
-func IsHasSigned(err error) bool {
+func IsDBError(err error) (DBError, bool) {
 	e, ok := err.(DBError)
-	return ok && e.ErrCode == ErrHasSigned
+	return e, ok
 }
 
-func IsInvalidParameter(err error) bool {
-	e, ok := err.(DBError)
-	return ok && e.ErrCode == ErrInvalidParameter
+func IsHasSigned(err DBError) bool {
+	return err.ErrCode == ErrHasSigned
+}
+
+func IsInvalidParameter(err DBError) bool {
+	return err.ErrCode == ErrInvalidParameter
 }

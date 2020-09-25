@@ -13,7 +13,6 @@ func GetDB() IDB {
 type IDB interface {
 	ICorporationSigning
 	ICorporationManager
-	IEmployeeSigning
 	IOrgEmail
 	ICLAOrg
 	IIndividualSigning
@@ -35,13 +34,6 @@ type ICorporationManager interface {
 	ResetCorporationManagerPassword(string, CorporationManagerResetPassword) error
 	ListCorporationManager(claOrgID string, opt CorporationManagerListOption) ([]CorporationManagerListResult, error)
 	ListManagersWhenEmployeeSigning(claOrgIDs []string, corporID string) ([]CorporationManagerListResult, error)
-}
-
-type IEmployeeSigning interface {
-	SignAsEmployee(claOrgID string, info EmployeeSigningInfo) error
-	ListEmployeeSigning(EmployeeSigningListOption) (map[string][]EmployeeSigningInfo, error)
-	UpdateEmployeeSigning(claOrgID, email string, opt EmployeeSigningUpdateInfo) error
-	DeleteEmployeeSigning(claOrgID, email string) error
 }
 
 type IOrgEmail interface {

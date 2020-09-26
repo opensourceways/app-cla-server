@@ -52,7 +52,7 @@ type CLAOrg struct {
 
 	// Corporations is the cla signing information of corporation
 	// key is the email suffix of corporation
-	Corporations []corporationSigning `bson:"corporations,omitempty"`
+	Corporations []corporationSigningDoc `bson:"corporations,omitempty"`
 
 	// CorporationManagers is the managers of corporation who can manage the employee
 	CorporationManagers []corporationManager `bson:"corp_managers,omitempty"`

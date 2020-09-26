@@ -13,6 +13,13 @@ import (
 	"github.com/opensourceways/app-cla-server/util"
 )
 
+type corporationSigningDoc struct {
+	corporationSigning
+
+	PDFUploaded bool `bson:"pdf_uploaded" json:"pdf_uploaded"`
+	AdminAdded  bool `bson:"admin_added" json:"admin_added"`
+}
+
 type corporationSigning struct {
 	AdminEmail      string                   `bson:"admin_email" json:"admin_email" required:"true"`
 	AdminName       string                   `bson:"admin_name" json:"admin_name" required:"true"`
@@ -255,12 +262,108 @@ func (c *client) UpdateCorporationSigning(claOrgID, adminEmail, corporationName 
 	return withContext(f)
 }
 
-func toDBModelCorporationSigningInfo(info corporationSigning) dbmodels.CorporationSigningInfo {
+func (c *client) GetCorporationSigningDetail(platform, org, repo, email string) (dbmodels.CorporationSigningDetail, error) {
+	filter := bson.M{
+		"platform": platform,
+		"org_id":   org,
+	}
+	if repo == "" {
+		filter[fieldRepo] = ""
+	} else {
+		filter[fieldRepo] = bson.M{"$in": bson.A{"", repo}}
+
+	}
+	filterForCorpSigning(filter)
+
+	var v []CLAOrg
+
+	f := func(ctx context.Context) error {
+		col := c.collection(claOrgCollection)
+
+		pipeline := bson.A{
+			bson.M{"$match": filter},
+			bson.M{"$project": bson.M{
+				fieldRepo: 1,
+				fieldCorporations: bson.M{"$filter": bson.M{
+					"input": fmt.Sprintf("$%s", fieldCorporations),
+					"cond":  bson.M{"$eq": bson.A{"$$this.corp_id", util.EmailSuffix(email)}},
+				}},
+			}},
+			bson.M{"$project": bson.M{
+				fieldRepo:                        1,
+				corpSigningField("admin_email"):  1,
+				corpSigningField("admin_name"):   1,
+				corpSigningField("corp_name"):    1,
+				corpSigningField("date"):         1,
+				corpSigningField("pdf_uploaded"): 1,
+				corpSigningField("admin_added"):  1,
+			}},
+		}
+		cursor, err := col.Aggregate(ctx, pipeline)
+		if err != nil {
+			return err
+		}
+
+		return cursor.All(ctx, &v)
+	}
+
+	err := withContext(f)
+	if err != nil {
+		return dbmodels.CorporationSigningDetail{}, err
+	}
+
+	err = dbmodels.DBError{
+		ErrCode: dbmodels.ErrHasNotSigned,
+		Err:     fmt.Errorf("the corp:%s has not signed for this org/repo: %s/%s/%s ", util.EmailSuffix(email), platform, org, repo),
+	}
+
+	if repo != "" {
+		bingo := false
+
+		for _, item := range v {
+			if item.RepoID == repo {
+				if !bingo {
+					bingo = true
+				}
+				if len(item.Corporations) != 0 {
+					return toDBModelCorporationSigningDetail(objectIDToUID(item.ID), &item.Corporations[0]), nil
+				}
+			}
+		}
+		if bingo {
+			return dbmodels.CorporationSigningDetail{}, err
+		}
+	}
+
+	for _, item := range v {
+		if len(item.Corporations) != 0 {
+			return toDBModelCorporationSigningDetail(objectIDToUID(item.ID), &item.Corporations[0]), nil
+		}
+	}
+
+	return dbmodels.CorporationSigningDetail{}, err
+}
+
+func toDBModelCorporationSigningInfo(info corporationSigningDoc) dbmodels.CorporationSigningInfo {
 	return dbmodels.CorporationSigningInfo{
 		CorporationName: info.CorporationName,
 		AdminEmail:      info.AdminEmail,
 		AdminName:       info.AdminName,
 		Enabled:         info.Enabled,
 		Info:            info.SigningInfo,
+	}
+}
+
+func toDBModelCorporationSigningDetail(claOrgID string, cs *corporationSigningDoc) dbmodels.CorporationSigningDetail {
+	return dbmodels.CorporationSigningDetail{
+		CorporationSigningBasicInfo: dbmodels.CorporationSigningBasicInfo{
+			AdminEmail:      cs.AdminEmail,
+			AdminName:       cs.AdminName,
+			CorporationName: cs.CorporationName,
+			Date:            cs.Date,
+		},
+		PDFUploaded: cs.PDFUploaded,
+		AdminAdded:  cs.AdminAdded,
+		CLAOrgID:    claOrgID,
 	}
 }

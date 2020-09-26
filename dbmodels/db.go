@@ -25,6 +25,7 @@ type ICorporationSigning interface {
 	SignAsCorporation(string, CorporationSigningInfo) error
 	ListCorporationSigning(CorporationSigningListOption) (map[string][]CorporationSigningDetails, error)
 	UpdateCorporationSigning(claOrgID, adminEmail, corporationName string, opt CorporationSigningUpdateInfo) error
+	GetCorporationSigningDetail(platform, org, repo, email string) (CorporationSigningDetail, error)
 }
 
 type ICorporationManager interface {

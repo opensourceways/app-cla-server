@@ -25,6 +25,12 @@ func corpoManagerElemKey(field string) string {
 	return fmt.Sprintf("%s.%s", fieldCorpoManagers, field)
 }
 
+func filterForCorpManager(filter bson.M) {
+	filter["apply_to"] = dbmodels.ApplyToCorporation
+	filter["enabled"] = true
+	filter[fieldCorpoManagers] = bson.M{"$type": "array"}
+}
+
 func checkBeforeAddingCorporationManager(c *client, ctx mongo.SessionContext, claOrg dbmodels.CLAOrg, opt []dbmodels.CorporationManagerCreateOption) (int, int, error) {
 	emails := make(bson.A, 0, len(opt))
 	for _, item := range opt {
@@ -36,7 +42,7 @@ func checkBeforeAddingCorporationManager(c *client, ctx mongo.SessionContext, cl
 		"org_id":   claOrg.OrgID,
 		"repo_id":  claOrg.RepoID,
 	}
-	additionalConditionForCorpoCLADoc(filter)
+	filterForCorpManager(filter)
 	pipeline := bson.A{
 		bson.M{"$match": filter},
 		bson.M{"$project": bson.M{
@@ -140,7 +146,7 @@ func (c *client) AddCorporationManager(claOrgID string, opt []dbmodels.Corporati
 
 func (c *client) CheckCorporationManagerExist(opt dbmodels.CorporationManagerCheckInfo) ([]dbmodels.CorporationManagerCheckResult, error) {
 	filter := bson.M{}
-	additionalConditionForCorpoCLADoc(filter)
+	filterForCorpManager(filter)
 
 	var v []CLAOrg
 
@@ -220,7 +226,7 @@ func (c *client) ResetCorporationManagerPassword(claOrgID string, opt dbmodels.C
 	}
 
 	filter := bson.M{"_id": oid}
-	additionalConditionForCorpoCLADoc(filter)
+	filterForCorpManager(filter)
 
 	f := func(ctx context.Context) error {
 		col := c.collection(claOrgCollection)
@@ -265,7 +271,7 @@ func (c *client) ListCorporationManager(claOrgID string, opt dbmodels.Corporatio
 	}
 
 	filter := bson.M{"_id": oid}
-	additionalConditionForCorpoCLADoc(filter)
+	filterForCorpManager(filter)
 
 	var v []CLAOrg
 
@@ -429,7 +435,7 @@ func checkBeforeDeletingCorporationManager(c *client, ctx mongo.SessionContext, 
 	}
 
 	filter := bson.M{"_id": claOrgID}
-	additionalConditionForCorpoCLADoc(filter)
+	filterForCorpManager(filter)
 
 	pipeline := bson.A{
 		bson.M{"$match": filter},

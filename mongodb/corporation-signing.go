@@ -10,24 +10,25 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 
 	"github.com/opensourceways/app-cla-server/dbmodels"
+	"github.com/opensourceways/app-cla-server/util"
 )
 
 type corporationSigning struct {
-	AdminEmail      string                   `bson:"admin_email"`
-	AdminName       string                   `bson:"admin_name"`
-	CorporationName string                   `bson:"corp_name"`
-	CorporationID   string                   `bson:"corp_id"`
-	Enabled         bool                     `bson:"enabled"`
-	Date            string                   `bson:"date"`
-	SigningInfo     dbmodels.TypeSigningInfo `bson:"info"`
+	AdminEmail      string                   `bson:"admin_email" json:"admin_email" required:"true"`
+	AdminName       string                   `bson:"admin_name" json:"admin_name" required:"true"`
+	CorporationName string                   `bson:"corp_name" json:"corp_name" required:"true"`
+	Enabled         bool                     `bson:"enabled" json:"enabled"`
+	Date            string                   `bson:"date" json:"date" required:"true"`
+	SigningInfo     dbmodels.TypeSigningInfo `bson:"info" json:"info,omitempty"`
 }
 
-func additionalConditionForCorpoCLADoc(filter bson.M) {
+func filterForCorpSigning(filter bson.M) {
 	filter["apply_to"] = dbmodels.ApplyToCorporation
 	filter["enabled"] = true
+	filter[fieldCorporations] = bson.M{"$type": "array"}
 }
 
-func corporationsElemKey(field string) string {
+func corpSigningField(field string) string {
 	return fmt.Sprintf("%s.%s", fieldCorporations, field)
 }
 
@@ -37,15 +38,21 @@ func (c *client) SignAsCorporation(claOrgID string, info dbmodels.CorporationSig
 		return err
 	}
 
-	oid, err := toObjectID(claOrgID)
+	oid, _ := toObjectID(claOrgID)
+
+	signing := corporationSigning{
+		AdminEmail:      info.AdminEmail,
+		AdminName:       info.AdminName,
+		CorporationName: info.CorporationName,
+		Enabled:         info.Enabled,
+		Date:            info.Date,
+		SigningInfo:     info.Info,
+	}
+	body, err := structToMap(signing)
 	if err != nil {
 		return err
 	}
-
-	body, err := golangsdk.BuildRequestBody(info, "")
-	if err != nil {
-		return fmt.Errorf("Failed to build body for signing as corporation, err:%v", err)
-	}
+	addCorporationID(info.AdminEmail, body)
 
 	f := func(ctx mongo.SessionContext) error {
 		col := c.collection(claOrgCollection)
@@ -55,7 +62,7 @@ func (c *client) SignAsCorporation(claOrgID string, info dbmodels.CorporationSig
 			"org_id":   claOrg.OrgID,
 			"repo_id":  claOrg.RepoID,
 		}
-		additionalConditionForCorpoCLADoc(filter)
+		filterForCorpSigning(filter)
 
 		pipeline := bson.A{
 			bson.M{"$match": filter},
@@ -64,7 +71,7 @@ func (c *client) SignAsCorporation(claOrgID string, info dbmodels.CorporationSig
 					bson.M{"$isArray": fmt.Sprintf("$%s", fieldCorporations)},
 					bson.M{"$size": bson.M{"$filter": bson.M{
 						"input": fmt.Sprintf("$%s", fieldCorporations),
-						"cond":  bson.M{"$eq": bson.A{"$$this.corp_id", info.CorporationID}},
+						"cond":  bson.M{"$eq": bson.A{"$$this.corp_id", util.EmailSuffix(info.AdminEmail)}},
 					}}},
 					0,
 				}},
@@ -86,7 +93,7 @@ func (c *client) SignAsCorporation(claOrgID string, info dbmodels.CorporationSig
 
 		for _, item := range count {
 			if item.Count != 0 {
-				return fmt.Errorf("Failed to add info when signing as corporation, it has signed")
+				return fmt.Errorf("this corporation has signed")
 			}
 		}
 
@@ -95,12 +102,8 @@ func (c *client) SignAsCorporation(claOrgID string, info dbmodels.CorporationSig
 			return err
 		}
 
-		if r.MatchedCount == 0 {
-			return fmt.Errorf("Failed to add info when signing as corporation, the cla bound to org is not exist")
-		}
-
 		if r.ModifiedCount == 0 {
-			return fmt.Errorf("Failed to add info when signing as corporation, impossible")
+			return fmt.Errorf("impossible")
 		}
 		return nil
 	}
@@ -114,7 +117,7 @@ func (c *client) ListCorporationSigning(opt dbmodels.CorporationSigningListOptio
 		return nil, fmt.Errorf("build options to list corporation signing failed, err:%v", err)
 	}
 	filter := bson.M(body)
-	additionalConditionForCorpoCLADoc(filter)
+	filterForCorpSigning(filter)
 
 	var v []CLAOrg
 
@@ -132,10 +135,10 @@ func (c *client) ListCorporationSigning(opt dbmodels.CorporationSigningListOptio
 				}},
 			}},
 			bson.M{"$project": bson.M{
-				corporationsElemKey("corp_name"):   1,
-				corporationsElemKey("admin_email"): 1,
-				corporationsElemKey("admin_name"):  1,
-				corporationsElemKey("enabled"):     1,
+				corpSigningField("corp_name"):   1,
+				corpSigningField("admin_email"): 1,
+				corpSigningField("admin_name"):  1,
+				corpSigningField("enabled"):     1,
 
 				corpoManagerElemKey("email"): 1,
 			}},
@@ -207,7 +210,7 @@ func (c *client) UpdateCorporationSigning(claOrgID, adminEmail, corporationName 
 		col := c.collection(claOrgCollection)
 
 		filter := bson.M{"_id": oid}
-		additionalConditionForCorpoCLADoc(filter)
+		filterForCorpSigning(filter)
 
 		update := bson.M{"$set": info}
 

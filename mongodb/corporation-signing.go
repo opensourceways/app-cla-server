@@ -112,7 +112,19 @@ func (c *client) SignAsCorporation(claOrgID string, info dbmodels.CorporationSig
 }
 
 func (c *client) ListCorporationSigning(opt dbmodels.CorporationSigningListOption) (map[string][]dbmodels.CorporationSigningDetails, error) {
-	body, err := golangsdk.BuildRequestBody(opt, "")
+	info := struct {
+		Platform    string `json:"platform" required:"true"`
+		OrgID       string `json:"org_id" required:"true"`
+		RepoID      string `json:"repo_id"`
+		CLALanguage string `json:"cla_language,omitempty"`
+	}{
+		Platform:    opt.Platform,
+		OrgID:       opt.OrgID,
+		RepoID:      opt.RepoID,
+		CLALanguage: opt.CLALanguage,
+	}
+
+	body, err := structToMap(info)
 	if err != nil {
 		return nil, fmt.Errorf("build options to list corporation signing failed, err:%v", err)
 	}

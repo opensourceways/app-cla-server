@@ -89,15 +89,15 @@ func (this *CorporationSigningController) Post() {
 
 // @Title GetAll
 // @Description get all the corporations which have signed to a org
-// @Success 200 {object} dbmodels.CorporationSigningInfo
 // @router / [get]
 func (this *CorporationSigningController) GetAll() {
 	var statusCode = 200
+	var errCode = 0
 	var reason error
 	var body interface{}
 
 	defer func() {
-		sendResponse1(&this.Controller, statusCode, reason, body)
+		sendResponse(&this.Controller, statusCode, errCode, reason, body)
 	}()
 
 	opt := models.CorporationSigningListOption{
@@ -109,8 +109,8 @@ func (this *CorporationSigningController) GetAll() {
 
 	r, err := opt.List()
 	if err != nil {
-		reason = err
-		statusCode = 500
+		reason = fmt.Errorf("Failed to list corporation, err:%s", err.Error())
+		statusCode, errCode = convertDBError(err)
 		return
 	}
 

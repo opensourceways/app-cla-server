@@ -54,21 +54,10 @@ func (this *CorporationSigningUdateInfo) Update() error {
 		dbmodels.CorporationSigningUpdateInfo{Enabled: &this.Enabled})
 }
 
-type CorporationSigningListOption struct {
-	Platform    string `json:"platform"`
-	OrgID       string `json:"org_id"`
-	RepoID      string `json:"repo_id"`
-	CLALanguage string `json:"cla_language"`
-}
+type CorporationSigningListOption dbmodels.CorporationSigningListOption
 
 func (this CorporationSigningListOption) List() (map[string][]dbmodels.CorporationSigningDetails, error) {
-	opt := dbmodels.CorporationSigningListOption{
-		Platform:    this.Platform,
-		OrgID:       this.OrgID,
-		RepoID:      this.RepoID,
-		CLALanguage: this.CLALanguage,
-	}
-	return dbmodels.GetDB().ListCorporationSigning(opt)
+	return dbmodels.GetDB().ListCorporationSigning(dbmodels.CorporationSigningListOption(this))
 }
 
 type CorporationSigningVerifCode struct {

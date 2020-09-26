@@ -4,6 +4,7 @@ const (
 	ErrorStart = iota
 	ErrInvalidParameter
 	ErrHasSigned
+	ErrHasNotSigned
 )
 
 type DBError struct {

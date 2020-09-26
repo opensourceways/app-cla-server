@@ -10,21 +10,7 @@ import (
 
 const ActionCorporationSigning = "corporation-signing"
 
-type CorporationSigningDetails struct {
-	CorporationSigning
-	AdministratorEnabled bool `json:"administrator_enabled"`
-}
-
-type CorporationSigning struct {
-	CLAOrgID        string `json:"cla_org_id"`
-	AdminEmail      string `json:"admin_email"`
-	AdminName       string `json:"admin_name"`
-	CorporationName string `json:"corporation_name"`
-	Enabled         bool   `json:"enabled"`
-	Date            string `json:"date"`
-
-	Info dbmodels.TypeSigningInfo `json:"info"`
-}
+type CorporationSigning dbmodels.CorporationSigningInfo
 
 type CorporationSigningCreateOption struct {
 	CorporationSigning
@@ -49,15 +35,10 @@ func (this *CorporationSigningCreateOption) Validate() error {
 	return nil
 }
 
-func (this *CorporationSigningCreateOption) Create() error {
+func (this *CorporationSigningCreateOption) Create(claOrgID string) error {
 	this.Date = util.Date()
-	p := dbmodels.CorporationSigningInfo{}
-	if err := util.CopyBetweenStructs(&this.CorporationSigning, &p); err != nil {
-		return err
-	}
-	p.CorporationID = util.EmailSuffixToKey(this.AdminEmail)
 
-	return dbmodels.GetDB().SignAsCorporation(this.CLAOrgID, p)
+	return dbmodels.GetDB().SignAsCorporation(claOrgID, dbmodels.CorporationSigningInfo(this.CorporationSigning))
 }
 
 type CorporationSigningUdateInfo struct {
@@ -80,39 +61,14 @@ type CorporationSigningListOption struct {
 	CLALanguage string `json:"cla_language"`
 }
 
-func (this CorporationSigningListOption) List() ([]CorporationSigningDetails, error) {
+func (this CorporationSigningListOption) List() (map[string][]dbmodels.CorporationSigningDetails, error) {
 	opt := dbmodels.CorporationSigningListOption{
 		Platform:    this.Platform,
 		OrgID:       this.OrgID,
 		RepoID:      this.RepoID,
 		CLALanguage: this.CLALanguage,
 	}
-	v, err := dbmodels.GetDB().ListCorporationSigning(opt)
-	if err != nil {
-		return nil, err
-	}
-
-	n := 0
-	for _, items := range v {
-		n += len(items)
-	}
-
-	r := make([]CorporationSigningDetails, 0, n)
-	for k, items := range v {
-		for _, item := range items {
-			r = append(r, CorporationSigningDetails{
-				CorporationSigning: CorporationSigning{
-					CLAOrgID:        k,
-					AdminEmail:      item.AdminEmail,
-					AdminName:       item.AdminName,
-					CorporationName: item.CorporationName,
-					Enabled:         item.Enabled,
-				},
-				AdministratorEnabled: item.AdministratorEnabled,
-			})
-		}
-	}
-	return r, nil
+	return dbmodels.GetDB().ListCorporationSigning(opt)
 }
 
 type CorporationSigningVerifCode struct {

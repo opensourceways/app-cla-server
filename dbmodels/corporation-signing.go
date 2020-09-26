@@ -4,17 +4,17 @@ type TypeSigningInfo map[string]string
 
 type CorporationSigningDetails struct {
 	CorporationSigningInfo
-	AdministratorEnabled bool
+
+	AdministratorEnabled bool `json:"administrator_enabled"`
 }
 
 type CorporationSigningInfo struct {
-	AdminEmail      string          `json:"admin_email" required:"true"`
-	AdminName       string          `json:"admin_name" required:"true"`
-	CorporationName string          `json:"corporation_name" required:"true"`
-	CorporationID   string          `json:"corporation_id" required:"true"`
+	AdminEmail      string          `json:"admin_email"`
+	AdminName       string          `json:"admin_name"`
+	CorporationName string          `json:"corporation_name"`
 	Enabled         bool            `json:"enabled"`
-	Date            string          `json:"date" required:"true"`
-	Info            TypeSigningInfo `json:"info,omitempty"`
+	Date            string          `json:"date"`
+	Info            TypeSigningInfo `json:"info"`
 }
 
 type CorporationSigningListOption struct {

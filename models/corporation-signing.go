@@ -44,13 +44,13 @@ func (this *CorporationSigningUdateInfo) Update() error {
 		dbmodels.CorporationSigningUpdateInfo{Enabled: &this.Enabled})
 }
 
-func GetCorporationSigningDetail(platform, org, repo, email string) (dbmodels.CorporationSigningDetail, error) {
+func GetCorporationSigningDetail(platform, org, repo, email string) (string, dbmodels.CorporationSigningDetail, error) {
 	return dbmodels.GetDB().GetCorporationSigningDetail(platform, org, repo, email)
 }
 
 type CorporationSigningListOption dbmodels.CorporationSigningListOption
 
-func (this CorporationSigningListOption) List() (map[string][]dbmodels.CorporationSigningDetails, error) {
+func (this CorporationSigningListOption) List() (map[string][]dbmodels.CorporationSigningDetail, error) {
 	return dbmodels.GetDB().ListCorporationSigning(dbmodels.CorporationSigningListOption(this))
 }
 

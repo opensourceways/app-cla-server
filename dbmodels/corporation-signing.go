@@ -12,24 +12,14 @@ type CorporationSigningBasicInfo struct {
 type CorporationSigningDetail struct {
 	CorporationSigningBasicInfo
 
-	CLAOrgID    string `json:"cla_org_id"`
-	PDFUploaded bool   `json:"pdf_uploaded"`
-	AdminAdded  bool   `json:"admin_added"`
-}
-
-type CorporationSigningDetails struct {
-	CorporationSigningInfo
-
-	AdministratorEnabled bool `json:"administrator_enabled"`
+	PDFUploaded bool `json:"pdf_uploaded"`
+	AdminAdded  bool `json:"admin_added"`
 }
 
 type CorporationSigningInfo struct {
-	AdminEmail      string          `json:"admin_email"`
-	AdminName       string          `json:"admin_name"`
-	CorporationName string          `json:"corporation_name"`
-	Enabled         bool            `json:"enabled"`
-	Date            string          `json:"date"`
-	Info            TypeSigningInfo `json:"info"`
+	CorporationSigningBasicInfo
+
+	Info TypeSigningInfo `json:"info"`
 }
 
 type CorporationSigningListOption struct {

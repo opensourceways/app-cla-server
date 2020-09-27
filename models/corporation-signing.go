@@ -31,17 +31,12 @@ func (this *CorporationSigningCreateOption) Create(claOrgID string) error {
 	return dbmodels.GetDB().SignAsCorporation(claOrgID, dbmodels.CorporationSigningInfo(this.CorporationSigning))
 }
 
-type CorporationSigningUdateInfo struct {
-	CLAOrgID        string `json:"cla_org_id"`
-	AdminEmail      string `json:"admin_email"`
-	CorporationName string `json:"corporation_name"`
-	Enabled         bool   `json:"enabled"`
+func UploadCorporationSigningPDF(claOrgID, email string, pdf []byte) error {
+	return dbmodels.GetDB().UploadCorporationSigningPDF(claOrgID, email, pdf)
 }
 
-func (this *CorporationSigningUdateInfo) Update() error {
-	return dbmodels.GetDB().UpdateCorporationSigning(
-		this.CLAOrgID, this.AdminEmail, this.CorporationName,
-		dbmodels.CorporationSigningUpdateInfo{Enabled: &this.Enabled})
+func DownloadCorporationSigningPDF(claOrgID, email string) ([]byte, error) {
+	return dbmodels.GetDB().DownloadCorporationSigningPDF(claOrgID, email)
 }
 
 func GetCorporationSigningDetail(platform, org, repo, email string) (string, dbmodels.CorporationSigningDetail, error) {

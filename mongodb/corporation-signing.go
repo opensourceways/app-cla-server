@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/huaweicloud/golangsdk"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -15,6 +14,8 @@ import (
 
 type corporationSigningDoc struct {
 	corporationSigning
+
+	PDF []byte `bson:"pdf"`
 }
 
 type corporationSigning struct {
@@ -186,20 +187,7 @@ func (c *client) ListCorporationSigning(opt dbmodels.CorporationSigningListOptio
 	return r, nil
 }
 
-func (c *client) UpdateCorporationSigning(claOrgID, adminEmail, corporationName string, opt dbmodels.CorporationSigningUpdateInfo) error {
-	body, err := golangsdk.BuildRequestBody(opt, "")
-	if err != nil {
-		return fmt.Errorf("Failed to build options for updating corporation signing, err:%v", err)
-	}
-	if len(body) == 0 {
-		return nil
-	}
-
-	info := bson.M{}
-	for k, v := range body {
-		info[fmt.Sprintf("%s.$[elem].%s", fieldCorporations, k)] = v
-	}
-
+func (c *client) UploadCorporationSigningPDF(claOrgID, adminEmail string, pdf []byte) error {
 	oid, err := toObjectID(claOrgID)
 	if err != nil {
 		return err
@@ -211,14 +199,16 @@ func (c *client) UpdateCorporationSigning(claOrgID, adminEmail, corporationName 
 		filter := bson.M{"_id": oid}
 		filterForCorpSigning(filter)
 
-		update := bson.M{"$set": info}
+		update := bson.M{"$set": bson.M{
+			fmt.Sprintf("%s.$[elem].pdf", fieldCorporations):          pdf,
+			fmt.Sprintf("%s.$[elem].pdf_uploaded", fieldCorporations): true,
+		}}
 
 		updateOpt := options.UpdateOptions{
 			ArrayFilters: &options.ArrayFilters{
 				Filters: bson.A{
 					bson.M{
-						"elem.corp_name":   corporationName,
-						"elem.admin_email": adminEmail,
+						"elem.corp_id": util.EmailSuffix(adminEmail),
 					},
 				},
 			},
@@ -230,16 +220,88 @@ func (c *client) UpdateCorporationSigning(claOrgID, adminEmail, corporationName 
 		}
 
 		if r.MatchedCount == 0 {
-			return fmt.Errorf("Failed to update corporation signing, doesn't match any record")
+			return dbmodels.DBError{
+				ErrCode: dbmodels.ErrInvalidParameter,
+				Err:     fmt.Errorf("can't find the cla"),
+			}
 		}
 
 		if r.ModifiedCount == 0 {
-			return fmt.Errorf("Failed to update corporation signing, impossible")
+			return dbmodels.DBError{
+				ErrCode: dbmodels.ErrInvalidParameter,
+				Err:     fmt.Errorf("can't find the corp signing record"),
+			}
 		}
 		return nil
 	}
 
 	return withContext(f)
+}
+
+func (c *client) DownloadCorporationSigningPDF(claOrgID, email string) ([]byte, error) {
+	oid, err := toObjectID(claOrgID)
+	if err != nil {
+		return nil, err
+	}
+
+	var v []CLAOrg
+
+	f := func(ctx context.Context) error {
+		col := c.collection(claOrgCollection)
+
+		filter := bson.M{"_id": oid}
+		filterForCorpSigning(filter)
+
+		pipeline := bson.A{
+			bson.M{"$match": filter},
+			bson.M{"$project": bson.M{
+				fieldCorporations: bson.M{"$filter": bson.M{
+					"input": fmt.Sprintf("$%s", fieldCorporations),
+					"cond":  bson.M{"$eq": bson.A{"$$this.corp_id", util.EmailSuffix(email)}},
+				}},
+			}},
+			bson.M{"$project": bson.M{
+				corpSigningField("pdf"):          1,
+				corpSigningField("pdf_uploaded"): 1,
+			}},
+		}
+		cursor, err := col.Aggregate(ctx, pipeline)
+		if err != nil {
+			return err
+		}
+
+		return cursor.All(ctx, &v)
+	}
+
+	err = withContext(f)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(v) == 0 {
+		return nil, dbmodels.DBError{
+			ErrCode: dbmodels.ErrInvalidParameter,
+			Err:     fmt.Errorf("can't find the cla"),
+		}
+	}
+
+	cs := v[0].Corporations
+	if len(cs) == 0 {
+		return nil, dbmodels.DBError{
+			ErrCode: dbmodels.ErrInvalidParameter,
+			Err:     fmt.Errorf("can't find the corp signing in this record"),
+		}
+	}
+
+	item := cs[0]
+	if !item.PDFUploaded {
+		return nil, dbmodels.DBError{
+			ErrCode: dbmodels.ErrPDFHasNotUploaded,
+			Err:     fmt.Errorf("pdf has not yet been uploaded"),
+		}
+	}
+
+	return item.PDF, nil
 }
 
 func (c *client) GetCorporationSigningDetail(platform, org, repo, email string) (string, dbmodels.CorporationSigningDetail, error) {

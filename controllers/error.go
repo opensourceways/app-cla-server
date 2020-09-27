@@ -15,6 +15,7 @@ const (
 	ErrSendingEmail
 	ErrWrongVerificationCode
 	ErrVerificationCodeExpired
+	ErrPDFHasNotUploaded
 )
 
 func convertDBError(err error) (int, int) {
@@ -38,6 +39,9 @@ func convertDBError(err error) (int, int) {
 
 	case dbmodels.ErrVerificationCodeExpired:
 		return 400, ErrVerificationCodeExpired
+
+	case dbmodels.ErrPDFHasNotUploaded:
+		return 400, ErrPDFHasNotUploaded
 	}
 
 	return 500, 0

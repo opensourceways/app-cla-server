@@ -6,9 +6,11 @@ const (
 	ErrorStart = iota
 	ErrInvalidParameter
 	ErrHasSigned
+	ErrHasNotSigned
 	ErrMissingToken
 	ErrUnknownToken
 	ErrInvalidToken
+	ErrSigningUncompleted
 )
 
 func convertDBError(err error) (int, int) {
@@ -17,11 +19,15 @@ func convertDBError(err error) (int, int) {
 		return 500, 0
 	}
 
-	if dbmodels.IsInvalidParameter(e) {
+	switch e.ErrCode {
+	case dbmodels.ErrInvalidParameter:
 		return 400, ErrInvalidParameter
 
-	} else if dbmodels.IsHasSigned(e) {
+	case dbmodels.ErrHasSigned:
 		return 400, ErrHasSigned
+
+	case dbmodels.ErrHasNotSigned:
+		return 400, ErrHasNotSigned
 	}
 
 	return 500, 0

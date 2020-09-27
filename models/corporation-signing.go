@@ -1,9 +1,6 @@
 package models
 
 import (
-	"fmt"
-	"time"
-
 	"github.com/opensourceways/app-cla-server/dbmodels"
 	"github.com/opensourceways/app-cla-server/util"
 )
@@ -25,14 +22,7 @@ func (this *CorporationSigningCreateOption) Validate() error {
 		Purpose: ActionCorporationSigning,
 	}
 
-	v, err := dbmodels.GetDB().CheckVerificationCode(vc)
-	if err != nil {
-		return err
-	}
-	if !v {
-		return fmt.Errorf("Verification Code is expired or wrong")
-	}
-	return nil
+	return dbmodels.GetDB().CheckVerificationCode(vc)
 }
 
 func (this *CorporationSigningCreateOption) Create(claOrgID string) error {
@@ -65,8 +55,6 @@ func (this CorporationSigningListOption) List() (map[string][]dbmodels.Corporati
 }
 
 type CorporationSigningVerifCode struct {
-	CLAOrgID string `json:"cla_org_id"`
-
 	// Email is the email address of corporation
 	Email string `json:"email"`
 }
@@ -78,7 +66,7 @@ func (this CorporationSigningVerifCode) Create(expiry int64) (string, error) {
 		Email:   this.Email,
 		Code:    code,
 		Purpose: ActionCorporationSigning,
-		Expiry:  time.Now().Unix() + expiry,
+		Expiry:  util.Now() + expiry,
 	}
 
 	err := dbmodels.GetDB().CreateVerificationCode(vc)

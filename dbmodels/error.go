@@ -5,6 +5,8 @@ const (
 	ErrInvalidParameter
 	ErrHasSigned
 	ErrHasNotSigned
+	ErrWrongVerificationCode
+	ErrVerificationCodeExpired
 )
 
 type DBError struct {

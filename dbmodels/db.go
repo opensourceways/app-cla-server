@@ -68,7 +68,7 @@ type ICLA interface {
 
 type IVerifiCode interface {
 	CreateVerificationCode(opt VerificationCode) error
-	CheckVerificationCode(opt VerificationCode) (bool, error)
+	CheckVerificationCode(opt VerificationCode) error
 }
 
 type IPDF interface {

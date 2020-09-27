@@ -104,3 +104,7 @@ func RenderTemplate(tmpl *template.Template, data interface{}) (string, error) {
 func Date() string {
 	return time.Now().Format("2006-01-02")
 }
+
+func Now() int64 {
+	return time.Now().Unix()
+}

@@ -24,8 +24,9 @@ type IDB interface {
 type ICorporationSigning interface {
 	SignAsCorporation(string, CorporationSigningInfo) error
 	ListCorporationSigning(CorporationSigningListOption) (map[string][]CorporationSigningDetail, error)
-	UpdateCorporationSigning(claOrgID, adminEmail, corporationName string, opt CorporationSigningUpdateInfo) error
 	GetCorporationSigningDetail(platform, org, repo, email string) (string, CorporationSigningDetail, error)
+	UploadCorporationSigningPDF(claOrgID, adminEmail string, pdf []byte) error
+	DownloadCorporationSigningPDF(claOrgID, email string) ([]byte, error)
 }
 
 type ICorporationManager interface {

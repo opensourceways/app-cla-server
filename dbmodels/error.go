@@ -7,6 +7,7 @@ const (
 	ErrHasNotSigned
 	ErrWrongVerificationCode
 	ErrVerificationCodeExpired
+	ErrPDFHasNotUploaded
 )
 
 type DBError struct {

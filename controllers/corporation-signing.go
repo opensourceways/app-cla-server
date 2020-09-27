@@ -20,8 +20,22 @@ type CorporationSigningController struct {
 func (this *CorporationSigningController) Prepare() {
 	method := this.Ctx.Request.Method
 
-	if method == http.MethodGet || method == http.MethodPut {
-		apiPrepare(&this.Controller, []string{PermissionOwnerOfOrg}, nil)
+	if getRouterPattern(&this.Controller) == "/v1/corporation-signing/:cla_org_id/:email" {
+		switch method {
+		// upload pdf
+		case http.MethodPatch:
+			apiPrepare(&this.Controller, []string{PermissionOwnerOfOrg}, nil)
+
+		// download pdf
+		case http.MethodGet:
+			apiPrepare(&this.Controller, []string{PermissionOwnerOfOrg, PermissionCorporAdmin}, nil)
+		}
+
+	} else {
+		// list corp signings
+		if method == http.MethodGet {
+			apiPrepare(&this.Controller, []string{PermissionOwnerOfOrg}, nil)
+		}
 	}
 }
 
@@ -122,10 +136,10 @@ func (this *CorporationSigningController) GetAll() {
 // @Description upload pdf of corporation signing
 // @Param	:cla_org_id	path 	string					true		"cla org id"
 // @Param	:email		path 	string					true		"email of corp"
-// @Success 201 {int} map
-// @router /:cla_org_id/:email [put]
+// @Success 204 {int} map
+// @router /:cla_org_id/:email [patch]
 func (this *CorporationSigningController) Upload() {
-	var statusCode = 202
+	var statusCode = 204
 	var errCode = 0
 	var reason error
 	var body interface{}
@@ -173,7 +187,7 @@ func (this *CorporationSigningController) Upload() {
 // @Param	:cla_org_id	path 	string					true		"cla org id"
 // @Param	:email		path 	string					true		"email of corp"
 // @Success 200 {int} map
-// @router /:cla_org_id/:email [put]
+// @router /:cla_org_id/:email [get]
 func (this *CorporationSigningController) Download() {
 	var statusCode = 200
 	var errCode = 0
@@ -211,11 +225,11 @@ func (this *CorporationSigningController) Download() {
 // @Title SendVerifiCode
 // @Description send verification code when signing as Corporation
 // @Param	:cla_org_id	path 	string					true		"cla org id"
-// @Param	body		body 	models.CorporationSigningVerifCode	true		"body for sending verification code"
-// @Success 201 {int} map
-// @router /verifi-code/:cla_org_id [post]
+// @Param	:email		path 	string					true		"email of corp"
+// @Success 202 {int} map
+// @router /:cla_org_id/:email [put]
 func (this *CorporationSigningController) SendVerifiCode() {
-	var statusCode = 201
+	var statusCode = 202
 	var errCode = 0
 	var reason error
 	var body interface{}
@@ -224,21 +238,15 @@ func (this *CorporationSigningController) SendVerifiCode() {
 		sendResponse(&this.Controller, statusCode, errCode, reason, body)
 	}()
 
-	claOrgID, err := fetchStringParameter(&this.Controller, ":cla_org_id")
-	if err != nil {
+	if err := checkAPIStringParameter(&this.Controller, []string{":cla_org_id", ":email"}); err != nil {
 		reason = err
 		errCode = ErrInvalidParameter
 		statusCode = 400
 		return
 	}
 
-	var info models.CorporationSigningVerifCode
-	if err := fetchInputPayload(&this.Controller, &info); err != nil {
-		reason = err
-		errCode = ErrInvalidParameter
-		statusCode = 400
-		return
-	}
+	claOrgID := this.GetString(":cla_org_id")
+	adminEmail := this.GetString(":email")
 
 	_, emailCfg, err := getEmailConfig(claOrgID)
 	if err != nil {
@@ -255,7 +263,7 @@ func (this *CorporationSigningController) SendVerifiCode() {
 		return
 	}
 
-	code, err := info.Create(conf.AppConfig.VerificationCodeExpiry)
+	code, err := models.CreateCorporationSigningVerifCode(adminEmail, conf.AppConfig.VerificationCodeExpiry)
 	if err != nil {
 		reason = fmt.Errorf("Failed to send verification code, err:%s", err.Error())
 		statusCode, errCode = convertDBError(err)
@@ -263,7 +271,7 @@ func (this *CorporationSigningController) SendVerifiCode() {
 	}
 
 	msg := email.EmailMessage{
-		To:      []string{info.Email},
+		To:      []string{adminEmail},
 		Content: code,
 		Subject: "verification code",
 	}

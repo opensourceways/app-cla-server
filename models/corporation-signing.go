@@ -49,16 +49,11 @@ func (this CorporationSigningListOption) List() (map[string][]dbmodels.Corporati
 	return dbmodels.GetDB().ListCorporationSigning(dbmodels.CorporationSigningListOption(this))
 }
 
-type CorporationSigningVerifCode struct {
-	// Email is the email address of corporation
-	Email string `json:"email"`
-}
-
-func (this CorporationSigningVerifCode) Create(expiry int64) (string, error) {
+func CreateCorporationSigningVerifCode(email string, expiry int64) (string, error) {
 	code := "123456"
 
 	vc := dbmodels.VerificationCode{
-		Email:   this.Email,
+		Email:   email,
 		Code:    code,
 		Purpose: ActionCorporationSigning,
 		Expiry:  util.Now() + expiry,

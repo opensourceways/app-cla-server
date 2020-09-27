@@ -260,8 +260,10 @@ func (this *CLAOrgController) GetBlankPdf() {
 	}
 
 	signing := models.CorporationSigning{
-		AdminEmail: "abc@black_pef.com",
-		Info:       dbmodels.TypeSigningInfo(value),
+		CorporationSigningBasicInfo: dbmodels.CorporationSigningBasicInfo{
+			AdminEmail: "abc@black_pef.com",
+		},
+		Info: dbmodels.TypeSigningInfo(value),
 	}
 
 	pdf.GetPDFGenerator().GenCLAPDFForCorporation(claOrg, &signing, cla)

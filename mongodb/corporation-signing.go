@@ -15,18 +15,17 @@ import (
 
 type corporationSigningDoc struct {
 	corporationSigning
-
-	PDFUploaded bool `bson:"pdf_uploaded" json:"pdf_uploaded"`
-	AdminAdded  bool `bson:"admin_added" json:"admin_added"`
 }
 
 type corporationSigning struct {
 	AdminEmail      string                   `bson:"admin_email" json:"admin_email" required:"true"`
 	AdminName       string                   `bson:"admin_name" json:"admin_name" required:"true"`
 	CorporationName string                   `bson:"corp_name" json:"corp_name" required:"true"`
-	Enabled         bool                     `bson:"enabled" json:"enabled"`
 	Date            string                   `bson:"date" json:"date" required:"true"`
 	SigningInfo     dbmodels.TypeSigningInfo `bson:"info" json:"info,omitempty"`
+
+	PDFUploaded bool `bson:"pdf_uploaded" json:"pdf_uploaded"`
+	AdminAdded  bool `bson:"admin_added" json:"admin_added"`
 }
 
 func filterForCorpSigning(filter bson.M) {
@@ -51,7 +50,6 @@ func (c *client) SignAsCorporation(claOrgID string, info dbmodels.CorporationSig
 		AdminEmail:      info.AdminEmail,
 		AdminName:       info.AdminName,
 		CorporationName: info.CorporationName,
-		Enabled:         info.Enabled,
 		Date:            info.Date,
 		SigningInfo:     info.Info,
 	}
@@ -118,7 +116,7 @@ func (c *client) SignAsCorporation(claOrgID string, info dbmodels.CorporationSig
 	return c.doTransaction(f)
 }
 
-func (c *client) ListCorporationSigning(opt dbmodels.CorporationSigningListOption) (map[string][]dbmodels.CorporationSigningDetails, error) {
+func (c *client) ListCorporationSigning(opt dbmodels.CorporationSigningListOption) (map[string][]dbmodels.CorporationSigningDetail, error) {
 	info := struct {
 		Platform    string `json:"platform" required:"true"`
 		OrgID       string `json:"org_id" required:"true"`
@@ -133,7 +131,7 @@ func (c *client) ListCorporationSigning(opt dbmodels.CorporationSigningListOptio
 
 	body, err := structToMap(info)
 	if err != nil {
-		return nil, fmt.Errorf("build options to list corporation signing failed, err:%v", err)
+		return nil, err
 	}
 	filter := bson.M(body)
 	filterForCorpSigning(filter)
@@ -146,30 +144,22 @@ func (c *client) ListCorporationSigning(opt dbmodels.CorporationSigningListOptio
 		pipeline := bson.A{
 			bson.M{"$match": filter},
 			bson.M{"$project": bson.M{
-				fieldCorporations: 1,
-
-				fieldCorpoManagers: bson.M{"$filter": bson.M{
-					"input": fmt.Sprintf("$%s", fieldCorpoManagers),
-					"cond":  bson.M{"$eq": bson.A{"$$this.role", dbmodels.RoleAdmin}},
-				}},
-			}},
-			bson.M{"$project": bson.M{
-				corpSigningField("corp_name"):   1,
-				corpSigningField("admin_email"): 1,
-				corpSigningField("admin_name"):  1,
-				corpSigningField("enabled"):     1,
-
-				corpoManagerElemKey("email"): 1,
+				corpSigningField("admin_email"):  1,
+				corpSigningField("admin_name"):   1,
+				corpSigningField("corp_name"):    1,
+				corpSigningField("date"):         1,
+				corpSigningField("pdf_uploaded"): 1,
+				corpSigningField("admin_added"):  1,
 			}},
 		}
 		cursor, err := col.Aggregate(ctx, pipeline)
 		if err != nil {
-			return fmt.Errorf("error find bindings: %v", err)
+			return err
 		}
 
 		err = cursor.All(ctx, &v)
 		if err != nil {
-			return fmt.Errorf("error decoding to bson struct of corporation signing: %v", err)
+			return err
 		}
 		return nil
 	}
@@ -179,28 +169,18 @@ func (c *client) ListCorporationSigning(opt dbmodels.CorporationSigningListOptio
 		return nil, err
 	}
 
-	r := map[string][]dbmodels.CorporationSigningDetails{}
-
-	for i := 0; i < len(v); i++ {
-		cs := v[i].Corporations
-		if cs == nil || len(cs) == 0 {
+	r := map[string][]dbmodels.CorporationSigningDetail{}
+	for _, doc := range v {
+		cs := doc.Corporations
+		if len(cs) == 0 {
 			continue
 		}
 
-		admins := map[string]bool{}
-		for _, m := range v[i].CorporationManagers {
-			admins[m.Email] = true
-		}
-
-		cs1 := make([]dbmodels.CorporationSigningDetails, 0, len(cs))
+		cs1 := make([]dbmodels.CorporationSigningDetail, 0, len(cs))
 		for _, item := range cs {
-
-			cs1 = append(cs1, dbmodels.CorporationSigningDetails{
-				CorporationSigningInfo: toDBModelCorporationSigningInfo(item),
-				AdministratorEnabled:   admins[item.AdminEmail],
-			})
+			cs1 = append(cs1, toDBModelCorporationSigningDetail(&item))
 		}
-		r[objectIDToUID(v[i].ID)] = cs1
+		r[objectIDToUID(doc.ID)] = cs1
 	}
 
 	return r, nil
@@ -262,7 +242,7 @@ func (c *client) UpdateCorporationSigning(claOrgID, adminEmail, corporationName 
 	return withContext(f)
 }
 
-func (c *client) GetCorporationSigningDetail(platform, org, repo, email string) (dbmodels.CorporationSigningDetail, error) {
+func (c *client) GetCorporationSigningDetail(platform, org, repo, email string) (string, dbmodels.CorporationSigningDetail, error) {
 	filter := bson.M{
 		"platform": platform,
 		"org_id":   org,
@@ -309,7 +289,7 @@ func (c *client) GetCorporationSigningDetail(platform, org, repo, email string) 
 
 	err := withContext(f)
 	if err != nil {
-		return dbmodels.CorporationSigningDetail{}, err
+		return "", dbmodels.CorporationSigningDetail{}, err
 	}
 
 	err = dbmodels.DBError{
@@ -326,35 +306,25 @@ func (c *client) GetCorporationSigningDetail(platform, org, repo, email string) 
 					bingo = true
 				}
 				if len(item.Corporations) != 0 {
-					return toDBModelCorporationSigningDetail(objectIDToUID(item.ID), &item.Corporations[0]), nil
+					return objectIDToUID(item.ID), toDBModelCorporationSigningDetail(&item.Corporations[0]), nil
 				}
 			}
 		}
 		if bingo {
-			return dbmodels.CorporationSigningDetail{}, err
+			return "", dbmodels.CorporationSigningDetail{}, err
 		}
 	}
 
 	for _, item := range v {
 		if len(item.Corporations) != 0 {
-			return toDBModelCorporationSigningDetail(objectIDToUID(item.ID), &item.Corporations[0]), nil
+			return objectIDToUID(item.ID), toDBModelCorporationSigningDetail(&item.Corporations[0]), nil
 		}
 	}
 
-	return dbmodels.CorporationSigningDetail{}, err
+	return "", dbmodels.CorporationSigningDetail{}, err
 }
 
-func toDBModelCorporationSigningInfo(info corporationSigningDoc) dbmodels.CorporationSigningInfo {
-	return dbmodels.CorporationSigningInfo{
-		CorporationName: info.CorporationName,
-		AdminEmail:      info.AdminEmail,
-		AdminName:       info.AdminName,
-		Enabled:         info.Enabled,
-		Info:            info.SigningInfo,
-	}
-}
-
-func toDBModelCorporationSigningDetail(claOrgID string, cs *corporationSigningDoc) dbmodels.CorporationSigningDetail {
+func toDBModelCorporationSigningDetail(cs *corporationSigningDoc) dbmodels.CorporationSigningDetail {
 	return dbmodels.CorporationSigningDetail{
 		CorporationSigningBasicInfo: dbmodels.CorporationSigningBasicInfo{
 			AdminEmail:      cs.AdminEmail,
@@ -364,6 +334,5 @@ func toDBModelCorporationSigningDetail(claOrgID string, cs *corporationSigningDo
 		},
 		PDFUploaded: cs.PDFUploaded,
 		AdminAdded:  cs.AdminAdded,
-		CLAOrgID:    claOrgID,
 	}
 }

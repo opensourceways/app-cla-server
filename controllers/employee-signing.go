@@ -63,7 +63,7 @@ func (this *EmployeeSigningController) Post() {
 		return
 	}
 
-	corpSign, err := models.GetCorporationSigningDetail(
+	corpSignedCla, corpSign, err := models.GetCorporationSigningDetail(
 		claOrg.Platform, claOrg.OrgID, claOrg.RepoID, info.Email)
 	if err != nil {
 		reason = fmt.Errorf("Failed to sign as employee, err:%s", err.Error())
@@ -79,7 +79,7 @@ func (this *EmployeeSigningController) Post() {
 	}
 
 	opt := models.CorporationManagerListOption{
-		CLAOrgID: corpSign.CLAOrgID,
+		CLAOrgID: corpSignedCla,
 		Role:     dbmodels.RoleManager,
 		Email:    info.Email,
 	}

@@ -11,6 +11,10 @@ const (
 	ErrUnknownToken
 	ErrInvalidToken
 	ErrSigningUncompleted
+	ErrUnknownEmailPlatform
+	ErrSendingEmail
+	ErrWrongVerificationCode
+	ErrVerificationCodeExpired
 )
 
 func convertDBError(err error) (int, int) {
@@ -28,6 +32,12 @@ func convertDBError(err error) (int, int) {
 
 	case dbmodels.ErrHasNotSigned:
 		return 400, ErrHasNotSigned
+
+	case dbmodels.ErrWrongVerificationCode:
+		return 400, ErrWrongVerificationCode
+
+	case dbmodels.ErrVerificationCodeExpired:
+		return 400, ErrVerificationCodeExpired
 	}
 
 	return 500, 0

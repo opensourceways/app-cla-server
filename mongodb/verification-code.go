@@ -3,20 +3,31 @@ package mongodb
 import (
 	"context"
 	"fmt"
-	"time"
 
-	"github.com/huaweicloud/golangsdk"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 
 	"github.com/opensourceways/app-cla-server/dbmodels"
+	"github.com/opensourceways/app-cla-server/util"
 )
 
 const verifCodeCollection = "verification_codes"
 
 func (c *client) CreateVerificationCode(opt dbmodels.VerificationCode) error {
-	body, err := golangsdk.BuildRequestBody(opt, "")
+	info := struct {
+		Email   string `json:"email" required:"true"`
+		Code    string `json:"code" required:"true"`
+		Purpose string `json:"purpose" required:"true"`
+		Expiry  int64  `json:"expiry" required:"true"`
+	}{
+		Email:   opt.Email,
+		Code:    opt.Code,
+		Purpose: opt.Purpose,
+		Expiry:  opt.Expiry,
+	}
+
+	body, err := structToMap(info)
 	if err != nil {
 		return fmt.Errorf("Failed to build verification code body:%v", err)
 	}
@@ -28,18 +39,19 @@ func (c *client) CreateVerificationCode(opt dbmodels.VerificationCode) error {
 		filter := bson.M{"email": opt.Email, "purpose": opt.Purpose}
 		col.DeleteMany(ctx, filter)
 
-		upsert := true
-		update := bson.M{"$setOnInsert": bson.M(body)}
 		// add this filter in case of repetitive code
 		filter["code"] = opt.Code
 
+		upsert := true
+		update := bson.M{"$setOnInsert": bson.M(body)}
+
 		r, err := col.UpdateOne(ctx, filter, update, &options.UpdateOptions{Upsert: &upsert})
 		if err != nil {
-			return fmt.Errorf("Failed to create verification code: write db err:%v", err)
+			return fmt.Errorf("write db err:%v", err)
 		}
 
 		if r.MatchedCount == 0 && r.UpsertedCount == 0 {
-			return fmt.Errorf("Failed to create verification code: impossible")
+			return fmt.Errorf("impossible")
 		}
 		return nil
 	}
@@ -47,9 +59,7 @@ func (c *client) CreateVerificationCode(opt dbmodels.VerificationCode) error {
 	return c.doTransaction(f)
 }
 
-func (c *client) CheckVerificationCode(opt dbmodels.VerificationCode) (bool, error) {
-	valid := false
-
+func (c *client) CheckVerificationCode(opt dbmodels.VerificationCode) error {
 	f := func(ctx context.Context) error {
 		col := c.collection(verifCodeCollection)
 
@@ -69,15 +79,23 @@ func (c *client) CheckVerificationCode(opt dbmodels.VerificationCode) (bool, err
 		}
 		if err := r.Decode(&v); err != nil {
 			if err.Error() == mongo.ErrNoDocuments.Error() {
-				return nil
+				return dbmodels.DBError{
+					ErrCode: dbmodels.ErrWrongVerificationCode,
+					Err:     fmt.Errorf("wrong verification code"),
+				}
 			}
 
-			return fmt.Errorf("Failed to check verification code: %s", r.Err().Error())
+			return err
 		}
 
-		valid = (v.Expiry >= time.Now().Unix())
+		if v.Expiry < util.Now() {
+			return dbmodels.DBError{
+				ErrCode: dbmodels.ErrVerificationCodeExpired,
+				Err:     fmt.Errorf("verification code is expired"),
+			}
+		}
 		return nil
 	}
 
-	return valid, withContext(f)
+	return withContext(f)
 }

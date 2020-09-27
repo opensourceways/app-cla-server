@@ -27,6 +27,7 @@ func (this *CorporationSigningController) Prepare() {
 
 // @Title Post
 // @Description sign as corporation
+// @Param	:cla_org_id	path 	string					true		"cla org id"
 // @Param	body		body 	models.CorporationSigningCreateOption	true		"body for corporation signing"
 // @Success 201 {int} map
 // @router /:cla_org_id [post]
@@ -148,53 +149,57 @@ func (this *CorporationSigningController) Update() {
 	body = "enabled corporation successfully"
 }
 
-// @Title send verification code when signing as Corporation
-// @Description send verification code
+// @Title SendVerifiCode
+// @Description send verification code when signing as Corporation
+// @Param	:cla_org_id	path 	string					true		"cla org id"
 // @Param	body		body 	models.CorporationSigningVerifCode	true		"body for sending verification code"
 // @Success 201 {int} map
-// @Failure 403 body is empty
-// @router /verifi-code [post]
+// @router /verifi-code/:cla_org_id [post]
 func (this *CorporationSigningController) SendVerifiCode() {
 	var statusCode = 201
+	var errCode = 0
 	var reason error
 	var body interface{}
 
 	defer func() {
-		sendResponse1(&this.Controller, statusCode, reason, body)
+		sendResponse(&this.Controller, statusCode, errCode, reason, body)
 	}()
 
+	claOrgID, err := fetchStringParameter(&this.Controller, ":cla_org_id")
+	if err != nil {
+		reason = err
+		errCode = ErrInvalidParameter
+		statusCode = 400
+		return
+	}
+
 	var info models.CorporationSigningVerifCode
-	if err := json.Unmarshal(this.Ctx.Input.RequestBody, &info); err != nil {
+	if err := fetchInputPayload(&this.Controller, &info); err != nil {
 		reason = err
+		errCode = ErrInvalidParameter
 		statusCode = 400
 		return
 	}
 
-	claOrg := &models.CLAOrg{ID: info.CLAOrgID}
-	if err := claOrg.Get(); err != nil {
-		reason = err
-		statusCode = 400
-		return
-	}
-
-	emailCfg := &models.OrgEmail{Email: claOrg.OrgEmail}
-	if err := emailCfg.Get(); err != nil {
-		reason = err
-		statusCode = 400
+	_, emailCfg, err := getEmailConfig(claOrgID)
+	if err != nil {
+		reason = fmt.Errorf("Failed to send verification code, err:%s", err.Error())
+		statusCode, errCode = convertDBError(err)
 		return
 	}
 
 	ec, err := email.GetEmailClient(emailCfg.Platform)
 	if err != nil {
-		reason = fmt.Errorf("Failtd to get email client: %s", err.Error())
+		reason = fmt.Errorf("Failed to send verification code, err:%s", err.Error())
+		errCode = ErrUnknownEmailPlatform
 		statusCode = 500
 		return
 	}
 
 	code, err := info.Create(conf.AppConfig.VerificationCodeExpiry)
 	if err != nil {
-		reason = err
-		statusCode = 500
+		reason = fmt.Errorf("Failed to send verification code, err:%s", err.Error())
+		statusCode, errCode = convertDBError(err)
 		return
 	}
 
@@ -204,7 +209,8 @@ func (this *CorporationSigningController) SendVerifiCode() {
 		Subject: "verification code",
 	}
 	if err := ec.SendEmail(emailCfg.Token, &msg); err != nil {
-		reason = fmt.Errorf("Failed to send verification code by email: %s", err.Error())
+		reason = fmt.Errorf("Failed to send verification code, err: %s", err.Error())
+		errCode = ErrSendingEmail
 		statusCode = 500
 		return
 	}

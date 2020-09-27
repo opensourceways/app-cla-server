@@ -24,6 +24,7 @@ func (this *IndividualSigningController) Prepare() {
 
 // @Title Post
 // @Description sign as individual
+// @Param	:cla_org_id	path 	string				true		"cla org id"
 // @Param	body		body 	models.IndividualSigning	true		"body for individual signing"
 // @Success 201 {int} map
 // @router /:cla_org_id [post]

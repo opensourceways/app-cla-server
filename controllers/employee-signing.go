@@ -26,6 +26,7 @@ func (this *EmployeeSigningController) Prepare() {
 
 // @Title Post
 // @Description sign as employee
+// @Param	:cla_org_id	path 	string				true		"cla org id"
 // @Param	body		body 	models.IndividualSigning	true		"body for employee signing"
 // @Success 201 {int} map
 // @router /:cla_org_id [post]
@@ -62,60 +63,53 @@ func (this *EmployeeSigningController) Post() {
 		return
 	}
 
-	opt := models.CLAOrgListOption{
-		Platform: claOrg.Platform,
-		OrgID:    claOrg.OrgID,
-		RepoID:   claOrg.RepoID,
-		ApplyTo:  dbmodels.ApplyToCorporation,
-	}
-	claOrgs, err := opt.List()
+	corpSign, err := models.GetCorporationSigningDetail(
+		claOrg.Platform, claOrg.OrgID, claOrg.RepoID, info.Email)
 	if err != nil {
-		reason = err
-		statusCode = 500
+		reason = fmt.Errorf("Failed to sign as employee, err:%s", err.Error())
+		statusCode, errCode = convertDBError(err)
 		return
 	}
-	if len(claOrgs) == 0 {
-		reason = fmt.Errorf("this org has not been bound any cla to be signed as corporation")
+
+	if !corpSign.AdminAdded {
+		reason = fmt.Errorf("Failed to sign as employee, err: the corp signing is not completed")
+		errCode = ErrSigningUncompleted
 		statusCode = 400
 		return
 	}
 
-	ids := make([]string, 0, len(claOrgs))
-	for _, i := range claOrgs {
-		ids = append(ids, i.ID)
+	opt := models.CorporationManagerListOption{
+		CLAOrgID: corpSign.CLAOrgID,
+		Role:     dbmodels.RoleManager,
+		Email:    info.Email,
 	}
-	managers, err := models.ListManagersWhenEmployeeSigning(ids, info.Email)
+	managers, err := opt.List()
 	if err != nil {
-		reason = err
-		statusCode = 500
-		return
-	}
-	if managers == nil || len(managers) == 0 {
-		reason = fmt.Errorf("the corporation has not signed")
-		statusCode = 500
+		reason = fmt.Errorf("Failed to sign as employee, err:%s", err.Error())
+		statusCode, errCode = convertDBError(err)
 		return
 	}
 
 	if err := (&info).Create(claOrgID, false); err != nil {
-		reason = err
-		statusCode = 500
+		reason = fmt.Errorf("Failed to sign as employee, err:%s", err.Error())
+		statusCode, errCode = convertDBError(err)
 		return
 	}
+	body = "sign successfully"
 
-	msg := email.EmailMessage{
-		To:      []string{},
-		Subject: "Notification",
-		Content: "somebody has signed",
-	}
-	for _, item := range managers {
-		if item.Role == dbmodels.RoleManager {
-			msg.To = append(msg.To, item.Email)
+	if len(managers) > 0 {
+		msg := email.EmailMessage{
+			To:      []string{},
+			Subject: "Notification",
+			Content: "somebody has signed",
 		}
-	}
-	if len(msg.To) > 0 {
+		for _, item := range managers {
+			if item.Role == dbmodels.RoleManager {
+				msg.To = append(msg.To, item.Email)
+			}
+		}
 		worker.GetEmailWorker().SendSimpleMessage(emailCfg, &msg)
 	}
-	body = "sign successfully"
 }
 
 // @Title GetAll

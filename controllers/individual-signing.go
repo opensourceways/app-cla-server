@@ -26,6 +26,8 @@ func (this *IndividualSigningController) Prepare() {
 // @Param	:cla_org_id	path 	string				true		"cla org id"
 // @Param	body		body 	models.IndividualSigning	true		"body for individual signing"
 // @Success 201 {int} map
+// @Failure util.ErrNoCLABinding
+// @Failure util.ErrHasSigned
 // @router /:cla_org_id [post]
 func (this *IndividualSigningController) Post() {
 	var statusCode = 0
@@ -115,7 +117,10 @@ func (this *IndividualSigningController) Check() {
 	if err != nil {
 		reason = err
 		statusCode, errCode = convertDBError(err)
-		return
+		if errCode != util.ErrHasNotSigned {
+			return
+		}
+		reason = nil
 	}
 
 	body = map[string]bool{

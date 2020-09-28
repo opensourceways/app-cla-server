@@ -52,7 +52,7 @@ func (this *CorporationSigningController) Post() {
 	var body interface{}
 
 	defer func() {
-		sendResponse(&this.Controller, statusCode, errCode, reason, body)
+		sendResponse(&this.Controller, statusCode, errCode, reason, body, "sign as corporation")
 	}()
 
 	claOrgID, err := fetchStringParameter(&this.Controller, ":cla_org_id")
@@ -72,27 +72,27 @@ func (this *CorporationSigningController) Post() {
 	}
 
 	if err := (&info).Validate(); err != nil {
-		reason = fmt.Errorf("Failed to sign as corporation, err:%s", err.Error())
+		reason = err
 		statusCode, errCode = convertDBError(err)
 		return
 	}
 
 	claOrg, emailCfg, err := getEmailConfig(claOrgID)
 	if err != nil {
-		reason = fmt.Errorf("Failed to sign as corporation, err:%s", err.Error())
+		reason = err
 		statusCode, errCode = convertDBError(err)
 		return
 	}
 
 	cla := &models.CLA{ID: claOrg.CLAID}
 	if err := cla.Get(); err != nil {
-		reason = fmt.Errorf("Failed to sign as corporation, err:%s", err.Error())
+		reason = err
 		statusCode, errCode = convertDBError(err)
 		return
 	}
 
 	if err := (&info).Create(claOrgID); err != nil {
-		reason = fmt.Errorf("Failed to sign as corporation, err:%s", err.Error())
+		reason = err
 		statusCode, errCode = convertDBError(err)
 		return
 	}
@@ -112,7 +112,7 @@ func (this *CorporationSigningController) GetAll() {
 	var body interface{}
 
 	defer func() {
-		sendResponse(&this.Controller, statusCode, errCode, reason, body)
+		sendResponse(&this.Controller, statusCode, errCode, reason, body, "list corporation")
 	}()
 
 	opt := models.CorporationSigningListOption{
@@ -122,9 +122,11 @@ func (this *CorporationSigningController) GetAll() {
 		CLALanguage: this.GetString("cla_language"),
 	}
 
+	// TODO: check whether can do this
+
 	r, err := opt.List()
 	if err != nil {
-		reason = fmt.Errorf("Failed to list corporation, err:%s", err.Error())
+		reason = err
 		statusCode, errCode = convertDBError(err)
 		return
 	}
@@ -145,8 +147,10 @@ func (this *CorporationSigningController) Upload() {
 	var body interface{}
 
 	defer func() {
-		sendResponse(&this.Controller, statusCode, errCode, reason, body)
+		sendResponse(&this.Controller, statusCode, errCode, reason, body, "upload corp's signing pdf")
 	}()
+
+	// TODO: is this cla bound by the org
 
 	if err := checkAPIStringParameter(&this.Controller, []string{":cla_org_id", ":email"}); err != nil {
 		reason = err
@@ -174,7 +178,7 @@ func (this *CorporationSigningController) Upload() {
 
 	err = models.UploadCorporationSigningPDF(this.GetString(":cla_org_id"), this.GetString(":email"), data)
 	if err != nil {
-		reason = fmt.Errorf("Failed to upload corporation signing pdf, err:%s", err.Error())
+		reason = err
 		statusCode, errCode = convertDBError(err)
 		return
 	}
@@ -195,7 +199,7 @@ func (this *CorporationSigningController) Download() {
 	var body interface{}
 
 	defer func() {
-		sendResponse(&this.Controller, statusCode, errCode, reason, body)
+		sendResponse(&this.Controller, statusCode, errCode, reason, body, "download corp's signing pdf")
 	}()
 
 	if err := checkAPIStringParameter(&this.Controller, []string{":cla_org_id", ":email"}); err != nil {
@@ -207,12 +211,12 @@ func (this *CorporationSigningController) Download() {
 
 	pdf, err := models.DownloadCorporationSigningPDF(this.GetString(":cla_org_id"), this.GetString(":email"))
 	if err != nil {
-		reason = fmt.Errorf("Failed to download corporation signing pdf, err: %s", err.Error())
+		reason = err
 		statusCode, errCode = convertDBError(err)
 		return
 	}
 	if pdf == nil {
-		reason = fmt.Errorf("Failed to download corporation signing pdf, err: no pdf found")
+		reason = fmt.Errorf("no pdf found")
 		statusCode = 500
 		return
 	}
@@ -235,7 +239,7 @@ func (this *CorporationSigningController) SendVerifiCode() {
 	var body interface{}
 
 	defer func() {
-		sendResponse(&this.Controller, statusCode, errCode, reason, body)
+		sendResponse(&this.Controller, statusCode, errCode, reason, body, "send verification code")
 	}()
 
 	if err := checkAPIStringParameter(&this.Controller, []string{":cla_org_id", ":email"}); err != nil {
@@ -250,14 +254,14 @@ func (this *CorporationSigningController) SendVerifiCode() {
 
 	_, emailCfg, err := getEmailConfig(claOrgID)
 	if err != nil {
-		reason = fmt.Errorf("Failed to send verification code, err:%s", err.Error())
+		reason = err
 		statusCode, errCode = convertDBError(err)
 		return
 	}
 
 	ec, err := email.GetEmailClient(emailCfg.Platform)
 	if err != nil {
-		reason = fmt.Errorf("Failed to send verification code, err:%s", err.Error())
+		reason = err
 		errCode = ErrUnknownEmailPlatform
 		statusCode = 500
 		return
@@ -265,7 +269,7 @@ func (this *CorporationSigningController) SendVerifiCode() {
 
 	code, err := models.CreateCorporationSigningVerifCode(adminEmail, conf.AppConfig.VerificationCodeExpiry)
 	if err != nil {
-		reason = fmt.Errorf("Failed to send verification code, err:%s", err.Error())
+		reason = err
 		statusCode, errCode = convertDBError(err)
 		return
 	}
@@ -276,7 +280,7 @@ func (this *CorporationSigningController) SendVerifiCode() {
 		Subject: "verification code",
 	}
 	if err := ec.SendEmail(emailCfg.Token, &msg); err != nil {
-		reason = fmt.Errorf("Failed to send verification code, err: %s", err.Error())
+		reason = err
 		errCode = ErrSendingEmail
 		statusCode = 500
 		return

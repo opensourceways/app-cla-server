@@ -40,9 +40,8 @@ func (this *EmployeeManagerController) Delete() {
 // @Title GetAll
 // @Description get all employee managers
 // @Param	:cla_org_id	path 	string					true		"cla org id"
-// @Param	:email		path 	string					true		"email of corp"
 // @Success 200 {object} dbmodels.CorporationManagerListResult
-// @router /:cla_org_id/:email [get]
+// @router /:cla_org_id [get]
 func (this *EmployeeManagerController) GetAll() {
 	var statusCode = 0
 	var errCode = 0
@@ -50,21 +49,29 @@ func (this *EmployeeManagerController) GetAll() {
 	var body interface{}
 
 	defer func() {
-		sendResponse(&this.Controller, statusCode, errCode, reason, body)
+		sendResponse(&this.Controller, statusCode, errCode, reason, body, "list employee managers")
 	}()
 
-	if err := checkAPIStringParameter(&this.Controller, []string{":cla_org_id", ":email"}); err != nil {
+	claOrgID, err := fetchStringParameter(&this.Controller, ":cla_org_id")
+	if err != nil {
 		reason = err
 		errCode = ErrInvalidParameter
 		statusCode = 400
 		return
 	}
 
+	corpEmail, err := getApiAccessUser(&this.Controller)
+	if err != nil {
+		reason = err
+		statusCode = 500
+		return
+	}
+
 	r, err := models.ListCorporationManagers(
-		this.GetString(":cla_org_id"), this.GetString(":email"), dbmodels.RoleManager,
+		claOrgID, corpEmail, dbmodels.RoleManager,
 	)
 	if err != nil {
-		reason = fmt.Errorf("Failed to list employee managers, err:%s", err.Error())
+		reason = err
 		statusCode, errCode = convertDBError(err)
 		return
 	}
@@ -79,7 +86,13 @@ func (this *EmployeeManagerController) addOrDeleteManagers(toAdd bool) {
 	var body interface{}
 
 	defer func() {
-		sendResponse(&this.Controller, statusCode, errCode, reason, body)
+		op := "add"
+		if !toAdd {
+			op = "delete"
+		}
+		body = fmt.Sprintf("%s employee manager successfully", op)
+
+		sendResponse(&this.Controller, statusCode, errCode, reason, body, fmt.Sprintf("%s employee managers", op))
 	}()
 
 	claOrgID, err := fetchStringParameter(&this.Controller, ":cla_org_id")
@@ -105,19 +118,18 @@ func (this *EmployeeManagerController) addOrDeleteManagers(toAdd bool) {
 		return
 	}
 
-	op := "add"
-	if toAdd {
-		err = (&info).Create(claOrgID)
-	} else {
-		op = "delete"
-		err = (&info).Delete(claOrgID)
-	}
-
-	if err != nil {
-		reason = fmt.Errorf("Failed to %s employee managers, err: %s", op, err.Error())
-		statusCode, errCode = convertDBError(err)
+	statusCode, errCode, reason = isSameCorp(&this.Controller, info.Emails[0])
+	if reason != nil {
 		return
 	}
 
-	body = fmt.Sprintf("%s employee manager successfully", op)
+	if toAdd {
+		err = (&info).Create(claOrgID)
+	} else {
+		err = (&info).Delete(claOrgID)
+	}
+	if err != nil {
+		reason = err
+		statusCode, errCode = convertDBError(err)
+	}
 }

@@ -17,64 +17,13 @@ type CorporationManagerController struct {
 func (this *CorporationManagerController) Prepare() {
 	if getRouterPattern(&this.Controller) == "/v1/corporation-manager/:cla_org_id/:email" {
 		if this.Ctx.Request.Method == http.MethodPut {
+			// add administrator
 			apiPrepare(&this.Controller, []string{PermissionOwnerOfOrg}, nil)
 		} else {
+			// reset password of manager
 			apiPrepare(&this.Controller, []string{PermissionCorporAdmin, PermissionEmployeeManager}, nil)
 		}
 	}
-}
-
-// @Title Put
-// @Description add corporation administrator
-// @Param	:cla_org_id	path 	string					true		"cla org id"
-// @Param	:email		path 	string					true		"email of corp"
-// @Success 202 {int} map
-// @router /:cla_org_id/:email [put]
-func (this *CorporationManagerController) Put() {
-	var statusCode = 0
-	var errCode = 0
-	var reason error
-	var body interface{}
-
-	defer func() {
-		sendResponse(&this.Controller, statusCode, errCode, reason, body)
-	}()
-
-	if err := checkAPIStringParameter(&this.Controller, []string{":cla_org_id", ":email"}); err != nil {
-		reason = err
-		errCode = ErrInvalidParameter
-		statusCode = 400
-		return
-	}
-	claOrgID := this.GetString(":cla_org_id")
-	email := this.GetString(":email")
-
-	info, err := models.CheckCorporationSigning(claOrgID, email)
-	if err != nil {
-		reason = fmt.Errorf("Failed to add corp administrator, err: %s", err.Error())
-		statusCode, errCode = convertDBError(err)
-		return
-	}
-
-	if !info.PDFUploaded {
-		reason = fmt.Errorf("Failed to add corp administrator, err: pdf corporation signed has not been uploaded")
-		errCode = ErrPDFHasNotUploaded
-		statusCode = 400
-		return
-	}
-
-	if info.AdminAdded {
-		// TODO: send email failed
-	}
-
-	err = models.CreateCorporationAdministrator(claOrgID, email)
-	if err != nil {
-		reason = fmt.Errorf("Failed to add corp administrator, err: %s", err.Error())
-		statusCode, errCode = convertDBError(err)
-		return
-	}
-
-	body = "add manager successfully"
 }
 
 // @Title authenticate corporation manager
@@ -90,7 +39,7 @@ func (this *CorporationManagerController) Auth() {
 	var body interface{}
 
 	defer func() {
-		sendResponse(&this.Controller, statusCode, errCode, reason, body)
+		sendResponse(&this.Controller, statusCode, errCode, reason, body, "authenticate as corp manager")
 	}()
 
 	var info models.CorporationManagerAuthentication
@@ -103,7 +52,7 @@ func (this *CorporationManagerController) Auth() {
 
 	v, err := (&info).Authenticate()
 	if err != nil {
-		reason = fmt.Errorf("Failed to authenticate as corp manager, err:%s", err.Error())
+		reason = err
 		statusCode, errCode = convertDBError(err)
 		return
 	}
@@ -123,6 +72,9 @@ func (this *CorporationManagerController) Auth() {
 				continue
 			}
 
+			// should not expose email of corp manager
+			item.Email = ""
+
 			result = append(result, authInfo{
 				CorporationManagerCheckResult: item,
 				Token:                         token,
@@ -134,12 +86,64 @@ func (this *CorporationManagerController) Auth() {
 	body = result
 }
 
+// @Title Put
+// @Description add corporation administrator
+// @Param	:cla_org_id	path 	string					true		"cla org id"
+// @Param	:email		path 	string					true		"email of corp"
+// @Success 202 {int} map
+// @router /:cla_org_id/:email [put]
+func (this *CorporationManagerController) Put() {
+	var statusCode = 0
+	var errCode = 0
+	var reason error
+	var body interface{}
+
+	defer func() {
+		sendResponse(&this.Controller, statusCode, errCode, reason, body, "add corp administrator")
+	}()
+
+	if err := checkAPIStringParameter(&this.Controller, []string{":cla_org_id", ":email"}); err != nil {
+		reason = err
+		errCode = ErrInvalidParameter
+		statusCode = 400
+		return
+	}
+	claOrgID := this.GetString(":cla_org_id")
+	email := this.GetString(":email")
+
+	info, err := models.CheckCorporationSigning(claOrgID, email)
+	if err != nil {
+		reason = err
+		statusCode, errCode = convertDBError(err)
+		return
+	}
+
+	if !info.PDFUploaded {
+		reason = fmt.Errorf("pdf corporation signed has not been uploaded")
+		errCode = ErrPDFHasNotUploaded
+		statusCode = 400
+		return
+	}
+
+	if info.AdminAdded {
+		// TODO: send email failed
+	}
+
+	err = models.CreateCorporationAdministrator(claOrgID, email)
+	if err != nil {
+		reason = err
+		statusCode, errCode = convertDBError(err)
+		return
+	}
+
+	body = "add manager successfully"
+}
+
 // @Title Patch
 // @Description reset password of corporation administrator
 // @Param	:cla_org_id	path 	string					true		"cla org id"
-// @Param	:email		path 	string					true		"email of corp"
 // @Success 204 {int} map
-// @router /:cla_org_id/:email [patch]
+// @router /:cla_org_id [patch]
 func (this *CorporationManagerController) Patch() {
 	var statusCode = 0
 	var errCode = 0
@@ -147,13 +151,21 @@ func (this *CorporationManagerController) Patch() {
 	var body interface{}
 
 	defer func() {
-		sendResponse(&this.Controller, statusCode, errCode, reason, body)
+		sendResponse(&this.Controller, statusCode, errCode, reason, body, "reset password of corp's manager")
 	}()
 
-	if err := checkAPIStringParameter(&this.Controller, []string{":cla_org_id", ":email"}); err != nil {
+	claOrgID, err := fetchStringParameter(&this.Controller, ":cla_org_id")
+	if err != nil {
 		reason = err
 		errCode = ErrInvalidParameter
 		statusCode = 400
+		return
+	}
+
+	corpEmail, err := getApiAccessUser(&this.Controller)
+	if err != nil {
+		reason = err
+		statusCode = 500
 		return
 	}
 
@@ -165,8 +177,8 @@ func (this *CorporationManagerController) Patch() {
 		return
 	}
 
-	if err := (&info).Reset(this.GetString(":cla_org_id"), this.GetString(":email")); err != nil {
-		reason = fmt.Errorf("Failed to reset password of admin, err:%s", err.Error())
+	if err := (&info).Reset(claOrgID, corpEmail); err != nil {
+		reason = err
 		statusCode, errCode = convertDBError(err)
 		return
 	}

@@ -9,6 +9,7 @@ import (
 	"github.com/opensourceways/app-cla-server/conf"
 	"github.com/opensourceways/app-cla-server/dbmodels"
 	"github.com/opensourceways/app-cla-server/models"
+	"github.com/opensourceways/app-cla-server/util"
 )
 
 const (
@@ -16,7 +17,7 @@ const (
 	apiAccessController = "access_controller"
 )
 
-func sendResponse(c *beego.Controller, statusCode, errCode int, reason error, body interface{}) {
+func sendResponse(c *beego.Controller, statusCode, errCode int, reason error, body interface{}, doWhat string) {
 	if token, err := refreshAccessToken(c); err == nil {
 		// this code must run before `c.Ctx.ResponseWriter.WriteHeader`
 		// otherwise the header can't be set successfully.
@@ -34,6 +35,8 @@ func sendResponse(c *beego.Controller, statusCode, errCode int, reason error, bo
 	}
 
 	if reason != nil {
+		reason = fmt.Errorf("Failed to %s, err: %s", doWhat, reason.Error())
+
 		if statusCode >= 500 {
 			beego.Error(reason.Error())
 			reason = fmt.Errorf("System error")
@@ -147,7 +150,7 @@ func apiPrepare(c *beego.Controller, permission []string, ac accessControllerInt
 	}
 
 	if statusCode, errCode, err := checkApiAccessToken(c, permission, ac); err != nil {
-		sendResponse(c, statusCode, errCode, err, nil)
+		sendResponse(c, statusCode, errCode, err, nil, "")
 		c.StopRun()
 	}
 
@@ -261,4 +264,17 @@ func getEmailConfig(claOrgID string) (*models.CLAOrg, *models.OrgEmail, error) {
 	}
 
 	return claOrg, emailInfo, nil
+}
+
+func isSameCorp(c *beego.Controller, email string) (int, int, error) {
+	corpEmail, err := getApiAccessUser(c)
+	if err != nil {
+		return 500, 0, err
+	}
+
+	if util.EmailSuffix(corpEmail) != util.EmailSuffix(email) {
+		return 400, ErrInvalidParameter, fmt.Errorf("can't operate on the different corporation")
+	}
+
+	return 0, 0, nil
 }

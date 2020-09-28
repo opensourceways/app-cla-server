@@ -2,10 +2,20 @@ package models
 
 import "github.com/opensourceways/app-cla-server/dbmodels"
 
-type EmployeeSigningListOption dbmodels.IndividualSigningListOption
+type EmployeeSigningListOption struct {
+	RepoID      string `json:"repo_id"`
+	CLALanguage string `json:"cla_language"`
+}
 
-func (this EmployeeSigningListOption) List() (map[string][]dbmodels.IndividualSigningBasicInfo, error) {
-	return dbmodels.GetDB().ListIndividualSigning(dbmodels.IndividualSigningListOption(this))
+func (this EmployeeSigningListOption) List(email, platform, org string) (map[string][]dbmodels.IndividualSigningBasicInfo, error) {
+	opt := dbmodels.IndividualSigningListOption{
+		Platform:         platform,
+		OrgID:            org,
+		RepoID:           this.RepoID,
+		CLALanguage:      this.CLALanguage,
+		CorporationEmail: email,
+	}
+	return dbmodels.GetDB().ListIndividualSigning(opt)
 }
 
 type EmployeeSigningUdateInfo struct {

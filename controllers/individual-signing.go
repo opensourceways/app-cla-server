@@ -1,8 +1,6 @@
 package controllers
 
 import (
-	"fmt"
-
 	"github.com/astaxie/beego"
 
 	// "github.com/opensourceways/app-cla-server/email"
@@ -35,7 +33,7 @@ func (this *IndividualSigningController) Post() {
 	var body interface{}
 
 	defer func() {
-		sendResponse(&this.Controller, statusCode, errCode, reason, body)
+		sendResponse(&this.Controller, statusCode, errCode, reason, body, "sign as individual")
 	}()
 
 	claOrgID, err := fetchStringParameter(&this.Controller, ":cla_org_id")
@@ -71,7 +69,7 @@ func (this *IndividualSigningController) Post() {
 		msg.To = []string{info.Email}
 	*/
 	if err := (&info).Create(claOrgID, true); err != nil {
-		reason = fmt.Errorf("Failed to sign as individual, err:%s", err.Error())
+		reason = err
 		statusCode, errCode = convertDBError(err)
 		return
 	}
@@ -96,7 +94,7 @@ func (this *IndividualSigningController) Check() {
 	var body interface{}
 
 	defer func() {
-		sendResponse(&this.Controller, statusCode, errCode, reason, body)
+		sendResponse(&this.Controller, statusCode, errCode, reason, body, "check individual signing")
 	}()
 
 	params := []string{":platform", ":org", ":repo", "email"}
@@ -114,7 +112,7 @@ func (this *IndividualSigningController) Check() {
 		this.GetString("email"),
 	)
 	if err != nil {
-		reason = fmt.Errorf("Failed to check individual signing, err:%s", err.Error())
+		reason = err
 		statusCode, errCode = convertDBError(err)
 		return
 	}

@@ -80,7 +80,7 @@ func (c *client) CheckVerificationCode(opt dbmodels.VerificationCode) error {
 		if err := r.Decode(&v); err != nil {
 			if err.Error() == mongo.ErrNoDocuments.Error() {
 				return dbmodels.DBError{
-					ErrCode: dbmodels.ErrWrongVerificationCode,
+					ErrCode: util.ErrWrongVerificationCode,
 					Err:     fmt.Errorf("wrong verification code"),
 				}
 			}
@@ -90,7 +90,7 @@ func (c *client) CheckVerificationCode(opt dbmodels.VerificationCode) error {
 
 		if v.Expiry < util.Now() {
 			return dbmodels.DBError{
-				ErrCode: dbmodels.ErrVerificationCodeExpired,
+				ErrCode: util.ErrVerificationCodeExpired,
 				Err:     fmt.Errorf("verification code is expired"),
 			}
 		}

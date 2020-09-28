@@ -8,6 +8,7 @@ import (
 
 	"github.com/opensourceways/app-cla-server/dbmodels"
 	"github.com/opensourceways/app-cla-server/models"
+	"github.com/opensourceways/app-cla-server/util"
 )
 
 type CorporationManagerController struct {
@@ -45,7 +46,7 @@ func (this *CorporationManagerController) Auth() {
 	var info models.CorporationManagerAuthentication
 	if err := fetchInputPayload(&this.Controller, &info); err != nil {
 		reason = err
-		errCode = ErrInvalidParameter
+		errCode = util.ErrInvalidParameter
 		statusCode = 400
 		return
 	}
@@ -104,7 +105,7 @@ func (this *CorporationManagerController) Put() {
 
 	if err := checkAPIStringParameter(&this.Controller, []string{":cla_org_id", ":email"}); err != nil {
 		reason = err
-		errCode = ErrInvalidParameter
+		errCode = util.ErrInvalidParameter
 		statusCode = 400
 		return
 	}
@@ -120,7 +121,7 @@ func (this *CorporationManagerController) Put() {
 
 	if !info.PDFUploaded {
 		reason = fmt.Errorf("pdf corporation signed has not been uploaded")
-		errCode = ErrPDFHasNotUploaded
+		errCode = util.ErrPDFHasNotUploaded
 		statusCode = 400
 		return
 	}
@@ -157,7 +158,7 @@ func (this *CorporationManagerController) Patch() {
 	claOrgID, err := fetchStringParameter(&this.Controller, ":cla_org_id")
 	if err != nil {
 		reason = err
-		errCode = ErrInvalidParameter
+		errCode = util.ErrInvalidParameter
 		statusCode = 400
 		return
 	}
@@ -172,7 +173,7 @@ func (this *CorporationManagerController) Patch() {
 	var info models.CorporationManagerResetPassword
 	if err := fetchInputPayload(&this.Controller, &info); err != nil {
 		reason = err
-		errCode = ErrInvalidParameter
+		errCode = util.ErrInvalidParameter
 		statusCode = 400
 		return
 	}

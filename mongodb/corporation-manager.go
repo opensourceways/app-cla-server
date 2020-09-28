@@ -57,7 +57,7 @@ func (c *client) AddCorporationManager(claOrgID string, opt []dbmodels.Corporati
 
 		if len(ms)+len(toAdd) > managerNumber {
 			return dbmodels.DBError{
-				ErrCode: dbmodels.ErrNumOfCorpManagersExceeded,
+				ErrCode: util.ErrNumOfCorpManagersExceeded,
 				Err:     fmt.Errorf("exceed %d managers allowed", managerNumber),
 			}
 		}
@@ -145,7 +145,7 @@ func (c *client) CheckCorporationManagerExist(opt dbmodels.CorporationManagerChe
 
 	if len(v) == 0 {
 		return nil, dbmodels.DBError{
-			ErrCode: dbmodels.ErrInvalidParameter,
+			ErrCode: util.ErrInvalidParameter,
 			Err:     fmt.Errorf("no manager found"),
 		}
 	}
@@ -206,14 +206,14 @@ func (c *client) ResetCorporationManagerPassword(claOrgID, email string, opt dbm
 
 		if v.MatchedCount == 0 {
 			return dbmodels.DBError{
-				ErrCode: dbmodels.ErrInvalidParameter,
+				ErrCode: util.ErrInvalidParameter,
 				Err:     fmt.Errorf("can't find the cla"),
 			}
 		}
 
 		if v.ModifiedCount != 1 {
 			return dbmodels.DBError{
-				ErrCode: dbmodels.ErrInvalidParameter,
+				ErrCode: util.ErrInvalidParameter,
 				Err:     fmt.Errorf("invalid email or old password"),
 			}
 		}
@@ -269,7 +269,7 @@ func (c *client) listCorporationManager(claOrgID primitive.ObjectID, email, role
 
 	if len(v) == 0 {
 		return nil, dbmodels.DBError{
-			ErrCode: dbmodels.ErrInvalidParameter,
+			ErrCode: util.ErrInvalidParameter,
 			Err:     fmt.Errorf("can't find the cla"),
 		}
 	}

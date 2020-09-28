@@ -131,15 +131,15 @@ func newAccessTokenAuthorizedByCodePlatform(user, permission, platformToken stri
 func checkApiAccessToken(c *beego.Controller, permission []string, ac accessControllerInterface) (int, int, error) {
 	token := getHeader(c, headerToken)
 	if token == "" {
-		return 401, ErrMissingToken, fmt.Errorf("no token passed")
+		return 401, util.ErrMissingToken, fmt.Errorf("no token passed")
 	}
 
 	if err := ac.ParseToken(token, conf.AppConfig.APITokenKey); err != nil {
-		return 401, ErrUnknownToken, err
+		return 401, util.ErrUnknownToken, err
 	}
 
 	if err := ac.Verify(permission); err != nil {
-		return 403, ErrInvalidToken, err
+		return 403, util.ErrInvalidToken, err
 	}
 	return 0, 0, nil
 }
@@ -273,8 +273,17 @@ func isSameCorp(c *beego.Controller, email string) (int, int, error) {
 	}
 
 	if util.EmailSuffix(corpEmail) != util.EmailSuffix(email) {
-		return 400, ErrInvalidParameter, fmt.Errorf("can't operate on the different corporation")
+		return 400, util.ErrInvalidParameter, fmt.Errorf("can't operate on the different corporation")
 	}
 
 	return 0, 0, nil
+}
+
+func convertDBError(err error) (int, int) {
+	e, ok := dbmodels.IsDBError(err)
+	if !ok {
+		return 500, 0
+	}
+
+	return 400, e.ErrCode
 }

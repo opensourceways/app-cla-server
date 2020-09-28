@@ -10,6 +10,7 @@ import (
 	"github.com/opensourceways/app-cla-server/conf"
 	"github.com/opensourceways/app-cla-server/email"
 	"github.com/opensourceways/app-cla-server/models"
+	"github.com/opensourceways/app-cla-server/util"
 	"github.com/opensourceways/app-cla-server/worker"
 )
 
@@ -58,7 +59,7 @@ func (this *CorporationSigningController) Post() {
 	claOrgID, err := fetchStringParameter(&this.Controller, ":cla_org_id")
 	if err != nil {
 		reason = err
-		errCode = ErrInvalidParameter
+		errCode = util.ErrInvalidParameter
 		statusCode = 400
 		return
 	}
@@ -66,7 +67,7 @@ func (this *CorporationSigningController) Post() {
 	var info models.CorporationSigningCreateOption
 	if err := fetchInputPayload(&this.Controller, &info); err != nil {
 		reason = err
-		errCode = ErrInvalidParameter
+		errCode = util.ErrInvalidParameter
 		statusCode = 400
 		return
 	}
@@ -154,7 +155,7 @@ func (this *CorporationSigningController) Upload() {
 
 	if err := checkAPIStringParameter(&this.Controller, []string{":cla_org_id", ":email"}); err != nil {
 		reason = err
-		errCode = ErrInvalidParameter
+		errCode = util.ErrInvalidParameter
 		statusCode = 400
 		return
 	}
@@ -162,7 +163,7 @@ func (this *CorporationSigningController) Upload() {
 	f, _, err := this.GetFile("pdf")
 	if err != nil {
 		reason = fmt.Errorf("missing pdf file")
-		errCode = ErrInvalidParameter
+		errCode = util.ErrInvalidParameter
 		statusCode = 400
 		return
 	}
@@ -204,7 +205,7 @@ func (this *CorporationSigningController) Download() {
 
 	if err := checkAPIStringParameter(&this.Controller, []string{":cla_org_id", ":email"}); err != nil {
 		reason = err
-		errCode = ErrInvalidParameter
+		errCode = util.ErrInvalidParameter
 		statusCode = 400
 		return
 	}
@@ -244,7 +245,7 @@ func (this *CorporationSigningController) SendVerifiCode() {
 
 	if err := checkAPIStringParameter(&this.Controller, []string{":cla_org_id", ":email"}); err != nil {
 		reason = err
-		errCode = ErrInvalidParameter
+		errCode = util.ErrInvalidParameter
 		statusCode = 400
 		return
 	}
@@ -262,7 +263,7 @@ func (this *CorporationSigningController) SendVerifiCode() {
 	ec, err := email.GetEmailClient(emailCfg.Platform)
 	if err != nil {
 		reason = err
-		errCode = ErrUnknownEmailPlatform
+		errCode = util.ErrUnknownEmailPlatform
 		statusCode = 500
 		return
 	}
@@ -281,7 +282,7 @@ func (this *CorporationSigningController) SendVerifiCode() {
 	}
 	if err := ec.SendEmail(emailCfg.Token, &msg); err != nil {
 		reason = err
-		errCode = ErrSendingEmail
+		errCode = util.ErrSendingEmail
 		statusCode = 500
 		return
 	}

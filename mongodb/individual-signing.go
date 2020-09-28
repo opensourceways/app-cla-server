@@ -94,7 +94,7 @@ func (c *client) SignAsIndividual(claOrgID string, info dbmodels.IndividualSigni
 		for _, item := range count {
 			if item.Count != 0 {
 				return dbmodels.DBError{
-					ErrCode: dbmodels.ErrHasSigned,
+					ErrCode: util.ErrHasSigned,
 					Err:     fmt.Errorf("he/she has signed"),
 				}
 			}
@@ -138,7 +138,7 @@ func (c *client) DeleteIndividualSigning(claOrgID, email string) error {
 
 		if r.MatchedCount == 0 {
 			return dbmodels.DBError{
-				ErrCode: dbmodels.ErrInvalidParameter,
+				ErrCode: util.ErrInvalidParameter,
 				Err:     fmt.Errorf("can't find the cla"),
 			}
 		}
@@ -182,14 +182,14 @@ func (c *client) UpdateIndividualSigning(claOrgID, email string, enabled bool) e
 
 		if r.MatchedCount == 0 {
 			return dbmodels.DBError{
-				ErrCode: dbmodels.ErrInvalidParameter,
+				ErrCode: util.ErrInvalidParameter,
 				Err:     fmt.Errorf("can't find the cla"),
 			}
 		}
 
 		if r.ModifiedCount == 0 {
 			return dbmodels.DBError{
-				ErrCode: dbmodels.ErrInvalidParameter,
+				ErrCode: util.ErrInvalidParameter,
 				Err:     fmt.Errorf("can't find the corresponding signing info"),
 			}
 		}

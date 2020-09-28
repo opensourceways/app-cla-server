@@ -11,7 +11,7 @@ func structToMap(info interface{}) (map[string]interface{}, error) {
 	body, err := golangsdk.BuildRequestBody(info, "")
 	if err != nil {
 		return nil, dbmodels.DBError{
-			ErrCode: dbmodels.ErrInvalidParameter,
+			ErrCode: util.ErrInvalidParameter,
 			Err:     err,
 		}
 	}
@@ -20,4 +20,9 @@ func structToMap(info interface{}) (map[string]interface{}, error) {
 
 func addCorporationID(email string, body map[string]interface{}) {
 	body[fieldCorporationID] = util.EmailSuffix(email)
+}
+
+func isHasNotSigned(err error) bool {
+	e, ok := dbmodels.IsDBError(err)
+	return ok && e.ErrCode == util.ErrHasNotSigned
 }

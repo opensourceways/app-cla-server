@@ -5,6 +5,7 @@ import (
 
 	// "github.com/opensourceways/app-cla-server/email"
 	"github.com/opensourceways/app-cla-server/models"
+	"github.com/opensourceways/app-cla-server/util"
 	// "github.com/opensourceways/app-cla-server/worker"
 )
 
@@ -27,7 +28,7 @@ func (this *IndividualSigningController) Prepare() {
 // @Success 201 {int} map
 // @router /:cla_org_id [post]
 func (this *IndividualSigningController) Post() {
-	var statusCode = 201
+	var statusCode = 0
 	var errCode = 0
 	var reason error
 	var body interface{}
@@ -39,7 +40,7 @@ func (this *IndividualSigningController) Post() {
 	claOrgID, err := fetchStringParameter(&this.Controller, ":cla_org_id")
 	if err != nil {
 		reason = err
-		errCode = ErrInvalidParameter
+		errCode = util.ErrInvalidParameter
 		statusCode = 400
 		return
 	}
@@ -47,7 +48,7 @@ func (this *IndividualSigningController) Post() {
 	var info models.IndividualSigning
 	if err := fetchInputPayload(&this.Controller, &info); err != nil {
 		reason = err
-		errCode = ErrInvalidParameter
+		errCode = util.ErrInvalidParameter
 		statusCode = 400
 		return
 	}
@@ -100,7 +101,7 @@ func (this *IndividualSigningController) Check() {
 	params := []string{":platform", ":org", ":repo", "email"}
 	if err := checkAPIStringParameter(&this.Controller, params); err != nil {
 		reason = err
-		errCode = ErrInvalidParameter
+		errCode = util.ErrInvalidParameter
 		statusCode = 400
 		return
 	}

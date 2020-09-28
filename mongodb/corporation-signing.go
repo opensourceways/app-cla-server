@@ -65,12 +65,12 @@ func (c *client) SignAsCorporation(claOrgID string, info dbmodels.CorporationSig
 			claOrg.Platform, claOrg.OrgID, claOrg.RepoID, info.AdminEmail, ctx,
 		)
 		if err != nil {
-			if !dbmodels.IsHasNotSigned(err) {
+			if !isHasNotSigned(err) {
 				return err
 			}
 		} else {
 			return dbmodels.DBError{
-				ErrCode: dbmodels.ErrHasSigned,
+				ErrCode: util.ErrHasSigned,
 				Err:     fmt.Errorf("this corp has already signed"),
 			}
 		}
@@ -194,14 +194,14 @@ func (c *client) UploadCorporationSigningPDF(claOrgID, adminEmail string, pdf []
 
 		if r.MatchedCount == 0 {
 			return dbmodels.DBError{
-				ErrCode: dbmodels.ErrInvalidParameter,
+				ErrCode: util.ErrInvalidParameter,
 				Err:     fmt.Errorf("can't find the cla"),
 			}
 		}
 
 		if r.ModifiedCount == 0 {
 			return dbmodels.DBError{
-				ErrCode: dbmodels.ErrInvalidParameter,
+				ErrCode: util.ErrInvalidParameter,
 				Err:     fmt.Errorf("can't find the corp signing record"),
 			}
 		}
@@ -253,7 +253,7 @@ func (c *client) DownloadCorporationSigningPDF(claOrgID, email string) ([]byte, 
 
 	if len(v) == 0 {
 		return nil, dbmodels.DBError{
-			ErrCode: dbmodels.ErrInvalidParameter,
+			ErrCode: util.ErrInvalidParameter,
 			Err:     fmt.Errorf("can't find the cla"),
 		}
 	}
@@ -261,7 +261,7 @@ func (c *client) DownloadCorporationSigningPDF(claOrgID, email string) ([]byte, 
 	cs := v[0].Corporations
 	if len(cs) == 0 {
 		return nil, dbmodels.DBError{
-			ErrCode: dbmodels.ErrInvalidParameter,
+			ErrCode: util.ErrInvalidParameter,
 			Err:     fmt.Errorf("can't find the corp signing in this record"),
 		}
 	}
@@ -269,7 +269,7 @@ func (c *client) DownloadCorporationSigningPDF(claOrgID, email string) ([]byte, 
 	item := cs[0]
 	if !item.PDFUploaded {
 		return nil, dbmodels.DBError{
-			ErrCode: dbmodels.ErrPDFHasNotUploaded,
+			ErrCode: util.ErrPDFHasNotUploaded,
 			Err:     fmt.Errorf("pdf has not yet been uploaded"),
 		}
 	}
@@ -330,13 +330,13 @@ func (c *client) getCorporationSigningDetail(platform, org, repo, email string, 
 
 	if len(v) == 0 {
 		return "", result, dbmodels.DBError{
-			ErrCode: dbmodels.ErrInvalidParameter,
+			ErrCode: util.ErrInvalidParameter,
 			Err:     fmt.Errorf("no record for this org/repo: %s/%s/%s", platform, org, repo),
 		}
 	}
 
 	err := dbmodels.DBError{
-		ErrCode: dbmodels.ErrHasNotSigned,
+		ErrCode: util.ErrHasNotSigned,
 		Err:     fmt.Errorf("the corp:%s has not signed for this org/repo: %s/%s/%s", util.EmailSuffix(email), platform, org, repo),
 	}
 
@@ -431,7 +431,7 @@ func (c *client) CheckCorporationSigning(claOrgID, email string) (dbmodels.Corpo
 
 	if len(v) == 0 {
 		return result, dbmodels.DBError{
-			ErrCode: dbmodels.ErrInvalidParameter,
+			ErrCode: util.ErrInvalidParameter,
 			Err:     fmt.Errorf("can't find the cla"),
 		}
 	}
@@ -439,7 +439,7 @@ func (c *client) CheckCorporationSigning(claOrgID, email string) (dbmodels.Corpo
 	cs := v[0].Corporations
 	if len(cs) == 0 {
 		return result, dbmodels.DBError{
-			ErrCode: dbmodels.ErrHasNotSigned,
+			ErrCode: util.ErrHasNotSigned,
 			Err:     fmt.Errorf("the corp:%s has not signed", util.EmailSuffix(email)),
 		}
 	}

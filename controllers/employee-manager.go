@@ -7,6 +7,7 @@ import (
 
 	"github.com/opensourceways/app-cla-server/dbmodels"
 	"github.com/opensourceways/app-cla-server/models"
+	"github.com/opensourceways/app-cla-server/util"
 )
 
 type EmployeeManagerController struct {
@@ -55,7 +56,7 @@ func (this *EmployeeManagerController) GetAll() {
 	claOrgID, err := fetchStringParameter(&this.Controller, ":cla_org_id")
 	if err != nil {
 		reason = err
-		errCode = ErrInvalidParameter
+		errCode = util.ErrInvalidParameter
 		statusCode = 400
 		return
 	}
@@ -98,7 +99,7 @@ func (this *EmployeeManagerController) addOrDeleteManagers(toAdd bool) {
 	claOrgID, err := fetchStringParameter(&this.Controller, ":cla_org_id")
 	if err != nil {
 		reason = err
-		errCode = ErrInvalidParameter
+		errCode = util.ErrInvalidParameter
 		statusCode = 400
 		return
 	}
@@ -106,14 +107,14 @@ func (this *EmployeeManagerController) addOrDeleteManagers(toAdd bool) {
 	var info models.EmployeeManagerCreateOption
 	if err := fetchInputPayload(&this.Controller, &info); err != nil {
 		reason = err
-		errCode = ErrInvalidParameter
+		errCode = util.ErrInvalidParameter
 		statusCode = 400
 		return
 	}
 
 	if err := (&info).Validate(); err != nil {
 		reason = err
-		errCode = ErrInvalidParameter
+		errCode = util.ErrInvalidParameter
 		statusCode = 400
 		return
 	}

@@ -12,6 +12,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 
 	"github.com/opensourceways/app-cla-server/dbmodels"
+	"github.com/opensourceways/app-cla-server/util"
 )
 
 const (
@@ -134,7 +135,7 @@ func (c *client) GetBindingBetweenCLAAndOrg(uid string) (dbmodels.CLAOrg, error)
 		return r, err
 	}
 
-	var sr *mongo.SingleResult
+	var v CLAOrg
 
 	f := func(ctx context.Context) error {
 		col := c.db.Collection(claOrgCollection)
@@ -142,16 +143,23 @@ func (c *client) GetBindingBetweenCLAAndOrg(uid string) (dbmodels.CLAOrg, error)
 			Projection: projectOfClaOrg(),
 		}
 
-		sr = col.FindOne(ctx, bson.M{"_id": oid}, &opt)
+		sr := col.FindOne(ctx, bson.M{"_id": oid}, &opt)
+
+		if err := sr.Decode(&v); err != nil {
+			if isErrNoDocuments(err) {
+				return dbmodels.DBError{
+					ErrCode: util.ErrNoCLABinding,
+					Err:     fmt.Errorf("can't find cla binding"),
+				}
+			}
+			return err
+		}
+
 		return nil
 	}
 
-	withContext(f)
-
-	var v CLAOrg
-	err = sr.Decode(&v)
-	if err != nil {
-		return r, fmt.Errorf("error decoding to bson struct of CLA: %v", err)
+	if err := withContext(f); err != nil {
+		return r, err
 	}
 
 	return toModelCLAOrg(v), nil

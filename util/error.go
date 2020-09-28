@@ -17,4 +17,5 @@ const (
 	ErrPDFHasNotUploaded
 	ErrNumOfCorpManagersExceeded
 	ErrCorpManagerHasAdded
+	ErrNoCLABinding
 )

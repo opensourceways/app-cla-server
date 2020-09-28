@@ -62,10 +62,6 @@ func (this *client) doTransaction(f func(mongo.SessionContext) error) error {
 	return err
 }
 
-func toObjectID(uid string) (primitive.ObjectID, error) {
-	return primitive.ObjectIDFromHex(uid)
-}
-
 func objectIDToUID(oid primitive.ObjectID) string {
 	return oid.Hex()
 }

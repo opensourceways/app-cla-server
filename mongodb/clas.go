@@ -87,7 +87,7 @@ func (this *client) DeleteCLA(uid string) error {
 		err := sr.Err()
 
 		if err != nil {
-			if err.Error() == mongo.ErrNoDocuments.Error() {
+			if isErrNoDocuments(err) {
 				col = this.collection(clasCollection)
 
 				_, err := col.DeleteOne(ctx, bson.M{"_id": oid})

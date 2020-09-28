@@ -78,7 +78,7 @@ func (c *client) CheckVerificationCode(opt dbmodels.VerificationCode) error {
 			Expiry int64 `bson:"expiry"`
 		}
 		if err := r.Decode(&v); err != nil {
-			if err.Error() == mongo.ErrNoDocuments.Error() {
+			if isErrNoDocuments(err) {
 				return dbmodels.DBError{
 					ErrCode: util.ErrWrongVerificationCode,
 					Err:     fmt.Errorf("wrong verification code"),

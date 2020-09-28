@@ -1,7 +1,7 @@
 package controllers
 
 import (
-	"encoding/json"
+	"fmt"
 
 	"github.com/astaxie/beego"
 
@@ -17,105 +17,107 @@ func (this *EmployeeManagerController) Prepare() {
 	apiPrepare(&this.Controller, []string{PermissionCorporAdmin}, nil)
 }
 
-// @Title add employee manager
-// @Description add employee manager
+// @Title Post
+// @Description add employee managers
+// @Param	:cla_org_id	path 	string					true		"cla org id"
 // @Param	body		body 	models.EmployeeManagerCreateOption	true		"body for employee manager"
 // @Success 201 {int} map
-// @Failure 403 body is empty
-// @router / [post]
+// @router /:cla_org_id [post]
 func (this *EmployeeManagerController) Post() {
-	var statusCode = 201
-	var reason error
-	var body interface{}
+	this.addOrDeleteManagers(true)
+}
 
-	defer func() {
-		sendResponse1(&this.Controller, statusCode, reason, body)
-	}()
-
-	var info models.EmployeeManagerCreateOption
-	if err := json.Unmarshal(this.Ctx.Input.RequestBody, &info); err != nil {
-		reason = err
-		statusCode = 400
-		return
-	}
-
-	if err := (&info).Validate(); err != nil {
-		reason = err
-		statusCode = 400
-		return
-	}
-
-	if err := (&info).Create(); err != nil {
-		reason = err
-		statusCode = 500
-		return
-	}
-
-	body = "add employee manager successfully"
+// @Title Delete
+// @Description delete employee manager
+// @Param	:cla_org_id	path 	string					true		"cla org id"
+// @Param	body		body 	models.EmployeeManagerCreateOption	true		"body for employee manager"
+// @Success 204 {string} delete success!
+// @router /:cla_org_id [delete]
+func (this *EmployeeManagerController) Delete() {
+	this.addOrDeleteManagers(false)
 }
 
 // @Title GetAll
 // @Description get all employee managers
+// @Param	:cla_org_id	path 	string					true		"cla org id"
+// @Param	:email		path 	string					true		"email of corp"
 // @Success 200 {object} dbmodels.CorporationManagerListResult
-// @router / [get]
+// @router /:cla_org_id/:email [get]
 func (this *EmployeeManagerController) GetAll() {
-	var statusCode = 200
+	var statusCode = 0
+	var errCode = 0
 	var reason error
 	var body interface{}
 
 	defer func() {
-		sendResponse1(&this.Controller, statusCode, reason, body)
+		sendResponse(&this.Controller, statusCode, errCode, reason, body)
 	}()
 
-	opt := models.CorporationManagerListOption{
-		CLAOrgID: this.GetString("cla_org_id"),
-		Email:    this.GetString("email"),
-		Role:     dbmodels.RoleManager,
+	if err := checkAPIStringParameter(&this.Controller, []string{":cla_org_id", ":email"}); err != nil {
+		reason = err
+		errCode = ErrInvalidParameter
+		statusCode = 400
+		return
 	}
 
-	r, err := opt.List()
+	r, err := models.ListCorporationManagers(
+		this.GetString(":cla_org_id"), this.GetString(":email"), dbmodels.RoleManager,
+	)
 	if err != nil {
-		reason = err
-		statusCode = 500
+		reason = fmt.Errorf("Failed to list employee managers, err:%s", err.Error())
+		statusCode, errCode = convertDBError(err)
 		return
 	}
 
 	body = r
 }
 
-// @Title Delete
-// @Description delete employee manager
-// @Param	body		body 	models.EmployeeManagerCreateOption	true		"body for employee manager"
-// @Success 204 {string} delete success!
-// @Failure 403 uid is empty
-// @router / [delete]
-func (this *EmployeeManagerController) Delete() {
-	var statusCode = 204
+func (this *EmployeeManagerController) addOrDeleteManagers(toAdd bool) {
+	var statusCode = 0
+	var errCode = 0
 	var reason error
-	var body string
+	var body interface{}
 
 	defer func() {
-		sendResponse1(&this.Controller, statusCode, reason, body)
+		sendResponse(&this.Controller, statusCode, errCode, reason, body)
 	}()
 
-	var info models.EmployeeManagerCreateOption
-	if err := json.Unmarshal(this.Ctx.Input.RequestBody, &info); err != nil {
+	claOrgID, err := fetchStringParameter(&this.Controller, ":cla_org_id")
+	if err != nil {
 		reason = err
+		errCode = ErrInvalidParameter
+		statusCode = 400
+		return
+	}
+
+	var info models.EmployeeManagerCreateOption
+	if err := fetchInputPayload(&this.Controller, &info); err != nil {
+		reason = err
+		errCode = ErrInvalidParameter
 		statusCode = 400
 		return
 	}
 
 	if err := (&info).Validate(); err != nil {
 		reason = err
+		errCode = ErrInvalidParameter
 		statusCode = 400
 		return
 	}
 
-	if err := (&info).Delete(); err != nil {
-		reason = err
-		statusCode = 500
+	op := "add"
+	if toAdd {
+		err = (&info).Create(claOrgID)
+	} else {
+		op = "delete"
+		err = (&info).Delete(claOrgID)
+	}
+
+	if err != nil {
+		reason = fmt.Errorf("Failed to %s employee managers, err: %s", op, err.Error())
+		statusCode, errCode = convertDBError(err)
 		return
 	}
 
-	body = "delete cla successfully"
+	body = fmt.Sprintf("%s employee manager successfully", op)
 }

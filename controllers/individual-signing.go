@@ -73,7 +73,6 @@ func (this *IndividualSigningController) Post() {
 	if err := (&info).Create(claOrgID, true); err != nil {
 		reason = fmt.Errorf("Failed to sign as individual, err:%s", err.Error())
 		statusCode, errCode = convertDBError(err)
-
 		return
 	}
 

@@ -28,7 +28,3 @@ type CorporationSigningListOption struct {
 	RepoID      string `json:"repo_id"`
 	CLALanguage string `json:"cla_language"`
 }
-
-type CorporationSigningUpdateInfo struct {
-	Enabled *bool `json:"enabled,omitempty"`
-}

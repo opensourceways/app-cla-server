@@ -8,8 +8,7 @@ import (
 )
 
 type EmployeeManagerCreateOption struct {
-	CLAOrgID string   `json:"cla_org_id"`
-	Emails   []string `json:"emails"`
+	Emails []string `json:"emails"`
 }
 
 func (this *EmployeeManagerCreateOption) Validate() error {
@@ -36,24 +35,23 @@ func (this *EmployeeManagerCreateOption) Validate() error {
 	return nil
 }
 
-func (this *EmployeeManagerCreateOption) Create() error {
+func (this *EmployeeManagerCreateOption) Create(claOrgID string) error {
 	pw := "123456"
 
 	opt := make([]dbmodels.CorporationManagerCreateOption, 0, len(this.Emails))
 
 	for _, item := range this.Emails {
 		opt = append(opt, dbmodels.CorporationManagerCreateOption{
-			Role:          dbmodels.RoleManager,
-			Email:         item,
-			Password:      pw,
-			CorporationID: util.EmailSuffixToKey(this.Emails[0]),
+			Role:     dbmodels.RoleManager,
+			Email:    item,
+			Password: pw,
 		})
 	}
 
-	return dbmodels.GetDB().AddCorporationManager(this.CLAOrgID, opt, 5)
+	return dbmodels.GetDB().AddCorporationManager(claOrgID, opt, 5)
 }
 
-func (this *EmployeeManagerCreateOption) Delete() error {
+func (this *EmployeeManagerCreateOption) Delete(claOrgID string) error {
 	opt := make([]dbmodels.CorporationManagerCreateOption, 0, len(this.Emails))
 
 	for _, item := range this.Emails {
@@ -63,5 +61,5 @@ func (this *EmployeeManagerCreateOption) Delete() error {
 		})
 	}
 
-	return dbmodels.GetDB().DeleteCorporationManager(this.CLAOrgID, opt)
+	return dbmodels.GetDB().DeleteCorporationManager(claOrgID, opt)
 }

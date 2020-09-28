@@ -31,6 +31,10 @@ func (this *CorporationSigningCreateOption) Create(claOrgID string) error {
 	return dbmodels.GetDB().SignAsCorporation(claOrgID, dbmodels.CorporationSigningInfo(this.CorporationSigning))
 }
 
+func CheckCorporationSigning(claOrgID, email string) (dbmodels.CorporationSigningDetail, error) {
+	return dbmodels.GetDB().CheckCorporationSigning(claOrgID, email)
+}
+
 func UploadCorporationSigningPDF(claOrgID, email string, pdf []byte) error {
 	return dbmodels.GetDB().UploadCorporationSigningPDF(claOrgID, email, pdf)
 }

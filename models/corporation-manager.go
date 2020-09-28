@@ -1,73 +1,35 @@
 package models
 
-import (
-	"github.com/opensourceways/app-cla-server/dbmodels"
-	"github.com/opensourceways/app-cla-server/util"
-)
+import "github.com/opensourceways/app-cla-server/dbmodels"
 
-type CorporationManagerCreateOption struct {
-	CLAOrgID string `json:"cla_org_id"`
-	Email    string `json:"email"`
-}
-
-func (this *CorporationManagerCreateOption) Create() error {
+func CreateCorporationAdministrator(claOrgID, email string) error {
 	pw := "123456"
 	opt := []dbmodels.CorporationManagerCreateOption{
 		{
-			Role:          dbmodels.RoleAdmin,
-			Email:         this.Email,
-			Password:      pw,
-			CorporationID: util.EmailSuffixToKey(this.Email),
+			Role:     dbmodels.RoleAdmin,
+			Email:    email,
+			Password: pw,
 		},
 	}
-	return dbmodels.GetDB().AddCorporationManager(this.CLAOrgID, opt, 1)
+	return dbmodels.GetDB().AddCorporationManager(claOrgID, opt, 1)
 }
 
-type CorporationManagerAuthentication struct {
-	User     string `json:"user"`
-	Password string `json:"password"`
+type CorporationManagerAuthentication dbmodels.CorporationManagerCheckInfo
+
+func (this CorporationManagerAuthentication) Authenticate() (map[string][]dbmodels.CorporationManagerCheckResult, error) {
+	return dbmodels.GetDB().CheckCorporationManagerExist(
+		dbmodels.CorporationManagerCheckInfo(this),
+	)
 }
 
-func (this CorporationManagerAuthentication) Authenticate() ([]dbmodels.CorporationManagerCheckResult, error) {
-	opt := dbmodels.CorporationManagerCheckInfo{
-		User:     this.User,
-		Password: this.Password,
-	}
+type CorporationManagerResetPassword dbmodels.CorporationManagerResetPassword
 
-	return dbmodels.GetDB().CheckCorporationManagerExist(opt)
+func (this CorporationManagerResetPassword) Reset(claOrgID, email string) error {
+	return dbmodels.GetDB().ResetCorporationManagerPassword(
+		claOrgID, email, dbmodels.CorporationManagerResetPassword(this),
+	)
 }
 
-type CorporationManagerResetPassword struct {
-	CLAOrgID    string `json:"cla_org_id"`
-	Email       string `json:"email"`
-	OldPassword string `json:"old_password"`
-	NewPassword string `json:"new_password"`
-}
-
-func (this CorporationManagerResetPassword) Reset() error {
-	opt := dbmodels.CorporationManagerResetPassword{
-		Email:       this.Email,
-		OldPassword: this.OldPassword,
-		NewPassword: this.NewPassword,
-	}
-
-	return dbmodels.GetDB().ResetCorporationManagerPassword(this.CLAOrgID, opt)
-}
-
-type CorporationManagerListOption struct {
-	CLAOrgID string `json:"cla_org_id"`
-	Role     string `json:"role"`
-	Email    string `json:"email"`
-}
-
-func (this CorporationManagerListOption) List() ([]dbmodels.CorporationManagerListResult, error) {
-	opt := dbmodels.CorporationManagerListOption{
-		Role:          this.Role,
-		CorporationID: util.EmailSuffixToKey(this.Email),
-	}
-	return dbmodels.GetDB().ListCorporationManager(this.CLAOrgID, opt)
-}
-
-func ListManagersWhenEmployeeSigning(claOrgIDs []string, employeeEmail string) ([]dbmodels.CorporationManagerListResult, error) {
-	return dbmodels.GetDB().ListManagersWhenEmployeeSigning(claOrgIDs, util.EmailSuffixToKey(employeeEmail))
+func ListCorporationManagers(claOrgID, email, role string) ([]dbmodels.CorporationManagerListResult, error) {
+	return dbmodels.GetDB().ListCorporationManager(claOrgID, email, role)
 }

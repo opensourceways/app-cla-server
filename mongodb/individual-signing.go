@@ -12,7 +12,7 @@ import (
 	"github.com/opensourceways/app-cla-server/util"
 )
 
-type individualSigning struct {
+type individualSigningDoc struct {
 	Name        string                   `bson:"name" json:"name" required:"true"`
 	Email       string                   `bson:"email" json:"email" required:"true"`
 	Enabled     bool                     `bson:"enabled" json:"enabled"`
@@ -38,7 +38,7 @@ func (c *client) SignAsIndividual(claOrgID string, info dbmodels.IndividualSigni
 
 	oid, _ := toObjectID(claOrgID)
 
-	signing := individualSigning{
+	signing := individualSigningDoc{
 		Email:       info.Email,
 		Name:        info.Name,
 		Enabled:     info.Enabled,
@@ -375,7 +375,7 @@ func (c *client) ListIndividualSigning(opt dbmodels.IndividualSigningListOption)
 	return r, nil
 }
 
-func toDBModelIndividualSigningBasicInfo(item individualSigning) dbmodels.IndividualSigningBasicInfo {
+func toDBModelIndividualSigningBasicInfo(item individualSigningDoc) dbmodels.IndividualSigningBasicInfo {
 	return dbmodels.IndividualSigningBasicInfo{
 		Email:   item.Email,
 		Name:    item.Name,

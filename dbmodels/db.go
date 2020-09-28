@@ -27,15 +27,15 @@ type ICorporationSigning interface {
 	GetCorporationSigningDetail(platform, org, repo, email string) (string, CorporationSigningDetail, error)
 	UploadCorporationSigningPDF(claOrgID, adminEmail string, pdf []byte) error
 	DownloadCorporationSigningPDF(claOrgID, email string) ([]byte, error)
+	CheckCorporationSigning(claOrgID, email string) (CorporationSigningDetail, error)
 }
 
 type ICorporationManager interface {
-	CheckCorporationManagerExist(CorporationManagerCheckInfo) ([]CorporationManagerCheckResult, error)
+	CheckCorporationManagerExist(CorporationManagerCheckInfo) (map[string][]CorporationManagerCheckResult, error)
 	AddCorporationManager(claOrgID string, opt []CorporationManagerCreateOption, managerNumber int) error
 	DeleteCorporationManager(claOrgID string, opt []CorporationManagerCreateOption) error
-	ResetCorporationManagerPassword(string, CorporationManagerResetPassword) error
-	ListCorporationManager(claOrgID string, opt CorporationManagerListOption) ([]CorporationManagerListResult, error)
-	ListManagersWhenEmployeeSigning(claOrgIDs []string, corporID string) ([]CorporationManagerListResult, error)
+	ResetCorporationManagerPassword(string, string, CorporationManagerResetPassword) error
+	ListCorporationManager(claOrgID, email, role string) ([]CorporationManagerListResult, error)
 }
 
 type IOrgEmail interface {

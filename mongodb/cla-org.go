@@ -48,14 +48,14 @@ type CLAOrg struct {
 
 	// Individuals is the cla signing information of ordinary contributors
 	// key is the email of contributor
-	Individuals []individualSigning `bson:"individuals,omitempty"`
+	Individuals []individualSigningDoc `bson:"individuals,omitempty"`
 
 	// Corporations is the cla signing information of corporation
 	// key is the email suffix of corporation
 	Corporations []corporationSigningDoc `bson:"corporations,omitempty"`
 
 	// CorporationManagers is the managers of corporation who can manage the employee
-	CorporationManagers []corporationManager `bson:"corp_managers,omitempty"`
+	CorporationManagers []corporationManagerDoc `bson:"corp_managers,omitempty"`
 
 	OrgSignatureUploaded bool   `bson:"org_signature_uploaded"`
 	OrgSignature         []byte `bson:"org_signature"`

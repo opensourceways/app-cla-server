@@ -78,12 +78,7 @@ func (this *EmployeeSigningController) Post() {
 		return
 	}
 
-	opt := models.CorporationManagerListOption{
-		CLAOrgID: corpSignedCla,
-		Role:     dbmodels.RoleManager,
-		Email:    info.Email,
-	}
-	managers, err := opt.List()
+	managers, err := models.ListCorporationManagers(corpSignedCla, info.Email, dbmodels.RoleManager)
 	if err != nil {
 		reason = fmt.Errorf("Failed to sign as employee, err:%s", err.Error())
 		statusCode, errCode = convertDBError(err)

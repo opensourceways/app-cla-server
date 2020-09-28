@@ -9,6 +9,7 @@ import (
 	"github.com/opensourceways/app-cla-server/dbmodels"
 	"github.com/opensourceways/app-cla-server/email"
 	"github.com/opensourceways/app-cla-server/models"
+	"github.com/opensourceways/app-cla-server/util"
 	"github.com/opensourceways/app-cla-server/worker"
 )
 
@@ -45,7 +46,7 @@ func (this *EmployeeSigningController) Post() {
 	claOrgID, err := fetchStringParameter(&this.Controller, ":cla_org_id")
 	if err != nil {
 		reason = err
-		errCode = ErrInvalidParameter
+		errCode = util.ErrInvalidParameter
 		statusCode = 400
 		return
 	}
@@ -53,7 +54,7 @@ func (this *EmployeeSigningController) Post() {
 	var info models.IndividualSigning
 	if err := fetchInputPayload(&this.Controller, &info); err != nil {
 		reason = err
-		errCode = ErrInvalidParameter
+		errCode = util.ErrInvalidParameter
 		statusCode = 400
 		return
 	}
@@ -75,7 +76,7 @@ func (this *EmployeeSigningController) Post() {
 
 	if !corpSign.AdminAdded {
 		reason = fmt.Errorf("the corp signing is not completed")
-		errCode = ErrSigningUncompleted
+		errCode = util.ErrSigningUncompleted
 		statusCode = 400
 		return
 	}
@@ -128,7 +129,7 @@ func (this *EmployeeSigningController) GetAll() {
 	params := []string{":platform", ":org"}
 	if err := checkAPIStringParameter(&this.Controller, params); err != nil {
 		reason = err
-		errCode = ErrInvalidParameter
+		errCode = util.ErrInvalidParameter
 		statusCode = 400
 		return
 	}
@@ -173,7 +174,7 @@ func (this *EmployeeSigningController) Update() {
 
 	if err := checkAPIStringParameter(&this.Controller, []string{":cla_org_id", ":email"}); err != nil {
 		reason = err
-		errCode = ErrInvalidParameter
+		errCode = util.ErrInvalidParameter
 		statusCode = 400
 		return
 
@@ -188,7 +189,7 @@ func (this *EmployeeSigningController) Update() {
 	var info models.EmployeeSigningUdateInfo
 	if err := fetchInputPayload(&this.Controller, &info); err != nil {
 		reason = err
-		errCode = ErrInvalidParameter
+		errCode = util.ErrInvalidParameter
 		statusCode = 400
 		return
 	}
@@ -221,7 +222,7 @@ func (this *EmployeeSigningController) Delete() {
 
 	if err := checkAPIStringParameter(&this.Controller, []string{":cla_org_id", ":email"}); err != nil {
 		reason = err
-		errCode = ErrInvalidParameter
+		errCode = util.ErrInvalidParameter
 		statusCode = 400
 		return
 

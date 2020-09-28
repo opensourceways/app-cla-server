@@ -23,7 +23,7 @@ func (this *EmployeeManagerController) Prepare() {
 // @Param	:cla_org_id	path 	string					true		"cla org id"
 // @Param	body		body 	models.EmployeeManagerCreateOption	true		"body for employee manager"
 // @Success 201 {int} map
-// @router /:cla_org_id [post]
+// @router / [post]
 func (this *EmployeeManagerController) Post() {
 	this.addOrDeleteManagers(true)
 }
@@ -33,7 +33,7 @@ func (this *EmployeeManagerController) Post() {
 // @Param	:cla_org_id	path 	string					true		"cla org id"
 // @Param	body		body 	models.EmployeeManagerCreateOption	true		"body for employee manager"
 // @Success 204 {string} delete success!
-// @router /:cla_org_id [delete]
+// @router / [delete]
 func (this *EmployeeManagerController) Delete() {
 	this.addOrDeleteManagers(false)
 }
@@ -96,13 +96,15 @@ func (this *EmployeeManagerController) addOrDeleteManagers(toAdd bool) {
 		sendResponse(&this.Controller, statusCode, errCode, reason, body, fmt.Sprintf("%s employee managers", op))
 	}()
 
-	claOrgID, err := fetchStringParameter(&this.Controller, ":cla_org_id")
+	claOrgID, corpEmail, err := parseCorpManagerUser(&this.Controller)
 	if err != nil {
 		reason = err
-		errCode = util.ErrInvalidParameter
-		statusCode = 400
+		errCode = util.ErrUnknownToken
+		statusCode = 401
 		return
 	}
+
+	//TODO: check if the cla org has the adminstrator, otherwise he/she can't do this operation.
 
 	var info models.EmployeeManagerCreateOption
 	if err := fetchInputPayload(&this.Controller, &info); err != nil {
@@ -119,8 +121,10 @@ func (this *EmployeeManagerController) addOrDeleteManagers(toAdd bool) {
 		return
 	}
 
-	statusCode, errCode, reason = isSameCorp(&this.Controller, info.Emails[0])
-	if reason != nil {
+	if !isSameCorp(corpEmail, info.Emails[0]) {
+		reason = fmt.Errorf("not same corp")
+		errCode = util.ErrNotSameCorp
+		statusCode = 400
 		return
 	}
 

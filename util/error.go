@@ -18,4 +18,5 @@ const (
 	ErrNumOfCorpManagersExceeded
 	ErrCorpManagerHasAdded
 	ErrNoCLABinding
+	ErrNotSameCorp
 )

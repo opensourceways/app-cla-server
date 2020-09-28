@@ -3,6 +3,7 @@ package controllers
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/astaxie/beego"
 
@@ -266,14 +267,18 @@ func getEmailConfig(claOrgID string) (*models.CLAOrg, *models.OrgEmail, error) {
 	return claOrg, emailInfo, nil
 }
 
-func isSameCorp(c *beego.Controller, email string) (int, int, error) {
-	corpEmail, err := getApiAccessUser(c)
+func isSameCorp(email1, email2 string) bool {
+	return util.EmailSuffix(email1) != util.EmailSuffix(email2)
+}
+
+func checkSameCorp(c *beego.Controller, email string) (int, int, error) {
+	_, corpEmail, err := parseCorpManagerUser(c)
 	if err != nil {
-		return 500, 0, err
+		return 401, util.ErrUnknownToken, err
 	}
 
-	if util.EmailSuffix(corpEmail) != util.EmailSuffix(email) {
-		return 400, util.ErrInvalidParameter, fmt.Errorf("can't operate on the different corporation")
+	if !isSameCorp(corpEmail, email) {
+		return 400, util.ErrNotSameCorp, fmt.Errorf("not same corp")
 	}
 
 	return 0, 0, nil
@@ -286,4 +291,22 @@ func convertDBError(err error) (int, int) {
 	}
 
 	return 400, e.ErrCode
+}
+
+func corpManagerUser(claOrgID, email string) string {
+	return fmt.Sprintf("%s/%s", claOrgID, email)
+}
+
+func parseCorpManagerUser(c *beego.Controller) (string, string, error) {
+	user, err := getApiAccessUser(c)
+	if err != nil {
+		return "", "", err
+	}
+
+	v := strings.Split(user, "/")
+	if len(v) != 2 {
+		return "", "", fmt.Errorf("can't parse corp manager user")
+	}
+
+	return v[0], v[1], nil
 }

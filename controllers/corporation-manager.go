@@ -68,7 +68,8 @@ func (this *CorporationManagerController) Auth() {
 
 	for claOrgID, items := range v {
 		for _, item := range items {
-			token, err := newAccessToken(item.Email, corporRoleToPermission(item.Role))
+			user := corpManagerUser(claOrgID, item.Email)
+			token, err := newAccessToken(user, corporRoleToPermission(item.Role))
 			if err != nil {
 				continue
 			}

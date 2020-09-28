@@ -181,7 +181,7 @@ func (this *EmployeeSigningController) Update() {
 	}
 	employeeEmail := this.GetString(":email")
 
-	statusCode, errCode, reason = isSameCorp(&this.Controller, employeeEmail)
+	statusCode, errCode, reason = checkSameCorp(&this.Controller, employeeEmail)
 	if reason != nil {
 		return
 	}
@@ -229,7 +229,7 @@ func (this *EmployeeSigningController) Delete() {
 	}
 	employeeEmail := this.GetString(":email")
 
-	statusCode, errCode, reason = isSameCorp(&this.Controller, employeeEmail)
+	statusCode, errCode, reason = checkSameCorp(&this.Controller, employeeEmail)
 	if reason != nil {
 		return
 	}

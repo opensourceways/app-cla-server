@@ -72,12 +72,12 @@ func (c *client) CheckVerificationCode(opt dbmodels.VerificationCode) error {
 			Projection: bson.M{"expiry": 1},
 		}
 
-		r := col.FindOneAndDelete(ctx, filter, &opt)
+		sr := col.FindOneAndDelete(ctx, filter, &opt)
 
 		var v struct {
 			Expiry int64 `bson:"expiry"`
 		}
-		if err := r.Decode(&v); err != nil {
+		if err := sr.Decode(&v); err != nil {
 			if isErrNoDocuments(err) {
 				return dbmodels.DBError{
 					ErrCode: util.ErrWrongVerificationCode,

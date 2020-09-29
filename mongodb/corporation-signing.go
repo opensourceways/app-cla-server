@@ -39,13 +39,11 @@ func corpSigningField(field string) string {
 	return fmt.Sprintf("%s.%s", fieldCorporations, field)
 }
 
-func (c *client) SignAsCorporation(claOrgID string, info dbmodels.CorporationSigningInfo) error {
-	claOrg, err := c.GetBindingBetweenCLAAndOrg(claOrgID)
+func (c *client) SignAsCorporation(claOrgID, platform, org, repo string, info dbmodels.CorporationSigningInfo) error {
+	oid, err := toObjectID(claOrgID)
 	if err != nil {
 		return err
 	}
-
-	oid, _ := toObjectID(claOrgID)
 
 	signing := corporationSigning{
 		AdminEmail:      info.AdminEmail,
@@ -61,9 +59,7 @@ func (c *client) SignAsCorporation(claOrgID string, info dbmodels.CorporationSig
 	addCorporationID(info.AdminEmail, body)
 
 	f := func(ctx mongo.SessionContext) error {
-		_, _, err := c.getCorporationSigningDetail(
-			claOrg.Platform, claOrg.OrgID, claOrg.RepoID, info.AdminEmail, ctx,
-		)
+		_, _, err := c.getCorporationSigningDetail(platform, org, repo, info.AdminEmail, ctx)
 		if err != nil {
 			if !isHasNotSigned(err) {
 				return err

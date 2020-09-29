@@ -25,10 +25,13 @@ func (this *CorporationSigningCreateOption) Validate() error {
 	return dbmodels.GetDB().CheckVerificationCode(vc)
 }
 
-func (this *CorporationSigningCreateOption) Create(claOrgID string) error {
+func (this *CorporationSigningCreateOption) Create(claOrgID, platform, orgID, repoId string) error {
 	this.Date = util.Date()
 
-	return dbmodels.GetDB().SignAsCorporation(claOrgID, dbmodels.CorporationSigningInfo(this.CorporationSigning))
+	return dbmodels.GetDB().SignAsCorporation(
+		claOrgID, platform, orgID, repoId,
+		dbmodels.CorporationSigningInfo(this.CorporationSigning),
+	)
 }
 
 func CheckCorporationSigning(claOrgID, email string) (dbmodels.CorporationSigningDetail, error) {

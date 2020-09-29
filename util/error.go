@@ -16,6 +16,8 @@ const (
 	ErrPDFHasNotUploaded         = "pdf_has_not_uploaded"
 	ErrNumOfCorpManagersExceeded = "num_of_corp_managers_exceeded"
 	ErrCorpManagerHasAdded       = "corp_manager_exists"
-	ErrNoCLABinding              = "no_cla_binding"
+	ErrNoCLABindingDoc           = "no_cla_binding"
 	ErrNotSameCorp               = "not_same_corp"
+	ErrNoOrgEmail                = "no_org_email"
+	ErrSystemError               = "system_error"
 )

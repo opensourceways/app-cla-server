@@ -26,7 +26,6 @@ func (this *IndividualSigningController) Prepare() {
 // @Param	:cla_org_id	path 	string				true		"cla org id"
 // @Param	body		body 	models.IndividualSigning	true		"body for individual signing"
 // @Success 201 {int} map
-// @Failure util.ErrNoCLABinding
 // @Failure util.ErrHasSigned
 // @router /:cla_org_id [post]
 func (this *IndividualSigningController) Post() {
@@ -55,6 +54,11 @@ func (this *IndividualSigningController) Post() {
 		return
 	}
 
+	claOrg := &models.CLAOrg{ID: claOrgID}
+	if err := claOrg.Get(); err != nil {
+		reason = err
+		return
+	}
 	/*
 		_, emailCfg, err := getEmailConfig(claOrgID)
 		if err != nil {
@@ -71,9 +75,10 @@ func (this *IndividualSigningController) Post() {
 		}
 		msg.To = []string{info.Email}
 	*/
-	if err := (&info).Create(claOrgID, true); err != nil {
+
+	err = (&info).Create(claOrgID, claOrg.Platform, claOrg.OrgID, claOrg.RepoID, true)
+	if err != nil {
 		reason = err
-		statusCode, errCode = convertDBError(err)
 		return
 	}
 
@@ -91,7 +96,7 @@ func (this *IndividualSigningController) Post() {
 // @Success 200
 // @router /:platform/:org/:repo [get]
 func (this *IndividualSigningController) Check() {
-	var statusCode = 200
+	var statusCode = 0
 	var errCode = ""
 	var reason error
 	var body interface{}

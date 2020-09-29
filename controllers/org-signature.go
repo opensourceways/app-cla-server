@@ -25,7 +25,7 @@ func (this *OrgSignatureController) Prepare() {
 // @Failure 403 body is empty
 // @router /:cla_org_id [post]
 func (this *OrgSignatureController) Post() {
-	var statusCode = 201
+	var statusCode = 0
 	var reason error
 	var body interface{}
 
@@ -84,7 +84,7 @@ func (this *OrgSignatureController) Post() {
 // @Failure 403 :cla_org_id is empty
 // @router /:cla_org_id [get]
 func (this *OrgSignatureController) Get() {
-	var statusCode = 200
+	var statusCode = 0
 	var reason error
 	var body interface{}
 
@@ -117,7 +117,7 @@ func (this *OrgSignatureController) Get() {
 // @Failure 403 :language is empty
 // @router /blank/:language [get]
 func (this *OrgSignatureController) BlankSignature() {
-	var statusCode = 200
+	var statusCode = 0
 	var reason error
 	var body interface{}
 

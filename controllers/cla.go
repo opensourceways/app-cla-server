@@ -24,7 +24,7 @@ func (this *CLAController) Prepare() {
 // @Failure 403 body is empty
 // @router / [post]
 func (this *CLAController) Post() {
-	var statusCode = 201
+	var statusCode = 0
 	var reason error
 	var body interface{}
 
@@ -63,7 +63,7 @@ func (this *CLAController) Post() {
 // @Failure 403 uid is empty
 // @router /:uid [delete]
 func (this *CLAController) Delete() {
-	var statusCode = 204
+	var statusCode = 0
 	var reason error
 	var body string
 
@@ -96,7 +96,7 @@ func (this *CLAController) Delete() {
 // @Failure 403 :uid is empty
 // @router /:uid [get]
 func (this *CLAController) Get() {
-	var statusCode = 200
+	var statusCode = 0
 	var reason error
 	var body interface{}
 
@@ -127,7 +127,7 @@ func (this *CLAController) Get() {
 // @Success 200 {object} models.CLA
 // @router / [get]
 func (this *CLAController) GetAll() {
-	var statusCode = 200
+	var statusCode = 0
 	var reason error
 	var body interface{}
 

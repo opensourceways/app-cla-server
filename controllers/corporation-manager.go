@@ -34,7 +34,7 @@ func (this *CorporationManagerController) Prepare() {
 // @Failure 403 body is empty
 // @router /auth [post]
 func (this *CorporationManagerController) Auth() {
-	var statusCode = 201
+	var statusCode = 0
 	var errCode = ""
 	var reason error
 	var body interface{}

@@ -64,7 +64,7 @@ func (this *AuthController) Auth() {
 // @Success 200 {object}
 // @router /authcodeurl/:platform/:purpose [get]
 func (this *AuthController) Get() {
-	var statusCode = 200
+	var statusCode = 0
 	var reason error
 	var body interface{}
 

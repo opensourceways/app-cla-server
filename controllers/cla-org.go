@@ -31,7 +31,7 @@ func (this *CLAOrgController) Prepare() {
 // @Failure 403 body is empty
 // @router / [post]
 func (this *CLAOrgController) Post() {
-	var statusCode = 201
+	var statusCode = 0
 	var reason error
 	var body interface{}
 
@@ -86,7 +86,7 @@ func (this *CLAOrgController) Post() {
 // @Failure 403 uid is empty
 // @router /:uid [delete]
 func (this *CLAOrgController) Delete() {
-	var statusCode = 204
+	var statusCode = 0
 	var reason error
 	var body string
 
@@ -117,7 +117,7 @@ func (this *CLAOrgController) Delete() {
 // @Success 200 {object} models.CLAOrg
 // @router /:platform/:org_id [get]
 func (this *CLAOrgController) GetAll() {
-	var statusCode = 200
+	var statusCode = 0
 	var reason error
 	var body interface{}
 
@@ -154,7 +154,7 @@ func (this *CLAOrgController) GetAll() {
 // @Success 200 {object} models.CLAOrg
 // @router /:platform/:org_id/:apply_to [get]
 func (this *CLAOrgController) GetSigningPageInfo() {
-	var statusCode = 200
+	var statusCode = 0
 	var reason error
 	var body interface{}
 
@@ -224,7 +224,7 @@ func (this *CLAOrgController) GetSigningPageInfo() {
 // @Description get blank pdf of signature
 // @router /blank-pdf/:cla_org_id [get]
 func (this *CLAOrgController) GetBlankPdf() {
-	var statusCode = 200
+	var statusCode = 0
 	var reason error
 	var body interface{}
 

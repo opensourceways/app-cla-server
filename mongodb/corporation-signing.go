@@ -329,7 +329,7 @@ func (c *client) getCorporationSigningDetail(platform, org, repo, email string, 
 
 	if len(v) == 0 {
 		return "", result, dbmodels.DBError{
-			ErrCode: util.ErrInvalidParameter,
+			ErrCode: util.ErrNoCLABindingDoc,
 			Err:     fmt.Errorf("no record for this org/repo: %s/%s/%s", platform, org, repo),
 		}
 	}

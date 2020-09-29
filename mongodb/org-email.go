@@ -11,6 +11,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 
 	"github.com/opensourceways/app-cla-server/dbmodels"
+	"github.com/opensourceways/app-cla-server/util"
 )
 
 const orgEmailCollection = "org_emails"
@@ -65,6 +66,7 @@ func (c *client) GetOrgEmailInfo(email string) (dbmodels.OrgEmailCreateInfo, err
 	}
 
 	r := dbmodels.OrgEmailCreateInfo{}
+
 	err := withContext(f)
 	if err != nil {
 		return r, err
@@ -72,7 +74,14 @@ func (c *client) GetOrgEmailInfo(email string) (dbmodels.OrgEmailCreateInfo, err
 
 	var v OrgEmail
 	if err := sr.Decode(&v); err != nil {
-		return r, fmt.Errorf("error decoding to bson struct: %s", err.Error())
+		if isErrNoDocuments(err) {
+			return r, dbmodels.DBError{
+				ErrCode: util.ErrNoOrgEmail,
+				Err:     fmt.Errorf("can't find org email configuration"),
+			}
+		}
+
+		return r, err
 	}
 
 	return toDBModelOrgEmail(v), nil

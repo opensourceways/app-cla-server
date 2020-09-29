@@ -59,7 +59,7 @@ func (this *EmailController) Auth() {
 // @Failure 403 :platform is empty
 // @router /authcodeurl/:platform [get]
 func (this *EmailController) Get() {
-	var statusCode = 200
+	var statusCode = 0
 	var reason error
 	var body interface{}
 

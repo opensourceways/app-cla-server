@@ -269,7 +269,7 @@ func (c *client) listCorporationManager(claOrgID primitive.ObjectID, email, role
 
 	if len(v) == 0 {
 		return nil, dbmodels.DBError{
-			ErrCode: util.ErrInvalidParameter,
+			ErrCode: util.ErrNoCLABindingDoc,
 			Err:     fmt.Errorf("can't find the cla"),
 		}
 	}

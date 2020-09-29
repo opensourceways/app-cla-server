@@ -18,6 +18,22 @@ const (
 	apiAccessController = "access_controller"
 )
 
+func buildStatusAndErrCode(statusCode int, errCode string, reason error) (int, string) {
+	if errCode == "" {
+		sc, ec := convertDBError(reason)
+		if statusCode == 0 {
+			return sc, ec
+		}
+		return statusCode, ec
+	}
+
+	if statusCode == 0 {
+		return 500, errCode
+	}
+
+	return statusCode, errCode
+}
+
 func sendResponse(c *beego.Controller, statusCode int, errCode string, reason error, body interface{}, doWhat string) {
 	if token, err := refreshAccessToken(c); err == nil {
 		// this code must run before `c.Ctx.ResponseWriter.WriteHeader`
@@ -36,11 +52,13 @@ func sendResponse(c *beego.Controller, statusCode int, errCode string, reason er
 	}
 
 	if reason != nil {
-		reason = fmt.Errorf("Failed to %s, err: %s", doWhat, reason.Error())
+		statusCode, errCode := buildStatusAndErrCode(statusCode, errCode, reason)
 
 		if statusCode >= 500 {
-			beego.Error(reason.Error())
+			beego.Error(fmt.Sprintf("Failed to %s, errCode: %s, err: %s", doWhat, errCode, reason.Error()))
+
 			reason = fmt.Errorf("System error")
+			errCode = util.ErrSystemError
 		}
 
 		d := struct {
@@ -309,4 +327,9 @@ func parseCorpManagerUser(c *beego.Controller) (string, string, error) {
 	}
 
 	return v[0], v[1], nil
+}
+
+func isNoClaBindingDoc(err error) bool {
+	_, c := convertDBError(err)
+	return c == util.ErrNoCLABindingDoc
 }

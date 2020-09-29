@@ -32,9 +32,12 @@ func (this *EmployeeSigningController) Prepare() {
 // @Param	:cla_org_id	path 	string				true		"cla org id"
 // @Param	body		body 	models.IndividualSigning	true		"body for employee signing"
 // @Success 201 {int} map
+// @Failure util.ErrHasSigned		"employee has signed"
+// @Failure util.ErrHasNotSigned	"corp has not signed"
+// @Failure util.ErrSigningUncompleted	"corp has not been enabled"
 // @router /:cla_org_id [post]
 func (this *EmployeeSigningController) Post() {
-	var statusCode = 201
+	var statusCode = 0
 	var errCode = ""
 	var reason error
 	var body interface{}
@@ -59,10 +62,16 @@ func (this *EmployeeSigningController) Post() {
 		return
 	}
 
-	claOrg, emailCfg, err := getEmailConfig(claOrgID)
-	if err != nil {
+	claOrg := &models.CLAOrg{ID: claOrgID}
+	if err := claOrg.Get(); err != nil {
 		reason = err
-		statusCode, errCode = convertDBError(err)
+		return
+	}
+
+	emailCfg := &models.OrgEmail{Email: claOrg.OrgEmail}
+	if err := emailCfg.Get(); err != nil {
+		reason = err
+		statusCode = 500
 		return
 	}
 
@@ -70,12 +79,11 @@ func (this *EmployeeSigningController) Post() {
 		claOrg.Platform, claOrg.OrgID, claOrg.RepoID, info.Email)
 	if err != nil {
 		reason = err
-		statusCode, errCode = convertDBError(err)
 		return
 	}
 
 	if !corpSign.AdminAdded {
-		reason = fmt.Errorf("the corp signing is not completed")
+		reason = fmt.Errorf("the corp has not been enabled")
 		errCode = util.ErrSigningUncompleted
 		statusCode = 400
 		return
@@ -84,13 +92,12 @@ func (this *EmployeeSigningController) Post() {
 	managers, err := models.ListCorporationManagers(corpSignedCla, info.Email, dbmodels.RoleManager)
 	if err != nil {
 		reason = err
-		statusCode, errCode = convertDBError(err)
 		return
 	}
 
-	if err := (&info).Create(claOrgID, false); err != nil {
+	err = (&info).Create(claOrgID, claOrg.Platform, claOrg.OrgID, claOrg.RepoID, false)
+	if err != nil {
 		reason = err
-		statusCode, errCode = convertDBError(err)
 		return
 	}
 	body = "sign successfully"
@@ -117,7 +124,7 @@ func (this *EmployeeSigningController) Post() {
 // @Success 200 {int} map
 // @router /:platform/:org [get]
 func (this *EmployeeSigningController) GetAll() {
-	var statusCode = 200
+	var statusCode = 0
 	var errCode = ""
 	var reason error
 	var body interface{}
@@ -163,7 +170,7 @@ func (this *EmployeeSigningController) GetAll() {
 // @Success 202 {int} map
 // @router /:cla_org_id/:email [put]
 func (this *EmployeeSigningController) Update() {
-	var statusCode = 202
+	var statusCode = 0
 	var errCode = ""
 	var reason error
 	var body interface{}
@@ -211,7 +218,7 @@ func (this *EmployeeSigningController) Update() {
 // @Success 204 {string} delete success!
 // @router /:cla_org_id/:email [delete]
 func (this *EmployeeSigningController) Delete() {
-	var statusCode = 204
+	var statusCode = 0
 	var errCode = ""
 	var reason error
 	var body string

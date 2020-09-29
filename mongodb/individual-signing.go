@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/astaxie/beego"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -31,13 +30,11 @@ func filterForIndividualSigning(filter bson.M) {
 	filter[fieldIndividuals] = bson.M{"$type": "array"}
 }
 
-func (c *client) SignAsIndividual(claOrgID string, info dbmodels.IndividualSigningInfo) error {
-	claOrg, err := c.GetBindingBetweenCLAAndOrg(claOrgID)
+func (c *client) SignAsIndividual(claOrgID, platform, org, repo string, info dbmodels.IndividualSigningInfo) error {
+	oid, err := toObjectID(claOrgID)
 	if err != nil {
 		return err
 	}
-
-	oid, _ := toObjectID(claOrgID)
 
 	signing := individualSigningDoc{
 		Email:       info.Email,
@@ -53,8 +50,7 @@ func (c *client) SignAsIndividual(claOrgID string, info dbmodels.IndividualSigni
 	addCorporationID(info.Email, body)
 
 	f := func(ctx mongo.SessionContext) error {
-		_, err := c.isIndividualSigned(claOrg.Platform, claOrg.OrgID, claOrg.RepoID, info.Email, ctx)
-		beego.Info(fmt.Errorf("individual : %v", err))
+		_, err := c.isIndividualSigned(platform, org, repo, info.Email, ctx)
 		if err != nil {
 			if !isHasNotSigned(err) {
 				return err
@@ -228,6 +224,13 @@ func (c *client) isIndividualSigned(platform, orgID, repoID, email string, ctx c
 	}
 	if err := f(); err != nil {
 		return false, err
+	}
+
+	if len(v) == 0 {
+		return false, dbmodels.DBError{
+			ErrCode: util.ErrNoCLABindingDoc,
+			Err:     fmt.Errorf("no record for this org/repo: %s/%s/%s", platform, orgID, repoID),
+		}
 	}
 
 	err := dbmodels.DBError{

@@ -7,11 +7,13 @@ import (
 
 type IndividualSigning dbmodels.IndividualSigningInfo
 
-func (this *IndividualSigning) Create(claOrgID string, enabled bool) error {
+func (this *IndividualSigning) Create(claOrgID, platform, orgID, repoId string, enabled bool) error {
 	this.Date = util.Date()
 	this.Enabled = enabled
 
-	return dbmodels.GetDB().SignAsIndividual(claOrgID, *(*dbmodels.IndividualSigningInfo)(this))
+	return dbmodels.GetDB().SignAsIndividual(
+		claOrgID, platform, orgID, repoId, *(*dbmodels.IndividualSigningInfo)(this),
+	)
 }
 
 func IsIndividualSigned(platform, orgID, repoId, email string) (bool, error) {

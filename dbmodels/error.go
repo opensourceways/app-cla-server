@@ -1,7 +1,7 @@
 package dbmodels
 
 type DBError struct {
-	ErrCode int
+	ErrCode string
 	Err     error
 }
 

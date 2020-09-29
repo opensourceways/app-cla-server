@@ -35,7 +35,7 @@ func (this *EmployeeSigningController) Prepare() {
 // @router /:cla_org_id [post]
 func (this *EmployeeSigningController) Post() {
 	var statusCode = 201
-	var errCode = 0
+	var errCode = ""
 	var reason error
 	var body interface{}
 
@@ -118,7 +118,7 @@ func (this *EmployeeSigningController) Post() {
 // @router /:platform/:org [get]
 func (this *EmployeeSigningController) GetAll() {
 	var statusCode = 200
-	var errCode = 0
+	var errCode = ""
 	var reason error
 	var body interface{}
 
@@ -164,7 +164,7 @@ func (this *EmployeeSigningController) GetAll() {
 // @router /:cla_org_id/:email [put]
 func (this *EmployeeSigningController) Update() {
 	var statusCode = 202
-	var errCode = 0
+	var errCode = ""
 	var reason error
 	var body interface{}
 
@@ -212,7 +212,7 @@ func (this *EmployeeSigningController) Update() {
 // @router /:cla_org_id/:email [delete]
 func (this *EmployeeSigningController) Delete() {
 	var statusCode = 204
-	var errCode = 0
+	var errCode = ""
 	var reason error
 	var body string
 

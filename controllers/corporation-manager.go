@@ -35,7 +35,7 @@ func (this *CorporationManagerController) Prepare() {
 // @router /auth [post]
 func (this *CorporationManagerController) Auth() {
 	var statusCode = 201
-	var errCode = 0
+	var errCode = ""
 	var reason error
 	var body interface{}
 
@@ -96,7 +96,7 @@ func (this *CorporationManagerController) Auth() {
 // @router /:cla_org_id/:email [put]
 func (this *CorporationManagerController) Put() {
 	var statusCode = 0
-	var errCode = 0
+	var errCode = ""
 	var reason error
 	var body interface{}
 
@@ -148,7 +148,7 @@ func (this *CorporationManagerController) Put() {
 // @router /:cla_org_id [patch]
 func (this *CorporationManagerController) Patch() {
 	var statusCode = 0
-	var errCode = 0
+	var errCode = ""
 	var reason error
 	var body interface{}
 

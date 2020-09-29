@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/astaxie/beego"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -53,6 +54,7 @@ func (c *client) SignAsIndividual(claOrgID string, info dbmodels.IndividualSigni
 
 	f := func(ctx mongo.SessionContext) error {
 		_, err := c.isIndividualSigned(claOrg.Platform, claOrg.OrgID, claOrg.RepoID, info.Email, ctx)
+		beego.Info(fmt.Errorf("individual : %v", err))
 		if err != nil {
 			if !isHasNotSigned(err) {
 				return err
@@ -183,14 +185,18 @@ func (c *client) isIndividualSigned(platform, orgID, repoID, email string, ctx c
 		"platform": platform,
 		"org_id":   orgID,
 	}
-	filter[fieldRepo] = bson.M{"$in": bson.A{"", repoID}}
+	if repoID == "" {
+		filter[fieldRepo] = ""
+	} else {
+		filter[fieldRepo] = bson.M{"$in": bson.A{"", repoID}}
+	}
 	filterForIndividualSigning(filter)
 
 	pipeline := bson.A{
 		bson.M{"$match": filter},
 		bson.M{"$project": bson.M{
 			fieldRepo: 1,
-			fieldCorporations: bson.M{"$filter": bson.M{
+			fieldIndividuals: bson.M{"$filter": bson.M{
 				"input": fmt.Sprintf("$%s", fieldIndividuals),
 				"cond": bson.M{"$and": bson.A{
 					bson.M{"$eq": bson.A{"$$this.corp_id", util.EmailSuffix(email)}},

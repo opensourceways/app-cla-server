@@ -48,7 +48,7 @@ func (this *CorporationSigningController) Prepare() {
 // @router /:cla_org_id [post]
 func (this *CorporationSigningController) Post() {
 	var statusCode = 201
-	var errCode = 0
+	var errCode = ""
 	var reason error
 	var body interface{}
 
@@ -108,7 +108,7 @@ func (this *CorporationSigningController) Post() {
 // @router / [get]
 func (this *CorporationSigningController) GetAll() {
 	var statusCode = 200
-	var errCode = 0
+	var errCode = ""
 	var reason error
 	var body interface{}
 
@@ -143,7 +143,7 @@ func (this *CorporationSigningController) GetAll() {
 // @router /:cla_org_id/:email [patch]
 func (this *CorporationSigningController) Upload() {
 	var statusCode = 204
-	var errCode = 0
+	var errCode = ""
 	var reason error
 	var body interface{}
 
@@ -195,7 +195,7 @@ func (this *CorporationSigningController) Upload() {
 // @router /:cla_org_id/:email [get]
 func (this *CorporationSigningController) Download() {
 	var statusCode = 200
-	var errCode = 0
+	var errCode = ""
 	var reason error
 	var body interface{}
 
@@ -235,7 +235,7 @@ func (this *CorporationSigningController) Download() {
 // @router /:cla_org_id/:email [put]
 func (this *CorporationSigningController) SendVerifiCode() {
 	var statusCode = 202
-	var errCode = 0
+	var errCode = ""
 	var reason error
 	var body interface{}
 

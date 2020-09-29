@@ -45,7 +45,7 @@ func (this *EmployeeManagerController) Delete() {
 // @router /:cla_org_id [get]
 func (this *EmployeeManagerController) GetAll() {
 	var statusCode = 0
-	var errCode = 0
+	var errCode = ""
 	var reason error
 	var body interface{}
 
@@ -82,7 +82,7 @@ func (this *EmployeeManagerController) GetAll() {
 
 func (this *EmployeeManagerController) addOrDeleteManagers(toAdd bool) {
 	var statusCode = 0
-	var errCode = 0
+	var errCode = ""
 	var reason error
 	var body interface{}
 

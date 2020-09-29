@@ -18,7 +18,7 @@ const (
 	apiAccessController = "access_controller"
 )
 
-func sendResponse(c *beego.Controller, statusCode, errCode int, reason error, body interface{}, doWhat string) {
+func sendResponse(c *beego.Controller, statusCode int, errCode string, reason error, body interface{}, doWhat string) {
 	if token, err := refreshAccessToken(c); err == nil {
 		// this code must run before `c.Ctx.ResponseWriter.WriteHeader`
 		// otherwise the header can't be set successfully.
@@ -47,7 +47,7 @@ func sendResponse(c *beego.Controller, statusCode, errCode int, reason error, bo
 			ErrCode string `json:"error_code"`
 			ErrMsg  string `json:"error_message"`
 		}{
-			ErrCode: fmt.Sprintf("cla.%04d", errCode),
+			ErrCode: fmt.Sprintf("cla.%s", errCode),
 			ErrMsg:  reason.Error(),
 		}
 
@@ -129,7 +129,7 @@ func newAccessTokenAuthorizedByCodePlatform(user, permission, platformToken stri
 	return ac.NewToken(conf.AppConfig.APITokenExpiry)
 }
 
-func checkApiAccessToken(c *beego.Controller, permission []string, ac accessControllerInterface) (int, int, error) {
+func checkApiAccessToken(c *beego.Controller, permission []string, ac accessControllerInterface) (int, string, error) {
 	token := getHeader(c, headerToken)
 	if token == "" {
 		return 401, util.ErrMissingToken, fmt.Errorf("no token passed")
@@ -142,7 +142,7 @@ func checkApiAccessToken(c *beego.Controller, permission []string, ac accessCont
 	if err := ac.Verify(permission); err != nil {
 		return 403, util.ErrInvalidToken, err
 	}
-	return 0, 0, nil
+	return 0, "", nil
 }
 
 func apiPrepare(c *beego.Controller, permission []string, ac accessControllerInterface) {
@@ -271,7 +271,7 @@ func isSameCorp(email1, email2 string) bool {
 	return util.EmailSuffix(email1) != util.EmailSuffix(email2)
 }
 
-func checkSameCorp(c *beego.Controller, email string) (int, int, error) {
+func checkSameCorp(c *beego.Controller, email string) (int, string, error) {
 	_, corpEmail, err := parseCorpManagerUser(c)
 	if err != nil {
 		return 401, util.ErrUnknownToken, err
@@ -281,13 +281,13 @@ func checkSameCorp(c *beego.Controller, email string) (int, int, error) {
 		return 400, util.ErrNotSameCorp, fmt.Errorf("not same corp")
 	}
 
-	return 0, 0, nil
+	return 0, "", nil
 }
 
-func convertDBError(err error) (int, int) {
+func convertDBError(err error) (int, string) {
 	e, ok := dbmodels.IsDBError(err)
 	if !ok {
-		return 500, 0
+		return 500, ""
 	}
 
 	return 400, e.ErrCode

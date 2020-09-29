@@ -286,7 +286,6 @@ func (c *client) getCorporationSigningDetail(platform, org, repo, email string, 
 		filter[fieldRepo] = ""
 	} else {
 		filter[fieldRepo] = bson.M{"$in": bson.A{"", repo}}
-
 	}
 	filterForCorpSigning(filter)
 

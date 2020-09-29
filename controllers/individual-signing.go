@@ -31,7 +31,7 @@ func (this *IndividualSigningController) Prepare() {
 // @router /:cla_org_id [post]
 func (this *IndividualSigningController) Post() {
 	var statusCode = 0
-	var errCode = 0
+	var errCode = ""
 	var reason error
 	var body interface{}
 
@@ -92,7 +92,7 @@ func (this *IndividualSigningController) Post() {
 // @router /:platform/:org/:repo [get]
 func (this *IndividualSigningController) Check() {
 	var statusCode = 200
-	var errCode = 0
+	var errCode = ""
 	var reason error
 	var body interface{}
 

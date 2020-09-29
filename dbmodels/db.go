@@ -22,7 +22,7 @@ type IDB interface {
 }
 
 type ICorporationSigning interface {
-	SignAsCorporation(string, CorporationSigningInfo) error
+	SignAsCorporation(claOrgID, platform, org, repo string, info CorporationSigningInfo) error
 	ListCorporationSigning(CorporationSigningListOption) (map[string][]CorporationSigningDetail, error)
 	GetCorporationSigningDetail(platform, org, repo, email string) (string, CorporationSigningDetail, error)
 	UploadCorporationSigningPDF(claOrgID, adminEmail string, pdf []byte) error

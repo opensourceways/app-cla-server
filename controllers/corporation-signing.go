@@ -45,6 +45,9 @@ func (this *CorporationSigningController) Prepare() {
 // @Param	:cla_org_id	path 	string					true		"cla org id"
 // @Param	body		body 	models.CorporationSigningCreateOption	true		"body for corporation signing"
 // @Success 201 {int} map
+// @Failure util.ErrHasSigned
+// @Failure util.ErrWrongVerificationCode
+// @Failure util.ErrVerificationCodeExpired
 // @router /:cla_org_id [post]
 func (this *CorporationSigningController) Post() {
 	var statusCode = 0
@@ -74,27 +77,31 @@ func (this *CorporationSigningController) Post() {
 
 	if err := (&info).Validate(); err != nil {
 		reason = err
-		statusCode, errCode = convertDBError(err)
 		return
 	}
 
-	claOrg, emailCfg, err := getEmailConfig(claOrgID)
-	if err != nil {
+	claOrg := &models.CLAOrg{ID: claOrgID}
+	if err := claOrg.Get(); err != nil {
 		reason = err
-		statusCode, errCode = convertDBError(err)
+		return
+	}
+
+	emailCfg := &models.OrgEmail{Email: claOrg.OrgEmail}
+	if err := emailCfg.Get(); err != nil {
+		reason = err
+		statusCode = 500
 		return
 	}
 
 	cla := &models.CLA{ID: claOrg.CLAID}
 	if err := cla.Get(); err != nil {
 		reason = err
-		statusCode, errCode = convertDBError(err)
 		return
 	}
 
-	if err := (&info).Create(claOrgID); err != nil {
+	err = (&info).Create(claOrgID, claOrg.Platform, claOrg.OrgID, claOrg.RepoID)
+	if err != nil {
 		reason = err
-		statusCode, errCode = convertDBError(err)
 		return
 	}
 

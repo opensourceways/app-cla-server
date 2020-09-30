@@ -7,6 +7,7 @@ import (
 	"github.com/astaxie/beego"
 
 	platformAuth "github.com/opensourceways/app-cla-server/code-platform-auth"
+	"github.com/opensourceways/app-cla-server/util"
 )
 
 type AuthController struct {
@@ -15,12 +16,18 @@ type AuthController struct {
 
 // @Title Get
 // @Description get login info
+// @Param	:platform	path 	string				true		"gitee/github"
+// @Param	:purpose	path 	string				true		"purpose: login, sign"
 // @Success 200
 // @router /:platform/:purpose [get]
 func (this *AuthController) Auth() {
+	rs := func(statusCode int, errCode string, reason error) {
+		sendResponse(&this.Controller, statusCode, errCode, reason, nil, "authorize by gitee/github")
+	}
+
 	params := map[string]string{":platform": "", "code": "", ":purpose": "", "state": authURLState}
 	if err := checkAndVerifyAPIStringParameter(&this.Controller, params); err != nil {
-		sendResponse1(&this.Controller, 400, err, nil)
+		rs(400, util.ErrInvalidParameter, err)
 		return
 	}
 
@@ -32,14 +39,13 @@ func (this *AuthController) Auth() {
 
 	cp, err := platformAuth.GetAuthInstance(platform, purpose)
 	if err != nil {
-		sendResponse1(&this.Controller, 400, err, nil)
+		rs(400, util.ErrNotSupportedPlatform, err)
 		return
 	}
 
 	token, user, err := cp.Auth(code, scope)
 	if err != nil {
-		err = fmt.Errorf("Failed to auth: %s", err.Error())
-		sendResponse1(&this.Controller, 500, err, nil)
+		rs(500, util.ErrSystemError, err)
 		return
 	}
 
@@ -49,7 +55,7 @@ func (this *AuthController) Auth() {
 		token,
 	)
 	if err != nil {
-		sendResponse1(&this.Controller, 500, err, nil)
+		rs(500, util.ErrSystemError, err)
 		return
 	}
 
@@ -61,30 +67,48 @@ func (this *AuthController) Auth() {
 
 // @Title Get
 // @Description get auth code url
+// @Param	:platform	path 	string				true		"gitee/github"
+// @Param	:purpose	path 	string				true		"purpose: login, sign"
 // @Success 200 {object}
+// @Failure util.ErrNotSupportedPlatform
 // @router /authcodeurl/:platform/:purpose [get]
 func (this *AuthController) Get() {
 	var statusCode = 0
+	var errCode = ""
 	var reason error
 	var body interface{}
 
 	defer func() {
-		sendResponse1(&this.Controller, statusCode, reason, body)
+		sendResponse(&this.Controller, statusCode, errCode, reason, body, "fetch auth code url of gitee/github")
 	}()
 
 	params := []string{":platform", ":purpose"}
 	if err := checkAPIStringParameter(&this.Controller, params); err != nil {
 		reason = err
+		errCode = util.ErrInvalidParameter
 		statusCode = 400
 		return
 	}
 
-	platform := this.GetString(":platform")
-	// purpose: login, sign
 	purpose := this.GetString(":purpose")
-	cp, err := platformAuth.GetAuthInstance(platform, purpose)
+	bingo := false
+	for _, v := range []string{"login", "sign"} {
+		if v == purpose {
+			bingo = true
+			break
+		}
+	}
+	if !bingo {
+		reason = fmt.Errorf("unkonw purpose")
+		errCode = util.ErrInvalidParameter
+		statusCode = 400
+		return
+	}
+
+	cp, err := platformAuth.GetAuthInstance(this.GetString(":platform"), purpose)
 	if cp == nil {
 		reason = err
+		errCode = util.ErrNotSupportedPlatform
 		statusCode = 400
 		return
 	}

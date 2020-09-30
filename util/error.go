@@ -20,5 +20,6 @@ const (
 	ErrNotSameCorp               = "not_same_corp"
 	ErrNoOrgEmail                = "no_org_email"
 	ErrNotReadyToSign            = "not_ready_to_sign"
+	ErrNotSupportedPlatform      = "not_supported_platform"
 	ErrSystemError               = "system_error"
 )

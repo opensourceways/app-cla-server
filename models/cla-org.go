@@ -51,34 +51,12 @@ func (this *CLAOrg) Get() error {
 	return util.CopyBetweenStructs(&v, this)
 }
 
-type CLAOrgListOption struct {
-	Platform string `json:"platform"`
-	OrgID    string `json:"org_id"`
-	RepoID   string `json:"repo_id"`
-	ApplyTo  string `json:"apply_to"`
-}
-
-func (this CLAOrgListOption) buildListOpt() (dbmodels.CLAOrgListOption, error) {
-	p := dbmodels.CLAOrgListOption{}
-	if err := util.CopyBetweenStructs(&this, &p); err != nil {
-		return p, err
-	}
-	p.RepoID = this.RepoID
-	return p, nil
-}
+type CLAOrgListOption dbmodels.CLAOrgListOption
 
 func (this CLAOrgListOption) ListForSigningPage() ([]dbmodels.CLAOrg, error) {
-	p, err := this.buildListOpt()
-	if err != nil {
-		return nil, err
-	}
-	return dbmodels.GetDB().ListBindingForSigningPage(p)
+	return dbmodels.GetDB().ListBindingForSigningPage(dbmodels.CLAOrgListOption(this))
 }
 
 func (this CLAOrgListOption) List() ([]dbmodels.CLAOrg, error) {
-	p, err := this.buildListOpt()
-	if err != nil {
-		return nil, err
-	}
-	return dbmodels.GetDB().ListBindingBetweenCLAAndOrg(p)
+	return dbmodels.GetDB().ListBindingBetweenCLAAndOrg(dbmodels.CLAOrgListOption(this))
 }

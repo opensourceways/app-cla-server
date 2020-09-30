@@ -19,5 +19,6 @@ const (
 	ErrNoCLABindingDoc           = "no_cla_binding"
 	ErrNotSameCorp               = "not_same_corp"
 	ErrNoOrgEmail                = "no_org_email"
+	ErrNotReadyToSign            = "not_ready_to_sign"
 	ErrSystemError               = "system_error"
 )

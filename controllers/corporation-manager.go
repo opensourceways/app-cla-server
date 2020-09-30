@@ -31,7 +31,7 @@ func (this *CorporationManagerController) Prepare() {
 // @Description authenticate corporation manager
 // @Param	body		body 	models.CorporationManagerAuthentication	true		"body for corporation manager info"
 // @Success 201 {int} map
-// @Failure 403 body is empty
+// @Failure util.ErrNoCLABindingDoc	"no cla binding applied to corporation"
 // @router /auth [post]
 func (this *CorporationManagerController) Auth() {
 	var statusCode = 0
@@ -40,7 +40,7 @@ func (this *CorporationManagerController) Auth() {
 	var body interface{}
 
 	defer func() {
-		sendResponse(&this.Controller, statusCode, errCode, reason, body, "authenticate as corp manager")
+		sendResponse(&this.Controller, statusCode, errCode, reason, body, "authenticate as corp/employee manager")
 	}()
 
 	var info models.CorporationManagerAuthentication
@@ -54,7 +54,6 @@ func (this *CorporationManagerController) Auth() {
 	v, err := (&info).Authenticate()
 	if err != nil {
 		reason = err
-		statusCode, errCode = convertDBError(err)
 		return
 	}
 

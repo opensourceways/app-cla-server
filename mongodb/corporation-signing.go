@@ -273,10 +273,12 @@ func (c *client) DownloadCorporationSigningPDF(claOrgID, email string) ([]byte, 
 	return item.PDF, nil
 }
 func (c *client) getCorporationSigningDetail(platform, org, repo, email string, ctx context.Context) (string, dbmodels.CorporationSigningDetail, error) {
-	filterOfSigning := bson.M{"$filter": bson.M{
-		"input": fmt.Sprintf("$%s", fieldCorporations),
-		"cond":  bson.M{"$eq": bson.A{"$$this.corp_id", util.EmailSuffix(email)}},
-	}}
+	filterOfSigning := bson.M{
+		fieldCorporations: bson.M{"$filter": bson.M{
+			"input": fmt.Sprintf("$%s", fieldCorporations),
+			"cond":  bson.M{"$eq": bson.A{"$$this.corp_id", util.EmailSuffix(email)}},
+		}},
+	}
 
 	project := bson.M{
 		corpSigningField("admin_email"):  1,

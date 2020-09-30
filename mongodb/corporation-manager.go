@@ -145,8 +145,8 @@ func (c *client) CheckCorporationManagerExist(opt dbmodels.CorporationManagerChe
 
 	if len(v) == 0 {
 		return nil, dbmodels.DBError{
-			ErrCode: util.ErrInvalidParameter,
-			Err:     fmt.Errorf("no manager found"),
+			ErrCode: util.ErrNoCLABindingDoc,
+			Err:     fmt.Errorf("no cla binding found"),
 		}
 	}
 

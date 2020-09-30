@@ -177,13 +177,15 @@ func (c *client) IsIndividualSigned(platform, orgID, repoID, email string) (bool
 }
 
 func (c *client) isIndividualSigned(platform, orgID, repoID, email string, ctx context.Context) (bool, error) {
-	filterOfSigning := bson.M{"$filter": bson.M{
-		"input": fmt.Sprintf("$%s", fieldIndividuals),
-		"cond": bson.M{"$and": bson.A{
-			bson.M{"$eq": bson.A{"$$this.corp_id", util.EmailSuffix(email)}},
-			bson.M{"$eq": bson.A{"$$this.email", email}},
+	filterOfSigning := bson.M{
+		fieldIndividuals: bson.M{"$filter": bson.M{
+			"input": fmt.Sprintf("$%s", fieldIndividuals),
+			"cond": bson.M{"$and": bson.A{
+				bson.M{"$eq": bson.A{"$$this.corp_id", util.EmailSuffix(email)}},
+				bson.M{"$eq": bson.A{"$$this.email", email}},
+			}},
 		}},
-	}}
+	}
 
 	project := bson.M{
 		individualSigningField("enabled"): 1,

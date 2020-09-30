@@ -239,6 +239,7 @@ func (this *CorporationSigningController) Download() {
 // @Param	:cla_org_id	path 	string					true		"cla org id"
 // @Param	:email		path 	string					true		"email of corp"
 // @Success 202 {int} map
+// @Failure util.ErrSendingEmail
 // @router /:cla_org_id/:email [put]
 func (this *CorporationSigningController) SendVerifiCode() {
 	var statusCode = 0
@@ -263,7 +264,6 @@ func (this *CorporationSigningController) SendVerifiCode() {
 	_, emailCfg, err := getEmailConfig(claOrgID)
 	if err != nil {
 		reason = err
-		statusCode, errCode = convertDBError(err)
 		return
 	}
 
@@ -278,7 +278,6 @@ func (this *CorporationSigningController) SendVerifiCode() {
 	code, err := models.CreateCorporationSigningVerifCode(adminEmail, conf.AppConfig.VerificationCodeExpiry)
 	if err != nil {
 		reason = err
-		statusCode, errCode = convertDBError(err)
 		return
 	}
 

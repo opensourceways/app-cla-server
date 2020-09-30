@@ -29,7 +29,7 @@ func (c *client) CreateVerificationCode(opt dbmodels.VerificationCode) error {
 
 	body, err := structToMap(info)
 	if err != nil {
-		return fmt.Errorf("Failed to build verification code body:%v", err)
+		return err
 	}
 
 	f := func(ctx mongo.SessionContext) error {

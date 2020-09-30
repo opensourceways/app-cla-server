@@ -9,6 +9,7 @@ import (
 	"github.com/opensourceways/app-cla-server/dbmodels"
 	"github.com/opensourceways/app-cla-server/models"
 	"github.com/opensourceways/app-cla-server/pdf"
+	"github.com/opensourceways/app-cla-server/util"
 )
 
 type CLAOrgController struct {
@@ -17,7 +18,7 @@ type CLAOrgController struct {
 
 func (this *CLAOrgController) Prepare() {
 	if getRouterPattern(&this.Controller) == "/v1/cla-org/:platform/:org_id/:apply_to" {
-		apiPrepare(&this.Controller, []string{PermissionIndividualSigner}, nil)
+		// apiPrepare(&this.Controller, []string{PermissionIndividualSigner}, nil)
 		return
 	}
 
@@ -151,20 +152,28 @@ func (this *CLAOrgController) GetAll() {
 
 // @Title GetSigningPageInfo
 // @Description get signing page info
-// @Success 200 {object} models.CLAOrg
+// @Param	:platform	path 	string				true		"code platform"
+// @Param	:org_id		path 	string				true		"org"
+// @Param	repo_id		path 	string				true		"repo"
+// @Param	:apply_to	path 	string				true		"apply to"
+// @Success 201 {int} map
+// @Failure util.ErrNoCLABindingDoc	"this org/repo has not been bound any clas"
+// @Failure util.ErrNotReadyToSign	"the corp signing is not ready"
 // @router /:platform/:org_id/:apply_to [get]
 func (this *CLAOrgController) GetSigningPageInfo() {
 	var statusCode = 0
+	var errCode = ""
 	var reason error
 	var body interface{}
 
 	defer func() {
-		sendResponse1(&this.Controller, statusCode, reason, body)
+		sendResponse(&this.Controller, statusCode, errCode, reason, body, "fetch signing page info")
 	}()
 
 	params := []string{":platform", ":org_id", ":apply_to"}
 	if err := checkAPIStringParameter(&this.Controller, params); err != nil {
 		reason = err
+		errCode = util.ErrInvalidParameter
 		statusCode = 400
 		return
 	}
@@ -179,11 +188,11 @@ func (this *CLAOrgController) GetSigningPageInfo() {
 	claOrgs, err := opt.ListForSigningPage()
 	if err != nil {
 		reason = err
-		statusCode = 500
 		return
 	}
 	if len(claOrgs) == 0 {
 		reason = fmt.Errorf("this org has no bound cla")
+		errCode = util.ErrNoCLABindingDoc
 		statusCode = 404
 		return
 	}
@@ -197,7 +206,8 @@ func (this *CLAOrgController) GetSigningPageInfo() {
 				s = fmt.Sprintf("%s/%s", s, opt.RepoID)
 			}
 			reason = fmt.Errorf("The project of '%s' is not ready to sign cla as corporation", s)
-			statusCode = 501
+			errCode = util.ErrNotReadyToSign
+			statusCode = 400
 			return
 		}
 
@@ -208,7 +218,6 @@ func (this *CLAOrgController) GetSigningPageInfo() {
 	clas, err := models.ListCLAByIDs(ids)
 	if err != nil {
 		reason = err
-		statusCode = 500
 		return
 	}
 

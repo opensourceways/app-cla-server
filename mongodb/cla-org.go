@@ -28,7 +28,7 @@ const (
 	fieldRepo            = "repo_id"
 )
 
-func additionalConditionForCLAOrgDoc(filter bson.M) {
+func filterForClaOrgDoc(filter bson.M) {
 	filter["enabled"] = true
 }
 
@@ -166,15 +166,24 @@ func (c *client) GetBindingBetweenCLAAndOrg(uid string) (dbmodels.CLAOrg, error)
 }
 
 func (c *client) ListBindingBetweenCLAAndOrg(opt dbmodels.CLAOrgListOption) ([]dbmodels.CLAOrg, error) {
-	body, err := golangsdk.BuildRequestBody(opt, "")
+	info := struct {
+		Platform string `json:"platform" required:"true"`
+		OrgID    string `json:"org_id" required:"true"`
+		RepoID   string `json:"repo_id,omitempty"`
+		ApplyTo  string `json:"apply_to,omitempty"`
+	}{
+		Platform: opt.Platform,
+		OrgID:    opt.OrgID,
+		RepoID:   opt.RepoID,
+		ApplyTo:  opt.ApplyTo,
+	}
+
+	body, err := structToMap(info)
 	if err != nil {
-		return nil, fmt.Errorf("build options to list cla-org failed, err:%v", err)
+		return nil, err
 	}
 	filter := bson.M(body)
-	additionalConditionForCLAOrgDoc(filter)
-	if opt.RepoID != "" {
-		filter[fieldRepo] = opt.RepoID
-	}
+	filterForClaOrgDoc(filter)
 
 	var v []CLAOrg
 
@@ -211,12 +220,21 @@ func (c *client) ListBindingBetweenCLAAndOrg(opt dbmodels.CLAOrgListOption) ([]d
 }
 
 func (c *client) ListBindingForSigningPage(opt dbmodels.CLAOrgListOption) ([]dbmodels.CLAOrg, error) {
-	body, err := golangsdk.BuildRequestBody(opt, "")
-	if err != nil {
-		return nil, fmt.Errorf("build options to list cla-org failed, err:%v", err)
+	info := struct {
+		Platform string `json:"platform" required:"true"`
+		OrgID    string `json:"org_id" required:"true"`
+		ApplyTo  string `json:"apply_to,omitempty"`
+	}{
+		Platform: opt.Platform,
+		OrgID:    opt.OrgID,
+		ApplyTo:  opt.ApplyTo,
 	}
+	body, err := structToMap(info)
+	if err != nil {
+		return nil, err
+	}
+
 	filter := bson.M(body)
-	additionalConditionForCLAOrgDoc(filter)
 	if opt.RepoID == "" {
 		// only fetch cla bound to org
 		filter[fieldRepo] = ""
@@ -224,6 +242,7 @@ func (c *client) ListBindingForSigningPage(opt dbmodels.CLAOrgListOption) ([]dbm
 		// if the repo has not been bound any clas, return clas bound to org
 		filter[fieldRepo] = bson.M{"$in": bson.A{"", opt.RepoID}}
 	}
+	filter["enabled"] = true
 
 	var v []CLAOrg
 
@@ -245,8 +264,7 @@ func (c *client) ListBindingForSigningPage(opt dbmodels.CLAOrgListOption) ([]dbm
 		return nil
 	}
 
-	err = withContext(f)
-	if err != nil {
+	if err := withContext(f); err != nil {
 		return nil, err
 	}
 

@@ -226,9 +226,6 @@ func (c *client) ResetCorporationManagerPassword(claOrgID, email string, opt dbm
 
 func (c *client) listCorporationManager(claOrgID primitive.ObjectID, email, role string, ctx context.Context) ([]dbmodels.CorporationManagerListResult, error) {
 	filter := bson.M{"_id": claOrgID}
-	filterForCorpManager(filter)
-
-	var v []CLAOrg
 
 	cond := bson.A{
 		bson.M{"$eq": bson.A{"$$this.corp_id", util.EmailSuffix(email)}},
@@ -238,6 +235,7 @@ func (c *client) listCorporationManager(claOrgID primitive.ObjectID, email, role
 
 	}
 
+	var v []CLAOrg
 	f := func() error {
 		col := c.collection(claOrgCollection)
 

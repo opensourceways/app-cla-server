@@ -177,16 +177,38 @@ func (c *client) IsIndividualSigned(platform, orgID, repoID, email string) (bool
 }
 
 func (c *client) isIndividualSigned(platform, orgID, repoID, email string, ctx context.Context) (bool, error) {
+	filterOfSigning := bson.M{"$filter": bson.M{
+		"input": fmt.Sprintf("$%s", fieldIndividuals),
+		"cond": bson.M{"$and": bson.A{
+			bson.M{"$eq": bson.A{"$$this.corp_id", util.EmailSuffix(email)}},
+			bson.M{"$eq": bson.A{"$$this.email", email}},
+		}},
+	}}
+
+	project := bson.M{
+		individualSigningField("enabled"): 1,
+	}
+
+	claOrg, err := c.getSigningDetail(platform, orgID, repoID, dbmodels.ApplyToIndividual, filterOfSigning, project, ctx)
+	if err != nil {
+		return false, err
+	}
+
+	return claOrg.Individuals[0].Enabled, nil
+}
+
+func (c *client) isIndividualSigned1(platform, orgID, repoID, email string, ctx context.Context) (bool, error) {
 	filter := bson.M{
 		"platform": platform,
 		"org_id":   orgID,
+		"apply_to": dbmodels.ApplyToIndividual,
+		"enabled":  true,
 	}
 	if repoID == "" {
 		filter[fieldRepo] = ""
 	} else {
 		filter[fieldRepo] = bson.M{"$in": bson.A{"", repoID}}
 	}
-	filterForIndividualSigning(filter)
 
 	pipeline := bson.A{
 		bson.M{"$match": filter},

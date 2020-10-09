@@ -16,14 +16,14 @@ type CorporationManagerController struct {
 }
 
 func (this *CorporationManagerController) Prepare() {
-	if getRouterPattern(&this.Controller) == "/v1/corporation-manager/:cla_org_id/:email" {
-		if this.Ctx.Request.Method == http.MethodPut {
-			// add administrator
-			apiPrepare(&this.Controller, []string{PermissionOwnerOfOrg}, nil)
-		} else {
-			// reset password of manager
-			apiPrepare(&this.Controller, []string{PermissionCorporAdmin, PermissionEmployeeManager}, nil)
-		}
+	switch getRequestMethod(&this.Controller) {
+	case http.MethodPut:
+		// add administrator
+		apiPrepare(&this.Controller, []string{PermissionOwnerOfOrg}, nil)
+
+	case http.MethodPatch:
+		// reset password of manager
+		apiPrepare(&this.Controller, []string{PermissionCorporAdmin, PermissionEmployeeManager}, nil)
 	}
 }
 
@@ -92,6 +92,8 @@ func (this *CorporationManagerController) Auth() {
 // @Param	:cla_org_id	path 	string					true		"cla org id"
 // @Param	:email		path 	string					true		"email of corp"
 // @Success 202 {int} map
+// @Failure util.ErrPDFHasNotUploaded
+// @Failure util.ErrNumOfCorpManagersExceeded
 // @router /:cla_org_id/:email [put]
 func (this *CorporationManagerController) Put() {
 	var statusCode = 0
@@ -115,7 +117,6 @@ func (this *CorporationManagerController) Put() {
 	info, err := models.CheckCorporationSigning(claOrgID, email)
 	if err != nil {
 		reason = err
-		statusCode, errCode = convertDBError(err)
 		return
 	}
 
@@ -128,23 +129,23 @@ func (this *CorporationManagerController) Put() {
 
 	if info.AdminAdded {
 		// TODO: send email failed
+		return
 	}
 
 	err = models.CreateCorporationAdministrator(claOrgID, email)
 	if err != nil {
 		reason = err
-		statusCode, errCode = convertDBError(err)
 		return
 	}
 
+	// TODO: send email
 	body = "add manager successfully"
 }
 
 // @Title Patch
 // @Description reset password of corporation administrator
-// @Param	:cla_org_id	path 	string					true		"cla org id"
 // @Success 204 {int} map
-// @router /:cla_org_id [patch]
+// @router / [patch]
 func (this *CorporationManagerController) Patch() {
 	var statusCode = 0
 	var errCode = ""
@@ -155,18 +156,11 @@ func (this *CorporationManagerController) Patch() {
 		sendResponse(&this.Controller, statusCode, errCode, reason, body, "reset password of corp's manager")
 	}()
 
-	claOrgID, err := fetchStringParameter(&this.Controller, ":cla_org_id")
+	claOrgID, corpEmail, err := parseCorpManagerUser(&this.Controller)
 	if err != nil {
 		reason = err
-		errCode = util.ErrInvalidParameter
-		statusCode = 400
-		return
-	}
-
-	corpEmail, err := getApiAccessUser(&this.Controller)
-	if err != nil {
-		reason = err
-		statusCode = 500
+		errCode = util.ErrUnknownToken
+		statusCode = 401
 		return
 	}
 
@@ -180,7 +174,6 @@ func (this *CorporationManagerController) Patch() {
 
 	if err := (&info).Reset(claOrgID, corpEmail); err != nil {
 		reason = err
-		statusCode, errCode = convertDBError(err)
 		return
 	}
 

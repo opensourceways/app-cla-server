@@ -18,7 +18,7 @@ type EmployeeSigningController struct {
 }
 
 func (this *EmployeeSigningController) Prepare() {
-	if this.Ctx.Request.Method == http.MethodPost {
+	if getRequestMethod(&this.Controller) == http.MethodPost {
 		// sign as employee
 		apiPrepare(&this.Controller, []string{PermissionIndividualSigner}, nil)
 	} else {
@@ -119,10 +119,8 @@ func (this *EmployeeSigningController) Post() {
 
 // @Title GetAll
 // @Description get all the employees
-// @Param	:platform	path 	string	true		"code platform"
-// @Param	:org		path 	string	true		"org"
 // @Success 200 {int} map
-// @router /:platform/:org [get]
+// @router / [get]
 func (this *EmployeeSigningController) GetAll() {
 	var statusCode = 0
 	var errCode = ""
@@ -133,30 +131,27 @@ func (this *EmployeeSigningController) GetAll() {
 		sendResponse(&this.Controller, statusCode, errCode, reason, body, "list employees")
 	}()
 
-	params := []string{":platform", ":org"}
-	if err := checkAPIStringParameter(&this.Controller, params); err != nil {
+	claOrgID, corpEmail, err := parseCorpManagerUser(&this.Controller)
+	if err != nil {
 		reason = err
-		errCode = util.ErrInvalidParameter
-		statusCode = 400
+		errCode = util.ErrUnknownToken
+		statusCode = 401
+		return
+	}
+
+	claOrg := &models.CLAOrg{ID: claOrgID}
+	if err := claOrg.Get(); err != nil {
+		reason = err
 		return
 	}
 
 	opt := models.EmployeeSigningListOption{
-		RepoID:      this.GetString("repo_id"),
 		CLALanguage: this.GetString("cla_language"),
 	}
 
-	email, err := getApiAccessUser(&this.Controller)
+	r, err := opt.List(corpEmail, claOrg.Platform, claOrg.OrgID, claOrg.RepoID)
 	if err != nil {
 		reason = err
-		statusCode = 500
-		return
-	}
-
-	r, err := opt.List(email, this.GetString(":platform"), this.GetString(":org"))
-	if err != nil {
-		reason = err
-		statusCode, errCode = convertDBError(err)
 		return
 	}
 
@@ -187,8 +182,9 @@ func (this *EmployeeSigningController) Update() {
 
 	}
 	employeeEmail := this.GetString(":email")
+	claOrgID := this.GetString(":cla_org_id")
 
-	statusCode, errCode, reason = checkSameCorp(&this.Controller, employeeEmail)
+	statusCode, errCode, reason = this.canHandleOnEmployee(claOrgID, employeeEmail)
 	if reason != nil {
 		return
 	}
@@ -201,10 +197,8 @@ func (this *EmployeeSigningController) Update() {
 		return
 	}
 
-	err := (&info).Update(this.GetString(":cla_org_id"), employeeEmail)
-	if err != nil {
+	if err := (&info).Update(claOrgID, employeeEmail); err != nil {
 		reason = err
-		statusCode, errCode = convertDBError(err)
 		return
 	}
 
@@ -235,18 +229,46 @@ func (this *EmployeeSigningController) Delete() {
 
 	}
 	employeeEmail := this.GetString(":email")
+	claOrgID := this.GetString(":cla_org_id")
 
-	statusCode, errCode, reason = checkSameCorp(&this.Controller, employeeEmail)
+	statusCode, errCode, reason = this.canHandleOnEmployee(claOrgID, employeeEmail)
 	if reason != nil {
 		return
 	}
 
-	err := models.DeleteEmployeeSigning(this.GetString(":cla_org_id"), this.GetString(":email"))
-	if err != nil {
+	if err := models.DeleteEmployeeSigning(claOrgID, employeeEmail); err != nil {
 		reason = err
-		statusCode, errCode = convertDBError(err)
 		return
 	}
 
 	body = "delete employee successfully"
+}
+
+func (this *EmployeeSigningController) canHandleOnEmployee(claOrgID, employeeEmail string) (int, string, error) {
+	corpClaOrgID, corpEmail, err := parseCorpManagerUser(&this.Controller)
+	if err != nil {
+		return 401, util.ErrUnknownToken, err
+	}
+
+	if !isSameCorp(corpEmail, employeeEmail) {
+		return 400, util.ErrNotSameCorp, fmt.Errorf("not same corp")
+	}
+
+	claOrg := &models.CLAOrg{ID: claOrgID}
+	if err := claOrg.Get(); err != nil {
+		return 0, "", err
+	}
+
+	corpClaOrg := &models.CLAOrg{ID: corpClaOrgID}
+	if err := claOrg.Get(); err != nil {
+		return 0, "", err
+	}
+
+	if claOrg.Platform != corpClaOrg.Platform ||
+		claOrg.OrgID != corpClaOrg.OrgID ||
+		claOrg.RepoID != corpClaOrg.RepoID {
+		return 400, util.ErrInvalidParameter, fmt.Errorf("not the same repo")
+	}
+
+	return 0, "", nil
 }

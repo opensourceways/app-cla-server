@@ -20,7 +20,6 @@ func (this *EmployeeManagerController) Prepare() {
 
 // @Title Post
 // @Description add employee managers
-// @Param	:cla_org_id	path 	string					true		"cla org id"
 // @Param	body		body 	models.EmployeeManagerCreateOption	true		"body for employee manager"
 // @Success 201 {int} map
 // @router / [post]
@@ -30,7 +29,6 @@ func (this *EmployeeManagerController) Post() {
 
 // @Title Delete
 // @Description delete employee manager
-// @Param	:cla_org_id	path 	string					true		"cla org id"
 // @Param	body		body 	models.EmployeeManagerCreateOption	true		"body for employee manager"
 // @Success 204 {string} delete success!
 // @router / [delete]
@@ -40,9 +38,8 @@ func (this *EmployeeManagerController) Delete() {
 
 // @Title GetAll
 // @Description get all employee managers
-// @Param	:cla_org_id	path 	string					true		"cla org id"
 // @Success 200 {object} dbmodels.CorporationManagerListResult
-// @router /:cla_org_id [get]
+// @router / [get]
 func (this *EmployeeManagerController) GetAll() {
 	var statusCode = 0
 	var errCode = ""
@@ -53,18 +50,11 @@ func (this *EmployeeManagerController) GetAll() {
 		sendResponse(&this.Controller, statusCode, errCode, reason, body, "list employee managers")
 	}()
 
-	claOrgID, err := fetchStringParameter(&this.Controller, ":cla_org_id")
+	claOrgID, corpEmail, err := parseCorpManagerUser(&this.Controller)
 	if err != nil {
 		reason = err
-		errCode = util.ErrInvalidParameter
-		statusCode = 400
-		return
-	}
-
-	corpEmail, err := getApiAccessUser(&this.Controller)
-	if err != nil {
-		reason = err
-		statusCode = 500
+		errCode = util.ErrUnknownToken
+		statusCode = 401
 		return
 	}
 
@@ -73,7 +63,6 @@ func (this *EmployeeManagerController) GetAll() {
 	)
 	if err != nil {
 		reason = err
-		statusCode, errCode = convertDBError(err)
 		return
 	}
 
@@ -96,15 +85,13 @@ func (this *EmployeeManagerController) addOrDeleteManagers(toAdd bool) {
 		sendResponse(&this.Controller, statusCode, errCode, reason, body, fmt.Sprintf("%s employee managers", op))
 	}()
 
-	claOrgID, corpEmail, err := parseCorpManagerUser(&this.Controller)
+	claOrgID, adminEmail, err := parseCorpManagerUser(&this.Controller)
 	if err != nil {
 		reason = err
 		errCode = util.ErrUnknownToken
 		statusCode = 401
 		return
 	}
-
-	//TODO: check if the cla org has the adminstrator, otherwise he/she can't do this operation.
 
 	var info models.EmployeeManagerCreateOption
 	if err := fetchInputPayload(&this.Controller, &info); err != nil {
@@ -114,16 +101,9 @@ func (this *EmployeeManagerController) addOrDeleteManagers(toAdd bool) {
 		return
 	}
 
-	if err := (&info).Validate(); err != nil {
+	if c, err := (&info).Validate(adminEmail); err != nil {
 		reason = err
-		errCode = util.ErrInvalidParameter
-		statusCode = 400
-		return
-	}
-
-	if !isSameCorp(corpEmail, info.Emails[0]) {
-		reason = fmt.Errorf("not same corp")
-		errCode = util.ErrNotSameCorp
+		errCode = c
 		statusCode = 400
 		return
 	}
@@ -135,6 +115,5 @@ func (this *EmployeeManagerController) addOrDeleteManagers(toAdd bool) {
 	}
 	if err != nil {
 		reason = err
-		statusCode, errCode = convertDBError(err)
 	}
 }

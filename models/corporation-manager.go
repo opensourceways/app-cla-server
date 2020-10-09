@@ -2,6 +2,14 @@ package models
 
 import "github.com/opensourceways/app-cla-server/dbmodels"
 
+type CorporationManagerAuthentication dbmodels.CorporationManagerCheckInfo
+
+func (this CorporationManagerAuthentication) Authenticate() (map[string][]dbmodels.CorporationManagerCheckResult, error) {
+	return dbmodels.GetDB().CheckCorporationManagerExist(
+		dbmodels.CorporationManagerCheckInfo(this),
+	)
+}
+
 func CreateCorporationAdministrator(claOrgID, email string) error {
 	pw := "123456"
 	opt := []dbmodels.CorporationManagerCreateOption{
@@ -12,14 +20,6 @@ func CreateCorporationAdministrator(claOrgID, email string) error {
 		},
 	}
 	return dbmodels.GetDB().AddCorporationManager(claOrgID, opt, 1)
-}
-
-type CorporationManagerAuthentication dbmodels.CorporationManagerCheckInfo
-
-func (this CorporationManagerAuthentication) Authenticate() (map[string][]dbmodels.CorporationManagerCheckResult, error) {
-	return dbmodels.GetDB().CheckCorporationManagerExist(
-		dbmodels.CorporationManagerCheckInfo(this),
-	)
 }
 
 type CorporationManagerResetPassword dbmodels.CorporationManagerResetPassword

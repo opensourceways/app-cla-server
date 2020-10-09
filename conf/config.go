@@ -21,6 +21,7 @@ type appConfig struct {
 	PDFOutDir               string `json:"pdf_out_dir"`
 	CodePlatformConfigFile  string `json:"code_platforms"`
 	EmailPlatformConfigFile string `json:"email_platforms"`
+	EmployeeManagersNumber  int    `json:"employee_managers_number"`
 }
 
 func InitAppConfig() error {
@@ -30,6 +31,11 @@ func InitAppConfig() error {
 	}
 
 	codeExpiry, err := beego.AppConfig.Int64("verification_code_expiry")
+	if err != nil {
+		return err
+	}
+
+	employeeMangers, err := beego.AppConfig.Int("employee_managers_number")
 	if err != nil {
 		return err
 	}
@@ -45,6 +51,7 @@ func InitAppConfig() error {
 		PDFOutDir:               beego.AppConfig.String("pdf_out_dir"),
 		CodePlatformConfigFile:  beego.AppConfig.String("code_platforms"),
 		EmailPlatformConfigFile: beego.AppConfig.String("email_platforms"),
+		EmployeeManagersNumber:  employeeMangers,
 	}
 	return AppConfig.validate()
 }
@@ -60,6 +67,10 @@ func (this *appConfig) validate() error {
 
 	if this.APITokenExpiry <= 0 {
 		return fmt.Errorf("The apit_oken_expiry:%d should be bigger than 0", this.APITokenExpiry)
+	}
+
+	if this.EmployeeManagersNumber <= 0 {
+		return fmt.Errorf("The employee_managers_number:%d should be bigger than 0", this.EmployeeManagersNumber)
 	}
 
 	if len(this.APITokenKey) < 20 {

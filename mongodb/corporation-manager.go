@@ -36,15 +36,16 @@ func (c *client) AddCorporationManager(claOrgID string, opt []dbmodels.Corporati
 	}
 
 	f := func(ctx mongo.SessionContext) error {
+		toAdd := map[string]dbmodels.CorporationManagerCreateOption{}
+		for _, item := range opt {
+			toAdd[item.Email] = item
+		}
+
 		ms, err := c.listCorporationManager(oid, opt[0].Email, opt[0].Role, ctx)
 		if err != nil {
 			return err
 		}
 
-		toAdd := map[string]dbmodels.CorporationManagerCreateOption{}
-		for _, item := range opt {
-			toAdd[item.Email] = item
-		}
 		for _, item := range ms {
 			if _, ok := toAdd[item.Email]; ok {
 				delete(toAdd, item.Email)
@@ -91,6 +92,10 @@ func (c *client) AddCorporationManager(claOrgID string, opt []dbmodels.Corporati
 
 		if v.ModifiedCount != 1 {
 			return fmt.Errorf("impossible")
+		}
+
+		if opt[0].Role == dbmodels.RoleAdmin {
+			return c.setAdministratorAdded(oid, opt[0].Email, ctx)
 		}
 		return nil
 	}
@@ -158,6 +163,7 @@ func (c *client) CheckCorporationManagerExist(opt dbmodels.CorporationManagerChe
 		}
 
 		// If len(cm) > 1, it happened when administrator add himself as the manager
+		// But, it will not happend
 		ms := make([]dbmodels.CorporationManagerCheckResult, 0, len(cm))
 		for _, item := range cm {
 			ms = append(ms, dbmodels.CorporationManagerCheckResult{
@@ -206,7 +212,7 @@ func (c *client) ResetCorporationManagerPassword(claOrgID, email string, opt dbm
 
 		if v.MatchedCount == 0 {
 			return dbmodels.DBError{
-				ErrCode: util.ErrInvalidParameter,
+				ErrCode: util.ErrNoCLABindingDoc,
 				Err:     fmt.Errorf("can't find the cla"),
 			}
 		}
@@ -226,6 +232,7 @@ func (c *client) ResetCorporationManagerPassword(claOrgID, email string, opt dbm
 
 func (c *client) listCorporationManager(claOrgID primitive.ObjectID, email, role string, ctx context.Context) ([]dbmodels.CorporationManagerListResult, error) {
 	filter := bson.M{"_id": claOrgID}
+	filterForCorpManager(filter)
 
 	cond := bson.A{
 		bson.M{"$eq": bson.A{"$$this.corp_id", util.EmailSuffix(email)}},
@@ -333,7 +340,8 @@ func (c *client) DeleteCorporationManager(claOrgID string, opt []dbmodels.Corpor
 
 		update := bson.M{"$pull": bson.M{
 			fieldCorpoManagers: bson.M{
-				"email": bson.M{"$in": toDelete},
+				"corp_id": util.EmailSuffix(opt[0].Email),
+				"email":   bson.M{"$in": toDelete},
 			},
 		}}
 

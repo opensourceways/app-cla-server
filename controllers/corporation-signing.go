@@ -275,7 +275,8 @@ func (this *CorporationSigningController) SendVerifiCode() {
 		return
 	}
 
-	code, err := models.CreateCorporationSigningVerifCode(adminEmail, conf.AppConfig.VerificationCodeExpiry)
+	expiry := conf.AppConfig.VerificationCodeExpiry
+	code, err := models.CreateCorporationSigningVerifCode(adminEmail, expiry)
 	if err != nil {
 		reason = err
 		return
@@ -293,5 +294,7 @@ func (this *CorporationSigningController) SendVerifiCode() {
 		return
 	}
 
-	body = "verification code has been sent successfully"
+	body = map[string]int64{
+		"expiry": expiry,
+	}
 }

@@ -286,7 +286,7 @@ func getEmailConfig(claOrgID string) (*models.CLAOrg, *models.OrgEmail, error) {
 }
 
 func isSameCorp(email1, email2 string) bool {
-	return util.EmailSuffix(email1) != util.EmailSuffix(email2)
+	return util.EmailSuffix(email1) == util.EmailSuffix(email2)
 }
 
 func checkSameCorp(c *beego.Controller, email string) (int, string, error) {
@@ -332,4 +332,8 @@ func parseCorpManagerUser(c *beego.Controller) (string, string, error) {
 func isNoClaBindingDoc(err error) bool {
 	_, c := convertDBError(err)
 	return c == util.ErrNoCLABindingDoc
+}
+
+func getRequestMethod(c *beego.Controller) string {
+	return c.Ctx.Request.Method
 }

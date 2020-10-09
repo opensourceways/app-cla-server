@@ -3,6 +3,7 @@ package models
 import (
 	"fmt"
 
+	"github.com/opensourceways/app-cla-server/conf"
 	"github.com/opensourceways/app-cla-server/dbmodels"
 	"github.com/opensourceways/app-cla-server/util"
 )
@@ -11,28 +12,32 @@ type EmployeeManagerCreateOption struct {
 	Emails []string `json:"emails"`
 }
 
-func (this *EmployeeManagerCreateOption) Validate() error {
+func (this *EmployeeManagerCreateOption) Validate(adminEmail string) (string, error) {
 	if len(this.Emails) == 0 {
-		return fmt.Errorf("parameter error: no user to add")
+		return util.ErrInvalidParameter, fmt.Errorf("no employee mangers to add")
 	}
 
 	em := map[string]bool{}
-	suffix := util.EmailSuffixToKey(this.Emails[0])
+	suffix := util.EmailSuffix(adminEmail)
 
 	for _, item := range this.Emails {
-		em[item] = true
-
-		s := util.EmailSuffixToKey(item)
-		if s != suffix {
-			return fmt.Errorf("parameter error: the email suffixes are not same")
+		if item == adminEmail {
+			return util.ErrInvalidParameter, fmt.Errorf("can't add/delete administrator himself/herself")
 		}
+
+		s := util.EmailSuffix(item)
+		if s != suffix {
+			return util.ErrNotSameCorp, fmt.Errorf("the email suffixes are not same")
+		}
+
+		em[item] = true
 	}
 
 	if len(em) != len(this.Emails) {
-		return fmt.Errorf("parameter error: there are duplicate emails")
+		return util.ErrInvalidParameter, fmt.Errorf("there are duplicate emails")
 	}
 
-	return nil
+	return "", nil
 }
 
 func (this *EmployeeManagerCreateOption) Create(claOrgID string) error {
@@ -48,7 +53,7 @@ func (this *EmployeeManagerCreateOption) Create(claOrgID string) error {
 		})
 	}
 
-	return dbmodels.GetDB().AddCorporationManager(claOrgID, opt, 5)
+	return dbmodels.GetDB().AddCorporationManager(claOrgID, opt, conf.AppConfig.EmployeeManagersNumber)
 }
 
 func (this *EmployeeManagerCreateOption) Delete(claOrgID string) error {

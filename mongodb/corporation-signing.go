@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 
@@ -13,12 +14,6 @@ import (
 )
 
 type corporationSigningDoc struct {
-	corporationSigning
-
-	PDF []byte `bson:"pdf"`
-}
-
-type corporationSigning struct {
 	AdminEmail      string                   `bson:"admin_email" json:"admin_email" required:"true"`
 	AdminName       string                   `bson:"admin_name" json:"admin_name" required:"true"`
 	CorporationName string                   `bson:"corp_name" json:"corp_name" required:"true"`
@@ -27,6 +22,8 @@ type corporationSigning struct {
 
 	PDFUploaded bool `bson:"pdf_uploaded" json:"pdf_uploaded"`
 	AdminAdded  bool `bson:"admin_added" json:"admin_added"`
+
+	PDF []byte `bson:"pdf" json:"pdf,omitempty"`
 }
 
 func filterForCorpSigning(filter bson.M) {
@@ -45,7 +42,7 @@ func (c *client) SignAsCorporation(claOrgID, platform, org, repo string, info db
 		return err
 	}
 
-	signing := corporationSigning{
+	signing := corporationSigningDoc{
 		AdminEmail:      info.AdminEmail,
 		AdminName:       info.AdminName,
 		CorporationName: info.CorporationName,
@@ -134,8 +131,7 @@ func (c *client) ListCorporationSigning(opt dbmodels.CorporationSigningListOptio
 		return nil
 	}
 
-	err = withContext(f)
-	if err != nil {
+	if err = withContext(f); err != nil {
 		return nil, err
 	}
 
@@ -154,6 +150,44 @@ func (c *client) ListCorporationSigning(opt dbmodels.CorporationSigningListOptio
 	}
 
 	return r, nil
+}
+
+func (c *client) setAdministratorAdded(claOrgID primitive.ObjectID, email string, ctx context.Context) error {
+	col := c.collection(claOrgCollection)
+
+	filter := bson.M{"_id": claOrgID}
+	filterForCorpSigning(filter)
+
+	update := bson.M{"$set": bson.M{
+		fmt.Sprintf("%s.$[elem].admin_added", fieldCorporations): true,
+	}}
+
+	updateOpt := options.UpdateOptions{
+		ArrayFilters: &options.ArrayFilters{
+			Filters: bson.A{
+				bson.M{
+					"elem.corp_id": util.EmailSuffix(email),
+				},
+			},
+		},
+	}
+
+	r, err := col.UpdateOne(ctx, filter, update, &updateOpt)
+	if err != nil {
+		return err
+	}
+
+	if r.MatchedCount == 0 {
+		return dbmodels.DBError{
+			ErrCode: util.ErrNoCLABindingDoc,
+			Err:     fmt.Errorf("can't find the cla"),
+		}
+	}
+
+	if r.ModifiedCount == 0 {
+		return fmt.Errorf("impossible")
+	}
+	return nil
 }
 
 func (c *client) UploadCorporationSigningPDF(claOrgID, adminEmail string, pdf []byte) error {
@@ -451,7 +485,7 @@ func (c *client) CheckCorporationSigning(claOrgID, email string) (dbmodels.Corpo
 
 	if len(v) == 0 {
 		return result, dbmodels.DBError{
-			ErrCode: util.ErrInvalidParameter,
+			ErrCode: util.ErrNoCLABindingDoc,
 			Err:     fmt.Errorf("can't find the cla"),
 		}
 	}

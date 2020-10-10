@@ -16,8 +16,8 @@ import (
 var worker IEmailWorker
 
 type IEmailWorker interface {
-	GenCLAPDFForCorporationAndSendIt(claOrg *models.CLAOrg, signing *models.CorporationSigning, cla *models.CLA, emailCfg *models.OrgEmail)
-	SendSimpleMessage(emailCfg *models.OrgEmail, msg *email.EmailMessage)
+	GenCLAPDFForCorporationAndSendIt(claOrg *models.CLAOrg, signing *models.CorporationSigning, cla *models.CLA)
+	SendSimpleMessage(orgEmail string, msg *email.EmailMessage)
 }
 
 func GetEmailWorker() IEmailWorker {
@@ -41,11 +41,16 @@ func (this *emailWorker) Shutdown() {
 	this.wg.Wait()
 }
 
-func (this *emailWorker) GenCLAPDFForCorporationAndSendIt(claOrg *models.CLAOrg, signing *models.CorporationSigning, cla *models.CLA, emailCfg *models.OrgEmail) {
+func (this *emailWorker) GenCLAPDFForCorporationAndSendIt(claOrg *models.CLAOrg, signing *models.CorporationSigning, cla *models.CLA) {
 	f := func() {
 		defer func() {
 			this.wg.Done()
 		}()
+
+		emailCfg, ec, err := getEmailClient(claOrg.OrgEmail)
+		if err != nil {
+			return
+		}
 
 		file := ""
 		for {
@@ -63,23 +68,16 @@ func (this *emailWorker) GenCLAPDFForCorporationAndSendIt(claOrg *models.CLAOrg,
 				file = file1
 			}
 
-			e, err := email.GetEmailClient(emailCfg.Platform)
-			if err != nil {
-				beego.Info(err)
-				break
-			}
-
 			data := email.CorporationSigning{}
 			msg, err := data.GenEmailMsg()
 			if err != nil {
 				next(err)
 				continue
 			}
-
 			msg.To = []string{signing.AdminEmail}
 			msg.Attachment = file
 
-			if err := e.SendEmail(emailCfg.Token, msg); err != nil {
+			if err := ec.SendEmail(emailCfg.Token, msg); err != nil {
 				next(err)
 				continue
 			}
@@ -93,11 +91,16 @@ func (this *emailWorker) GenCLAPDFForCorporationAndSendIt(claOrg *models.CLAOrg,
 	go f()
 }
 
-func (this *emailWorker) SendSimpleMessage(emailCfg *models.OrgEmail, msg *email.EmailMessage) {
+func (this *emailWorker) SendSimpleMessage(orgEmail string, msg *email.EmailMessage) {
 	f := func() {
 		defer func() {
 			this.wg.Done()
 		}()
+
+		emailCfg, ec, err := getEmailClient(orgEmail)
+		if err != nil {
+			return
+		}
 
 		for {
 			if this.shutdown {
@@ -105,13 +108,7 @@ func (this *emailWorker) SendSimpleMessage(emailCfg *models.OrgEmail, msg *email
 				break
 			}
 
-			e, err := email.GetEmailClient(emailCfg.Platform)
-			if err != nil {
-				beego.Info(err)
-				break
-			}
-
-			if err := e.SendEmail(emailCfg.Token, msg); err != nil {
+			if err := ec.SendEmail(emailCfg.Token, msg); err != nil {
 				next(err)
 				continue
 			}
@@ -128,4 +125,20 @@ func next(err error) {
 	beego.Info(err)
 	time.Sleep(time.Minute * time.Duration(1))
 
+}
+
+func getEmailClient(orgEmail string) (*models.OrgEmail, email.IEmail, error) {
+	emailCfg := &models.OrgEmail{Email: orgEmail}
+	if err := emailCfg.Get(); err != nil {
+		beego.Info(err)
+		return nil, nil, err
+	}
+
+	ec, err := email.GetEmailClient(emailCfg.Platform)
+	if err != nil {
+		beego.Info(err)
+		return nil, nil, err
+	}
+
+	return emailCfg, ec, nil
 }

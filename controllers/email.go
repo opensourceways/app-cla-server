@@ -15,6 +15,12 @@ type EmailController struct {
 	beego.Controller
 }
 
+func (this *EmailController) Prepare() {
+	if getRouterPattern(&this.Controller) == "/v1/email/authcodeurl/:platform" {
+		apiPrepare(&this.Controller, []string{PermissionOwnerOfOrg}, nil)
+	}
+}
+
 // @Title Get
 // @Description get login info
 // @Success 200
@@ -66,13 +72,6 @@ func (this *EmailController) Get() {
 	defer func() {
 		sendResponse1(&this.Controller, statusCode, reason, body)
 	}()
-
-	code, _, err := checkApiAccessToken(&this.Controller, []string{PermissionOwnerOfOrg}, &accessController{})
-	if err != nil {
-		reason = err
-		statusCode = code
-		return
-	}
 
 	platform := this.GetString(":platform")
 	if platform == "" {

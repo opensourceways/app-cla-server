@@ -29,26 +29,28 @@ func filterForCorpManager(filter bson.M) {
 	filter[fieldCorpoManagers] = bson.M{"$type": "array"}
 }
 
-func (c *client) AddCorporationManager(claOrgID string, opt []dbmodels.CorporationManagerCreateOption, managerNumber int) error {
+func (c *client) AddCorporationManager(claOrgID string, opt []dbmodels.CorporationManagerCreateOption, managerNumber int) ([]dbmodels.CorporationManagerCreateOption, error) {
 	oid, err := toObjectID(claOrgID)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	f := func(ctx mongo.SessionContext) error {
-		toAdd := map[string]dbmodels.CorporationManagerCreateOption{}
-		for _, item := range opt {
-			toAdd[item.Email] = item
-		}
+	toAdd := make([]dbmodels.CorporationManagerCreateOption, 0, len(opt))
 
+	f := func(ctx mongo.SessionContext) error {
 		ms, err := c.listCorporationManager(oid, opt[0].Email, opt[0].Role, ctx)
 		if err != nil {
 			return err
 		}
 
+		current := map[string]bool{}
 		for _, item := range ms {
-			if _, ok := toAdd[item.Email]; ok {
-				delete(toAdd, item.Email)
+			current[item.Email] = true
+		}
+
+		for _, item := range opt {
+			if _, ok := current[item.Email]; !ok {
+				toAdd = append(toAdd, item)
 			}
 		}
 
@@ -100,7 +102,8 @@ func (c *client) AddCorporationManager(claOrgID string, opt []dbmodels.Corporati
 		return nil
 	}
 
-	return c.doTransaction(f)
+	err = c.doTransaction(f)
+	return toAdd, err
 }
 
 func (c *client) CheckCorporationManagerExist(opt dbmodels.CorporationManagerCheckInfo) (map[string][]dbmodels.CorporationManagerCheckResult, error) {
@@ -309,11 +312,13 @@ func (c *client) ListCorporationManager(claOrgID, email, role string) ([]dbmodel
 	return r, err
 }
 
-func (c *client) DeleteCorporationManager(claOrgID string, opt []dbmodels.CorporationManagerCreateOption) error {
+func (c *client) DeleteCorporationManager(claOrgID string, opt []dbmodels.CorporationManagerCreateOption) ([]string, error) {
 	oid, err := toObjectID(claOrgID)
 	if err != nil {
-		return err
+		return nil, err
 	}
+
+	deleted := make([]string, 0, len(opt))
 
 	f := func(ctx mongo.SessionContext) error {
 		ms, err := c.listCorporationManager(oid, opt[0].Email, opt[0].Role, ctx)
@@ -330,6 +335,7 @@ func (c *client) DeleteCorporationManager(claOrgID string, opt []dbmodels.Corpor
 		for _, item := range opt {
 			if _, ok := all[item.Email]; ok {
 				toDelete = append(toDelete, item.Email)
+				deleted = append(deleted, item.Email)
 			}
 		}
 		if len(toDelete) == 0 {
@@ -357,5 +363,6 @@ func (c *client) DeleteCorporationManager(claOrgID string, opt []dbmodels.Corpor
 		return nil
 	}
 
-	return c.doTransaction(f)
+	err = c.doTransaction(f)
+	return deleted, err
 }

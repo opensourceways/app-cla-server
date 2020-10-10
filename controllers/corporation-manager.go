@@ -112,9 +112,9 @@ func (this *CorporationManagerController) Put() {
 		return
 	}
 	claOrgID := this.GetString(":cla_org_id")
-	email := this.GetString(":email")
+	adminEmail := this.GetString(":email")
 
-	info, err := models.CheckCorporationSigning(claOrgID, email)
+	info, err := models.CheckCorporationSigning(claOrgID, adminEmail)
 	if err != nil {
 		reason = err
 		return
@@ -132,14 +132,20 @@ func (this *CorporationManagerController) Put() {
 		return
 	}
 
-	err = models.CreateCorporationAdministrator(claOrgID, email)
+	added, err := models.CreateCorporationAdministrator(claOrgID, adminEmail)
 	if err != nil {
 		reason = err
 		return
 	}
 
-	// TODO: send email
 	body = "add manager successfully"
+
+	claOrg := &models.CLAOrg{ID: claOrgID}
+	if err := claOrg.Get(); err != nil {
+		return
+	}
+
+	notifyCorpManagerWhenAdding(claOrg.OrgEmail, "Corporation Administrator", added)
 }
 
 // @Title Patch

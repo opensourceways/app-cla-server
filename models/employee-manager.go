@@ -40,7 +40,7 @@ func (this *EmployeeManagerCreateOption) Validate(adminEmail string) (string, er
 	return "", nil
 }
 
-func (this *EmployeeManagerCreateOption) Create(claOrgID string) error {
+func (this *EmployeeManagerCreateOption) Create(claOrgID string) ([]dbmodels.CorporationManagerCreateOption, error) {
 	pw := "123456"
 
 	opt := make([]dbmodels.CorporationManagerCreateOption, 0, len(this.Emails))
@@ -56,7 +56,7 @@ func (this *EmployeeManagerCreateOption) Create(claOrgID string) error {
 	return dbmodels.GetDB().AddCorporationManager(claOrgID, opt, conf.AppConfig.EmployeeManagersNumber)
 }
 
-func (this *EmployeeManagerCreateOption) Delete(claOrgID string) error {
+func (this *EmployeeManagerCreateOption) Delete(claOrgID string) ([]string, error) {
 	opt := make([]dbmodels.CorporationManagerCreateOption, 0, len(this.Emails))
 
 	for _, item := range this.Emails {

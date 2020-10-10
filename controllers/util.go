@@ -9,8 +9,10 @@ import (
 
 	"github.com/opensourceways/app-cla-server/conf"
 	"github.com/opensourceways/app-cla-server/dbmodels"
+	"github.com/opensourceways/app-cla-server/email"
 	"github.com/opensourceways/app-cla-server/models"
 	"github.com/opensourceways/app-cla-server/util"
+	"github.com/opensourceways/app-cla-server/worker"
 )
 
 const (
@@ -336,4 +338,52 @@ func isNoClaBindingDoc(err error) bool {
 
 func getRequestMethod(c *beego.Controller) string {
 	return c.Ctx.Request.Method
+}
+
+func notifyCorpManagerWhenAdding(orgEmail, subject string, info []dbmodels.CorporationManagerCreateOption) {
+	for _, item := range info {
+		d := email.AddingCorpManager{
+			Admin:    (item.Role == dbmodels.RoleAdmin),
+			Password: item.Password,
+		}
+		msg, err := d.GenEmailMsg()
+		if err != nil {
+			beego.Error(err)
+			continue
+		}
+		msg.To = []string{item.Email}
+		msg.Subject = subject
+
+		worker.GetEmailWorker().SendSimpleMessage(orgEmail, msg)
+	}
+}
+
+func notifyCorpManagerWhenRemoving(orgEmail string, info []string) {
+	for _, item := range info {
+		d := email.RemovingCorpManager{}
+		msg, err := d.GenEmailMsg()
+		if err != nil {
+			beego.Error(err)
+			continue
+		}
+
+		msg.To = []string{item}
+		msg.Subject = "Removing Corp Manager"
+
+		worker.GetEmailWorker().SendSimpleMessage(orgEmail, msg)
+	}
+}
+
+func sendVerificationCodeEmail(code, orgEmail, adminEmail string) {
+	d := email.CorpSigningVerificationCode{Code: code}
+	msg, err := d.GenEmailMsg()
+	if err != nil {
+		beego.Error(err)
+		return
+	}
+
+	msg.To = []string{adminEmail}
+	msg.Subject = "verification code"
+
+	worker.GetEmailWorker().SendSimpleMessage(orgEmail, msg)
 }

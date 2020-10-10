@@ -65,11 +65,12 @@ func (this *emailWorker) GenCLAPDFForCorporationAndSendIt(claOrg *models.CLAOrg,
 
 			e, err := email.GetEmailClient(emailCfg.Platform)
 			if err != nil {
-				next(err)
-				continue
+				beego.Info(err)
+				break
 			}
 
-			msg, err := email.GenCorporationSigningNotificationMsg(email.CorporationSigning{})
+			data := email.CorporationSigning{}
+			msg, err := data.GenEmailMsg()
 			if err != nil {
 				next(err)
 				continue
@@ -106,8 +107,8 @@ func (this *emailWorker) SendSimpleMessage(emailCfg *models.OrgEmail, msg *email
 
 			e, err := email.GetEmailClient(emailCfg.Platform)
 			if err != nil {
-				next(err)
-				continue
+				beego.Info(err)
+				break
 			}
 
 			if err := e.SendEmail(emailCfg.Token, msg); err != nil {

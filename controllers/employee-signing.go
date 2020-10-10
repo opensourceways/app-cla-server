@@ -260,7 +260,7 @@ func (this *EmployeeSigningController) canHandleOnEmployee(claOrgID, employeeEma
 	}
 
 	corpClaOrg := &models.CLAOrg{ID: corpClaOrgID}
-	if err := claOrg.Get(); err != nil {
+	if err := corpClaOrg.Get(); err != nil {
 		return 0, "", err
 	}
 

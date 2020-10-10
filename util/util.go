@@ -15,14 +15,6 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
-func emailToKey(email string) string {
-	return strings.ReplaceAll(email, ".", "_")
-}
-
-func EmailSuffixToKey(email string) string {
-	return emailToKey(strings.Split(email, "@")[1])
-}
-
 func EmailSuffix(email string) string {
 	v := strings.Split(email, "@")
 	if len(v) == 2 {
@@ -32,7 +24,8 @@ func EmailSuffix(email string) string {
 }
 
 func CorporCLAPDFFile(out, claOrgID, email, other string) string {
-	f := fmt.Sprintf("%s_%s%s.pdf", claOrgID, EmailSuffixToKey(email), other)
+	s := strings.ReplaceAll(EmailSuffix(email), ".", "_")
+	f := fmt.Sprintf("%s_%s%s.pdf", claOrgID, s, other)
 	return filepath.Join(out, f)
 }
 

@@ -19,7 +19,7 @@ type CorporationSigningController struct {
 }
 
 func (this *CorporationSigningController) Prepare() {
-	method := this.Ctx.Request.Method
+	method := getRequestMethod(&this.Controller)
 
 	if getRouterPattern(&this.Controller) == "/v1/corporation-signing/:cla_org_id/:email" {
 		switch method {

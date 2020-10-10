@@ -108,12 +108,26 @@ func (this *EmployeeManagerController) addOrDeleteManagers(toAdd bool) {
 		return
 	}
 
-	if toAdd {
-		err = (&info).Create(claOrgID)
-	} else {
-		err = (&info).Delete(claOrgID)
-	}
-	if err != nil {
+	claOrg := &models.CLAOrg{ID: claOrgID}
+	if err := claOrg.Get(); err != nil {
 		reason = err
+		return
+	}
+
+	if toAdd {
+		added, err := (&info).Create(claOrgID)
+		if err != nil {
+			reason = err
+		} else {
+			notifyCorpManagerWhenAdding(claOrg.OrgEmail, "Corporation Manager", added)
+		}
+
+	} else {
+		deleted, err := (&info).Delete(claOrgID)
+		if err != nil {
+			reason = err
+		} else {
+			notifyCorpManagerWhenRemoving(claOrg.OrgEmail, deleted)
+		}
 	}
 }

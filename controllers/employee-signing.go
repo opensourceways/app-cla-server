@@ -68,13 +68,6 @@ func (this *EmployeeSigningController) Post() {
 		return
 	}
 
-	emailCfg := &models.OrgEmail{Email: claOrg.OrgEmail}
-	if err := emailCfg.Get(); err != nil {
-		reason = err
-		statusCode = 500
-		return
-	}
-
 	corpSignedCla, corpSign, err := models.GetCorporationSigningDetail(
 		claOrg.Platform, claOrg.OrgID, claOrg.RepoID, info.Email)
 	if err != nil {
@@ -89,12 +82,6 @@ func (this *EmployeeSigningController) Post() {
 		return
 	}
 
-	managers, err := models.ListCorporationManagers(corpSignedCla, info.Email, dbmodels.RoleManager)
-	if err != nil {
-		reason = err
-		return
-	}
-
 	err = (&info).Create(claOrgID, claOrg.Platform, claOrg.OrgID, claOrg.RepoID, false)
 	if err != nil {
 		reason = err
@@ -102,19 +89,8 @@ func (this *EmployeeSigningController) Post() {
 	}
 	body = "sign successfully"
 
-	if len(managers) > 0 {
-		msg := email.EmailMessage{
-			To:      []string{},
-			Subject: "Notification",
-			Content: "somebody has signed",
-		}
-		for _, item := range managers {
-			if item.Role == dbmodels.RoleManager {
-				msg.To = append(msg.To, item.Email)
-			}
-		}
-		worker.GetEmailWorker().SendSimpleMessage(emailCfg, &msg)
-	}
+	d := email.EmployeeSigning{}
+	this.notifyManagers(corpSignedCla, info.Email, claOrg.OrgEmail, "Employee Signing", d)
 }
 
 // @Title GetAll
@@ -184,7 +160,8 @@ func (this *EmployeeSigningController) Update() {
 	employeeEmail := this.GetString(":email")
 	claOrgID := this.GetString(":cla_org_id")
 
-	statusCode, errCode, reason = this.canHandleOnEmployee(claOrgID, employeeEmail)
+	orgEmail := ""
+	statusCode, errCode, orgEmail, reason = this.canHandleOnEmployee(claOrgID, employeeEmail)
 	if reason != nil {
 		return
 	}
@@ -203,6 +180,17 @@ func (this *EmployeeSigningController) Update() {
 	}
 
 	body = "enabled employee successfully"
+
+	b := email.EmployeeNotification{}
+	subject := ""
+	if info.Enabled {
+		b.Active = true
+		subject = "Activate employee"
+	} else {
+		b.Inactive = true
+		subject = "Inavtivate employee"
+	}
+	this.notifyEmployee(employeeEmail, orgEmail, subject, &b)
 }
 
 // @Title Delete
@@ -231,7 +219,8 @@ func (this *EmployeeSigningController) Delete() {
 	employeeEmail := this.GetString(":email")
 	claOrgID := this.GetString(":cla_org_id")
 
-	statusCode, errCode, reason = this.canHandleOnEmployee(claOrgID, employeeEmail)
+	orgEmail := ""
+	statusCode, errCode, orgEmail, reason = this.canHandleOnEmployee(claOrgID, employeeEmail)
 	if reason != nil {
 		return
 	}
@@ -242,33 +231,79 @@ func (this *EmployeeSigningController) Delete() {
 	}
 
 	body = "delete employee successfully"
+
+	b := email.EmployeeNotification{Removing: true}
+	subject := "Remove employee"
+	this.notifyEmployee(employeeEmail, orgEmail, subject, &b)
 }
 
-func (this *EmployeeSigningController) canHandleOnEmployee(claOrgID, employeeEmail string) (int, string, error) {
+func (this *EmployeeSigningController) canHandleOnEmployee(claOrgID, employeeEmail string) (int, string, string, error) {
 	corpClaOrgID, corpEmail, err := parseCorpManagerUser(&this.Controller)
 	if err != nil {
-		return 401, util.ErrUnknownToken, err
+		return 401, util.ErrUnknownToken, "", err
 	}
 
 	if !isSameCorp(corpEmail, employeeEmail) {
-		return 400, util.ErrNotSameCorp, fmt.Errorf("not same corp")
+		return 400, util.ErrNotSameCorp, "", fmt.Errorf("not same corp")
 	}
 
 	claOrg := &models.CLAOrg{ID: claOrgID}
 	if err := claOrg.Get(); err != nil {
-		return 0, "", err
+		return 0, "", "", err
 	}
 
 	corpClaOrg := &models.CLAOrg{ID: corpClaOrgID}
 	if err := corpClaOrg.Get(); err != nil {
-		return 0, "", err
+		return 0, "", "", err
 	}
 
 	if claOrg.Platform != corpClaOrg.Platform ||
 		claOrg.OrgID != corpClaOrg.OrgID ||
 		claOrg.RepoID != corpClaOrg.RepoID {
-		return 400, util.ErrInvalidParameter, fmt.Errorf("not the same repo")
+		return 400, util.ErrInvalidParameter, "", fmt.Errorf("not the same repo")
 	}
 
-	return 0, "", nil
+	return 0, "", claOrg.OrgEmail, nil
+}
+
+func (this *EmployeeSigningController) notifyManagers(corpClaOrgID, employeeEmail, orgEmail, subject string, builder email.IEmailMessageBulder) {
+	managers, err := models.ListCorporationManagers(corpClaOrgID, employeeEmail, dbmodels.RoleManager)
+	if err != nil {
+		beego.Error(err)
+		return
+	}
+
+	if len(managers) == 0 {
+		return
+	}
+
+	msg, err := builder.GenEmailMsg()
+	if err != nil {
+		beego.Error(err)
+		return
+	}
+
+	to := make([]string, 0, len(managers))
+	for _, item := range managers {
+		if item.Role == dbmodels.RoleManager {
+			to = append(to, item.Email)
+		}
+	}
+	msg.To = to
+	msg.Subject = subject
+
+	worker.GetEmailWorker().SendSimpleMessage(orgEmail, msg)
+}
+
+func (this *EmployeeSigningController) notifyEmployee(employeeEmail, orgEmail, subject string, builder email.IEmailMessageBulder) {
+	msg, err := builder.GenEmailMsg()
+	if err != nil {
+		beego.Error(err)
+		return
+	}
+
+	msg.To = []string{employeeEmail}
+	msg.Subject = subject
+
+	worker.GetEmailWorker().SendSimpleMessage(orgEmail, msg)
 }

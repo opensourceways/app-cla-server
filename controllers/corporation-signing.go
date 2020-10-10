@@ -8,7 +8,7 @@ import (
 	"github.com/astaxie/beego"
 
 	"github.com/opensourceways/app-cla-server/conf"
-	"github.com/opensourceways/app-cla-server/email"
+	"github.com/opensourceways/app-cla-server/dbmodels"
 	"github.com/opensourceways/app-cla-server/models"
 	"github.com/opensourceways/app-cla-server/util"
 	"github.com/opensourceways/app-cla-server/worker"
@@ -86,13 +86,6 @@ func (this *CorporationSigningController) Post() {
 		return
 	}
 
-	emailCfg := &models.OrgEmail{Email: claOrg.OrgEmail}
-	if err := emailCfg.Get(); err != nil {
-		reason = err
-		statusCode = 500
-		return
-	}
-
 	cla := &models.CLA{ID: claOrg.CLAID}
 	if err := cla.Get(); err != nil {
 		reason = err
@@ -107,7 +100,7 @@ func (this *CorporationSigningController) Post() {
 
 	body = "sign successfully"
 
-	worker.GetEmailWorker().GenCLAPDFForCorporationAndSendIt(claOrg, &info.CorporationSigning, cla, emailCfg)
+	worker.GetEmailWorker().GenCLAPDFForCorporationAndSendIt(claOrg, &info.CorporationSigning, cla)
 }
 
 // @Title GetAll
@@ -257,21 +250,19 @@ func (this *CorporationSigningController) SendVerifiCode() {
 		statusCode = 400
 		return
 	}
-
 	claOrgID := this.GetString(":cla_org_id")
 	adminEmail := this.GetString(":email")
 
-	_, emailCfg, err := getEmailConfig(claOrgID)
-	if err != nil {
+	claOrg := &models.CLAOrg{ID: claOrgID}
+	if err := claOrg.Get(); err != nil {
 		reason = err
 		return
 	}
 
-	ec, err := email.GetEmailClient(emailCfg.Platform)
-	if err != nil {
-		reason = err
-		errCode = util.ErrUnknownEmailPlatform
-		statusCode = 500
+	if claOrg.ApplyTo != dbmodels.ApplyToCorporation {
+		reason = fmt.Errorf("no signing on cla applied to corporation")
+		errCode = util.ErrInvalidParameter
+		statusCode = 400
 		return
 	}
 
@@ -282,19 +273,9 @@ func (this *CorporationSigningController) SendVerifiCode() {
 		return
 	}
 
-	msg := email.EmailMessage{
-		To:      []string{adminEmail},
-		Content: code,
-		Subject: "verification code",
-	}
-	if err := ec.SendEmail(emailCfg.Token, &msg); err != nil {
-		reason = err
-		errCode = util.ErrSendingEmail
-		statusCode = 500
-		return
-	}
-
 	body = map[string]int64{
 		"expiry": expiry,
 	}
+
+	sendVerificationCodeEmail(code, claOrg.OrgEmail, adminEmail)
 }

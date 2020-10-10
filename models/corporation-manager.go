@@ -10,7 +10,7 @@ func (this CorporationManagerAuthentication) Authenticate() (map[string][]dbmode
 	)
 }
 
-func CreateCorporationAdministrator(claOrgID, email string) error {
+func CreateCorporationAdministrator(claOrgID, email string) ([]dbmodels.CorporationManagerCreateOption, error) {
 	pw := "123456"
 	opt := []dbmodels.CorporationManagerCreateOption{
 		{

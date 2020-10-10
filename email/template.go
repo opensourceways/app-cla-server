@@ -52,15 +52,19 @@ func genEmailMsg(tmplName string, data interface{}) (*EmailMessage, error) {
 	return &EmailMessage{Content: str}, nil
 }
 
+type IEmailMessageBulder interface {
+	// msg returned only includes content and subject
+	GenEmailMsg() (*EmailMessage, error)
+}
+
 type CorporationSigning struct{}
 
-func GenCorporationSigningNotificationMsg(data CorporationSigning) (*EmailMessage, error) {
-	return genEmailMsg(TmplCorporationSigning, data)
+func (this CorporationSigning) GenEmailMsg() (*EmailMessage, error) {
+	return genEmailMsg(TmplCorporationSigning, this)
 }
 
 type IndividualSigning struct{}
 
-func GenIndividualSigningNotificationMsg(data *IndividualSigning) (*EmailMessage, error) {
-	// msg returned should include content and subject
-	return genEmailMsg(TmplIndividualSigning, data)
+func (this IndividualSigning) GenEmailMsg() (*EmailMessage, error) {
+	return genEmailMsg(TmplIndividualSigning, this)
 }

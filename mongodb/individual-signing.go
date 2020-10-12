@@ -50,7 +50,7 @@ func (c *client) SignAsIndividual(claOrgID, platform, org, repo string, info dbm
 	addCorporationID(info.Email, body)
 
 	f := func(ctx mongo.SessionContext) error {
-		_, err := c.isIndividualSigned(platform, org, repo, info.Email, ctx)
+		_, err := c.isIndividualSigned(platform, org, repo, info.Email, false, ctx)
 		if err != nil {
 			if !isHasNotSigned(err) {
 				return err
@@ -166,7 +166,7 @@ func (c *client) IsIndividualSigned(platform, orgID, repoID, email string) (bool
 	r := false
 
 	f := func(ctx context.Context) error {
-		v, err := c.isIndividualSigned(platform, orgID, repoID, email, ctx)
+		v, err := c.isIndividualSigned(platform, orgID, repoID, email, true, ctx)
 		r = v
 		return err
 
@@ -176,7 +176,7 @@ func (c *client) IsIndividualSigned(platform, orgID, repoID, email string) (bool
 	return r, err
 }
 
-func (c *client) isIndividualSigned(platform, orgID, repoID, email string, ctx context.Context) (bool, error) {
+func (c *client) isIndividualSigned(platform, orgID, repoID, email string, orgCared bool, ctx context.Context) (bool, error) {
 	filterOfSigning := bson.M{
 		fieldIndividuals: bson.M{"$filter": bson.M{
 			"input": fmt.Sprintf("$%s", fieldIndividuals),
@@ -191,101 +191,12 @@ func (c *client) isIndividualSigned(platform, orgID, repoID, email string, ctx c
 		individualSigningField("enabled"): 1,
 	}
 
-	claOrg, err := c.getSigningDetail(platform, orgID, repoID, dbmodels.ApplyToIndividual, filterOfSigning, project, ctx)
+	claOrg, err := c.getSigningDetail(platform, orgID, repoID, dbmodels.ApplyToIndividual, orgCared, filterOfSigning, project, ctx)
 	if err != nil {
 		return false, err
 	}
 
 	return claOrg.Individuals[0].Enabled, nil
-}
-
-func (c *client) isIndividualSigned1(platform, orgID, repoID, email string, ctx context.Context) (bool, error) {
-	filter := bson.M{
-		"platform": platform,
-		"org_id":   orgID,
-		"apply_to": dbmodels.ApplyToIndividual,
-		"enabled":  true,
-	}
-	if repoID == "" {
-		filter[fieldRepo] = ""
-	} else {
-		filter[fieldRepo] = bson.M{"$in": bson.A{"", repoID}}
-	}
-
-	pipeline := bson.A{
-		bson.M{"$match": filter},
-		bson.M{"$project": bson.M{
-			fieldRepo: 1,
-			fieldIndividuals: bson.M{"$filter": bson.M{
-				"input": fmt.Sprintf("$%s", fieldIndividuals),
-				"cond": bson.M{"$and": bson.A{
-					bson.M{"$eq": bson.A{"$$this.corp_id", util.EmailSuffix(email)}},
-					bson.M{"$eq": bson.A{"$$this.email", email}},
-				}},
-			}},
-		}},
-		bson.M{"$project": bson.M{
-			fieldRepo:                         1,
-			individualSigningField("enabled"): 1,
-		}},
-	}
-
-	var v []CLAOrg
-	f := func() error {
-		col := c.collection(claOrgCollection)
-
-		cursor, err := col.Aggregate(ctx, pipeline)
-		if err != nil {
-			return err
-		}
-
-		err = cursor.All(ctx, &v)
-		if err != nil {
-			return err
-		}
-
-		return nil
-	}
-	if err := f(); err != nil {
-		return false, err
-	}
-
-	if len(v) == 0 {
-		return false, dbmodels.DBError{
-			ErrCode: util.ErrNoCLABindingDoc,
-			Err:     fmt.Errorf("no record for this org/repo: %s/%s/%s", platform, orgID, repoID),
-		}
-	}
-
-	err := dbmodels.DBError{
-		ErrCode: util.ErrHasNotSigned,
-		Err:     fmt.Errorf("he/she has not signed"),
-	}
-	if repoID != "" {
-		bingo := false
-
-		for _, doc := range v {
-			if doc.RepoID == repoID {
-				if !bingo {
-					bingo = true
-				}
-				if len(doc.Individuals) > 0 {
-					return doc.Individuals[0].Enabled, nil
-				}
-			}
-		}
-		if bingo {
-			return false, err
-		}
-	}
-
-	for _, doc := range v {
-		if len(doc.Individuals) > 0 {
-			return doc.Individuals[0].Enabled, nil
-		}
-	}
-
-	return false, err
 }
 
 func (c *client) ListIndividualSigning(opt dbmodels.IndividualSigningListOption) (map[string][]dbmodels.IndividualSigningBasicInfo, error) {

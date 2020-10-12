@@ -22,11 +22,12 @@ type CorporationManagerResetPassword struct {
 }
 
 type CorporationManagerCheckResult struct {
-	Role     string `json:"role"`
-	Email    string `json:"email"`
-	Platform string `json:"platform"`
-	OrgID    string `json:"org_id"`
-	RepoID   string `json:"repo_id"`
+	Role             string `json:"role"`
+	Email            string `json:"email"`
+	Platform         string `json:"platform"`
+	OrgID            string `json:"org_id"`
+	RepoID           string `json:"repo_id"`
+	InitialPWChanged bool   `json:"initial_pw_changed"`
 }
 
 type CorporationManagerListResult struct {

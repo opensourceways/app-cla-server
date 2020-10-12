@@ -1,6 +1,8 @@
 package models
 
 import (
+	"fmt"
+
 	"github.com/opensourceways/app-cla-server/dbmodels"
 	"github.com/opensourceways/app-cla-server/util"
 )
@@ -27,6 +29,13 @@ func CreateCorporationAdministrator(claOrgID, email string) ([]dbmodels.Corporat
 }
 
 type CorporationManagerResetPassword dbmodels.CorporationManagerResetPassword
+
+func (this CorporationManagerResetPassword) Validate() (string, error) {
+	if this.NewPassword == this.OldPassword {
+		return util.ErrInvalidParameter, fmt.Errorf("the new password is same as old one")
+	}
+	return "", nil
+}
 
 func (this CorporationManagerResetPassword) Reset(claOrgID, email string) error {
 	return dbmodels.GetDB().ResetCorporationManagerPassword(

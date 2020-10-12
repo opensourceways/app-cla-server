@@ -14,9 +14,10 @@ import (
 )
 
 type corporationManagerDoc struct {
-	Role     string `bson:"role" json:"role" required:"true"`
-	Email    string `bson:"email"  json:"email" required:"true"`
-	Password string `bson:"password" json:"password" required:"true"`
+	Role             string `bson:"role" json:"role" required:"true"`
+	Email            string `bson:"email"  json:"email" required:"true"`
+	Password         string `bson:"password" json:"password" required:"true"`
+	InitialPWChanged bool   `bson:"changed" json:"changed"`
 }
 
 func corpManagerField(field string) string {
@@ -131,11 +132,12 @@ func (c *client) CheckCorporationManagerExist(opt dbmodels.CorporationManagerChe
 				}}},
 			},
 			bson.M{"$project": bson.M{
-				"platform":                1,
-				"org_id":                  1,
-				"repo_id":                 1,
-				corpManagerField("role"):  1,
-				corpManagerField("email"): 1,
+				"platform":                  1,
+				"org_id":                    1,
+				"repo_id":                   1,
+				corpManagerField("role"):    1,
+				corpManagerField("email"):   1,
+				corpManagerField("changed"): 1,
 			}},
 		}
 
@@ -170,11 +172,12 @@ func (c *client) CheckCorporationManagerExist(opt dbmodels.CorporationManagerChe
 		ms := make([]dbmodels.CorporationManagerCheckResult, 0, len(cm))
 		for _, item := range cm {
 			ms = append(ms, dbmodels.CorporationManagerCheckResult{
-				Email:    item.Email,
-				Role:     item.Role,
-				Platform: doc.Platform,
-				OrgID:    doc.OrgID,
-				RepoID:   doc.RepoID,
+				Email:            item.Email,
+				Role:             item.Role,
+				Platform:         doc.Platform,
+				OrgID:            doc.OrgID,
+				RepoID:           doc.RepoID,
+				InitialPWChanged: item.InitialPWChanged,
 			})
 		}
 		result[objectIDToUID(doc.ID)] = ms
@@ -194,7 +197,10 @@ func (c *client) ResetCorporationManagerPassword(claOrgID, email string, opt dbm
 	f := func(ctx context.Context) error {
 		col := c.collection(claOrgCollection)
 
-		update := bson.M{"$set": bson.M{fmt.Sprintf("%s.$[ms].password", fieldCorpoManagers): opt.NewPassword}}
+		update := bson.M{"$set": bson.M{
+			fmt.Sprintf("%s.$[ms].password", fieldCorpoManagers): opt.NewPassword,
+			fmt.Sprintf("%s.$[ms].changed", fieldCorpoManagers):  true,
+		}}
 
 		updateOpt := options.UpdateOptions{
 			ArrayFilters: &options.ArrayFilters{

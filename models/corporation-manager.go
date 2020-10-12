@@ -1,6 +1,9 @@
 package models
 
-import "github.com/opensourceways/app-cla-server/dbmodels"
+import (
+	"github.com/opensourceways/app-cla-server/dbmodels"
+	"github.com/opensourceways/app-cla-server/util"
+)
 
 type CorporationManagerAuthentication dbmodels.CorporationManagerCheckInfo
 
@@ -11,7 +14,8 @@ func (this CorporationManagerAuthentication) Authenticate() (map[string][]dbmode
 }
 
 func CreateCorporationAdministrator(claOrgID, email string) ([]dbmodels.CorporationManagerCreateOption, error) {
-	pw := "123456"
+	pw := util.RandStr(8, "alphanum")
+
 	opt := []dbmodels.CorporationManagerCreateOption{
 		{
 			Role:     dbmodels.RoleAdmin,

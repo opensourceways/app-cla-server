@@ -1,7 +1,6 @@
 package email
 
 import (
-	"crypto/rand"
 	"fmt"
 
 	"golang.org/x/oauth2"
@@ -55,26 +54,4 @@ type EmailMessage struct {
 	Subject    string   `json:"subject"`
 	Content    string   `json:"content"`
 	Attachment string   `json:"attachment"`
-}
-
-func randStr(strSize int, randType string) string {
-	var dictionary string
-
-	switch randType {
-	case "alphanum":
-		dictionary = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
-	case "alpha":
-		dictionary = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
-	case "number":
-		dictionary = "0123456789"
-	}
-
-	var bytes = make([]byte, strSize)
-	rand.Read(bytes)
-
-	n := byte(len(dictionary))
-	for k, v := range bytes {
-		bytes[k] = dictionary[v%n]
-	}
-	return string(bytes)
 }

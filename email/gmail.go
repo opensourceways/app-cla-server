@@ -17,6 +17,7 @@ import (
 
 	"github.com/opensourceways/app-cla-server/models"
 	myoauth2 "github.com/opensourceways/app-cla-server/oauth2"
+	"github.com/opensourceways/app-cla-server/util"
 )
 
 func init() {
@@ -143,7 +144,7 @@ func (this *gmailClient) createGmailMessage(msg *EmailMessage) (*gmail.Message, 
 		To:           msg.To[0],
 		Subject:      msg.Subject,
 		Content:      msg.Content,
-		Boundary:     randStr(32, "alphanum"),
+		Boundary:     util.RandStr(32, "alphanum"),
 		FileData:     base64.StdEncoding.EncodeToString(fileBytes),
 		FileName:     path.Base(attachment),
 		FileMIMEType: http.DetectContentType(fileBytes),

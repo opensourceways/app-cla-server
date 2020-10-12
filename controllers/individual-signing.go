@@ -1,12 +1,13 @@
 package controllers
 
 import (
+	"fmt"
+	"net/http"
+
 	"github.com/astaxie/beego"
 
-	// "github.com/opensourceways/app-cla-server/email"
 	"github.com/opensourceways/app-cla-server/models"
 	"github.com/opensourceways/app-cla-server/util"
-	// "github.com/opensourceways/app-cla-server/worker"
 )
 
 type IndividualSigningController struct {
@@ -14,11 +15,10 @@ type IndividualSigningController struct {
 }
 
 func (this *IndividualSigningController) Prepare() {
-	if getRouterPattern(&this.Controller) == "/v1/individual-signing/:platform/:org/:repo" {
-		return
+	// sign as individual
+	if getRequestMethod(&this.Controller) == http.MethodPost {
+		apiPrepare(&this.Controller, []string{PermissionIndividualSigner}, nil)
 	}
-
-	apiPrepare(&this.Controller, []string{PermissionIndividualSigner}, nil)
 }
 
 // @Title Post
@@ -59,22 +59,12 @@ func (this *IndividualSigningController) Post() {
 		reason = err
 		return
 	}
-	/*
-		_, emailCfg, err := getEmailConfig(claOrgID)
-		if err != nil {
-			reason = err
-			statusCode = 500
-			return
-		}
-
-		msg, err := email.GenIndividualSigningNotificationMsg(nil)
-		if err != nil {
-			reason = err
-			statusCode = 500
-			return
-		}
-		msg.To = []string{info.Email}
-	*/
+	if isNotIndividualCLA(claOrg) {
+		reason = fmt.Errorf("invalid cla")
+		errCode = util.ErrInvalidParameter
+		statusCode = 400
+		return
+	}
 
 	err = (&info).Create(claOrgID, claOrg.Platform, claOrg.OrgID, claOrg.RepoID, true)
 	if err != nil {
@@ -83,8 +73,6 @@ func (this *IndividualSigningController) Post() {
 	}
 
 	body = "sign successfully"
-
-	// worker.GetEmailWorker().SendSimpleMessage(emailCfg, msg)
 }
 
 // @Title Check
@@ -122,10 +110,9 @@ func (this *IndividualSigningController) Check() {
 	if err != nil {
 		reason = err
 		statusCode, errCode = convertDBError(err)
-		if errCode != util.ErrHasNotSigned {
-			return
+		if errCode == util.ErrHasNotSigned {
+			reason = nil
 		}
-		reason = nil
 	}
 
 	body = map[string]bool{

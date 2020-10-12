@@ -8,7 +8,6 @@ import (
 	"github.com/astaxie/beego"
 
 	"github.com/opensourceways/app-cla-server/conf"
-	"github.com/opensourceways/app-cla-server/dbmodels"
 	"github.com/opensourceways/app-cla-server/models"
 	"github.com/opensourceways/app-cla-server/util"
 	"github.com/opensourceways/app-cla-server/worker"
@@ -74,7 +73,6 @@ func (this *CorporationSigningController) Post() {
 		statusCode = 400
 		return
 	}
-
 	if err := (&info).Validate(); err != nil {
 		reason = err
 		return
@@ -83,6 +81,12 @@ func (this *CorporationSigningController) Post() {
 	claOrg := &models.CLAOrg{ID: claOrgID}
 	if err := claOrg.Get(); err != nil {
 		reason = err
+		return
+	}
+	if isNotCorpCLA(claOrg) {
+		reason = fmt.Errorf("invalid cla")
+		errCode = util.ErrInvalidParameter
+		statusCode = 400
 		return
 	}
 
@@ -258,9 +262,8 @@ func (this *CorporationSigningController) SendVerifiCode() {
 		reason = err
 		return
 	}
-
-	if claOrg.ApplyTo != dbmodels.ApplyToCorporation {
-		reason = fmt.Errorf("no signing on cla applied to corporation")
+	if isNotCorpCLA(claOrg) {
+		reason = fmt.Errorf("invalid cla")
 		errCode = util.ErrInvalidParameter
 		statusCode = 400
 		return

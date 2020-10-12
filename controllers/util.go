@@ -387,3 +387,11 @@ func sendVerificationCodeEmail(code, orgEmail, adminEmail string) {
 
 	worker.GetEmailWorker().SendSimpleMessage(orgEmail, msg)
 }
+
+func isNotIndividualCLA(claOrg *models.CLAOrg) bool {
+	return claOrg.ApplyTo != dbmodels.ApplyToIndividual
+}
+
+func isNotCorpCLA(claOrg *models.CLAOrg) bool {
+	return claOrg.ApplyTo != dbmodels.ApplyToCorporation
+}

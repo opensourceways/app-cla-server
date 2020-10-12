@@ -53,8 +53,8 @@ type ICLAOrg interface {
 
 type IIndividualSigning interface {
 	SignAsIndividual(claOrgID, platform, org, repo string, info IndividualSigningInfo) error
-	DeleteIndividualSigning(claOrgID, email string) error
-	UpdateIndividualSigning(claOrgID, email string, enabled bool) error
+	DeleteIndividualSigning(platform, org, repo, email string) error
+	UpdateIndividualSigning(platform, org, repo, email string, enabled bool) error
 	IsIndividualSigned(platform, orgID, repoId, email string) (bool, error)
 	ListIndividualSigning(opt IndividualSigningListOption) (map[string][]IndividualSigningBasicInfo, error)
 }

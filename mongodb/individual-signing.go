@@ -77,16 +77,14 @@ func (c *client) SignAsIndividual(claOrgID, platform, org, repo string, info dbm
 	return c.doTransaction(f)
 }
 
-func (c *client) DeleteIndividualSigning(claOrgID, email string) error {
-	oid, err := toObjectID(claOrgID)
-	if err != nil {
-		return err
-	}
-
+func (c *client) DeleteIndividualSigning(platform, org, repo, email string) error {
 	f := func(ctx context.Context) error {
-		col := c.collection(claOrgCollection)
+		claOrg, err := c.isIndividualSigned(platform, org, repo, email, false, ctx)
+		if err != nil {
+			return err
+		}
 
-		filter := bson.M{"_id": oid}
+		filter := bson.M{"_id": claOrg.ID}
 		filterForIndividualSigning(filter)
 
 		update := bson.M{"$pull": bson.M{fieldIndividuals: bson.M{
@@ -94,6 +92,7 @@ func (c *client) DeleteIndividualSigning(claOrgID, email string) error {
 			"email":            email,
 		}}}
 
+		col := c.collection(claOrgCollection)
 		r, err := col.UpdateOne(ctx, filter, update)
 		if err != nil {
 			return err
@@ -112,16 +111,14 @@ func (c *client) DeleteIndividualSigning(claOrgID, email string) error {
 	return withContext(f)
 }
 
-func (c *client) UpdateIndividualSigning(claOrgID, email string, enabled bool) error {
-	oid, err := toObjectID(claOrgID)
-	if err != nil {
-		return err
-	}
-
+func (c *client) UpdateIndividualSigning(platform, org, repo, email string, enabled bool) error {
 	f := func(ctx context.Context) error {
-		col := c.collection(claOrgCollection)
+		claOrg, err := c.isIndividualSigned(platform, org, repo, email, false, ctx)
+		if err != nil {
+			return err
+		}
 
-		filter := bson.M{"_id": oid}
+		filter := bson.M{"_id": claOrg.ID}
 		filterForIndividualSigning(filter)
 
 		update := bson.M{"$set": bson.M{fmt.Sprintf("%s.$[ms].enabled", fieldIndividuals): enabled}}
@@ -138,6 +135,7 @@ func (c *client) UpdateIndividualSigning(claOrgID, email string, enabled bool) e
 			},
 		}
 
+		col := c.collection(claOrgCollection)
 		r, err := col.UpdateOne(ctx, filter, update, &updateOpt)
 		if err != nil {
 			return err
@@ -167,16 +165,18 @@ func (c *client) IsIndividualSigned(platform, orgID, repoID, email string) (bool
 
 	f := func(ctx context.Context) error {
 		v, err := c.isIndividualSigned(platform, orgID, repoID, email, true, ctx)
-		r = v
-		return err
+		if err == nil {
+			r = v.Individuals[0].Enabled
+		}
 
+		return err
 	}
 
 	err := withContext(f)
 	return r, err
 }
 
-func (c *client) isIndividualSigned(platform, orgID, repoID, email string, orgCared bool, ctx context.Context) (bool, error) {
+func (c *client) isIndividualSigned(platform, orgID, repoID, email string, orgCared bool, ctx context.Context) (*CLAOrg, error) {
 	filterOfSigning := bson.M{
 		fieldIndividuals: bson.M{"$filter": bson.M{
 			"input": fmt.Sprintf("$%s", fieldIndividuals),
@@ -191,12 +191,7 @@ func (c *client) isIndividualSigned(platform, orgID, repoID, email string, orgCa
 		individualSigningField("enabled"): 1,
 	}
 
-	claOrg, err := c.getSigningDetail(platform, orgID, repoID, dbmodels.ApplyToIndividual, orgCared, filterOfSigning, project, ctx)
-	if err != nil {
-		return false, err
-	}
-
-	return claOrg.Individuals[0].Enabled, nil
+	return c.getSigningDetail(platform, orgID, repoID, dbmodels.ApplyToIndividual, orgCared, filterOfSigning, project, ctx)
 }
 
 func (c *client) ListIndividualSigning(opt dbmodels.IndividualSigningListOption) (map[string][]dbmodels.IndividualSigningBasicInfo, error) {

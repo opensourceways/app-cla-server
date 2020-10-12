@@ -18,8 +18,10 @@ type CLAOrgController struct {
 
 func (this *CLAOrgController) Prepare() {
 	if getRouterPattern(&this.Controller) == "/v1/cla-org/:platform/:org_id/:apply_to" {
-		// apiPrepare(&this.Controller, []string{PermissionIndividualSigner}, nil)
-		return
+		if getHeader(&this.Controller, headerToken) != "" {
+			apiPrepare(&this.Controller, []string{PermissionIndividualSigner}, nil)
+			return
+		}
 	}
 
 	apiPrepare(&this.Controller, []string{PermissionOwnerOfOrg}, &codePlatformAuth{})
@@ -183,6 +185,15 @@ func (this *CLAOrgController) GetSigningPageInfo() {
 		OrgID:    this.GetString(":org_id"),
 		RepoID:   this.GetString("repo_id"),
 		ApplyTo:  this.GetString(":apply_to"),
+	}
+
+	token := getHeader(&this.Controller, headerToken)
+	if (token == "" && opt.ApplyTo != dbmodels.ApplyToCorporation) ||
+		(token != "" && opt.ApplyTo != dbmodels.ApplyToIndividual) {
+		reason = fmt.Errorf("invalid :apply_to")
+		errCode = util.ErrInvalidParameter
+		statusCode = 400
+		return
 	}
 
 	claOrgs, err := opt.ListForSigningPage()

@@ -21,12 +21,12 @@ type EmployeeSigningUdateInfo struct {
 	Enabled bool `json:"enabled"`
 }
 
-func (this *EmployeeSigningUdateInfo) Update(claOrgID, email string) error {
+func (this *EmployeeSigningUdateInfo) Update(platform, org, repo, email string) error {
 	return dbmodels.GetDB().UpdateIndividualSigning(
-		claOrgID, email, this.Enabled,
+		platform, org, repo, email, this.Enabled,
 	)
 }
 
-func DeleteEmployeeSigning(claOrgID, email string) error {
-	return dbmodels.GetDB().DeleteIndividualSigning(claOrgID, email)
+func DeleteEmployeeSigning(platform, org, repo, email string) error {
+	return dbmodels.GetDB().DeleteIndividualSigning(platform, org, repo, email)
 }

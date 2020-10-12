@@ -67,6 +67,12 @@ func (this *EmployeeSigningController) Post() {
 		reason = err
 		return
 	}
+	if isNotIndividualCLA(claOrg) {
+		reason = fmt.Errorf("invalid cla")
+		errCode = util.ErrInvalidParameter
+		statusCode = 400
+		return
+	}
 
 	corpSignedCla, corpSign, err := models.GetCorporationSigningDetail(
 		claOrg.Platform, claOrg.OrgID, claOrg.RepoID, info.Email)
@@ -136,10 +142,9 @@ func (this *EmployeeSigningController) GetAll() {
 
 // @Title Update
 // @Description enable/unable employee signing
-// @Param	:cla_org_id	path 	string	true		"cla org id"
 // @Param	:email		path 	string	true		"email"
 // @Success 202 {int} map
-// @router /:cla_org_id/:email [put]
+// @router /:email [put]
 func (this *EmployeeSigningController) Update() {
 	var statusCode = 0
 	var errCode = ""
@@ -150,19 +155,23 @@ func (this *EmployeeSigningController) Update() {
 		sendResponse(&this.Controller, statusCode, errCode, reason, body, "enable/unable employee signing")
 	}()
 
-	if err := checkAPIStringParameter(&this.Controller, []string{":cla_org_id", ":email"}); err != nil {
+	employeeEmail, err := fetchStringParameter(&this.Controller, ":email")
+	if err != nil {
 		reason = err
 		errCode = util.ErrInvalidParameter
 		statusCode = 400
 		return
-
 	}
-	employeeEmail := this.GetString(":email")
-	claOrgID := this.GetString(":cla_org_id")
 
-	orgEmail := ""
-	statusCode, errCode, orgEmail, reason = this.canHandleOnEmployee(claOrgID, employeeEmail)
+	corpClaOrgID := ""
+	statusCode, errCode, corpClaOrgID, reason = this.canHandleOnEmployee(employeeEmail)
 	if reason != nil {
+		return
+	}
+
+	corpClaOrg := &models.CLAOrg{ID: corpClaOrgID}
+	if err := corpClaOrg.Get(); err != nil {
+		reason = err
 		return
 	}
 
@@ -174,7 +183,8 @@ func (this *EmployeeSigningController) Update() {
 		return
 	}
 
-	if err := (&info).Update(claOrgID, employeeEmail); err != nil {
+	err = (&info).Update(corpClaOrg.Platform, corpClaOrg.OrgID, corpClaOrg.RepoID, employeeEmail)
+	if err != nil {
 		reason = err
 		return
 	}
@@ -190,15 +200,14 @@ func (this *EmployeeSigningController) Update() {
 		b.Inactive = true
 		subject = "Inavtivate employee"
 	}
-	this.notifyEmployee(employeeEmail, orgEmail, subject, &b)
+	this.notifyEmployee(employeeEmail, corpClaOrg.OrgEmail, subject, &b)
 }
 
 // @Title Delete
 // @Description delete employee signing
-// @Param	:cla_org_id	path 	string	true		"cla org id"
 // @Param	:email		path 	string	true		"email"
 // @Success 204 {string} delete success!
-// @router /:cla_org_id/:email [delete]
+// @router /:email [delete]
 func (this *EmployeeSigningController) Delete() {
 	var statusCode = 0
 	var errCode = ""
@@ -209,23 +218,28 @@ func (this *EmployeeSigningController) Delete() {
 		sendResponse(&this.Controller, statusCode, errCode, reason, body, "delete employee signing")
 	}()
 
-	if err := checkAPIStringParameter(&this.Controller, []string{":cla_org_id", ":email"}); err != nil {
+	employeeEmail, err := fetchStringParameter(&this.Controller, ":email")
+	if err != nil {
 		reason = err
 		errCode = util.ErrInvalidParameter
 		statusCode = 400
 		return
-
 	}
-	employeeEmail := this.GetString(":email")
-	claOrgID := this.GetString(":cla_org_id")
 
-	orgEmail := ""
-	statusCode, errCode, orgEmail, reason = this.canHandleOnEmployee(claOrgID, employeeEmail)
+	corpClaOrgID := ""
+	statusCode, errCode, corpClaOrgID, reason = this.canHandleOnEmployee(employeeEmail)
 	if reason != nil {
 		return
 	}
 
-	if err := models.DeleteEmployeeSigning(claOrgID, employeeEmail); err != nil {
+	corpClaOrg := &models.CLAOrg{ID: corpClaOrgID}
+	if err := corpClaOrg.Get(); err != nil {
+		reason = err
+		return
+	}
+
+	err = models.DeleteEmployeeSigning(corpClaOrg.Platform, corpClaOrg.OrgID, corpClaOrg.RepoID, employeeEmail)
+	if err != nil {
 		reason = err
 		return
 	}
@@ -234,10 +248,10 @@ func (this *EmployeeSigningController) Delete() {
 
 	b := email.EmployeeNotification{Removing: true}
 	subject := "Remove employee"
-	this.notifyEmployee(employeeEmail, orgEmail, subject, &b)
+	this.notifyEmployee(employeeEmail, corpClaOrg.OrgEmail, subject, &b)
 }
 
-func (this *EmployeeSigningController) canHandleOnEmployee(claOrgID, employeeEmail string) (int, string, string, error) {
+func (this *EmployeeSigningController) canHandleOnEmployee(employeeEmail string) (int, string, string, error) {
 	corpClaOrgID, corpEmail, err := parseCorpManagerUser(&this.Controller)
 	if err != nil {
 		return 401, util.ErrUnknownToken, "", err
@@ -247,23 +261,7 @@ func (this *EmployeeSigningController) canHandleOnEmployee(claOrgID, employeeEma
 		return 400, util.ErrNotSameCorp, "", fmt.Errorf("not same corp")
 	}
 
-	claOrg := &models.CLAOrg{ID: claOrgID}
-	if err := claOrg.Get(); err != nil {
-		return 0, "", "", err
-	}
-
-	corpClaOrg := &models.CLAOrg{ID: corpClaOrgID}
-	if err := corpClaOrg.Get(); err != nil {
-		return 0, "", "", err
-	}
-
-	if claOrg.Platform != corpClaOrg.Platform ||
-		claOrg.OrgID != corpClaOrg.OrgID ||
-		claOrg.RepoID != corpClaOrg.RepoID {
-		return 400, util.ErrInvalidParameter, "", fmt.Errorf("not the same repo")
-	}
-
-	return 0, "", claOrg.OrgEmail, nil
+	return 0, "", corpClaOrgID, nil
 }
 
 func (this *EmployeeSigningController) notifyManagers(corpClaOrgID, employeeEmail, orgEmail, subject string, builder email.IEmailMessageBulder) {

@@ -178,6 +178,11 @@ func (this *CorporationManagerController) Patch() {
 		return
 	}
 
+	if errCode, reason = info.Validate(); reason != nil {
+		statusCode = 400
+		return
+	}
+
 	if err := (&info).Reset(claOrgID, corpEmail); err != nil {
 		reason = err
 		return

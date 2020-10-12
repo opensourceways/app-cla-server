@@ -196,7 +196,7 @@ func (this *CLAOrgController) GetSigningPageInfo() {
 		return
 	}
 
-	claOrgs, err := opt.ListForSigningPage()
+	claOrgs, err := opt.List()
 	if err != nil {
 		reason = err
 		return

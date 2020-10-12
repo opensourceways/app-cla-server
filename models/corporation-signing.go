@@ -57,7 +57,7 @@ func (this CorporationSigningListOption) List() (map[string][]dbmodels.Corporati
 }
 
 func CreateCorporationSigningVerifCode(email string, expiry int64) (string, error) {
-	code := "123456"
+	code := util.RandStr(6, "number")
 
 	vc := dbmodels.VerificationCode{
 		Email:   email,

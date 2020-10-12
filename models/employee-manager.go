@@ -41,11 +41,11 @@ func (this *EmployeeManagerCreateOption) Validate(adminEmail string) (string, er
 }
 
 func (this *EmployeeManagerCreateOption) Create(claOrgID string) ([]dbmodels.CorporationManagerCreateOption, error) {
-	pw := "123456"
-
 	opt := make([]dbmodels.CorporationManagerCreateOption, 0, len(this.Emails))
 
 	for _, item := range this.Emails {
+		pw := util.RandStr(8, "alphanum")
+
 		opt = append(opt, dbmodels.CorporationManagerCreateOption{
 			Role:     dbmodels.RoleManager,
 			Email:    item,

@@ -2,6 +2,7 @@ package util
 
 import (
 	"bytes"
+	"crypto/rand"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -100,4 +101,26 @@ func Date() string {
 
 func Now() int64 {
 	return time.Now().Unix()
+}
+
+func RandStr(strSize int, randType string) string {
+	var dictionary string
+
+	switch randType {
+	case "alphanum":
+		dictionary = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
+	case "alpha":
+		dictionary = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
+	case "number":
+		dictionary = "0123456789"
+	}
+
+	var bytes = make([]byte, strSize)
+	rand.Read(bytes)
+
+	n := byte(len(dictionary))
+	for k, v := range bytes {
+		bytes[k] = dictionary[v%n]
+	}
+	return string(bytes)
 }

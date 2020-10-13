@@ -30,7 +30,7 @@ type accessController struct {
 	secret     string `json:"-"`
 }
 
-type codePlatformAuth struct {
+type acForCodePlatform struct {
 	accessController
 
 	PlatformToken string `json:"platform_token"`

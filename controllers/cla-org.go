@@ -8,7 +8,6 @@ import (
 
 	"github.com/opensourceways/app-cla-server/dbmodels"
 	"github.com/opensourceways/app-cla-server/models"
-	"github.com/opensourceways/app-cla-server/pdf"
 	"github.com/opensourceways/app-cla-server/util"
 )
 
@@ -20,11 +19,11 @@ func (this *CLAOrgController) Prepare() {
 	if getRouterPattern(&this.Controller) == "/v1/cla-org/:platform/:org_id/:apply_to" {
 		if getHeader(&this.Controller, headerToken) != "" {
 			apiPrepare(&this.Controller, []string{PermissionIndividualSigner}, nil)
-			return
 		}
+		return
 	}
 
-	apiPrepare(&this.Controller, []string{PermissionOwnerOfOrg}, &codePlatformAuth{})
+	apiPrepare(&this.Controller, []string{PermissionOwnerOfOrg}, &acForCodePlatform{})
 }
 
 // @Title Bind CLA to Org/Repo
@@ -238,53 +237,4 @@ func (this *CLAOrgController) GetSigningPageInfo() {
 	}
 
 	body = result
-}
-
-// @Title GetBlankPdf
-// @Description get blank pdf of signature
-// @router /blank-pdf/:cla_org_id [get]
-func (this *CLAOrgController) GetBlankPdf() {
-	var statusCode = 0
-	var reason error
-	var body interface{}
-
-	defer func() {
-		sendResponse1(&this.Controller, statusCode, reason, body)
-	}()
-
-	claOrgID := this.GetString(":cla_org_id")
-
-	claOrg := &models.CLAOrg{ID: claOrgID}
-	if err := claOrg.Get(); err != nil {
-		reason = err
-		statusCode = 400
-		return
-	}
-
-	if claOrg.ApplyTo != dbmodels.ApplyToCorporation {
-		reason = fmt.Errorf("Only can review blank pdf of corporation")
-		statusCode = 400
-		return
-	}
-
-	cla := &models.CLA{ID: claOrg.CLAID}
-	if err := cla.Get(); err != nil {
-		reason = err
-		statusCode = 400
-		return
-	}
-
-	value := map[string]string{}
-	for _, item := range cla.Fields {
-		value[item.ID] = ""
-	}
-
-	signing := models.CorporationSigning{
-		CorporationSigningBasicInfo: dbmodels.CorporationSigningBasicInfo{
-			AdminEmail: "abc@black_pef.com",
-		},
-		Info: dbmodels.TypeSigningInfo(value),
-	}
-
-	pdf.GetPDFGenerator().GenCLAPDFForCorporation(claOrg, &signing, cla)
 }

@@ -6,7 +6,7 @@ import (
 
 type Platform interface {
 	GetUser() (string, error)
-	ListOrg() ([]string, error)
+	IsOrgExist(org string) (bool, error)
 }
 
 func NewPlatform(accessToken, refreshToken, platform string) (Platform, error) {

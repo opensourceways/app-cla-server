@@ -7,6 +7,7 @@ import (
 
 	"github.com/astaxie/beego"
 
+	"github.com/opensourceways/app-cla-server/code-platform-auth/platforms"
 	"github.com/opensourceways/app-cla-server/conf"
 	"github.com/opensourceways/app-cla-server/dbmodels"
 	"github.com/opensourceways/app-cla-server/email"
@@ -137,7 +138,7 @@ func newAccessToken(user, permission string) (string, error) {
 }
 
 func newAccessTokenAuthorizedByCodePlatform(user, permission, platformToken string) (string, error) {
-	ac := &codePlatformAuth{
+	ac := &acForCodePlatform{
 		accessController: accessController{
 			User:       user,
 			Permission: permission,
@@ -307,7 +308,7 @@ func checkSameCorp(c *beego.Controller, email string) (int, string, error) {
 func convertDBError(err error) (int, string) {
 	e, ok := dbmodels.IsDBError(err)
 	if !ok {
-		return 500, ""
+		return 500, util.ErrSystemError
 	}
 
 	return 400, e.ErrCode
@@ -394,4 +395,43 @@ func isNotIndividualCLA(claOrg *models.CLAOrg) bool {
 
 func isNotCorpCLA(claOrg *models.CLAOrg) bool {
 	return claOrg.ApplyTo != dbmodels.ApplyToCorporation
+}
+
+func canOwnerOfOrgAccessCLA(c *beego.Controller, claOrgID string) (*models.CLAOrg, int, string, error) {
+	claOrg := &models.CLAOrg{ID: claOrgID}
+	if err := claOrg.Get(); err != nil {
+		return nil, 400, util.ErrInvalidParameter, err
+	}
+
+	ac, err := getAccessController(c)
+	if err != nil {
+		return nil, 400, util.ErrInvalidParameter, err
+	}
+
+	cpa, ok := ac.(*acForCodePlatform)
+	if !ok {
+		cpa = &acForCodePlatform{}
+		statusCode, errCode, err := checkApiAccessToken(c, []string{PermissionOwnerOfOrg}, cpa)
+		if err != nil {
+			return nil, statusCode, errCode, err
+		}
+	}
+
+	token := cpa.PlatformToken
+	p, err := platforms.NewPlatform(token, "", claOrg.Platform)
+	if err != nil {
+		return nil, 400, util.ErrInvalidParameter, err
+	}
+
+	b, err := p.IsOrgExist(claOrg.OrgID)
+	if err != nil {
+		// TODO token expiry
+		return nil, 500, util.ErrSystemError, err
+	}
+
+	if !b {
+		return nil, 400, util.ErrNotYoursOrg, fmt.Errorf("not the org of owner")
+	}
+
+	return claOrg, 0, "", nil
 }

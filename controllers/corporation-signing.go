@@ -2,7 +2,6 @@ package controllers
 
 import (
 	"fmt"
-	"io/ioutil"
 	"net/http"
 
 	"github.com/astaxie/beego"
@@ -18,24 +17,9 @@ type CorporationSigningController struct {
 }
 
 func (this *CorporationSigningController) Prepare() {
-	method := getRequestMethod(&this.Controller)
-
-	if getRouterPattern(&this.Controller) == "/v1/corporation-signing/:cla_org_id/:email" {
-		switch method {
-		// upload pdf
-		case http.MethodPatch:
-			apiPrepare(&this.Controller, []string{PermissionOwnerOfOrg}, nil)
-
-		// download pdf
-		case http.MethodGet:
-			apiPrepare(&this.Controller, []string{PermissionOwnerOfOrg, PermissionCorporAdmin}, nil)
-		}
-
-	} else {
-		// list corp signings
-		if method == http.MethodGet {
-			apiPrepare(&this.Controller, []string{PermissionOwnerOfOrg}, nil)
-		}
+	// list corp signings
+	if getRequestMethod(&this.Controller) == http.MethodGet {
+		apiPrepare(&this.Controller, []string{PermissionOwnerOfOrg}, nil)
 	}
 }
 
@@ -137,98 +121,6 @@ func (this *CorporationSigningController) GetAll() {
 	}
 
 	body = r
-}
-
-// @Title Upload
-// @Description upload pdf of corporation signing
-// @Param	:cla_org_id	path 	string					true		"cla org id"
-// @Param	:email		path 	string					true		"email of corp"
-// @Success 204 {int} map
-// @router /:cla_org_id/:email [patch]
-func (this *CorporationSigningController) Upload() {
-	var statusCode = 0
-	var errCode = ""
-	var reason error
-	var body interface{}
-
-	defer func() {
-		sendResponse(&this.Controller, statusCode, errCode, reason, body, "upload corp's signing pdf")
-	}()
-
-	// TODO: is this cla bound by the org
-
-	if err := checkAPIStringParameter(&this.Controller, []string{":cla_org_id", ":email"}); err != nil {
-		reason = err
-		errCode = util.ErrInvalidParameter
-		statusCode = 400
-		return
-	}
-
-	f, _, err := this.GetFile("pdf")
-	if err != nil {
-		reason = fmt.Errorf("missing pdf file")
-		errCode = util.ErrInvalidParameter
-		statusCode = 400
-		return
-	}
-
-	defer f.Close()
-
-	data, err := ioutil.ReadAll(f)
-	if err != nil {
-		reason = err
-		statusCode = 400
-		return
-	}
-
-	err = models.UploadCorporationSigningPDF(this.GetString(":cla_org_id"), this.GetString(":email"), data)
-	if err != nil {
-		reason = err
-		statusCode, errCode = convertDBError(err)
-		return
-	}
-
-	body = "upload pdf of signature page successfully"
-}
-
-// @Title Download
-// @Description download pdf of corporation signing
-// @Param	:cla_org_id	path 	string					true		"cla org id"
-// @Param	:email		path 	string					true		"email of corp"
-// @Success 200 {int} map
-// @router /:cla_org_id/:email [get]
-func (this *CorporationSigningController) Download() {
-	var statusCode = 0
-	var errCode = ""
-	var reason error
-	var body interface{}
-
-	defer func() {
-		sendResponse(&this.Controller, statusCode, errCode, reason, body, "download corp's signing pdf")
-	}()
-
-	if err := checkAPIStringParameter(&this.Controller, []string{":cla_org_id", ":email"}); err != nil {
-		reason = err
-		errCode = util.ErrInvalidParameter
-		statusCode = 400
-		return
-	}
-
-	pdf, err := models.DownloadCorporationSigningPDF(this.GetString(":cla_org_id"), this.GetString(":email"))
-	if err != nil {
-		reason = err
-		statusCode, errCode = convertDBError(err)
-		return
-	}
-	if pdf == nil {
-		reason = fmt.Errorf("no pdf found")
-		statusCode = 500
-		return
-	}
-
-	body = map[string]interface{}{
-		"pdf": pdf,
-	}
 }
 
 // @Title SendVerifiCode

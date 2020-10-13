@@ -33,7 +33,22 @@ func (this *giteeClient) GetUser() (string, error) {
 	return u.Login, err
 }
 
-func (this *giteeClient) ListOrg() ([]string, error) {
+func (this *giteeClient) IsOrgExist(org string) (bool, error) {
+	orgs, err := this.listOrg()
+	if err != nil {
+		//TODO :is token expiry
+		return false, err
+	}
+
+	for _, item := range orgs {
+		if item == org {
+			return true, nil
+		}
+	}
+	return false, nil
+}
+
+func (this *giteeClient) listOrg() ([]string, error) {
 	var r []string
 
 	p := int32(1)

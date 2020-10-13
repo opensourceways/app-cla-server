@@ -7,7 +7,6 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
 
 	"github.com/opensourceways/app-cla-server/dbmodels"
 	"github.com/opensourceways/app-cla-server/util"
@@ -66,9 +65,7 @@ func (c *client) AddCorporationManager(claOrgID string, opt []dbmodels.Corporati
 			}
 		}
 
-		col := c.collection(claOrgCollection)
-
-		updates := make(bson.A, 0, len(opt))
+		items := make(bson.A, 0, len(toAdd))
 		for _, item := range toAdd {
 			info := corporationManagerDoc{
 				Email:    item.Email,
@@ -82,12 +79,12 @@ func (c *client) AddCorporationManager(claOrgID string, opt []dbmodels.Corporati
 			}
 			addCorporationID(item.Email, body)
 
-			updates = append(updates, bson.M(body))
+			items = append(items, bson.M(body))
 		}
 
-		v, err := col.UpdateOne(
-			ctx, bson.M{"_id": oid},
-			bson.M{"$push": bson.M{fieldCorpoManagers: bson.M{"$each": updates}}},
+		v, err := c.pushArryItems(
+			ctx, claOrgCollection, fieldCorpoManagers,
+			bson.M{"_id": oid}, items,
 		)
 		if err != nil {
 			return fmt.Errorf("write db failed: %s", err.Error())
@@ -108,45 +105,36 @@ func (c *client) AddCorporationManager(claOrgID string, opt []dbmodels.Corporati
 }
 
 func (c *client) CheckCorporationManagerExist(opt dbmodels.CorporationManagerCheckInfo) (map[string][]dbmodels.CorporationManagerCheckResult, error) {
-	filter := bson.M{}
-	filterForCorpManager(filter)
+	filterOfDoc := bson.M{}
+	filterForCorpManager(filterOfDoc)
+
+	filterOfArray := bson.M{
+		"platform": 1,
+		"org_id":   1,
+		"repo_id":  1,
+		fieldCorpoManagers: bson.M{"$filter": bson.M{
+			"input": fmt.Sprintf("$%s", fieldCorpoManagers),
+			"cond": bson.M{"$and": bson.A{
+				bson.M{"$eq": bson.A{"$$this.corp_id", util.EmailSuffix(opt.User)}},
+				bson.M{"$eq": bson.A{"$$this.email", opt.User}},
+				bson.M{"$eq": bson.A{"$$this.password", opt.Password}},
+			}},
+		}},
+	}
+
+	project := bson.M{
+		"platform":                  1,
+		"org_id":                    1,
+		"repo_id":                   1,
+		corpManagerField("role"):    1,
+		corpManagerField("email"):   1,
+		corpManagerField("changed"): 1,
+	}
 
 	var v []CLAOrg
 
 	f := func(ctx context.Context) error {
-		col := c.collection(claOrgCollection)
-
-		pipeline := bson.A{
-			bson.M{"$match": filter},
-			bson.M{"$project": bson.M{
-				"platform": 1,
-				"org_id":   1,
-				"repo_id":  1,
-				fieldCorpoManagers: bson.M{"$filter": bson.M{
-					"input": fmt.Sprintf("$%s", fieldCorpoManagers),
-					"cond": bson.M{"$and": bson.A{
-						bson.M{"$eq": bson.A{"$$this.corp_id", util.EmailSuffix(opt.User)}},
-						bson.M{"$eq": bson.A{"$$this.email", opt.User}},
-						bson.M{"$eq": bson.A{"$$this.password", opt.Password}},
-					}},
-				}}},
-			},
-			bson.M{"$project": bson.M{
-				"platform":                  1,
-				"org_id":                    1,
-				"repo_id":                   1,
-				corpManagerField("role"):    1,
-				corpManagerField("email"):   1,
-				corpManagerField("changed"): 1,
-			}},
-		}
-
-		cursor, err := col.Aggregate(ctx, pipeline)
-		if err != nil {
-			return fmt.Errorf("error find bindings: %v", err)
-		}
-
-		return cursor.All(ctx, &v)
+		return c.getArrayItem(claOrgCollection, filterOfDoc, filterOfArray, project, ctx, &v)
 	}
 
 	if err := withContext(f); err != nil {
@@ -191,30 +179,21 @@ func (c *client) ResetCorporationManagerPassword(claOrgID, email string, opt dbm
 		return err
 	}
 
-	filter := bson.M{"_id": oid}
-	filterForCorpManager(filter)
+	filterOfDoc := bson.M{"_id": oid}
+
+	updateCmd := bson.M{
+		fmt.Sprintf("%s.$[ms].password", fieldCorpoManagers): opt.NewPassword,
+		fmt.Sprintf("%s.$[ms].changed", fieldCorpoManagers):  true,
+	}
+
+	filterOfArray := bson.M{
+		"ms.corp_id":  util.EmailSuffix(email),
+		"ms.email":    email,
+		"ms.password": opt.OldPassword,
+	}
 
 	f := func(ctx context.Context) error {
-		col := c.collection(claOrgCollection)
-
-		update := bson.M{"$set": bson.M{
-			fmt.Sprintf("%s.$[ms].password", fieldCorpoManagers): opt.NewPassword,
-			fmt.Sprintf("%s.$[ms].changed", fieldCorpoManagers):  true,
-		}}
-
-		updateOpt := options.UpdateOptions{
-			ArrayFilters: &options.ArrayFilters{
-				Filters: bson.A{
-					bson.M{
-						"ms.corp_id":  util.EmailSuffix(email),
-						"ms.email":    email,
-						"ms.password": opt.OldPassword,
-					},
-				},
-			},
-		}
-
-		v, err := col.UpdateOne(ctx, filter, update, &updateOpt)
+		v, err := c.updateArryItem(claOrgCollection, filterOfDoc, filterOfArray, updateCmd, ctx)
 		if err != nil {
 			return err
 		}
@@ -228,7 +207,7 @@ func (c *client) ResetCorporationManagerPassword(claOrgID, email string, opt dbm
 
 		if v.ModifiedCount != 1 {
 			return dbmodels.DBError{
-				ErrCode: util.ErrInvalidParameter,
+				ErrCode: util.ErrInvalidAccountOrPw,
 				Err:     fmt.Errorf("invalid email or old password"),
 			}
 		}
@@ -240,44 +219,30 @@ func (c *client) ResetCorporationManagerPassword(claOrgID, email string, opt dbm
 }
 
 func (c *client) listCorporationManager(claOrgID primitive.ObjectID, email, role string, ctx context.Context) ([]dbmodels.CorporationManagerListResult, error) {
-	filter := bson.M{"_id": claOrgID}
-	filterForCorpManager(filter)
+	filterOfDoc := bson.M{"_id": claOrgID}
 
-	cond := bson.A{
-		bson.M{"$eq": bson.A{"$$this.corp_id", util.EmailSuffix(email)}},
-	}
+	cond := bson.M{"$eq": bson.A{"$$this.corp_id", util.EmailSuffix(email)}}
 	if role != "" {
-		cond = append(cond, bson.M{"$eq": bson.A{"$$this.role", role}})
+		cond = bson.M{"$and": bson.A{
+			cond,
+			bson.M{"$eq": bson.A{"$$this.role", role}},
+		}}
+	}
+	filterOfArray := bson.M{
+		fieldCorpoManagers: bson.M{"$filter": bson.M{
+			"input": fmt.Sprintf("$%s", fieldCorpoManagers),
+			"cond":  cond,
+		}},
+	}
 
+	project := bson.M{
+		corpManagerField("email"): 1,
+		corpManagerField("role"):  1,
 	}
 
 	var v []CLAOrg
-	f := func() error {
-		col := c.collection(claOrgCollection)
-
-		pipeline := bson.A{
-			bson.M{"$match": filter},
-			bson.M{"$project": bson.M{
-				fieldCorpoManagers: bson.M{"$filter": bson.M{
-					"input": fmt.Sprintf("$%s", fieldCorpoManagers),
-					"cond":  cond,
-				}}},
-			},
-			bson.M{"$project": bson.M{
-				corpManagerField("email"): 1,
-				corpManagerField("role"):  1,
-			}},
-		}
-
-		cursor, err := col.Aggregate(ctx, pipeline)
-		if err != nil {
-			return fmt.Errorf("error find bindings: %v", err)
-		}
-
-		return cursor.All(ctx, &v)
-	}
-
-	if err := f(); err != nil {
+	err := c.getArrayItem(claOrgCollection, filterOfDoc, filterOfArray, project, ctx, &v)
+	if err != nil {
 		return nil, err
 	}
 
@@ -348,16 +313,15 @@ func (c *client) DeleteCorporationManager(claOrgID string, opt []dbmodels.Corpor
 			return nil
 		}
 
-		col := c.collection(claOrgCollection)
+		filterOfArray := bson.M{
+			"corp_id": util.EmailSuffix(opt[0].Email),
+			"email":   bson.M{"$in": toDelete},
+		}
 
-		update := bson.M{"$pull": bson.M{
-			fieldCorpoManagers: bson.M{
-				"corp_id": util.EmailSuffix(opt[0].Email),
-				"email":   bson.M{"$in": toDelete},
-			},
-		}}
-
-		v, err := col.UpdateOne(ctx, bson.M{"_id": oid}, update)
+		v, err := c.pullArryItem(
+			ctx, claOrgCollection, fieldCorpoManagers,
+			bson.M{"_id": oid}, filterOfArray,
+		)
 		if err != nil {
 			return fmt.Errorf("failed to write db: %s", err.Error())
 		}

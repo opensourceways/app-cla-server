@@ -16,49 +16,55 @@ type OrgSignatureController struct {
 }
 
 func (this *OrgSignatureController) Prepare() {
-	apiPrepare(&this.Controller, []string{PermissionOwnerOfOrg}, nil)
+	apiPrepare(&this.Controller, []string{PermissionOwnerOfOrg}, &acForCodePlatform{})
 }
 
-// @Title Upload
-// @Description upload pdf of signature page
-// @Param	cla_org_id		path 	string	true		"the id of binding between cla and org"
-// @Failure 403 body is empty
+// @Title Post
+// @Description upload org signature
+// @Param	cla_org_id		path 	string	true		"cla org id"
 // @router /:cla_org_id [post]
 func (this *OrgSignatureController) Post() {
 	var statusCode = 0
+	var errCode = ""
 	var reason error
 	var body interface{}
 
 	defer func() {
-		sendResponse1(&this.Controller, statusCode, reason, body)
+		sendResponse(&this.Controller, statusCode, errCode, reason, body, "upload org signature")
 	}()
 
-	claOrgID := this.GetString(":cla_org_id")
-	if claOrgID == "" {
-		reason = fmt.Errorf("missing cla_org_id")
+	claOrgID, err := fetchStringParameter(&this.Controller, ":cla_org_id")
+	if err != nil {
+		reason = err
+		errCode = util.ErrInvalidParameter
 		statusCode = 400
+		return
+	}
+
+	_, statusCode, errCode, reason = canOwnerOfOrgAccessCLA(&this.Controller, claOrgID)
+	if reason != nil {
 		return
 	}
 
 	f, _, err := this.GetFile("signature_page")
 	if err != nil {
 		reason = err
+		errCode = util.ErrInvalidParameter
 		statusCode = 400
 		return
 	}
 
 	defer f.Close()
+
 	data, err := ioutil.ReadAll(f)
 	if err != nil {
 		reason = err
-		statusCode = 400
 		return
 	}
 
 	err = models.UploadOrgSignature(claOrgID, data)
 	if err != nil {
 		reason = err
-		statusCode = 500
 		return
 	}
 
@@ -71,7 +77,6 @@ func (this *OrgSignatureController) Post() {
 	}
 	if err := ioutil.WriteFile(path, data, 0644); err != nil {
 		reason = fmt.Errorf("Failed to write org signature pdf: %s", err.Error())
-		statusCode = 500
 		return
 	}
 
@@ -79,30 +84,35 @@ func (this *OrgSignatureController) Post() {
 }
 
 // @Title Get
-// @Description get org signature
-// @Param	cla_org_id		path 	string	true		"The id of binding between cla and org"
-// @Failure 403 :cla_org_id is empty
+// @Description download org signature
+// @Param	cla_org_id		path 	string	true		"cla org id"
 // @router /:cla_org_id [get]
 func (this *OrgSignatureController) Get() {
 	var statusCode = 0
+	var errCode = ""
 	var reason error
 	var body interface{}
 
 	defer func() {
-		sendResponse1(&this.Controller, statusCode, reason, body)
+		sendResponse(&this.Controller, statusCode, errCode, reason, body, "download org signature")
 	}()
 
-	claOrgID := this.GetString(":cla_org_id")
-	if claOrgID == "" {
-		reason = fmt.Errorf("missing cla_org_id")
+	claOrgID, err := fetchStringParameter(&this.Controller, ":cla_org_id")
+	if err != nil {
+		reason = err
+		errCode = util.ErrInvalidParameter
 		statusCode = 400
+		return
+	}
+
+	_, statusCode, errCode, reason = canOwnerOfOrgAccessCLA(&this.Controller, claOrgID)
+	if reason != nil {
 		return
 	}
 
 	pdf, err := models.DownloadOrgSignature(claOrgID)
 	if err != nil {
 		reason = err
-		statusCode = 500
 		return
 	}
 
@@ -112,22 +122,23 @@ func (this *OrgSignatureController) Get() {
 }
 
 // @Title BlankSignature
-// @Description get blank signature
-// @Param	language		path 	string	true		"The language of blank signature"
-// @Failure 403 :language is empty
+// @Description get blank pdf of org signature
+// @Param	language		path 	string	true		"The language which the signature applies to"
 // @router /blank/:language [get]
 func (this *OrgSignatureController) BlankSignature() {
 	var statusCode = 0
+	var errCode = ""
 	var reason error
 	var body interface{}
 
 	defer func() {
-		sendResponse1(&this.Controller, statusCode, reason, body)
+		sendResponse(&this.Controller, statusCode, errCode, reason, body, "download blank pdf of org signature")
 	}()
 
-	language := this.GetString(":language")
-	if language == "" {
-		reason = fmt.Errorf("missing language")
+	language, err := fetchStringParameter(&this.Controller, ":language")
+	if err != nil {
+		reason = err
+		errCode = util.ErrInvalidParameter
 		statusCode = 400
 		return
 	}
@@ -135,7 +146,6 @@ func (this *OrgSignatureController) BlankSignature() {
 	pdf, err := models.DownloadBlankSignature(language)
 	if err != nil {
 		reason = err
-		statusCode = 500
 		return
 	}
 

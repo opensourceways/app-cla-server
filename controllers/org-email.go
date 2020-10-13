@@ -1,12 +1,12 @@
 package controllers
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/astaxie/beego"
 
 	"github.com/opensourceways/app-cla-server/email"
+	"github.com/opensourceways/app-cla-server/util"
 )
 
 const authURLState = "state-token-cla"
@@ -17,18 +17,22 @@ type EmailController struct {
 
 func (this *EmailController) Prepare() {
 	if getRouterPattern(&this.Controller) == "/v1/email/authcodeurl/:platform" {
-		apiPrepare(&this.Controller, []string{PermissionOwnerOfOrg}, nil)
+		apiPrepare(&this.Controller, []string{PermissionOwnerOfOrg}, &acForCodePlatform{})
 	}
 }
 
-// @Title Get
-// @Description get login info
+// @Title Auth
+// @Description authorized by org email
 // @Success 200
 // @router /auth/:platform [get]
 func (this *EmailController) Auth() {
+	rs := func(statusCode int, errCode string, err error) {
+		sendResponse(&this.Controller, statusCode, errCode, err, nil, "authorized by org email")
+	}
+
 	params := map[string]string{":platform": "", "code": "", "scope": "", "state": authURLState}
 	if err := checkAndVerifyAPIStringParameter(&this.Controller, params); err != nil {
-		sendResponse1(&this.Controller, 400, err, nil)
+		rs(400, util.ErrInvalidParameter, err)
 		return
 	}
 	code := this.GetString("code")
@@ -37,19 +41,20 @@ func (this *EmailController) Auth() {
 
 	e, err := email.GetEmailClient(platform)
 	if err != nil {
-		sendResponse1(&this.Controller, 400, err, nil)
+		rs(400, util.ErrInvalidParameter, err)
 		return
 	}
 
 	opt, err := e.GetAuthorizedEmail(code, scope)
 	if err != nil {
-		sendResponse1(&this.Controller, 400, err, nil)
+		rs(400, util.ErrInvalidParameter, err)
 		return
 	}
 	opt.Platform = platform
 
 	if err = opt.Create(); err != nil {
-		sendResponse1(&this.Controller, 500, err, nil)
+		sc, ec := convertDBError(err)
+		rs(sc, ec, err)
 		return
 	}
 
@@ -62,20 +67,21 @@ func (this *EmailController) Auth() {
 // @Description get auth code url
 // @Param	platform		path 	string	true		"The email platform"
 // @Success 200 {object}
-// @Failure 403 :platform is empty
 // @router /authcodeurl/:platform [get]
 func (this *EmailController) Get() {
 	var statusCode = 0
+	var errCode = ""
 	var reason error
 	var body interface{}
 
 	defer func() {
-		sendResponse1(&this.Controller, statusCode, reason, body)
+		sendResponse(&this.Controller, statusCode, errCode, reason, body, "get auth code url of email")
 	}()
 
-	platform := this.GetString(":platform")
-	if platform == "" {
-		reason = fmt.Errorf("missing email platform")
+	platform, err := fetchStringParameter(&this.Controller, ":platform")
+	if err != nil {
+		reason = err
+		errCode = util.ErrInvalidParameter
 		statusCode = 400
 		return
 	}
@@ -83,7 +89,6 @@ func (this *EmailController) Get() {
 	e, err := email.GetEmailClient(platform)
 	if err != nil {
 		reason = err
-		statusCode = 500
 		return
 	}
 

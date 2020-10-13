@@ -19,7 +19,7 @@ func (this *CorporationManagerController) Prepare() {
 	switch getRequestMethod(&this.Controller) {
 	case http.MethodPut:
 		// add administrator
-		apiPrepare(&this.Controller, []string{PermissionOwnerOfOrg}, nil)
+		apiPrepare(&this.Controller, []string{PermissionOwnerOfOrg}, &acForCodePlatform{})
 
 	case http.MethodPatch:
 		// reset password of manager
@@ -114,6 +114,12 @@ func (this *CorporationManagerController) Put() {
 	claOrgID := this.GetString(":cla_org_id")
 	adminEmail := this.GetString(":email")
 
+	var claOrg *models.CLAOrg
+	claOrg, statusCode, errCode, reason = canOwnerOfOrgAccessCLA(&this.Controller, claOrgID)
+	if reason != nil {
+		return
+	}
+
 	info, err := models.CheckCorporationSigning(claOrgID, adminEmail)
 	if err != nil {
 		reason = err
@@ -139,11 +145,6 @@ func (this *CorporationManagerController) Put() {
 	}
 
 	body = "add manager successfully"
-
-	claOrg := &models.CLAOrg{ID: claOrgID}
-	if err := claOrg.Get(); err != nil {
-		return
-	}
 
 	notifyCorpManagerWhenAdding(claOrg.OrgEmail, "Corporation Administrator", added)
 }

@@ -14,15 +14,15 @@ type AuthController struct {
 	beego.Controller
 }
 
-// @Title Get
-// @Description get login info
+// @Title Auth
+// @Description authorized by gitee/github
 // @Param	:platform	path 	string				true		"gitee/github"
 // @Param	:purpose	path 	string				true		"purpose: login, sign"
 // @Success 200
 // @router /:platform/:purpose [get]
 func (this *AuthController) Auth() {
 	rs := func(statusCode int, errCode string, reason error) {
-		sendResponse(&this.Controller, statusCode, errCode, reason, nil, "authorize by gitee/github")
+		sendResponse(&this.Controller, statusCode, errCode, reason, nil, "authorized by gitee/github")
 	}
 
 	params := map[string]string{":platform": "", "code": "", ":purpose": "", "state": authURLState}

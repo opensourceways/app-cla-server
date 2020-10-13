@@ -14,7 +14,7 @@ type CLAController struct {
 }
 
 func (this *CLAController) Prepare() {
-	apiPrepare(&this.Controller, []string{PermissionOwnerOfOrg}, nil)
+	apiPrepare(&this.Controller, []string{PermissionOwnerOfOrg}, &acForCodePlatform{})
 }
 
 // @Title CreateCLA

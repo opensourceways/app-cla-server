@@ -3,6 +3,7 @@ package mongodb
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/huaweicloud/golangsdk"
 	"go.mongodb.org/mongo-driver/bson"
@@ -26,7 +27,11 @@ func structToMap(info interface{}) (map[string]interface{}, error) {
 }
 
 func addCorporationID(email string, body map[string]interface{}) {
-	body[fieldCorporationID] = util.EmailSuffix(email)
+	body[fieldCorporationID] = genCorpID(email)
+}
+
+func genCorpID(email string) string {
+	return util.EmailSuffix(email)
 }
 
 func isHasNotSigned(err error) bool {
@@ -63,13 +68,22 @@ func (c *client) pullArryItem(ctx context.Context, collection, array string, fil
 	return col.UpdateOne(ctx, filterOfDoc, update)
 }
 
-func (c *client) updateArryItem(collection string, filterOfDoc, filterOfArray, updateCmd bson.M, ctx context.Context) (*mongo.UpdateResult, error) {
-	update := bson.M{"$set": updateCmd}
+func (c *client) updateArryItem(ctx context.Context, collection, array string, filterOfDoc, filterOfArray, updateCmd bson.M) (*mongo.UpdateResult, error) {
+	cmd := bson.M{}
+	for k, v := range updateCmd {
+		cmd[fmt.Sprintf("%s.$[i].%s", array, k)] = v
+	}
+	update := bson.M{"$set": cmd}
+
+	filterOfArray1 := bson.M{}
+	for k, v := range filterOfArray {
+		filterOfArray1["i."+k] = v
+	}
 
 	updateOpt := options.UpdateOptions{
 		ArrayFilters: &options.ArrayFilters{
 			Filters: bson.A{
-				filterOfArray,
+				filterOfArray1,
 			},
 		},
 	}
@@ -78,10 +92,33 @@ func (c *client) updateArryItem(collection string, filterOfDoc, filterOfArray, u
 	return col.UpdateOne(ctx, filterOfDoc, update, &updateOpt)
 }
 
-func (c *client) getArrayItem(collection string, filterOfDoc, filterOfArray, project bson.M, ctx context.Context, result interface{}) error {
+func (c *client) getArrayItem(ctx context.Context, collection, array string, filterOfDoc, filterOfArray, project bson.M, result interface{}) error {
+	cond := make(bson.A, 0, len(filterOfArray))
+	for k, v := range filterOfArray {
+		cond = append(cond, bson.M{"$eq": bson.A{"$$this." + k, v}})
+	}
+
+	cond1 := cond[0]
+	if len(filterOfArray) > 1 {
+		cond1 = bson.M{"$and": cond}
+	}
+
+	filterOfArray1 := bson.M{
+		array: bson.M{"$filter": bson.M{
+			"input": fmt.Sprintf("$%s", array),
+			"cond":  cond1,
+		}},
+	}
+
+	for k, v := range project {
+		if !strings.HasPrefix(k, array) {
+			filterOfArray1[k] = v
+		}
+	}
+
 	pipeline := bson.A{
 		bson.M{"$match": filterOfDoc},
-		bson.M{"$project": filterOfArray},
+		bson.M{"$project": filterOfArray1},
 		bson.M{"$project": project},
 	}
 

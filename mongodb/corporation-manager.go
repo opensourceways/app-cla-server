@@ -109,23 +109,15 @@ func (c *client) CheckCorporationManagerExist(opt dbmodels.CorporationManagerChe
 	filterForCorpManager(filterOfDoc)
 
 	filterOfArray := bson.M{
-		"platform": 1,
-		"org_id":   1,
-		"repo_id":  1,
-		fieldCorpoManagers: bson.M{"$filter": bson.M{
-			"input": fmt.Sprintf("$%s", fieldCorpoManagers),
-			"cond": bson.M{"$and": bson.A{
-				bson.M{"$eq": bson.A{"$$this.corp_id", util.EmailSuffix(opt.User)}},
-				bson.M{"$eq": bson.A{"$$this.email", opt.User}},
-				bson.M{"$eq": bson.A{"$$this.password", opt.Password}},
-			}},
-		}},
+		fieldCorporationID: genCorpID(opt.User),
+		"email":            opt.User,
+		"password":         opt.Password,
 	}
 
 	project := bson.M{
 		"platform":                  1,
 		"org_id":                    1,
-		"repo_id":                   1,
+		fieldRepo:                   1,
 		corpManagerField("role"):    1,
 		corpManagerField("email"):   1,
 		corpManagerField("changed"): 1,
@@ -134,7 +126,7 @@ func (c *client) CheckCorporationManagerExist(opt dbmodels.CorporationManagerChe
 	var v []CLAOrg
 
 	f := func(ctx context.Context) error {
-		return c.getArrayItem(claOrgCollection, filterOfDoc, filterOfArray, project, ctx, &v)
+		return c.getArrayItem(ctx, claOrgCollection, fieldCorpoManagers, filterOfDoc, filterOfArray, project, &v)
 	}
 
 	if err := withContext(f); err != nil {
@@ -182,18 +174,18 @@ func (c *client) ResetCorporationManagerPassword(claOrgID, email string, opt dbm
 	filterOfDoc := bson.M{"_id": oid}
 
 	updateCmd := bson.M{
-		fmt.Sprintf("%s.$[ms].password", fieldCorpoManagers): opt.NewPassword,
-		fmt.Sprintf("%s.$[ms].changed", fieldCorpoManagers):  true,
+		"password": opt.NewPassword,
+		"changed":  true,
 	}
 
 	filterOfArray := bson.M{
-		"ms.corp_id":  util.EmailSuffix(email),
-		"ms.email":    email,
-		"ms.password": opt.OldPassword,
+		"corp_id":  util.EmailSuffix(email),
+		"email":    email,
+		"password": opt.OldPassword,
 	}
 
 	f := func(ctx context.Context) error {
-		v, err := c.updateArryItem(claOrgCollection, filterOfDoc, filterOfArray, updateCmd, ctx)
+		v, err := c.updateArryItem(ctx, claOrgCollection, fieldCorpoManagers, filterOfDoc, filterOfArray, updateCmd)
 		if err != nil {
 			return err
 		}
@@ -221,18 +213,9 @@ func (c *client) ResetCorporationManagerPassword(claOrgID, email string, opt dbm
 func (c *client) listCorporationManager(claOrgID primitive.ObjectID, email, role string, ctx context.Context) ([]dbmodels.CorporationManagerListResult, error) {
 	filterOfDoc := bson.M{"_id": claOrgID}
 
-	cond := bson.M{"$eq": bson.A{"$$this.corp_id", util.EmailSuffix(email)}}
+	filterOfArray := bson.M{fieldCorporationID: genCorpID(email)}
 	if role != "" {
-		cond = bson.M{"$and": bson.A{
-			cond,
-			bson.M{"$eq": bson.A{"$$this.role", role}},
-		}}
-	}
-	filterOfArray := bson.M{
-		fieldCorpoManagers: bson.M{"$filter": bson.M{
-			"input": fmt.Sprintf("$%s", fieldCorpoManagers),
-			"cond":  cond,
-		}},
+		filterOfArray["role"] = role
 	}
 
 	project := bson.M{
@@ -241,7 +224,7 @@ func (c *client) listCorporationManager(claOrgID primitive.ObjectID, email, role
 	}
 
 	var v []CLAOrg
-	err := c.getArrayItem(claOrgCollection, filterOfDoc, filterOfArray, project, ctx, &v)
+	err := c.getArrayItem(ctx, claOrgCollection, fieldCorpoManagers, filterOfDoc, filterOfArray, project, &v)
 	if err != nil {
 		return nil, err
 	}
@@ -314,8 +297,8 @@ func (c *client) DeleteCorporationManager(claOrgID string, opt []dbmodels.Corpor
 		}
 
 		filterOfArray := bson.M{
-			"corp_id": util.EmailSuffix(opt[0].Email),
-			"email":   bson.M{"$in": toDelete},
+			fieldCorporationID: genCorpID(opt[0].Email),
+			"email":            bson.M{"$in": toDelete},
 		}
 
 		v, err := c.pullArryItem(

@@ -152,6 +152,7 @@ func (this *CorporationManagerController) Put() {
 // @Title Patch
 // @Description reset password of corporation administrator
 // @Success 204 {int} map
+// @Failure util.ErrInvalidAccountOrPw
 // @router / [patch]
 func (this *CorporationManagerController) Patch() {
 	var statusCode = 0

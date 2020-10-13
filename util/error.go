@@ -22,5 +22,6 @@ const (
 	ErrNotReadyToSign            = "not_ready_to_sign"
 	ErrNotSupportedPlatform      = "not_supported_platform"
 	ErrNotYoursOrg               = "not_yours_org"
+	ErrInvalidAccountOrPw        = "invalid_account_or_pw"
 	ErrSystemError               = "system_error"
 )

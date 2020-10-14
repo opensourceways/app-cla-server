@@ -17,7 +17,7 @@ type EmailController struct {
 
 func (this *EmailController) Prepare() {
 	if getRouterPattern(&this.Controller) == "/v1/email/authcodeurl/:platform" {
-		apiPrepare(&this.Controller, []string{PermissionOwnerOfOrg}, &acForCodePlatform{})
+		apiPrepare(&this.Controller, []string{PermissionOwnerOfOrg}, &acForCodePlatformPayload{})
 	}
 }
 

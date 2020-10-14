@@ -21,7 +21,7 @@ func (this *CorporationPDFController) Prepare() {
 		// admin reviews pdf
 		apiPrepare(&this.Controller, []string{PermissionCorporAdmin}, nil)
 	} else {
-		apiPrepare(&this.Controller, []string{PermissionOwnerOfOrg}, &acForCodePlatform{})
+		apiPrepare(&this.Controller, []string{PermissionOwnerOfOrg}, &acForCodePlatformPayload{})
 	}
 }
 

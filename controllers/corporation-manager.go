@@ -19,7 +19,7 @@ func (this *CorporationManagerController) Prepare() {
 	switch getRequestMethod(&this.Controller) {
 	case http.MethodPut:
 		// add administrator
-		apiPrepare(&this.Controller, []string{PermissionOwnerOfOrg}, &acForCodePlatform{})
+		apiPrepare(&this.Controller, []string{PermissionOwnerOfOrg}, &acForCodePlatformPayload{})
 
 	case http.MethodPatch:
 		// reset password of manager

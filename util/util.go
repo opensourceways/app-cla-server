@@ -103,6 +103,10 @@ func Now() int64 {
 	return time.Now().Unix()
 }
 
+func Expiry(expiry int64) int64 {
+	return time.Now().Add(time.Second * time.Duration(expiry)).Unix()
+}
+
 func RandStr(strSize int, randType string) string {
 	var dictionary string
 

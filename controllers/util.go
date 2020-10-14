@@ -129,28 +129,32 @@ func getHeader(c *beego.Controller, h string) string {
 
 func newAccessToken(user, permission string) (string, error) {
 	ac := &accessController{
-		User:       user,
+		Expiry:     util.Expiry(conf.AppConfig.APITokenExpiry),
 		Permission: permission,
-		secret:     conf.AppConfig.APITokenKey,
+		Payload: &accessControllerBasicPayload{
+			User: user,
+		},
 	}
 
-	return ac.NewToken(conf.AppConfig.APITokenExpiry)
+	return ac.NewToken(conf.AppConfig.APITokenKey)
 }
 
 func newAccessTokenAuthorizedByCodePlatform(user, permission, platformToken string) (string, error) {
-	ac := &acForCodePlatform{
-		accessController: accessController{
-			User:       user,
-			Permission: permission,
-			secret:     conf.AppConfig.APITokenKey,
+	ac := &accessController{
+		Expiry:     util.Expiry(conf.AppConfig.APITokenExpiry),
+		Permission: permission,
+		Payload: &acForCodePlatformPayload{
+			accessControllerBasicPayload: accessControllerBasicPayload{
+				User: user,
+			},
+			PlatformToken: platformToken,
 		},
-		PlatformToken: platformToken,
 	}
 
-	return ac.NewToken(conf.AppConfig.APITokenExpiry)
+	return ac.NewToken(conf.AppConfig.APITokenKey)
 }
 
-func checkApiAccessToken(c *beego.Controller, permission []string, ac accessControllerInterface) (int, string, error) {
+func checkApiAccessToken(c *beego.Controller, permission []string, ac *accessController) (int, string, error) {
 	token := getHeader(c, headerToken)
 	if token == "" {
 		return 401, util.ErrMissingToken, fmt.Errorf("no token passed")
@@ -166,9 +170,13 @@ func checkApiAccessToken(c *beego.Controller, permission []string, ac accessCont
 	return 0, "", nil
 }
 
-func apiPrepare(c *beego.Controller, permission []string, ac accessControllerInterface) {
-	if ac == nil {
-		ac = &accessController{}
+func apiPrepare(c *beego.Controller, permission []string, acp interface{}) {
+	if acp == nil {
+		acp = &accessControllerBasicPayload{}
+	}
+
+	ac := &accessController{
+		Payload: acp,
 	}
 
 	if statusCode, errCode, err := checkApiAccessToken(c, permission, ac); err != nil {
@@ -179,25 +187,17 @@ func apiPrepare(c *beego.Controller, permission []string, ac accessControllerInt
 	c.Data[apiAccessController] = ac
 }
 
-func getAccessController(c *beego.Controller) (accessControllerInterface, error) {
+func getAccessController(c *beego.Controller) (*accessController, error) {
 	ac, ok := c.Data[apiAccessController]
 	if !ok {
 		return nil, fmt.Errorf("no access controller")
 	}
 
-	if v, ok := ac.(accessControllerInterface); ok {
+	if v, ok := ac.(*accessController); ok {
 		return v, nil
 	}
 
 	return nil, fmt.Errorf("can't convert to access controller instance")
-}
-
-func getApiAccessUser(c *beego.Controller) (string, error) {
-	ac, err := getAccessController(c)
-	if err != nil {
-		return "", err
-	}
-	return ac.GetUser(), nil
 }
 
 func refreshAccessToken(c *beego.Controller) (string, error) {
@@ -205,7 +205,7 @@ func refreshAccessToken(c *beego.Controller) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return ac.NewToken(conf.AppConfig.APITokenExpiry)
+	return ac.RefreshToken(conf.AppConfig.APITokenExpiry, conf.AppConfig.APITokenKey)
 }
 
 func corporRoleToPermission(role string) string {
@@ -319,12 +319,17 @@ func corpManagerUser(claOrgID, email string) string {
 }
 
 func parseCorpManagerUser(c *beego.Controller) (string, string, error) {
-	user, err := getApiAccessUser(c)
+	ac, err := getAccessController(c)
 	if err != nil {
 		return "", "", err
 	}
 
-	v := strings.Split(user, "/")
+	p, ok := ac.Payload.(*accessControllerBasicPayload)
+	if !ok {
+		return "", "", fmt.Errorf("fetch token Payload failed")
+	}
+
+	v := strings.Split(p.User, "/")
 	if len(v) != 2 {
 		return "", "", fmt.Errorf("can't parse corp manager user")
 	}
@@ -408,13 +413,9 @@ func canOwnerOfOrgAccessCLA(c *beego.Controller, claOrgID string) (*models.CLAOr
 		return nil, 400, util.ErrInvalidParameter, err
 	}
 
-	cpa, ok := ac.(*acForCodePlatform)
+	cpa, ok := ac.Payload.(*acForCodePlatformPayload)
 	if !ok {
-		cpa = &acForCodePlatform{}
-		statusCode, errCode, err := checkApiAccessToken(c, []string{PermissionOwnerOfOrg}, cpa)
-		if err != nil {
-			return nil, statusCode, errCode, err
-		}
+		return nil, 500, util.ErrSystemError, fmt.Errorf("invalid payload")
 	}
 
 	token := cpa.PlatformToken

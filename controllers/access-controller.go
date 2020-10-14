@@ -3,10 +3,11 @@ package controllers
 import (
 	"encoding/json"
 	"fmt"
-	"time"
 
 	"github.com/dgrijalva/jwt-go"
 	"github.com/huaweicloud/golangsdk"
+
+	"github.com/opensourceways/app-cla-server/util"
 )
 
 const (
@@ -16,29 +17,13 @@ const (
 	PermissionEmployeeManager  = "employee manager"
 )
 
-type accessControllerInterface interface {
-	NewToken(int64) (string, error)
-	ParseToken(token, secret string) error
-	Verify(permission []string) error
-	GetUser() string
-}
-
 type accessController struct {
-	Expiry     int64  `json:"expiry"`
-	User       string `json:"user"`
-	Permission string `json:"permission"`
-	secret     string `json:"-"`
+	Expiry     int64       `json:"expiry"`
+	Permission string      `json:"permission"`
+	Payload    interface{} `json:"payload"`
 }
 
-type acForCodePlatform struct {
-	accessController
-
-	PlatformToken string `json:"platform_token"`
-}
-
-func (this *accessController) NewToken(expiry int64) (string, error) {
-	this.Expiry = time.Now().Add(time.Second * time.Duration(expiry)).Unix()
-
+func (this *accessController) NewToken(secret string) (string, error) {
 	body, err := golangsdk.BuildRequestBody(this, "")
 	if err != nil {
 		return "", fmt.Errorf("Failed to create token: build body failed: %s", err.Error())
@@ -47,7 +32,12 @@ func (this *accessController) NewToken(expiry int64) (string, error) {
 	token := jwt.New(jwt.SigningMethodHS256)
 	token.Claims = jwt.MapClaims(body)
 
-	return token.SignedString([]byte(this.secret))
+	return token.SignedString([]byte(secret))
+}
+
+func (this *accessController) RefreshToken(expiry int64, secret string) (string, error) {
+	this.Expiry = util.Expiry(expiry)
+	return this.NewToken(secret)
 }
 
 func (this *accessController) ParseToken(token, secret string) error {
@@ -79,19 +69,14 @@ func (this *accessController) ParseToken(token, secret string) error {
 		return err
 	}
 
-	this.secret = secret
-	return nil
-}
-
-func (this *accessController) GetUser() string {
-	return this.User
-}
-
-func (this *accessController) Verify(permission []string) error {
-	if this.Expiry < time.Now().Unix() {
+	if this.Expiry < util.Now() {
 		return fmt.Errorf("token is expired")
 	}
 
+	return nil
+}
+
+func (this *accessController) Verify(permission []string) error {
 	for _, item := range permission {
 		if this.Permission == item {
 			return nil
@@ -99,4 +84,14 @@ func (this *accessController) Verify(permission []string) error {
 	}
 
 	return fmt.Errorf("Not allowed permission")
+}
+
+type accessControllerBasicPayload struct {
+	User string `json:"user"`
+}
+
+type acForCodePlatformPayload struct {
+	accessControllerBasicPayload
+
+	PlatformToken string `json:"platform_token"`
 }

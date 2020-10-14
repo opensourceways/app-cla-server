@@ -19,7 +19,7 @@ type CorporationSigningController struct {
 func (this *CorporationSigningController) Prepare() {
 	// list corp signings
 	if getRequestMethod(&this.Controller) == http.MethodGet {
-		apiPrepare(&this.Controller, []string{PermissionOwnerOfOrg}, &acForCodePlatform{})
+		apiPrepare(&this.Controller, []string{PermissionOwnerOfOrg}, &acForCodePlatformPayload{})
 	}
 }
 

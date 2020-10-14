@@ -14,7 +14,7 @@ type CLAController struct {
 }
 
 func (this *CLAController) Prepare() {
-	apiPrepare(&this.Controller, []string{PermissionOwnerOfOrg}, &acForCodePlatform{})
+	apiPrepare(&this.Controller, []string{PermissionOwnerOfOrg}, &acForCodePlatformPayload{})
 }
 
 // @Title CreateCLA
@@ -39,13 +39,15 @@ func (this *CLAController) Post() {
 		return
 	}
 
-	user, err := getApiAccessUser(&this.Controller)
-	if err != nil {
-		reason = err
-		statusCode = 400
-		return
-	}
-	cla.Submitter = user
+	/*
+		user, err := getApiAccessUser(&this.Controller)
+		if err != nil {
+			reason = err
+			statusCode = 400
+			return
+		}
+		cla.Submitter = user
+	*/
 
 	if err := (&cla).Create(); err != nil {
 		reason = err
@@ -135,18 +137,20 @@ func (this *CLAController) GetAll() {
 		sendResponse1(&this.Controller, statusCode, reason, body)
 	}()
 
-	user, err := getApiAccessUser(&this.Controller)
-	if err != nil {
-		reason = err
-		statusCode = 400
-		return
-	}
+	/*
+		user, err := getApiAccessUser(&this.Controller)
+		if err != nil {
+			reason = err
+			statusCode = 400
+			return
+		}
+	*/
 
 	clas := models.CLAListOptions{
-		Submitter: user,
-		Name:      this.GetString("name"),
-		ApplyTo:   this.GetString("apply_to"),
-		Language:  this.GetString("language"),
+		// Submitter: user,
+		Name:     this.GetString("name"),
+		ApplyTo:  this.GetString("apply_to"),
+		Language: this.GetString("language"),
 	}
 
 	r, err := clas.Get()

@@ -23,7 +23,7 @@ func (this *CLAOrgController) Prepare() {
 		return
 	}
 
-	apiPrepare(&this.Controller, []string{PermissionOwnerOfOrg}, &acForCodePlatform{})
+	apiPrepare(&this.Controller, []string{PermissionOwnerOfOrg}, &acForCodePlatformPayload{})
 }
 
 // @Title Bind CLA to Org/Repo

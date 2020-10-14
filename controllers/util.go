@@ -127,33 +127,6 @@ func getHeader(c *beego.Controller, h string) string {
 	return c.Ctx.Input.Header(h)
 }
 
-func newAccessToken(user, permission string) (string, error) {
-	ac := &accessController{
-		Expiry:     util.Expiry(conf.AppConfig.APITokenExpiry),
-		Permission: permission,
-		Payload: &accessControllerBasicPayload{
-			User: user,
-		},
-	}
-
-	return ac.NewToken(conf.AppConfig.APITokenKey)
-}
-
-func newAccessTokenAuthorizedByCodePlatform(user, permission, platformToken string) (string, error) {
-	ac := &accessController{
-		Expiry:     util.Expiry(conf.AppConfig.APITokenExpiry),
-		Permission: permission,
-		Payload: &acForCodePlatformPayload{
-			accessControllerBasicPayload: accessControllerBasicPayload{
-				User: user,
-			},
-			PlatformToken: platformToken,
-		},
-	}
-
-	return ac.NewToken(conf.AppConfig.APITokenKey)
-}
-
 func checkApiAccessToken(c *beego.Controller, permission []string, ac *accessController) (int, string, error) {
 	token := getHeader(c, headerToken)
 	if token == "" {
@@ -206,26 +179,6 @@ func refreshAccessToken(c *beego.Controller) (string, error) {
 		return "", err
 	}
 	return ac.RefreshToken(conf.AppConfig.APITokenExpiry, conf.AppConfig.APITokenKey)
-}
-
-func corporRoleToPermission(role string) string {
-	switch role {
-	case dbmodels.RoleAdmin:
-		return PermissionCorporAdmin
-	case dbmodels.RoleManager:
-		return PermissionEmployeeManager
-	}
-	return ""
-}
-
-func actionToPermission(action string) string {
-	switch action {
-	case "login":
-		return PermissionOwnerOfOrg
-	case "sign":
-		return PermissionIndividualSigner
-	}
-	return ""
 }
 
 func getRouterPattern(c *beego.Controller) string {
@@ -418,13 +371,18 @@ func canOwnerOfOrgAccessCLA(c *beego.Controller, claOrgID string) (*models.CLAOr
 		return nil, 500, util.ErrSystemError, fmt.Errorf("invalid payload")
 	}
 
+	org := claOrg.OrgID
+	if cpa.hasOrg(org) {
+		return claOrg, 0, "", nil
+	}
+
 	token := cpa.PlatformToken
 	p, err := platforms.NewPlatform(token, "", claOrg.Platform)
 	if err != nil {
 		return nil, 400, util.ErrInvalidParameter, err
 	}
 
-	b, err := p.IsOrgExist(claOrg.OrgID)
+	b, err := p.IsOrgExist(org)
 	if err != nil {
 		// TODO token expiry
 		return nil, 500, util.ErrSystemError, err
@@ -433,6 +391,8 @@ func canOwnerOfOrgAccessCLA(c *beego.Controller, claOrgID string) (*models.CLAOr
 	if !b {
 		return nil, 400, util.ErrNotYoursOrg, fmt.Errorf("not the org of owner")
 	}
+
+	cpa.addOrg(org)
 
 	return claOrg, 0, "", nil
 }

@@ -7,6 +7,8 @@ import (
 	"github.com/astaxie/beego"
 
 	platformAuth "github.com/opensourceways/app-cla-server/code-platform-auth"
+	"github.com/opensourceways/app-cla-server/code-platform-auth/platforms"
+	"github.com/opensourceways/app-cla-server/conf"
 	"github.com/opensourceways/app-cla-server/util"
 )
 
@@ -49,13 +51,9 @@ func (this *AuthController) Auth() {
 		return
 	}
 
-	at, err := newAccessTokenAuthorizedByCodePlatform(
-		fmt.Sprintf("%s/%s", platform, user),
-		actionToPermission(purpose),
-		token,
-	)
+	at, sc, ec, err := this.newAccessToken(platform, user, purpose, token)
 	if err != nil {
-		rs(500, util.ErrSystemError, err)
+		rs(sc, ec, err)
 		return
 	}
 
@@ -63,6 +61,50 @@ func (this *AuthController) Auth() {
 	this.Ctx.SetCookie("platform_token", token, "3600", "/")
 
 	http.Redirect(this.Ctx.ResponseWriter, this.Ctx.Request, cp.WebRedirectDir(), http.StatusFound)
+}
+
+func (this *AuthController) newAccessToken(platform, user, purpose, platformToken string) (string, int, string, error) {
+	pt, err := platforms.NewPlatform(platformToken, "", platform)
+	if err != nil {
+		return "", 400, util.ErrNotSupportedPlatform, err
+	}
+
+	orgs, err := pt.ListOrg()
+	if err != nil {
+		return "", 500, util.ErrSystemError, err
+	}
+
+	orgm := map[string]bool{}
+	for _, item := range orgs {
+		orgm[item] = true
+	}
+
+	permission := ""
+	switch purpose {
+	case "login":
+		permission = PermissionOwnerOfOrg
+	case "sign":
+		permission = PermissionIndividualSigner
+	}
+
+	ac := &accessController{
+		Expiry:     util.Expiry(conf.AppConfig.APITokenExpiry),
+		Permission: permission,
+		Payload: &acForCodePlatformPayload{
+			accessControllerBasicPayload: accessControllerBasicPayload{
+				User: fmt.Sprintf("%s/%s", platform, user),
+			},
+			PlatformToken: platformToken,
+			Orgs:          orgm,
+		},
+	}
+
+	token, err := ac.NewToken(conf.AppConfig.APITokenKey)
+	if err != nil {
+		return "", 500, util.ErrSystemError, err
+	}
+
+	return token, 0, "", nil
 }
 
 // @Title Get

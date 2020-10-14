@@ -6,6 +6,7 @@ import (
 
 	"github.com/astaxie/beego"
 
+	"github.com/opensourceways/app-cla-server/conf"
 	"github.com/opensourceways/app-cla-server/dbmodels"
 	"github.com/opensourceways/app-cla-server/models"
 	"github.com/opensourceways/app-cla-server/util"
@@ -67,8 +68,7 @@ func (this *CorporationManagerController) Auth() {
 
 	for claOrgID, items := range v {
 		for _, item := range items {
-			user := corpManagerUser(claOrgID, item.Email)
-			token, err := newAccessToken(user, corporRoleToPermission(item.Role))
+			token, err := this.newAccessToken(claOrgID, item.Email, item.Role)
 			if err != nil {
 				continue
 			}
@@ -85,6 +85,26 @@ func (this *CorporationManagerController) Auth() {
 	}
 
 	body = result
+}
+
+func (this *CorporationManagerController) newAccessToken(claOrgID, email, role string) (string, error) {
+	permission := ""
+	switch role {
+	case dbmodels.RoleAdmin:
+		permission = PermissionCorporAdmin
+	case dbmodels.RoleManager:
+		permission = PermissionEmployeeManager
+	}
+
+	ac := &accessController{
+		Expiry:     util.Expiry(conf.AppConfig.APITokenExpiry),
+		Permission: permission,
+		Payload: &accessControllerBasicPayload{
+			User: corpManagerUser(claOrgID, email),
+		},
+	}
+
+	return ac.NewToken(conf.AppConfig.APITokenKey)
 }
 
 // @Title Put

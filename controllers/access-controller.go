@@ -93,5 +93,23 @@ type accessControllerBasicPayload struct {
 type acForCodePlatformPayload struct {
 	accessControllerBasicPayload
 
-	PlatformToken string `json:"platform_token"`
+	PlatformToken string          `json:"platform_token"`
+	Orgs          map[string]bool `json:"orgs"`
+}
+
+func (this *acForCodePlatformPayload) hasOrg(org string) bool {
+	if this.Orgs == nil {
+		return false
+	}
+
+	_, ok := this.Orgs[org]
+	return ok
+}
+
+func (this *acForCodePlatformPayload) addOrg(org string) {
+	if this.Orgs == nil {
+		this.Orgs = map[string]bool{}
+	}
+
+	this.Orgs[org] = true
 }

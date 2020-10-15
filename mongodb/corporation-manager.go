@@ -29,40 +29,53 @@ func filterForCorpManager(filter bson.M) {
 	filter[fieldCorpoManagers] = bson.M{"$type": "array"}
 }
 
+func managersToAdd(
+	ctx context.Context, c *client, oid primitive.ObjectID,
+	opt []dbmodels.CorporationManagerCreateOption, managerNumber int,
+) ([]dbmodels.CorporationManagerCreateOption, error) {
+
+	ms, err := c.listCorporationManager(oid, opt[0].Email, opt[0].Role, ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	current := map[string]bool{}
+	for _, item := range ms {
+		current[item.Email] = true
+	}
+
+	toAdd := make([]dbmodels.CorporationManagerCreateOption, 0, len(opt))
+	for _, item := range opt {
+		if _, ok := current[item.Email]; !ok {
+			toAdd = append(toAdd, item)
+		}
+	}
+
+	if len(ms)+len(toAdd) > managerNumber {
+		return nil, dbmodels.DBError{
+			ErrCode: util.ErrNumOfCorpManagersExceeded,
+			Err:     fmt.Errorf("exceed %d managers allowed", managerNumber),
+		}
+	}
+
+	return toAdd, nil
+}
+
 func (c *client) AddCorporationManager(claOrgID string, opt []dbmodels.CorporationManagerCreateOption, managerNumber int) ([]dbmodels.CorporationManagerCreateOption, error) {
 	oid, err := toObjectID(claOrgID)
 	if err != nil {
 		return nil, err
 	}
 
-	toAdd := make([]dbmodels.CorporationManagerCreateOption, 0, len(opt))
+	var toAdd []dbmodels.CorporationManagerCreateOption
 
 	f := func(ctx mongo.SessionContext) error {
-		ms, err := c.listCorporationManager(oid, opt[0].Email, opt[0].Role, ctx)
+		toAdd, err = managersToAdd(ctx, c, oid, opt, managerNumber)
 		if err != nil {
 			return err
 		}
-
-		current := map[string]bool{}
-		for _, item := range ms {
-			current[item.Email] = true
-		}
-
-		for _, item := range opt {
-			if _, ok := current[item.Email]; !ok {
-				toAdd = append(toAdd, item)
-			}
-		}
-
 		if len(toAdd) == 0 {
 			return nil
-		}
-
-		if len(ms)+len(toAdd) > managerNumber {
-			return dbmodels.DBError{
-				ErrCode: util.ErrNumOfCorpManagersExceeded,
-				Err:     fmt.Errorf("exceed %d managers allowed", managerNumber),
-			}
 		}
 
 		items := make(bson.A, 0, len(toAdd))
@@ -82,20 +95,22 @@ func (c *client) AddCorporationManager(claOrgID string, opt []dbmodels.Corporati
 			items = append(items, bson.M(body))
 		}
 
-		v, err := c.pushArryItems(
+		err = c.pushArryItems(
 			ctx, claOrgCollection, fieldCorpoManagers,
-			bson.M{"_id": oid}, items,
+			filterOfDocID(oid), items,
 		)
 		if err != nil {
 			return fmt.Errorf("write db failed: %s", err.Error())
 		}
 
-		if v.ModifiedCount != 1 {
-			return fmt.Errorf("impossible")
-		}
-
 		if opt[0].Role == dbmodels.RoleAdmin {
-			return c.setAdministratorAdded(oid, opt[0].Email, ctx)
+			return c.updateArryItem(
+				ctx, claOrgCollection, fieldCorporations,
+				filterOfDocID(oid),
+				filterOfCorpID(opt[0].Email),
+				bson.M{"admin_added": true},
+				true,
+			)
 		}
 		return nil
 	}
@@ -109,10 +124,10 @@ func (c *client) CheckCorporationManagerExist(opt dbmodels.CorporationManagerChe
 	filterForCorpManager(filterOfDoc)
 
 	filterOfArray := bson.M{
-		fieldCorporationID: genCorpID(opt.User),
-		"email":            opt.User,
-		"password":         opt.Password,
+		"email":    opt.User,
+		"password": opt.Password,
 	}
+	addCorporationID(opt.User, filterOfArray)
 
 	project := bson.M{
 		"platform":                  1,
@@ -135,7 +150,7 @@ func (c *client) CheckCorporationManagerExist(opt dbmodels.CorporationManagerChe
 
 	if len(v) == 0 {
 		return nil, dbmodels.DBError{
-			ErrCode: util.ErrNoCLABindingDoc,
+			ErrCode: util.ErrNoDBRecord,
 			Err:     fmt.Errorf("no cla binding found"),
 		}
 	}
@@ -171,49 +186,26 @@ func (c *client) ResetCorporationManagerPassword(claOrgID, email string, opt dbm
 		return err
 	}
 
-	filterOfDoc := bson.M{"_id": oid}
-
 	updateCmd := bson.M{
 		"password": opt.NewPassword,
 		"changed":  true,
 	}
 
 	filterOfArray := bson.M{
-		"corp_id":  util.EmailSuffix(email),
 		"email":    email,
 		"password": opt.OldPassword,
 	}
+	addCorporationID(email, filterOfArray)
 
 	f := func(ctx context.Context) error {
-		v, err := c.updateArryItem(ctx, claOrgCollection, fieldCorpoManagers, filterOfDoc, filterOfArray, updateCmd)
-		if err != nil {
-			return err
-		}
-
-		if v.MatchedCount == 0 {
-			return dbmodels.DBError{
-				ErrCode: util.ErrNoCLABindingDoc,
-				Err:     fmt.Errorf("can't find the cla"),
-			}
-		}
-
-		if v.ModifiedCount != 1 {
-			return dbmodels.DBError{
-				ErrCode: util.ErrInvalidAccountOrPw,
-				Err:     fmt.Errorf("invalid email or old password"),
-			}
-		}
-
-		return nil
+		return c.updateArryItem(ctx, claOrgCollection, fieldCorpoManagers, filterOfDocID(oid), filterOfArray, updateCmd, true)
 	}
 
 	return withContext(f)
 }
 
 func (c *client) listCorporationManager(claOrgID primitive.ObjectID, email, role string, ctx context.Context) ([]dbmodels.CorporationManagerListResult, error) {
-	filterOfDoc := bson.M{"_id": claOrgID}
-
-	filterOfArray := bson.M{fieldCorporationID: genCorpID(email)}
+	filterOfArray := filterOfCorpID(email)
 	if role != "" {
 		filterOfArray["role"] = role
 	}
@@ -224,14 +216,17 @@ func (c *client) listCorporationManager(claOrgID primitive.ObjectID, email, role
 	}
 
 	var v []CLAOrg
-	err := c.getArrayItem(ctx, claOrgCollection, fieldCorpoManagers, filterOfDoc, filterOfArray, project, &v)
+	err := c.getArrayItem(
+		ctx, claOrgCollection, fieldCorpoManagers,
+		filterOfDocID(claOrgID), filterOfArray, project, &v,
+	)
 	if err != nil {
 		return nil, err
 	}
 
 	if len(v) == 0 {
 		return nil, dbmodels.DBError{
-			ErrCode: util.ErrNoCLABindingDoc,
+			ErrCode: util.ErrNoDBRecord,
 			Err:     fmt.Errorf("can't find the cla"),
 		}
 	}
@@ -296,24 +291,13 @@ func (c *client) DeleteCorporationManager(claOrgID string, opt []dbmodels.Corpor
 			return nil
 		}
 
-		filterOfArray := bson.M{
-			fieldCorporationID: genCorpID(opt[0].Email),
-			"email":            bson.M{"$in": toDelete},
-		}
+		filterOfArray := filterOfCorpID(opt[0].Email)
+		filterOfArray["email"] = bson.M{"$in": toDelete}
 
-		v, err := c.pullArryItem(
+		return c.pullArryItem(
 			ctx, claOrgCollection, fieldCorpoManagers,
-			bson.M{"_id": oid}, filterOfArray,
+			filterOfDocID(oid), filterOfArray,
 		)
-		if err != nil {
-			return fmt.Errorf("failed to write db: %s", err.Error())
-		}
-
-		if v.ModifiedCount != 1 {
-			return fmt.Errorf("impossible.")
-		}
-
-		return nil
 	}
 
 	err = c.doTransaction(f)

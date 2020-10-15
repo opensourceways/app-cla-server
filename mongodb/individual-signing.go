@@ -6,7 +6,6 @@ import (
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
 
 	"github.com/opensourceways/app-cla-server/dbmodels"
 	"github.com/opensourceways/app-cla-server/util"
@@ -50,7 +49,7 @@ func (c *client) SignAsIndividual(claOrgID, platform, org, repo string, info dbm
 	addCorporationID(info.Email, body)
 
 	f := func(ctx mongo.SessionContext) error {
-		_, err := c.isIndividualSigned(platform, org, repo, info.Email, false, ctx)
+		_, err := c.isIndividualSigned(ctx, platform, org, repo, info.Email, false)
 		if err != nil {
 			if !isHasNotSigned(err) {
 				return err
@@ -62,109 +61,64 @@ func (c *client) SignAsIndividual(claOrgID, platform, org, repo string, info dbm
 			}
 		}
 
-		col := c.collection(claOrgCollection)
-		r, err := col.UpdateOne(ctx, bson.M{"_id": oid}, bson.M{"$push": bson.M{fieldIndividuals: bson.M(body)}})
-		if err != nil {
-			return err
-		}
-
-		if r.ModifiedCount == 0 {
-			return fmt.Errorf("impossible")
-		}
-		return nil
+		return c.pushArryItem(ctx, claOrgCollection, fieldIndividuals, filterOfDocID(oid), bson.M(body))
 	}
 
 	return c.doTransaction(f)
 }
 
 func (c *client) DeleteIndividualSigning(platform, org, repo, email string) error {
-	f := func(ctx context.Context) error {
-		claOrg, err := c.isIndividualSigned(platform, org, repo, email, false, ctx)
+	f := func(ctx mongo.SessionContext) error {
+		claOrg, err := c.isIndividualSigned(ctx, platform, org, repo, email, false)
 		if err != nil {
-			return err
-		}
-
-		filter := bson.M{"_id": claOrg.ID}
-		filterForIndividualSigning(filter)
-
-		update := bson.M{"$pull": bson.M{fieldIndividuals: bson.M{
-			fieldCorporationID: util.EmailSuffix(email),
-			"email":            email,
-		}}}
-
-		col := c.collection(claOrgCollection)
-		r, err := col.UpdateOne(ctx, filter, update)
-		if err != nil {
-			return err
-		}
-
-		if r.MatchedCount == 0 {
-			return dbmodels.DBError{
-				ErrCode: util.ErrInvalidParameter,
-				Err:     fmt.Errorf("can't find the cla"),
+			if isHasNotSigned(err) {
+				return nil
 			}
+			return err
 		}
 
-		return nil
+		_, err = c.pullArryItem(
+			ctx, claOrgCollection, fieldIndividuals,
+			filterOfDocID(claOrg.ID),
+			bson.M{
+				fieldCorporationID: genCorpID(email),
+				"email":            email,
+			},
+		)
+		return err
 	}
 
-	return withContext(f)
+	return c.doTransaction(f)
 }
 
 func (c *client) UpdateIndividualSigning(platform, org, repo, email string, enabled bool) error {
-	f := func(ctx context.Context) error {
-		claOrg, err := c.isIndividualSigned(platform, org, repo, email, false, ctx)
+	f := func(ctx mongo.SessionContext) error {
+		claOrg, err := c.isIndividualSigned(ctx, platform, org, repo, email, false)
 		if err != nil {
 			return err
 		}
 
-		filter := bson.M{"_id": claOrg.ID}
-		filterForIndividualSigning(filter)
-
-		update := bson.M{"$set": bson.M{fmt.Sprintf("%s.$[ms].enabled", fieldIndividuals): enabled}}
-
-		updateOpt := options.UpdateOptions{
-			ArrayFilters: &options.ArrayFilters{
-				Filters: bson.A{
-					bson.M{
-						"ms.corp_id": util.EmailSuffix(email),
-						"ms.email":   email,
-						"ms.enabled": !enabled,
-					},
-				},
+		return c.updateArryItem(
+			ctx, claOrgCollection, fieldIndividuals,
+			filterOfDocID(claOrg.ID),
+			bson.M{
+				fieldCorporationID: genCorpID(email),
+				"email":            email,
+				"enabled":          !enabled,
 			},
-		}
-
-		col := c.collection(claOrgCollection)
-		r, err := col.UpdateOne(ctx, filter, update, &updateOpt)
-		if err != nil {
-			return err
-		}
-
-		if r.MatchedCount == 0 {
-			return dbmodels.DBError{
-				ErrCode: util.ErrInvalidParameter,
-				Err:     fmt.Errorf("can't find the cla"),
-			}
-		}
-
-		if r.ModifiedCount == 0 {
-			return dbmodels.DBError{
-				ErrCode: util.ErrInvalidParameter,
-				Err:     fmt.Errorf("can't find the corresponding signing info"),
-			}
-		}
-		return nil
+			bson.M{"enabled": enabled},
+			false,
+		)
 	}
 
-	return withContext(f)
+	return c.doTransaction(f)
 }
 
 func (c *client) IsIndividualSigned(platform, orgID, repoID, email string) (bool, error) {
 	r := false
 
 	f := func(ctx context.Context) error {
-		v, err := c.isIndividualSigned(platform, orgID, repoID, email, true, ctx)
+		v, err := c.isIndividualSigned(ctx, platform, orgID, repoID, email, true)
 		if err == nil {
 			r = v.Individuals[0].Enabled
 		}
@@ -176,22 +130,43 @@ func (c *client) IsIndividualSigned(platform, orgID, repoID, email string) (bool
 	return r, err
 }
 
-func (c *client) isIndividualSigned(platform, orgID, repoID, email string, orgCared bool, ctx context.Context) (*CLAOrg, error) {
-	filterOfSigning := bson.M{
-		fieldIndividuals: bson.M{"$filter": bson.M{
-			"input": fmt.Sprintf("$%s", fieldIndividuals),
-			"cond": bson.M{"$and": bson.A{
-				bson.M{"$eq": bson.A{"$$this.corp_id", util.EmailSuffix(email)}},
-				bson.M{"$eq": bson.A{"$$this.email", email}},
-			}},
-		}},
+func (c *client) isIndividualSigned(ctx context.Context, platform, orgID, repoID, email string, orgCared bool) (*CLAOrg, error) {
+	filterOfDoc := bson.M{
+		"platform": platform,
+		"org_id":   orgID,
+		"apply_to": dbmodels.ApplyToIndividual,
+		"enabled":  true,
+	}
+	if repoID != "" && orgCared {
+		filterOfDoc[fieldRepo] = bson.M{"$in": bson.A{"", repoID}}
+	} else {
+		filterOfDoc[fieldRepo] = repoID
 	}
 
-	project := bson.M{
-		individualSigningField("enabled"): 1,
+	var v []CLAOrg
+
+	err := c.getArrayItem(
+		ctx, claOrgCollection, fieldIndividuals, filterOfDoc,
+		bson.M{
+			fieldCorporationID: genCorpID(email),
+			"email":            email,
+		},
+		bson.M{
+			fieldRepo:                         1,
+			individualSigningField("enabled"): 1,
+		},
+		&v,
+	)
+	if err != nil {
+		return nil, err
 	}
 
-	return c.getSigningDetail(platform, orgID, repoID, dbmodels.ApplyToIndividual, orgCared, filterOfSigning, project, ctx)
+	return c.getSigningDetail1(
+		platform, orgID, repoID, orgCared, v,
+		func(doc *CLAOrg) bool {
+			return len(doc.Individuals) > 0
+		},
+	)
 }
 
 func (c *client) ListIndividualSigning(opt dbmodels.IndividualSigningListOption) (map[string][]dbmodels.IndividualSigningBasicInfo, error) {
@@ -211,52 +186,29 @@ func (c *client) ListIndividualSigning(opt dbmodels.IndividualSigningListOption)
 	if err != nil {
 		return nil, err
 	}
-	filter := bson.M(body)
-	filterForIndividualSigning(filter)
+	filterOfDoc := bson.M(body)
+	filterForIndividualSigning(filterOfDoc)
 
-	var v []CLAOrg
-
-	f := func(ctx context.Context) error {
-		col := c.collection(claOrgCollection)
-
-		pipeline := bson.A{bson.M{"$match": filter}}
-
-		if opt.CorporationEmail != "" {
-			pipeline = append(
-				pipeline,
-				bson.M{"$project": bson.M{
-					fieldIndividuals: bson.M{"$filter": bson.M{
-						"input": fmt.Sprintf("$%s", fieldIndividuals),
-						"cond":  bson.M{"$eq": bson.A{"$$this.corp_id", util.EmailSuffix(opt.CorporationEmail)}},
-					}}},
-				},
-			)
-		}
-
-		pipeline = append(
-			pipeline,
-			bson.M{"$project": bson.M{
-				individualSigningField("email"):   1,
-				individualSigningField("name"):    1,
-				individualSigningField("enabled"): 1,
-				individualSigningField("date"):    1,
-			}},
-		)
-
-		cursor, err := col.Aggregate(ctx, pipeline)
-		if err != nil {
-			return fmt.Errorf("error find bindings: %v", err)
-		}
-
-		err = cursor.All(ctx, &v)
-		if err != nil {
-			return fmt.Errorf("error decoding to bson struct of employee signing: %v", err)
-		}
-		return nil
+	filterOfArray := bson.M{}
+	if opt.CorporationEmail != "" {
+		filterOfArray = filterOfCorpID(opt.CorporationEmail)
 	}
 
-	err = withContext(f)
-	if err != nil {
+	project := bson.M{
+		individualSigningField("email"):   1,
+		individualSigningField("name"):    1,
+		individualSigningField("enabled"): 1,
+		individualSigningField("date"):    1,
+	}
+
+	var v []CLAOrg
+	f := func(ctx context.Context) error {
+		return c.getArrayItem(
+			ctx, claOrgCollection, fieldIndividuals,
+			filterOfDoc, filterOfArray, project, &v)
+	}
+
+	if err = withContext(f); err != nil {
 		return nil, err
 	}
 
@@ -264,7 +216,7 @@ func (c *client) ListIndividualSigning(opt dbmodels.IndividualSigningListOption)
 
 	for i := 0; i < len(v); i++ {
 		rs := v[i].Individuals
-		if rs == nil || len(rs) == 0 {
+		if len(rs) == 0 {
 			continue
 		}
 

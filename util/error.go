@@ -23,5 +23,6 @@ const (
 	ErrNotSupportedPlatform      = "not_supported_platform"
 	ErrNotYoursOrg               = "not_yours_org"
 	ErrInvalidAccountOrPw        = "invalid_account_or_pw"
+	ErrNoDBRecord                = "no_db_record"
 	ErrSystemError               = "system_error"
 )

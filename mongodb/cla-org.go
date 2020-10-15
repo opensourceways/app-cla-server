@@ -148,7 +148,7 @@ func (c *client) GetBindingBetweenCLAAndOrg(uid string) (dbmodels.CLAOrg, error)
 		if err := sr.Decode(&v); err != nil {
 			if isErrNoDocuments(err) {
 				return dbmodels.DBError{
-					ErrCode: util.ErrNoCLABindingDoc,
+					ErrCode: util.ErrNoDBRecord,
 					Err:     fmt.Errorf("can't find cla binding"),
 				}
 			}

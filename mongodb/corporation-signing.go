@@ -5,9 +5,7 @@ import (
 	"fmt"
 
 	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
 
 	"github.com/opensourceways/app-cla-server/dbmodels"
 	"github.com/opensourceways/app-cla-server/util"
@@ -56,7 +54,7 @@ func (c *client) SignAsCorporation(claOrgID, platform, org, repo string, info db
 	addCorporationID(info.AdminEmail, body)
 
 	f := func(ctx mongo.SessionContext) error {
-		_, _, err := c.getCorporationSigningDetail(platform, org, repo, info.AdminEmail, ctx)
+		_, _, err := c.getCorporationSigningDetail(ctx, platform, org, repo, info.AdminEmail)
 		if err != nil {
 			if !isHasNotSigned(err) {
 				return err
@@ -68,16 +66,7 @@ func (c *client) SignAsCorporation(claOrgID, platform, org, repo string, info db
 			}
 		}
 
-		col := c.collection(claOrgCollection)
-		r, err := col.UpdateOne(ctx, bson.M{"_id": oid}, bson.M{"$push": bson.M{fieldCorporations: bson.M(body)}})
-		if err != nil {
-			return err
-		}
-
-		if r.ModifiedCount == 0 {
-			return fmt.Errorf("impossible")
-		}
-		return nil
+		return c.pushArryItem(ctx, claOrgCollection, fieldCorporations, filterOfDocID(oid), bson.M(body))
 	}
 
 	return c.doTransaction(f)
@@ -96,39 +85,25 @@ func (c *client) ListCorporationSigning(opt dbmodels.CorporationSigningListOptio
 		CLALanguage: opt.CLALanguage,
 	}
 
-	body, err := structToMap(info)
+	filterOfDoc, err := structToMap(info)
 	if err != nil {
 		return nil, err
 	}
-	filter := bson.M(body)
-	filterForCorpSigning(filter)
+	filterForCorpSigning(filterOfDoc)
+
+	project := bson.M{
+		corpSigningField("admin_email"):  1,
+		corpSigningField("admin_name"):   1,
+		corpSigningField("corp_name"):    1,
+		corpSigningField("date"):         1,
+		corpSigningField("pdf_uploaded"): 1,
+		corpSigningField("admin_added"):  1,
+	}
 
 	var v []CLAOrg
 
 	f := func(ctx context.Context) error {
-		col := c.collection(claOrgCollection)
-
-		pipeline := bson.A{
-			bson.M{"$match": filter},
-			bson.M{"$project": bson.M{
-				corpSigningField("admin_email"):  1,
-				corpSigningField("admin_name"):   1,
-				corpSigningField("corp_name"):    1,
-				corpSigningField("date"):         1,
-				corpSigningField("pdf_uploaded"): 1,
-				corpSigningField("admin_added"):  1,
-			}},
-		}
-		cursor, err := col.Aggregate(ctx, pipeline)
-		if err != nil {
-			return err
-		}
-
-		err = cursor.All(ctx, &v)
-		if err != nil {
-			return err
-		}
-		return nil
+		return c.getArrayItem(ctx, claOrgCollection, fieldCorporations, filterOfDoc, nil, project, &v)
 	}
 
 	if err = withContext(f); err != nil {
@@ -152,52 +127,7 @@ func (c *client) ListCorporationSigning(opt dbmodels.CorporationSigningListOptio
 	return r, nil
 }
 
-func (c *client) setAdministratorAdded(claOrgID primitive.ObjectID, email string, ctx context.Context) error {
-	col := c.collection(claOrgCollection)
-
-	filter := bson.M{"_id": claOrgID}
-	filterForCorpSigning(filter)
-
-	update := bson.M{"$set": bson.M{
-		fmt.Sprintf("%s.$[elem].admin_added", fieldCorporations): true,
-	}}
-
-	updateOpt := options.UpdateOptions{
-		ArrayFilters: &options.ArrayFilters{
-			Filters: bson.A{
-				bson.M{
-					"elem.corp_id": util.EmailSuffix(email),
-				},
-			},
-		},
-	}
-
-	r, err := col.UpdateOne(ctx, filter, update, &updateOpt)
-	if err != nil {
-		return err
-	}
-
-	if r.MatchedCount == 0 {
-		return dbmodels.DBError{
-			ErrCode: util.ErrNoCLABindingDoc,
-			Err:     fmt.Errorf("can't find the cla"),
-		}
-	}
-
-	if r.ModifiedCount == 0 {
-		return fmt.Errorf("impossible")
-	}
-	return nil
-}
-
-func (c *client) getCorporationSigningDetail(platform, org, repo, email string, ctx context.Context) (string, dbmodels.CorporationSigningDetail, error) {
-	filterOfSigning := bson.M{
-		fieldCorporations: bson.M{"$filter": bson.M{
-			"input": fmt.Sprintf("$%s", fieldCorporations),
-			"cond":  bson.M{"$eq": bson.A{"$$this.corp_id", util.EmailSuffix(email)}},
-		}},
-	}
-
+func (c *client) getCorporationSigningDetail(ctx context.Context, platform, org, repo, email string) (string, dbmodels.CorporationSigningDetail, error) {
 	project := bson.M{
 		corpSigningField("admin_email"):  1,
 		corpSigningField("admin_name"):   1,
@@ -207,7 +137,30 @@ func (c *client) getCorporationSigningDetail(platform, org, repo, email string, 
 		corpSigningField("admin_added"):  1,
 	}
 
-	claOrg, err := c.getSigningDetail(platform, org, repo, dbmodels.ApplyToCorporation, false, filterOfSigning, project, ctx)
+	filterOfDoc := bson.M{
+		"platform": platform,
+		"org_id":   org,
+		"apply_to": dbmodels.ApplyToCorporation,
+		"enabled":  true,
+		fieldRepo:  repo,
+	}
+
+	var v []CLAOrg
+
+	err := c.getArrayItem(
+		ctx, claOrgCollection, fieldCorporations,
+		filterOfDoc, filterOfCorpID(email), project, &v,
+	)
+	if err != nil {
+		return "", dbmodels.CorporationSigningDetail{}, err
+	}
+
+	claOrg, err := c.getSigningDetail1(
+		platform, org, repo, false, v,
+		func(doc *CLAOrg) bool {
+			return len(doc.Corporations) > 0
+		},
+	)
 	if err != nil {
 		return "", dbmodels.CorporationSigningDetail{}, err
 	}
@@ -220,7 +173,7 @@ func (c *client) GetCorporationSigningDetail(platform, org, repo, email string) 
 	var r dbmodels.CorporationSigningDetail
 
 	f := func(ctx context.Context) error {
-		cid, v, err := c.getCorporationSigningDetail(platform, org, repo, email, ctx)
+		cid, v, err := c.getCorporationSigningDetail(ctx, platform, org, repo, email)
 		claOrgID = cid
 		r = v
 		return err
@@ -239,47 +192,31 @@ func (c *client) CheckCorporationSigning(claOrgID, email string) (dbmodels.Corpo
 		return result, err
 	}
 
+	project := bson.M{
+		corpSigningField("admin_email"):  1,
+		corpSigningField("admin_name"):   1,
+		corpSigningField("corp_name"):    1,
+		corpSigningField("date"):         1,
+		corpSigningField("pdf_uploaded"): 1,
+		corpSigningField("admin_added"):  1,
+	}
+
 	var v []CLAOrg
 
 	f := func(ctx context.Context) error {
-		col := c.collection(claOrgCollection)
-
-		filter := bson.M{"_id": oid}
-		filterForCorpSigning(filter)
-
-		pipeline := bson.A{
-			bson.M{"$match": filter},
-			bson.M{"$project": bson.M{
-				fieldCorporations: bson.M{"$filter": bson.M{
-					"input": fmt.Sprintf("$%s", fieldCorporations),
-					"cond":  bson.M{"$eq": bson.A{"$$this.corp_id", util.EmailSuffix(email)}},
-				}},
-			}},
-			bson.M{"$project": bson.M{
-				corpSigningField("admin_email"):  1,
-				corpSigningField("admin_name"):   1,
-				corpSigningField("corp_name"):    1,
-				corpSigningField("date"):         1,
-				corpSigningField("pdf_uploaded"): 1,
-				corpSigningField("admin_added"):  1,
-			}},
-		}
-		cursor, err := col.Aggregate(ctx, pipeline)
-		if err != nil {
-			return err
-		}
-
-		return cursor.All(ctx, &v)
+		return c.getArrayItem(
+			ctx, claOrgCollection, fieldCorporations,
+			filterOfDocID(oid), filterOfCorpID(email), project, &v,
+		)
 	}
 
-	err = withContext(f)
-	if err != nil {
+	if err = withContext(f); err != nil {
 		return result, err
 	}
 
 	if len(v) == 0 {
 		return result, dbmodels.DBError{
-			ErrCode: util.ErrNoCLABindingDoc,
+			ErrCode: util.ErrNoDBRecord,
 			Err:     fmt.Errorf("can't find the cla"),
 		}
 	}
@@ -308,47 +245,10 @@ func toDBModelCorporationSigningDetail(cs *corporationSigningDoc) dbmodels.Corpo
 	}
 }
 
-func (c *client) getSigningDetail(platform, org, repo, applyTo string, orgCared bool, filterOfSigning, project bson.M, ctx context.Context) (*CLAOrg, error) {
-	filter := bson.M{
-		"platform": platform,
-		"org_id":   org,
-		"apply_to": applyTo,
-		"enabled":  true,
-	}
-	if repo != "" && orgCared {
-		filter[fieldRepo] = bson.M{"$in": bson.A{"", repo}}
-	} else {
-		filter[fieldRepo] = repo
-	}
-
-	var v []CLAOrg
-
-	f := func() error {
-		col := c.collection(claOrgCollection)
-
-		filterOfSigning[fieldRepo] = 1
-		project[fieldRepo] = 1
-
-		pipeline := bson.A{
-			bson.M{"$match": filter},
-			bson.M{"$project": filterOfSigning},
-			bson.M{"$project": project},
-		}
-		cursor, err := col.Aggregate(ctx, pipeline)
-		if err != nil {
-			return err
-		}
-
-		return cursor.All(ctx, &v)
-	}
-
-	if err := f(); err != nil {
-		return nil, err
-	}
-
+func (c *client) getSigningDetail1(platform, org, repo string, orgCared bool, v []CLAOrg, isOk func(doc *CLAOrg) bool) (*CLAOrg, error) {
 	if len(v) == 0 {
 		return nil, dbmodels.DBError{
-			ErrCode: util.ErrNoCLABindingDoc,
+			ErrCode: util.ErrNoDBRecord,
 			Err:     fmt.Errorf("no record for this org/repo: %s/%s/%s", platform, org, repo),
 		}
 	}
@@ -356,13 +256,6 @@ func (c *client) getSigningDetail(platform, org, repo, applyTo string, orgCared 
 	err := dbmodels.DBError{
 		ErrCode: util.ErrHasNotSigned,
 		Err:     fmt.Errorf("the corp/individual has not signed for this org/repo: %s/%s/%s", platform, org, repo),
-	}
-
-	isOk := func(doc *CLAOrg) bool {
-		if applyTo == dbmodels.ApplyToCorporation {
-			return len(doc.Corporations) > 0
-		}
-		return len(doc.Individuals) > 0
 	}
 
 	if repo != "" && orgCared {

@@ -92,7 +92,7 @@ func (c *client) AddCorporationManager(claOrgID string, opt []dbmodels.Corporati
 			}
 			addCorporationID(item.Email, body)
 
-			items = append(items, bson.M(body))
+			items = append(items, body)
 		}
 
 		err = c.pushArryItems(
@@ -141,7 +141,7 @@ func (c *client) CheckCorporationManagerExist(opt dbmodels.CorporationManagerChe
 	var v []CLAOrg
 
 	f := func(ctx context.Context) error {
-		return c.getArrayItem(ctx, claOrgCollection, fieldCorpoManagers, filterOfDoc, filterOfArray, project, &v)
+		return c.getArrayElem(ctx, claOrgCollection, fieldCorpoManagers, filterOfDoc, filterOfArray, project, &v)
 	}
 
 	if err := withContext(f); err != nil {
@@ -216,7 +216,7 @@ func (c *client) listCorporationManager(claOrgID primitive.ObjectID, email, role
 	}
 
 	var v []CLAOrg
-	err := c.getArrayItem(
+	err := c.getArrayElem(
 		ctx, claOrgCollection, fieldCorpoManagers,
 		filterOfDocID(claOrgID), filterOfArray, project, &v,
 	)

@@ -43,7 +43,7 @@ func (c *client) CreateVerificationCode(opt dbmodels.VerificationCode) error {
 		filter["code"] = opt.Code
 
 		upsert := true
-		update := bson.M{"$setOnInsert": bson.M(body)}
+		update := bson.M{"$setOnInsert": body}
 
 		r, err := col.UpdateOne(ctx, filter, update, &options.UpdateOptions{Upsert: &upsert})
 		if err != nil {

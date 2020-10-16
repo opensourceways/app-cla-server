@@ -42,7 +42,7 @@ func filterOfDocID(oid primitive.ObjectID) bson.M {
 	return bson.M{"_id": oid}
 }
 
-func isHasNotSigned(err error) bool {
+func isErrorOfNotSigned(err error) bool {
 	e, ok := dbmodels.IsDBError(err)
 	return ok && e.ErrCode == util.ErrHasNotSigned
 }
@@ -115,24 +115,24 @@ func (c *client) updateArryItem(ctx context.Context, collection, array string, f
 	for k, v := range updateCmd {
 		cmd[fmt.Sprintf("%s.$[i].%s", array, k)] = v
 	}
-	update := bson.M{"$set": cmd}
 
-	filterOfArray1 := bson.M{}
+	arrayFilter := bson.M{}
 	for k, v := range filterOfArray {
-		filterOfArray1["i."+k] = v
-	}
-
-	updateOpt := options.UpdateOptions{
-		ArrayFilters: &options.ArrayFilters{
-			Filters: bson.A{
-				filterOfArray1,
-			},
-		},
+		arrayFilter["i."+k] = v
 	}
 
 	col := c.collection(collection)
-
-	r, err := col.UpdateOne(ctx, filterOfDoc, update, &updateOpt)
+	r, err := col.UpdateOne(
+		ctx, filterOfDoc,
+		bson.M{"$set": cmd},
+		&options.UpdateOptions{
+			ArrayFilters: &options.ArrayFilters{
+				Filters: bson.A{
+					arrayFilter,
+				},
+			},
+		},
+	)
 	if err != nil {
 		return err
 	}
@@ -146,7 +146,7 @@ func (c *client) updateArryItem(ctx context.Context, collection, array string, f
 		if err == nil && b {
 			return dbmodels.DBError{
 				ErrCode: util.ErrNoDBRecord,
-				Err:     fmt.Errorf("can't find the corp signing record"),
+				Err:     fmt.Errorf("can't find array element"),
 			}
 		}
 	}
@@ -180,14 +180,14 @@ func (c *client) isArryItemNotExists(ctx context.Context, collection, array stri
 	return len(v) <= 0, nil
 }
 
-func (c *client) getArrayItem(ctx context.Context, collection, array string, filterOfDoc, filterOfArray, project bson.M, result interface{}) error {
+func (c *client) getArrayElem(ctx context.Context, collection, array string, filterOfDoc, filterOfArray, project bson.M, result interface{}) error {
 	pipeline := bson.A{bson.M{"$match": filterOfDoc}}
 
 	if len(filterOfArray) > 0 {
 		project1 := bson.M{
 			array: bson.M{"$filter": bson.M{
 				"input": fmt.Sprintf("$%s", array),
-				"cond":  filterOfArrayItem(filterOfArray),
+				"cond":  conditionTofilterArray(filterOfArray),
 			}},
 		}
 
@@ -213,7 +213,7 @@ func (c *client) getArrayItem(ctx context.Context, collection, array string, fil
 	return cursor.All(ctx, result)
 }
 
-func filterOfArrayItem(filterOfArray bson.M) bson.M {
+func conditionTofilterArray(filterOfArray bson.M) bson.M {
 	cond := make(bson.A, 0, len(filterOfArray))
 	for k, v := range filterOfArray {
 		cond = append(cond, bson.M{"$eq": bson.A{"$$this." + k, v}})

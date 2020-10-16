@@ -40,7 +40,7 @@ func (c *client) DownloadCorporationSigningPDF(claOrgID, email string) ([]byte, 
 	var v []CLAOrg
 
 	f := func(ctx context.Context) error {
-		return c.getArrayItem(
+		return c.getArrayElem(
 			ctx, claOrgCollection, fieldCorporations,
 			filterOfDocID(oid),
 			filterOfCorpID(email),

@@ -178,11 +178,10 @@ func (c *client) ListBindingBetweenCLAAndOrg(opt dbmodels.CLAOrgListOption) ([]d
 		ApplyTo:  opt.ApplyTo,
 	}
 
-	body, err := structToMap(info)
+	filter, err := structToMap(info)
 	if err != nil {
 		return nil, err
 	}
-	filter := bson.M(body)
 	filterForClaOrgDoc(filter)
 
 	var v []CLAOrg
@@ -229,12 +228,11 @@ func (c *client) ListBindingForSigningPage(opt dbmodels.CLAOrgListOption) ([]dbm
 		OrgID:    opt.OrgID,
 		ApplyTo:  opt.ApplyTo,
 	}
-	body, err := structToMap(info)
+	filter, err := structToMap(info)
 	if err != nil {
 		return nil, err
 	}
 
-	filter := bson.M(body)
 	if opt.RepoID == "" {
 		// only fetch cla bound to org
 		filter[fieldRepo] = ""

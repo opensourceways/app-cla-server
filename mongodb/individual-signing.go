@@ -50,18 +50,17 @@ func (c *client) SignAsIndividual(claOrgID, platform, org, repo string, info dbm
 
 	f := func(ctx mongo.SessionContext) error {
 		_, err := c.isIndividualSigned(ctx, platform, org, repo, info.Email, false)
-		if err != nil {
-			if !isHasNotSigned(err) {
-				return err
-			}
-		} else {
+		if err == nil {
 			return dbmodels.DBError{
 				ErrCode: util.ErrHasSigned,
 				Err:     fmt.Errorf("he/she has signed"),
 			}
 		}
+		if !isErrorOfNotSigned(err) {
+			return err
+		}
 
-		return c.pushArryItem(ctx, claOrgCollection, fieldIndividuals, filterOfDocID(oid), bson.M(body))
+		return c.pushArryItem(ctx, claOrgCollection, fieldIndividuals, filterOfDocID(oid), body)
 	}
 
 	return c.doTransaction(f)
@@ -71,13 +70,13 @@ func (c *client) DeleteIndividualSigning(platform, org, repo, email string) erro
 	f := func(ctx mongo.SessionContext) error {
 		claOrg, err := c.isIndividualSigned(ctx, platform, org, repo, email, false)
 		if err != nil {
-			if isHasNotSigned(err) {
+			if isErrorOfNotSigned(err) {
 				return nil
 			}
 			return err
 		}
 
-		_, err = c.pullArryItem(
+		return c.pullArryItem(
 			ctx, claOrgCollection, fieldIndividuals,
 			filterOfDocID(claOrg.ID),
 			bson.M{
@@ -85,7 +84,6 @@ func (c *client) DeleteIndividualSigning(platform, org, repo, email string) erro
 				"email":            email,
 			},
 		)
-		return err
 	}
 
 	return c.doTransaction(f)
@@ -145,7 +143,7 @@ func (c *client) isIndividualSigned(ctx context.Context, platform, orgID, repoID
 
 	var v []CLAOrg
 
-	err := c.getArrayItem(
+	err := c.getArrayElem(
 		ctx, claOrgCollection, fieldIndividuals, filterOfDoc,
 		bson.M{
 			fieldCorporationID: genCorpID(email),
@@ -161,7 +159,7 @@ func (c *client) isIndividualSigned(ctx context.Context, platform, orgID, repoID
 		return nil, err
 	}
 
-	return c.getSigningDetail1(
+	return c.getSigningDetail(
 		platform, orgID, repoID, orgCared, v,
 		func(doc *CLAOrg) bool {
 			return len(doc.Individuals) > 0
@@ -182,11 +180,10 @@ func (c *client) ListIndividualSigning(opt dbmodels.IndividualSigningListOption)
 		CLALanguage: opt.CLALanguage,
 	}
 
-	body, err := structToMap(info)
+	filterOfDoc, err := structToMap(info)
 	if err != nil {
 		return nil, err
 	}
-	filterOfDoc := bson.M(body)
 	filterForIndividualSigning(filterOfDoc)
 
 	filterOfArray := bson.M{}
@@ -203,7 +200,7 @@ func (c *client) ListIndividualSigning(opt dbmodels.IndividualSigningListOption)
 
 	var v []CLAOrg
 	f := func(ctx context.Context) error {
-		return c.getArrayItem(
+		return c.getArrayElem(
 			ctx, claOrgCollection, fieldIndividuals,
 			filterOfDoc, filterOfArray, project, &v)
 	}

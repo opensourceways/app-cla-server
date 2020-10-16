@@ -55,18 +55,17 @@ func (c *client) SignAsCorporation(claOrgID, platform, org, repo string, info db
 
 	f := func(ctx mongo.SessionContext) error {
 		_, _, err := c.getCorporationSigningDetail(ctx, platform, org, repo, info.AdminEmail)
-		if err != nil {
-			if !isHasNotSigned(err) {
-				return err
-			}
-		} else {
+		if err == nil {
 			return dbmodels.DBError{
 				ErrCode: util.ErrHasSigned,
 				Err:     fmt.Errorf("this corp has already signed"),
 			}
 		}
+		if !isErrorOfNotSigned(err) {
+			return err
+		}
 
-		return c.pushArryItem(ctx, claOrgCollection, fieldCorporations, filterOfDocID(oid), bson.M(body))
+		return c.pushArryItem(ctx, claOrgCollection, fieldCorporations, filterOfDocID(oid), body)
 	}
 
 	return c.doTransaction(f)
@@ -103,7 +102,7 @@ func (c *client) ListCorporationSigning(opt dbmodels.CorporationSigningListOptio
 	var v []CLAOrg
 
 	f := func(ctx context.Context) error {
-		return c.getArrayItem(ctx, claOrgCollection, fieldCorporations, filterOfDoc, nil, project, &v)
+		return c.getArrayElem(ctx, claOrgCollection, fieldCorporations, filterOfDoc, nil, project, &v)
 	}
 
 	if err = withContext(f); err != nil {
@@ -147,7 +146,7 @@ func (c *client) getCorporationSigningDetail(ctx context.Context, platform, org,
 
 	var v []CLAOrg
 
-	err := c.getArrayItem(
+	err := c.getArrayElem(
 		ctx, claOrgCollection, fieldCorporations,
 		filterOfDoc, filterOfCorpID(email), project, &v,
 	)
@@ -155,7 +154,7 @@ func (c *client) getCorporationSigningDetail(ctx context.Context, platform, org,
 		return "", dbmodels.CorporationSigningDetail{}, err
 	}
 
-	claOrg, err := c.getSigningDetail1(
+	claOrg, err := c.getSigningDetail(
 		platform, org, repo, false, v,
 		func(doc *CLAOrg) bool {
 			return len(doc.Corporations) > 0
@@ -204,7 +203,7 @@ func (c *client) CheckCorporationSigning(claOrgID, email string) (dbmodels.Corpo
 	var v []CLAOrg
 
 	f := func(ctx context.Context) error {
-		return c.getArrayItem(
+		return c.getArrayElem(
 			ctx, claOrgCollection, fieldCorporations,
 			filterOfDocID(oid), filterOfCorpID(email), project, &v,
 		)
@@ -245,7 +244,7 @@ func toDBModelCorporationSigningDetail(cs *corporationSigningDoc) dbmodels.Corpo
 	}
 }
 
-func (c *client) getSigningDetail1(platform, org, repo string, orgCared bool, v []CLAOrg, isOk func(doc *CLAOrg) bool) (*CLAOrg, error) {
+func (c *client) getSigningDetail(platform, org, repo string, orgCared bool, v []CLAOrg, isOk func(doc *CLAOrg) bool) (*CLAOrg, error) {
 	if len(v) == 0 {
 		return nil, dbmodels.DBError{
 			ErrCode: util.ErrNoDBRecord,

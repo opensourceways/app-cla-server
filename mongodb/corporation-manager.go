@@ -34,7 +34,7 @@ func managersToAdd(
 	opt []dbmodels.CorporationManagerCreateOption, managerNumber int,
 ) ([]dbmodels.CorporationManagerCreateOption, error) {
 
-	ms, err := c.listCorporationManager(oid, opt[0].Email, opt[0].Role, ctx)
+	ms, err := c.listCorporationManager(ctx, oid, opt[0].Email, opt[0].Role)
 	if err != nil {
 		return nil, err
 	}
@@ -95,16 +95,16 @@ func (c *client) AddCorporationManager(claOrgID string, opt []dbmodels.Corporati
 			items = append(items, body)
 		}
 
-		err = c.pushArryItems(
+		err = c.pushArrayElems(
 			ctx, claOrgCollection, fieldCorpoManagers,
 			filterOfDocID(oid), items,
 		)
 		if err != nil {
-			return fmt.Errorf("write db failed: %s", err.Error())
+			return err
 		}
 
 		if opt[0].Role == dbmodels.RoleAdmin {
-			return c.updateArryItem(
+			return c.updateArrayElem(
 				ctx, claOrgCollection, fieldCorporations,
 				filterOfDocID(oid),
 				filterOfCorpID(opt[0].Email),
@@ -119,15 +119,12 @@ func (c *client) AddCorporationManager(claOrgID string, opt []dbmodels.Corporati
 	return toAdd, err
 }
 
-func (c *client) CheckCorporationManagerExist(opt dbmodels.CorporationManagerCheckInfo) (map[string][]dbmodels.CorporationManagerCheckResult, error) {
+func (c *client) CheckCorporationManagerExist(opt dbmodels.CorporationManagerCheckInfo) (map[string]dbmodels.CorporationManagerCheckResult, error) {
 	filterOfDoc := bson.M{}
 	filterForCorpManager(filterOfDoc)
 
-	filterOfArray := bson.M{
-		"email":    opt.User,
-		"password": opt.Password,
-	}
-	addCorporationID(opt.User, filterOfArray)
+	filterOfArray := indexOfCorpManagerAndIndividual(opt.User)
+	filterOfArray["password"] = opt.Password
 
 	project := bson.M{
 		"platform":                  1,
@@ -155,27 +152,22 @@ func (c *client) CheckCorporationManagerExist(opt dbmodels.CorporationManagerChe
 		}
 	}
 
-	result := map[string][]dbmodels.CorporationManagerCheckResult{}
+	result := map[string]dbmodels.CorporationManagerCheckResult{}
 	for _, doc := range v {
 		cm := doc.CorporationManagers
 		if len(cm) == 0 {
 			continue
 		}
 
-		// If len(cm) > 1, it happened when administrator add himself as the manager
-		// But, it will not happend
-		ms := make([]dbmodels.CorporationManagerCheckResult, 0, len(cm))
-		for _, item := range cm {
-			ms = append(ms, dbmodels.CorporationManagerCheckResult{
-				Email:            item.Email,
-				Role:             item.Role,
-				Platform:         doc.Platform,
-				OrgID:            doc.OrgID,
-				RepoID:           doc.RepoID,
-				InitialPWChanged: item.InitialPWChanged,
-			})
+		item := &cm[0]
+		result[objectIDToUID(doc.ID)] = dbmodels.CorporationManagerCheckResult{
+			Email:            item.Email,
+			Role:             item.Role,
+			Platform:         doc.Platform,
+			OrgID:            doc.OrgID,
+			RepoID:           doc.RepoID,
+			InitialPWChanged: item.InitialPWChanged,
 		}
-		result[objectIDToUID(doc.ID)] = ms
 	}
 	return result, nil
 }
@@ -191,20 +183,17 @@ func (c *client) ResetCorporationManagerPassword(claOrgID, email string, opt dbm
 		"changed":  true,
 	}
 
-	filterOfArray := bson.M{
-		"email":    email,
-		"password": opt.OldPassword,
-	}
-	addCorporationID(email, filterOfArray)
+	filterOfArray := indexOfCorpManagerAndIndividual(email)
+	filterOfArray["password"] = opt.OldPassword
 
 	f := func(ctx context.Context) error {
-		return c.updateArryItem(ctx, claOrgCollection, fieldCorpoManagers, filterOfDocID(oid), filterOfArray, updateCmd, true)
+		return c.updateArrayElem(ctx, claOrgCollection, fieldCorpoManagers, filterOfDocID(oid), filterOfArray, updateCmd, true)
 	}
 
 	return withContext(f)
 }
 
-func (c *client) listCorporationManager(claOrgID primitive.ObjectID, email, role string, ctx context.Context) ([]dbmodels.CorporationManagerListResult, error) {
+func (c *client) listCorporationManager(ctx context.Context, claOrgID primitive.ObjectID, email, role string) ([]corporationManagerDoc, error) {
 	filterOfArray := filterOfCorpID(email)
 	if role != "" {
 		filterOfArray["role"] = role
@@ -230,16 +219,7 @@ func (c *client) listCorporationManager(claOrgID primitive.ObjectID, email, role
 			Err:     fmt.Errorf("can't find the cla"),
 		}
 	}
-
-	ms := v[0].CorporationManagers
-	r := make([]dbmodels.CorporationManagerListResult, 0, len(ms))
-	for _, item := range ms {
-		r = append(r, dbmodels.CorporationManagerListResult{
-			Email: item.Email,
-			Role:  item.Role,
-		})
-	}
-	return r, nil
+	return v[0].CorporationManagers, nil
 }
 
 func (c *client) ListCorporationManager(claOrgID, email, role string) ([]dbmodels.CorporationManagerListResult, error) {
@@ -248,17 +228,26 @@ func (c *client) ListCorporationManager(claOrgID, email, role string) ([]dbmodel
 		return nil, err
 	}
 
-	var r []dbmodels.CorporationManagerListResult
+	var v []corporationManagerDoc
 
 	f := func(ctx context.Context) error {
-		v, err := c.listCorporationManager(oid, email, role, ctx)
-		r = v
+		r, err := c.listCorporationManager(ctx, oid, email, role)
+		v = r
 		return err
 	}
 
-	err = withContext(f)
+	if err = withContext(f); err != nil {
+		return nil, err
+	}
 
-	return r, err
+	ms := make([]dbmodels.CorporationManagerListResult, 0, len(v))
+	for _, item := range v {
+		ms = append(ms, dbmodels.CorporationManagerListResult{
+			Email: item.Email,
+			Role:  item.Role,
+		})
+	}
+	return ms, nil
 }
 
 func (c *client) DeleteCorporationManager(claOrgID string, opt []dbmodels.CorporationManagerCreateOption) ([]string, error) {
@@ -270,7 +259,7 @@ func (c *client) DeleteCorporationManager(claOrgID string, opt []dbmodels.Corpor
 	deleted := make([]string, 0, len(opt))
 
 	f := func(ctx mongo.SessionContext) error {
-		ms, err := c.listCorporationManager(oid, opt[0].Email, opt[0].Role, ctx)
+		ms, err := c.listCorporationManager(ctx, oid, opt[0].Email, opt[0].Role)
 		if err != nil {
 			return err
 		}
@@ -294,7 +283,7 @@ func (c *client) DeleteCorporationManager(claOrgID string, opt []dbmodels.Corpor
 		filterOfArray := filterOfCorpID(opt[0].Email)
 		filterOfArray["email"] = bson.M{"$in": toDelete}
 
-		return c.pullArryItem(
+		return c.pullArrayElem(
 			ctx, claOrgCollection, fieldCorpoManagers,
 			filterOfDocID(oid), filterOfArray,
 		)

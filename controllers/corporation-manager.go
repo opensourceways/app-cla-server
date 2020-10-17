@@ -66,22 +66,20 @@ func (this *CorporationManagerController) Auth() {
 
 	result := make([]authInfo, 0, len(v))
 
-	for claOrgID, items := range v {
-		for _, item := range items {
-			token, err := this.newAccessToken(claOrgID, item.Email, item.Role)
-			if err != nil {
-				continue
-			}
-
-			// should not expose email of corp manager
-			item.Email = ""
-
-			result = append(result, authInfo{
-				CorporationManagerCheckResult: item,
-				Token:                         token,
-				CLAOrgID:                      claOrgID,
-			})
+	for claOrgID, item := range v {
+		token, err := this.newAccessToken(claOrgID, item.Email, item.Role)
+		if err != nil {
+			continue
 		}
+
+		// should not expose email of corp manager
+		item.Email = ""
+
+		result = append(result, authInfo{
+			CorporationManagerCheckResult: item,
+			Token:                         token,
+			CLAOrgID:                      claOrgID,
+		})
 	}
 
 	body = result

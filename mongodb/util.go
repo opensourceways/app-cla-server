@@ -42,6 +42,13 @@ func filterOfDocID(oid primitive.ObjectID) bson.M {
 	return bson.M{"_id": oid}
 }
 
+func indexOfCorpManagerAndIndividual(email string) bson.M {
+	return bson.M{
+		fieldCorporationID: genCorpID(email),
+		"email":            email,
+	}
+}
+
 func isErrorOfNotSigned(err error) bool {
 	e, ok := dbmodels.IsDBError(err)
 	return ok && e.ErrCode == util.ErrHasNotSigned
@@ -72,7 +79,7 @@ func errorIfMatchingNoDoc(r *mongo.UpdateResult) error {
 	return nil
 }
 
-func (c *client) pushArryItem(ctx context.Context, collection, array string, filterOfDoc, value bson.M) error {
+func (c *client) pushArrayElem(ctx context.Context, collection, array string, filterOfDoc, value bson.M) error {
 	update := bson.M{"$push": bson.M{array: value}}
 
 	col := c.collection(collection)
@@ -84,7 +91,7 @@ func (c *client) pushArryItem(ctx context.Context, collection, array string, fil
 	return errorIfMatchingNoDoc(r)
 }
 
-func (c *client) pushArryItems(ctx context.Context, collection, array string, filterOfDoc bson.M, value bson.A) error {
+func (c *client) pushArrayElems(ctx context.Context, collection, array string, filterOfDoc bson.M, value bson.A) error {
 	update := bson.M{"$push": bson.M{array: bson.M{"$each": value}}}
 
 	col := c.collection(collection)
@@ -96,7 +103,7 @@ func (c *client) pushArryItems(ctx context.Context, collection, array string, fi
 	return errorIfMatchingNoDoc(r)
 }
 
-func (c *client) pullArryItem(ctx context.Context, collection, array string, filterOfDoc, filterOfArray bson.M) error {
+func (c *client) pullArrayElem(ctx context.Context, collection, array string, filterOfDoc, filterOfArray bson.M) error {
 	update := bson.M{"$pull": bson.M{array: filterOfArray}}
 
 	col := c.collection(collection)
@@ -110,7 +117,7 @@ func (c *client) pullArryItem(ctx context.Context, collection, array string, fil
 
 // r, _ := col.UpdateOne; r.ModifiedCount == 0 will happen in two case: 1. no matched array item; 2 update repeatedly with same update cmd.
 // checkModified = true when it can't exclude any case of above two; otherwise it can be set as false.
-func (c *client) updateArryItem(ctx context.Context, collection, array string, filterOfDoc, filterOfArray, updateCmd bson.M, checkModified bool) error {
+func (c *client) updateArrayElem(ctx context.Context, collection, array string, filterOfDoc, filterOfArray, updateCmd bson.M, checkModified bool) error {
 	cmd := bson.M{}
 	for k, v := range updateCmd {
 		cmd[fmt.Sprintf("%s.$[i].%s", array, k)] = v
@@ -142,7 +149,7 @@ func (c *client) updateArryItem(ctx context.Context, collection, array string, f
 	}
 
 	if r.ModifiedCount == 0 && checkModified {
-		b, err := c.isArryItemNotExists(ctx, collection, array, filterOfDoc, filterOfArray)
+		b, err := c.isArrayElemNotExists(ctx, collection, array, filterOfDoc, filterOfArray)
 		if err == nil && b {
 			return dbmodels.DBError{
 				ErrCode: util.ErrNoDBRecord,
@@ -153,7 +160,7 @@ func (c *client) updateArryItem(ctx context.Context, collection, array string, f
 	return nil
 }
 
-func (c *client) isArryItemNotExists(ctx context.Context, collection, array string, filterOfDoc, filterOfArray bson.M) (bool, error) {
+func (c *client) isArrayElemNotExists(ctx context.Context, collection, array string, filterOfDoc, filterOfArray bson.M) (bool, error) {
 	opts := options.FindOptions{
 		Projection: bson.M{"_id": 1},
 	}
@@ -224,4 +231,25 @@ func conditionTofilterArray(filterOfArray bson.M) bson.M {
 	}
 
 	return bson.M{"$and": cond}
+}
+
+func getSigningDoc(v []CLAOrg, isOk func(doc *CLAOrg) bool) (*CLAOrg, error) {
+	if len(v) == 0 {
+		return nil, dbmodels.DBError{
+			ErrCode: util.ErrNoDBRecord,
+			Err:     fmt.Errorf("can't find any record"),
+		}
+	}
+
+	for i := 0; i < len(v); i++ {
+		doc := &v[i]
+		if isOk(doc) {
+			return doc, nil
+		}
+	}
+
+	return nil, dbmodels.DBError{
+		ErrCode: util.ErrHasNotSigned,
+		Err:     fmt.Errorf("has not signed"),
+	}
 }

@@ -9,7 +9,7 @@ import (
 
 type CorporationManagerAuthentication dbmodels.CorporationManagerCheckInfo
 
-func (this CorporationManagerAuthentication) Authenticate() (map[string][]dbmodels.CorporationManagerCheckResult, error) {
+func (this CorporationManagerAuthentication) Authenticate() (map[string]dbmodels.CorporationManagerCheckResult, error) {
 	return dbmodels.GetDB().CheckCorporationManagerExist(
 		dbmodels.CorporationManagerCheckInfo(this),
 	)

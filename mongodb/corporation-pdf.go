@@ -17,7 +17,7 @@ func (c *client) UploadCorporationSigningPDF(claOrgID, adminEmail string, pdf []
 	}
 
 	f := func(ctx context.Context) error {
-		return c.updateArryItem(
+		return c.updateArrayElem(
 			ctx, claOrgCollection, fieldCorporations,
 			filterOfDocID(oid),
 			filterOfCorpID(adminEmail),
@@ -55,22 +55,11 @@ func (c *client) DownloadCorporationSigningPDF(claOrgID, email string) ([]byte, 
 		return nil, err
 	}
 
-	if len(v) == 0 {
-		return nil, dbmodels.DBError{
-			ErrCode: util.ErrNoDBRecord,
-			Err:     fmt.Errorf("can't find the cla"),
-		}
-	}
+	claOrg, err := getSigningDoc(v, func(doc *CLAOrg) bool {
+		return len(doc.Corporations) > 0
+	})
 
-	cs := v[0].Corporations
-	if len(cs) == 0 {
-		return nil, dbmodels.DBError{
-			ErrCode: util.ErrNoDBRecord,
-			Err:     fmt.Errorf("can't find the corp signing in this record"),
-		}
-	}
-
-	item := cs[0]
+	item := claOrg.Corporations[0]
 	if !item.PDFUploaded {
 		return nil, dbmodels.DBError{
 			ErrCode: util.ErrPDFHasNotUploaded,

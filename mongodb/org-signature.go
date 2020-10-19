@@ -2,11 +2,8 @@ package mongodb
 
 import (
 	"context"
-	"fmt"
 
 	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 func (c *client) UploadOrgSignature(claOrgID string, pdf []byte) error {
@@ -16,14 +13,13 @@ func (c *client) UploadOrgSignature(claOrgID string, pdf []byte) error {
 	}
 
 	f := func(ctx context.Context) error {
-		col := c.collection(claOrgCollection)
-
-		v := bson.M{
-			fieldOrgSignature:    pdf,
-			fieldOrgSignatureTag: true,
-		}
-		_, err := col.UpdateOne(ctx, bson.M{"_id": oid}, bson.M{"$set": v})
-		return err
+		return c.updateDoc(
+			ctx, claOrgCollection, filterOfDocID(oid),
+			bson.M{
+				fieldOrgSignature:    pdf,
+				fieldOrgSignatureTag: true,
+			},
+		)
 	}
 
 	return withContext(f)
@@ -35,27 +31,20 @@ func (c *client) DownloadOrgSignature(claOrgID string) ([]byte, error) {
 		return nil, err
 	}
 
-	var sr *mongo.SingleResult
+	var v CLAOrg
 
 	f := func(ctx context.Context) error {
-		col := c.collection(claOrgCollection)
-
-		opt := options.FindOneOptions{
-			Projection: bson.M{
-				fieldOrgSignature: 1,
-			},
-		}
-
-		sr = col.FindOne(ctx, bson.M{"_id": oid, fieldOrgSignatureTag: true}, &opt)
-		return nil
+		return c.getDoc(
+			ctx, claOrgCollection, filterOfDocID(oid),
+			bson.M{
+				fieldOrgSignature:    1,
+				fieldOrgSignatureTag: 1,
+			}, &v,
+		)
 	}
 
-	withContext(f)
-
-	var v CLAOrg
-	err = sr.Decode(&v)
-	if err != nil {
-		return nil, fmt.Errorf("error decoding to bson struct of CLAOrg: %v", err)
+	if withContext(f); err != nil {
+		return nil, err
 	}
 
 	return v.OrgSignature, nil

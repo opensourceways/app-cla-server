@@ -1,16 +1,16 @@
 package dbmodels
 
 type CLAOrg struct {
-	ID                   string `json:"id,omitempty"`
-	Platform             string `json:"platform" required:"true"`
-	OrgID                string `json:"org_id" required:"true"`
+	ID                   string `json:"id"`
+	Platform             string `json:"platform"`
+	OrgID                string `json:"org_id"`
 	RepoID               string `json:"repo_id"`
-	CLAID                string `json:"cla_id" required:"true"`
-	CLALanguage          string `json:"cla_language" required:"true"`
-	ApplyTo              string `json:"apply_to" required:"true"`
-	OrgEmail             string `json:"org_email" required:"true"`
+	CLAID                string `json:"cla_id"`
+	CLALanguage          string `json:"cla_language"`
+	ApplyTo              string `json:"apply_to"`
+	OrgEmail             string `json:"org_email"`
 	Enabled              bool   `json:"enabled"`
-	Submitter            string `json:"submitter" required:"true"`
+	Submitter            string `json:"submitter"`
 	OrgSignatureUploaded bool   `json:"org_signature_uploaded"`
 }
 

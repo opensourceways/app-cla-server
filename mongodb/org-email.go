@@ -2,94 +2,54 @@ package mongodb
 
 import (
 	"context"
-	"fmt"
 
-	"github.com/huaweicloud/golangsdk"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
 
 	"github.com/opensourceways/app-cla-server/dbmodels"
-	"github.com/opensourceways/app-cla-server/util"
 )
 
 const orgEmailCollection = "org_emails"
 
 type OrgEmail struct {
-	ID       primitive.ObjectID `bson:"_id,omitempty"`
-	Email    string             `bson:"email"`
-	Platform string             `bson:"platform"`
-	Token    []byte             `bson:"token"`
+	ID       primitive.ObjectID `bson:"_id" json:"-"`
+	Email    string             `bson:"email" json:"email" required:"true"`
+	Platform string             `bson:"platform" json:"platform" required:"true"`
+	Token    []byte             `bson:"token" json:"-"`
 }
 
 func (c *client) CreateOrgEmail(opt dbmodels.OrgEmailCreateInfo) error {
-	body, err := golangsdk.BuildRequestBody(opt, "")
+	info := OrgEmail{
+		Email:    opt.Email,
+		Platform: opt.Platform,
+	}
+	body, err := structToMap(info)
 	if err != nil {
-		return fmt.Errorf("Failed to create org email info: build body err:%v", err)
+		return err
 	}
 	body["token"] = opt.Token
 
 	f := func(ctx context.Context) error {
-		col := c.collection(orgEmailCollection)
-
-		filter := bson.M{"email": opt.Email}
-		upsert := true
-		update := bson.M{"$setOnInsert": bson.M(body)}
-
-		r, err := col.UpdateOne(ctx, filter, update, &options.UpdateOptions{Upsert: &upsert})
-		if err != nil {
-			return fmt.Errorf("Failed to create org email info: write db err:%v", err)
-		}
-
-		if r.MatchedCount == 0 && r.UpsertedCount == 0 {
-			return fmt.Errorf("Failed to create org email info: impossible")
-		}
-
-		return nil
+		_, err := c.newDoc(ctx, orgEmailCollection, bson.M{"email": opt.Email}, body)
+		return err
 	}
 
 	return withContext(f)
 }
 
 func (c *client) GetOrgEmailInfo(email string) (dbmodels.OrgEmailCreateInfo, error) {
-	var sr *mongo.SingleResult
+	var v OrgEmail
 
 	f := func(ctx context.Context) error {
-		col := c.db.Collection(orgEmailCollection)
-		opt := options.FindOneOptions{
-			Projection: bson.M{"email": 0},
-		}
-
-		sr = col.FindOne(ctx, bson.M{"email": email}, &opt)
-		return nil
+		return c.getDoc(ctx, orgEmailCollection, bson.M{"email": email}, bson.M{"email": 0}, &v)
 	}
 
-	r := dbmodels.OrgEmailCreateInfo{}
-
-	err := withContext(f)
-	if err != nil {
-		return r, err
+	if err := withContext(f); err != nil {
+		return dbmodels.OrgEmailCreateInfo{}, err
 	}
 
-	var v OrgEmail
-	if err := sr.Decode(&v); err != nil {
-		if isErrNoDocuments(err) {
-			return r, dbmodels.DBError{
-				ErrCode: util.ErrNoOrgEmail,
-				Err:     fmt.Errorf("can't find org email configuration"),
-			}
-		}
-
-		return r, err
-	}
-
-	return toDBModelOrgEmail(v), nil
-}
-
-func toDBModelOrgEmail(item OrgEmail) dbmodels.OrgEmailCreateInfo {
 	return dbmodels.OrgEmailCreateInfo{
-		Platform: item.Platform,
-		Token:    item.Token,
-	}
+		Platform: v.Platform,
+		Token:    v.Token,
+	}, nil
 }

@@ -24,5 +24,6 @@ const (
 	ErrNotYoursOrg               = "not_yours_org"
 	ErrInvalidAccountOrPw        = "invalid_account_or_pw"
 	ErrNoDBRecord                = "no_db_record"
+	ErrRecordExists              = "db_record_exists"
 	ErrSystemError               = "system_error"
 )

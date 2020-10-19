@@ -161,26 +161,17 @@ func (c *client) updateArrayElem(ctx context.Context, collection, array string, 
 }
 
 func (c *client) isArrayElemNotExists(ctx context.Context, collection, array string, filterOfDoc, filterOfArray bson.M) (bool, error) {
-	opts := options.FindOptions{
-		Projection: bson.M{"_id": 1},
-	}
-
 	query := bson.M{array: bson.M{"$elemMatch": filterOfArray}}
 	for k, v := range filterOfDoc {
 		query[k] = v
 	}
 
-	col := c.collection(collection)
-
-	cursor, err := col.Find(ctx, query, &opts)
-	if err != nil {
-		return false, err
-	}
-
 	var v []struct {
 		ID primitive.ObjectID `bson:"_id"`
 	}
-	if err = cursor.All(ctx, &v); err != nil {
+
+	err := c.getDocs(ctx, collection, query, bson.M{"_id": 1}, &v)
+	if err != nil {
 		return false, err
 	}
 
@@ -252,4 +243,64 @@ func getSigningDoc(v []CLAOrg, isOk func(doc *CLAOrg) bool) (*CLAOrg, error) {
 		ErrCode: util.ErrHasNotSigned,
 		Err:     fmt.Errorf("has not signed"),
 	}
+}
+
+func (c *client) newDoc(ctx context.Context, collection string, filterOfDoc, docInfo bson.M) (string, error) {
+	upsert := true
+
+	col := c.collection(collection)
+	r, err := col.UpdateOne(
+		ctx, filterOfDoc, bson.M{"$setOnInsert": docInfo},
+		&options.UpdateOptions{Upsert: &upsert},
+	)
+	if err != nil {
+		return "", err
+	}
+
+	if r.UpsertedID == nil {
+		return "", dbmodels.DBError{
+			ErrCode: util.ErrRecordExists,
+			Err:     fmt.Errorf("the doc exists"),
+		}
+	}
+
+	return toUID(r.UpsertedID)
+}
+
+func (c *client) updateDoc(ctx context.Context, collection string, filterOfDoc, update bson.M) error {
+	col := c.collection(collection)
+	r, err := col.UpdateOne(ctx, filterOfDoc, bson.M{"$set": update})
+	if err != nil {
+		return err
+	}
+	return errorIfMatchingNoDoc(r)
+}
+
+func (c *client) getDoc(ctx context.Context, collection string, filterOfDoc, project bson.M, result interface{}) error {
+	col := c.collection(collection)
+	sr := col.FindOne(ctx, filterOfDoc, &options.FindOneOptions{
+		Projection: project,
+	})
+
+	if err := sr.Decode(result); err != nil {
+		if err == mongo.ErrNoDocuments {
+			return dbmodels.DBError{
+				ErrCode: util.ErrNoDBRecord,
+				Err:     fmt.Errorf("can't find record"),
+			}
+		}
+		return err
+	}
+	return nil
+}
+
+func (c *client) getDocs(ctx context.Context, collection string, filterOfDoc, project bson.M, result interface{}) error {
+	col := c.collection(collection)
+	cursor, err := col.Find(ctx, filterOfDoc, &options.FindOptions{
+		Projection: project,
+	})
+	if err != nil {
+		return err
+	}
+	return cursor.All(ctx, result)
 }

@@ -35,8 +35,6 @@ func (this *OrgEmail) Get() error {
 		return err
 	}
 
-	this.Platform = info.Platform
-
 	var token oauth2.Token
 
 	err = json.Unmarshal(info.Token, &token)
@@ -45,5 +43,7 @@ func (this *OrgEmail) Get() error {
 	}
 
 	this.Token = &token
+	this.Platform = info.Platform
+
 	return nil
 }

@@ -54,6 +54,11 @@ func isErrorOfNotSigned(err error) bool {
 	return ok && e.ErrCode == util.ErrHasNotSigned
 }
 
+func isErrorOfRecordExists(err error) bool {
+	e, ok := dbmodels.IsDBError(err)
+	return ok && e.ErrCode == util.ErrRecordExists
+}
+
 func toObjectID(uid string) (primitive.ObjectID, error) {
 	v, err := primitive.ObjectIDFromHex(uid)
 	if err != nil {
@@ -245,7 +250,7 @@ func getSigningDoc(v []CLAOrg, isOk func(doc *CLAOrg) bool) (*CLAOrg, error) {
 	}
 }
 
-func (c *client) newDoc(ctx context.Context, collection string, filterOfDoc, docInfo bson.M) (string, error) {
+func (c *client) newDocIfNotExist(ctx context.Context, collection string, filterOfDoc, docInfo bson.M) (string, error) {
 	upsert := true
 
 	col := c.collection(collection)
@@ -267,6 +272,24 @@ func (c *client) newDoc(ctx context.Context, collection string, filterOfDoc, doc
 	return toUID(r.UpsertedID)
 }
 
+func (c *client) newDoc(ctx context.Context, collection string, filterOfDoc, docInfo bson.M) (string, error) {
+	upsert := true
+
+	col := c.collection(collection)
+	r, err := col.ReplaceOne(
+		ctx, filterOfDoc, docInfo,
+		&options.ReplaceOptions{Upsert: &upsert},
+	)
+	if err != nil {
+		return "", err
+	}
+
+	if r.UpsertedID != nil {
+		return toUID(r.UpsertedID)
+	}
+	return "", nil
+}
+
 func (c *client) updateDoc(ctx context.Context, collection string, filterOfDoc, update bson.M) error {
 	col := c.collection(collection)
 	r, err := col.UpdateOne(ctx, filterOfDoc, bson.M{"$set": update})
@@ -278,9 +301,15 @@ func (c *client) updateDoc(ctx context.Context, collection string, filterOfDoc, 
 
 func (c *client) getDoc(ctx context.Context, collection string, filterOfDoc, project bson.M, result interface{}) error {
 	col := c.collection(collection)
-	sr := col.FindOne(ctx, filterOfDoc, &options.FindOneOptions{
-		Projection: project,
-	})
+
+	var sr *mongo.SingleResult
+	if len(project) > 0 {
+		sr = col.FindOne(ctx, filterOfDoc, &options.FindOneOptions{
+			Projection: project,
+		})
+	} else {
+		sr = col.FindOne(ctx, filterOfDoc)
+	}
 
 	if err := sr.Decode(result); err != nil {
 		if err == mongo.ErrNoDocuments {
@@ -303,4 +332,14 @@ func (c *client) getDocs(ctx context.Context, collection string, filterOfDoc, pr
 		return err
 	}
 	return cursor.All(ctx, result)
+}
+
+func (c *client) insertDoc(ctx context.Context, collection string, docInfo bson.M) (string, error) {
+	col := c.collection(collection)
+	r, err := col.InsertOne(ctx, docInfo)
+	if err != nil {
+		return "", err
+	}
+
+	return toUID(r.InsertedID)
 }

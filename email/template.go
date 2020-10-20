@@ -113,9 +113,14 @@ func (this RemovingCorpManager) GenEmailMsg() (*EmailMessage, error) {
 }
 
 type EmployeeSigning struct {
+	Org  string
+	Repo string
 }
 
 func (this EmployeeSigning) GenEmailMsg() (*EmailMessage, error) {
+	if this.Repo != "" {
+		this.Repo = fmt.Sprintf("/%s", this.Repo)
+	}
 	return genEmailMsg(TmplEmployeeSigning, this)
 }
 

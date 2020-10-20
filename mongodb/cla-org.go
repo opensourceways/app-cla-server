@@ -86,7 +86,7 @@ func (c *client) CreateBindingBetweenCLAAndOrg(info dbmodels.CLAOrg) (string, er
 	claOrgID := ""
 
 	f := func(ctx context.Context) error {
-		s, err := c.newDoc(ctx, claOrgCollection, filterOfDoc, body)
+		s, err := c.newDocIfNotExist(ctx, claOrgCollection, filterOfDoc, body)
 		if err != nil {
 			return err
 		}

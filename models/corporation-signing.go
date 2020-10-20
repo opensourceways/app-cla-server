@@ -5,24 +5,16 @@ import (
 	"github.com/opensourceways/app-cla-server/util"
 )
 
-const ActionCorporationSigning = "corporation-signing"
-
 type CorporationSigning dbmodels.CorporationSigningInfo
 
 type CorporationSigningCreateOption struct {
 	CorporationSigning
 
-	VerifiCode string `json:"verifi_code"`
+	VerificationCode string `json:"verification_code"`
 }
 
 func (this *CorporationSigningCreateOption) Validate() error {
-	vc := dbmodels.VerificationCode{
-		Email:   this.AdminEmail,
-		Code:    this.VerifiCode,
-		Purpose: ActionCorporationSigning,
-	}
-
-	return dbmodels.GetDB().CheckVerificationCode(vc)
+	return checkVerificationCode(this.AdminEmail, this.VerificationCode, ActionCorporationSigning)
 }
 
 func (this *CorporationSigningCreateOption) Create(claOrgID, platform, orgID, repoId string) error {
@@ -54,18 +46,4 @@ type CorporationSigningListOption dbmodels.CorporationSigningListOption
 
 func (this CorporationSigningListOption) List() (map[string][]dbmodels.CorporationSigningDetail, error) {
 	return dbmodels.GetDB().ListCorporationSigning(dbmodels.CorporationSigningListOption(this))
-}
-
-func CreateCorporationSigningVerifCode(email string, expiry int64) (string, error) {
-	code := util.RandStr(6, "number")
-
-	vc := dbmodels.VerificationCode{
-		Email:   email,
-		Code:    code,
-		Purpose: ActionCorporationSigning,
-		Expiry:  util.Now() + expiry,
-	}
-
-	err := dbmodels.GetDB().CreateVerificationCode(vc)
-	return code, err
 }

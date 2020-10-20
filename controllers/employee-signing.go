@@ -54,11 +54,15 @@ func (this *EmployeeSigningController) Post() {
 		return
 	}
 
-	var info models.IndividualSigning
+	var info models.EmployeeSigning
 	if err := fetchInputPayload(&this.Controller, &info); err != nil {
 		reason = err
 		errCode = util.ErrInvalidParameter
 		statusCode = 400
+		return
+	}
+	if err := (&info).Validate(); err != nil {
+		reason = err
 		return
 	}
 
@@ -95,7 +99,10 @@ func (this *EmployeeSigningController) Post() {
 	}
 	body = "sign successfully"
 
-	d := email.EmployeeSigning{}
+	d := email.EmployeeSigning{
+		Org:  claOrg.OrgID,
+		Repo: claOrg.RepoID,
+	}
 	this.notifyManagers(corpSignedCla, info.Email, claOrg.OrgEmail, "Employee Signing", d)
 }
 

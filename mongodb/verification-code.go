@@ -12,7 +12,7 @@ import (
 	"github.com/opensourceways/app-cla-server/util"
 )
 
-const verifCodeCollection = "verification_codes"
+const vcCollection = "verification_codes"
 
 func (c *client) CreateVerificationCode(opt dbmodels.VerificationCode) error {
 	info := struct {
@@ -33,35 +33,28 @@ func (c *client) CreateVerificationCode(opt dbmodels.VerificationCode) error {
 	}
 
 	f := func(ctx mongo.SessionContext) error {
-		col := c.collection(verifCodeCollection)
+		col := c.collection(vcCollection)
 
-		// delete the old codes, including unused ones.
-		filter := bson.M{"email": opt.Email, "purpose": opt.Purpose}
+		// delete the expired codes.
+		filter := bson.M{"expiry": bson.M{"$lt": util.Now()}}
 		col.DeleteMany(ctx, filter)
 
-		// add this filter in case of repetitive code
-		filter["code"] = opt.Code
-
-		upsert := true
-		update := bson.M{"$setOnInsert": body}
-
-		r, err := col.UpdateOne(ctx, filter, update, &options.UpdateOptions{Upsert: &upsert})
-		if err != nil {
-			return fmt.Errorf("write db err:%v", err)
-		}
-
-		if r.MatchedCount == 0 && r.UpsertedCount == 0 {
-			return fmt.Errorf("impossible")
-		}
-		return nil
+		// email + purpose can't be the index, for example: a corp signs two different communities
+		// so, it should use insert doc instead
+		_, err := c.insertDoc(ctx, vcCollection, body)
+		return err
 	}
 
 	return c.doTransaction(f)
 }
 
 func (c *client) CheckVerificationCode(opt dbmodels.VerificationCode) error {
+	var v struct {
+		Expiry int64 `bson:"expiry"`
+	}
+
 	f := func(ctx context.Context) error {
-		col := c.collection(verifCodeCollection)
+		col := c.collection(vcCollection)
 
 		filter := bson.M{
 			"email":   opt.Email,
@@ -73,29 +66,26 @@ func (c *client) CheckVerificationCode(opt dbmodels.VerificationCode) error {
 		}
 
 		sr := col.FindOneAndDelete(ctx, filter, &opt)
-
-		var v struct {
-			Expiry int64 `bson:"expiry"`
-		}
-		if err := sr.Decode(&v); err != nil {
-			if isErrNoDocuments(err) {
-				return dbmodels.DBError{
-					ErrCode: util.ErrWrongVerificationCode,
-					Err:     fmt.Errorf("wrong verification code"),
-				}
-			}
-
-			return err
-		}
-
-		if v.Expiry < util.Now() {
+		err := sr.Decode(&v)
+		if err != nil && isErrNoDocuments(err) {
 			return dbmodels.DBError{
-				ErrCode: util.ErrVerificationCodeExpired,
-				Err:     fmt.Errorf("verification code is expired"),
+				ErrCode: util.ErrWrongVerificationCode,
+				Err:     fmt.Errorf("wrong verification code"),
 			}
 		}
-		return nil
+
+		return err
 	}
 
-	return withContext(f)
+	if err := withContext(f); err != nil {
+		return err
+	}
+
+	if v.Expiry < util.Now() {
+		return dbmodels.DBError{
+			ErrCode: util.ErrVerificationCodeExpired,
+			Err:     fmt.Errorf("verification code is expired"),
+		}
+	}
+	return nil
 }

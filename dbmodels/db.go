@@ -17,7 +17,7 @@ type IDB interface {
 	ICLAOrg
 	IIndividualSigning
 	ICLA
-	IVerifiCode
+	IVerificationCode
 	IPDF
 }
 
@@ -66,7 +66,7 @@ type ICLA interface {
 	ListCLAByIDs(ids []string) ([]CLA, error)
 }
 
-type IVerifiCode interface {
+type IVerificationCode interface {
 	CreateVerificationCode(opt VerificationCode) error
 	CheckVerificationCode(opt VerificationCode) error
 }

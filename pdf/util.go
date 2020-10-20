@@ -92,12 +92,12 @@ func GenBlankSignaturePage() error {
 func uploadBlankSignature(language, path string) error {
 	data, err := ioutil.ReadFile(path)
 	if err != nil {
-		return fmt.Errorf("Failed to update blank siganture: %s", err.Error())
+		return fmt.Errorf("Failed to update blank signature: %s", err.Error())
 	}
 
 	err = dbmodels.GetDB().UploadBlankSignature(language, data)
 	if err != nil {
-		return fmt.Errorf("Failed to update blank siganture: %s", err.Error())
+		return fmt.Errorf("Failed to update blank signature: %s", err.Error())
 	}
 	return nil
 }

@@ -30,7 +30,10 @@ func (c *client) CreateOrgEmail(opt dbmodels.OrgEmailCreateInfo) error {
 	body["token"] = opt.Token
 
 	f := func(ctx context.Context) error {
-		_, err := c.newDoc(ctx, orgEmailCollection, bson.M{"email": opt.Email}, body)
+		_, err := c.newDocIfNotExist(ctx, orgEmailCollection, bson.M{"email": opt.Email}, body)
+		if err != nil && isErrorOfRecordExists(err) {
+			return nil
+		}
 		return err
 	}
 

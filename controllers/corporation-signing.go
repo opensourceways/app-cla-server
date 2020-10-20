@@ -6,7 +6,6 @@ import (
 
 	"github.com/astaxie/beego"
 
-	"github.com/opensourceways/app-cla-server/conf"
 	"github.com/opensourceways/app-cla-server/models"
 	"github.com/opensourceways/app-cla-server/util"
 	"github.com/opensourceways/app-cla-server/worker"
@@ -121,56 +120,4 @@ func (this *CorporationSigningController) GetAll() {
 	}
 
 	body = r
-}
-
-// @Title SendVerifiCode
-// @Description send verification code when signing as Corporation
-// @Param	:cla_org_id	path 	string					true		"cla org id"
-// @Param	:email		path 	string					true		"email of corp"
-// @Success 202 {int} map
-// @Failure util.ErrSendingEmail
-// @router /:cla_org_id/:email [put]
-func (this *CorporationSigningController) SendVerifiCode() {
-	var statusCode = 0
-	var errCode = ""
-	var reason error
-	var body interface{}
-
-	defer func() {
-		sendResponse(&this.Controller, statusCode, errCode, reason, body, "send verification code")
-	}()
-
-	if err := checkAPIStringParameter(&this.Controller, []string{":cla_org_id", ":email"}); err != nil {
-		reason = err
-		errCode = util.ErrInvalidParameter
-		statusCode = 400
-		return
-	}
-	claOrgID := this.GetString(":cla_org_id")
-	adminEmail := this.GetString(":email")
-
-	claOrg := &models.CLAOrg{ID: claOrgID}
-	if err := claOrg.Get(); err != nil {
-		reason = err
-		return
-	}
-	if isNotCorpCLA(claOrg) {
-		reason = fmt.Errorf("invalid cla")
-		errCode = util.ErrInvalidParameter
-		statusCode = 400
-		return
-	}
-
-	expiry := conf.AppConfig.VerificationCodeExpiry
-	code, err := models.CreateCorporationSigningVerifCode(adminEmail, expiry)
-	if err != nil {
-		reason = err
-		return
-	}
-
-	body = map[string]int64{
-		"expiry": expiry,
-	}
-
-	sendVerificationCodeEmail(code, claOrg.OrgEmail, adminEmail)
 }

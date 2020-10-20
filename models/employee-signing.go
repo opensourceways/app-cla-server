@@ -2,6 +2,16 @@ package models
 
 import "github.com/opensourceways/app-cla-server/dbmodels"
 
+type EmployeeSigning struct {
+	IndividualSigning
+
+	VerificationCode string `json:"verification_code"`
+}
+
+func (this *EmployeeSigning) Validate() error {
+	return checkVerificationCode(this.Email, this.VerificationCode, ActionEmployeeSigning)
+}
+
 type EmployeeSigningListOption struct {
 	CLALanguage string `json:"cla_language"`
 }

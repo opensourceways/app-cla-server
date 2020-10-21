@@ -64,27 +64,26 @@ func (this *AuthController) Auth() {
 }
 
 func (this *AuthController) newAccessToken(platform, user, purpose, platformToken string) (string, int, string, error) {
-	pt, err := platforms.NewPlatform(platformToken, "", platform)
-	if err != nil {
-		return "", 400, util.ErrNotSupportedPlatform, err
-	}
-
-	orgs, err := pt.ListOrg()
-	if err != nil {
-		return "", 500, util.ErrSystemError, err
-	}
-
-	orgm := map[string]bool{}
-	for _, item := range orgs {
-		orgm[item] = true
-	}
-
 	permission := ""
 	switch purpose {
 	case "login":
 		permission = PermissionOwnerOfOrg
 	case "sign":
 		permission = PermissionIndividualSigner
+	}
+
+	orgm := map[string]bool{}
+	if permission == PermissionOwnerOfOrg {
+		pt, err := platforms.NewPlatform(platformToken, "", platform)
+		if err != nil {
+			return "", 400, util.ErrNotSupportedPlatform, err
+		}
+
+		if orgs, err := pt.ListOrg(); err == nil {
+			for _, item := range orgs {
+				orgm[item] = true
+			}
+		}
 	}
 
 	ac := &accessController{

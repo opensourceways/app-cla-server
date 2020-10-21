@@ -9,7 +9,6 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
 
 	"github.com/opensourceways/app-cla-server/dbmodels"
 )
@@ -17,61 +16,55 @@ import (
 const clasCollection = "clas"
 
 type CLA struct {
-	ID        primitive.ObjectID `bson:"_id,omitempty"`
-	CreatedAt time.Time          `bson:"created_at,omitempty"`
-	UpdatedAt time.Time          `bson:"updated_at,omitempty"`
-	Name      string             `bson:"name"`
-	Text      string             `bson:"text"`
-	Language  string             `bson:"language"`
-	Submitter string             `bson:"submitter"`
-	ApplyTo   string             `bson:"apply_to" required:"true"`
-	Fields    []Field            `bson:"fields,omitempty"`
+	ID        primitive.ObjectID `bson:"_id" json:"-"`
+	CreatedAt time.Time          `bson:"created_at" json:"-"`
+	UpdatedAt time.Time          `bson:"updated_at" json:"-"`
+	URL       string             `bson:"url" json:"url" required:"true"`
+	Text      string             `bson:"text" json:"text" required:"true"`
+	Language  string             `bson:"language" json:"language" required:"true"`
+	Fields    []Field            `bson:"fields" json:"fields,omitempty"`
 }
 
 type Field struct {
-	ID          string `bson:"id" required:"true"`
-	Title       string `bson:"title"`
-	Type        string `bson:"type"`
-	Description string `bson:"description,omitempty"`
-	Required    bool   `bson:"required"`
+	ID          string `bson:"id" json:"id" required:"true"`
+	Title       string `bson:"title" json:"title" required:"true"`
+	Type        string `bson:"type" json:"type" required:"true"`
+	Description string `bson:"description" json:"description,omitempty"`
+	Required    bool   `bson:"required" json:"required"`
 }
 
 func (c *client) CreateCLA(cla dbmodels.CLA) (string, error) {
-	body, err := golangsdk.BuildRequestBody(cla, "")
-	if err != nil {
-		return "", fmt.Errorf("build body failed, err:%v", err)
+	info := CLA{
+		URL:      cla.Name,
+		Text:     cla.Text,
+		Language: cla.Language,
 	}
-
-	var r *mongo.UpdateResult
-
-	f := func(ctx context.Context) error {
-		col := c.collection(clasCollection)
-
-		filter := bson.M{
-			"name":      cla.Name,
-			"submitter": cla.Submitter,
+	if len(cla.Fields) > 0 {
+		fields := make([]Field, 0, len(cla.Fields))
+		for _, item := range cla.Fields {
+			fields = append(fields, Field{
+				ID:          item.ID,
+				Title:       item.Title,
+				Type:        item.Type,
+				Description: item.Description,
+				Required:    item.Required,
+			})
 		}
-
-		upsert := true
-
-		r, err = col.UpdateOne(ctx, filter, bson.M{"$setOnInsert": bson.M(body)}, &options.UpdateOptions{Upsert: &upsert})
-		if err != nil {
-			return fmt.Errorf("write db failed, err:%v", err)
-		}
-
-		return nil
 	}
-
-	err = withContext(f)
+	body, err := structToMap(info)
 	if err != nil {
 		return "", err
 	}
 
-	if r.UpsertedID == nil {
-		return "", fmt.Errorf("the cla(%s) is already existing", cla.Name)
+	uid := ""
+	f := func(ctx context.Context) error {
+		s, err := c.insertDoc(ctx, clasCollection, body)
+		uid = s
+		return err
 	}
 
-	return toUID(r.UpsertedID)
+	err = withContext(f)
+	return uid, err
 }
 
 func (this *client) DeleteCLA(uid string) error {
@@ -212,12 +205,10 @@ func (c *client) GetCLA(uid string) (dbmodels.CLA, error) {
 
 func toModelCLA(item CLA) dbmodels.CLA {
 	cla := dbmodels.CLA{
-		ID:        objectIDToUID(item.ID),
-		Name:      item.Name,
-		Text:      item.Text,
-		Language:  item.Language,
-		ApplyTo:   item.ApplyTo,
-		Submitter: item.Submitter,
+		ID:       objectIDToUID(item.ID),
+		Name:     item.URL,
+		Text:     item.Text,
+		Language: item.Language,
 	}
 
 	if item.Fields != nil {

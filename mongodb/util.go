@@ -325,9 +325,17 @@ func (c *client) getDoc(ctx context.Context, collection string, filterOfDoc, pro
 
 func (c *client) getDocs(ctx context.Context, collection string, filterOfDoc, project bson.M, result interface{}) error {
 	col := c.collection(collection)
-	cursor, err := col.Find(ctx, filterOfDoc, &options.FindOptions{
-		Projection: project,
-	})
+
+	var cursor *mongo.Cursor
+	var err error
+	if len(project) > 0 {
+		cursor, err = col.Find(ctx, filterOfDoc, &options.FindOptions{
+			Projection: project,
+		})
+	} else {
+		cursor, err = col.Find(ctx, filterOfDoc)
+	}
+
 	if err != nil {
 		return err
 	}

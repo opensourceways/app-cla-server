@@ -147,21 +147,11 @@ func (c *client) ListCLAByIDs(ids []string) ([]dbmodels.CLA, error) {
 	var v []CLA
 
 	f := func(ctx context.Context) error {
-		col := c.db.Collection(clasCollection)
 		filter := bson.M{
 			"_id": bson.M{"$in": ids1},
 		}
 
-		cursor, err := col.Find(ctx, filter)
-		if err != nil {
-			return fmt.Errorf("error find clas: %v", err)
-		}
-
-		err = cursor.All(ctx, &v)
-		if err != nil {
-			return fmt.Errorf("error decoding to bson struct of CLA: %v", err)
-		}
-		return nil
+		return c.getDocs(ctx, clasCollection, filter, bson.M{"text": 1, "language": 1}, &v)
 	}
 
 	if err := withContext(f); err != nil {
@@ -211,7 +201,7 @@ func toModelCLA(item CLA) dbmodels.CLA {
 		Language: item.Language,
 	}
 
-	if item.Fields != nil {
+	if len(item.Fields) > 0 {
 		fs := make([]dbmodels.Field, 0, len(item.Fields))
 		for _, v := range item.Fields {
 			fs = append(fs, dbmodels.Field{

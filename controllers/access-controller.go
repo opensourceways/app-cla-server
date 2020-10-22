@@ -93,6 +93,7 @@ type accessControllerBasicPayload struct {
 type acForCodePlatformPayload struct {
 	accessControllerBasicPayload
 
+	Platform      string          `json:"platform"`
 	PlatformToken string          `json:"platform_token"`
 	Orgs          map[string]bool `json:"orgs"`
 }

@@ -15,6 +15,20 @@ import (
 	"github.com/opensourceways/app-cla-server/util"
 )
 
+func dbValueOfRepo(org, repo string) string {
+	if repo == "" {
+		return ""
+	}
+	return fmt.Sprintf("%s/%s", org, repo)
+}
+
+func toNormalRepo(repo string) string {
+	if strings.Contains(repo, "/") {
+		return strings.Split(repo, "/")[1]
+	}
+	return repo
+}
+
 func structToMap(info interface{}) (bson.M, error) {
 	body, err := golangsdk.BuildRequestBody(info, "")
 	if err != nil {
@@ -47,6 +61,28 @@ func indexOfCorpManagerAndIndividual(email string) bson.M {
 		fieldCorporationID: genCorpID(email),
 		"email":            email,
 	}
+}
+
+func filterOfOrgRepo(platform, org, repo string) (bson.M, error) {
+	if !(platform != "" && org != "") {
+		return nil, dbmodels.DBError{
+			ErrCode: util.ErrNoPlatformOrOrg,
+			Err:     fmt.Errorf("platform or org is empty"),
+		}
+	}
+
+	if repo == "" {
+		return bson.M{
+			"platform": platform,
+			"org_id":   org,
+			fieldRepo:  "",
+		}, nil
+	}
+
+	return bson.M{
+		"platform": platform,
+		fieldRepo:  dbValueOfRepo(org, repo),
+	}, nil
 }
 
 func isErrorOfNotSigned(err error) bool {

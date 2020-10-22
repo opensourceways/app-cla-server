@@ -32,11 +32,7 @@ func filterForIndividualSigning(filter bson.M, advanced bool) {
 }
 
 func filterOfDocForIndividualSigning(platform, org, repo string, advanced bool) bson.M {
-	m := bson.M{
-		"platform": platform,
-		"org_id":   org,
-		fieldRepo:  repo,
-	}
+	m, _ := filterOfOrgRepo(platform, org, repo)
 	filterForIndividualSigning(m, advanced)
 	return m
 }
@@ -110,9 +106,16 @@ func (c *client) UpdateIndividualSigning(platform, org, repo, email string, enab
 }
 
 func (c *client) IsIndividualSigned(platform, orgID, repoID, email string) (bool, error) {
-	filterOfDoc := filterOfDocForIndividualSigning(platform, orgID, repoID, false)
-	if repoID != "" {
-		filterOfDoc[fieldRepo] = bson.M{"$in": bson.A{"", repoID}}
+	// must specify repo="" for filterOfOrgRepo to add org filter
+	filterOfDoc, err := filterOfOrgRepo(platform, orgID, "")
+	if err != nil {
+		return false, err
+	}
+	filterForIndividualSigning(filterOfDoc, false)
+
+	repo := dbValueOfRepo(orgID, repoID)
+	if repo != "" {
+		filterOfDoc[fieldRepo] = bson.M{"$in": bson.A{"", repo}}
 	}
 
 	var v []CLAOrg
@@ -137,12 +140,12 @@ func (c *client) IsIndividualSigned(platform, orgID, repoID, email string) (bool
 		return false, nil
 	}
 
-	if repoID != "" {
+	if repo != "" {
 		bingo := false
 
 		for i := 0; i < len(v); i++ {
 			doc := &v[i]
-			if doc.RepoID == repoID {
+			if doc.RepoID == repo {
 				if !bingo {
 					bingo = true
 				}
@@ -167,21 +170,12 @@ func (c *client) IsIndividualSigned(platform, orgID, repoID, email string) (bool
 }
 
 func (c *client) ListIndividualSigning(opt dbmodels.IndividualSigningListOption) (map[string][]dbmodels.IndividualSigningBasicInfo, error) {
-	info := struct {
-		Platform    string `json:"platform" required:"true"`
-		OrgID       string `json:"org_id" required:"true"`
-		RepoID      string `json:"repo_id,omitempty"`
-		CLALanguage string `json:"cla_language,omitempty"`
-	}{
-		Platform:    opt.Platform,
-		OrgID:       opt.OrgID,
-		RepoID:      opt.RepoID,
-		CLALanguage: opt.CLALanguage,
-	}
-
-	filterOfDoc, err := structToMap(info)
+	filterOfDoc, err := filterOfOrgRepo(opt.Platform, opt.OrgID, opt.RepoID)
 	if err != nil {
 		return nil, err
+	}
+	if opt.CLALanguage != "" {
+		filterOfDoc["cla_language"] = opt.CLALanguage
 	}
 	filterForIndividualSigning(filterOfDoc, true)
 

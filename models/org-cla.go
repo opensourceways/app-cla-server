@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/opensourceways/app-cla-server/dbmodels"
+	"github.com/opensourceways/app-cla-server/util"
 )
 
 type OrgRepoCreateOption struct {
@@ -20,6 +21,23 @@ type OrgRepoCreateOption struct {
 	OrgEmail string `json:"org_email"`
 
 	CLA CLACreateOption `json:"cla"`
+}
+
+func (this OrgRepoCreateOption) Validate() (string, error) {
+	if this.ApplyTo != dbmodels.ApplyToIndividual && this.ApplyTo != dbmodels.ApplyToCorporation {
+		return util.ErrInvalidParameter, fmt.Errorf("invalid apply_to")
+	}
+
+	_, err := dbmodels.GetDB().GetOrgEmailInfo(this.OrgEmail)
+	if err == nil {
+		return "", nil
+	}
+
+	ec, err := parseErrorOfDBApi(err)
+	if ec == util.ErrNoDBRecord {
+		return util.ErrInvalidEmail, err
+	}
+	return ec, err
 }
 
 func (this OrgRepoCreateOption) Create(claID string) (string, error) {

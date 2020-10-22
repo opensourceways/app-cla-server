@@ -7,6 +7,10 @@ import (
 
 type IndividualSigning dbmodels.IndividualSigningInfo
 
+func (this *IndividualSigning) Validate() (string, error) {
+	return checkEmailFormat(this.Email)
+}
+
 func (this *IndividualSigning) Create(claOrgID, platform, orgID, repoId string, enabled bool) error {
 	this.Date = util.Date()
 	this.Enabled = enabled

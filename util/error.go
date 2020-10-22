@@ -26,5 +26,6 @@ const (
 	ErrNoDBRecord                = "no_db_record"
 	ErrRecordExists              = "db_record_exists"
 	ErrNoPlatformOrOrg           = "no_platform_or_org"
+	ErrInvalidEmail              = "invalid_email"
 	ErrSystemError               = "system_error"
 )

@@ -53,6 +53,12 @@ func (this *IndividualSigningController) Post() {
 		statusCode = 400
 		return
 	}
+	if ec, err := (&info).Validate(); err != nil {
+		reason = err
+		errCode = ec
+		statusCode = 400
+		return
+	}
 
 	claOrg := &models.CLAOrg{ID: claOrgID}
 	if err := claOrg.Get(); err != nil {

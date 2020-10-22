@@ -37,6 +37,12 @@ func (this *EmployeeManagerCreateOption) Validate(adminEmail string) (string, er
 		return util.ErrInvalidParameter, fmt.Errorf("there are duplicate emails")
 	}
 
+	for _, email := range this.Emails {
+		if ec, err := checkEmailFormat(email); err != nil {
+			return ec, err
+		}
+	}
+
 	return "", nil
 }
 

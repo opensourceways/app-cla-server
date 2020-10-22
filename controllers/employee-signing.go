@@ -61,8 +61,10 @@ func (this *EmployeeSigningController) Post() {
 		statusCode = 400
 		return
 	}
-	if err := (&info).Validate(); err != nil {
+	if ec, err := (&info).Validate(); err != nil {
 		reason = err
+		errCode = ec
+		statusCode = 400
 		return
 	}
 

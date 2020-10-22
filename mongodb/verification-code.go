@@ -48,7 +48,7 @@ func (c *client) CreateVerificationCode(opt dbmodels.VerificationCode) error {
 	return c.doTransaction(f)
 }
 
-func (c *client) CheckVerificationCode(opt dbmodels.VerificationCode) error {
+func (c *client) GetVerificationCode(opt *dbmodels.VerificationCode) error {
 	var v struct {
 		Expiry int64 `bson:"expiry"`
 	}
@@ -66,11 +66,12 @@ func (c *client) CheckVerificationCode(opt dbmodels.VerificationCode) error {
 		}
 
 		sr := col.FindOneAndDelete(ctx, filter, &opt)
+
 		err := sr.Decode(&v)
 		if err != nil && isErrNoDocuments(err) {
 			return dbmodels.DBError{
-				ErrCode: util.ErrWrongVerificationCode,
-				Err:     fmt.Errorf("wrong verification code"),
+				ErrCode: util.ErrNoDBRecord,
+				Err:     fmt.Errorf("no db record"),
 			}
 		}
 
@@ -81,11 +82,6 @@ func (c *client) CheckVerificationCode(opt dbmodels.VerificationCode) error {
 		return err
 	}
 
-	if v.Expiry < util.Now() {
-		return dbmodels.DBError{
-			ErrCode: util.ErrVerificationCodeExpired,
-			Err:     fmt.Errorf("verification code is expired"),
-		}
-	}
+	opt.Expiry = v.Expiry
 	return nil
 }

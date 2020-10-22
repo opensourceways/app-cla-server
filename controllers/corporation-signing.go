@@ -94,7 +94,7 @@ func (this *CorporationSigningController) Post() {
 
 // @Title GetAll
 // @Description get all the corporations which have signed to a org
-// @router / [get]
+// @router /:org_id [get]
 func (this *CorporationSigningController) GetAll() {
 	var statusCode = 0
 	var errCode = ""
@@ -105,14 +105,35 @@ func (this *CorporationSigningController) GetAll() {
 		sendResponse(&this.Controller, statusCode, errCode, reason, body, "list corporation")
 	}()
 
+	org, err := fetchStringParameter(&this.Controller, ":org_id")
+	if err != nil {
+		reason = err
+		errCode = util.ErrInvalidParameter
+		statusCode = 400
+		return
+	}
+
+	ac, ec, err := getACOfCodePlatform(&this.Controller)
+	if err != nil {
+		reason = err
+		errCode = ec
+		statusCode = 400
+		return
+	}
+
+	if !ac.hasOrg(org) {
+		reason = fmt.Errorf("can't access org:%s", org)
+		errCode = util.ErrInvalidParameter
+		statusCode = 400
+		return
+	}
+
 	opt := models.CorporationSigningListOption{
-		Platform:    this.GetString("platform"),
-		OrgID:       this.GetString("org_id"),
+		Platform:    ac.Platform,
+		OrgID:       org,
 		RepoID:      this.GetString("repo_id"),
 		CLALanguage: this.GetString("cla_language"),
 	}
-
-	// TODO: check whether can do this
 
 	r, err := opt.List()
 	if err != nil {

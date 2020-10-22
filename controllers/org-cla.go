@@ -132,35 +132,28 @@ func (this *OrgCLAController) GetAll() {
 		sendResponse(&this.Controller, statusCode, errCode, reason, body, "list org cla")
 	}()
 
-	ac, err := getAccessController(&this.Controller)
+	ac, ec, err := getACOfCodePlatform(&this.Controller)
 	if err != nil {
 		reason = err
-		errCode = util.ErrInvalidParameter
+		errCode = ec
 		statusCode = 400
 		return
 	}
 
-	cpa, ok := ac.Payload.(*acForCodePlatformPayload)
-	if !ok {
-		reason = fmt.Errorf("invalid token payload")
-		errCode = util.ErrSystemError
-		statusCode = 500
-		return
-	}
-	if len(cpa.Orgs) == 0 {
+	if len(ac.Orgs) == 0 {
 		reason = fmt.Errorf("not orgs")
 		errCode = util.ErrSystemError
 		statusCode = 500
 		return
 	}
 
-	orgs := make([]string, 0, len(cpa.Orgs))
-	for k := range cpa.Orgs {
+	orgs := make([]string, 0, len(ac.Orgs))
+	for k := range ac.Orgs {
 		orgs = append(orgs, k)
 	}
 
 	opt := models.CLAOrgListOption{
-		Platform: cpa.Platform,
+		Platform: ac.Platform,
 		OrgID:    orgs,
 	}
 

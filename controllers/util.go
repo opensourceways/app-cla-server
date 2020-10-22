@@ -361,22 +361,17 @@ func canOwnerOfOrgAccessCLA(c *beego.Controller, claOrgID string) (*models.CLAOr
 		return nil, 400, util.ErrInvalidParameter, err
 	}
 
-	ac, err := getAccessController(c)
+	ac, ec, err := getACOfCodePlatform(c)
 	if err != nil {
-		return nil, 400, util.ErrInvalidParameter, err
-	}
-
-	cpa, ok := ac.Payload.(*acForCodePlatformPayload)
-	if !ok {
-		return nil, 500, util.ErrSystemError, fmt.Errorf("invalid payload")
+		return nil, 400, ec, err
 	}
 
 	org := claOrg.OrgID
-	if cpa.hasOrg(org) {
+	if ac.hasOrg(org) {
 		return claOrg, 0, "", nil
 	}
 
-	p, err := platforms.NewPlatform(cpa.PlatformToken, "", cpa.Platform)
+	p, err := platforms.NewPlatform(ac.PlatformToken, "", ac.Platform)
 	if err != nil {
 		return nil, 400, util.ErrInvalidParameter, err
 	}
@@ -391,7 +386,21 @@ func canOwnerOfOrgAccessCLA(c *beego.Controller, claOrgID string) (*models.CLAOr
 		return nil, 400, util.ErrNotYoursOrg, fmt.Errorf("not the org of owner")
 	}
 
-	cpa.addOrg(org)
+	ac.addOrg(org)
 
 	return claOrg, 0, "", nil
+}
+
+func getACOfCodePlatform(c *beego.Controller) (*acForCodePlatformPayload, string, error) {
+	ac, err := getAccessController(c)
+	if err != nil {
+		return nil, util.ErrInvalidParameter, err
+	}
+
+	cpa, ok := ac.Payload.(*acForCodePlatformPayload)
+	if !ok {
+		return nil, util.ErrSystemError, fmt.Errorf("invalid token payload")
+	}
+
+	return cpa, "", nil
 }

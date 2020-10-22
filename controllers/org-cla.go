@@ -49,10 +49,9 @@ func (this *OrgCLAController) Post() {
 		statusCode = 400
 		return
 	}
-
-	if input.ApplyTo != dbmodels.ApplyToIndividual && input.ApplyTo != dbmodels.ApplyToCorporation {
-		reason = fmt.Errorf("invalid apply_to")
-		errCode = util.ErrInvalidParameter
+	if ec, err := input.Validate(); err != nil {
+		reason = err
+		errCode = ec
 		statusCode = 400
 		return
 	}

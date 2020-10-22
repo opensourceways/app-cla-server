@@ -376,8 +376,7 @@ func canOwnerOfOrgAccessCLA(c *beego.Controller, claOrgID string) (*models.CLAOr
 		return claOrg, 0, "", nil
 	}
 
-	token := cpa.PlatformToken
-	p, err := platforms.NewPlatform(token, "", claOrg.Platform)
+	p, err := platforms.NewPlatform(cpa.PlatformToken, "", cpa.Platform)
 	if err != nil {
 		return nil, 400, util.ErrInvalidParameter, err
 	}

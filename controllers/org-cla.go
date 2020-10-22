@@ -43,9 +43,15 @@ func (this *OrgCLAController) Post() {
 	}()
 
 	var input models.OrgRepoCreateOption
-
 	if err := json.Unmarshal(this.Ctx.Input.RequestBody, &input); err != nil {
 		reason = err
+		errCode = util.ErrInvalidParameter
+		statusCode = 400
+		return
+	}
+
+	if input.ApplyTo != dbmodels.ApplyToIndividual && input.ApplyTo != dbmodels.ApplyToCorporation {
+		reason = fmt.Errorf("invalid apply_to")
 		errCode = util.ErrInvalidParameter
 		statusCode = 400
 		return
@@ -114,36 +120,54 @@ func (this *OrgCLAController) Delete() {
 }
 
 // @Title GetAll
-// @Description get all bindings
+// @Description get all org clas
 // @Success 200 {object} models.CLAOrg
-// @router /:platform/:org_id [get]
+// @router / [get]
 func (this *OrgCLAController) GetAll() {
 	var statusCode = 0
+	var errCode = ""
 	var reason error
 	var body interface{}
 
 	defer func() {
-		sendResponse1(&this.Controller, statusCode, reason, body)
+		sendResponse(&this.Controller, statusCode, errCode, reason, body, "list org cla")
 	}()
 
-	for _, p := range []string{":platform", ":org_id"} {
-		if this.GetString(p) == "" {
-			reason = fmt.Errorf("missing parameter of %s", p)
-			statusCode = 400
-			return
-		}
+	ac, err := getAccessController(&this.Controller)
+	if err != nil {
+		reason = err
+		errCode = util.ErrInvalidParameter
+		statusCode = 400
+		return
 	}
+
+	cpa, ok := ac.Payload.(*acForCodePlatformPayload)
+	if !ok {
+		reason = fmt.Errorf("invalid token payload")
+		errCode = util.ErrSystemError
+		statusCode = 500
+		return
+	}
+	if len(cpa.Orgs) == 0 {
+		reason = fmt.Errorf("not orgs")
+		errCode = util.ErrSystemError
+		statusCode = 500
+		return
+	}
+
+	orgs := make([]string, 0, len(cpa.Orgs))
+	for k := range cpa.Orgs {
+		orgs = append(orgs, k)
+	}
+
 	opt := models.CLAOrgListOption{
-		Platform: this.GetString(":platform"),
-		OrgID:    this.GetString(":org_id"),
-		RepoID:   this.GetString("repo_id"),
-		ApplyTo:  this.GetString("apply_to"),
+		Platform: cpa.Platform,
+		OrgID:    orgs,
 	}
 
 	r, err := opt.List()
 	if err != nil {
 		reason = err
-		statusCode = 500
 		return
 	}
 
@@ -178,11 +202,16 @@ func (this *OrgCLAController) GetSigningPageInfo() {
 		return
 	}
 
+	org := this.GetString(":org_id")
+	repo := this.GetString("repo_id")
 	opt := models.CLAOrgListOption{
 		Platform: this.GetString(":platform"),
-		OrgID:    this.GetString(":org_id"),
-		RepoID:   this.GetString("repo_id"),
 		ApplyTo:  this.GetString(":apply_to"),
+	}
+	if repo != "" {
+		opt.RepoID = fmt.Sprintf("%s/%s", org, repo)
+	} else {
+		opt.OrgID = []string{org}
 	}
 
 	token := getHeader(&this.Controller, headerToken)
@@ -210,7 +239,7 @@ func (this *OrgCLAController) GetSigningPageInfo() {
 	m := map[string]string{}
 	for _, i := range claOrgs {
 		if i.ApplyTo == dbmodels.ApplyToCorporation && !i.OrgSignatureUploaded {
-			s := opt.OrgID
+			s := org
 			if opt.RepoID != "" {
 				s = fmt.Sprintf("%s/%s", s, opt.RepoID)
 			}

@@ -2,6 +2,7 @@ package mongodb
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -60,7 +61,7 @@ func (c *client) CreateBindingBetweenCLAAndOrg(info dbmodels.CLAOrg) (string, er
 	claOrg := CLAOrg{
 		Platform:        info.Platform,
 		OrgID:           info.OrgID,
-		RepoID:          info.RepoID,
+		RepoID:          dbValueOfRepo(info.OrgID, info.RepoID),
 		CLAID:           info.CLAID,
 		CLALanguage:     info.CLALanguage,
 		ApplyTo:         info.ApplyTo,
@@ -74,14 +75,10 @@ func (c *client) CreateBindingBetweenCLAAndOrg(info dbmodels.CLAOrg) (string, er
 		return "", err
 	}
 
-	filterOfDoc := bson.M{
-		"platform":     info.Platform,
-		"org_id":       info.OrgID,
-		fieldRepo:      info.RepoID,
-		"cla_language": info.CLALanguage,
-		"apply_to":     info.ApplyTo,
-		"enabled":      true,
-	}
+	filterOfDoc, _ := filterOfOrgRepo(info.Platform, info.OrgID, info.RepoID)
+	filterOfDoc["cla_language"] = info.CLALanguage
+	filterOfDoc["apply_to"] = info.ApplyTo
+	filterOfDoc["enabled"] = true
 
 	claOrgID := ""
 
@@ -135,14 +132,16 @@ func (c *client) GetBindingBetweenCLAAndOrg(uid string) (dbmodels.CLAOrg, error)
 }
 
 func (c *client) ListBindingBetweenCLAAndOrg(opt dbmodels.CLAOrgListOption) ([]dbmodels.CLAOrg, error) {
+	if (opt.RepoID != "" && len(opt.OrgID) > 0) || (opt.RepoID == "" && len(opt.OrgID) == 0) {
+		return nil, fmt.Errorf("need specify multiple orgs or a single repo")
+	}
+
 	info := struct {
 		Platform string `json:"platform" required:"true"`
-		OrgID    string `json:"org_id" required:"true"`
 		RepoID   string `json:"repo_id,omitempty"`
 		ApplyTo  string `json:"apply_to,omitempty"`
 	}{
 		Platform: opt.Platform,
-		OrgID:    opt.OrgID,
 		RepoID:   opt.RepoID,
 		ApplyTo:  opt.ApplyTo,
 	}
@@ -152,6 +151,9 @@ func (c *client) ListBindingBetweenCLAAndOrg(opt dbmodels.CLAOrgListOption) ([]d
 		return nil, err
 	}
 	filterForClaOrgDoc(filter)
+	if len(opt.OrgID) > 0 {
+		filter["org_id"] = bson.M{"$in": opt.OrgID}
+	}
 
 	var v []CLAOrg
 
@@ -177,7 +179,7 @@ func toModelCLAOrg(item CLAOrg) dbmodels.CLAOrg {
 		ID:                   objectIDToUID(item.ID),
 		Platform:             item.Platform,
 		OrgID:                item.OrgID,
-		RepoID:               item.RepoID,
+		RepoID:               toNormalRepo(item.RepoID),
 		CLAID:                item.CLAID,
 		CLALanguage:          item.CLALanguage,
 		ApplyTo:              item.ApplyTo,

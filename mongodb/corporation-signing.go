@@ -30,11 +30,7 @@ func filterForCorpSigning(filter bson.M) {
 }
 
 func filterOfDocForCorpSigning(platform, org, repo string) bson.M {
-	m := bson.M{
-		"platform": platform,
-		"org_id":   org,
-		fieldRepo:  repo,
-	}
+	m, _ := filterOfOrgRepo(platform, org, repo)
 	filterForCorpSigning(m)
 	return m
 }
@@ -85,21 +81,12 @@ func (c *client) SignAsCorporation(claOrgID, platform, org, repo string, info db
 }
 
 func (c *client) ListCorporationSigning(opt dbmodels.CorporationSigningListOption) (map[string][]dbmodels.CorporationSigningDetail, error) {
-	info := struct {
-		Platform    string `json:"platform" required:"true"`
-		OrgID       string `json:"org_id" required:"true"`
-		RepoID      string `json:"repo_id"`
-		CLALanguage string `json:"cla_language,omitempty"`
-	}{
-		Platform:    opt.Platform,
-		OrgID:       opt.OrgID,
-		RepoID:      opt.RepoID,
-		CLALanguage: opt.CLALanguage,
-	}
-
-	filterOfDoc, err := structToMap(info)
+	filterOfDoc, err := filterOfOrgRepo(opt.Platform, opt.OrgID, opt.RepoID)
 	if err != nil {
 		return nil, err
+	}
+	if opt.CLALanguage != "" {
+		filterOfDoc["cla_language"] = opt.CLALanguage
 	}
 	filterForCorpSigning(filterOfDoc)
 	filterOfDoc[fieldCorporations] = bson.M{"$type": "array"}

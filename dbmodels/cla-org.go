@@ -16,7 +16,9 @@ type CLAOrg struct {
 
 type CLAOrgListOption struct {
 	Platform string `json:"platform"`
-	OrgID    string `json:"org_id"`
-	RepoID   string `json:"repo_id"`
-	ApplyTo  string `json:"apply_to"`
+	// it must specify one of OrgID and RepoID, but not both
+	OrgID []string `json:"org_id"`
+	// if RepoID is not empty, it is in the format of org/repo
+	RepoID  string `json:"repo_id"`
+	ApplyTo string `json:"apply_to"`
 }

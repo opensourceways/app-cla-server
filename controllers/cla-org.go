@@ -114,43 +114,6 @@ func (this *CLAOrgController) Delete() {
 	body = "unbinding successfully"
 }
 
-// @Title GetAll
-// @Description get all bindings
-// @Success 200 {object} models.CLAOrg
-// @router /:platform/:org_id [get]
-func (this *CLAOrgController) GetAll() {
-	var statusCode = 0
-	var reason error
-	var body interface{}
-
-	defer func() {
-		sendResponse1(&this.Controller, statusCode, reason, body)
-	}()
-
-	for _, p := range []string{":platform", ":org_id"} {
-		if this.GetString(p) == "" {
-			reason = fmt.Errorf("missing parameter of %s", p)
-			statusCode = 400
-			return
-		}
-	}
-	opt := models.CLAOrgListOption{
-		Platform: this.GetString(":platform"),
-		OrgID:    this.GetString(":org_id"),
-		RepoID:   this.GetString("repo_id"),
-		ApplyTo:  this.GetString("apply_to"),
-	}
-
-	r, err := opt.List()
-	if err != nil {
-		reason = err
-		statusCode = 500
-		return
-	}
-
-	body = r
-}
-
 // @Title GetSigningPageInfo
 // @Description get signing page info
 // @Param	:platform	path 	string				true		"code platform"
@@ -179,11 +142,16 @@ func (this *CLAOrgController) GetSigningPageInfo() {
 		return
 	}
 
+	org := this.GetString(":org_id")
+	repo := this.GetString("repo_id")
 	opt := models.CLAOrgListOption{
 		Platform: this.GetString(":platform"),
-		OrgID:    this.GetString(":org_id"),
-		RepoID:   this.GetString("repo_id"),
 		ApplyTo:  this.GetString(":apply_to"),
+	}
+	if repo != "" {
+		opt.RepoID = fmt.Sprintf("%s/%s", org, repo)
+	} else {
+		opt.OrgID = []string{org}
 	}
 
 	token := getHeader(&this.Controller, headerToken)
@@ -211,7 +179,7 @@ func (this *CLAOrgController) GetSigningPageInfo() {
 	m := map[string]string{}
 	for _, i := range claOrgs {
 		if i.ApplyTo == dbmodels.ApplyToCorporation && !i.OrgSignatureUploaded {
-			s := opt.OrgID
+			s := org
 			if opt.RepoID != "" {
 				s = fmt.Sprintf("%s/%s", s, opt.RepoID)
 			}

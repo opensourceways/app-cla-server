@@ -165,7 +165,7 @@ func (c *client) CheckCorporationManagerExist(opt dbmodels.CorporationManagerChe
 			Role:             item.Role,
 			Platform:         doc.Platform,
 			OrgID:            doc.OrgID,
-			RepoID:           doc.RepoID,
+			RepoID:           toNormalRepo(doc.RepoID),
 			InitialPWChanged: item.InitialPWChanged,
 		}
 	}

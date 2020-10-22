@@ -93,6 +93,7 @@ func (this *AuthController) newAccessToken(platform, user, purpose, platformToke
 			accessControllerBasicPayload: accessControllerBasicPayload{
 				User: fmt.Sprintf("%s/%s", platform, user),
 			},
+			Platform:      platform,
 			PlatformToken: platformToken,
 			Orgs:          orgm,
 		},

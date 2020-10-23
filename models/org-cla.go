@@ -18,7 +18,8 @@ type OrgRepoCreateOption struct {
 
 	ApplyTo string `json:"apply_to"`
 
-	OrgEmail string `json:"org_email"`
+	OrgEmail  string `json:"org_email"`
+	Submitter string `json:"submitter"`
 
 	CLA CLACreateOption `json:"cla"`
 }
@@ -50,6 +51,7 @@ func (this OrgRepoCreateOption) Create(claID string) (string, error) {
 		Enabled:     true,
 		CLAID:       claID,
 		CLALanguage: this.CLA.Language,
+		Submitter:   this.Submitter,
 	}
 	return dbmodels.GetDB().CreateBindingBetweenCLAAndOrg(info)
 }

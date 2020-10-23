@@ -61,8 +61,8 @@ func managersToAdd(
 	return toAdd, nil
 }
 
-func (c *client) AddCorporationManager(claOrgID string, opt []dbmodels.CorporationManagerCreateOption, managerNumber int) ([]dbmodels.CorporationManagerCreateOption, error) {
-	oid, err := toObjectID(claOrgID)
+func (c *client) AddCorporationManager(orgCLAID string, opt []dbmodels.CorporationManagerCreateOption, managerNumber int) ([]dbmodels.CorporationManagerCreateOption, error) {
+	oid, err := toObjectID(orgCLAID)
 	if err != nil {
 		return nil, err
 	}
@@ -96,7 +96,7 @@ func (c *client) AddCorporationManager(claOrgID string, opt []dbmodels.Corporati
 		}
 
 		err = c.pushArrayElems(
-			ctx, claOrgCollection, fieldCorpoManagers,
+			ctx, orgCLACollection, fieldCorpoManagers,
 			filterOfDocID(oid), items,
 		)
 		if err != nil {
@@ -105,7 +105,7 @@ func (c *client) AddCorporationManager(claOrgID string, opt []dbmodels.Corporati
 
 		if opt[0].Role == dbmodels.RoleAdmin {
 			return c.updateArrayElem(
-				ctx, claOrgCollection, fieldCorporations,
+				ctx, orgCLACollection, fieldCorporations,
 				filterOfDocID(oid),
 				filterOfCorpID(opt[0].Email),
 				bson.M{"admin_added": true},
@@ -135,10 +135,10 @@ func (c *client) CheckCorporationManagerExist(opt dbmodels.CorporationManagerChe
 		corpManagerField("changed"): 1,
 	}
 
-	var v []CLAOrg
+	var v []OrgCLA
 
 	f := func(ctx context.Context) error {
-		return c.getArrayElem(ctx, claOrgCollection, fieldCorpoManagers, filterOfDoc, filterOfArray, project, &v)
+		return c.getArrayElem(ctx, orgCLACollection, fieldCorpoManagers, filterOfDoc, filterOfArray, project, &v)
 	}
 
 	if err := withContext(f); err != nil {
@@ -172,8 +172,8 @@ func (c *client) CheckCorporationManagerExist(opt dbmodels.CorporationManagerChe
 	return result, nil
 }
 
-func (c *client) ResetCorporationManagerPassword(claOrgID, email string, opt dbmodels.CorporationManagerResetPassword) error {
-	oid, err := toObjectID(claOrgID)
+func (c *client) ResetCorporationManagerPassword(orgCLAID, email string, opt dbmodels.CorporationManagerResetPassword) error {
+	oid, err := toObjectID(orgCLAID)
 	if err != nil {
 		return err
 	}
@@ -187,13 +187,13 @@ func (c *client) ResetCorporationManagerPassword(claOrgID, email string, opt dbm
 	filterOfArray["password"] = opt.OldPassword
 
 	f := func(ctx context.Context) error {
-		return c.updateArrayElem(ctx, claOrgCollection, fieldCorpoManagers, filterOfDocID(oid), filterOfArray, updateCmd, true)
+		return c.updateArrayElem(ctx, orgCLACollection, fieldCorpoManagers, filterOfDocID(oid), filterOfArray, updateCmd, true)
 	}
 
 	return withContext(f)
 }
 
-func (c *client) listCorporationManager(ctx context.Context, claOrgID primitive.ObjectID, email, role string) ([]corporationManagerDoc, error) {
+func (c *client) listCorporationManager(ctx context.Context, orgCLAID primitive.ObjectID, email, role string) ([]corporationManagerDoc, error) {
 	filterOfArray := filterOfCorpID(email)
 	if role != "" {
 		filterOfArray["role"] = role
@@ -204,10 +204,10 @@ func (c *client) listCorporationManager(ctx context.Context, claOrgID primitive.
 		corpManagerField("role"):  1,
 	}
 
-	var v []CLAOrg
+	var v []OrgCLA
 	err := c.getArrayElem(
-		ctx, claOrgCollection, fieldCorpoManagers,
-		filterOfDocID(claOrgID), filterOfArray, project, &v,
+		ctx, orgCLACollection, fieldCorpoManagers,
+		filterOfDocID(orgCLAID), filterOfArray, project, &v,
 	)
 	if err != nil {
 		return nil, err
@@ -222,8 +222,8 @@ func (c *client) listCorporationManager(ctx context.Context, claOrgID primitive.
 	return v[0].CorporationManagers, nil
 }
 
-func (c *client) ListCorporationManager(claOrgID, email, role string) ([]dbmodels.CorporationManagerListResult, error) {
-	oid, err := toObjectID(claOrgID)
+func (c *client) ListCorporationManager(orgCLAID, email, role string) ([]dbmodels.CorporationManagerListResult, error) {
+	oid, err := toObjectID(orgCLAID)
 	if err != nil {
 		return nil, err
 	}
@@ -250,8 +250,8 @@ func (c *client) ListCorporationManager(claOrgID, email, role string) ([]dbmodel
 	return ms, nil
 }
 
-func (c *client) DeleteCorporationManager(claOrgID string, opt []dbmodels.CorporationManagerCreateOption) ([]string, error) {
-	oid, err := toObjectID(claOrgID)
+func (c *client) DeleteCorporationManager(orgCLAID string, opt []dbmodels.CorporationManagerCreateOption) ([]string, error) {
+	oid, err := toObjectID(orgCLAID)
 	if err != nil {
 		return nil, err
 	}
@@ -284,7 +284,7 @@ func (c *client) DeleteCorporationManager(claOrgID string, opt []dbmodels.Corpor
 		filterOfArray["email"] = bson.M{"$in": toDelete}
 
 		return c.pullArrayElem(
-			ctx, claOrgCollection, fieldCorpoManagers,
+			ctx, orgCLACollection, fieldCorpoManagers,
 			filterOfDocID(oid), filterOfArray,
 		)
 	}

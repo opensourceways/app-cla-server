@@ -11,18 +11,18 @@ import (
 	"github.com/opensourceways/app-cla-server/util"
 )
 
-func (this *pdfGenerator) GenCLAPDFForCorporation(claOrg *models.CLAOrg, signing *models.CorporationSigning, cla *models.CLA) (string, error) {
-	orgSigPdfFile := util.OrgSignaturePDFFILE(this.pdfOrgSigDir, claOrg.ID)
+func (this *pdfGenerator) GenCLAPDFForCorporation(orgCLA *models.OrgCLA, signing *models.CorporationSigning, cla *models.CLA) (string, error) {
+	orgSigPdfFile := util.OrgSignaturePDFFILE(this.pdfOrgSigDir, orgCLA.ID)
 	if util.IsFileNotExist(orgSigPdfFile) {
 		return "", fmt.Errorf("Failed to generate pdf for corporation signing: the org signature pdf file is not exist")
 	}
 
-	tempPdf, err := this.genCorporPDFMissingSig(claOrg, signing, cla)
+	tempPdf, err := this.genCorporPDFMissingSig(orgCLA, signing, cla)
 	if err != nil {
 		return "", err
 	}
 
-	file := util.CorporCLAPDFFile(this.pdfOutDir, claOrg.ID, signing.AdminEmail, "")
+	file := util.CorporCLAPDFFile(this.pdfOutDir, orgCLA.ID, signing.AdminEmail, "")
 	if err := this.mergeCorporPDFSignaturePage(tempPdf, orgSigPdfFile, file); err != nil {
 		return "", err
 	}
@@ -32,19 +32,19 @@ func (this *pdfGenerator) GenCLAPDFForCorporation(claOrg *models.CLAOrg, signing
 	return file, nil
 }
 
-func (this *pdfGenerator) genCorporPDFMissingSig(claOrg *models.CLAOrg, signing *models.CorporationSigning, cla *models.CLA) (string, error) {
+func (this *pdfGenerator) genCorporPDFMissingSig(orgCLA *models.OrgCLA, signing *models.CorporationSigning, cla *models.CLA) (string, error) {
 	c := this.corporation
 
-	project := claOrg.OrgID
-	if claOrg.RepoID != "" {
-		project = fmt.Sprintf("%s-%s", project, claOrg.RepoID)
+	project := orgCLA.OrgID
+	if orgCLA.RepoID != "" {
+		project = fmt.Sprintf("%s-%s", project, orgCLA.RepoID)
 	}
 
 	pdf := c.begin()
 
 	// first page
 	c.firstPage(pdf, fmt.Sprintf("The %s Project", project))
-	c.welcome(pdf, project, claOrg.OrgEmail)
+	c.welcome(pdf, project, orgCLA.OrgEmail)
 
 	orders, keys, err := buildCorporContact(cla)
 	if err != nil {
@@ -58,7 +58,7 @@ func (this *pdfGenerator) genCorporPDFMissingSig(claOrg *models.CLAOrg, signing 
 	// second page
 	c.secondPage(pdf, signing.Date)
 
-	path := util.CorporCLAPDFFile(this.pdfOutDir, claOrg.ID, signing.AdminEmail, "_missing_sig")
+	path := util.CorporCLAPDFFile(this.pdfOutDir, orgCLA.ID, signing.AdminEmail, "_missing_sig")
 	if err := c.end(pdf, path); err != nil {
 		return "", err
 	}

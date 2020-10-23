@@ -11,7 +11,7 @@ import (
 	"github.com/opensourceways/app-cla-server/util"
 )
 
-type OrgRepoCreateOption struct {
+type OrgCLACreateOption struct {
 	Platform string `json:"platform"`
 	OrgID    string `json:"org_id"`
 	RepoID   string `json:"repo_id"`
@@ -24,7 +24,7 @@ type OrgRepoCreateOption struct {
 	CLA CLACreateOption `json:"cla"`
 }
 
-func (this OrgRepoCreateOption) Validate() (string, error) {
+func (this OrgCLACreateOption) Validate() (string, error) {
 	if this.ApplyTo != dbmodels.ApplyToIndividual && this.ApplyTo != dbmodels.ApplyToCorporation {
 		return util.ErrInvalidParameter, fmt.Errorf("invalid apply_to")
 	}
@@ -41,8 +41,8 @@ func (this OrgRepoCreateOption) Validate() (string, error) {
 	return ec, err
 }
 
-func (this OrgRepoCreateOption) Create(claID string) (string, error) {
-	info := dbmodels.CLAOrg{
+func (this OrgCLACreateOption) Create(claID string) (string, error) {
+	info := dbmodels.OrgCLA{
 		Platform:    this.Platform,
 		OrgID:       this.OrgID,
 		RepoID:      this.RepoID,
@@ -53,7 +53,7 @@ func (this OrgRepoCreateOption) Create(claID string) (string, error) {
 		CLALanguage: this.CLA.Language,
 		Submitter:   this.Submitter,
 	}
-	return dbmodels.GetDB().CreateBindingBetweenCLAAndOrg(info)
+	return dbmodels.GetDB().CreateOrgCLA(info)
 }
 
 type CLACreateOption struct {
@@ -101,4 +101,25 @@ func (this *CLACreateOption) DownloadCLA() error {
 	}
 
 	return fmt.Errorf("it is not the content of cla")
+}
+
+type OrgCLA dbmodels.OrgCLA
+
+func (this OrgCLA) Delete() error {
+	return dbmodels.GetDB().DeleteOrgCLA(this.ID)
+}
+
+func (this *OrgCLA) Get() error {
+	v, err := dbmodels.GetDB().GetOrgCLA(this.ID)
+	if err != nil {
+		return err
+	}
+	*(*dbmodels.OrgCLA)(this) = v
+	return nil
+}
+
+type OrgCLAListOption dbmodels.OrgCLAListOption
+
+func (this OrgCLAListOption) List() ([]dbmodels.OrgCLA, error) {
+	return dbmodels.GetDB().ListOrgCLA(dbmodels.OrgCLAListOption(this))
 }

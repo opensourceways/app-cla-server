@@ -14,7 +14,7 @@ type IDB interface {
 	ICorporationSigning
 	ICorporationManager
 	IOrgEmail
-	ICLAOrg
+	IOrgCLA
 	IIndividualSigning
 	ICLA
 	IVerificationCode
@@ -22,20 +22,20 @@ type IDB interface {
 }
 
 type ICorporationSigning interface {
-	SignAsCorporation(claOrgID, platform, org, repo string, info CorporationSigningInfo) error
+	SignAsCorporation(orgCLAID, platform, org, repo string, info CorporationSigningInfo) error
 	ListCorporationSigning(CorporationSigningListOption) (map[string][]CorporationSigningDetail, error)
 	GetCorporationSigningDetail(platform, org, repo, email string) (string, CorporationSigningDetail, error)
-	UploadCorporationSigningPDF(claOrgID, adminEmail string, pdf []byte) error
-	DownloadCorporationSigningPDF(claOrgID, email string) ([]byte, error)
-	CheckCorporationSigning(claOrgID, email string) (CorporationSigningDetail, error)
+	UploadCorporationSigningPDF(orgCLAID, adminEmail string, pdf []byte) error
+	DownloadCorporationSigningPDF(orgCLAID, email string) ([]byte, error)
+	CheckCorporationSigning(orgCLAID, email string) (CorporationSigningDetail, error)
 }
 
 type ICorporationManager interface {
 	CheckCorporationManagerExist(CorporationManagerCheckInfo) (map[string]CorporationManagerCheckResult, error)
-	AddCorporationManager(claOrgID string, opt []CorporationManagerCreateOption, managerNumber int) ([]CorporationManagerCreateOption, error)
-	DeleteCorporationManager(claOrgID string, opt []CorporationManagerCreateOption) ([]string, error)
+	AddCorporationManager(orgCLAID string, opt []CorporationManagerCreateOption, managerNumber int) ([]CorporationManagerCreateOption, error)
+	DeleteCorporationManager(orgCLAID string, opt []CorporationManagerCreateOption) ([]string, error)
 	ResetCorporationManagerPassword(string, string, CorporationManagerResetPassword) error
-	ListCorporationManager(claOrgID, email, role string) ([]CorporationManagerListResult, error)
+	ListCorporationManager(orgCLAID, email, role string) ([]CorporationManagerListResult, error)
 }
 
 type IOrgEmail interface {
@@ -43,15 +43,15 @@ type IOrgEmail interface {
 	GetOrgEmailInfo(email string) (OrgEmailCreateInfo, error)
 }
 
-type ICLAOrg interface {
-	ListBindingBetweenCLAAndOrg(CLAOrgListOption) ([]CLAOrg, error)
-	GetBindingBetweenCLAAndOrg(string) (CLAOrg, error)
-	CreateBindingBetweenCLAAndOrg(CLAOrg) (string, error)
-	DeleteBindingBetweenCLAAndOrg(string) error
+type IOrgCLA interface {
+	ListOrgCLA(OrgCLAListOption) ([]OrgCLA, error)
+	GetOrgCLA(string) (OrgCLA, error)
+	CreateOrgCLA(OrgCLA) (string, error)
+	DeleteOrgCLA(string) error
 }
 
 type IIndividualSigning interface {
-	SignAsIndividual(claOrgID, platform, org, repo string, info IndividualSigningInfo) error
+	SignAsIndividual(orgCLAID, platform, org, repo string, info IndividualSigningInfo) error
 	DeleteIndividualSigning(platform, org, repo, email string) error
 	UpdateIndividualSigning(platform, org, repo, email string, enabled bool) error
 	IsIndividualSigned(platform, orgID, repoId, email string) (bool, error)
@@ -72,8 +72,8 @@ type IVerificationCode interface {
 }
 
 type IPDF interface {
-	UploadOrgSignature(claOrgID string, pdf []byte) error
-	DownloadOrgSignature(claOrgID string) ([]byte, error)
+	UploadOrgSignature(orgCLAID string, pdf []byte) error
+	DownloadOrgSignature(orgCLAID string) ([]byte, error)
 
 	UploadBlankSignature(language string, pdf []byte) error
 	DownloadBlankSignature(language string) ([]byte, error)

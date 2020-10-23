@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	claOrgCollection     = "cla_orgs"
+	orgCLACollection     = "org_clas"
 	fieldIndividuals     = "individuals"
 	fieldEmployees       = "employees"
 	fieldCorporations    = "corporations"
@@ -27,7 +27,7 @@ func filterForClaOrgDoc(filter bson.M) {
 	filter["enabled"] = true
 }
 
-type CLAOrg struct {
+type OrgCLA struct {
 	ID primitive.ObjectID `bson:"_id" json:"-"`
 
 	CreatedAt   time.Time `bson:"created_at" json:"-"`
@@ -57,8 +57,8 @@ type CLAOrg struct {
 	OrgSignature    []byte `bson:"org_signature" json:"-"`
 }
 
-func (c *client) CreateBindingBetweenCLAAndOrg(info dbmodels.CLAOrg) (string, error) {
-	claOrg := CLAOrg{
+func (c *client) CreateOrgCLA(info dbmodels.OrgCLA) (string, error) {
+	orgCLA := OrgCLA{
 		Platform:        info.Platform,
 		OrgID:           info.OrgID,
 		RepoID:          dbValueOfRepo(info.OrgID, info.RepoID),
@@ -70,7 +70,7 @@ func (c *client) CreateBindingBetweenCLAAndOrg(info dbmodels.CLAOrg) (string, er
 		Submitter:       info.Submitter,
 		HasOrgSignature: info.OrgSignatureUploaded,
 	}
-	body, err := structToMap(claOrg)
+	body, err := structToMap(orgCLA)
 	if err != nil {
 		return "", err
 	}
@@ -80,58 +80,58 @@ func (c *client) CreateBindingBetweenCLAAndOrg(info dbmodels.CLAOrg) (string, er
 	filterOfDoc["apply_to"] = info.ApplyTo
 	filterOfDoc["enabled"] = true
 
-	claOrgID := ""
+	orgCLAID := ""
 
 	f := func(ctx context.Context) error {
-		s, err := c.newDocIfNotExist(ctx, claOrgCollection, filterOfDoc, body)
+		s, err := c.newDocIfNotExist(ctx, orgCLACollection, filterOfDoc, body)
 		if err != nil {
 			return err
 		}
-		claOrgID = s
+		orgCLAID = s
 		return nil
 	}
 
 	if err = withContext(f); err != nil {
 		return "", err
 	}
-	return claOrgID, nil
+	return orgCLAID, nil
 }
 
-func (c *client) DeleteBindingBetweenCLAAndOrg(uid string) error {
+func (c *client) DeleteOrgCLA(uid string) error {
 	oid, err := toObjectID(uid)
 	if err != nil {
 		return err
 	}
 
 	f := func(ctx context.Context) error {
-		return c.updateDoc(ctx, claOrgCollection, filterOfDocID(oid), bson.M{"enabled": false})
+		return c.updateDoc(ctx, orgCLACollection, filterOfDocID(oid), bson.M{"enabled": false})
 	}
 
 	return withContext(f)
 }
 
-func (c *client) GetBindingBetweenCLAAndOrg(uid string) (dbmodels.CLAOrg, error) {
-	var r dbmodels.CLAOrg
+func (c *client) GetOrgCLA(uid string) (dbmodels.OrgCLA, error) {
+	var r dbmodels.OrgCLA
 
 	oid, err := toObjectID(uid)
 	if err != nil {
 		return r, err
 	}
 
-	var v CLAOrg
+	var v OrgCLA
 
 	f := func(ctx context.Context) error {
-		return c.getDoc(ctx, claOrgCollection, filterOfDocID(oid), projectOfClaOrg(), &v)
+		return c.getDoc(ctx, orgCLACollection, filterOfDocID(oid), projectOfClaOrg(), &v)
 	}
 
 	if err := withContext(f); err != nil {
 		return r, err
 	}
 
-	return toModelCLAOrg(v), nil
+	return toModelOrgCLA(v), nil
 }
 
-func (c *client) ListBindingBetweenCLAAndOrg(opt dbmodels.CLAOrgListOption) ([]dbmodels.CLAOrg, error) {
+func (c *client) ListOrgCLA(opt dbmodels.OrgCLAListOption) ([]dbmodels.OrgCLA, error) {
 	if (opt.RepoID != "" && len(opt.OrgID) > 0) || (opt.RepoID == "" && len(opt.OrgID) == 0) {
 		return nil, fmt.Errorf("need specify multiple orgs or a single repo")
 	}
@@ -155,10 +155,10 @@ func (c *client) ListBindingBetweenCLAAndOrg(opt dbmodels.CLAOrgListOption) ([]d
 		filter["org_id"] = bson.M{"$in": opt.OrgID}
 	}
 
-	var v []CLAOrg
+	var v []OrgCLA
 
 	f := func(ctx context.Context) error {
-		return c.getDocs(ctx, claOrgCollection, filter, projectOfClaOrg(), &v)
+		return c.getDocs(ctx, orgCLACollection, filter, projectOfClaOrg(), &v)
 	}
 
 	if err = withContext(f); err != nil {
@@ -166,16 +166,16 @@ func (c *client) ListBindingBetweenCLAAndOrg(opt dbmodels.CLAOrgListOption) ([]d
 	}
 
 	n := len(v)
-	r := make([]dbmodels.CLAOrg, 0, n)
+	r := make([]dbmodels.OrgCLA, 0, n)
 	for _, item := range v {
-		r = append(r, toModelCLAOrg(item))
+		r = append(r, toModelOrgCLA(item))
 	}
 
 	return r, nil
 }
 
-func toModelCLAOrg(item CLAOrg) dbmodels.CLAOrg {
-	return dbmodels.CLAOrg{
+func toModelOrgCLA(item OrgCLA) dbmodels.OrgCLA {
+	return dbmodels.OrgCLA{
 		ID:                   objectIDToUID(item.ID),
 		Platform:             item.Platform,
 		OrgID:                item.OrgID,

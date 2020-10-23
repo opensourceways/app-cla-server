@@ -74,7 +74,7 @@ func (this *client) DeleteCLA(uid string) error {
 	}
 
 	f := func(ctx mongo.SessionContext) error {
-		col := this.collection(claOrgCollection)
+		col := this.collection(orgCLACollection)
 
 		sr := col.FindOne(ctx, bson.M{"cla_id": uid})
 		err := sr.Err()

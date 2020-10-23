@@ -47,9 +47,9 @@ func (this *CorporationPDFController) Upload() {
 		statusCode = 400
 		return
 	}
-	claOrgID := this.GetString(":cla_org_id")
+	orgCLAID := this.GetString(":cla_org_id")
 
-	_, statusCode, errCode, reason = canAccessOrgCLA(&this.Controller, claOrgID)
+	_, statusCode, errCode, reason = canAccessOrgCLA(&this.Controller, orgCLAID)
 	if reason != nil {
 		return
 	}
@@ -70,7 +70,7 @@ func (this *CorporationPDFController) Upload() {
 		return
 	}
 
-	err = models.UploadCorporationSigningPDF(claOrgID, this.GetString(":email"), data)
+	err = models.UploadCorporationSigningPDF(orgCLAID, this.GetString(":email"), data)
 	if err != nil {
 		reason = err
 		return
@@ -101,14 +101,14 @@ func (this *CorporationPDFController) Download() {
 		statusCode = 400
 		return
 	}
-	claOrgID := this.GetString(":cla_org_id")
+	orgCLAID := this.GetString(":cla_org_id")
 
-	_, statusCode, errCode, reason = canAccessOrgCLA(&this.Controller, claOrgID)
+	_, statusCode, errCode, reason = canAccessOrgCLA(&this.Controller, orgCLAID)
 	if reason != nil {
 		return
 	}
 
-	pdf, err := models.DownloadCorporationSigningPDF(claOrgID, this.GetString(":email"))
+	pdf, err := models.DownloadCorporationSigningPDF(orgCLAID, this.GetString(":email"))
 	if err != nil {
 		reason = err
 		return
@@ -133,7 +133,7 @@ func (this *CorporationPDFController) Review() {
 		sendResponse(&this.Controller, statusCode, errCode, reason, body, "download corp's signing pdf")
 	}()
 
-	claOrgID, corpEmail, err := parseCorpManagerUser(&this.Controller)
+	orgCLAID, corpEmail, err := parseCorpManagerUser(&this.Controller)
 	if err != nil {
 		reason = err
 		errCode = util.ErrUnknownToken
@@ -141,7 +141,7 @@ func (this *CorporationPDFController) Review() {
 		return
 	}
 
-	pdf, err := models.DownloadCorporationSigningPDF(claOrgID, corpEmail)
+	pdf, err := models.DownloadCorporationSigningPDF(orgCLAID, corpEmail)
 	if err != nil {
 		reason = err
 		return
@@ -157,7 +157,7 @@ func (this *CorporationPDFController) Review() {
 // @Param	:cla_org_id	path 	string					true		"cla org id"
 // @Success 200 {int} map
 // @router /:cla_org_id [get]
-func (this *CLAOrgController) Preview() {
+func (this *CorporationPDFController) Preview() {
 	var statusCode = 0
 	var errCode = ""
 	var reason error
@@ -167,7 +167,7 @@ func (this *CLAOrgController) Preview() {
 		sendResponse(&this.Controller, statusCode, errCode, reason, body, "preview the unsinged pdf of corp")
 	}()
 
-	claOrgID, err := fetchStringParameter(&this.Controller, ":cla_org_id")
+	orgCLAID, err := fetchStringParameter(&this.Controller, ":cla_org_id")
 	if err != nil {
 		reason = err
 		errCode = util.ErrInvalidParameter
@@ -175,20 +175,20 @@ func (this *CLAOrgController) Preview() {
 		return
 	}
 
-	var claOrg *models.CLAOrg
-	claOrg, statusCode, errCode, reason = canAccessOrgCLA(&this.Controller, claOrgID)
+	var orgCLA *models.OrgCLA
+	orgCLA, statusCode, errCode, reason = canAccessOrgCLA(&this.Controller, orgCLAID)
 	if reason != nil {
 		return
 	}
 
-	if isNotCorpCLA(claOrg) {
+	if isNotCorpCLA(orgCLA) {
 		reason = fmt.Errorf("not cla applied to corp")
 		errCode = util.ErrInvalidParameter
 		statusCode = 400
 		return
 	}
 
-	cla := &models.CLA{ID: claOrg.CLAID}
+	cla := &models.CLA{ID: orgCLA.CLAID}
 	if err := cla.Get(); err != nil {
 		reason = err
 		return
@@ -206,6 +206,6 @@ func (this *CLAOrgController) Preview() {
 		Info: dbmodels.TypeSigningInfo(value),
 	}
 
-	pdf.GetPDFGenerator().GenCLAPDFForCorporation(claOrg, &signing, cla)
+	pdf.GetPDFGenerator().GenCLAPDFForCorporation(orgCLA, &signing, cla)
 	// TODO: not finished
 }

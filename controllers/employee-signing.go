@@ -46,7 +46,7 @@ func (this *EmployeeSigningController) Post() {
 		sendResponse(&this.Controller, statusCode, errCode, reason, body, "sign as employee")
 	}()
 
-	claOrgID, err := fetchStringParameter(&this.Controller, ":cla_org_id")
+	orgCLAID, err := fetchStringParameter(&this.Controller, ":cla_org_id")
 	if err != nil {
 		reason = err
 		errCode = util.ErrInvalidParameter
@@ -68,12 +68,12 @@ func (this *EmployeeSigningController) Post() {
 		return
 	}
 
-	claOrg := &models.CLAOrg{ID: claOrgID}
-	if err := claOrg.Get(); err != nil {
+	orgCLA := &models.OrgCLA{ID: orgCLAID}
+	if err := orgCLA.Get(); err != nil {
 		reason = err
 		return
 	}
-	if isNotIndividualCLA(claOrg) {
+	if isNotIndividualCLA(orgCLA) {
 		reason = fmt.Errorf("invalid cla")
 		errCode = util.ErrInvalidParameter
 		statusCode = 400
@@ -81,7 +81,7 @@ func (this *EmployeeSigningController) Post() {
 	}
 
 	corpSignedCla, corpSign, err := models.GetCorporationSigningDetail(
-		claOrg.Platform, claOrg.OrgID, claOrg.RepoID, info.Email)
+		orgCLA.Platform, orgCLA.OrgID, orgCLA.RepoID, info.Email)
 	if err != nil {
 		reason = err
 		return
@@ -94,7 +94,7 @@ func (this *EmployeeSigningController) Post() {
 		return
 	}
 
-	cla := &models.CLA{ID: claOrg.CLAID}
+	cla := &models.CLA{ID: orgCLA.CLAID}
 	if err := cla.GetFields(); err != nil {
 		reason = err
 		return
@@ -102,7 +102,7 @@ func (this *EmployeeSigningController) Post() {
 
 	trimSingingInfo(info.Info, cla.Fields)
 
-	err = (&info).Create(claOrgID, claOrg.Platform, claOrg.OrgID, claOrg.RepoID, false)
+	err = (&info).Create(orgCLAID, orgCLA.Platform, orgCLA.OrgID, orgCLA.RepoID, false)
 	if err != nil {
 		reason = err
 		return
@@ -110,10 +110,10 @@ func (this *EmployeeSigningController) Post() {
 	body = "sign successfully"
 
 	d := email.EmployeeSigning{
-		Org:  claOrg.OrgID,
-		Repo: claOrg.RepoID,
+		Org:  orgCLA.OrgID,
+		Repo: orgCLA.RepoID,
 	}
-	this.notifyManagers(corpSignedCla, info.Email, claOrg.OrgEmail, "Employee Signing", d)
+	this.notifyManagers(corpSignedCla, info.Email, orgCLA.OrgEmail, "Employee Signing", d)
 }
 
 // @Title GetAll
@@ -130,7 +130,7 @@ func (this *EmployeeSigningController) GetAll() {
 		sendResponse(&this.Controller, statusCode, errCode, reason, body, "list employees")
 	}()
 
-	claOrgID, corpEmail, err := parseCorpManagerUser(&this.Controller)
+	orgCLAID, corpEmail, err := parseCorpManagerUser(&this.Controller)
 	if err != nil {
 		reason = err
 		errCode = util.ErrUnknownToken
@@ -138,8 +138,8 @@ func (this *EmployeeSigningController) GetAll() {
 		return
 	}
 
-	claOrg := &models.CLAOrg{ID: claOrgID}
-	if err := claOrg.Get(); err != nil {
+	orgCLA := &models.OrgCLA{ID: orgCLAID}
+	if err := orgCLA.Get(); err != nil {
 		reason = err
 		return
 	}
@@ -148,7 +148,7 @@ func (this *EmployeeSigningController) GetAll() {
 		CLALanguage: this.GetString("cla_language"),
 	}
 
-	r, err := opt.List(corpEmail, claOrg.Platform, claOrg.OrgID, claOrg.RepoID)
+	r, err := opt.List(corpEmail, orgCLA.Platform, orgCLA.OrgID, orgCLA.RepoID)
 	if err != nil {
 		reason = err
 		return
@@ -186,7 +186,7 @@ func (this *EmployeeSigningController) Update() {
 		return
 	}
 
-	corpClaOrg := &models.CLAOrg{ID: corpClaOrgID}
+	corpClaOrg := &models.OrgCLA{ID: corpClaOrgID}
 	if err := corpClaOrg.Get(); err != nil {
 		reason = err
 		return
@@ -249,7 +249,7 @@ func (this *EmployeeSigningController) Delete() {
 		return
 	}
 
-	corpClaOrg := &models.CLAOrg{ID: corpClaOrgID}
+	corpClaOrg := &models.OrgCLA{ID: corpClaOrgID}
 	if err := corpClaOrg.Get(); err != nil {
 		reason = err
 		return

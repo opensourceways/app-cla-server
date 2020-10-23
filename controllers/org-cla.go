@@ -28,8 +28,8 @@ func (this *OrgCLAController) Prepare() {
 
 // @Title Bind CLA to Org/Repo
 // @Description bind cla
-// @Param	body		body 	models.CLAOrg	true		"body for org-repo content"
-// @Success 201 {int} models.CLAOrg
+// @Param	body		body 	models.OrgCLA	true		"body for org-repo content"
+// @Success 201 {int} models.OrgCLA
 // @Failure 403 body is empty
 // @router / [post]
 func (this *OrgCLAController) Post() {
@@ -42,7 +42,7 @@ func (this *OrgCLAController) Post() {
 		sendResponse(&this.Controller, statusCode, errCode, reason, body, "create org cla")
 	}()
 
-	var input models.OrgRepoCreateOption
+	var input models.OrgCLACreateOption
 	if err := json.Unmarshal(this.Ctx.Input.RequestBody, &input); err != nil {
 		reason = err
 		errCode = util.ErrInvalidParameter
@@ -78,10 +78,10 @@ func (this *OrgCLAController) Post() {
 
 	body = struct {
 		OrgClaID string `json:"org_cla_id"`
-		models.OrgRepoCreateOption
+		models.OrgCLACreateOption
 	}{
-		OrgClaID:            uid,
-		OrgRepoCreateOption: input,
+		OrgClaID:           uid,
+		OrgCLACreateOption: input,
 	}
 }
 
@@ -107,9 +107,9 @@ func (this *OrgCLAController) Delete() {
 		return
 	}
 
-	claOrg := models.CLAOrg{ID: uid}
+	orgCLA := models.OrgCLA{ID: uid}
 
-	if err := claOrg.Delete(); err != nil {
+	if err := orgCLA.Delete(); err != nil {
 		reason = err
 		statusCode = 500
 		return
@@ -120,7 +120,7 @@ func (this *OrgCLAController) Delete() {
 
 // @Title GetAll
 // @Description get all org clas
-// @Success 200 {object} models.CLAOrg
+// @Success 200 {object} models.OrgCLA
 // @router / [get]
 func (this *OrgCLAController) GetAll() {
 	var statusCode = 0
@@ -152,7 +152,7 @@ func (this *OrgCLAController) GetAll() {
 		orgs = append(orgs, k)
 	}
 
-	opt := models.CLAOrgListOption{
+	opt := models.OrgCLAListOption{
 		Platform: ac.Platform,
 		OrgID:    orgs,
 	}
@@ -181,7 +181,7 @@ func (this *OrgCLAController) GetCLA() {
 		sendResponse(&this.Controller, statusCode, errCode, reason, body, "get cla bound to org")
 	}()
 
-	claOrgID, err := fetchStringParameter(&this.Controller, ":cla_org_id")
+	orgCLAID, err := fetchStringParameter(&this.Controller, ":cla_org_id")
 	if err != nil {
 		reason = err
 		errCode = util.ErrInvalidParameter
@@ -189,8 +189,8 @@ func (this *OrgCLAController) GetCLA() {
 		return
 	}
 
-	var orgCLA *models.CLAOrg
-	orgCLA, statusCode, errCode, reason = canAccessOrgCLA(&this.Controller, claOrgID)
+	var orgCLA *models.OrgCLA
+	orgCLA, statusCode, errCode, reason = canAccessOrgCLA(&this.Controller, orgCLAID)
 	if reason != nil {
 		return
 	}
@@ -234,7 +234,7 @@ func (this *OrgCLAController) GetSigningPageInfo() {
 
 	org := this.GetString(":org_id")
 	repo := this.GetString("repo_id")
-	opt := models.CLAOrgListOption{
+	opt := models.OrgCLAListOption{
 		Platform: this.GetString(":platform"),
 		ApplyTo:  this.GetString(":apply_to"),
 	}
@@ -253,21 +253,21 @@ func (this *OrgCLAController) GetSigningPageInfo() {
 		return
 	}
 
-	claOrgs, err := opt.List()
+	orgCLAs, err := opt.List()
 	if err != nil {
 		reason = err
 		return
 	}
-	if len(claOrgs) == 0 {
+	if len(orgCLAs) == 0 {
 		reason = fmt.Errorf("this org has no bound cla")
 		errCode = util.ErrNoCLABindingDoc
 		statusCode = 404
 		return
 	}
 
-	ids := make([]string, 0, len(claOrgs))
+	ids := make([]string, 0, len(orgCLAs))
 	m := map[string]string{}
-	for _, i := range claOrgs {
+	for _, i := range orgCLAs {
 		if i.ApplyTo == dbmodels.ApplyToCorporation && !i.OrgSignatureUploaded {
 			s := org
 			if opt.RepoID != "" {

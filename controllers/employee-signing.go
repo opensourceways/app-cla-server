@@ -10,7 +10,6 @@ import (
 	"github.com/opensourceways/app-cla-server/email"
 	"github.com/opensourceways/app-cla-server/models"
 	"github.com/opensourceways/app-cla-server/util"
-	"github.com/opensourceways/app-cla-server/worker"
 )
 
 type EmployeeSigningController struct {
@@ -109,11 +108,14 @@ func (this *EmployeeSigningController) Post() {
 	}
 	body = "sign successfully"
 
-	d := email.EmployeeSigning{
+	msg := email.EmployeeSigning{
+		Name: info.Name,
 		Org:  orgCLA.OrgID,
 		Repo: orgCLA.RepoID,
 	}
-	this.notifyManagers(corpSignedCla, info.Email, orgCLA.OrgEmail, "Employee Signing", d)
+	sendEmailToIndividual(info.Email, orgCLA.OrgEmail, "Signing as employee", msg)
+
+	this.notifyManagers(corpSignedCla, &info, orgCLA)
 }
 
 // @Title GetAll
@@ -208,16 +210,16 @@ func (this *EmployeeSigningController) Update() {
 
 	body = "enabled employee successfully"
 
-	b := email.EmployeeNotification{}
+	msg := email.EmployeeNotification{}
 	subject := ""
 	if info.Enabled {
-		b.Active = true
+		msg.Active = true
 		subject = "Activate employee"
 	} else {
-		b.Inactive = true
+		msg.Inactive = true
 		subject = "Inavtivate employee"
 	}
-	this.notifyEmployee(employeeEmail, corpClaOrg.OrgEmail, subject, &b)
+	sendEmailToIndividual(employeeEmail, corpClaOrg.OrgEmail, subject, msg)
 }
 
 // @Title Delete
@@ -263,9 +265,8 @@ func (this *EmployeeSigningController) Delete() {
 
 	body = "delete employee successfully"
 
-	b := email.EmployeeNotification{Removing: true}
-	subject := "Remove employee"
-	this.notifyEmployee(employeeEmail, corpClaOrg.OrgEmail, subject, &b)
+	msg := email.EmployeeNotification{Removing: true}
+	sendEmailToIndividual(employeeEmail, corpClaOrg.OrgEmail, "Remove employee", msg)
 }
 
 func (this *EmployeeSigningController) canHandleOnEmployee(employeeEmail string) (int, string, string, error) {
@@ -281,8 +282,8 @@ func (this *EmployeeSigningController) canHandleOnEmployee(employeeEmail string)
 	return 0, "", corpClaOrgID, nil
 }
 
-func (this *EmployeeSigningController) notifyManagers(corpClaOrgID, employeeEmail, orgEmail, subject string, builder email.IEmailMessageBulder) {
-	managers, err := models.ListCorporationManagers(corpClaOrgID, employeeEmail, dbmodels.RoleManager)
+func (this *EmployeeSigningController) notifyManagers(corpClaOrgID string, info *models.EmployeeSigning, orgCLA *models.OrgCLA) {
+	managers, err := models.ListCorporationManagers(corpClaOrgID, info.Email, dbmodels.RoleManager)
 	if err != nil {
 		beego.Error(err)
 		return
@@ -292,33 +293,18 @@ func (this *EmployeeSigningController) notifyManagers(corpClaOrgID, employeeEmai
 		return
 	}
 
-	msg, err := builder.GenEmailMsg()
-	if err != nil {
-		beego.Error(err)
-		return
-	}
-
 	to := make([]string, 0, len(managers))
 	for _, item := range managers {
 		if item.Role == dbmodels.RoleManager {
 			to = append(to, item.Email)
 		}
 	}
-	msg.To = to
-	msg.Subject = subject
 
-	worker.GetEmailWorker().SendSimpleMessage(orgEmail, msg)
-}
-
-func (this *EmployeeSigningController) notifyEmployee(employeeEmail, orgEmail, subject string, builder email.IEmailMessageBulder) {
-	msg, err := builder.GenEmailMsg()
-	if err != nil {
-		beego.Error(err)
-		return
+	msg := email.NotifyingManager{
+		Name:     info.Name,
+		Platform: orgCLA.Platform,
+		Org:      orgCLA.OrgID,
+		Repo:     orgCLA.RepoID,
 	}
-
-	msg.To = []string{employeeEmail}
-	msg.Subject = subject
-
-	worker.GetEmailWorker().SendSimpleMessage(orgEmail, msg)
+	sendEmail(to, orgCLA.OrgEmail, "A employee has signed CLA", msg)
 }

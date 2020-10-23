@@ -299,52 +299,32 @@ func getRequestMethod(c *beego.Controller) string {
 	return c.Ctx.Request.Method
 }
 
+func sendEmailToIndividual(to, from, subject string, builder email.IEmailMessageBulder) {
+	sendEmail([]string{to}, from, subject, builder)
+}
+
+func sendEmail(to []string, from, subject string, builder email.IEmailMessageBulder) {
+	msg, err := builder.GenEmailMsg()
+	if err != nil {
+		beego.Error(err)
+		return
+	}
+
+	msg.To = to
+	msg.Subject = subject
+
+	worker.GetEmailWorker().SendSimpleMessage(from, msg)
+}
+
 func notifyCorpManagerWhenAdding(orgEmail, subject string, info []dbmodels.CorporationManagerCreateOption) {
 	for _, item := range info {
 		d := email.AddingCorpManager{
 			Admin:    (item.Role == dbmodels.RoleAdmin),
 			Password: item.Password,
 		}
-		msg, err := d.GenEmailMsg()
-		if err != nil {
-			beego.Error(err)
-			continue
-		}
-		msg.To = []string{item.Email}
-		msg.Subject = subject
 
-		worker.GetEmailWorker().SendSimpleMessage(orgEmail, msg)
+		sendEmailToIndividual(item.Email, orgEmail, subject, d)
 	}
-}
-
-func notifyCorpManagerWhenRemoving(orgEmail string, info []string) {
-	for _, item := range info {
-		d := email.RemovingCorpManager{}
-		msg, err := d.GenEmailMsg()
-		if err != nil {
-			beego.Error(err)
-			continue
-		}
-
-		msg.To = []string{item}
-		msg.Subject = "Removing Corp Manager"
-
-		worker.GetEmailWorker().SendSimpleMessage(orgEmail, msg)
-	}
-}
-
-func sendVerificationCodeEmail(code, orgEmail, adminEmail string) {
-	d := email.CorpSigningVerificationCode{Code: code}
-	msg, err := d.GenEmailMsg()
-	if err != nil {
-		beego.Error(err)
-		return
-	}
-
-	msg.To = []string{adminEmail}
-	msg.Subject = "verification code"
-
-	worker.GetEmailWorker().SendSimpleMessage(orgEmail, msg)
 }
 
 func isNotIndividualCLA(orgCLA *models.OrgCLA) bool {

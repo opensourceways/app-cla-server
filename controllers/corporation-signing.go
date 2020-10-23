@@ -41,7 +41,7 @@ func (this *CorporationSigningController) Post() {
 		sendResponse(&this.Controller, statusCode, errCode, reason, body, "sign as corporation")
 	}()
 
-	claOrgID, err := fetchStringParameter(&this.Controller, ":cla_org_id")
+	orgCLAID, err := fetchStringParameter(&this.Controller, ":cla_org_id")
 	if err != nil {
 		reason = err
 		errCode = util.ErrInvalidParameter
@@ -63,19 +63,19 @@ func (this *CorporationSigningController) Post() {
 		return
 	}
 
-	claOrg := &models.CLAOrg{ID: claOrgID}
-	if err := claOrg.Get(); err != nil {
+	orgCLA := &models.OrgCLA{ID: orgCLAID}
+	if err := orgCLA.Get(); err != nil {
 		reason = err
 		return
 	}
-	if isNotCorpCLA(claOrg) {
+	if isNotCorpCLA(orgCLA) {
 		reason = fmt.Errorf("invalid cla")
 		errCode = util.ErrInvalidParameter
 		statusCode = 400
 		return
 	}
 
-	cla := &models.CLA{ID: claOrg.CLAID}
+	cla := &models.CLA{ID: orgCLA.CLAID}
 	if err := cla.Get(); err != nil {
 		reason = err
 		return
@@ -83,7 +83,7 @@ func (this *CorporationSigningController) Post() {
 
 	trimSingingInfo(info.Info, cla.Fields)
 
-	err = (&info).Create(claOrgID, claOrg.Platform, claOrg.OrgID, claOrg.RepoID)
+	err = (&info).Create(orgCLAID, orgCLA.Platform, orgCLA.OrgID, orgCLA.RepoID)
 	if err != nil {
 		reason = err
 		return
@@ -91,7 +91,7 @@ func (this *CorporationSigningController) Post() {
 
 	body = "sign successfully"
 
-	worker.GetEmailWorker().GenCLAPDFForCorporationAndSendIt(claOrg, &info.CorporationSigning, cla)
+	worker.GetEmailWorker().GenCLAPDFForCorporationAndSendIt(orgCLA, &info.CorporationSigning, cla)
 }
 
 // @Title GetAll

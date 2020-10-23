@@ -15,7 +15,7 @@ func (this CorporationManagerAuthentication) Authenticate() (map[string]dbmodels
 	)
 }
 
-func CreateCorporationAdministrator(claOrgID, email string) ([]dbmodels.CorporationManagerCreateOption, error) {
+func CreateCorporationAdministrator(orgCLAID, email string) ([]dbmodels.CorporationManagerCreateOption, error) {
 	pw := util.RandStr(8, "alphanum")
 
 	opt := []dbmodels.CorporationManagerCreateOption{
@@ -25,7 +25,7 @@ func CreateCorporationAdministrator(claOrgID, email string) ([]dbmodels.Corporat
 			Password: pw,
 		},
 	}
-	return dbmodels.GetDB().AddCorporationManager(claOrgID, opt, 1)
+	return dbmodels.GetDB().AddCorporationManager(orgCLAID, opt, 1)
 }
 
 type CorporationManagerResetPassword dbmodels.CorporationManagerResetPassword
@@ -37,12 +37,12 @@ func (this CorporationManagerResetPassword) Validate() (string, error) {
 	return "", nil
 }
 
-func (this CorporationManagerResetPassword) Reset(claOrgID, email string) error {
+func (this CorporationManagerResetPassword) Reset(orgCLAID, email string) error {
 	return dbmodels.GetDB().ResetCorporationManagerPassword(
-		claOrgID, email, dbmodels.CorporationManagerResetPassword(this),
+		orgCLAID, email, dbmodels.CorporationManagerResetPassword(this),
 	)
 }
 
-func ListCorporationManagers(claOrgID, email, role string) ([]dbmodels.CorporationManagerListResult, error) {
-	return dbmodels.GetDB().ListCorporationManager(claOrgID, email, role)
+func ListCorporationManagers(orgCLAID, email, role string) ([]dbmodels.CorporationManagerListResult, error) {
+	return dbmodels.GetDB().ListCorporationManager(orgCLAID, email, role)
 }

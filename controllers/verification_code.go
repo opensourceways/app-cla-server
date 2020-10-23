@@ -42,11 +42,11 @@ func (this *VerificationCodeController) Post() {
 		statusCode = 400
 		return
 	}
-	claOrgID := this.GetString(":cla_org_id")
+	orgCLAID := this.GetString(":cla_org_id")
 	email := this.GetString(":email")
 
-	claOrg := &models.CLAOrg{ID: claOrgID}
-	if err := claOrg.Get(); err != nil {
+	orgCLA := &models.OrgCLA{ID: orgCLAID}
+	if err := orgCLA.Get(); err != nil {
 		reason = err
 		return
 	}
@@ -57,7 +57,7 @@ func (this *VerificationCodeController) Post() {
 	}
 
 	code, err := models.CreateVerificationCode(
-		email, m[claOrg.ApplyTo],
+		email, m[orgCLA.ApplyTo],
 		conf.AppConfig.VerificationCodeExpiry,
 	)
 	if err != nil {
@@ -67,5 +67,5 @@ func (this *VerificationCodeController) Post() {
 
 	body = "create verification code successfully"
 
-	sendVerificationCodeEmail(code, claOrg.OrgEmail, email)
+	sendVerificationCodeEmail(code, orgCLA.OrgEmail, email)
 }

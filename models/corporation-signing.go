@@ -22,25 +22,25 @@ func (this *CorporationSigningCreateOption) Validate() (string, error) {
 	return checkEmailFormat(this.AdminEmail)
 }
 
-func (this *CorporationSigningCreateOption) Create(claOrgID, platform, orgID, repoId string) error {
+func (this *CorporationSigningCreateOption) Create(orgCLAID, platform, orgID, repoId string) error {
 	this.Date = util.Date()
 
 	return dbmodels.GetDB().SignAsCorporation(
-		claOrgID, platform, orgID, repoId,
+		orgCLAID, platform, orgID, repoId,
 		dbmodels.CorporationSigningInfo(this.CorporationSigning),
 	)
 }
 
-func CheckCorporationSigning(claOrgID, email string) (dbmodels.CorporationSigningDetail, error) {
-	return dbmodels.GetDB().CheckCorporationSigning(claOrgID, email)
+func CheckCorporationSigning(orgCLAID, email string) (dbmodels.CorporationSigningDetail, error) {
+	return dbmodels.GetDB().CheckCorporationSigning(orgCLAID, email)
 }
 
-func UploadCorporationSigningPDF(claOrgID, email string, pdf []byte) error {
-	return dbmodels.GetDB().UploadCorporationSigningPDF(claOrgID, email, pdf)
+func UploadCorporationSigningPDF(orgCLAID, email string, pdf []byte) error {
+	return dbmodels.GetDB().UploadCorporationSigningPDF(orgCLAID, email, pdf)
 }
 
-func DownloadCorporationSigningPDF(claOrgID, email string) ([]byte, error) {
-	return dbmodels.GetDB().DownloadCorporationSigningPDF(claOrgID, email)
+func DownloadCorporationSigningPDF(orgCLAID, email string) ([]byte, error) {
+	return dbmodels.GetDB().DownloadCorporationSigningPDF(orgCLAID, email)
 }
 
 func GetCorporationSigningDetail(platform, org, repo, email string) (string, dbmodels.CorporationSigningDetail, error) {

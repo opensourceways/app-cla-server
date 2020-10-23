@@ -33,7 +33,7 @@ func (this *OrgSignatureController) Post() {
 		sendResponse(&this.Controller, statusCode, errCode, reason, body, "upload org signature")
 	}()
 
-	claOrgID, err := fetchStringParameter(&this.Controller, ":cla_org_id")
+	orgCLAID, err := fetchStringParameter(&this.Controller, ":cla_org_id")
 	if err != nil {
 		reason = err
 		errCode = util.ErrInvalidParameter
@@ -41,7 +41,7 @@ func (this *OrgSignatureController) Post() {
 		return
 	}
 
-	_, statusCode, errCode, reason = canAccessOrgCLA(&this.Controller, claOrgID)
+	_, statusCode, errCode, reason = canAccessOrgCLA(&this.Controller, orgCLAID)
 	if reason != nil {
 		return
 	}
@@ -62,7 +62,7 @@ func (this *OrgSignatureController) Post() {
 		return
 	}
 
-	err = models.UploadOrgSignature(claOrgID, data)
+	err = models.UploadOrgSignature(orgCLAID, data)
 	if err != nil {
 		reason = err
 		return
@@ -70,7 +70,7 @@ func (this *OrgSignatureController) Post() {
 
 	path := util.OrgSignaturePDFFILE(
 		beego.AppConfig.String("pdf_org_signature_dir"),
-		claOrgID,
+		orgCLAID,
 	)
 	if !util.IsFileNotExist(path) {
 		os.Remove(path)
@@ -97,7 +97,7 @@ func (this *OrgSignatureController) Get() {
 		sendResponse(&this.Controller, statusCode, errCode, reason, body, "download org signature")
 	}()
 
-	claOrgID, err := fetchStringParameter(&this.Controller, ":cla_org_id")
+	orgCLAID, err := fetchStringParameter(&this.Controller, ":cla_org_id")
 	if err != nil {
 		reason = err
 		errCode = util.ErrInvalidParameter
@@ -105,12 +105,12 @@ func (this *OrgSignatureController) Get() {
 		return
 	}
 
-	_, statusCode, errCode, reason = canAccessOrgCLA(&this.Controller, claOrgID)
+	_, statusCode, errCode, reason = canAccessOrgCLA(&this.Controller, orgCLAID)
 	if reason != nil {
 		return
 	}
 
-	pdf, err := models.DownloadOrgSignature(claOrgID)
+	pdf, err := models.DownloadOrgSignature(orgCLAID)
 	if err != nil {
 		reason = err
 		return

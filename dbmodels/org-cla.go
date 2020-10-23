@@ -1,6 +1,6 @@
 package dbmodels
 
-type CLAOrg struct {
+type OrgCLA struct {
 	ID                   string `json:"id"`
 	Platform             string `json:"platform"`
 	OrgID                string `json:"org_id"`
@@ -14,7 +14,7 @@ type CLAOrg struct {
 	OrgSignatureUploaded bool   `json:"org_signature_uploaded"`
 }
 
-type CLAOrgListOption struct {
+type OrgCLAListOption struct {
 	Platform string `json:"platform"`
 	// it must specify one of OrgID and RepoID, but not both
 	OrgID []string `json:"org_id"`

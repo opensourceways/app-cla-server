@@ -38,7 +38,7 @@ func (this *IndividualSigningController) Post() {
 		sendResponse(&this.Controller, statusCode, errCode, reason, body, "sign as individual")
 	}()
 
-	claOrgID, err := fetchStringParameter(&this.Controller, ":cla_org_id")
+	orgCLAID, err := fetchStringParameter(&this.Controller, ":cla_org_id")
 	if err != nil {
 		reason = err
 		errCode = util.ErrInvalidParameter
@@ -60,19 +60,19 @@ func (this *IndividualSigningController) Post() {
 		return
 	}
 
-	claOrg := &models.CLAOrg{ID: claOrgID}
-	if err := claOrg.Get(); err != nil {
+	orgCLA := &models.OrgCLA{ID: orgCLAID}
+	if err := orgCLA.Get(); err != nil {
 		reason = err
 		return
 	}
-	if isNotIndividualCLA(claOrg) {
+	if isNotIndividualCLA(orgCLA) {
 		reason = fmt.Errorf("invalid cla")
 		errCode = util.ErrInvalidParameter
 		statusCode = 400
 		return
 	}
 
-	cla := &models.CLA{ID: claOrg.CLAID}
+	cla := &models.CLA{ID: orgCLA.CLAID}
 	if err := cla.GetFields(); err != nil {
 		reason = err
 		return
@@ -80,7 +80,7 @@ func (this *IndividualSigningController) Post() {
 
 	trimSingingInfo(info.Info, cla.Fields)
 
-	err = (&info).Create(claOrgID, claOrg.Platform, claOrg.OrgID, claOrg.RepoID, true)
+	err = (&info).Create(orgCLAID, orgCLA.Platform, orgCLA.OrgID, orgCLA.RepoID, true)
 	if err != nil {
 		reason = err
 		return

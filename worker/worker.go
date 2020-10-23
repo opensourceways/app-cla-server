@@ -16,7 +16,7 @@ import (
 var worker IEmailWorker
 
 type IEmailWorker interface {
-	GenCLAPDFForCorporationAndSendIt(claOrg *models.CLAOrg, signing *models.CorporationSigning, cla *models.CLA)
+	GenCLAPDFForCorporationAndSendIt(orgCLA *models.OrgCLA, signing *models.CorporationSigning, cla *models.CLA)
 	SendSimpleMessage(orgEmail string, msg *email.EmailMessage)
 }
 
@@ -41,13 +41,13 @@ func (this *emailWorker) Shutdown() {
 	this.wg.Wait()
 }
 
-func (this *emailWorker) GenCLAPDFForCorporationAndSendIt(claOrg *models.CLAOrg, signing *models.CorporationSigning, cla *models.CLA) {
+func (this *emailWorker) GenCLAPDFForCorporationAndSendIt(orgCLA *models.OrgCLA, signing *models.CorporationSigning, cla *models.CLA) {
 	f := func() {
 		defer func() {
 			this.wg.Done()
 		}()
 
-		emailCfg, ec, err := getEmailClient(claOrg.OrgEmail)
+		emailCfg, ec, err := getEmailClient(orgCLA.OrgEmail)
 		if err != nil {
 			return
 		}
@@ -60,7 +60,7 @@ func (this *emailWorker) GenCLAPDFForCorporationAndSendIt(claOrg *models.CLAOrg,
 			}
 
 			if file == "" || util.IsFileNotExist(file) {
-				file1, err := this.pdfGenerator.GenCLAPDFForCorporation(claOrg, signing, cla)
+				file1, err := this.pdfGenerator.GenCLAPDFForCorporation(orgCLA, signing, cla)
 				if err != nil {
 					next(err)
 					continue

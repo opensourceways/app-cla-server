@@ -11,12 +11,12 @@ func (this *IndividualSigning) Validate() (string, error) {
 	return checkEmailFormat(this.Email)
 }
 
-func (this *IndividualSigning) Create(claOrgID, platform, orgID, repoId string, enabled bool) error {
+func (this *IndividualSigning) Create(orgCLAID, platform, orgID, repoId string, enabled bool) error {
 	this.Date = util.Date()
 	this.Enabled = enabled
 
 	return dbmodels.GetDB().SignAsIndividual(
-		claOrgID, platform, orgID, repoId, *(*dbmodels.IndividualSigningInfo)(this),
+		orgCLAID, platform, orgID, repoId, *(*dbmodels.IndividualSigningInfo)(this),
 	)
 }
 

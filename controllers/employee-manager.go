@@ -50,7 +50,7 @@ func (this *EmployeeManagerController) GetAll() {
 		sendResponse(&this.Controller, statusCode, errCode, reason, body, "list employee managers")
 	}()
 
-	claOrgID, corpEmail, err := parseCorpManagerUser(&this.Controller)
+	orgCLAID, corpEmail, err := parseCorpManagerUser(&this.Controller)
 	if err != nil {
 		reason = err
 		errCode = util.ErrUnknownToken
@@ -59,7 +59,7 @@ func (this *EmployeeManagerController) GetAll() {
 	}
 
 	r, err := models.ListCorporationManagers(
-		claOrgID, corpEmail, dbmodels.RoleManager,
+		orgCLAID, corpEmail, dbmodels.RoleManager,
 	)
 	if err != nil {
 		reason = err
@@ -85,7 +85,7 @@ func (this *EmployeeManagerController) addOrDeleteManagers(toAdd bool) {
 		sendResponse(&this.Controller, statusCode, errCode, reason, body, fmt.Sprintf("%s employee managers", op))
 	}()
 
-	claOrgID, adminEmail, err := parseCorpManagerUser(&this.Controller)
+	orgCLAID, adminEmail, err := parseCorpManagerUser(&this.Controller)
 	if err != nil {
 		reason = err
 		errCode = util.ErrUnknownToken
@@ -108,26 +108,26 @@ func (this *EmployeeManagerController) addOrDeleteManagers(toAdd bool) {
 		return
 	}
 
-	claOrg := &models.CLAOrg{ID: claOrgID}
-	if err := claOrg.Get(); err != nil {
+	orgCLA := &models.OrgCLA{ID: orgCLAID}
+	if err := orgCLA.Get(); err != nil {
 		reason = err
 		return
 	}
 
 	if toAdd {
-		added, err := (&info).Create(claOrgID)
+		added, err := (&info).Create(orgCLAID)
 		if err != nil {
 			reason = err
 		} else {
-			notifyCorpManagerWhenAdding(claOrg.OrgEmail, "Corporation Manager", added)
+			notifyCorpManagerWhenAdding(orgCLA.OrgEmail, "Corporation Manager", added)
 		}
 
 	} else {
-		deleted, err := (&info).Delete(claOrgID)
+		deleted, err := (&info).Delete(orgCLAID)
 		if err != nil {
 			reason = err
 		} else {
-			notifyCorpManagerWhenRemoving(claOrg.OrgEmail, deleted)
+			notifyCorpManagerWhenRemoving(orgCLA.OrgEmail, deleted)
 		}
 	}
 }

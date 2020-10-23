@@ -61,13 +61,13 @@ func (this *CorporationManagerController) Auth() {
 	type authInfo struct {
 		dbmodels.CorporationManagerCheckResult
 		Token    string `json:"token"`
-		CLAOrgID string `json:"cla_org_id"`
+		OrgCLAID string `json:"cla_org_id"`
 	}
 
 	result := make([]authInfo, 0, len(v))
 
-	for claOrgID, item := range v {
-		token, err := this.newAccessToken(claOrgID, item.Email, item.Role)
+	for orgCLAID, item := range v {
+		token, err := this.newAccessToken(orgCLAID, item.Email, item.Role)
 		if err != nil {
 			continue
 		}
@@ -78,14 +78,14 @@ func (this *CorporationManagerController) Auth() {
 		result = append(result, authInfo{
 			CorporationManagerCheckResult: item,
 			Token:                         token,
-			CLAOrgID:                      claOrgID,
+			OrgCLAID:                      orgCLAID,
 		})
 	}
 
 	body = result
 }
 
-func (this *CorporationManagerController) newAccessToken(claOrgID, email, role string) (string, error) {
+func (this *CorporationManagerController) newAccessToken(orgCLAID, email, role string) (string, error) {
 	permission := ""
 	switch role {
 	case dbmodels.RoleAdmin:
@@ -98,7 +98,7 @@ func (this *CorporationManagerController) newAccessToken(claOrgID, email, role s
 		Expiry:     util.Expiry(conf.AppConfig.APITokenExpiry),
 		Permission: permission,
 		Payload: &accessControllerBasicPayload{
-			User: corpManagerUser(claOrgID, email),
+			User: corpManagerUser(orgCLAID, email),
 		},
 	}
 
@@ -129,16 +129,16 @@ func (this *CorporationManagerController) Put() {
 		statusCode = 400
 		return
 	}
-	claOrgID := this.GetString(":cla_org_id")
+	orgCLAID := this.GetString(":cla_org_id")
 	adminEmail := this.GetString(":email")
 
-	var claOrg *models.CLAOrg
-	claOrg, statusCode, errCode, reason = canAccessOrgCLA(&this.Controller, claOrgID)
+	var orgCLA *models.OrgCLA
+	orgCLA, statusCode, errCode, reason = canAccessOrgCLA(&this.Controller, orgCLAID)
 	if reason != nil {
 		return
 	}
 
-	info, err := models.CheckCorporationSigning(claOrgID, adminEmail)
+	info, err := models.CheckCorporationSigning(orgCLAID, adminEmail)
 	if err != nil {
 		reason = err
 		return
@@ -156,7 +156,7 @@ func (this *CorporationManagerController) Put() {
 		return
 	}
 
-	added, err := models.CreateCorporationAdministrator(claOrgID, adminEmail)
+	added, err := models.CreateCorporationAdministrator(orgCLAID, adminEmail)
 	if err != nil {
 		reason = err
 		return
@@ -164,7 +164,7 @@ func (this *CorporationManagerController) Put() {
 
 	body = "add manager successfully"
 
-	notifyCorpManagerWhenAdding(claOrg.OrgEmail, "Corporation Administrator", added)
+	notifyCorpManagerWhenAdding(orgCLA.OrgEmail, "Corporation Administrator", added)
 }
 
 // @Title Patch
@@ -182,7 +182,7 @@ func (this *CorporationManagerController) Patch() {
 		sendResponse(&this.Controller, statusCode, errCode, reason, body, "reset password of corp's manager")
 	}()
 
-	claOrgID, corpEmail, err := parseCorpManagerUser(&this.Controller)
+	orgCLAID, corpEmail, err := parseCorpManagerUser(&this.Controller)
 	if err != nil {
 		reason = err
 		errCode = util.ErrUnknownToken
@@ -203,7 +203,7 @@ func (this *CorporationManagerController) Patch() {
 		return
 	}
 
-	if err := (&info).Reset(claOrgID, corpEmail); err != nil {
+	if err := (&info).Reset(orgCLAID, corpEmail); err != nil {
 		reason = err
 		return
 	}

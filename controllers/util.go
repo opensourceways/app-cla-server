@@ -227,18 +227,18 @@ func fetchStringParameter(c *beego.Controller, param string) (string, error) {
 	return v, nil
 }
 
-func getEmailConfig(claOrgID string) (*models.CLAOrg, *models.OrgEmail, error) {
-	claOrg := &models.CLAOrg{ID: claOrgID}
-	if err := claOrg.Get(); err != nil {
+func getEmailConfig(orgCLAID string) (*models.OrgCLA, *models.OrgEmail, error) {
+	orgCLA := &models.OrgCLA{ID: orgCLAID}
+	if err := orgCLA.Get(); err != nil {
 		return nil, nil, err
 	}
 
-	emailInfo := &models.OrgEmail{Email: claOrg.OrgEmail}
+	emailInfo := &models.OrgEmail{Email: orgCLA.OrgEmail}
 	if err := emailInfo.Get(); err != nil {
 		return nil, nil, err
 	}
 
-	return claOrg, emailInfo, nil
+	return orgCLA, emailInfo, nil
 }
 
 func isSameCorp(email1, email2 string) bool {
@@ -267,8 +267,8 @@ func convertDBError(err error) (int, string) {
 	return 400, e.ErrCode
 }
 
-func corpManagerUser(claOrgID, email string) string {
-	return fmt.Sprintf("%s/%s", claOrgID, email)
+func corpManagerUser(orgCLAID, email string) string {
+	return fmt.Sprintf("%s/%s", orgCLAID, email)
 }
 
 func parseCorpManagerUser(c *beego.Controller) (string, string, error) {
@@ -347,17 +347,17 @@ func sendVerificationCodeEmail(code, orgEmail, adminEmail string) {
 	worker.GetEmailWorker().SendSimpleMessage(orgEmail, msg)
 }
 
-func isNotIndividualCLA(claOrg *models.CLAOrg) bool {
-	return claOrg.ApplyTo != dbmodels.ApplyToIndividual
+func isNotIndividualCLA(orgCLA *models.OrgCLA) bool {
+	return orgCLA.ApplyTo != dbmodels.ApplyToIndividual
 }
 
-func isNotCorpCLA(claOrg *models.CLAOrg) bool {
-	return claOrg.ApplyTo != dbmodels.ApplyToCorporation
+func isNotCorpCLA(orgCLA *models.OrgCLA) bool {
+	return orgCLA.ApplyTo != dbmodels.ApplyToCorporation
 }
 
-func canAccessOrgCLA(c *beego.Controller, claOrgID string) (*models.CLAOrg, int, string, error) {
-	claOrg := &models.CLAOrg{ID: claOrgID}
-	if err := claOrg.Get(); err != nil {
+func canAccessOrgCLA(c *beego.Controller, orgCLAID string) (*models.OrgCLA, int, string, error) {
+	orgCLA := &models.OrgCLA{ID: orgCLAID}
+	if err := orgCLA.Get(); err != nil {
 		return nil, 400, util.ErrInvalidParameter, err
 	}
 
@@ -366,9 +366,9 @@ func canAccessOrgCLA(c *beego.Controller, claOrgID string) (*models.CLAOrg, int,
 		return nil, 400, ec, err
 	}
 
-	org := claOrg.OrgID
+	org := orgCLA.OrgID
 	if ac.hasOrg(org) {
-		return claOrg, 0, "", nil
+		return orgCLA, 0, "", nil
 	}
 
 	p, err := platforms.NewPlatform(ac.PlatformToken, "", ac.Platform)
@@ -388,7 +388,7 @@ func canAccessOrgCLA(c *beego.Controller, claOrgID string) (*models.CLAOrg, int,
 
 	ac.addOrg(org)
 
-	return claOrg, 0, "", nil
+	return orgCLA, 0, "", nil
 }
 
 func getACOfCodePlatform(c *beego.Controller) (*acForCodePlatformPayload, string, error) {

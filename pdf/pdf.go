@@ -5,7 +5,7 @@ import (
 )
 
 type IPDFGenerator interface {
-	GenCLAPDFForCorporation(claOrg *models.CLAOrg, signing *models.CorporationSigning, cla *models.CLA) (string, error)
+	GenCLAPDFForCorporation(orgCLA *models.OrgCLA, signing *models.CorporationSigning, cla *models.CLA) (string, error)
 }
 
 var generator *pdfGenerator

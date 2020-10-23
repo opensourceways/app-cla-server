@@ -11,6 +11,7 @@ const (
 	TmplCorporationSigning    = "corporation signing"
 	TmplIndividualSigning     = "individual signing"
 	TmplEmployeeSigning       = "employee signing"
+	TmplNotifyingManager      = "notifying manager"
 	TmplCorpSigningVerifiCode = "verificaition code"
 	TmplAddingCorpAdmin       = "adding corp admin"
 	TmplAddingCorpManager     = "adding corp manager"
@@ -27,6 +28,7 @@ func initTemplate() error {
 		TmplCorporationSigning:    "./conf/email-template/corporation-signing.tmpl",
 		TmplIndividualSigning:     "./conf/email-template/individual-signing.tmpl",
 		TmplEmployeeSigning:       "./conf/email-template/employee-signing.tmpl",
+		TmplNotifyingManager:      "./conf/email-template/notifying-corp-manager.tmpl",
 		TmplCorpSigningVerifiCode: "./conf/email-template/verification-code.tmpl",
 		TmplAddingCorpAdmin:       "./conf/email-template/adding-corp-admin.tmpl",
 		TmplAddingCorpManager:     "./conf/email-template/adding-corp-manager.tmpl",
@@ -79,7 +81,9 @@ func (this CorporationSigning) GenEmailMsg() (*EmailMessage, error) {
 	return genEmailMsg(TmplCorporationSigning, this)
 }
 
-type IndividualSigning struct{}
+type IndividualSigning struct {
+	Name string
+}
 
 func (this IndividualSigning) GenEmailMsg() (*EmailMessage, error) {
 	return genEmailMsg(TmplIndividualSigning, this)
@@ -113,6 +117,7 @@ func (this RemovingCorpManager) GenEmailMsg() (*EmailMessage, error) {
 }
 
 type EmployeeSigning struct {
+	Name string
 	Org  string
 	Repo string
 }
@@ -122,6 +127,20 @@ func (this EmployeeSigning) GenEmailMsg() (*EmailMessage, error) {
 		this.Repo = fmt.Sprintf("/%s", this.Repo)
 	}
 	return genEmailMsg(TmplEmployeeSigning, this)
+}
+
+type NotifyingManager struct {
+	Name     string
+	Platform string
+	Org      string
+	Repo     string
+}
+
+func (this NotifyingManager) GenEmailMsg() (*EmailMessage, error) {
+	if this.Repo != "" {
+		this.Repo = fmt.Sprintf("/%s", this.Repo)
+	}
+	return genEmailMsg(TmplNotifyingManager, this)
 }
 
 type EmployeeNotification struct {

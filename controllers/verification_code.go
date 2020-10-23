@@ -5,6 +5,7 @@ import (
 
 	"github.com/opensourceways/app-cla-server/conf"
 	"github.com/opensourceways/app-cla-server/dbmodels"
+	"github.com/opensourceways/app-cla-server/email"
 	"github.com/opensourceways/app-cla-server/models"
 	"github.com/opensourceways/app-cla-server/util"
 )
@@ -43,7 +44,7 @@ func (this *VerificationCodeController) Post() {
 		return
 	}
 	orgCLAID := this.GetString(":cla_org_id")
-	email := this.GetString(":email")
+	individualEmail := this.GetString(":email")
 
 	orgCLA := &models.OrgCLA{ID: orgCLAID}
 	if err := orgCLA.Get(); err != nil {
@@ -57,7 +58,7 @@ func (this *VerificationCodeController) Post() {
 	}
 
 	code, err := models.CreateVerificationCode(
-		email, m[orgCLA.ApplyTo],
+		individualEmail, m[orgCLA.ApplyTo],
 		conf.AppConfig.VerificationCodeExpiry,
 	)
 	if err != nil {
@@ -67,5 +68,6 @@ func (this *VerificationCodeController) Post() {
 
 	body = "create verification code successfully"
 
-	sendVerificationCodeEmail(code, orgCLA.OrgEmail, email)
+	msg := email.CorpSigningVerificationCode{Code: code}
+	sendEmailToIndividual(individualEmail, orgCLA.OrgEmail, "verification code", msg)
 }

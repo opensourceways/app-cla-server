@@ -6,6 +6,7 @@ import (
 	"github.com/astaxie/beego"
 
 	"github.com/opensourceways/app-cla-server/dbmodels"
+	"github.com/opensourceways/app-cla-server/email"
 	"github.com/opensourceways/app-cla-server/models"
 	"github.com/opensourceways/app-cla-server/util"
 )
@@ -127,7 +128,10 @@ func (this *EmployeeManagerController) addOrDeleteManagers(toAdd bool) {
 		if err != nil {
 			reason = err
 		} else {
-			notifyCorpManagerWhenRemoving(orgCLA.OrgEmail, deleted)
+			for _, emailTo := range deleted {
+				msg := email.RemovingCorpManager{}
+				sendEmailToIndividual(emailTo, orgCLA.OrgEmail, "Removing Corp Manager", msg)
+			}
 		}
 	}
 }

@@ -41,7 +41,7 @@ func (this *OrgSignatureController) Post() {
 		return
 	}
 
-	_, statusCode, errCode, reason = canOwnerOfOrgAccessCLA(&this.Controller, claOrgID)
+	_, statusCode, errCode, reason = canAccessOrgCLA(&this.Controller, claOrgID)
 	if reason != nil {
 		return
 	}
@@ -105,7 +105,7 @@ func (this *OrgSignatureController) Get() {
 		return
 	}
 
-	_, statusCode, errCode, reason = canOwnerOfOrgAccessCLA(&this.Controller, claOrgID)
+	_, statusCode, errCode, reason = canAccessOrgCLA(&this.Controller, claOrgID)
 	if reason != nil {
 		return
 	}

@@ -133,7 +133,7 @@ func (this *CorporationManagerController) Put() {
 	adminEmail := this.GetString(":email")
 
 	var claOrg *models.CLAOrg
-	claOrg, statusCode, errCode, reason = canOwnerOfOrgAccessCLA(&this.Controller, claOrgID)
+	claOrg, statusCode, errCode, reason = canAccessOrgCLA(&this.Controller, claOrgID)
 	if reason != nil {
 		return
 	}

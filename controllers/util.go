@@ -355,7 +355,7 @@ func isNotCorpCLA(claOrg *models.CLAOrg) bool {
 	return claOrg.ApplyTo != dbmodels.ApplyToCorporation
 }
 
-func canOwnerOfOrgAccessCLA(c *beego.Controller, claOrgID string) (*models.CLAOrg, int, string, error) {
+func canAccessOrgCLA(c *beego.Controller, claOrgID string) (*models.CLAOrg, int, string, error) {
 	claOrg := &models.CLAOrg{ID: claOrgID}
 	if err := claOrg.Get(); err != nil {
 		return nil, 400, util.ErrInvalidParameter, err

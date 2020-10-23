@@ -404,3 +404,20 @@ func getACOfCodePlatform(c *beego.Controller) (*acForCodePlatformPayload, string
 
 	return cpa, "", nil
 }
+
+func trimSingingInfo(info dbmodels.TypeSigningInfo, fields []dbmodels.Field) {
+	if len(info) == 0 {
+		return
+	}
+
+	m := map[string]bool{}
+	for _, item := range fields {
+		m[item.ID] = true
+	}
+
+	for k := range info {
+		if _, ok := m[k]; !ok {
+			delete(info, k)
+		}
+	}
+}

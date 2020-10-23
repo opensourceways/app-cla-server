@@ -166,28 +166,24 @@ func (c *client) ListCLAByIDs(ids []string) ([]dbmodels.CLA, error) {
 	return r, nil
 }
 
-func (c *client) GetCLA(uid string) (dbmodels.CLA, error) {
-	var r dbmodels.CLA
-
+func (c *client) GetCLA(uid string, onlyFields bool) (dbmodels.CLA, error) {
 	oid, err := toObjectID(uid)
 	if err != nil {
-		return r, err
+		return dbmodels.CLA{}, err
 	}
-
-	var sr *mongo.SingleResult
-
-	f := func(ctx context.Context) error {
-		col := c.db.Collection(clasCollection)
-		sr = col.FindOne(ctx, bson.M{"_id": oid})
-		return nil
-	}
-
-	withContext(f)
 
 	var v CLA
-	err = sr.Decode(&v)
-	if err != nil {
-		return r, fmt.Errorf("error decoding to bson struct of CLA: %v", err)
+
+	project := bson.M{}
+	if onlyFields {
+		project["fields"] = 1
+	}
+	f := func(ctx context.Context) error {
+		return c.getDoc(ctx, clasCollection, filterOfDocID(oid), project, &v)
+	}
+
+	if err := withContext(f); err != nil {
+		return dbmodels.CLA{}, err
 	}
 
 	return toModelCLA(v), nil

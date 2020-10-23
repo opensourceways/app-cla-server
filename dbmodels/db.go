@@ -61,7 +61,7 @@ type IIndividualSigning interface {
 type ICLA interface {
 	CreateCLA(CLA) (string, error)
 	ListCLA(CLAListOptions) ([]CLA, error)
-	GetCLA(string) (CLA, error)
+	GetCLA(string, bool) (CLA, error)
 	DeleteCLA(string) error
 	ListCLAByIDs(ids []string) ([]CLA, error)
 }

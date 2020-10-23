@@ -151,7 +151,7 @@ func (c *client) ListCLAByIDs(ids []string) ([]dbmodels.CLA, error) {
 			"_id": bson.M{"$in": ids1},
 		}
 
-		return c.getDocs(ctx, clasCollection, filter, bson.M{"text": 1, "language": 1}, &v)
+		return c.getDocs(ctx, clasCollection, filter, nil, &v)
 	}
 
 	if err := withContext(f); err != nil {

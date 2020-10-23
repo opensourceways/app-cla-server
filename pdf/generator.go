@@ -37,7 +37,8 @@ func newCorporationPDF() (*corporationCLAPDF, error) {
 }
 
 func (this *corporationCLAPDF) begin() *gofpdf.Fpdf {
-	pdf := gofpdf.New("P", "mm", "A4", "") // 210mm x 297mm
+	pdf := gofpdf.New("P", "mm", "A4", "./conf/pdf-font") // 210mm x 297mm
+	pdf.AddUTF8Font("NotoSansSC-Regular", "", "NotoSansSC-Regular.ttf")
 	initializePdf(pdf)
 	return pdf
 }
@@ -93,6 +94,12 @@ func (this *corporationCLAPDF) contact(pdf *gofpdf.Fpdf, items map[string]string
 
 		pdf.MultiCell(130, gh, value, "B", "L", false)
 	}
+
+	defer func() {
+		pdf.SetFont("Arial", "", 12)
+	}()
+
+	pdf.SetFont("NotoSansSC-Regular", "", 12)
 
 	for _, i := range orders {
 		f(keys[i], items[i])

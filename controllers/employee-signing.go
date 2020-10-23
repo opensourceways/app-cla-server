@@ -94,6 +94,14 @@ func (this *EmployeeSigningController) Post() {
 		return
 	}
 
+	cla := &models.CLA{ID: claOrg.CLAID}
+	if err := cla.GetFields(); err != nil {
+		reason = err
+		return
+	}
+
+	trimSingingInfo(info.Info, cla.Fields)
+
 	err = (&info).Create(claOrgID, claOrg.Platform, claOrg.OrgID, claOrg.RepoID, false)
 	if err != nil {
 		reason = err

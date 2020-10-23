@@ -1,7 +1,6 @@
 package controllers
 
 import (
-	"encoding/json"
 	"fmt"
 
 	"github.com/astaxie/beego"
@@ -15,47 +14,6 @@ type CLAController struct {
 
 func (this *CLAController) Prepare() {
 	apiPrepare(&this.Controller, []string{PermissionOwnerOfOrg}, &acForCodePlatformPayload{})
-}
-
-// @Title CreateCLA
-// @Description create cla
-// @Param	body		body 	models.CLA	true		"body for cla content"
-// @Success 201 {int} models.CLA
-// @Failure 403 body is empty
-// @router / [post]
-func (this *CLAController) Post() {
-	var statusCode = 0
-	var reason error
-	var body interface{}
-
-	defer func() {
-		sendResponse1(&this.Controller, statusCode, reason, body)
-	}()
-
-	var cla models.CLA
-	if err := json.Unmarshal(this.Ctx.Input.RequestBody, &cla); err != nil {
-		reason = err
-		statusCode = 400
-		return
-	}
-
-	/*
-		user, err := getApiAccessUser(&this.Controller)
-		if err != nil {
-			reason = err
-			statusCode = 400
-			return
-		}
-		cla.Submitter = user
-	*/
-
-	if err := (&cla).Create(); err != nil {
-		reason = err
-		statusCode = 500
-		return
-	}
-
-	body = cla
 }
 
 // @Title Delete CLA

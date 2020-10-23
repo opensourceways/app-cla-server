@@ -6,26 +6,24 @@ const (
 )
 
 type CLA struct {
-	ID        string  `json:"id,omitempty"`
-	Name      string  `json:"name" required:"true"`
-	Text      string  `json:"text" required:"true"`
-	Language  string  `json:"language" required:"true"`
-	Submitter string  `json:"submitter" required:"true"`
-	ApplyTo   string  `json:"apply_to" required:"true"`
-	Fields    []Field `json:"fields,omitempty"`
+	ID       string  `json:"id"`
+	Name     string  `json:"name"`
+	Text     string  `json:"text"`
+	Language string  `json:"language"`
+	Fields   []Field `json:"fields"`
 }
 
 type Field struct {
-	ID          string `json:"id" required:"true"`
-	Title       string `json:"title" required:"true"`
-	Type        string `json:"type" required:"true"`
-	Description string `json:"description,omitempty"`
-	Required    bool   `json:"required" required:"true"`
+	ID          string `json:"id"`
+	Title       string `json:"title"`
+	Type        string `json:"type"`
+	Description string `json:"description"`
+	Required    bool   `json:"required"`
 }
 
 type CLAListOptions struct {
-	Submitter string `json:"submitter" required:"true"`
-	Name      string `json:"name,omitempty"`
-	Language  string `json:"language,omitempty"`
-	ApplyTo   string `json:"apply_to,omitempty"`
+	Submitter string `json:"submitter"`
+	Name      string `json:"name"`
+	Language  string `json:"language"`
+	ApplyTo   string `json:"apply_to"`
 }

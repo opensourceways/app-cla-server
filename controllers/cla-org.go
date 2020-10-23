@@ -63,14 +63,7 @@ func (this *CLAOrgController) Post() {
 		return
 	}
 
-	if cla.ApplyTo == "" {
-		reason = fmt.Errorf("the apply_to of cla(id:%s) is empty", cla.ID)
-		statusCode = 500
-		return
-	}
-
 	claOrg.CLALanguage = cla.Language
-	claOrg.ApplyTo = cla.ApplyTo
 
 	if err := (&claOrg).Create(); err != nil {
 		reason = err

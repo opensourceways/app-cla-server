@@ -166,6 +166,44 @@ func (this *OrgCLAController) GetAll() {
 	body = r
 }
 
+// @Title GetCLA
+// @Description get cla bound to org
+// @Param	uid		path 	string	true		"org cla id"
+// @Success 200 {object} models.CLA
+// @router /:uid [get]
+func (this *OrgCLAController) GetCLA() {
+	var statusCode = 0
+	var errCode = ""
+	var reason error
+	var body interface{}
+
+	defer func() {
+		sendResponse(&this.Controller, statusCode, errCode, reason, body, "get cla bound to org")
+	}()
+
+	claOrgID, err := fetchStringParameter(&this.Controller, ":cla_org_id")
+	if err != nil {
+		reason = err
+		errCode = util.ErrInvalidParameter
+		statusCode = 400
+		return
+	}
+
+	var orgCLA *models.CLAOrg
+	orgCLA, statusCode, errCode, reason = canAccessOrgCLA(&this.Controller, claOrgID)
+	if reason != nil {
+		return
+	}
+
+	cla := &models.CLA{ID: orgCLA.CLAID}
+	if err := cla.Get(); err != nil {
+		reason = err
+		return
+	}
+
+	body = cla
+}
+
 // @Title GetSigningPageInfo
 // @Description get signing page info
 // @Param	:platform	path 	string				true		"code platform"

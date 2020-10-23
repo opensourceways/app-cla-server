@@ -49,7 +49,7 @@ func (this *CorporationPDFController) Upload() {
 	}
 	claOrgID := this.GetString(":cla_org_id")
 
-	_, statusCode, errCode, reason = canOwnerOfOrgAccessCLA(&this.Controller, claOrgID)
+	_, statusCode, errCode, reason = canAccessOrgCLA(&this.Controller, claOrgID)
 	if reason != nil {
 		return
 	}
@@ -103,7 +103,7 @@ func (this *CorporationPDFController) Download() {
 	}
 	claOrgID := this.GetString(":cla_org_id")
 
-	_, statusCode, errCode, reason = canOwnerOfOrgAccessCLA(&this.Controller, claOrgID)
+	_, statusCode, errCode, reason = canAccessOrgCLA(&this.Controller, claOrgID)
 	if reason != nil {
 		return
 	}
@@ -176,7 +176,7 @@ func (this *CLAOrgController) Preview() {
 	}
 
 	var claOrg *models.CLAOrg
-	claOrg, statusCode, errCode, reason = canOwnerOfOrgAccessCLA(&this.Controller, claOrgID)
+	claOrg, statusCode, errCode, reason = canAccessOrgCLA(&this.Controller, claOrgID)
 	if reason != nil {
 		return
 	}

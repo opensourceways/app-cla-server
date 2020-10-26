@@ -50,6 +50,7 @@ func (c *client) CreateCLA(cla dbmodels.CLA) (string, error) {
 				Required:    item.Required,
 			})
 		}
+		info.Fields = fields
 	}
 	body, err := structToMap(info)
 	if err != nil {

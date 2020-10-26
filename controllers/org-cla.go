@@ -170,7 +170,7 @@ func (this *OrgCLAController) GetAll() {
 // @Description get cla bound to org
 // @Param	uid		path 	string	true		"org cla id"
 // @Success 200 {object} models.CLA
-// @router /:uid [get]
+// @router /:org_cla_id/cla [get]
 func (this *OrgCLAController) GetCLA() {
 	var statusCode = 0
 	var errCode = ""
@@ -181,7 +181,7 @@ func (this *OrgCLAController) GetCLA() {
 		sendResponse(&this.Controller, statusCode, errCode, reason, body, "get cla bound to org")
 	}()
 
-	orgCLAID, err := fetchStringParameter(&this.Controller, ":cla_org_id")
+	orgCLAID, err := fetchStringParameter(&this.Controller, ":org_cla_id")
 	if err != nil {
 		reason = err
 		errCode = util.ErrInvalidParameter

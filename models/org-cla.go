@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/opensourceways/app-cla-server/conf"
 	"github.com/opensourceways/app-cla-server/dbmodels"
 	"github.com/opensourceways/app-cla-server/util"
 )
@@ -27,6 +28,10 @@ type OrgCLACreateOption struct {
 func (this OrgCLACreateOption) Validate() (string, error) {
 	if this.ApplyTo != dbmodels.ApplyToIndividual && this.ApplyTo != dbmodels.ApplyToCorporation {
 		return util.ErrInvalidParameter, fmt.Errorf("invalid apply_to")
+	}
+
+	if len(this.CLA.Fields) > conf.AppConfig.CLAFieldsNumber {
+		return util.ErrInvalidParameter, fmt.Errorf("exceeds the max fields number")
 	}
 
 	_, err := dbmodels.GetDB().GetOrgEmailInfo(this.OrgEmail)

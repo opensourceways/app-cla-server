@@ -99,7 +99,7 @@ func (this *EmployeeSigningController) Post() {
 		return
 	}
 
-	trimSingingInfo(info.Info, cla.Fields)
+	info.Info = getSingingInfo(info.Info, cla.Fields)
 
 	err = (&info).Create(orgCLAID, orgCLA.Platform, orgCLA.OrgID, orgCLA.RepoID, false)
 	if err != nil {

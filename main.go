@@ -44,17 +44,18 @@ func main() {
 		os.Exit(1)
 	}
 
-	if err := pdf.GenBlankSignaturePage(); err != nil {
-		beego.Info(err)
-		return
-	}
-
 	if err := pdf.InitPDFGenerator(
 		AppConfig.PythonBin,
 		AppConfig.PDFOutDir,
 		AppConfig.PDFOrgSignatureDir,
 	); err != nil {
 		beego.Error(err)
+		os.Exit(1)
+	}
+
+	// must run after pdf.InitPDFGenerator
+	if err := pdf.GenBlankSignaturePage(); err != nil {
+		beego.Info(err)
 		os.Exit(1)
 	}
 

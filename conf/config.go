@@ -14,6 +14,7 @@ type appConfig struct {
 	PythonBin               string `json:"python_bin"`
 	MongodbConn             string `json:"mongodb_conn"`
 	DBName                  string `json:"mongodb_db"`
+	CLAFieldsNumber         int    `json:"cla_fields_number"`
 	VerificationCodeExpiry  int64  `json:"verification_code_expiry"`
 	APITokenExpiry          int64  `json:"api_token_expiry"`
 	APITokenKey             string `json:"api_token_key"`
@@ -25,6 +26,11 @@ type appConfig struct {
 }
 
 func InitAppConfig() error {
+	claFieldsNumber, err := beego.AppConfig.Int("cla_fields_number")
+	if err != nil {
+		return err
+	}
+
 	tokenExpiry, err := beego.AppConfig.Int64("api_token_expiry")
 	if err != nil {
 		return err
@@ -44,6 +50,7 @@ func InitAppConfig() error {
 		PythonBin:               beego.AppConfig.String("python_bin"),
 		MongodbConn:             beego.AppConfig.String("mongodb_conn"),
 		DBName:                  beego.AppConfig.String("mongodb_db"),
+		CLAFieldsNumber:         claFieldsNumber,
 		VerificationCodeExpiry:  codeExpiry,
 		APITokenExpiry:          tokenExpiry,
 		APITokenKey:             beego.AppConfig.String("api_token_key"),
@@ -59,6 +66,10 @@ func InitAppConfig() error {
 func (this *appConfig) validate() error {
 	if util.IsFileNotExist(this.PythonBin) {
 		return fmt.Errorf("The file:%s is not exist", this.PythonBin)
+	}
+
+	if this.CLAFieldsNumber <= 0 {
+		return fmt.Errorf("The cla_fields_number:%d should be bigger than 0", this.CLAFieldsNumber)
 	}
 
 	if this.VerificationCodeExpiry <= 0 {

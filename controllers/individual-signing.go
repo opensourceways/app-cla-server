@@ -78,7 +78,7 @@ func (this *IndividualSigningController) Post() {
 		return
 	}
 
-	trimSingingInfo(info.Info, cla.Fields)
+	info.Info = getSingingInfo(info.Info, cla.Fields)
 
 	err = (&info).Create(orgCLAID, orgCLA.Platform, orgCLA.OrgID, orgCLA.RepoID, true)
 	if err != nil {

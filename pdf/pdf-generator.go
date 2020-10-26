@@ -11,19 +11,26 @@ import (
 	"github.com/opensourceways/app-cla-server/util"
 )
 
-func (this *pdfGenerator) GenCLAPDFForCorporation(orgCLA *models.OrgCLA, signing *models.CorporationSigning, cla *models.CLA) (string, error) {
+type pdfGenerator struct {
+	pdfOutDir    string
+	pdfOrgSigDir string
+	pythonBin    string
+	corp         *corpSigningPDF
+}
+
+func (this *pdfGenerator) GenPDFForCorporationSigning(orgCLA *models.OrgCLA, signing *models.CorporationSigning, cla *models.CLA) (string, error) {
 	orgSigPdfFile := util.OrgSignaturePDFFILE(this.pdfOrgSigDir, orgCLA.ID)
 	if util.IsFileNotExist(orgSigPdfFile) {
-		return "", fmt.Errorf("Failed to generate pdf for corporation signing: the org signature pdf file is not exist")
+		return "", fmt.Errorf("the org signature pdf file is not exist")
 	}
 
-	tempPdf, err := this.genCorporPDFMissingSig(orgCLA, signing, cla)
+	tempPdf, err := genCorporPDFMissingSig(this.corp, orgCLA, signing, cla, this.pdfOutDir)
 	if err != nil {
 		return "", err
 	}
 
 	file := util.CorporCLAPDFFile(this.pdfOutDir, orgCLA.ID, signing.AdminEmail, "")
-	if err := this.mergeCorporPDFSignaturePage(tempPdf, orgSigPdfFile, file); err != nil {
+	if err := mergeCorporPDFSignaturePage(this.pythonBin, tempPdf, orgSigPdfFile, file); err != nil {
 		return "", err
 	}
 
@@ -32,9 +39,7 @@ func (this *pdfGenerator) GenCLAPDFForCorporation(orgCLA *models.OrgCLA, signing
 	return file, nil
 }
 
-func (this *pdfGenerator) genCorporPDFMissingSig(orgCLA *models.OrgCLA, signing *models.CorporationSigning, cla *models.CLA) (string, error) {
-	c := this.corporation
-
+func genCorporPDFMissingSig(c *corpSigningPDF, orgCLA *models.OrgCLA, signing *models.CorporationSigning, cla *models.CLA, outDir string) (string, error) {
 	project := orgCLA.OrgID
 	if orgCLA.RepoID != "" {
 		project = fmt.Sprintf("%s-%s", project, orgCLA.RepoID)
@@ -46,7 +51,7 @@ func (this *pdfGenerator) genCorporPDFMissingSig(orgCLA *models.OrgCLA, signing 
 	c.firstPage(pdf, fmt.Sprintf("The %s Project", project))
 	c.welcome(pdf, project, orgCLA.OrgEmail)
 
-	orders, keys, err := buildCorporContact(cla)
+	orders, keys, err := buildCorpContact(cla)
 	if err != nil {
 		return "", err
 	}
@@ -58,27 +63,27 @@ func (this *pdfGenerator) genCorporPDFMissingSig(orgCLA *models.OrgCLA, signing 
 	// second page
 	c.secondPage(pdf, signing.Date)
 
-	path := util.CorporCLAPDFFile(this.pdfOutDir, orgCLA.ID, signing.AdminEmail, "_missing_sig")
+	path := util.CorporCLAPDFFile(outDir, orgCLA.ID, signing.AdminEmail, "_missing_sig")
 	if err := c.end(pdf, path); err != nil {
 		return "", err
 	}
 	return path, nil
 }
 
-func (this *pdfGenerator) mergeCorporPDFSignaturePage(pdfFile, sigFile, outfile string) error {
+func mergeCorporPDFSignaturePage(pythonBin, pdfFile, sigFile, outfile string) error {
 	cmd := exec.Command(
-		this.pythonBin, "./util/merge-signature.py",
+		pythonBin, "./util/merge-signature.py",
 		pdfFile, sigFile, outfile,
 	)
 	_, err := cmd.Output()
 	if err != nil {
-		return fmt.Errorf("Failed to merge signature page for corporation pdf: %s", err.Error())
+		return fmt.Errorf("merge page of signature failed: %s", err.Error())
 	}
 
 	return nil
 }
 
-func buildCorporContact(cla *models.CLA) ([]string, map[string]string, error) {
+func buildCorpContact(cla *models.CLA) ([]string, map[string]string, error) {
 	ids := make(sort.IntSlice, 0, len(cla.Fields))
 	m := map[int]string{}
 	mk := map[string]string{}

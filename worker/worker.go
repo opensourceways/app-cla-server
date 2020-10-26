@@ -1,6 +1,7 @@
 package worker
 
 import (
+	"fmt"
 	"os"
 	"sync"
 	"time"
@@ -60,9 +61,9 @@ func (this *emailWorker) GenCLAPDFForCorporationAndSendIt(orgCLA *models.OrgCLA,
 			}
 
 			if file == "" || util.IsFileNotExist(file) {
-				file1, err := this.pdfGenerator.GenCLAPDFForCorporation(orgCLA, signing, cla)
+				file1, err := this.pdfGenerator.GenPDFForCorporationSigning(orgCLA, signing, cla)
 				if err != nil {
-					next(err)
+					next(fmt.Errorf("Failed to generate pdf for corp signing: %s", err.Error()))
 					continue
 				}
 				file = file1
@@ -122,7 +123,7 @@ func (this *emailWorker) SendSimpleMessage(orgEmail string, msg *email.EmailMess
 }
 
 func next(err error) {
-	beego.Info(err)
+	beego.Info(err.Error())
 	time.Sleep(time.Minute * time.Duration(1))
 
 }
@@ -130,13 +131,13 @@ func next(err error) {
 func getEmailClient(orgEmail string) (*models.OrgEmail, email.IEmail, error) {
 	emailCfg := &models.OrgEmail{Email: orgEmail}
 	if err := emailCfg.Get(); err != nil {
-		beego.Info(err)
+		beego.Info(err.Error())
 		return nil, nil, err
 	}
 
 	ec, err := email.GetEmailClient(emailCfg.Platform)
 	if err != nil {
-		beego.Info(err)
+		beego.Info(err.Error())
 		return nil, nil, err
 	}
 

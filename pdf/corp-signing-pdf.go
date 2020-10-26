@@ -10,13 +10,13 @@ import (
 	"github.com/opensourceways/app-cla-server/util"
 )
 
-type corporationCLAPDF struct {
+type corpSigningPDF struct {
 	welcomeTemp *template.Template
 	declaration *template.Template
 	gh          float64
 }
 
-func newCorporationPDF() (*corporationCLAPDF, error) {
+func newCorpSigningPDF() (*corpSigningPDF, error) {
 	path := "./conf/pdf_template_corporation/welcome.tmpl"
 	welTemp, err := util.NewTemplate("wel", path)
 	if err != nil {
@@ -29,21 +29,21 @@ func newCorporationPDF() (*corporationCLAPDF, error) {
 		return nil, err
 	}
 
-	return &corporationCLAPDF{
+	return &corpSigningPDF{
 		welcomeTemp: welTemp,
 		declaration: declTemp,
 		gh:          5.0,
 	}, nil
 }
 
-func (this *corporationCLAPDF) begin() *gofpdf.Fpdf {
+func (this *corpSigningPDF) begin() *gofpdf.Fpdf {
 	pdf := gofpdf.New("P", "mm", "A4", "./conf/pdf-font") // 210mm x 297mm
 	pdf.AddUTF8Font("NotoSansSC-Regular", "", "NotoSansSC-Regular.ttf")
 	initializePdf(pdf)
 	return pdf
 }
 
-func (this *corporationCLAPDF) end(pdf *gofpdf.Fpdf, path string) error {
+func (this *corpSigningPDF) end(pdf *gofpdf.Fpdf, path string) error {
 	if pdf.Err() {
 		return fmt.Errorf("Failed to geneate pdf: %s", pdf.Error().Error())
 	}
@@ -51,7 +51,7 @@ func (this *corporationCLAPDF) end(pdf *gofpdf.Fpdf, path string) error {
 	return pdf.OutputFileAndClose(path)
 }
 
-func (this *corporationCLAPDF) firstPage(pdf *gofpdf.Fpdf, title string) {
+func (this *corpSigningPDF) firstPage(pdf *gofpdf.Fpdf, title string) {
 	pdf.AddPage()
 
 	pdf.SetFont("Arial", "", 12)
@@ -64,7 +64,7 @@ func (this *corporationCLAPDF) firstPage(pdf *gofpdf.Fpdf, title string) {
 	pdf.Ln(-1)
 }
 
-func (this *corporationCLAPDF) welcome(pdf *gofpdf.Fpdf, project, email string) {
+func (this *corpSigningPDF) welcome(pdf *gofpdf.Fpdf, project, email string) {
 	data := struct {
 		Project string
 		Email   string
@@ -84,7 +84,7 @@ func (this *corporationCLAPDF) welcome(pdf *gofpdf.Fpdf, project, email string) 
 	multlines(pdf, this.gh, buf.String())
 }
 
-func (this *corporationCLAPDF) contact(pdf *gofpdf.Fpdf, items map[string]string, orders []string, keys map[string]string) {
+func (this *corpSigningPDF) contact(pdf *gofpdf.Fpdf, items map[string]string, orders []string, keys map[string]string) {
 	gh := this.gh
 
 	f := func(title, value string) {
@@ -107,7 +107,7 @@ func (this *corporationCLAPDF) contact(pdf *gofpdf.Fpdf, items map[string]string
 	}
 }
 
-func (this *corporationCLAPDF) declare(pdf *gofpdf.Fpdf, project string) {
+func (this *corpSigningPDF) declare(pdf *gofpdf.Fpdf, project string) {
 	data := struct {
 		Project string
 	}{
@@ -125,11 +125,11 @@ func (this *corporationCLAPDF) declare(pdf *gofpdf.Fpdf, project string) {
 	multlines(pdf, this.gh, buf.String())
 }
 
-func (this *corporationCLAPDF) cla(pdf *gofpdf.Fpdf, content string) {
+func (this *corpSigningPDF) cla(pdf *gofpdf.Fpdf, content string) {
 	multlines(pdf, this.gh, content)
 }
 
-func (this *corporationCLAPDF) secondPage(pdf *gofpdf.Fpdf, date string) {
+func (this *corpSigningPDF) secondPage(pdf *gofpdf.Fpdf, date string) {
 	item := []string{"", ""}
 	items := [][]string{item, item, item}
 	genSignatureItems(pdf, this.gh, "", "", items)

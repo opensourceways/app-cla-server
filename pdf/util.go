@@ -2,11 +2,8 @@ package pdf
 
 import (
 	"fmt"
-	"io/ioutil"
 
 	"github.com/jung-kurt/gofpdf"
-
-	"github.com/opensourceways/app-cla-server/dbmodels"
 )
 
 func addSignatureItem(pdf *gofpdf.Fpdf, gh float64, ltitle, rtitle, lvalue, rvalue string) {
@@ -66,38 +63,4 @@ func initializePdf(pdf *gofpdf.Fpdf) {
 			"", 0, "C", false, 0, "",
 		)
 	})
-}
-
-func GenBlankSignaturePage() error {
-	corporation := &corporationCLAPDF{gh: 5.0}
-
-	pdf := gofpdf.New("P", "mm", "A4", "") // 210mm x 297mm
-
-	items := [][]string{
-		{"Signature", "Signature"},
-		{"Title", "Title"},
-		{"Community", "Corporation"},
-	}
-
-	genSignatureItems(pdf, corporation.gh, "Community Sign", "Corporation Sign", items)
-
-	path := "./conf/blank_signature/english_blank_signature.pdf"
-	if err := corporation.end(pdf, path); err != nil {
-		return err
-	}
-
-	return uploadBlankSignature("english", path)
-}
-
-func uploadBlankSignature(language, path string) error {
-	data, err := ioutil.ReadFile(path)
-	if err != nil {
-		return fmt.Errorf("Failed to update blank signature: %s", err.Error())
-	}
-
-	err = dbmodels.GetDB().UploadBlankSignature(language, data)
-	if err != nil {
-		return fmt.Errorf("Failed to update blank signature: %s", err.Error())
-	}
-	return nil
 }

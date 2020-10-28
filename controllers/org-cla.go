@@ -6,6 +6,7 @@ import (
 
 	"github.com/astaxie/beego"
 
+	"github.com/opensourceways/app-cla-server/conf"
 	"github.com/opensourceways/app-cla-server/dbmodels"
 	"github.com/opensourceways/app-cla-server/models"
 	"github.com/opensourceways/app-cla-server/util"
@@ -56,6 +57,41 @@ func (this *OrgCLAController) Post() {
 		return
 	}
 
+	// check before creating to avoid downloading cla
+	opt := models.OrgCLAListOption{
+		Platform: input.Platform,
+		ApplyTo:  input.ApplyTo,
+	}
+	if input.RepoID != "" {
+		opt.RepoID = fmt.Sprintf("%s/%s", input.OrgID, input.RepoID)
+	} else {
+		opt.OrgID = []string{input.OrgID}
+	}
+
+	if r, err := opt.List(); err != nil {
+		reason = err
+		return
+	} else if len(r) > 0 {
+		reason = fmt.Errorf("recreate org's cla")
+		errCode = util.ErrInvalidParameter
+		statusCode = 400
+		return
+	}
+
+	// Create a file as a file lock for this org. The reasons are:
+	// 1. A file lock needs the file exist first
+	// 2. It is safe to create the file here, evet if creating a org's cla concurrently.
+	//    Because it doesn't care the content of locked file
+	path := util.LockedFilePath(conf.AppConfig.PDFOrgSignatureDir, input.Platform, input.OrgID, input.RepoID)
+	if util.IsFileNotExist(path) {
+		if err := util.NewFileLock(path).CreateLockedFile(); err != nil {
+			reason = err
+			errCode = util.ErrSystemError
+			statusCode = 500
+			return
+		}
+	}
+
 	cla := &input.CLA
 	if err := cla.DownloadCLA(); err != nil {
 		reason = err
@@ -73,6 +109,7 @@ func (this *OrgCLAController) Post() {
 	uid, err := input.Create(claID)
 	if err != nil {
 		reason = err
+		//TODO remove cla
 		return
 	}
 

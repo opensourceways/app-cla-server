@@ -63,7 +63,10 @@ func (this *emailWorker) GenCLAPDFForCorporationAndSendIt(orgCLA *models.OrgCLA,
 			if file == "" || util.IsFileNotExist(file) {
 				file1, err := this.pdfGenerator.GenPDFForCorporationSigning(orgCLA, signing, cla)
 				if err != nil {
-					next(fmt.Errorf("Failed to generate pdf for corp signing: %s", err.Error()))
+					next(fmt.Errorf(
+						"Failed to generate pdf for corp signing(%s:%s:%s/%s): %s",
+						orgCLA.Platform, orgCLA.OrgID, orgCLA.RepoID, util.EmailSuffix(signing.AdminEmail),
+						err.Error()))
 					continue
 				}
 				file = file1

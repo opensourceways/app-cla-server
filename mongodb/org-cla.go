@@ -19,7 +19,7 @@ const (
 	fieldCorpoManagers   = "corp_managers"
 	fieldCorporationID   = "corp_id"
 	fieldOrgSignature    = "org_signature"
-	fieldOrgSignatureTag = "has_org_signature"
+	fieldOrgSignatureTag = "md5sum"
 	fieldRepo            = "repo_id"
 )
 
@@ -53,22 +53,21 @@ type OrgCLA struct {
 	// CorporationManagers is the managers of corporation who can manage the employee
 	CorporationManagers []corporationManagerDoc `bson:"corp_managers" json:"-"`
 
-	HasOrgSignature bool   `bson:"has_org_signature" json:"has_org_signature"`
-	OrgSignature    []byte `bson:"org_signature" json:"-"`
+	Md5sumOfOrgSignature string `bson:"md5sum" json:"md5sum"`
+	OrgSignature         []byte `bson:"org_signature" json:"-"`
 }
 
 func (c *client) CreateOrgCLA(info dbmodels.OrgCLA) (string, error) {
 	orgCLA := OrgCLA{
-		Platform:        info.Platform,
-		OrgID:           info.OrgID,
-		RepoID:          dbValueOfRepo(info.OrgID, info.RepoID),
-		CLAID:           info.CLAID,
-		CLALanguage:     info.CLALanguage,
-		ApplyTo:         info.ApplyTo,
-		OrgEmail:        info.OrgEmail,
-		Enabled:         info.Enabled,
-		Submitter:       info.Submitter,
-		HasOrgSignature: info.OrgSignatureUploaded,
+		Platform:    info.Platform,
+		OrgID:       info.OrgID,
+		RepoID:      dbValueOfRepo(info.OrgID, info.RepoID),
+		CLAID:       info.CLAID,
+		CLALanguage: info.CLALanguage,
+		ApplyTo:     info.ApplyTo,
+		OrgEmail:    info.OrgEmail,
+		Enabled:     info.Enabled,
+		Submitter:   info.Submitter,
 	}
 	body, err := structToMap(orgCLA)
 	if err != nil {
@@ -186,7 +185,7 @@ func toModelOrgCLA(item OrgCLA) dbmodels.OrgCLA {
 		OrgEmail:             item.OrgEmail,
 		Enabled:              item.Enabled,
 		Submitter:            item.Submitter,
-		OrgSignatureUploaded: item.HasOrgSignature,
+		OrgSignatureUploaded: item.Md5sumOfOrgSignature != "",
 	}
 }
 

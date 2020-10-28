@@ -2,6 +2,7 @@ package util
 
 import (
 	"bytes"
+	"crypto/md5"
 	"crypto/rand"
 	"encoding/json"
 	"fmt"
@@ -127,4 +128,17 @@ func RandStr(strSize int, randType string) string {
 		bytes[k] = dictionary[v%n]
 	}
 	return string(bytes)
+}
+
+func Md5sumOfFile(path string) (string, error) {
+	data, err := ioutil.ReadFile(path)
+	if err != nil {
+		return "", err
+	}
+
+	return Md5sumOfBytes(data), nil
+}
+
+func Md5sumOfBytes(data []byte) string {
+	return fmt.Sprintf("%x", md5.Sum(data))
 }

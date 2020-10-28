@@ -3,7 +3,6 @@ package controllers
 import (
 	"fmt"
 	"io/ioutil"
-	"os"
 
 	"github.com/astaxie/beego"
 
@@ -41,8 +40,15 @@ func (this *OrgSignatureController) Post() {
 		return
 	}
 
-	_, statusCode, errCode, reason = canAccessOrgCLA(&this.Controller, orgCLAID)
+	var orgCLA *models.OrgCLA
+	orgCLA, statusCode, errCode, reason = canAccessOrgCLA(&this.Controller, orgCLAID)
 	if reason != nil {
+		return
+	}
+	if isNotCorpCLA(orgCLA) {
+		reason = fmt.Errorf("no need upload org signature for individual signing")
+		errCode = util.ErrInvalidParameter
+		statusCode = 400
 		return
 	}
 
@@ -65,18 +71,6 @@ func (this *OrgSignatureController) Post() {
 	err = models.UploadOrgSignature(orgCLAID, data)
 	if err != nil {
 		reason = err
-		return
-	}
-
-	path := util.OrgSignaturePDFFILE(
-		beego.AppConfig.String("pdf_org_signature_dir"),
-		orgCLAID,
-	)
-	if !util.IsFileNotExist(path) {
-		os.Remove(path)
-	}
-	if err := ioutil.WriteFile(path, data, 0644); err != nil {
-		reason = fmt.Errorf("Failed to write org signature pdf: %s", err.Error())
 		return
 	}
 

@@ -59,7 +59,7 @@ func (this *emailWorker) GenCLAPDFForCorporationAndSendIt(orgCLA *models.OrgCLA,
 			Org:         orgCLA.OrgID,
 			Project:     util.ProjectName(orgCLA.OrgID, orgCLA.RepoID),
 			Date:        signing.Date,
-			SingingInfo: buildCorpSigningInfo(signing, cla),
+			SigningInfo: buildCorpSigningInfo(signing, cla),
 		}
 
 		var msg *email.EmailMessage

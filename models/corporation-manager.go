@@ -15,11 +15,12 @@ func (this CorporationManagerAuthentication) Authenticate() (map[string]dbmodels
 	)
 }
 
-func CreateCorporationAdministrator(orgCLAID, email string) ([]dbmodels.CorporationManagerCreateOption, error) {
+func CreateCorporationAdministrator(orgCLAID, name, email string) ([]dbmodels.CorporationManagerCreateOption, error) {
 	pw := util.RandStr(8, "alphanum")
 
 	opt := []dbmodels.CorporationManagerCreateOption{
 		{
+			Name:     name,
 			Role:     dbmodels.RoleAdmin,
 			Email:    email,
 			Password: pw,

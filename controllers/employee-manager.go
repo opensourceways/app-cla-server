@@ -134,13 +134,13 @@ func (this *EmployeeManagerController) addOrDeleteManagers(toAdd bool) {
 				util.ProjectName(orgCLA.OrgID, orgCLA.RepoID),
 			)
 
-			for _, emailTo := range deleted {
+			for _, item := range deleted {
 				msg := email.RemovingCorpManager{
-					User:       "user",
+					User:       item.Name,
 					Org:        orgCLA.OrgID,
 					ProjectURL: url,
 				}
-				sendEmailToIndividual(emailTo, orgCLA.OrgEmail, subject, msg)
+				sendEmailToIndividual(item.Email, orgCLA.OrgEmail, subject, msg)
 			}
 		}
 	}

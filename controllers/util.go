@@ -323,7 +323,7 @@ func notifyCorpManagerWhenAdding(orgCLA *models.OrgCLA, info []dbmodels.Corporat
 	for _, item := range info {
 		d := email.AddingCorpManager{
 			Admin:            admin,
-			User:             "user",
+			User:             item.Name,
 			Email:            item.Email,
 			Password:         item.Password,
 			Org:              orgCLA.OrgID,

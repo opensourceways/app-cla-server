@@ -13,6 +13,7 @@ import (
 )
 
 type corporationManagerDoc struct {
+	Name             string `bson:"name" json:"name" required:"true"`
 	Role             string `bson:"role" json:"role" required:"true"`
 	Email            string `bson:"email"  json:"email" required:"true"`
 	Password         string `bson:"password" json:"password" required:"true"`
@@ -81,6 +82,7 @@ func (c *client) AddCorporationManager(orgCLAID string, opt []dbmodels.Corporati
 		items := make(bson.A, 0, len(toAdd))
 		for _, item := range toAdd {
 			info := corporationManagerDoc{
+				Name:     item.Name,
 				Email:    item.Email,
 				Role:     item.Role,
 				Password: item.Password,
@@ -131,6 +133,7 @@ func (c *client) CheckCorporationManagerExist(opt dbmodels.CorporationManagerChe
 		"org_id":                    1,
 		fieldRepo:                   1,
 		corpManagerField("role"):    1,
+		corpManagerField("name"):    1,
 		corpManagerField("email"):   1,
 		corpManagerField("changed"): 1,
 	}
@@ -200,6 +203,7 @@ func (c *client) listCorporationManager(ctx context.Context, orgCLAID primitive.
 	}
 
 	project := bson.M{
+		corpManagerField("name"):  1,
 		corpManagerField("email"): 1,
 		corpManagerField("role"):  1,
 	}
@@ -243,6 +247,7 @@ func (c *client) ListCorporationManager(orgCLAID, email, role string) ([]dbmodel
 	ms := make([]dbmodels.CorporationManagerListResult, 0, len(v))
 	for _, item := range v {
 		ms = append(ms, dbmodels.CorporationManagerListResult{
+			Name:  item.Name,
 			Email: item.Email,
 			Role:  item.Role,
 		})
@@ -250,37 +255,40 @@ func (c *client) ListCorporationManager(orgCLAID, email, role string) ([]dbmodel
 	return ms, nil
 }
 
-func (c *client) DeleteCorporationManager(orgCLAID string, opt []dbmodels.CorporationManagerCreateOption) ([]string, error) {
+func (c *client) DeleteCorporationManager(orgCLAID, role string, emails []string) ([]dbmodels.CorporationManagerCreateOption, error) {
 	oid, err := toObjectID(orgCLAID)
 	if err != nil {
 		return nil, err
 	}
 
-	deleted := make([]string, 0, len(opt))
+	deleted := make([]dbmodels.CorporationManagerCreateOption, 0, len(emails))
 
 	f := func(ctx mongo.SessionContext) error {
-		ms, err := c.listCorporationManager(ctx, oid, opt[0].Email, opt[0].Role)
+		ms, err := c.listCorporationManager(ctx, oid, emails[0], role)
 		if err != nil {
 			return err
 		}
 
-		all := map[string]bool{}
-		for _, item := range ms {
-			all[item.Email] = true
+		all := map[string]int{}
+		for i, item := range ms {
+			all[item.Email] = i
 		}
 
-		toDelete := make(bson.A, 0, len(opt))
-		for _, item := range opt {
-			if _, ok := all[item.Email]; ok {
-				toDelete = append(toDelete, item.Email)
-				deleted = append(deleted, item.Email)
+		toDelete := make(bson.A, 0, len(emails))
+		for _, email := range emails {
+			if i, ok := all[email]; ok {
+				toDelete = append(toDelete, email)
+				deleted = append(deleted, dbmodels.CorporationManagerCreateOption{
+					Email: ms[i].Email,
+					Name:  ms[i].Name,
+				})
 			}
 		}
 		if len(toDelete) == 0 {
 			return nil
 		}
 
-		filterOfArray := filterOfCorpID(opt[0].Email)
+		filterOfArray := filterOfCorpID(emails[0])
 		filterOfArray["email"] = bson.M{"$in": toDelete}
 
 		return c.pullArrayElem(

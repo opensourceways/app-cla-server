@@ -3,9 +3,11 @@ package controllers
 import (
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/astaxie/beego"
 
+	"github.com/opensourceways/app-cla-server/conf"
 	"github.com/opensourceways/app-cla-server/dbmodels"
 	"github.com/opensourceways/app-cla-server/email"
 	"github.com/opensourceways/app-cla-server/models"
@@ -93,6 +95,18 @@ func (this *EmployeeSigningController) Post() {
 		return
 	}
 
+	managers, err := models.ListCorporationManagers(corpSignedCla, info.Email, dbmodels.RoleManager)
+	if err != nil {
+		reason = err
+		return
+	}
+	if len(managers) == 0 {
+		reason = fmt.Errorf("no managers")
+		errCode = util.ErrNoCorpManager
+		statusCode = 400
+		return
+	}
+
 	cla := &models.CLA{ID: orgCLA.CLAID}
 	if err := cla.GetFields(); err != nil {
 		reason = err
@@ -108,14 +122,7 @@ func (this *EmployeeSigningController) Post() {
 	}
 	body = "sign successfully"
 
-	msg := email.EmployeeSigning{
-		Name: info.Name,
-		Org:  orgCLA.OrgID,
-		Repo: orgCLA.RepoID,
-	}
-	sendEmailToIndividual(info.Email, orgCLA.OrgEmail, "Signing as employee", msg)
-
-	this.notifyManagers(corpSignedCla, &info, orgCLA)
+	this.notifyManagers(managers, &info, orgCLA)
 }
 
 // @Title GetAll
@@ -183,7 +190,8 @@ func (this *EmployeeSigningController) Update() {
 	}
 
 	corpClaOrgID := ""
-	statusCode, errCode, corpClaOrgID, reason = this.canHandleOnEmployee(employeeEmail)
+	managerEmail := ""
+	statusCode, errCode, corpClaOrgID, managerEmail, reason = this.canHandleOnEmployee(employeeEmail)
 	if reason != nil {
 		return
 	}
@@ -210,14 +218,19 @@ func (this *EmployeeSigningController) Update() {
 
 	body = "enabled employee successfully"
 
-	msg := email.EmployeeNotification{}
+	msg := email.EmployeeNotification{
+		Name:    employeeEmail,
+		Manager: managerEmail,
+		Project: util.ProjectName(corpClaOrg.OrgID, corpClaOrg.RepoID),
+		Org:     corpClaOrg.OrgID,
+	}
 	subject := ""
 	if info.Enabled {
 		msg.Active = true
-		subject = "Activate employee"
+		subject = "Activate the CLA signing"
 	} else {
 		msg.Inactive = true
-		subject = "Inavtivate employee"
+		subject = "Inavtivate the CLA signing"
 	}
 	sendEmailToIndividual(employeeEmail, corpClaOrg.OrgEmail, subject, msg)
 }
@@ -246,7 +259,8 @@ func (this *EmployeeSigningController) Delete() {
 	}
 
 	corpClaOrgID := ""
-	statusCode, errCode, corpClaOrgID, reason = this.canHandleOnEmployee(employeeEmail)
+	managerEmail := ""
+	statusCode, errCode, corpClaOrgID, managerEmail, reason = this.canHandleOnEmployee(employeeEmail)
 	if reason != nil {
 		return
 	}
@@ -265,46 +279,54 @@ func (this *EmployeeSigningController) Delete() {
 
 	body = "delete employee successfully"
 
-	msg := email.EmployeeNotification{Removing: true}
+	msg := email.EmployeeNotification{
+		Removing: true,
+		Name:     employeeEmail,
+		Manager:  managerEmail,
+		Project:  util.ProjectName(corpClaOrg.OrgID, corpClaOrg.RepoID),
+		Org:      corpClaOrg.OrgID,
+	}
 	sendEmailToIndividual(employeeEmail, corpClaOrg.OrgEmail, "Remove employee", msg)
 }
 
-func (this *EmployeeSigningController) canHandleOnEmployee(employeeEmail string) (int, string, string, error) {
+func (this *EmployeeSigningController) canHandleOnEmployee(employeeEmail string) (int, string, string, string, error) {
 	corpClaOrgID, corpEmail, err := parseCorpManagerUser(&this.Controller)
 	if err != nil {
-		return 401, util.ErrUnknownToken, "", err
+		return 401, util.ErrUnknownToken, "", "", err
 	}
 
 	if !isSameCorp(corpEmail, employeeEmail) {
-		return 400, util.ErrNotSameCorp, "", fmt.Errorf("not same corp")
+		return 400, util.ErrNotSameCorp, "", "", fmt.Errorf("not same corp")
 	}
 
-	return 0, "", corpClaOrgID, nil
+	return 0, "", corpClaOrgID, corpEmail, nil
 }
 
-func (this *EmployeeSigningController) notifyManagers(corpClaOrgID string, info *models.EmployeeSigning, orgCLA *models.OrgCLA) {
-	managers, err := models.ListCorporationManagers(corpClaOrgID, info.Email, dbmodels.RoleManager)
-	if err != nil {
-		beego.Error(err)
-		return
-	}
-
-	if len(managers) == 0 {
-		return
-	}
-
+func (this *EmployeeSigningController) notifyManagers(managers []dbmodels.CorporationManagerListResult, info *models.EmployeeSigning, orgCLA *models.OrgCLA) {
+	ms := make([]string, 0, len(managers))
 	to := make([]string, 0, len(managers))
 	for _, item := range managers {
-		if item.Role == dbmodels.RoleManager {
-			to = append(to, item.Email)
-		}
+		to = append(to, item.Email)
+		ms = append(ms, fmt.Sprintf("%s: %s", item.Name, item.Email))
 	}
 
-	msg := email.NotifyingManager{
+	msg := email.EmployeeSigning{
 		Name:     info.Name,
-		Platform: orgCLA.Platform,
 		Org:      orgCLA.OrgID,
-		Repo:     orgCLA.RepoID,
+		Project:  util.ProjectName(orgCLA.OrgID, orgCLA.RepoID),
+		Managers: strings.Join(ms, "\n"),
 	}
-	sendEmail(to, orgCLA.OrgEmail, "A employee has signed CLA", msg)
+	sendEmailToIndividual(
+		info.Email, orgCLA.OrgEmail,
+		fmt.Sprintf("Signing CLA on project of \"%s\"", msg.Project),
+		msg,
+	)
+
+	msg1 := email.NotifyingManager{
+		EmployeeEmail:    info.Email,
+		ProjectURL:       util.ProjectURL(orgCLA.Platform, orgCLA.OrgID, orgCLA.RepoID),
+		Org:              orgCLA.OrgID,
+		URLOfCLAPlatform: conf.AppConfig.CLAPlatformURL,
+	}
+	sendEmail(to, orgCLA.OrgEmail, "An employee has signed CLA", msg1)
 }

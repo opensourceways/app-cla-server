@@ -133,29 +133,24 @@ func (this RemovingCorpManager) GenEmailMsg() (*EmailMessage, error) {
 }
 
 type EmployeeSigning struct {
-	Name string
-	Org  string
-	Repo string
+	Name     string
+	Org      string
+	Project  string
+	Managers string
 }
 
 func (this EmployeeSigning) GenEmailMsg() (*EmailMessage, error) {
-	if this.Repo != "" {
-		this.Repo = fmt.Sprintf("/%s", this.Repo)
-	}
 	return genEmailMsg(TmplEmployeeSigning, this)
 }
 
 type NotifyingManager struct {
-	Name     string
-	Platform string
-	Org      string
-	Repo     string
+	EmployeeEmail    string
+	ProjectURL       string
+	URLOfCLAPlatform string
+	Org              string
 }
 
 func (this NotifyingManager) GenEmailMsg() (*EmailMessage, error) {
-	if this.Repo != "" {
-		this.Repo = fmt.Sprintf("/%s", this.Repo)
-	}
 	return genEmailMsg(TmplNotifyingManager, this)
 }
 
@@ -163,6 +158,11 @@ type EmployeeNotification struct {
 	Removing bool
 	Active   bool
 	Inactive bool
+
+	Name    string
+	Project string
+	Manager string
+	Org     string
 }
 
 func (this EmployeeNotification) GenEmailMsg() (*EmailMessage, error) {

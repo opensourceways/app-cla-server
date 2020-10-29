@@ -142,3 +142,10 @@ func Md5sumOfFile(path string) (string, error) {
 func Md5sumOfBytes(data []byte) string {
 	return fmt.Sprintf("%x", md5.Sum(data))
 }
+
+func ProjectName(org, repo string) string {
+	if repo == "" {
+		return org
+	}
+	return fmt.Sprintf("%s/%s", org, repo)
+}

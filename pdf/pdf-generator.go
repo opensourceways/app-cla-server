@@ -55,7 +55,7 @@ func genCorporPDFMissingSig(c *corpSigningPDF, orgCLA *models.OrgCLA, signing *m
 	c.firstPage(pdf, fmt.Sprintf("The %s Project", project))
 	c.welcome(pdf, project, orgCLA.OrgEmail)
 
-	orders, keys, err := buildCorpContact(cla)
+	orders, keys, err := BuildCorpContact(cla)
 	if err != nil {
 		return "", fmt.Errorf("build contact info of corp signing failed: %s", err.Error())
 	}
@@ -116,7 +116,7 @@ func mergeCorporPDFSignaturePage(orgCLAID, pythonBin, pdfFile, sigFile, outfile 
 	return nil
 }
 
-func buildCorpContact(cla *models.CLA) ([]string, map[string]string, error) {
+func BuildCorpContact(cla *models.CLA) ([]string, map[string]string, error) {
 	ids := make(sort.IntSlice, 0, len(cla.Fields))
 	m := map[int]string{}
 	mk := map[string]string{}

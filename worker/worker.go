@@ -3,6 +3,7 @@ package worker
 import (
 	"fmt"
 	"os"
+	"strings"
 	"sync"
 	"time"
 
@@ -53,15 +54,36 @@ func (this *emailWorker) GenCLAPDFForCorporationAndSendIt(orgCLA *models.OrgCLA,
 			return
 		}
 
+		data := email.CorporationSigning{
+			AdminName:   signing.AdminName,
+			Org:         orgCLA.OrgID,
+			Project:     util.ProjectName(orgCLA.OrgID, orgCLA.RepoID),
+			Date:        signing.Date,
+			SingingInfo: buildCorpSigningInfo(signing, cla),
+		}
+
+		var msg *email.EmailMessage
 		file := ""
-		for {
+
+		for i := 0; i < 10; i++ {
 			if this.shutdown {
 				beego.Info("email worker exits forcedly")
 				break
 			}
 
+			var err error
+
+			if msg == nil {
+				if msg, err = data.GenEmailMsg(); err != nil {
+					next(err)
+					continue
+				}
+				msg.Subject = fmt.Sprintf("Signing Corporation CLA on project of %s", data.Project)
+				msg.To = []string{signing.AdminEmail}
+			}
+
 			if file == "" || util.IsFileNotExist(file) {
-				file1, err := this.pdfGenerator.GenPDFForCorporationSigning(orgCLA, signing, cla)
+				file, err = this.pdfGenerator.GenPDFForCorporationSigning(orgCLA, signing, cla)
 				if err != nil {
 					next(fmt.Errorf(
 						"Failed to generate pdf for corp signing(%s:%s:%s/%s): %s",
@@ -69,16 +91,7 @@ func (this *emailWorker) GenCLAPDFForCorporationAndSendIt(orgCLA *models.OrgCLA,
 						err.Error()))
 					continue
 				}
-				file = file1
 			}
-
-			data := email.CorporationSigning{}
-			msg, err := data.GenEmailMsg()
-			if err != nil {
-				next(err)
-				continue
-			}
-			msg.To = []string{signing.AdminEmail}
 			msg.Attachment = file
 
 			if err := ec.SendEmail(emailCfg.Token, msg); err != nil {
@@ -106,7 +119,7 @@ func (this *emailWorker) SendSimpleMessage(orgEmail string, msg *email.EmailMess
 			return
 		}
 
-		for {
+		for i := 0; i < 10; i++ {
 			if this.shutdown {
 				beego.Info("email worker exits forcedly")
 				break
@@ -145,4 +158,18 @@ func getEmailClient(orgEmail string) (*models.OrgEmail, email.IEmail, error) {
 	}
 
 	return emailCfg, ec, nil
+}
+
+func buildCorpSigningInfo(signing *models.CorporationSigning, cla *models.CLA) string {
+	orders, keys, err := pdf.BuildCorpContact(cla)
+	if err != nil {
+		return ""
+	}
+
+	v := make([]string, 0, len(orders))
+	for _, i := range orders {
+		v = append(v, fmt.Sprintf("%s: %s", keys[i], signing.Info[i]))
+	}
+
+	return strings.Join(v, "\n")
 }

@@ -80,7 +80,7 @@ type CorporationSigning struct {
 	Org         string
 	Project     string
 	Date        string
-	SingingInfo string
+	SigningInfo string
 }
 
 func (this CorporationSigning) GenEmailMsg() (*EmailMessage, error) {

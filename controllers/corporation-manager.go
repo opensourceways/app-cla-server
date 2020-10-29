@@ -156,7 +156,7 @@ func (this *CorporationManagerController) Put() {
 		return
 	}
 
-	added, err := models.CreateCorporationAdministrator(orgCLAID, adminEmail)
+	added, err := models.CreateCorporationAdministrator(orgCLAID, info.AdminName, adminEmail)
 	if err != nil {
 		reason = err
 		return

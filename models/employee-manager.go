@@ -9,52 +9,56 @@ import (
 )
 
 type EmployeeManagerCreateOption struct {
-	Emails []string `json:"emails"`
+	Managers []EmployeeManager `json:"managers"`
+}
+
+type EmployeeManager struct {
+	Email string `json:"email"`
+	Name  string `json:"name"`
 }
 
 func (this *EmployeeManagerCreateOption) Validate(adminEmail string) (string, error) {
-	if len(this.Emails) == 0 {
-		return util.ErrInvalidParameter, fmt.Errorf("no employee mangers to add")
+	if len(this.Managers) == 0 {
+		return util.ErrInvalidParameter, fmt.Errorf("no employee mangers to add/delete")
 	}
 
 	em := map[string]bool{}
 	suffix := util.EmailSuffix(adminEmail)
 
-	for _, item := range this.Emails {
-		if item == adminEmail {
+	for _, item := range this.Managers {
+		if item.Email == adminEmail {
 			return util.ErrInvalidParameter, fmt.Errorf("can't add/delete administrator himself/herself")
 		}
 
-		s := util.EmailSuffix(item)
+		if ec, err := checkEmailFormat(item.Email); err != nil {
+			return ec, err
+		}
+
+		s := util.EmailSuffix(item.Email)
 		if s != suffix {
 			return util.ErrNotSameCorp, fmt.Errorf("the email suffixes are not same")
 		}
 
-		em[item] = true
+		em[item.Email] = true
 	}
 
-	if len(em) != len(this.Emails) {
+	if len(em) != len(this.Managers) {
 		return util.ErrInvalidParameter, fmt.Errorf("there are duplicate emails")
-	}
-
-	for _, email := range this.Emails {
-		if ec, err := checkEmailFormat(email); err != nil {
-			return ec, err
-		}
 	}
 
 	return "", nil
 }
 
 func (this *EmployeeManagerCreateOption) Create(orgCLAID string) ([]dbmodels.CorporationManagerCreateOption, error) {
-	opt := make([]dbmodels.CorporationManagerCreateOption, 0, len(this.Emails))
+	opt := make([]dbmodels.CorporationManagerCreateOption, 0, len(this.Managers))
 
-	for _, item := range this.Emails {
+	for _, item := range this.Managers {
 		pw := util.RandStr(8, "alphanum")
 
 		opt = append(opt, dbmodels.CorporationManagerCreateOption{
 			Role:     dbmodels.RoleManager,
-			Email:    item,
+			Name:     item.Name,
+			Email:    item.Email,
 			Password: pw,
 		})
 	}
@@ -62,15 +66,12 @@ func (this *EmployeeManagerCreateOption) Create(orgCLAID string) ([]dbmodels.Cor
 	return dbmodels.GetDB().AddCorporationManager(orgCLAID, opt, conf.AppConfig.EmployeeManagersNumber)
 }
 
-func (this *EmployeeManagerCreateOption) Delete(orgCLAID string) ([]string, error) {
-	opt := make([]dbmodels.CorporationManagerCreateOption, 0, len(this.Emails))
+func (this *EmployeeManagerCreateOption) Delete(orgCLAID string) ([]dbmodels.CorporationManagerCreateOption, error) {
+	emails := make([]string, 0, len(this.Managers))
 
-	for _, item := range this.Emails {
-		opt = append(opt, dbmodels.CorporationManagerCreateOption{
-			Role:  dbmodels.RoleManager,
-			Email: item,
-		})
+	for _, item := range this.Managers {
+		emails = append(emails, item.Email)
 	}
 
-	return dbmodels.GetDB().DeleteCorporationManager(orgCLAID, opt)
+	return dbmodels.GetDB().DeleteCorporationManager(orgCLAID, dbmodels.RoleManager, emails)
 }

@@ -24,13 +24,13 @@ func (this *CorporationSigningController) Prepare() {
 
 // @Title Post
 // @Description sign as corporation
-// @Param	:cla_org_id	path 	string					true		"cla org id"
+// @Param	:org_cla_id	path 	string					true		"org cla id"
 // @Param	body		body 	models.CorporationSigningCreateOption	true		"body for corporation signing"
 // @Success 201 {int} map
 // @Failure util.ErrHasSigned
 // @Failure util.ErrWrongVerificationCode
 // @Failure util.ErrVerificationCodeExpired
-// @router /:cla_org_id [post]
+// @router /:org_cla_id [post]
 func (this *CorporationSigningController) Post() {
 	var statusCode = 0
 	var errCode = ""
@@ -41,7 +41,7 @@ func (this *CorporationSigningController) Post() {
 		sendResponse(&this.Controller, statusCode, errCode, reason, body, "sign as corporation")
 	}()
 
-	orgCLAID, err := fetchStringParameter(&this.Controller, ":cla_org_id")
+	orgCLAID, err := fetchStringParameter(&this.Controller, ":org_cla_id")
 	if err != nil {
 		reason = err
 		errCode = util.ErrInvalidParameter
@@ -56,7 +56,7 @@ func (this *CorporationSigningController) Post() {
 		statusCode = 400
 		return
 	}
-	if ec, err := (&info).Validate(); err != nil {
+	if ec, err := (&info).Validate(orgCLAID); err != nil {
 		reason = err
 		errCode = ec
 		statusCode = 400

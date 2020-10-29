@@ -20,8 +20,8 @@ func (this *OrgSignatureController) Prepare() {
 
 // @Title Post
 // @Description upload org signature
-// @Param	cla_org_id		path 	string	true		"cla org id"
-// @router /:cla_org_id [post]
+// @Param	org_cla_id		path 	string	true		"org cla id"
+// @router /:org_cla_id [post]
 func (this *OrgSignatureController) Post() {
 	var statusCode = 0
 	var errCode = ""
@@ -32,7 +32,7 @@ func (this *OrgSignatureController) Post() {
 		sendResponse(&this.Controller, statusCode, errCode, reason, body, "upload org signature")
 	}()
 
-	orgCLAID, err := fetchStringParameter(&this.Controller, ":cla_org_id")
+	orgCLAID, err := fetchStringParameter(&this.Controller, ":org_cla_id")
 	if err != nil {
 		reason = err
 		errCode = util.ErrInvalidParameter
@@ -79,8 +79,8 @@ func (this *OrgSignatureController) Post() {
 
 // @Title Get
 // @Description download org signature
-// @Param	cla_org_id		path 	string	true		"cla org id"
-// @router /:cla_org_id [get]
+// @Param	org_cla_id		path 	string	true		"org cla id"
+// @router /:org_cla_id [get]
 func (this *OrgSignatureController) Get() {
 	var statusCode = 0
 	var errCode = ""
@@ -91,7 +91,7 @@ func (this *OrgSignatureController) Get() {
 		sendResponse(&this.Controller, statusCode, errCode, reason, body, "download org signature")
 	}()
 
-	orgCLAID, err := fetchStringParameter(&this.Controller, ":cla_org_id")
+	orgCLAID, err := fetchStringParameter(&this.Controller, ":org_cla_id")
 	if err != nil {
 		reason = err
 		errCode = util.ErrInvalidParameter

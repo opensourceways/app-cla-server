@@ -13,8 +13,8 @@ type CorporationSigningCreateOption struct {
 	VerificationCode string `json:"verification_code"`
 }
 
-func (this *CorporationSigningCreateOption) Validate() (string, error) {
-	ec, err := checkVerificationCode(this.AdminEmail, this.VerificationCode, ActionCorporationSigning)
+func (this *CorporationSigningCreateOption) Validate(orgCLAID string) (string, error) {
+	ec, err := checkVerificationCode(this.AdminEmail, this.VerificationCode, orgCLAID)
 	if err != nil {
 		return ec, err
 	}

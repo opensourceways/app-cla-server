@@ -23,11 +23,11 @@ func (this *IndividualSigningController) Prepare() {
 
 // @Title Post
 // @Description sign as individual
-// @Param	:cla_org_id	path 	string				true		"cla org id"
+// @Param	:org_cla_id	path 	string				true		"org cla id"
 // @Param	body		body 	models.IndividualSigning	true		"body for individual signing"
 // @Success 201 {int} map
 // @Failure util.ErrHasSigned
-// @router /:cla_org_id [post]
+// @router /:org_cla_id [post]
 func (this *IndividualSigningController) Post() {
 	var statusCode = 0
 	var errCode = ""
@@ -38,7 +38,7 @@ func (this *IndividualSigningController) Post() {
 		sendResponse(&this.Controller, statusCode, errCode, reason, body, "sign as individual")
 	}()
 
-	orgCLAID, err := fetchStringParameter(&this.Controller, ":cla_org_id")
+	orgCLAID, err := fetchStringParameter(&this.Controller, ":org_cla_id")
 	if err != nil {
 		reason = err
 		errCode = util.ErrInvalidParameter

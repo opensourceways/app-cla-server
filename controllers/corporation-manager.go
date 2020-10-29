@@ -107,12 +107,12 @@ func (this *CorporationManagerController) newAccessToken(orgCLAID, email, role s
 
 // @Title Put
 // @Description add corporation administrator
-// @Param	:cla_org_id	path 	string					true		"cla org id"
+// @Param	:org_cla_id	path 	string					true		"org cla id"
 // @Param	:email		path 	string					true		"email of corp"
 // @Success 202 {int} map
 // @Failure util.ErrPDFHasNotUploaded
 // @Failure util.ErrNumOfCorpManagersExceeded
-// @router /:cla_org_id/:email [put]
+// @router /:org_cla_id/:email [put]
 func (this *CorporationManagerController) Put() {
 	var statusCode = 0
 	var errCode = ""
@@ -123,13 +123,13 @@ func (this *CorporationManagerController) Put() {
 		sendResponse(&this.Controller, statusCode, errCode, reason, body, "add corp administrator")
 	}()
 
-	if err := checkAPIStringParameter(&this.Controller, []string{":cla_org_id", ":email"}); err != nil {
+	if err := checkAPIStringParameter(&this.Controller, []string{":org_cla_id", ":email"}); err != nil {
 		reason = err
 		errCode = util.ErrInvalidParameter
 		statusCode = 400
 		return
 	}
-	orgCLAID := this.GetString(":cla_org_id")
+	orgCLAID := this.GetString(":org_cla_id")
 	adminEmail := this.GetString(":email")
 
 	var orgCLA *models.OrgCLA

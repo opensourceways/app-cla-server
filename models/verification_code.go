@@ -7,11 +7,6 @@ import (
 	"github.com/opensourceways/app-cla-server/util"
 )
 
-const (
-	ActionCorporationSigning = "corporation-signing"
-	ActionEmployeeSigning    = "employee-signing"
-)
-
 func CreateVerificationCode(email, purpose string, expiry int64) (string, error) {
 	code := util.RandStr(6, "number")
 

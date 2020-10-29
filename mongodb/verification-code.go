@@ -39,8 +39,8 @@ func (c *client) CreateVerificationCode(opt dbmodels.VerificationCode) error {
 		filter := bson.M{"expiry": bson.M{"$lt": util.Now()}}
 		col.DeleteMany(ctx, filter)
 
-		// email + purpose can't be the index, for example: a corp signs two different communities
-		// so, it should use insert doc instead
+		// email + purpose can't be the index, for example: a corp signs a community concurrently.
+		// so, it should use insertDoc to record each verification codes.
 		_, err := c.insertDoc(ctx, vcCollection, body)
 		return err
 	}

@@ -106,8 +106,13 @@ func (this VerificationCode) GenEmailMsg() (*EmailMessage, error) {
 }
 
 type AddingCorpManager struct {
-	Admin    bool
-	Password string
+	Admin            bool
+	User             string
+	Email            string
+	Password         string
+	Org              string
+	ProjectURL       string
+	URLOfCLAPlatform string
 }
 
 func (this AddingCorpManager) GenEmailMsg() (*EmailMessage, error) {
@@ -118,6 +123,9 @@ func (this AddingCorpManager) GenEmailMsg() (*EmailMessage, error) {
 }
 
 type RemovingCorpManager struct {
+	User       string
+	Org        string
+	ProjectURL string
 }
 
 func (this RemovingCorpManager) GenEmailMsg() (*EmailMessage, error) {

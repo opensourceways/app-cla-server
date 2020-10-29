@@ -164,7 +164,7 @@ func (this *CorporationManagerController) Put() {
 
 	body = "add manager successfully"
 
-	notifyCorpManagerWhenAdding(orgCLA.OrgEmail, "Corporation Administrator", added)
+	notifyCorpManagerWhenAdding(orgCLA, added)
 }
 
 // @Title Patch

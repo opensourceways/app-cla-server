@@ -120,7 +120,7 @@ func (this *EmployeeManagerController) addOrDeleteManagers(toAdd bool) {
 		if err != nil {
 			reason = err
 		} else {
-			notifyCorpManagerWhenAdding(orgCLA.OrgEmail, "Corporation Manager", added)
+			notifyCorpManagerWhenAdding(orgCLA, added)
 		}
 
 	} else {
@@ -128,9 +128,19 @@ func (this *EmployeeManagerController) addOrDeleteManagers(toAdd bool) {
 		if err != nil {
 			reason = err
 		} else {
+			url := util.ProjectURL(orgCLA.Platform, orgCLA.OrgID, orgCLA.RepoID)
+			subject := fmt.Sprintf(
+				"Revoking the authorization on project of \"%s\"",
+				util.ProjectName(orgCLA.OrgID, orgCLA.RepoID),
+			)
+
 			for _, emailTo := range deleted {
-				msg := email.RemovingCorpManager{}
-				sendEmailToIndividual(emailTo, orgCLA.OrgEmail, "Removing Corp Manager", msg)
+				msg := email.RemovingCorpManager{
+					User:       "user",
+					Org:        orgCLA.OrgID,
+					ProjectURL: url,
+				}
+				sendEmailToIndividual(emailTo, orgCLA.OrgEmail, subject, msg)
 			}
 		}
 	}

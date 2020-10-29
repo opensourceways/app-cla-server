@@ -71,7 +71,10 @@ func (this *VerificationCodeController) Post() {
 	}
 	sendEmailToIndividual(
 		individualEmail, orgCLA.OrgEmail,
-		fmt.Sprintf("Verification code for signing CLA on project of %s", util.ProjectName(orgCLA.OrgID, orgCLA.RepoID)),
+		fmt.Sprintf(
+			"Verification code for signing CLA on project of \"%s\"",
+			util.ProjectName(orgCLA.OrgID, orgCLA.RepoID),
+		),
 		msg,
 	)
 }

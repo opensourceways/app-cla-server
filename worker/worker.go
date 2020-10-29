@@ -78,7 +78,7 @@ func (this *emailWorker) GenCLAPDFForCorporationAndSendIt(orgCLA *models.OrgCLA,
 					next(err)
 					continue
 				}
-				msg.Subject = fmt.Sprintf("Signing Corporation CLA on project of %s", data.Project)
+				msg.Subject = fmt.Sprintf("Signing Corporation CLA on project of \"%s\"", data.Project)
 				msg.To = []string{signing.AdminEmail}
 			}
 

@@ -23,6 +23,7 @@ type appConfig struct {
 	CodePlatformConfigFile  string `json:"code_platforms"`
 	EmailPlatformConfigFile string `json:"email_platforms"`
 	EmployeeManagersNumber  int    `json:"employee_managers_number"`
+	CLAPlatformURL          string `json:"cla_platform_url"`
 }
 
 func InitAppConfig() error {
@@ -59,6 +60,7 @@ func InitAppConfig() error {
 		CodePlatformConfigFile:  beego.AppConfig.String("code_platforms"),
 		EmailPlatformConfigFile: beego.AppConfig.String("email_platforms"),
 		EmployeeManagersNumber:  employeeMangers,
+		CLAPlatformURL:          beego.AppConfig.String("cla_platform_url"),
 	}
 	return AppConfig.validate()
 }
@@ -102,6 +104,10 @@ func (this *appConfig) validate() error {
 
 	if util.IsFileNotExist(this.EmailPlatformConfigFile) {
 		return fmt.Errorf("The file:%s is not exist", this.EmailPlatformConfigFile)
+	}
+
+	if this.CLAPlatformURL == "" {
+		return fmt.Errorf("empty cla_platform_url")
 	}
 	return nil
 }

@@ -149,3 +149,10 @@ func ProjectName(org, repo string) string {
 	}
 	return fmt.Sprintf("%s/%s", org, repo)
 }
+
+func ProjectURL(platform, org, repo string) string {
+	if repo == "" {
+		return fmt.Sprintf("https://%s.com/%s", platform, org)
+	}
+	return fmt.Sprintf("https://%s.com/%s/%s", platform, org, repo)
+}

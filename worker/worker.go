@@ -161,14 +161,11 @@ func getEmailClient(orgEmail string) (*models.OrgEmail, email.IEmail, error) {
 }
 
 func buildCorpSigningInfo(signing *models.CorporationSigning, cla *models.CLA) string {
-	orders, keys, err := pdf.BuildCorpContact(cla)
-	if err != nil {
-		return ""
-	}
+	orders, titles := pdf.BuildCorpContact(cla)
 
 	v := make([]string, 0, len(orders))
 	for _, i := range orders {
-		v = append(v, fmt.Sprintf("%s: %s", keys[i], signing.Info[i]))
+		v = append(v, fmt.Sprintf("%s: %s", titles[i], signing.Info[i]))
 	}
 
 	return strings.Join(v, "\n")

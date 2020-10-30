@@ -10,6 +10,7 @@ RUN cd /go/src/github.com/opensourceways/app-cla-server && CGO_ENABLED=1 go buil
 FROM golang:latest
 RUN apt-get update && apt-get install -y python-pip && mkdir -p /opt/app/
 COPY ./conf /opt/app/conf
+RUN rm /opt/app/conf/config.go
 COPY ./util/merge-signature.py /opt/app/util
 # overwrite config yaml
 COPY ./deploy/app.conf /opt/app/conf

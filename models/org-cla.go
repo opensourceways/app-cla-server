@@ -17,6 +17,7 @@ type OrgCLACreateOption struct {
 	Platform string `json:"platform"`
 	OrgID    string `json:"org_id"`
 	RepoID   string `json:"repo_id"`
+	OrgAlias string `json:"org_alias"`
 
 	ApplyTo string `json:"apply_to"`
 
@@ -62,6 +63,7 @@ func (this OrgCLACreateOption) Create(claID string) (string, error) {
 		Platform:    this.Platform,
 		OrgID:       this.OrgID,
 		RepoID:      this.RepoID,
+		OrgAlias:    this.OrgAlias,
 		ApplyTo:     this.ApplyTo,
 		OrgEmail:    this.OrgEmail,
 		Enabled:     true,
@@ -69,6 +71,10 @@ func (this OrgCLACreateOption) Create(claID string) (string, error) {
 		CLALanguage: this.CLA.Language,
 		Submitter:   this.Submitter,
 	}
+	if this.OrgAlias == "" {
+		info.OrgAlias = this.OrgID
+	}
+
 	return dbmodels.GetDB().CreateOrgCLA(info)
 }
 

@@ -44,22 +44,18 @@ func (this *pdfGenerator) GenPDFForCorporationSigning(orgCLA *models.OrgCLA, sig
 }
 
 func genCorporPDFMissingSig(c *corpSigningPDF, orgCLA *models.OrgCLA, signing *models.CorporationSigning, cla *models.CLA, outDir string) (string, error) {
-	project := orgCLA.OrgID
-	if orgCLA.RepoID != "" {
-		project = fmt.Sprintf("%s-%s", project, orgCLA.RepoID)
-	}
-
 	pdf := c.begin()
 
 	// first page
-	c.firstPage(pdf, fmt.Sprintf("The %s Project", project))
-	c.welcome(pdf, project, orgCLA.OrgEmail)
+	c.firstPage(pdf, fmt.Sprintf("The Project of %s", orgCLA.OrgAlias))
+	c.welcome(pdf, orgCLA.OrgAlias, orgCLA.OrgEmail)
 
 	orders, titles := BuildCorpContact(cla)
 	c.contact(pdf, signing.Info, orders, titles)
 
-	c.declare(pdf, project)
+	c.declare(pdf)
 	c.cla(pdf, cla.Text)
+	c.projectURL(pdf, fmt.Sprintf("[1]. %s", util.ProjectURL(orgCLA.Platform, orgCLA.OrgID, orgCLA.RepoID)))
 
 	// second page
 	c.secondPage(pdf, signing.Date)

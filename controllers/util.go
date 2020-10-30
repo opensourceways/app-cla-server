@@ -318,7 +318,7 @@ func sendEmail(to []string, from, subject string, builder email.IEmailMessageBul
 
 func notifyCorpManagerWhenAdding(orgCLA *models.OrgCLA, info []dbmodels.CorporationManagerCreateOption) {
 	admin := (info[0].Role == dbmodels.RoleAdmin)
-	subject := fmt.Sprintf("Account on project of \"%s\"", util.ProjectName(orgCLA.OrgID, orgCLA.RepoID))
+	subject := fmt.Sprintf("Account on project of \"%s\"", orgCLA.OrgAlias)
 
 	for _, item := range info {
 		d := email.AddingCorpManager{
@@ -326,8 +326,8 @@ func notifyCorpManagerWhenAdding(orgCLA *models.OrgCLA, info []dbmodels.Corporat
 			User:             item.Name,
 			Email:            item.Email,
 			Password:         item.Password,
-			Org:              orgCLA.OrgID,
-			ProjectURL:       util.ProjectURL(orgCLA.Platform, orgCLA.RepoID, orgCLA.RepoID),
+			Org:              orgCLA.OrgAlias,
+			ProjectURL:       projectURL(orgCLA),
 			URLOfCLAPlatform: conf.AppConfig.CLAPlatformURL,
 		}
 
@@ -405,4 +405,8 @@ func getSingingInfo(info dbmodels.TypeSigningInfo, fields []dbmodels.Field) dbmo
 		}
 	}
 	return r
+}
+
+func projectURL(orgCLA *models.OrgCLA) string {
+	return util.ProjectURL(orgCLA.Platform, orgCLA.RepoID, orgCLA.RepoID)
 }

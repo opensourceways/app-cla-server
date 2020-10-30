@@ -76,10 +76,10 @@ type IEmailMessageBulder interface {
 }
 
 type CorporationSigning struct {
-	AdminName   string
 	Org         string
-	Project     string
 	Date        string
+	AdminName   string
+	ProjectURL  string
 	SigningInfo string
 }
 
@@ -96,9 +96,10 @@ func (this IndividualSigning) GenEmailMsg() (*EmailMessage, error) {
 }
 
 type VerificationCode struct {
-	Email string
-	Org   string
-	Code  string
+	Email      string
+	Org        string
+	Code       string
+	ProjectURL string
 }
 
 func (this VerificationCode) GenEmailMsg() (*EmailMessage, error) {
@@ -133,10 +134,10 @@ func (this RemovingCorpManager) GenEmailMsg() (*EmailMessage, error) {
 }
 
 type EmployeeSigning struct {
-	Name     string
-	Org      string
-	Project  string
-	Managers string
+	Name       string
+	Org        string
+	ProjectURL string
+	Managers   string
 }
 
 func (this EmployeeSigning) GenEmailMsg() (*EmailMessage, error) {
@@ -159,10 +160,10 @@ type EmployeeNotification struct {
 	Active   bool
 	Inactive bool
 
-	Name    string
-	Project string
-	Manager string
-	Org     string
+	Name       string
+	ProjectURL string
+	Manager    string
+	Org        string
 }
 
 func (this EmployeeNotification) GenEmailMsg() (*EmailMessage, error) {

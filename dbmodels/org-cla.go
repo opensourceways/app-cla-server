@@ -5,6 +5,7 @@ type OrgCLA struct {
 	Platform             string `json:"platform"`
 	OrgID                string `json:"org_id"`
 	RepoID               string `json:"repo_id"`
+	OrgAlias             string `json:"org_alias"`
 	CLAID                string `json:"cla_id"`
 	CLALanguage          string `json:"cla_language"`
 	ApplyTo              string `json:"apply_to"`

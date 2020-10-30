@@ -219,10 +219,10 @@ func (this *EmployeeSigningController) Update() {
 	body = "enabled employee successfully"
 
 	msg := email.EmployeeNotification{
-		Name:    employeeEmail,
-		Manager: managerEmail,
-		Project: util.ProjectName(corpClaOrg.OrgID, corpClaOrg.RepoID),
-		Org:     corpClaOrg.OrgID,
+		Name:       employeeEmail,
+		Manager:    managerEmail,
+		ProjectURL: projectURL(corpClaOrg),
+		Org:        corpClaOrg.OrgAlias,
 	}
 	subject := ""
 	if info.Enabled {
@@ -280,11 +280,11 @@ func (this *EmployeeSigningController) Delete() {
 	body = "delete employee successfully"
 
 	msg := email.EmployeeNotification{
-		Removing: true,
-		Name:     employeeEmail,
-		Manager:  managerEmail,
-		Project:  util.ProjectName(corpClaOrg.OrgID, corpClaOrg.RepoID),
-		Org:      corpClaOrg.OrgID,
+		Removing:   true,
+		Name:       employeeEmail,
+		Manager:    managerEmail,
+		ProjectURL: projectURL(corpClaOrg),
+		Org:        corpClaOrg.OrgAlias,
 	}
 	sendEmailToIndividual(employeeEmail, corpClaOrg.OrgEmail, "Remove employee", msg)
 }
@@ -311,21 +311,21 @@ func (this *EmployeeSigningController) notifyManagers(managers []dbmodels.Corpor
 	}
 
 	msg := email.EmployeeSigning{
-		Name:     info.Name,
-		Org:      orgCLA.OrgID,
-		Project:  util.ProjectName(orgCLA.OrgID, orgCLA.RepoID),
-		Managers: strings.Join(ms, "\n"),
+		Name:       info.Name,
+		Org:        orgCLA.OrgAlias,
+		ProjectURL: projectURL(orgCLA),
+		Managers:   "  " + strings.Join(ms, "\n  "),
 	}
 	sendEmailToIndividual(
 		info.Email, orgCLA.OrgEmail,
-		fmt.Sprintf("Signing CLA on project of \"%s\"", msg.Project),
+		fmt.Sprintf("Signing CLA on project of \"%s\"", msg.Org),
 		msg,
 	)
 
 	msg1 := email.NotifyingManager{
+		Org:              orgCLA.OrgAlias,
 		EmployeeEmail:    info.Email,
-		ProjectURL:       util.ProjectURL(orgCLA.Platform, orgCLA.OrgID, orgCLA.RepoID),
-		Org:              orgCLA.OrgID,
+		ProjectURL:       projectURL(orgCLA),
 		URLOfCLAPlatform: conf.AppConfig.CLAPlatformURL,
 	}
 	sendEmail(to, orgCLA.OrgEmail, "An employee has signed CLA", msg1)

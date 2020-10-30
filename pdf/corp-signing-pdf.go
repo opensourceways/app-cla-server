@@ -98,7 +98,7 @@ func (this *corpSigningPDF) welcome(pdf *gofpdf.Fpdf, project, email string) {
 	multlines(pdf, this.gh, buf.String())
 }
 
-func (this *corpSigningPDF) contact(pdf *gofpdf.Fpdf, items map[string]string, orders []string, keys map[string]string) {
+func (this *corpSigningPDF) contact(pdf *gofpdf.Fpdf, items map[string]string, orders []string, titles map[string]string) {
 	gh := this.gh
 
 	f := func(title, value string) {
@@ -114,7 +114,7 @@ func (this *corpSigningPDF) contact(pdf *gofpdf.Fpdf, items map[string]string, o
 	setFont(pdf, this.contactFont)
 
 	for _, i := range orders {
-		f(keys[i], items[i])
+		f(titles[i], items[i])
 	}
 }
 

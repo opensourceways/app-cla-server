@@ -55,11 +55,8 @@ func genCorporPDFMissingSig(c *corpSigningPDF, orgCLA *models.OrgCLA, signing *m
 	c.firstPage(pdf, fmt.Sprintf("The %s Project", project))
 	c.welcome(pdf, project, orgCLA.OrgEmail)
 
-	orders, keys, err := BuildCorpContact(cla)
-	if err != nil {
-		return "", fmt.Errorf("build contact info of corp signing failed: %s", err.Error())
-	}
-	c.contact(pdf, signing.Info, orders, keys)
+	orders, titles := BuildCorpContact(cla)
+	c.contact(pdf, signing.Info, orders, titles)
 
 	c.declare(pdf, project)
 	c.cla(pdf, cla.Text)
@@ -116,7 +113,7 @@ func mergeCorporPDFSignaturePage(orgCLAID, pythonBin, pdfFile, sigFile, outfile 
 	return nil
 }
 
-func BuildCorpContact(cla *models.CLA) ([]string, map[string]string, error) {
+func BuildCorpContact(cla *models.CLA) ([]string, map[string]string) {
 	ids := make(sort.IntSlice, 0, len(cla.Fields))
 	m := map[int]string{}
 	mk := map[string]string{}
@@ -124,7 +121,7 @@ func BuildCorpContact(cla *models.CLA) ([]string, map[string]string, error) {
 	for _, item := range cla.Fields {
 		v, err := strconv.Atoi(item.ID)
 		if err != nil {
-			return nil, nil, err
+			continue
 		}
 
 		ids = append(ids, v)
@@ -138,5 +135,5 @@ func BuildCorpContact(cla *models.CLA) ([]string, map[string]string, error) {
 	for _, k := range ids {
 		r = append(r, m[k])
 	}
-	return r, mk, nil
+	return r, mk
 }

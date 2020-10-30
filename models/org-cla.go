@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
@@ -30,8 +31,18 @@ func (this OrgCLACreateOption) Validate() (string, error) {
 		return util.ErrInvalidParameter, fmt.Errorf("invalid apply_to")
 	}
 
+	if len(this.CLA.Fields) <= 0 {
+		return util.ErrInvalidParameter, fmt.Errorf("no fields")
+	}
+
 	if len(this.CLA.Fields) > conf.AppConfig.CLAFieldsNumber {
 		return util.ErrInvalidParameter, fmt.Errorf("exceeds the max fields number")
+	}
+
+	for _, item := range this.CLA.Fields {
+		if _, err := strconv.Atoi(item.ID); err != nil {
+			return util.ErrInvalidParameter, fmt.Errorf("invalid field id")
+		}
 	}
 
 	_, err := dbmodels.GetDB().GetOrgEmailInfo(this.OrgEmail)

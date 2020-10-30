@@ -11,7 +11,7 @@ FROM golang:latest
 RUN apt-get update && apt-get install -y python3 && mkdir -p /opt/app/
 COPY ./conf /opt/app/conf
 RUN rm /opt/app/conf/config.go
-COPY ./util/merge-signature.py /opt/app/util
+COPY ./util/merge-signature.py /opt/app/util/merge-signature.py
 # overwrite config yaml
 COPY ./deploy/app.conf /opt/app/conf
 COPY  --from=BUILDER /go/src/github.com/opensourceways/app-cla-server/cla-server /opt/app

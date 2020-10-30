@@ -65,15 +65,16 @@ func (this *VerificationCodeController) Post() {
 	body = "create verification code successfully"
 
 	msg := email.VerificationCode{
-		Email: individualEmail,
-		Org:   orgCLA.OrgID,
-		Code:  code,
+		Email:      individualEmail,
+		Org:        orgCLA.OrgAlias,
+		Code:       code,
+		ProjectURL: projectURL(orgCLA),
 	}
 	sendEmailToIndividual(
 		individualEmail, orgCLA.OrgEmail,
 		fmt.Sprintf(
 			"Verification code for signing CLA on project of \"%s\"",
-			util.ProjectName(orgCLA.OrgID, orgCLA.RepoID),
+			orgCLA.OrgAlias,
 		),
 		msg,
 	)

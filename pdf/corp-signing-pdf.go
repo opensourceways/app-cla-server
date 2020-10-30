@@ -26,6 +26,7 @@ type corpSigningPDF struct {
 	contactFont   fontInfo
 	declareFont   fontInfo
 	claFont       fontInfo
+	urlFont       fontInfo
 	signatureFont fontInfo
 
 	subtitle     string
@@ -77,13 +78,13 @@ func (this *corpSigningPDF) firstPage(pdf *gofpdf.Fpdf, title string) {
 	pdf.Ln(-1)
 }
 
-func (this *corpSigningPDF) welcome(pdf *gofpdf.Fpdf, project, email string) {
+func (this *corpSigningPDF) welcome(pdf *gofpdf.Fpdf, org, email string) {
 	data := struct {
-		Project string
-		Email   string
+		Org   string
+		Email string
 	}{
-		Project: project,
-		Email:   email,
+		Org:   org,
+		Email: email,
 	}
 
 	tmpl := this.welcomeTemp
@@ -118,17 +119,11 @@ func (this *corpSigningPDF) contact(pdf *gofpdf.Fpdf, items map[string]string, o
 	}
 }
 
-func (this *corpSigningPDF) declare(pdf *gofpdf.Fpdf, project string) {
-	data := struct {
-		Project string
-	}{
-		Project: project,
-	}
-
+func (this *corpSigningPDF) declare(pdf *gofpdf.Fpdf) {
 	tmpl := this.declaration
 
 	buf := new(bytes.Buffer)
-	if err := tmpl.Execute(buf, data); err != nil {
+	if err := tmpl.Execute(buf, nil); err != nil {
 		pdf.SetErrorf("Failed to add declaration part: execute template failed: %s", err.Error())
 		return
 	}
@@ -140,6 +135,11 @@ func (this *corpSigningPDF) declare(pdf *gofpdf.Fpdf, project string) {
 func (this *corpSigningPDF) cla(pdf *gofpdf.Fpdf, content string) {
 	setFont(pdf, this.claFont)
 	multlines(pdf, this.gh, content)
+}
+
+func (this *corpSigningPDF) projectURL(pdf *gofpdf.Fpdf, url string) {
+	setFont(pdf, this.urlFont)
+	multlines(pdf, this.gh, url)
 }
 
 func (this *corpSigningPDF) secondPage(pdf *gofpdf.Fpdf, date string) {

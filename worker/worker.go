@@ -55,10 +55,10 @@ func (this *emailWorker) GenCLAPDFForCorporationAndSendIt(orgCLA *models.OrgCLA,
 		}
 
 		data := email.CorporationSigning{
-			AdminName:   signing.AdminName,
-			Org:         orgCLA.OrgID,
-			Project:     util.ProjectName(orgCLA.OrgID, orgCLA.RepoID),
+			Org:         orgCLA.OrgAlias,
 			Date:        signing.Date,
+			AdminName:   signing.AdminName,
+			ProjectURL:  util.ProjectURL(orgCLA.Platform, orgCLA.OrgID, orgCLA.RepoID),
 			SigningInfo: buildCorpSigningInfo(signing, cla),
 		}
 
@@ -78,7 +78,7 @@ func (this *emailWorker) GenCLAPDFForCorporationAndSendIt(orgCLA *models.OrgCLA,
 					next(err)
 					continue
 				}
-				msg.Subject = fmt.Sprintf("Signing Corporation CLA on project of \"%s\"", data.Project)
+				msg.Subject = fmt.Sprintf("Signing Corporation CLA on project of \"%s\"", data.Org)
 				msg.To = []string{signing.AdminEmail}
 			}
 
@@ -167,6 +167,7 @@ func buildCorpSigningInfo(signing *models.CorporationSigning, cla *models.CLA) s
 	for _, i := range orders {
 		v = append(v, fmt.Sprintf("%s: %s", titles[i], signing.Info[i]))
 	}
+	v = append(v, fmt.Sprintf("Date: %s", signing.Date))
 
-	return strings.Join(v, "\n")
+	return "  " + strings.Join(v, "\n  ")
 }

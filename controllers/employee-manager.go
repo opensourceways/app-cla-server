@@ -128,17 +128,13 @@ func (this *EmployeeManagerController) addOrDeleteManagers(toAdd bool) {
 		if err != nil {
 			reason = err
 		} else {
-			url := util.ProjectURL(orgCLA.Platform, orgCLA.OrgID, orgCLA.RepoID)
-			subject := fmt.Sprintf(
-				"Revoking the authorization on project of \"%s\"",
-				util.ProjectName(orgCLA.OrgID, orgCLA.RepoID),
-			)
+			subject := fmt.Sprintf("Revoking the authorization on project of \"%s\"", orgCLA.OrgAlias)
 
 			for _, item := range deleted {
 				msg := email.RemovingCorpManager{
 					User:       item.Name,
-					Org:        orgCLA.OrgID,
-					ProjectURL: url,
+					Org:        orgCLA.OrgAlias,
+					ProjectURL: projectURL(orgCLA),
 				}
 				sendEmailToIndividual(item.Email, orgCLA.OrgEmail, subject, msg)
 			}

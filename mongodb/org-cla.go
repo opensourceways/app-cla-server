@@ -35,6 +35,7 @@ type OrgCLA struct {
 	Platform    string    `bson:"platform" json:"platform" required:"true"`
 	OrgID       string    `bson:"org_id" json:"org_id" required:"true"`
 	RepoID      string    `bson:"repo_id" json:"repo_id"`
+	OrgAlias    string    `bson:"org_alias" json:"org_alias"`
 	CLAID       string    `bson:"cla_id" json:"cla_id" required:"true"`
 	CLALanguage string    `bson:"cla_language" json:"cla_language" required:"true"`
 	ApplyTo     string    `bson:"apply_to" json:"apply_to" required:"true"`
@@ -179,6 +180,7 @@ func toModelOrgCLA(item OrgCLA) dbmodels.OrgCLA {
 		Platform:             item.Platform,
 		OrgID:                item.OrgID,
 		RepoID:               toNormalRepo(item.RepoID),
+		OrgAlias:             item.OrgAlias,
 		CLAID:                item.CLAID,
 		CLALanguage:          item.CLALanguage,
 		ApplyTo:              item.ApplyTo,

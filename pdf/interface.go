@@ -77,6 +77,7 @@ func newCorpSigningPDF() (*corpSigningPDF, error) {
 		contactFont:   fontInfo{font: "NotoSansSC-Regular", size: 12},
 		declareFont:   fontInfo{font: "Times", size: 12},
 		claFont:       fontInfo{font: "Times", size: 12},
+		urlFont:       fontInfo{font: "Times", size: 12},
 		signatureFont: fontInfo{font: "Arial", size: 12},
 
 		subtitle: "Software Grant and Corporate Contributor License Agreement (\"Agreement\")",

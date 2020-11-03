@@ -20,11 +20,11 @@ func (this *CorporationManagerController) Prepare() {
 	switch getRequestMethod(&this.Controller) {
 	case http.MethodPut:
 		// add administrator
-		apiPrepare(&this.Controller, []string{PermissionOwnerOfOrg}, &acForCodePlatformPayload{})
+		apiPrepare(&this.Controller, []string{PermissionOwnerOfOrg})
 
 	case http.MethodPatch:
 		// reset password of manager
-		apiPrepare(&this.Controller, []string{PermissionCorporAdmin, PermissionEmployeeManager}, nil)
+		apiPrepare(&this.Controller, []string{PermissionCorporAdmin, PermissionEmployeeManager})
 	}
 }
 
@@ -59,35 +59,38 @@ func (this *CorporationManagerController) Auth() {
 	}
 
 	type authInfo struct {
-		dbmodels.CorporationManagerCheckResult
-		Token    string `json:"token"`
-		OrgCLAID string `json:"cla_org_id"`
+		Role             string `json:"role"`
+		Platform         string `json:"platform"`
+		OrgID            string `json:"org_id"`
+		RepoID           string `json:"repo_id"`
+		Token            string `json:"token"`
+		InitialPWChanged bool   `json:"initial_pw_changed"`
 	}
 
 	result := make([]authInfo, 0, len(v))
 
 	for orgCLAID, item := range v {
-		token, err := this.newAccessToken(orgCLAID, item.Email, item.Role)
+		token, err := this.newAccessToken(orgCLAID, &item)
 		if err != nil {
 			continue
 		}
 
-		// should not expose email of corp manager
-		item.Email = ""
-
 		result = append(result, authInfo{
-			CorporationManagerCheckResult: item,
-			Token:                         token,
-			OrgCLAID:                      orgCLAID,
+			Role:             item.Role,
+			Platform:         item.Platform,
+			OrgID:            item.OrgID,
+			RepoID:           item.RepoID,
+			Token:            token,
+			InitialPWChanged: item.InitialPWChanged,
 		})
 	}
 
 	body = result
 }
 
-func (this *CorporationManagerController) newAccessToken(orgCLAID, email, role string) (string, error) {
+func (this *CorporationManagerController) newAccessToken(orgCLAID string, info *dbmodels.CorporationManagerCheckResult) (string, error) {
 	permission := ""
-	switch role {
+	switch info.Role {
 	case dbmodels.RoleAdmin:
 		permission = PermissionCorporAdmin
 	case dbmodels.RoleManager:
@@ -97,8 +100,10 @@ func (this *CorporationManagerController) newAccessToken(orgCLAID, email, role s
 	ac := &accessController{
 		Expiry:     util.Expiry(conf.AppConfig.APITokenExpiry),
 		Permission: permission,
-		Payload: &accessControllerBasicPayload{
-			User: corpManagerUser(orgCLAID, email),
+		Payload: &acForCorpManagerPayload{
+			Name:     info.Name,
+			Email:    info.Email,
+			OrgCLAID: orgCLAID,
 		},
 	}
 
@@ -182,10 +187,9 @@ func (this *CorporationManagerController) Patch() {
 		sendResponse(&this.Controller, statusCode, errCode, reason, body, "reset password of corp's manager")
 	}()
 
-	orgCLAID, corpEmail, err := parseCorpManagerUser(&this.Controller)
-	if err != nil {
-		reason = err
-		errCode = util.ErrUnknownToken
+	var ac *acForCorpManagerPayload
+	ac, errCode, reason = getACOfCorpManager(&this.Controller)
+	if reason != nil {
 		statusCode = 401
 		return
 	}
@@ -203,7 +207,7 @@ func (this *CorporationManagerController) Patch() {
 		return
 	}
 
-	if err := (&info).Reset(orgCLAID, corpEmail); err != nil {
+	if err := (&info).Reset(ac.OrgCLAID, ac.Email); err != nil {
 		reason = err
 		return
 	}

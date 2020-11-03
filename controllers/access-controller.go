@@ -86,13 +86,8 @@ func (this *accessController) Verify(permission []string) error {
 	return fmt.Errorf("Not allowed permission")
 }
 
-type accessControllerBasicPayload struct {
-	User string `json:"user"`
-}
-
 type acForCodePlatformPayload struct {
-	accessControllerBasicPayload
-
+	User          string          `json:"user"`
 	Platform      string          `json:"platform"`
 	PlatformToken string          `json:"platform_token"`
 	Orgs          map[string]bool `json:"orgs"`
@@ -113,4 +108,10 @@ func (this *acForCodePlatformPayload) addOrg(org string) {
 	}
 
 	this.Orgs[org] = true
+}
+
+type acForCorpManagerPayload struct {
+	Name     string `json:"name"`
+	Email    string `json:"email"`
+	OrgCLAID string `json:"org_cla_id"`
 }

@@ -16,7 +16,7 @@ type EmployeeManagerController struct {
 }
 
 func (this *EmployeeManagerController) Prepare() {
-	apiPrepare(&this.Controller, []string{PermissionCorporAdmin}, nil)
+	apiPrepare(&this.Controller, []string{PermissionCorporAdmin})
 }
 
 // @Title Post
@@ -51,17 +51,14 @@ func (this *EmployeeManagerController) GetAll() {
 		sendResponse(&this.Controller, statusCode, errCode, reason, body, "list employee managers")
 	}()
 
-	orgCLAID, corpEmail, err := parseCorpManagerUser(&this.Controller)
-	if err != nil {
-		reason = err
-		errCode = util.ErrUnknownToken
+	var ac *acForCorpManagerPayload
+	ac, errCode, reason = getACOfCorpManager(&this.Controller)
+	if reason != nil {
 		statusCode = 401
 		return
 	}
 
-	r, err := models.ListCorporationManagers(
-		orgCLAID, corpEmail, dbmodels.RoleManager,
-	)
+	r, err := models.ListCorporationManagers(ac.OrgCLAID, ac.Email, dbmodels.RoleManager)
 	if err != nil {
 		reason = err
 		return
@@ -86,10 +83,9 @@ func (this *EmployeeManagerController) addOrDeleteManagers(toAdd bool) {
 		sendResponse(&this.Controller, statusCode, errCode, reason, body, fmt.Sprintf("%s employee managers", op))
 	}()
 
-	orgCLAID, adminEmail, err := parseCorpManagerUser(&this.Controller)
-	if err != nil {
-		reason = err
-		errCode = util.ErrUnknownToken
+	var ac *acForCorpManagerPayload
+	ac, errCode, reason = getACOfCorpManager(&this.Controller)
+	if reason != nil {
 		statusCode = 401
 		return
 	}
@@ -102,21 +98,21 @@ func (this *EmployeeManagerController) addOrDeleteManagers(toAdd bool) {
 		return
 	}
 
-	if c, err := (&info).Validate(adminEmail); err != nil {
+	if c, err := (&info).Validate(ac.Email); err != nil {
 		reason = err
 		errCode = c
 		statusCode = 400
 		return
 	}
 
-	orgCLA := &models.OrgCLA{ID: orgCLAID}
+	orgCLA := &models.OrgCLA{ID: ac.OrgCLAID}
 	if err := orgCLA.Get(); err != nil {
 		reason = err
 		return
 	}
 
 	if toAdd {
-		added, err := (&info).Create(orgCLAID)
+		added, err := (&info).Create(ac.OrgCLAID)
 		if err != nil {
 			reason = err
 		} else {
@@ -124,7 +120,7 @@ func (this *EmployeeManagerController) addOrDeleteManagers(toAdd bool) {
 		}
 
 	} else {
-		deleted, err := (&info).Delete(orgCLAID)
+		deleted, err := (&info).Delete(ac.OrgCLAID)
 		if err != nil {
 			reason = err
 		} else {

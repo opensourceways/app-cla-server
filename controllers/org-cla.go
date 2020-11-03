@@ -19,12 +19,11 @@ type OrgCLAController struct {
 func (this *OrgCLAController) Prepare() {
 	if getRouterPattern(&this.Controller) == "/v1/org-cla/:platform/:org_id/:apply_to" {
 		if getHeader(&this.Controller, headerToken) != "" {
-			apiPrepare(&this.Controller, []string{PermissionIndividualSigner}, nil)
+			apiPrepare(&this.Controller, []string{PermissionIndividualSigner})
 		}
-		return
+	} else {
+		apiPrepare(&this.Controller, []string{PermissionOwnerOfOrg})
 	}
-
-	apiPrepare(&this.Controller, []string{PermissionOwnerOfOrg}, &acForCodePlatformPayload{})
 }
 
 // @Title Bind CLA to Org/Repo

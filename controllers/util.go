@@ -3,7 +3,6 @@ package controllers
 import (
 	"encoding/json"
 	"fmt"
-	"strings"
 
 	"github.com/astaxie/beego"
 
@@ -143,9 +142,18 @@ func checkApiAccessToken(c *beego.Controller, permission []string, ac *accessCon
 	return 0, "", nil
 }
 
-func apiPrepare(c *beego.Controller, permission []string, acp interface{}) {
-	if acp == nil {
-		acp = &accessControllerBasicPayload{}
+func apiPrepare(c *beego.Controller, permission []string) {
+	var acp interface{}
+
+	switch permission[0] {
+	case PermissionOwnerOfOrg:
+		acp = &acForCodePlatformPayload{}
+	case PermissionIndividualSigner:
+		acp = &acForCodePlatformPayload{}
+	case PermissionCorporAdmin:
+		acp = &acForCorpManagerPayload{}
+	case PermissionEmployeeManager:
+		acp = &acForCorpManagerPayload{}
 	}
 
 	ac := &accessController{
@@ -171,6 +179,34 @@ func getAccessController(c *beego.Controller) (*accessController, error) {
 	}
 
 	return nil, fmt.Errorf("can't convert to access controller instance")
+}
+
+func getACOfCodePlatform(c *beego.Controller) (*acForCodePlatformPayload, string, error) {
+	ac, err := getAccessController(c)
+	if err != nil {
+		return nil, util.ErrInvalidParameter, err
+	}
+
+	cpa, ok := ac.Payload.(*acForCodePlatformPayload)
+	if !ok {
+		return nil, util.ErrSystemError, fmt.Errorf("invalid token payload")
+	}
+
+	return cpa, "", nil
+}
+
+func getACOfCorpManager(c *beego.Controller) (*acForCorpManagerPayload, string, error) {
+	ac, err := getAccessController(c)
+	if err != nil {
+		return nil, util.ErrInvalidParameter, err
+	}
+
+	pl, ok := ac.Payload.(*acForCorpManagerPayload)
+	if !ok {
+		return nil, util.ErrSystemError, fmt.Errorf("invalid token payload")
+	}
+
+	return pl, "", nil
 }
 
 func refreshAccessToken(c *beego.Controller) (string, error) {
@@ -245,19 +281,6 @@ func isSameCorp(email1, email2 string) bool {
 	return util.EmailSuffix(email1) == util.EmailSuffix(email2)
 }
 
-func checkSameCorp(c *beego.Controller, email string) (int, string, error) {
-	_, corpEmail, err := parseCorpManagerUser(c)
-	if err != nil {
-		return 401, util.ErrUnknownToken, err
-	}
-
-	if !isSameCorp(corpEmail, email) {
-		return 400, util.ErrNotSameCorp, fmt.Errorf("not same corp")
-	}
-
-	return 0, "", nil
-}
-
 func convertDBError(err error) (int, string) {
 	e, ok := dbmodels.IsDBError(err)
 	if !ok {
@@ -265,29 +288,6 @@ func convertDBError(err error) (int, string) {
 	}
 
 	return 400, e.ErrCode
-}
-
-func corpManagerUser(orgCLAID, email string) string {
-	return fmt.Sprintf("%s/%s", orgCLAID, email)
-}
-
-func parseCorpManagerUser(c *beego.Controller) (string, string, error) {
-	ac, err := getAccessController(c)
-	if err != nil {
-		return "", "", err
-	}
-
-	p, ok := ac.Payload.(*accessControllerBasicPayload)
-	if !ok {
-		return "", "", fmt.Errorf("fetch token Payload failed")
-	}
-
-	v := strings.Split(p.User, "/")
-	if len(v) != 2 {
-		return "", "", fmt.Errorf("can't parse corp manager user")
-	}
-
-	return v[0], v[1], nil
 }
 
 func isNoClaBindingDoc(err error) bool {
@@ -377,20 +377,6 @@ func canAccessOrgCLA(c *beego.Controller, orgCLAID string) (*models.OrgCLA, int,
 	ac.addOrg(org)
 
 	return orgCLA, 0, "", nil
-}
-
-func getACOfCodePlatform(c *beego.Controller) (*acForCodePlatformPayload, string, error) {
-	ac, err := getAccessController(c)
-	if err != nil {
-		return nil, util.ErrInvalidParameter, err
-	}
-
-	cpa, ok := ac.Payload.(*acForCodePlatformPayload)
-	if !ok {
-		return nil, util.ErrSystemError, fmt.Errorf("invalid token payload")
-	}
-
-	return cpa, "", nil
 }
 
 func getSingingInfo(info dbmodels.TypeSigningInfo, fields []dbmodels.Field) dbmodels.TypeSigningInfo {

@@ -19,9 +19,9 @@ type CorporationPDFController struct {
 func (this *CorporationPDFController) Prepare() {
 	if getRouterPattern(&this.Controller) == "/v1/corporation-pdf" {
 		// admin reviews pdf
-		apiPrepare(&this.Controller, []string{PermissionCorporAdmin}, nil)
+		apiPrepare(&this.Controller, []string{PermissionCorporAdmin})
 	} else {
-		apiPrepare(&this.Controller, []string{PermissionOwnerOfOrg}, &acForCodePlatformPayload{})
+		apiPrepare(&this.Controller, []string{PermissionOwnerOfOrg})
 	}
 }
 
@@ -133,15 +133,14 @@ func (this *CorporationPDFController) Review() {
 		sendResponse(&this.Controller, statusCode, errCode, reason, body, "download corp's signing pdf")
 	}()
 
-	orgCLAID, corpEmail, err := parseCorpManagerUser(&this.Controller)
-	if err != nil {
-		reason = err
-		errCode = util.ErrUnknownToken
+	var ac *acForCorpManagerPayload
+	ac, errCode, reason = getACOfCorpManager(&this.Controller)
+	if reason != nil {
 		statusCode = 401
 		return
 	}
 
-	pdf, err := models.DownloadCorporationSigningPDF(orgCLAID, corpEmail)
+	pdf, err := models.DownloadCorporationSigningPDF(ac.OrgCLAID, ac.Email)
 	if err != nil {
 		reason = err
 		return

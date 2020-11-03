@@ -17,7 +17,7 @@ type VerificationCodeController struct {
 
 func (this *VerificationCodeController) Prepare() {
 	if getHeader(&this.Controller, headerToken) != "" {
-		apiPrepare(&this.Controller, []string{PermissionIndividualSigner}, nil)
+		apiPrepare(&this.Controller, []string{PermissionIndividualSigner})
 	}
 }
 

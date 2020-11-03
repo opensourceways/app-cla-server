@@ -17,7 +17,7 @@ type IndividualSigningController struct {
 func (this *IndividualSigningController) Prepare() {
 	// sign as individual
 	if getRequestMethod(&this.Controller) == http.MethodPost {
-		apiPrepare(&this.Controller, []string{PermissionIndividualSigner}, nil)
+		apiPrepare(&this.Controller, []string{PermissionIndividualSigner})
 	}
 }
 

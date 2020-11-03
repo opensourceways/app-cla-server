@@ -164,12 +164,14 @@ func (c *client) CheckCorporationManagerExist(opt dbmodels.CorporationManagerChe
 
 		item := &cm[0]
 		result[objectIDToUID(doc.ID)] = dbmodels.CorporationManagerCheckResult{
+			Name:             item.Name,
 			Email:            item.Email,
 			Role:             item.Role,
-			Platform:         doc.Platform,
-			OrgID:            doc.OrgID,
-			RepoID:           toNormalRepo(doc.RepoID),
 			InitialPWChanged: item.InitialPWChanged,
+
+			Platform: doc.Platform,
+			OrgID:    doc.OrgID,
+			RepoID:   toNormalRepo(doc.RepoID),
 		}
 	}
 	return result, nil

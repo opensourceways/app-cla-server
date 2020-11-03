@@ -13,7 +13,7 @@ type CLAController struct {
 }
 
 func (this *CLAController) Prepare() {
-	apiPrepare(&this.Controller, []string{PermissionOwnerOfOrg}, &acForCodePlatformPayload{})
+	apiPrepare(&this.Controller, []string{PermissionOwnerOfOrg})
 }
 
 // @Title Delete CLA

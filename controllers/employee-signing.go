@@ -21,10 +21,10 @@ type EmployeeSigningController struct {
 func (this *EmployeeSigningController) Prepare() {
 	if getRequestMethod(&this.Controller) == http.MethodPost {
 		// sign as employee
-		apiPrepare(&this.Controller, []string{PermissionIndividualSigner}, nil)
+		apiPrepare(&this.Controller, []string{PermissionIndividualSigner})
 	} else {
 		// get, update and delete employee
-		apiPrepare(&this.Controller, []string{PermissionEmployeeManager}, nil)
+		apiPrepare(&this.Controller, []string{PermissionEmployeeManager})
 	}
 }
 
@@ -139,15 +139,14 @@ func (this *EmployeeSigningController) GetAll() {
 		sendResponse(&this.Controller, statusCode, errCode, reason, body, "list employees")
 	}()
 
-	orgCLAID, corpEmail, err := parseCorpManagerUser(&this.Controller)
-	if err != nil {
-		reason = err
-		errCode = util.ErrUnknownToken
+	var ac *acForCorpManagerPayload
+	ac, errCode, reason = getACOfCorpManager(&this.Controller)
+	if reason != nil {
 		statusCode = 401
 		return
 	}
 
-	orgCLA := &models.OrgCLA{ID: orgCLAID}
+	orgCLA := &models.OrgCLA{ID: ac.OrgCLAID}
 	if err := orgCLA.Get(); err != nil {
 		reason = err
 		return
@@ -157,7 +156,7 @@ func (this *EmployeeSigningController) GetAll() {
 		CLALanguage: this.GetString("cla_language"),
 	}
 
-	r, err := opt.List(corpEmail, orgCLA.Platform, orgCLA.OrgID, orgCLA.RepoID)
+	r, err := opt.List(ac.Email, orgCLA.Platform, orgCLA.OrgID, orgCLA.RepoID)
 	if err != nil {
 		reason = err
 		return
@@ -189,14 +188,21 @@ func (this *EmployeeSigningController) Update() {
 		return
 	}
 
-	corpClaOrgID := ""
-	managerEmail := ""
-	statusCode, errCode, corpClaOrgID, managerEmail, reason = this.canHandleOnEmployee(employeeEmail)
+	var ac *acForCorpManagerPayload
+	ac, errCode, reason = getACOfCorpManager(&this.Controller)
 	if reason != nil {
+		statusCode = 401
 		return
 	}
 
-	corpClaOrg := &models.OrgCLA{ID: corpClaOrgID}
+	if !isSameCorp(ac.Email, employeeEmail) {
+		reason = fmt.Errorf("not same corp")
+		errCode = util.ErrNotSameCorp
+		statusCode = 400
+		return
+	}
+
+	corpClaOrg := &models.OrgCLA{ID: ac.OrgCLAID}
 	if err := corpClaOrg.Get(); err != nil {
 		reason = err
 		return
@@ -220,7 +226,7 @@ func (this *EmployeeSigningController) Update() {
 
 	msg := email.EmployeeNotification{
 		Name:       employeeEmail,
-		Manager:    managerEmail,
+		Manager:    ac.Email,
 		ProjectURL: projectURL(corpClaOrg),
 		Org:        corpClaOrg.OrgAlias,
 	}
@@ -258,14 +264,21 @@ func (this *EmployeeSigningController) Delete() {
 		return
 	}
 
-	corpClaOrgID := ""
-	managerEmail := ""
-	statusCode, errCode, corpClaOrgID, managerEmail, reason = this.canHandleOnEmployee(employeeEmail)
+	var ac *acForCorpManagerPayload
+	ac, errCode, reason = getACOfCorpManager(&this.Controller)
 	if reason != nil {
+		statusCode = 401
 		return
 	}
 
-	corpClaOrg := &models.OrgCLA{ID: corpClaOrgID}
+	if !isSameCorp(ac.Email, employeeEmail) {
+		reason = fmt.Errorf("not same corp")
+		errCode = util.ErrNotSameCorp
+		statusCode = 400
+		return
+	}
+
+	corpClaOrg := &models.OrgCLA{ID: ac.OrgCLAID}
 	if err := corpClaOrg.Get(); err != nil {
 		reason = err
 		return
@@ -282,24 +295,11 @@ func (this *EmployeeSigningController) Delete() {
 	msg := email.EmployeeNotification{
 		Removing:   true,
 		Name:       employeeEmail,
-		Manager:    managerEmail,
+		Manager:    ac.Email,
 		ProjectURL: projectURL(corpClaOrg),
 		Org:        corpClaOrg.OrgAlias,
 	}
 	sendEmailToIndividual(employeeEmail, corpClaOrg.OrgEmail, "Remove employee", msg)
-}
-
-func (this *EmployeeSigningController) canHandleOnEmployee(employeeEmail string) (int, string, string, string, error) {
-	corpClaOrgID, corpEmail, err := parseCorpManagerUser(&this.Controller)
-	if err != nil {
-		return 401, util.ErrUnknownToken, "", "", err
-	}
-
-	if !isSameCorp(corpEmail, employeeEmail) {
-		return 400, util.ErrNotSameCorp, "", "", fmt.Errorf("not same corp")
-	}
-
-	return 0, "", corpClaOrgID, corpEmail, nil
 }
 
 func (this *EmployeeSigningController) notifyManagers(managers []dbmodels.CorporationManagerListResult, info *models.EmployeeSigning, orgCLA *models.OrgCLA) {

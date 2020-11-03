@@ -90,9 +90,7 @@ func (this *AuthController) newAccessToken(platform, user, purpose, platformToke
 		Expiry:     util.Expiry(conf.AppConfig.APITokenExpiry),
 		Permission: permission,
 		Payload: &acForCodePlatformPayload{
-			accessControllerBasicPayload: accessControllerBasicPayload{
-				User: fmt.Sprintf("%s/%s", platform, user),
-			},
+			User:          user,
 			Platform:      platform,
 			PlatformToken: platformToken,
 			Orgs:          orgm,

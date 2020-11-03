@@ -15,7 +15,7 @@ type OrgSignatureController struct {
 }
 
 func (this *OrgSignatureController) Prepare() {
-	apiPrepare(&this.Controller, []string{PermissionOwnerOfOrg}, &acForCodePlatformPayload{})
+	apiPrepare(&this.Controller, []string{PermissionOwnerOfOrg})
 }
 
 // @Title Post

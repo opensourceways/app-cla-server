@@ -22,7 +22,7 @@ type OrgCLACreateOption struct {
 	ApplyTo string `json:"apply_to"`
 
 	OrgEmail  string `json:"org_email"`
-	Submitter string `json:"submitter"`
+	Submitter string
 
 	CLA CLACreateOption `json:"cla"`
 }

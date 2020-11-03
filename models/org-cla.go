@@ -95,6 +95,10 @@ func (this *CLACreateOption) Create() (string, error) {
 	return dbmodels.GetDB().CreateCLA(cla)
 }
 
+func (this *CLACreateOption) Delete(claID string) error {
+	return dbmodels.GetDB().DeleteCLA(claID)
+}
+
 func (this *CLACreateOption) DownloadCLA() error {
 	var resp *http.Response
 

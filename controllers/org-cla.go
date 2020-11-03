@@ -118,7 +118,7 @@ func (this *OrgCLAController) Post() {
 	uid, err := input.Create(claID)
 	if err != nil {
 		reason = err
-		//TODO remove cla
+		cla.Delete(claID)
 		return
 	}
 
@@ -136,28 +136,33 @@ func (this *OrgCLAController) Post() {
 // @Param	uid		path 	string	true		"The uid of binding"
 // @Success 204 {string} delete success!
 // @Failure 403 uid is empty
-// @router /:uid [delete]
+// @router /:org_cla_id [delete]
 func (this *OrgCLAController) Delete() {
 	var statusCode = 0
+	var errCode = ""
 	var reason error
 	var body string
 
 	defer func() {
-		sendResponse1(&this.Controller, statusCode, reason, body)
+		sendResponse(&this.Controller, statusCode, errCode, reason, body, "unbind cla")
 	}()
 
-	uid := this.GetString(":uid")
-	if uid == "" {
-		reason = fmt.Errorf("missing binding id")
+	orgCLAID, err := fetchStringParameter(&this.Controller, ":org_cla_id")
+	if err != nil {
+		reason = err
+		errCode = util.ErrInvalidParameter
 		statusCode = 400
 		return
 	}
 
-	orgCLA := models.OrgCLA{ID: uid}
+	var orgCLA *models.OrgCLA
+	orgCLA, statusCode, errCode, reason = canAccessOrgCLA(&this.Controller, orgCLAID)
+	if reason != nil {
+		return
+	}
 
 	if err := orgCLA.Delete(); err != nil {
 		reason = err
-		statusCode = 500
 		return
 	}
 

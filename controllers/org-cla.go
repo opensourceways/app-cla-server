@@ -49,6 +49,16 @@ func (this *OrgCLAController) Post() {
 		statusCode = 400
 		return
 	}
+
+	if ac, ec, err := getACOfCodePlatform(&this.Controller); err != nil {
+		reason = err
+		errCode = ec
+		statusCode = 401
+		return
+	} else {
+		input.Submitter = ac.User
+	}
+
 	if ec, err := input.Validate(); err != nil {
 		reason = err
 		errCode = ec

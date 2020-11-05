@@ -17,6 +17,15 @@ func checkEmailFormat(email string) (string, error) {
 	return "", nil
 }
 
+func checkManagerID(mid string) (string, error) {
+	rg := regexp.MustCompile("^[a-zA-Z0-9_.-]+_[a-zA-Z0-9-]+(\\.[a-zA-Z0-9-]+)*\\.[a-zA-Z]{2,6}$")
+	if !rg.MatchString(mid) {
+		return util.ErrInvalidEmail, fmt.Errorf("invalid manager id:%s", mid)
+	}
+
+	return "", nil
+}
+
 func parseErrorOfDBApi(err error) (string, error) {
 	if err == nil {
 		return "", err

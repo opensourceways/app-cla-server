@@ -13,6 +13,7 @@ import (
 )
 
 type corporationManagerDoc struct {
+	ID               string `bson:"id" json:"id"`
 	Name             string `bson:"name" json:"name" required:"true"`
 	Role             string `bson:"role" json:"role" required:"true"`
 	Email            string `bson:"email"  json:"email" required:"true"`
@@ -40,15 +41,25 @@ func managersToAdd(
 		return nil, err
 	}
 
-	current := map[string]bool{}
+	currentEmails := map[string]bool{}
+	currentIDs := map[string]bool{}
 	for _, item := range ms {
-		current[item.Email] = true
+		currentEmails[item.Email] = true
+		if item.ID != "" {
+			currentIDs[item.ID] = true
+		}
 	}
 
 	toAdd := make([]dbmodels.CorporationManagerCreateOption, 0, len(opt))
 	for _, item := range opt {
-		if _, ok := current[item.Email]; !ok {
-			toAdd = append(toAdd, item)
+		if _, ok := currentEmails[item.Email]; !ok {
+			if item.ID == "" {
+				toAdd = append(toAdd, item)
+			} else {
+				if _, ok = currentIDs[item.ID]; !ok {
+					toAdd = append(toAdd, item)
+				}
+			}
 		}
 	}
 
@@ -82,6 +93,7 @@ func (c *client) AddCorporationManager(orgCLAID string, opt []dbmodels.Corporati
 		items := make(bson.A, 0, len(toAdd))
 		for _, item := range toAdd {
 			info := corporationManagerDoc{
+				ID:       item.ID,
 				Name:     item.Name,
 				Email:    item.Email,
 				Role:     item.Role,
@@ -125,7 +137,13 @@ func (c *client) CheckCorporationManagerExist(opt dbmodels.CorporationManagerChe
 	filterOfDoc := bson.M{}
 	filterForCorpManager(filterOfDoc)
 
-	filterOfArray := indexOfCorpManagerAndIndividual(opt.User)
+	var filterOfArray bson.M
+	if opt.Email != "" {
+		filterOfArray = indexOfCorpManagerAndIndividual(opt.Email)
+	} else {
+		filterOfArray[fieldCorporationID] = opt.EmailSuffix
+		filterOfArray["id"] = opt.ID
+	}
 	filterOfArray["password"] = opt.Password
 
 	project := bson.M{
@@ -205,6 +223,7 @@ func (c *client) listCorporationManager(ctx context.Context, orgCLAID primitive.
 	}
 
 	project := bson.M{
+		corpManagerField("id"):    1,
 		corpManagerField("name"):  1,
 		corpManagerField("email"): 1,
 		corpManagerField("role"):  1,
@@ -249,6 +268,7 @@ func (c *client) ListCorporationManager(orgCLAID, email, role string) ([]dbmodel
 	ms := make([]dbmodels.CorporationManagerListResult, 0, len(v))
 	for _, item := range v {
 		ms = append(ms, dbmodels.CorporationManagerListResult{
+			ID:    item.ID,
 			Name:  item.Name,
 			Email: item.Email,
 			Role:  item.Role,

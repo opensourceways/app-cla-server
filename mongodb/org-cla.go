@@ -16,7 +16,7 @@ const (
 	fieldIndividuals     = "individuals"
 	fieldEmployees       = "employees"
 	fieldCorporations    = "corporations"
-	fieldCorpoManagers   = "corp_managers"
+	fieldCorpManagers    = "corp_managers"
 	fieldCorporationID   = "corp_id"
 	fieldOrgSignature    = "org_signature"
 	fieldOrgSignatureTag = "md5sum"
@@ -193,10 +193,10 @@ func toModelOrgCLA(item OrgCLA) dbmodels.OrgCLA {
 
 func projectOfClaOrg() bson.M {
 	return bson.M{
-		fieldIndividuals:   0,
-		fieldEmployees:     0,
-		fieldCorporations:  0,
-		fieldCorpoManagers: 0,
-		fieldOrgSignature:  0,
+		fieldIndividuals:  0,
+		fieldEmployees:    0,
+		fieldCorporations: 0,
+		fieldCorpManagers: 0,
+		fieldOrgSignature: 0,
 	}
 }

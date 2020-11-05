@@ -220,18 +220,32 @@ func (c *client) isArrayElemNotExists(ctx context.Context, collection, array str
 }
 
 func (c *client) getArrayElem(ctx context.Context, collection, array string, filterOfDoc, filterOfArray, project bson.M, result interface{}) error {
+	ma := map[string]bson.M{}
+	if len(filterOfArray) > 0 {
+		ma[array] = filterOfArray
+	}
+	return c.getMultiArrays(ctx, collection, filterOfDoc, ma, project, result)
+}
+
+func (c *client) getMultiArrays(ctx context.Context, collection string, filterOfDoc bson.M, filterOfArrays map[string]bson.M, project bson.M, result interface{}) error {
 	pipeline := bson.A{bson.M{"$match": filterOfDoc}}
 
-	if len(filterOfArray) > 0 {
-		project1 := bson.M{
-			array: bson.M{"$filter": bson.M{
+	if len(filterOfArrays) > 0 {
+		project1 := bson.M{}
+
+		for array, filterOfArray := range filterOfArrays {
+			project1[array] = bson.M{"$filter": bson.M{
 				"input": fmt.Sprintf("$%s", array),
 				"cond":  conditionTofilterArray(filterOfArray),
-			}},
+			}}
 		}
 
 		for k, v := range project {
-			if !strings.HasPrefix(k, array) {
+			s := k
+			if i := strings.Index(k, "."); i >= 0 {
+				s = k[:i]
+			}
+			if _, ok := filterOfArrays[s]; !ok {
 				project1[k] = v
 			}
 		}

@@ -18,10 +18,8 @@ type corporationSigningDoc struct {
 	Date            string                   `bson:"date" json:"date" required:"true"`
 	SigningInfo     dbmodels.TypeSigningInfo `bson:"info" json:"info,omitempty"`
 
-	PDFUploaded bool `bson:"pdf_uploaded" json:"pdf_uploaded"`
-	AdminAdded  bool `bson:"admin_added" json:"admin_added"`
-
-	PDF []byte `bson:"pdf" json:"pdf,omitempty"`
+	PDFUploaded bool   `bson:"pdf_uploaded" json:"pdf_uploaded"`
+	PDF         []byte `bson:"pdf" json:"pdf,omitempty"`
 }
 
 func filterForCorpSigning(filter bson.M) {
@@ -94,9 +92,12 @@ func (c *client) ListCorporationSigning(opt dbmodels.CorporationSigningListOptio
 	var v []OrgCLA
 
 	f := func(ctx context.Context) error {
-		return c.getArrayElem(
-			ctx, orgCLACollection, fieldCorporations,
-			filterOfDoc, nil, projectOfCorpSigning(), &v)
+		ma := map[string]bson.M{
+			fieldCorpManagers: {"role": dbmodels.RoleAdmin},
+		}
+		return c.getMultiArrays(
+			ctx, orgCLACollection, filterOfDoc, ma, projectOfCorpSigning(), &v,
+		)
 	}
 
 	if err = withContext(f); err != nil {
@@ -110,9 +111,14 @@ func (c *client) ListCorporationSigning(opt dbmodels.CorporationSigningListOptio
 			continue
 		}
 
+		admins := map[string]bool{}
+		for _, item := range doc.CorporationManagers {
+			admins[item.Email] = true
+		}
+
 		cs1 := make([]dbmodels.CorporationSigningDetail, 0, len(cs))
 		for _, item := range cs {
-			cs1 = append(cs1, toDBModelCorporationSigningDetail(&item))
+			cs1 = append(cs1, toDBModelCorporationSigningDetail(&item, admins[item.AdminEmail]))
 		}
 		r[objectIDToUID(doc.ID)] = cs1
 	}
@@ -124,10 +130,16 @@ func (c *client) getCorporationSigningDetail(filterOfDoc bson.M, email string) (
 	var v []OrgCLA
 
 	f := func(ctx context.Context) error {
-		return c.getArrayElem(
-			ctx, orgCLACollection, fieldCorporations,
-			filterOfDoc, filterOfCorpID(email),
-			projectOfCorpSigning(), &v,
+		admin := indexOfCorpManagerAndIndividual(email)
+		admin["role"] = dbmodels.RoleAdmin
+
+		ma := map[string]bson.M{
+			fieldCorporations: filterOfCorpID(email),
+			fieldCorpManagers: admin,
+		}
+		return c.getMultiArrays(
+			ctx, orgCLACollection, filterOfDoc,
+			ma, projectOfCorpSigning(), &v,
 		)
 	}
 
@@ -148,7 +160,8 @@ func (c *client) GetCorporationSigningDetail(platform, org, repo, email string) 
 		return "", dbmodels.CorporationSigningDetail{}, err
 	}
 
-	return objectIDToUID(orgCLA.ID), toDBModelCorporationSigningDetail(&orgCLA.Corporations[0]), nil
+	detail := toDBModelCorporationSigningDetail(&orgCLA.Corporations[0], (len(orgCLA.CorporationManagers) > 0))
+	return objectIDToUID(orgCLA.ID), detail, nil
 }
 
 func (c *client) CheckCorporationSigning(orgCLAID, email string) (dbmodels.CorporationSigningDetail, error) {
@@ -164,10 +177,10 @@ func (c *client) CheckCorporationSigning(orgCLAID, email string) (dbmodels.Corpo
 		return result, err
 	}
 
-	return toDBModelCorporationSigningDetail(&orgCLA.Corporations[0]), nil
+	return toDBModelCorporationSigningDetail(&orgCLA.Corporations[0], (len(orgCLA.CorporationManagers) > 0)), nil
 }
 
-func toDBModelCorporationSigningDetail(cs *corporationSigningDoc) dbmodels.CorporationSigningDetail {
+func toDBModelCorporationSigningDetail(cs *corporationSigningDoc, adminAdded bool) dbmodels.CorporationSigningDetail {
 	return dbmodels.CorporationSigningDetail{
 		CorporationSigningBasicInfo: dbmodels.CorporationSigningBasicInfo{
 			AdminEmail:      cs.AdminEmail,
@@ -176,7 +189,7 @@ func toDBModelCorporationSigningDetail(cs *corporationSigningDoc) dbmodels.Corpo
 			Date:            cs.Date,
 		},
 		PDFUploaded: cs.PDFUploaded,
-		AdminAdded:  cs.AdminAdded,
+		AdminAdded:  adminAdded,
 	}
 }
 
@@ -187,6 +200,6 @@ func projectOfCorpSigning() bson.M {
 		corpSigningField("corp_name"):    1,
 		corpSigningField("date"):         1,
 		corpSigningField("pdf_uploaded"): 1,
-		corpSigningField("admin_added"):  1,
+		corpManagerField("email"):        1,
 	}
 }

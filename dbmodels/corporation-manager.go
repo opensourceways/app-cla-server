@@ -6,15 +6,18 @@ const (
 )
 
 type CorporationManagerCreateOption struct {
-	Name     string `json:"name"`
-	Role     string `json:"role"`
-	Email    string `json:"email"`
-	Password string `json:"password"`
+	ID       string
+	Name     string
+	Role     string
+	Email    string
+	Password string
 }
 
 type CorporationManagerCheckInfo struct {
-	User     string `json:"user"`
-	Password string `json:"password"`
+	ID          string
+	Email       string
+	EmailSuffix string
+	Password    string
 }
 
 type CorporationManagerResetPassword struct {
@@ -34,6 +37,7 @@ type CorporationManagerCheckResult struct {
 }
 
 type CorporationManagerListResult struct {
+	ID    string `json:"id"`
 	Name  string `json:"name"`
 	Email string `json:"email"`
 	Role  string `json:"role"`

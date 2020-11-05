@@ -108,6 +108,7 @@ func (this VerificationCode) GenEmailMsg() (*EmailMessage, error) {
 
 type AddingCorpManager struct {
 	Admin            bool
+	ID               string
 	User             string
 	Email            string
 	Password         string

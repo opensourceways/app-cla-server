@@ -6,7 +6,6 @@ import (
 )
 
 func init() {
-
 	beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:AuthController"] = append(beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:AuthController"],
 		beego.ControllerComments{
 			Method:           "Auth",
@@ -252,6 +251,15 @@ func init() {
 
 	beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:OrgCLAController"] = append(beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:OrgCLAController"],
 		beego.ControllerComments{
+			Method:           "Delete",
+			Router:           "/:org_cla_id",
+			AllowHTTPMethods: []string{"delete"},
+			MethodParams:     param.Make(),
+			Filters:          nil,
+			Params:           nil})
+
+	beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:OrgCLAController"] = append(beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:OrgCLAController"],
+		beego.ControllerComments{
 			Method:           "GetCLA",
 			Router:           "/:org_cla_id/cla",
 			AllowHTTPMethods: []string{"get"},
@@ -264,15 +272,6 @@ func init() {
 			Method:           "GetSigningPageInfo",
 			Router:           "/:platform/:org_id/:apply_to",
 			AllowHTTPMethods: []string{"get"},
-			MethodParams:     param.Make(),
-			Filters:          nil,
-			Params:           nil})
-
-	beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:OrgCLAController"] = append(beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:OrgCLAController"],
-		beego.ControllerComments{
-			Method:           "Delete",
-			Router:           "/:org_cla_id",
-			AllowHTTPMethods: []string{"delete"},
 			MethodParams:     param.Make(),
 			Filters:          nil,
 			Params:           nil})

@@ -20,7 +20,7 @@ func checkEmailFormat(email string) (string, error) {
 func checkManagerID(mid string) (string, error) {
 	rg := regexp.MustCompile("^[a-zA-Z0-9_.-]+_[a-zA-Z0-9-]+(\\.[a-zA-Z0-9-]+)*\\.[a-zA-Z]{2,6}$")
 	if !rg.MatchString(mid) {
-		return util.ErrInvalidEmail, fmt.Errorf("invalid manager id:%s", mid)
+		return util.ErrInvalidManagerID, fmt.Errorf("invalid manager id:%s", mid)
 	}
 
 	return "", nil

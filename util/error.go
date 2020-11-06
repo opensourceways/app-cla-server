@@ -29,5 +29,6 @@ const (
 	ErrInvalidEmail              = "invalid_email"
 	ErrInvalidManagerID          = "invalid_manager_id"
 	ErrNoCorpManager             = "no_corp_manager"
+	ErrAuthFailed                = "auth_failed"
 	ErrSystemError               = "system_error"
 )

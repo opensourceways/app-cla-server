@@ -83,7 +83,7 @@ func (this *gmailClient) GetAuthorizedEmail(code, scope string) (*models.OrgEmai
 }
 
 func (this *gmailClient) GetOauth2CodeURL(state string) string {
-	return myoauth2.GetOauth2CodeURL(state, this.cfg)
+	return myoauth2.GetOauth2CodeURL(this.cfg, state)
 }
 
 func (this *gmailClient) SendEmail(token *oauth2.Token, msg *EmailMessage) error {

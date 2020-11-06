@@ -23,67 +23,86 @@ type AuthController struct {
 // @Success 200
 // @router /:platform/:purpose [get]
 func (this *AuthController) Auth() {
-	rs := func(statusCode int, errCode string, reason error) {
-		sendResponse(&this.Controller, statusCode, errCode, reason, nil, "authorized by gitee/github")
-	}
-
-	params := map[string]string{":platform": "", "code": "", ":purpose": "", "state": authURLState}
-	if err := checkAndVerifyAPIStringParameter(&this.Controller, params); err != nil {
-		rs(400, util.ErrInvalidParameter, err)
-		return
-	}
-
 	purpose := this.GetString(":purpose")
-	code := this.GetString("code")
 	platform := this.GetString(":platform")
-	//TODO: gitee don't pass the scope parameter
-	scope := this.GetString("scope")
-
-	cp, err := platformAuth.GetAuthInstance(platform, purpose)
-	if err != nil {
-		rs(400, util.ErrNotSupportedPlatform, err)
+	authHelper, ok := platformAuth.Auth[purpose]
+	if !ok {
 		return
 	}
 
-	token, user, err := cp.Auth(code, scope)
-	if err != nil {
-		rs(500, util.ErrSystemError, err)
+	if this.GetString("state") != authURLState {
 		return
 	}
 
-	at, sc, ec, err := this.newAccessToken(platform, user, purpose, token)
+	rs := func(errCode string, reason error) {
+		this.Ctx.SetCookie("error_code", errCode, "3600", "/")
+		this.Ctx.SetCookie("error_msg", reason.Error(), "3600", "/")
+
+		http.Redirect(
+			this.Ctx.ResponseWriter, this.Ctx.Request,
+			authHelper.WebRedirectDir(false), http.StatusFound,
+		)
+	}
+
+	if err := this.GetString("error"); err != "" {
+		rs(util.ErrAuthFailed, fmt.Errorf("%s, %s", err, this.GetString("error_description")))
+		return
+	}
+
+	cp, err := authHelper.GetAuthInstance(platform)
 	if err != nil {
-		rs(sc, ec, err)
+		rs(util.ErrNotSupportedPlatform, err)
+		return
+	}
+
+	// gitee don't pass the scope paramter
+	token, err := cp.GetToken(this.GetString("code"), this.GetString("scope"))
+	if err != nil {
+		rs(util.ErrSystemError, err)
+		return
+	}
+
+	at, ec, err := this.newAccessToken(platform, purpose, token)
+	if err != nil {
+		rs(ec, err)
 		return
 	}
 
 	this.Ctx.SetCookie("access_token", at, "3600", "/")
 	this.Ctx.SetCookie("platform_token", token, "3600", "/")
 
-	http.Redirect(this.Ctx.ResponseWriter, this.Ctx.Request, cp.WebRedirectDir(), http.StatusFound)
+	http.Redirect(
+		this.Ctx.ResponseWriter, this.Ctx.Request,
+		authHelper.WebRedirectDir(true), http.StatusFound,
+	)
 }
 
-func (this *AuthController) newAccessToken(platform, user, purpose, platformToken string) (string, int, string, error) {
+func (this *AuthController) newAccessToken(platform, purpose, platformToken string) (string, string, error) {
 	permission := ""
 	switch purpose {
-	case "login":
+	case platformAuth.AuthApplyToLogin:
 		permission = PermissionOwnerOfOrg
-	case "sign":
+	case platformAuth.AuthApplyToSign:
 		permission = PermissionIndividualSigner
+	}
+
+	pt, err := platforms.NewPlatform(platformToken, "", platform)
+	if err != nil {
+		return "", util.ErrNotSupportedPlatform, err
 	}
 
 	orgm := map[string]bool{}
 	if permission == PermissionOwnerOfOrg {
-		pt, err := platforms.NewPlatform(platformToken, "", platform)
-		if err != nil {
-			return "", 400, util.ErrNotSupportedPlatform, err
-		}
-
 		if orgs, err := pt.ListOrg(); err == nil {
 			for _, item := range orgs {
 				orgm[item] = true
 			}
 		}
+	}
+
+	user, err := pt.GetUser()
+	if err != nil {
+		return "", util.ErrSystemError, err
 	}
 
 	ac := &accessController{
@@ -99,10 +118,10 @@ func (this *AuthController) newAccessToken(platform, user, purpose, platformToke
 
 	token, err := ac.NewToken(conf.AppConfig.APITokenKey)
 	if err != nil {
-		return "", 500, util.ErrSystemError, err
+		return "", util.ErrSystemError, err
 	}
 
-	return token, 0, "", nil
+	return token, "", nil
 }
 
 // @Title Get
@@ -122,31 +141,16 @@ func (this *AuthController) Get() {
 		sendResponse(&this.Controller, statusCode, errCode, reason, body, "fetch auth code url of gitee/github")
 	}()
 
-	params := []string{":platform", ":purpose"}
-	if err := checkAPIStringParameter(&this.Controller, params); err != nil {
-		reason = err
-		errCode = util.ErrInvalidParameter
-		statusCode = 400
-		return
-	}
-
-	purpose := this.GetString(":purpose")
-	bingo := false
-	for _, v := range []string{"login", "sign"} {
-		if v == purpose {
-			bingo = true
-			break
-		}
-	}
-	if !bingo {
+	authHelper, ok := platformAuth.Auth[this.GetString(":purpose")]
+	if !ok {
 		reason = fmt.Errorf("unkonw purpose")
 		errCode = util.ErrInvalidParameter
 		statusCode = 400
 		return
 	}
 
-	cp, err := platformAuth.GetAuthInstance(this.GetString(":platform"), purpose)
-	if cp == nil {
+	cp, err := authHelper.GetAuthInstance(this.GetString(":platform"))
+	if err != nil {
 		reason = err
 		errCode = util.ErrNotSupportedPlatform
 		statusCode = 400

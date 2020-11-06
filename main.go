@@ -39,7 +39,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	if err := platformAuth.RegisterPlatform(AppConfig.CodePlatformConfigFile); err != nil {
+	if err := platformAuth.Initialize(AppConfig.CodePlatformConfigFile); err != nil {
 		beego.Error(err)
 		os.Exit(1)
 	}

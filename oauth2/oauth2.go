@@ -21,7 +21,7 @@ func (this *client) GetToken(code, scope string) (*liboauth2.Token, error) {
 }
 
 func (this *client) GetOauth2CodeURL(state string) string {
-	return GetOauth2CodeURL(state, this.cfg)
+	return GetOauth2CodeURL(this.cfg, state)
 }
 
 type Oauth2Config struct {
@@ -52,7 +52,7 @@ func buildOauth2Config(cfg Oauth2Config) *liboauth2.Config {
 	}
 }
 
-func GetOauth2CodeURL(state string, cfg *liboauth2.Config) string {
+func GetOauth2CodeURL(cfg *liboauth2.Config, state string) string {
 	return cfg.AuthCodeURL(state, liboauth2.AccessTypeOffline)
 }
 

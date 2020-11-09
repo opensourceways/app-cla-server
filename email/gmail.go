@@ -15,24 +15,20 @@ import (
 	"golang.org/x/oauth2/google"
 	"google.golang.org/api/gmail/v1"
 
-	"github.com/opensourceways/app-cla-server/models"
 	myoauth2 "github.com/opensourceways/app-cla-server/oauth2"
 	"github.com/opensourceways/app-cla-server/util"
 )
 
 func init() {
-	emails["gmail"] = &gmailClient{}
+	EmailAgent.emailClients["gmail"] = &gmailClient{}
 }
 
 type gmailClient struct {
-	cfg *oauth2.Config
-
-	webRedirectDir string
-
+	cfg       *oauth2.Config
 	emailTemp *template.Template
 }
 
-func (this *gmailClient) initialize(path, webRedirectDir string) error {
+func (this *gmailClient) initialize(path string) error {
 	cfg, err := this.getOauth2Config(path)
 	if err != nil {
 		return fmt.Errorf("Failtd to initialize gmail client: %s", err.Error())
@@ -45,41 +41,31 @@ func (this *gmailClient) initialize(path, webRedirectDir string) error {
 	}
 
 	this.emailTemp = tmpl
-
 	this.cfg = cfg
-	this.webRedirectDir = webRedirectDir
 	return nil
 }
 
-func (this *gmailClient) WebRedirectDir() string {
-	return this.webRedirectDir
-}
-
-func (this *gmailClient) GetAuthorizedEmail(code, scope string) (*models.OrgEmail, error) {
+func (this *gmailClient) GetToken(code, scope string) (*oauth2.Token, error) {
 	if this.cfg == nil {
 		return nil, fmt.Errorf("gmail has not been initialized")
 	}
 
-	token, err := myoauth2.FetchOauth2Token(this.cfg, code)
-	if err != nil {
-		return nil, err
-	}
+	return myoauth2.FetchOauth2Token(this.cfg, code)
+}
 
+func (this *gmailClient) GetAuthorizedEmail(token *oauth2.Token) (string, error) {
 	client := this.cfg.Client(context.Background(), token)
 	srv, err := gmail.New(client)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 
 	v, err := srv.Users.GetProfile("me").Do()
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 
-	return &models.OrgEmail{
-		Email: v.EmailAddress,
-		Token: token,
-	}, nil
+	return v.EmailAddress, nil
 }
 
 func (this *gmailClient) GetOauth2CodeURL(state string) string {

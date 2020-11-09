@@ -35,13 +35,7 @@ func (this *AuthController) Auth() {
 	}
 
 	rs := func(errCode string, reason error) {
-		this.Ctx.SetCookie("error_code", errCode, "3600", "/")
-		this.Ctx.SetCookie("error_msg", reason.Error(), "3600", "/")
-
-		http.Redirect(
-			this.Ctx.ResponseWriter, this.Ctx.Request,
-			authHelper.WebRedirectDir(false), http.StatusFound,
-		)
+		rejectAuth(&this.Controller, authHelper.WebRedirectDir(false), errCode, reason)
 	}
 
 	if err := this.GetString("error"); err != "" {

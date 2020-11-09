@@ -2,6 +2,7 @@ package platforms
 
 import (
 	"context"
+	"fmt"
 
 	"gitee.com/openeuler/go-gitee/gitee"
 	"github.com/antihax/optional"
@@ -31,6 +32,27 @@ func (this *giteeClient) GetUser() (string, error) {
 		return "", err
 	}
 	return u.Login, err
+}
+
+func (this *giteeClient) GetAuthorizedEmail() (string, error) {
+	es, _, err := this.c.EmailsApi.GetV5Emails(context.Background(), nil)
+	if err != nil {
+		return "", err
+	}
+
+	for _, item := range es {
+		if item.State != "confirmed" {
+			continue
+		}
+
+		for _, scope := range item.Scope {
+			if scope == "committed" {
+				return item.Email, nil
+			}
+		}
+	}
+
+	return "", fmt.Errorf("no email for committing code")
 }
 
 func (this *giteeClient) IsOrgExist(org string) (bool, error) {

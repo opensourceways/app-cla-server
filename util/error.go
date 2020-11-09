@@ -30,5 +30,6 @@ const (
 	ErrInvalidManagerID          = "invalid_manager_id"
 	ErrNoCorpManager             = "no_corp_manager"
 	ErrAuthFailed                = "auth_failed"
+	ErrUnauthorized              = "unauthorized"
 	ErrSystemError               = "system_error"
 )

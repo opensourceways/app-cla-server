@@ -8,13 +8,13 @@ type EmployeeSigning struct {
 	VerificationCode string `json:"verification_code"`
 }
 
-func (this *EmployeeSigning) Validate(orgCLAID string) (string, error) {
+func (this *EmployeeSigning) Validate(orgCLAID, email string) (string, error) {
 	ec, err := checkVerificationCode(this.Email, this.VerificationCode, orgCLAID)
 	if err != nil {
 		return ec, err
 	}
 
-	return (&this.IndividualSigning).Validate()
+	return (&this.IndividualSigning).Validate(email)
 }
 
 type EmployeeSigningListOption struct {

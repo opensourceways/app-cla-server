@@ -6,6 +6,7 @@ import (
 
 type Platform interface {
 	GetUser() (string, error)
+	GetAuthorizedEmail() (string, error)
 	IsOrgExist(org string) (bool, error)
 	ListOrg() ([]string, error)
 }

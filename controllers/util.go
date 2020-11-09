@@ -399,11 +399,16 @@ func projectURL(orgCLA *models.OrgCLA) string {
 	return util.ProjectURL(orgCLA.Platform, orgCLA.RepoID, orgCLA.RepoID)
 }
 
-func rejectAuth(c *beego.Controller, webRedirectDir, errCode string, reason error) {
-	c.Ctx.SetCookie("error_code", errCode, "3600", "/")
-	c.Ctx.SetCookie("error_msg", reason.Error(), "3600", "/")
+func rspOnAuthFailed(c *beego.Controller, webRedirectDir, errCode string, reason error) {
+	setCookies(c, map[string]string{"error_code": errCode, "error_msg": reason.Error()})
 
 	http.Redirect(
 		c.Ctx.ResponseWriter, c.Ctx.Request, webRedirectDir, http.StatusFound,
 	)
+}
+
+func setCookies(c *beego.Controller, value map[string]string) {
+	for k, v := range value {
+		c.Ctx.SetCookie(k, v, "3600", "/")
+	}
 }

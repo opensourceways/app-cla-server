@@ -46,6 +46,14 @@ func (this *IndividualSigningController) Post() {
 		return
 	}
 
+	ac, ec, err := getACOfCodePlatform(&this.Controller)
+	if err != nil {
+		reason = err
+		errCode = ec
+		statusCode = 400
+		return
+	}
+
 	var info models.IndividualSigning
 	if err := fetchInputPayload(&this.Controller, &info); err != nil {
 		reason = err
@@ -53,7 +61,7 @@ func (this *IndividualSigningController) Post() {
 		statusCode = 400
 		return
 	}
-	if ec, err := (&info).Validate(); err != nil {
+	if ec, err := (&info).Validate(ac.Email); err != nil {
 		reason = err
 		errCode = ec
 		statusCode = 400

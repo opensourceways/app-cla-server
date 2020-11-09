@@ -29,7 +29,7 @@ func (this *EmailController) Prepare() {
 // @router /auth/:platform [get]
 func (this *EmailController) Auth() {
 	rs := func(errCode string, reason error) {
-		rejectAuth(&this.Controller, email.EmailAgent.WebRedirectDir(false), errCode, reason)
+		rspOnAuthFailed(&this.Controller, email.EmailAgent.WebRedirectDir(false), errCode, reason)
 	}
 
 	if err := this.GetString("error"); err != "" {

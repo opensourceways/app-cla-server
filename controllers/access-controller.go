@@ -88,6 +88,7 @@ func (this *accessController) Verify(permission []string) error {
 
 type acForCodePlatformPayload struct {
 	User          string          `json:"user"`
+	Email         string          `json:"email"`
 	Platform      string          `json:"platform"`
 	PlatformToken string          `json:"platform_token"`
 	Orgs          map[string]bool `json:"orgs"`

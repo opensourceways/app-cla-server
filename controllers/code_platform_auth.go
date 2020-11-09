@@ -3,6 +3,7 @@ package controllers
 import (
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/astaxie/beego"
 
@@ -35,7 +36,7 @@ func (this *AuthController) Auth() {
 	}
 
 	rs := func(errCode string, reason error) {
-		rejectAuth(&this.Controller, authHelper.WebRedirectDir(false), errCode, reason)
+		rspOnAuthFailed(&this.Controller, authHelper.WebRedirectDir(false), errCode, reason)
 	}
 
 	if err := this.GetString("error"); err != "" {
@@ -56,22 +57,6 @@ func (this *AuthController) Auth() {
 		return
 	}
 
-	at, ec, err := this.newAccessToken(platform, purpose, token)
-	if err != nil {
-		rs(ec, err)
-		return
-	}
-
-	this.Ctx.SetCookie("access_token", at, "3600", "/")
-	this.Ctx.SetCookie("platform_token", token, "3600", "/")
-
-	http.Redirect(
-		this.Ctx.ResponseWriter, this.Ctx.Request,
-		authHelper.WebRedirectDir(true), http.StatusFound,
-	)
-}
-
-func (this *AuthController) newAccessToken(platform, purpose, platformToken string) (string, string, error) {
 	permission := ""
 	switch purpose {
 	case platformAuth.AuthApplyToLogin:
@@ -80,9 +65,35 @@ func (this *AuthController) newAccessToken(platform, purpose, platformToken stri
 		permission = PermissionIndividualSigner
 	}
 
+	pl, ec, err := this.genACPayload(platform, permission, token)
+	if err != nil {
+		rs(ec, err)
+		return
+	}
+
+	at, err := this.newAccessToken(permission, pl)
+	if err != nil {
+		rs(util.ErrSystemError, err)
+		return
+	}
+
+	cookies := map[string]string{"access_token": at, "platform_token": token}
+	if permission == PermissionIndividualSigner {
+		cookies["sign_user"] = pl.User
+		cookies["sign_email"] = pl.Email
+	}
+	setCookies(&this.Controller, cookies)
+
+	http.Redirect(
+		this.Ctx.ResponseWriter, this.Ctx.Request,
+		authHelper.WebRedirectDir(true), http.StatusFound,
+	)
+}
+
+func (this *AuthController) genACPayload(platform, permission, platformToken string) (*acForCodePlatformPayload, string, error) {
 	pt, err := platforms.NewPlatform(platformToken, "", platform)
 	if err != nil {
-		return "", util.ErrNotSupportedPlatform, err
+		return nil, util.ErrNotSupportedPlatform, err
 	}
 
 	orgm := map[string]bool{}
@@ -94,28 +105,38 @@ func (this *AuthController) newAccessToken(platform, purpose, platformToken stri
 		}
 	}
 
-	user, err := pt.GetUser()
-	if err != nil {
-		return "", util.ErrSystemError, err
+	email := ""
+	if permission == PermissionIndividualSigner {
+		if email, err = pt.GetAuthorizedEmail(); err != nil {
+			if strings.Index(err.Error(), "401") >= 0 {
+				return nil, util.ErrUnauthorized, err
+			}
+			return nil, util.ErrSystemError, err
+		}
 	}
 
+	user, err := pt.GetUser()
+	if err != nil {
+		return nil, util.ErrSystemError, err
+	}
+
+	return &acForCodePlatformPayload{
+		User:          user,
+		Email:         email,
+		Platform:      platform,
+		PlatformToken: platformToken,
+		Orgs:          orgm,
+	}, "", nil
+}
+
+func (this *AuthController) newAccessToken(permission string, pl *acForCodePlatformPayload) (string, error) {
 	ac := &accessController{
 		Expiry:     util.Expiry(conf.AppConfig.APITokenExpiry),
 		Permission: permission,
-		Payload: &acForCodePlatformPayload{
-			User:          user,
-			Platform:      platform,
-			PlatformToken: platformToken,
-			Orgs:          orgm,
-		},
+		Payload:    pl,
 	}
 
-	token, err := ac.NewToken(conf.AppConfig.APITokenKey)
-	if err != nil {
-		return "", util.ErrSystemError, err
-	}
-
-	return token, "", nil
+	return ac.NewToken(conf.AppConfig.APITokenKey)
 }
 
 // @Title Get

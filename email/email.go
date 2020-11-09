@@ -5,30 +5,20 @@ import (
 
 	"golang.org/x/oauth2"
 
-	"github.com/opensourceways/app-cla-server/models"
 	"github.com/opensourceways/app-cla-server/util"
 )
 
-var emails = map[string]IEmail{}
+var EmailAgent = &emailAgent{emailClients: map[string]IEmail{}}
 
 type IEmail interface {
 	GetOauth2CodeURL(state string) string
-	GetAuthorizedEmail(code, scope string) (*models.OrgEmail, error)
+	GetToken(code, scope string) (*oauth2.Token, error)
+	GetAuthorizedEmail(token *oauth2.Token) (string, error)
 	SendEmail(token *oauth2.Token, msg *EmailMessage) error
-	WebRedirectDir() string
-	initialize(credentials, webRedirectDir string) error
+	initialize(string) error
 }
 
-func GetEmailClient(platform string) (IEmail, error) {
-	e, ok := emails[platform]
-	if !ok {
-		return nil, fmt.Errorf("it only supports gmail platform currently")
-	}
-
-	return e, nil
-}
-
-func RegisterPlatform(configFile string) error {
+func Initialize(configFile string) error {
 	if err := initTemplate(); err != nil {
 		return err
 	}
@@ -38,12 +28,16 @@ func RegisterPlatform(configFile string) error {
 		return err
 	}
 
+	EmailAgent.webRedirectDir = cfg.webRedirectDirConfig
+
 	for _, item := range cfg.Configs {
-		e, err := GetEmailClient(item.Platform)
+		e, err := EmailAgent.GetEmailClient(item.Platform)
 		if err != nil {
 			return err
 		}
-		return e.initialize(item.Credentials, cfg.WebRedirectDir)
+		if err = e.initialize(item.Credentials); err != nil {
+			return err
+		}
 	}
 	return nil
 }
@@ -54,4 +48,25 @@ type EmailMessage struct {
 	Subject    string   `json:"subject"`
 	Content    string   `json:"content"`
 	Attachment string   `json:"attachment"`
+}
+
+type emailAgent struct {
+	emailClients   map[string]IEmail
+	webRedirectDir webRedirectDirConfig
+}
+
+func (this *emailAgent) WebRedirectDir(success bool) string {
+	if success {
+		return this.webRedirectDir.WebRedirectDirOnSuccess
+	}
+	return this.webRedirectDir.WebRedirectDirOnFailure
+}
+
+func (this *emailAgent) GetEmailClient(platform string) (IEmail, error) {
+	e, ok := this.emailClients[platform]
+	if !ok {
+		return nil, fmt.Errorf("it only supports gmail platform currently")
+	}
+
+	return e, nil
 }

@@ -3,6 +3,7 @@ package controllers
 import (
 	"encoding/json"
 	"fmt"
+	"net/http"
 
 	"github.com/astaxie/beego"
 
@@ -396,4 +397,13 @@ func getSingingInfo(info dbmodels.TypeSigningInfo, fields []dbmodels.Field) dbmo
 
 func projectURL(orgCLA *models.OrgCLA) string {
 	return util.ProjectURL(orgCLA.Platform, orgCLA.RepoID, orgCLA.RepoID)
+}
+
+func rejectAuth(c *beego.Controller, webRedirectDir, errCode string, reason error) {
+	c.Ctx.SetCookie("error_code", errCode, "3600", "/")
+	c.Ctx.SetCookie("error_msg", reason.Error(), "3600", "/")
+
+	http.Redirect(
+		c.Ctx.ResponseWriter, c.Ctx.Request, webRedirectDir, http.StatusFound,
+	)
 }

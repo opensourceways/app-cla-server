@@ -1,11 +1,13 @@
 package controllers
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/astaxie/beego"
 
 	"github.com/opensourceways/app-cla-server/email"
+	"github.com/opensourceways/app-cla-server/models"
 	"github.com/opensourceways/app-cla-server/util"
 )
 
@@ -26,41 +28,55 @@ func (this *EmailController) Prepare() {
 // @Success 200
 // @router /auth/:platform [get]
 func (this *EmailController) Auth() {
-	rs := func(statusCode int, errCode string, err error) {
-		sendResponse(&this.Controller, statusCode, errCode, err, nil, "authorized by org email")
+	rs := func(errCode string, reason error) {
+		rejectAuth(&this.Controller, email.EmailAgent.WebRedirectDir(false), errCode, reason)
 	}
 
-	params := map[string]string{":platform": "", "code": "", "scope": "", "state": authURLState}
-	if err := checkAndVerifyAPIStringParameter(&this.Controller, params); err != nil {
-		rs(400, util.ErrInvalidParameter, err)
+	if err := this.GetString("error"); err != "" {
+		rs(util.ErrAuthFailed, fmt.Errorf("%s, %s", err, this.GetString("error_description")))
 		return
 	}
-	code := this.GetString("code")
-	scope := this.GetString("scope")
+
 	platform := this.GetString(":platform")
-
-	e, err := email.GetEmailClient(platform)
+	emailClient, err := email.EmailAgent.GetEmailClient(platform)
 	if err != nil {
-		rs(400, util.ErrInvalidParameter, err)
+		rs(util.ErrNotSupportedPlatform, err)
 		return
 	}
 
-	opt, err := e.GetAuthorizedEmail(code, scope)
-	if err != nil {
-		rs(400, util.ErrInvalidParameter, err)
+	params := map[string]string{"code": "", "scope": "", "state": authURLState}
+	if err := checkAndVerifyAPIStringParameter(&this.Controller, params); err != nil {
+		rs(util.ErrInvalidParameter, err)
 		return
 	}
-	opt.Platform = platform
 
+	token, err := emailClient.GetToken(this.GetString("code"), this.GetString("scope"))
+	if err != nil {
+		rs(util.ErrSystemError, err)
+		return
+	}
+
+	emailAddr, err := emailClient.GetAuthorizedEmail(token)
+	if err != nil {
+		rs(util.ErrSystemError, err)
+		return
+	}
+
+	opt := models.OrgEmail{
+		Token:    token,
+		Email:    emailAddr,
+		Platform: platform,
+	}
 	if err = opt.Create(); err != nil {
-		sc, ec := convertDBError(err)
-		rs(sc, ec, err)
+		rs(util.ErrSystemError, err)
 		return
 	}
 
 	this.Ctx.SetCookie("email", opt.Email, "3600", "/")
-
-	http.Redirect(this.Ctx.ResponseWriter, this.Ctx.Request, e.WebRedirectDir(), http.StatusFound)
+	http.Redirect(
+		this.Ctx.ResponseWriter, this.Ctx.Request,
+		email.EmailAgent.WebRedirectDir(true), http.StatusFound,
+	)
 }
 
 // @Title Get
@@ -86,7 +102,7 @@ func (this *EmailController) Get() {
 		return
 	}
 
-	e, err := email.GetEmailClient(platform)
+	e, err := email.EmailAgent.GetEmailClient(platform)
 	if err != nil {
 		reason = err
 		return

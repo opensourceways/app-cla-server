@@ -34,7 +34,7 @@ func main() {
 	}
 	dbmodels.RegisterDB(c)
 
-	if err = email.RegisterPlatform(AppConfig.EmailPlatformConfigFile); err != nil {
+	if err = email.Initialize(AppConfig.EmailPlatformConfigFile); err != nil {
 		beego.Error(err)
 		os.Exit(1)
 	}

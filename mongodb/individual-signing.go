@@ -37,7 +37,7 @@ func filterOfDocForIndividualSigning(platform, org, repo string, advanced bool) 
 	return m
 }
 
-func (c *client) SignAsIndividual(orgCLAID, platform, org, repo string, info dbmodels.IndividualSigningInfo) error {
+func (this *client) SignAsIndividual(orgCLAID, platform, org, repo string, info dbmodels.IndividualSigningInfo) error {
 	oid, err := toObjectID(orgCLAID)
 	if err != nil {
 		return err
@@ -57,8 +57,8 @@ func (c *client) SignAsIndividual(orgCLAID, platform, org, repo string, info dbm
 	addCorporationID(info.Email, body)
 
 	f := func(ctx mongo.SessionContext) error {
-		notExist, err := c.isArrayElemNotExists(
-			ctx, orgCLACollection, fieldIndividuals,
+		notExist, err := this.isArrayElemNotExists(
+			ctx, this.orgCLACollection, fieldIndividuals,
 			filterOfDocForIndividualSigning(platform, org, repo, false),
 			indexOfCorpManagerAndIndividual(info.Email),
 		)
@@ -72,29 +72,29 @@ func (c *client) SignAsIndividual(orgCLAID, platform, org, repo string, info dbm
 			}
 		}
 
-		return c.pushArrayElem(ctx, orgCLACollection, fieldIndividuals, filterOfDocID(oid), body)
+		return this.pushArrayElem(ctx, this.orgCLACollection, fieldIndividuals, filterOfDocID(oid), body)
 	}
 
-	return c.doTransaction(f)
+	return this.doTransaction(f)
 }
 
-func (c *client) DeleteIndividualSigning(platform, org, repo, email string) error {
+func (this *client) DeleteIndividualSigning(platform, org, repo, email string) error {
 	f := func(ctx mongo.SessionContext) error {
-		return c.pullArrayElem(
-			ctx, orgCLACollection, fieldIndividuals,
+		return this.pullArrayElem(
+			ctx, this.orgCLACollection, fieldIndividuals,
 			filterOfDocForIndividualSigning(platform, org, repo, false),
 			indexOfCorpManagerAndIndividual(email),
 		)
 	}
 
 	// TODO don't use transaction if there is only one doc of cla org for individual signing
-	return c.doTransaction(f)
+	return this.doTransaction(f)
 }
 
-func (c *client) UpdateIndividualSigning(platform, org, repo, email string, enabled bool) error {
+func (this *client) UpdateIndividualSigning(platform, org, repo, email string, enabled bool) error {
 	f := func(ctx mongo.SessionContext) error {
-		return c.updateArrayElem(
-			ctx, orgCLACollection, fieldIndividuals,
+		return this.updateArrayElem(
+			ctx, this.orgCLACollection, fieldIndividuals,
 			filterOfDocForIndividualSigning(platform, org, repo, true),
 			indexOfCorpManagerAndIndividual(email),
 			bson.M{"enabled": enabled},
@@ -102,10 +102,10 @@ func (c *client) UpdateIndividualSigning(platform, org, repo, email string, enab
 		)
 	}
 
-	return c.doTransaction(f)
+	return this.doTransaction(f)
 }
 
-func (c *client) IsIndividualSigned(platform, orgID, repoID, email string) (bool, error) {
+func (this *client) IsIndividualSigned(platform, orgID, repoID, email string) (bool, error) {
 	// must specify repo="" for filterOfOrgRepo to add org filter
 	filterOfDoc, err := filterOfOrgRepo(platform, orgID, "")
 	if err != nil {
@@ -121,8 +121,8 @@ func (c *client) IsIndividualSigned(platform, orgID, repoID, email string) (bool
 	var v []OrgCLA
 
 	f := func(ctx context.Context) error {
-		return c.getArrayElem(
-			ctx, orgCLACollection, fieldIndividuals, filterOfDoc,
+		return this.getArrayElem(
+			ctx, this.orgCLACollection, fieldIndividuals, filterOfDoc,
 			indexOfCorpManagerAndIndividual(email),
 			bson.M{
 				fieldRepo:                         1,
@@ -169,7 +169,7 @@ func (c *client) IsIndividualSigned(platform, orgID, repoID, email string) (bool
 	return false, nil
 }
 
-func (c *client) ListIndividualSigning(opt dbmodels.IndividualSigningListOption) (map[string][]dbmodels.IndividualSigningBasicInfo, error) {
+func (this *client) ListIndividualSigning(opt dbmodels.IndividualSigningListOption) (map[string][]dbmodels.IndividualSigningBasicInfo, error) {
 	filterOfDoc, err := filterOfOrgRepo(opt.Platform, opt.OrgID, opt.RepoID)
 	if err != nil {
 		return nil, err
@@ -193,8 +193,8 @@ func (c *client) ListIndividualSigning(opt dbmodels.IndividualSigningListOption)
 
 	var v []OrgCLA
 	f := func(ctx context.Context) error {
-		return c.getArrayElem(
-			ctx, orgCLACollection, fieldIndividuals,
+		return this.getArrayElem(
+			ctx, this.orgCLACollection, fieldIndividuals,
 			filterOfDoc, filterOfArray, project, &v)
 	}
 

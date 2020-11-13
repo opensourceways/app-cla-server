@@ -37,7 +37,7 @@ func corpSigningField(field string) string {
 	return fmt.Sprintf("%s.%s", fieldCorporations, field)
 }
 
-func (c *client) SignAsCorporation(orgCLAID, platform, org, repo string, info dbmodels.CorporationSigningInfo) error {
+func (this *client) SignAsCorporation(orgCLAID, platform, org, repo string, info dbmodels.CorporationSigningInfo) error {
 	oid, err := toObjectID(orgCLAID)
 	if err != nil {
 		return err
@@ -57,8 +57,8 @@ func (c *client) SignAsCorporation(orgCLAID, platform, org, repo string, info db
 	addCorporationID(info.AdminEmail, body)
 
 	f := func(ctx mongo.SessionContext) error {
-		notExist, err := c.isArrayElemNotExists(
-			ctx, orgCLACollection, fieldCorporations,
+		notExist, err := this.isArrayElemNotExists(
+			ctx, this.orgCLACollection, fieldCorporations,
 			filterOfDocForCorpSigning(platform, org, repo),
 			filterOfCorpID(info.AdminEmail),
 		)
@@ -72,13 +72,13 @@ func (c *client) SignAsCorporation(orgCLAID, platform, org, repo string, info db
 			}
 		}
 
-		return c.pushArrayElem(ctx, orgCLACollection, fieldCorporations, filterOfDocID(oid), body)
+		return this.pushArrayElem(ctx, this.orgCLACollection, fieldCorporations, filterOfDocID(oid), body)
 	}
 
-	return c.doTransaction(f)
+	return this.doTransaction(f)
 }
 
-func (c *client) ListCorporationSigning(opt dbmodels.CorporationSigningListOption) (map[string][]dbmodels.CorporationSigningDetail, error) {
+func (this *client) ListCorporationSigning(opt dbmodels.CorporationSigningListOption) (map[string][]dbmodels.CorporationSigningDetail, error) {
 	filterOfDoc, err := filterOfOrgRepo(opt.Platform, opt.OrgID, opt.RepoID)
 	if err != nil {
 		return nil, err
@@ -95,8 +95,8 @@ func (c *client) ListCorporationSigning(opt dbmodels.CorporationSigningListOptio
 		ma := map[string]bson.M{
 			fieldCorpManagers: {"role": dbmodels.RoleAdmin},
 		}
-		return c.getMultiArrays(
-			ctx, orgCLACollection, filterOfDoc, ma, projectOfCorpSigning(), &v,
+		return this.getMultiArrays(
+			ctx, this.orgCLACollection, filterOfDoc, ma, projectOfCorpSigning(), &v,
 		)
 	}
 
@@ -126,7 +126,7 @@ func (c *client) ListCorporationSigning(opt dbmodels.CorporationSigningListOptio
 	return r, nil
 }
 
-func (c *client) getCorporationSigningDetail(filterOfDoc bson.M, email string) (*OrgCLA, error) {
+func (this *client) getCorporationSigningDetail(filterOfDoc bson.M, email string) (*OrgCLA, error) {
 	var v []OrgCLA
 
 	f := func(ctx context.Context) error {
@@ -137,8 +137,8 @@ func (c *client) getCorporationSigningDetail(filterOfDoc bson.M, email string) (
 			fieldCorporations: filterOfCorpID(email),
 			fieldCorpManagers: admin,
 		}
-		return c.getMultiArrays(
-			ctx, orgCLACollection, filterOfDoc,
+		return this.getMultiArrays(
+			ctx, this.orgCLACollection, filterOfDoc,
 			ma, projectOfCorpSigning(), &v,
 		)
 	}
@@ -152,8 +152,8 @@ func (c *client) getCorporationSigningDetail(filterOfDoc bson.M, email string) (
 	})
 }
 
-func (c *client) GetCorporationSigningDetail(platform, org, repo, email string) (string, dbmodels.CorporationSigningDetail, error) {
-	orgCLA, err := c.getCorporationSigningDetail(
+func (this *client) GetCorporationSigningDetail(platform, org, repo, email string) (string, dbmodels.CorporationSigningDetail, error) {
+	orgCLA, err := this.getCorporationSigningDetail(
 		filterOfDocForCorpSigning(platform, org, repo), email,
 	)
 	if err != nil {
@@ -164,7 +164,7 @@ func (c *client) GetCorporationSigningDetail(platform, org, repo, email string) 
 	return objectIDToUID(orgCLA.ID), detail, nil
 }
 
-func (c *client) CheckCorporationSigning(orgCLAID, email string) (dbmodels.CorporationSigningDetail, error) {
+func (this *client) CheckCorporationSigning(orgCLAID, email string) (dbmodels.CorporationSigningDetail, error) {
 	var result dbmodels.CorporationSigningDetail
 
 	oid, err := toObjectID(orgCLAID)
@@ -172,7 +172,7 @@ func (c *client) CheckCorporationSigning(orgCLAID, email string) (dbmodels.Corpo
 		return result, err
 	}
 
-	orgCLA, err := c.getCorporationSigningDetail(filterOfDocID(oid), email)
+	orgCLA, err := this.getCorporationSigningDetail(filterOfDocID(oid), email)
 	if err != nil {
 		return result, err
 	}

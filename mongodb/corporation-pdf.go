@@ -10,15 +10,15 @@ import (
 	"github.com/opensourceways/app-cla-server/util"
 )
 
-func (c *client) UploadCorporationSigningPDF(orgCLAID, adminEmail string, pdf []byte) error {
+func (this *client) UploadCorporationSigningPDF(orgCLAID, adminEmail string, pdf []byte) error {
 	oid, err := toObjectID(orgCLAID)
 	if err != nil {
 		return err
 	}
 
 	f := func(ctx context.Context) error {
-		return c.updateArrayElem(
-			ctx, orgCLACollection, fieldCorporations,
+		return this.updateArrayElem(
+			ctx, this.orgCLACollection, fieldCorporations,
 			filterOfDocID(oid),
 			filterOfCorpID(adminEmail),
 			bson.M{
@@ -31,7 +31,7 @@ func (c *client) UploadCorporationSigningPDF(orgCLAID, adminEmail string, pdf []
 	return withContext(f)
 }
 
-func (c *client) DownloadCorporationSigningPDF(orgCLAID, email string) ([]byte, error) {
+func (this *client) DownloadCorporationSigningPDF(orgCLAID, email string) ([]byte, error) {
 	oid, err := toObjectID(orgCLAID)
 	if err != nil {
 		return nil, err
@@ -40,8 +40,8 @@ func (c *client) DownloadCorporationSigningPDF(orgCLAID, email string) ([]byte, 
 	var v []OrgCLA
 
 	f := func(ctx context.Context) error {
-		return c.getArrayElem(
-			ctx, orgCLACollection, fieldCorporations,
+		return this.getArrayElem(
+			ctx, this.orgCLACollection, fieldCorporations,
 			filterOfDocID(oid),
 			filterOfCorpID(email),
 			bson.M{

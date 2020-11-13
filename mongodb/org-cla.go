@@ -12,7 +12,6 @@ import (
 )
 
 const (
-	orgCLACollection     = "org_clas"
 	fieldIndividuals     = "individuals"
 	fieldEmployees       = "employees"
 	fieldCorporations    = "corporations"
@@ -58,7 +57,7 @@ type OrgCLA struct {
 	OrgSignature         []byte `bson:"org_signature" json:"-"`
 }
 
-func (c *client) CreateOrgCLA(info dbmodels.OrgCLA) (string, error) {
+func (this *client) CreateOrgCLA(info dbmodels.OrgCLA) (string, error) {
 	orgCLA := OrgCLA{
 		Platform:    info.Platform,
 		OrgID:       info.OrgID,
@@ -83,7 +82,7 @@ func (c *client) CreateOrgCLA(info dbmodels.OrgCLA) (string, error) {
 	orgCLAID := ""
 
 	f := func(ctx context.Context) error {
-		s, err := c.newDocIfNotExist(ctx, orgCLACollection, filterOfDoc, body)
+		s, err := this.newDocIfNotExist(ctx, this.orgCLACollection, filterOfDoc, body)
 		if err != nil {
 			return err
 		}
@@ -97,20 +96,20 @@ func (c *client) CreateOrgCLA(info dbmodels.OrgCLA) (string, error) {
 	return orgCLAID, nil
 }
 
-func (c *client) DeleteOrgCLA(uid string) error {
+func (this *client) DeleteOrgCLA(uid string) error {
 	oid, err := toObjectID(uid)
 	if err != nil {
 		return err
 	}
 
 	f := func(ctx context.Context) error {
-		return c.updateDoc(ctx, orgCLACollection, filterOfDocID(oid), bson.M{"enabled": false})
+		return this.updateDoc(ctx, this.orgCLACollection, filterOfDocID(oid), bson.M{"enabled": false})
 	}
 
 	return withContext(f)
 }
 
-func (c *client) GetOrgCLA(uid string) (dbmodels.OrgCLA, error) {
+func (this *client) GetOrgCLA(uid string) (dbmodels.OrgCLA, error) {
 	var r dbmodels.OrgCLA
 
 	oid, err := toObjectID(uid)
@@ -121,7 +120,7 @@ func (c *client) GetOrgCLA(uid string) (dbmodels.OrgCLA, error) {
 	var v OrgCLA
 
 	f := func(ctx context.Context) error {
-		return c.getDoc(ctx, orgCLACollection, filterOfDocID(oid), projectOfClaOrg(), &v)
+		return this.getDoc(ctx, this.orgCLACollection, filterOfDocID(oid), projectOfClaOrg(), &v)
 	}
 
 	if err := withContext(f); err != nil {
@@ -131,7 +130,7 @@ func (c *client) GetOrgCLA(uid string) (dbmodels.OrgCLA, error) {
 	return toModelOrgCLA(v), nil
 }
 
-func (c *client) ListOrgCLA(opt dbmodels.OrgCLAListOption) ([]dbmodels.OrgCLA, error) {
+func (this *client) ListOrgCLA(opt dbmodels.OrgCLAListOption) ([]dbmodels.OrgCLA, error) {
 	if (opt.RepoID != "" && len(opt.OrgID) > 0) || (opt.RepoID == "" && len(opt.OrgID) == 0) {
 		return nil, fmt.Errorf("need specify multiple orgs or a single repo")
 	}
@@ -158,7 +157,7 @@ func (c *client) ListOrgCLA(opt dbmodels.OrgCLAListOption) ([]dbmodels.OrgCLA, e
 	var v []OrgCLA
 
 	f := func(ctx context.Context) error {
-		return c.getDocs(ctx, orgCLACollection, filter, projectOfClaOrg(), &v)
+		return this.getDocs(ctx, this.orgCLACollection, filter, projectOfClaOrg(), &v)
 	}
 
 	if err = withContext(f); err != nil {

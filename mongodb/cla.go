@@ -13,8 +13,6 @@ import (
 	"github.com/opensourceways/app-cla-server/dbmodels"
 )
 
-const clasCollection = "clas"
-
 type CLA struct {
 	ID        primitive.ObjectID `bson:"_id" json:"-"`
 	CreatedAt time.Time          `bson:"created_at" json:"-"`
@@ -33,7 +31,7 @@ type Field struct {
 	Required    bool   `bson:"required" json:"required"`
 }
 
-func (c *client) CreateCLA(cla dbmodels.CLA) (string, error) {
+func (this *client) CreateCLA(cla dbmodels.CLA) (string, error) {
 	info := CLA{
 		URL:      cla.Name,
 		Text:     cla.Text,
@@ -59,7 +57,7 @@ func (c *client) CreateCLA(cla dbmodels.CLA) (string, error) {
 
 	uid := ""
 	f := func(ctx context.Context) error {
-		s, err := c.insertDoc(ctx, clasCollection, body)
+		s, err := this.insertDoc(ctx, this.clasCollection, body)
 		uid = s
 		return err
 	}
@@ -75,14 +73,14 @@ func (this *client) DeleteCLA(uid string) error {
 	}
 
 	f := func(ctx mongo.SessionContext) error {
-		col := this.collection(orgCLACollection)
+		col := this.collection(this.orgCLACollection)
 
 		sr := col.FindOne(ctx, bson.M{"cla_id": uid})
 		err := sr.Err()
 
 		if err != nil {
 			if isErrNoDocuments(err) {
-				col = this.collection(clasCollection)
+				col = this.collection(this.clasCollection)
 
 				_, err := col.DeleteOne(ctx, bson.M{"_id": oid})
 				return err
@@ -98,7 +96,7 @@ func (this *client) DeleteCLA(uid string) error {
 	return this.doTransaction(f)
 }
 
-func (c *client) ListCLA(opts dbmodels.CLAListOptions) ([]dbmodels.CLA, error) {
+func (this *client) ListCLA(opts dbmodels.CLAListOptions) ([]dbmodels.CLA, error) {
 	body, err := golangsdk.BuildRequestBody(opts, "")
 	if err != nil {
 		return nil, fmt.Errorf("build options to list cla failed, err:%v", err)
@@ -107,7 +105,7 @@ func (c *client) ListCLA(opts dbmodels.CLAListOptions) ([]dbmodels.CLA, error) {
 	var v []CLA
 
 	f := func(ctx context.Context) error {
-		col := c.db.Collection(clasCollection)
+		col := this.db.Collection(this.clasCollection)
 		filter := bson.M(body)
 
 		cursor, err := col.Find(ctx, filter)
@@ -135,7 +133,7 @@ func (c *client) ListCLA(opts dbmodels.CLAListOptions) ([]dbmodels.CLA, error) {
 	return r, nil
 }
 
-func (c *client) ListCLAByIDs(ids []string) ([]dbmodels.CLA, error) {
+func (this *client) ListCLAByIDs(ids []string) ([]dbmodels.CLA, error) {
 	ids1 := make(bson.A, 0, len(ids))
 	for _, id := range ids {
 		id1, err := toObjectID(id)
@@ -152,7 +150,7 @@ func (c *client) ListCLAByIDs(ids []string) ([]dbmodels.CLA, error) {
 			"_id": bson.M{"$in": ids1},
 		}
 
-		return c.getDocs(ctx, clasCollection, filter, nil, &v)
+		return this.getDocs(ctx, this.clasCollection, filter, nil, &v)
 	}
 
 	if err := withContext(f); err != nil {
@@ -167,7 +165,7 @@ func (c *client) ListCLAByIDs(ids []string) ([]dbmodels.CLA, error) {
 	return r, nil
 }
 
-func (c *client) GetCLA(uid string, onlyFields bool) (dbmodels.CLA, error) {
+func (this *client) GetCLA(uid string, onlyFields bool) (dbmodels.CLA, error) {
 	oid, err := toObjectID(uid)
 	if err != nil {
 		return dbmodels.CLA{}, err
@@ -180,7 +178,7 @@ func (c *client) GetCLA(uid string, onlyFields bool) (dbmodels.CLA, error) {
 		project["fields"] = 1
 	}
 	f := func(ctx context.Context) error {
-		return c.getDoc(ctx, clasCollection, filterOfDocID(oid), project, &v)
+		return this.getDoc(ctx, this.clasCollection, filterOfDocID(oid), project, &v)
 	}
 
 	if err := withContext(f); err != nil {

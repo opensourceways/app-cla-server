@@ -6,6 +6,7 @@ import (
 )
 
 func init() {
+
 	beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:AuthController"] = append(beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:AuthController"],
 		beego.ControllerComments{
 			Method:           "Auth",

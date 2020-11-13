@@ -120,10 +120,10 @@ func errorIfMatchingNoDoc(r *mongo.UpdateResult) error {
 	return nil
 }
 
-func (c *client) pushArrayElem(ctx context.Context, collection, array string, filterOfDoc, value bson.M) error {
+func (this *client) pushArrayElem(ctx context.Context, collection, array string, filterOfDoc, value bson.M) error {
 	update := bson.M{"$push": bson.M{array: value}}
 
-	col := c.collection(collection)
+	col := this.collection(collection)
 	r, err := col.UpdateOne(ctx, filterOfDoc, update)
 	if err != nil {
 		return err
@@ -132,10 +132,10 @@ func (c *client) pushArrayElem(ctx context.Context, collection, array string, fi
 	return errorIfMatchingNoDoc(r)
 }
 
-func (c *client) pushArrayElems(ctx context.Context, collection, array string, filterOfDoc bson.M, value bson.A) error {
+func (this *client) pushArrayElems(ctx context.Context, collection, array string, filterOfDoc bson.M, value bson.A) error {
 	update := bson.M{"$push": bson.M{array: bson.M{"$each": value}}}
 
-	col := c.collection(collection)
+	col := this.collection(collection)
 	r, err := col.UpdateOne(ctx, filterOfDoc, update)
 	if err != nil {
 		return err
@@ -144,10 +144,10 @@ func (c *client) pushArrayElems(ctx context.Context, collection, array string, f
 	return errorIfMatchingNoDoc(r)
 }
 
-func (c *client) pullArrayElem(ctx context.Context, collection, array string, filterOfDoc, filterOfArray bson.M) error {
+func (this *client) pullArrayElem(ctx context.Context, collection, array string, filterOfDoc, filterOfArray bson.M) error {
 	update := bson.M{"$pull": bson.M{array: filterOfArray}}
 
-	col := c.collection(collection)
+	col := this.collection(collection)
 	r, err := col.UpdateOne(ctx, filterOfDoc, update)
 	if err != nil {
 		return err
@@ -158,7 +158,7 @@ func (c *client) pullArrayElem(ctx context.Context, collection, array string, fi
 
 // r, _ := col.UpdateOne; r.ModifiedCount == 0 will happen in two case: 1. no matched array item; 2 update repeatedly with same update cmd.
 // checkModified = true when it can't exclude any case of above two; otherwise it can be set as false.
-func (c *client) updateArrayElem(ctx context.Context, collection, array string, filterOfDoc, filterOfArray, updateCmd bson.M, checkModified bool) error {
+func (this *client) updateArrayElem(ctx context.Context, collection, array string, filterOfDoc, filterOfArray, updateCmd bson.M, checkModified bool) error {
 	cmd := bson.M{}
 	for k, v := range updateCmd {
 		cmd[fmt.Sprintf("%s.$[i].%s", array, k)] = v
@@ -169,7 +169,7 @@ func (c *client) updateArrayElem(ctx context.Context, collection, array string, 
 		arrayFilter["i."+k] = v
 	}
 
-	col := c.collection(collection)
+	col := this.collection(collection)
 	r, err := col.UpdateOne(
 		ctx, filterOfDoc,
 		bson.M{"$set": cmd},
@@ -190,7 +190,7 @@ func (c *client) updateArrayElem(ctx context.Context, collection, array string, 
 	}
 
 	if r.ModifiedCount == 0 && checkModified {
-		b, err := c.isArrayElemNotExists(ctx, collection, array, filterOfDoc, filterOfArray)
+		b, err := this.isArrayElemNotExists(ctx, collection, array, filterOfDoc, filterOfArray)
 		if err == nil && b {
 			return dbmodels.DBError{
 				ErrCode: util.ErrNoDBRecord,
@@ -201,7 +201,7 @@ func (c *client) updateArrayElem(ctx context.Context, collection, array string, 
 	return nil
 }
 
-func (c *client) isArrayElemNotExists(ctx context.Context, collection, array string, filterOfDoc, filterOfArray bson.M) (bool, error) {
+func (this *client) isArrayElemNotExists(ctx context.Context, collection, array string, filterOfDoc, filterOfArray bson.M) (bool, error) {
 	query := bson.M{array: bson.M{"$elemMatch": filterOfArray}}
 	for k, v := range filterOfDoc {
 		query[k] = v
@@ -211,7 +211,7 @@ func (c *client) isArrayElemNotExists(ctx context.Context, collection, array str
 		ID primitive.ObjectID `bson:"_id"`
 	}
 
-	err := c.getDocs(ctx, collection, query, bson.M{"_id": 1}, &v)
+	err := this.getDocs(ctx, collection, query, bson.M{"_id": 1}, &v)
 	if err != nil {
 		return false, err
 	}
@@ -219,15 +219,15 @@ func (c *client) isArrayElemNotExists(ctx context.Context, collection, array str
 	return len(v) <= 0, nil
 }
 
-func (c *client) getArrayElem(ctx context.Context, collection, array string, filterOfDoc, filterOfArray, project bson.M, result interface{}) error {
+func (this *client) getArrayElem(ctx context.Context, collection, array string, filterOfDoc, filterOfArray, project bson.M, result interface{}) error {
 	ma := map[string]bson.M{}
 	if len(filterOfArray) > 0 {
 		ma[array] = filterOfArray
 	}
-	return c.getMultiArrays(ctx, collection, filterOfDoc, ma, project, result)
+	return this.getMultiArrays(ctx, collection, filterOfDoc, ma, project, result)
 }
 
-func (c *client) getMultiArrays(ctx context.Context, collection string, filterOfDoc bson.M, filterOfArrays map[string]bson.M, project bson.M, result interface{}) error {
+func (this *client) getMultiArrays(ctx context.Context, collection string, filterOfDoc bson.M, filterOfArrays map[string]bson.M, project bson.M, result interface{}) error {
 	pipeline := bson.A{bson.M{"$match": filterOfDoc}}
 
 	if len(filterOfArrays) > 0 {
@@ -257,7 +257,7 @@ func (c *client) getMultiArrays(ctx context.Context, collection string, filterOf
 		pipeline = append(pipeline, bson.M{"$project": project})
 	}
 
-	col := c.collection(collection)
+	col := this.collection(collection)
 	cursor, err := col.Aggregate(ctx, pipeline)
 	if err != nil {
 		return err
@@ -300,10 +300,10 @@ func getSigningDoc(v []OrgCLA, isOk func(doc *OrgCLA) bool) (*OrgCLA, error) {
 	}
 }
 
-func (c *client) newDocIfNotExist(ctx context.Context, collection string, filterOfDoc, docInfo bson.M) (string, error) {
+func (this *client) newDocIfNotExist(ctx context.Context, collection string, filterOfDoc, docInfo bson.M) (string, error) {
 	upsert := true
 
-	col := c.collection(collection)
+	col := this.collection(collection)
 	r, err := col.UpdateOne(
 		ctx, filterOfDoc, bson.M{"$setOnInsert": docInfo},
 		&options.UpdateOptions{Upsert: &upsert},
@@ -322,10 +322,10 @@ func (c *client) newDocIfNotExist(ctx context.Context, collection string, filter
 	return toUID(r.UpsertedID)
 }
 
-func (c *client) newDoc(ctx context.Context, collection string, filterOfDoc, docInfo bson.M) (string, error) {
+func (this *client) newDoc(ctx context.Context, collection string, filterOfDoc, docInfo bson.M) (string, error) {
 	upsert := true
 
-	col := c.collection(collection)
+	col := this.collection(collection)
 	r, err := col.ReplaceOne(
 		ctx, filterOfDoc, docInfo,
 		&options.ReplaceOptions{Upsert: &upsert},
@@ -340,8 +340,8 @@ func (c *client) newDoc(ctx context.Context, collection string, filterOfDoc, doc
 	return "", nil
 }
 
-func (c *client) updateDoc(ctx context.Context, collection string, filterOfDoc, update bson.M) error {
-	col := c.collection(collection)
+func (this *client) updateDoc(ctx context.Context, collection string, filterOfDoc, update bson.M) error {
+	col := this.collection(collection)
 	r, err := col.UpdateOne(ctx, filterOfDoc, bson.M{"$set": update})
 	if err != nil {
 		return err
@@ -349,8 +349,8 @@ func (c *client) updateDoc(ctx context.Context, collection string, filterOfDoc, 
 	return errorIfMatchingNoDoc(r)
 }
 
-func (c *client) getDoc(ctx context.Context, collection string, filterOfDoc, project bson.M, result interface{}) error {
-	col := c.collection(collection)
+func (this *client) getDoc(ctx context.Context, collection string, filterOfDoc, project bson.M, result interface{}) error {
+	col := this.collection(collection)
 
 	var sr *mongo.SingleResult
 	if len(project) > 0 {
@@ -373,8 +373,8 @@ func (c *client) getDoc(ctx context.Context, collection string, filterOfDoc, pro
 	return nil
 }
 
-func (c *client) getDocs(ctx context.Context, collection string, filterOfDoc, project bson.M, result interface{}) error {
-	col := c.collection(collection)
+func (this *client) getDocs(ctx context.Context, collection string, filterOfDoc, project bson.M, result interface{}) error {
+	col := this.collection(collection)
 
 	var cursor *mongo.Cursor
 	var err error
@@ -392,8 +392,8 @@ func (c *client) getDocs(ctx context.Context, collection string, filterOfDoc, pr
 	return cursor.All(ctx, result)
 }
 
-func (c *client) insertDoc(ctx context.Context, collection string, docInfo bson.M) (string, error) {
-	col := c.collection(collection)
+func (this *client) insertDoc(ctx context.Context, collection string, docInfo bson.M) (string, error) {
+	col := this.collection(collection)
 	r, err := col.InsertOne(ctx, docInfo)
 	if err != nil {
 		return "", err

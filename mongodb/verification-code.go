@@ -12,9 +12,7 @@ import (
 	"github.com/opensourceways/app-cla-server/util"
 )
 
-const vcCollection = "verification_codes"
-
-func (c *client) CreateVerificationCode(opt dbmodels.VerificationCode) error {
+func (this *client) CreateVerificationCode(opt dbmodels.VerificationCode) error {
 	info := struct {
 		Email   string `json:"email" required:"true"`
 		Code    string `json:"code" required:"true"`
@@ -33,7 +31,7 @@ func (c *client) CreateVerificationCode(opt dbmodels.VerificationCode) error {
 	}
 
 	f := func(ctx mongo.SessionContext) error {
-		col := c.collection(vcCollection)
+		col := this.collection(this.vcCollection)
 
 		// delete the expired codes.
 		filter := bson.M{"expiry": bson.M{"$lt": util.Now()}}
@@ -41,20 +39,20 @@ func (c *client) CreateVerificationCode(opt dbmodels.VerificationCode) error {
 
 		// email + purpose can't be the index, for example: a corp signs a community concurrently.
 		// so, it should use insertDoc to record each verification codes.
-		_, err := c.insertDoc(ctx, vcCollection, body)
+		_, err := this.insertDoc(ctx, this.vcCollection, body)
 		return err
 	}
 
-	return c.doTransaction(f)
+	return this.doTransaction(f)
 }
 
-func (c *client) GetVerificationCode(opt *dbmodels.VerificationCode) error {
+func (this *client) GetVerificationCode(opt *dbmodels.VerificationCode) error {
 	var v struct {
 		Expiry int64 `bson:"expiry"`
 	}
 
 	f := func(ctx context.Context) error {
-		col := c.collection(vcCollection)
+		col := this.collection(this.vcCollection)
 
 		filter := bson.M{
 			"email":   opt.Email,

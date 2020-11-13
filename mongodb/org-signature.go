@@ -9,15 +9,15 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 )
 
-func (c *client) UploadOrgSignature(orgCLAID string, pdf []byte) error {
+func (this *client) UploadOrgSignature(orgCLAID string, pdf []byte) error {
 	oid, err := toObjectID(orgCLAID)
 	if err != nil {
 		return err
 	}
 
 	f := func(ctx context.Context) error {
-		return c.updateDoc(
-			ctx, orgCLACollection, filterOfDocID(oid),
+		return this.updateDoc(
+			ctx, this.orgCLACollection, filterOfDocID(oid),
 			bson.M{
 				fieldOrgSignature:    pdf,
 				fieldOrgSignatureTag: util.Md5sumOfBytes(pdf),
@@ -28,7 +28,7 @@ func (c *client) UploadOrgSignature(orgCLAID string, pdf []byte) error {
 	return withContext(f)
 }
 
-func (c *client) DownloadOrgSignature(orgCLAID string) ([]byte, error) {
+func (this *client) DownloadOrgSignature(orgCLAID string) ([]byte, error) {
 	oid, err := toObjectID(orgCLAID)
 	if err != nil {
 		return nil, err
@@ -37,8 +37,8 @@ func (c *client) DownloadOrgSignature(orgCLAID string) ([]byte, error) {
 	var v OrgCLA
 
 	f := func(ctx context.Context) error {
-		return c.getDoc(
-			ctx, orgCLACollection, filterOfDocID(oid),
+		return this.getDoc(
+			ctx, this.orgCLACollection, filterOfDocID(oid),
 			bson.M{fieldOrgSignature: 1},
 			&v,
 		)
@@ -51,7 +51,7 @@ func (c *client) DownloadOrgSignature(orgCLAID string) ([]byte, error) {
 	return v.OrgSignature, nil
 }
 
-func (c *client) DownloadOrgSignatureByMd5(orgCLAID, md5sum string) ([]byte, error) {
+func (this *client) DownloadOrgSignatureByMd5(orgCLAID, md5sum string) ([]byte, error) {
 	oid, err := toObjectID(orgCLAID)
 	if err != nil {
 		return nil, err
@@ -71,7 +71,7 @@ func (c *client) DownloadOrgSignatureByMd5(orgCLAID, md5sum string) ([]byte, err
 			}},
 		}
 
-		col := c.collection(orgCLACollection)
+		col := this.collection(this.orgCLACollection)
 		cursor, err := col.Aggregate(ctx, pipeline)
 		if err != nil {
 			return err

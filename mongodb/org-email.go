@@ -9,8 +9,6 @@ import (
 	"github.com/opensourceways/app-cla-server/dbmodels"
 )
 
-const orgEmailCollection = "org_emails"
-
 type OrgEmail struct {
 	ID       primitive.ObjectID `bson:"_id" json:"-"`
 	Email    string             `bson:"email" json:"email" required:"true"`
@@ -18,7 +16,7 @@ type OrgEmail struct {
 	Token    []byte             `bson:"token" json:"-"`
 }
 
-func (c *client) CreateOrgEmail(opt dbmodels.OrgEmailCreateInfo) error {
+func (this *client) CreateOrgEmail(opt dbmodels.OrgEmailCreateInfo) error {
 	info := OrgEmail{
 		Email:    opt.Email,
 		Platform: opt.Platform,
@@ -30,7 +28,7 @@ func (c *client) CreateOrgEmail(opt dbmodels.OrgEmailCreateInfo) error {
 	body["token"] = opt.Token
 
 	f := func(ctx context.Context) error {
-		_, err := c.newDocIfNotExist(ctx, orgEmailCollection, bson.M{"email": opt.Email}, body)
+		_, err := this.newDocIfNotExist(ctx, this.orgEmailCollection, bson.M{"email": opt.Email}, body)
 		if err != nil && isErrorOfRecordExists(err) {
 			return nil
 		}
@@ -40,11 +38,11 @@ func (c *client) CreateOrgEmail(opt dbmodels.OrgEmailCreateInfo) error {
 	return withContext(f)
 }
 
-func (c *client) GetOrgEmailInfo(email string) (dbmodels.OrgEmailCreateInfo, error) {
+func (this *client) GetOrgEmailInfo(email string) (dbmodels.OrgEmailCreateInfo, error) {
 	var v OrgEmail
 
 	f := func(ctx context.Context) error {
-		return c.getDoc(ctx, orgEmailCollection, bson.M{"email": email}, bson.M{"email": 0}, &v)
+		return this.getDoc(ctx, this.orgEmailCollection, bson.M{"email": email}, bson.M{"email": 0}, &v)
 	}
 
 	if err := withContext(f); err != nil {

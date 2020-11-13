@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/astaxie/beego"
+	"github.com/huaweicloud/golangsdk"
 
 	"github.com/opensourceways/app-cla-server/util"
 )
@@ -11,19 +12,28 @@ import (
 var AppConfig *appConfig
 
 type appConfig struct {
-	PythonBin               string `json:"python_bin"`
-	MongodbConn             string `json:"mongodb_conn"`
-	DBName                  string `json:"mongodb_db"`
-	CLAFieldsNumber         int    `json:"cla_fields_number"`
-	VerificationCodeExpiry  int64  `json:"verification_code_expiry"`
-	APITokenExpiry          int64  `json:"api_token_expiry"`
-	APITokenKey             string `json:"api_token_key"`
-	PDFOrgSignatureDir      string `json:"pdf_org_signature_dir"`
-	PDFOutDir               string `json:"pdf_out_dir"`
-	CodePlatformConfigFile  string `json:"code_platforms"`
-	EmailPlatformConfigFile string `json:"email_platforms"`
-	EmployeeManagersNumber  int    `json:"employee_managers_number"`
-	CLAPlatformURL          string `json:"cla_platform_url"`
+	PythonBin               string        `json:"python_bin" required:"true"`
+	CLAFieldsNumber         int           `json:"cla_fields_number" required:"true"`
+	VerificationCodeExpiry  int64         `json:"verification_code_expiry" required:"true"`
+	APITokenExpiry          int64         `json:"api_token_expiry" required:"true"`
+	APITokenKey             string        `json:"api_token_key" required:"true"`
+	PDFOrgSignatureDir      string        `json:"pdf_org_signature_dir" required:"true"`
+	PDFOutDir               string        `json:"pdf_out_dir" required:"true"`
+	CodePlatformConfigFile  string        `json:"code_platforms" required:"true"`
+	EmailPlatformConfigFile string        `json:"email_platforms" required:"true"`
+	EmployeeManagersNumber  int           `json:"employee_managers_number" required:"true"`
+	CLAPlatformURL          string        `json:"cla_platform_url" required:"true"`
+	Mongodb                 MongodbConfig `json:"mongodb" required:"true"`
+}
+
+type MongodbConfig struct {
+	MongodbConn              string `json:"mongodb_conn" required:"true"`
+	DBName                   string `json:"mongodb_db" required:"true"`
+	CLACollection            string `json:"cla_collection" required:"true"`
+	LinkCollection           string `json:"link_collection" required:"true"`
+	OrgEmailCollection       string `json:"org_email_collection" required:"true"`
+	VCCollection             string `json:"verification_code_collection" required:"true"`
+	BlankSignatureCollection string `json:"blank_signature_collection" required:"true"`
 }
 
 func InitAppConfig() error {
@@ -49,8 +59,6 @@ func InitAppConfig() error {
 
 	AppConfig = &appConfig{
 		PythonBin:               beego.AppConfig.String("python_bin"),
-		MongodbConn:             beego.AppConfig.String("mongodb_conn"),
-		DBName:                  beego.AppConfig.String("mongodb_db"),
 		CLAFieldsNumber:         claFieldsNumber,
 		VerificationCodeExpiry:  codeExpiry,
 		APITokenExpiry:          tokenExpiry,
@@ -61,11 +69,25 @@ func InitAppConfig() error {
 		EmailPlatformConfigFile: beego.AppConfig.String("email_platforms"),
 		EmployeeManagersNumber:  employeeMangers,
 		CLAPlatformURL:          beego.AppConfig.String("cla_platform_url"),
+		Mongodb: MongodbConfig{
+			MongodbConn:              beego.AppConfig.String("mongodb::mongodb_conn"),
+			DBName:                   beego.AppConfig.String("mongodb::mongodb_db"),
+			CLACollection:            beego.AppConfig.String("mongodb::cla_collection"),
+			LinkCollection:           beego.AppConfig.String("mongodb::link_collection"),
+			OrgEmailCollection:       beego.AppConfig.String("mongodb::org_email_collection"),
+			VCCollection:             beego.AppConfig.String("mongodb::verification_code_collection"),
+			BlankSignatureCollection: beego.AppConfig.String("mongodb::blank_signature_collection"),
+		},
 	}
 	return AppConfig.validate()
 }
 
 func (this *appConfig) validate() error {
+	_, err := golangsdk.BuildRequestBody(this, "")
+	if err != nil {
+		return fmt.Errorf("config file error: %s", err.Error())
+	}
+
 	if util.IsFileNotExist(this.PythonBin) {
 		return fmt.Errorf("The file:%s is not exist", this.PythonBin)
 	}
@@ -106,8 +128,5 @@ func (this *appConfig) validate() error {
 		return fmt.Errorf("The file:%s is not exist", this.EmailPlatformConfigFile)
 	}
 
-	if this.CLAPlatformURL == "" {
-		return fmt.Errorf("empty cla_platform_url")
-	}
 	return nil
 }

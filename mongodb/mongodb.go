@@ -9,6 +9,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 
+	"github.com/opensourceways/app-cla-server/conf"
 	"github.com/opensourceways/app-cla-server/dbmodels"
 )
 
@@ -17,10 +18,16 @@ var _ dbmodels.IDB = (*client)(nil)
 type client struct {
 	c  *mongo.Client
 	db *mongo.Database
+
+	clasCollection     string
+	orgCLACollection   string
+	blankSigCollection string
+	vcCollection       string
+	orgEmailCollection string
 }
 
-func RegisterDatabase(conn, db string) (*client, error) {
-	c, err := mongo.NewClient(options.Client().ApplyURI(conn))
+func Initialize(cfg *conf.MongodbConfig) (*client, error) {
+	c, err := mongo.NewClient(options.Client().ApplyURI(cfg.MongodbConn))
 	if err != nil {
 		return nil, err
 	}
@@ -31,7 +38,13 @@ func RegisterDatabase(conn, db string) (*client, error) {
 
 	cli := &client{
 		c:  c,
-		db: c.Database(db),
+		db: c.Database(cfg.DBName),
+
+		vcCollection:       cfg.VCCollection,
+		clasCollection:     cfg.CLACollection,
+		orgCLACollection:   cfg.LinkCollection,
+		orgEmailCollection: cfg.OrgEmailCollection,
+		blankSigCollection: cfg.BlankSignatureCollection,
 	}
 	return cli, nil
 }

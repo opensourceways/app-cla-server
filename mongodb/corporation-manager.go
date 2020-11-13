@@ -73,7 +73,7 @@ func managersToAdd(
 	return toAdd, nil
 }
 
-func (c *client) AddCorporationManager(orgCLAID string, opt []dbmodels.CorporationManagerCreateOption, managerNumber int) ([]dbmodels.CorporationManagerCreateOption, error) {
+func (this *client) AddCorporationManager(orgCLAID string, opt []dbmodels.CorporationManagerCreateOption, managerNumber int) ([]dbmodels.CorporationManagerCreateOption, error) {
 	oid, err := toObjectID(orgCLAID)
 	if err != nil {
 		return nil, err
@@ -82,7 +82,7 @@ func (c *client) AddCorporationManager(orgCLAID string, opt []dbmodels.Corporati
 	var toAdd []dbmodels.CorporationManagerCreateOption
 
 	f := func(ctx mongo.SessionContext) error {
-		toAdd, err = managersToAdd(ctx, c, oid, opt, managerNumber)
+		toAdd, err = managersToAdd(ctx, this, oid, opt, managerNumber)
 		if err != nil {
 			return err
 		}
@@ -109,17 +109,17 @@ func (c *client) AddCorporationManager(orgCLAID string, opt []dbmodels.Corporati
 			items = append(items, body)
 		}
 
-		return c.pushArrayElems(
-			ctx, orgCLACollection, fieldCorpManagers,
+		return this.pushArrayElems(
+			ctx, this.orgCLACollection, fieldCorpManagers,
 			filterOfDocID(oid), items,
 		)
 	}
 
-	err = c.doTransaction(f)
+	err = this.doTransaction(f)
 	return toAdd, err
 }
 
-func (c *client) CheckCorporationManagerExist(opt dbmodels.CorporationManagerCheckInfo) (map[string]dbmodels.CorporationManagerCheckResult, error) {
+func (this *client) CheckCorporationManagerExist(opt dbmodels.CorporationManagerCheckInfo) (map[string]dbmodels.CorporationManagerCheckResult, error) {
 	filterOfDoc := bson.M{}
 	filterForCorpManager(filterOfDoc)
 
@@ -145,7 +145,7 @@ func (c *client) CheckCorporationManagerExist(opt dbmodels.CorporationManagerChe
 	var v []OrgCLA
 
 	f := func(ctx context.Context) error {
-		return c.getArrayElem(ctx, orgCLACollection, fieldCorpManagers, filterOfDoc, filterOfArray, project, &v)
+		return this.getArrayElem(ctx, this.orgCLACollection, fieldCorpManagers, filterOfDoc, filterOfArray, project, &v)
 	}
 
 	if err := withContext(f); err != nil {
@@ -181,7 +181,7 @@ func (c *client) CheckCorporationManagerExist(opt dbmodels.CorporationManagerChe
 	return result, nil
 }
 
-func (c *client) ResetCorporationManagerPassword(orgCLAID, email string, opt dbmodels.CorporationManagerResetPassword) error {
+func (this *client) ResetCorporationManagerPassword(orgCLAID, email string, opt dbmodels.CorporationManagerResetPassword) error {
 	oid, err := toObjectID(orgCLAID)
 	if err != nil {
 		return err
@@ -196,13 +196,13 @@ func (c *client) ResetCorporationManagerPassword(orgCLAID, email string, opt dbm
 	filterOfArray["password"] = opt.OldPassword
 
 	f := func(ctx context.Context) error {
-		return c.updateArrayElem(ctx, orgCLACollection, fieldCorpManagers, filterOfDocID(oid), filterOfArray, updateCmd, true)
+		return this.updateArrayElem(ctx, this.orgCLACollection, fieldCorpManagers, filterOfDocID(oid), filterOfArray, updateCmd, true)
 	}
 
 	return withContext(f)
 }
 
-func (c *client) listCorporationManager(ctx context.Context, orgCLAID primitive.ObjectID, email, role string) ([]corporationManagerDoc, error) {
+func (this *client) listCorporationManager(ctx context.Context, orgCLAID primitive.ObjectID, email, role string) ([]corporationManagerDoc, error) {
 	filterOfArray := filterOfCorpID(email)
 	if role != "" {
 		filterOfArray["role"] = role
@@ -216,8 +216,8 @@ func (c *client) listCorporationManager(ctx context.Context, orgCLAID primitive.
 	}
 
 	var v []OrgCLA
-	err := c.getArrayElem(
-		ctx, orgCLACollection, fieldCorpManagers,
+	err := this.getArrayElem(
+		ctx, this.orgCLACollection, fieldCorpManagers,
 		filterOfDocID(orgCLAID), filterOfArray, project, &v,
 	)
 	if err != nil {
@@ -233,7 +233,7 @@ func (c *client) listCorporationManager(ctx context.Context, orgCLAID primitive.
 	return v[0].CorporationManagers, nil
 }
 
-func (c *client) ListCorporationManager(orgCLAID, email, role string) ([]dbmodels.CorporationManagerListResult, error) {
+func (this *client) ListCorporationManager(orgCLAID, email, role string) ([]dbmodels.CorporationManagerListResult, error) {
 	oid, err := toObjectID(orgCLAID)
 	if err != nil {
 		return nil, err
@@ -242,7 +242,7 @@ func (c *client) ListCorporationManager(orgCLAID, email, role string) ([]dbmodel
 	var v []corporationManagerDoc
 
 	f := func(ctx context.Context) error {
-		r, err := c.listCorporationManager(ctx, oid, email, role)
+		r, err := this.listCorporationManager(ctx, oid, email, role)
 		v = r
 		return err
 	}
@@ -263,7 +263,7 @@ func (c *client) ListCorporationManager(orgCLAID, email, role string) ([]dbmodel
 	return ms, nil
 }
 
-func (c *client) DeleteCorporationManager(orgCLAID, role string, emails []string) ([]dbmodels.CorporationManagerCreateOption, error) {
+func (this *client) DeleteCorporationManager(orgCLAID, role string, emails []string) ([]dbmodels.CorporationManagerCreateOption, error) {
 	oid, err := toObjectID(orgCLAID)
 	if err != nil {
 		return nil, err
@@ -272,7 +272,7 @@ func (c *client) DeleteCorporationManager(orgCLAID, role string, emails []string
 	deleted := make([]dbmodels.CorporationManagerCreateOption, 0, len(emails))
 
 	f := func(ctx mongo.SessionContext) error {
-		ms, err := c.listCorporationManager(ctx, oid, emails[0], role)
+		ms, err := this.listCorporationManager(ctx, oid, emails[0], role)
 		if err != nil {
 			return err
 		}
@@ -299,12 +299,12 @@ func (c *client) DeleteCorporationManager(orgCLAID, role string, emails []string
 		filterOfArray := filterOfCorpID(emails[0])
 		filterOfArray["email"] = bson.M{"$in": toDelete}
 
-		return c.pullArrayElem(
-			ctx, orgCLACollection, fieldCorpManagers,
+		return this.pullArrayElem(
+			ctx, this.orgCLACollection, fieldCorpManagers,
 			filterOfDocID(oid), filterOfArray,
 		)
 	}
 
-	err = c.doTransaction(f)
+	err = this.doTransaction(f)
 	return deleted, err
 }

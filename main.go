@@ -27,7 +27,7 @@ func main() {
 	}
 	AppConfig := conf.AppConfig
 
-	c, err := mongodb.RegisterDatabase(AppConfig.MongodbConn, AppConfig.DBName)
+	c, err := mongodb.Initialize(&AppConfig.Mongodb)
 	if err != nil {
 		beego.Error(err)
 		os.Exit(1)

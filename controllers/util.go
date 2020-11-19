@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/astaxie/beego"
 
@@ -411,4 +412,12 @@ func setCookies(c *beego.Controller, value map[string]string) {
 	for k, v := range value {
 		c.Ctx.SetCookie(k, v, "3600", "/")
 	}
+}
+
+func parseOrgAndRepo(s string) (string, string) {
+	v := strings.Split(s, ":")
+	if len(v) == 2 {
+		return v[0], v[1]
+	}
+	return s, ""
 }

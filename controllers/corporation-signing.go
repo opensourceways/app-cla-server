@@ -2,7 +2,6 @@ package controllers
 
 import (
 	"fmt"
-	"net/http"
 
 	"github.com/astaxie/beego"
 
@@ -16,8 +15,8 @@ type CorporationSigningController struct {
 }
 
 func (this *CorporationSigningController) Prepare() {
-	// list corp signings
-	if getRequestMethod(&this.Controller) == http.MethodGet {
+	if getRouterPattern(&this.Controller) != "/v1/corporation-signing/:org_cla_id" {
+		// not signing
 		apiPrepare(&this.Controller, []string{PermissionOwnerOfOrg})
 	}
 }
@@ -92,6 +91,73 @@ func (this *CorporationSigningController) Post() {
 	body = "sign successfully"
 
 	worker.GetEmailWorker().GenCLAPDFForCorporationAndSendIt(orgCLA, &info.CorporationSigning, cla)
+}
+
+// @Title ResendCorpSigningEmail
+// @Description resend corp signing email
+// @Param	:org_id		path 	string		true		"org cla id"
+// @Param	:email		path 	string		true		"corp email"
+// @Success 201 {int} map
+// @router /:org_id/:email [post]
+func (this *CorporationSigningController) ResendCorpSigningEmail() {
+	var statusCode = 0
+	var errCode = ""
+	var reason error
+	var body interface{}
+
+	defer func() {
+		sendResponse(&this.Controller, statusCode, errCode, reason, body, "resend corp signing email")
+	}()
+
+	err := checkAndVerifyAPIStringParameter(&this.Controller, map[string]string{":org_id": "", ":email": ""})
+	if err != nil {
+		reason = err
+		errCode = util.ErrInvalidParameter
+		statusCode = 400
+		return
+	}
+
+	ac, ec, err := getACOfCodePlatform(&this.Controller)
+	if err != nil {
+		reason = err
+		errCode = ec
+		statusCode = 400
+		return
+	}
+
+	org, repo := parseOrgAndRepo(this.GetString(":org_id"))
+	if !ac.hasOrg(org) {
+		reason = fmt.Errorf("can't access org:%s", org)
+		errCode = util.ErrInvalidParameter
+		statusCode = 400
+		return
+	}
+
+	orgCLAID, signingInfo, err := models.GetCorpSigningInfo(
+		ac.Platform, org, repo, this.GetString(":email"),
+	)
+	if err != nil {
+		reason = err
+		return
+	}
+
+	orgCLA := &models.OrgCLA{ID: orgCLAID}
+	if err := orgCLA.Get(); err != nil {
+		reason = err
+		return
+	}
+
+	cla := &models.CLA{ID: orgCLA.CLAID}
+	if err := cla.Get(); err != nil {
+		reason = err
+		return
+	}
+
+	worker.GetEmailWorker().GenCLAPDFForCorporationAndSendIt(
+		orgCLA, (*models.CorporationSigning)(signingInfo), cla,
+	)
+
+	body = "resend email successfully"
 }
 
 // @Title GetAll

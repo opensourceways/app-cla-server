@@ -47,6 +47,10 @@ func GetCorporationSigningDetail(platform, org, repo, email string) (string, dbm
 	return dbmodels.GetDB().GetCorporationSigningDetail(platform, org, repo, email)
 }
 
+func GetCorpSigningInfo(platform, org, repo, email string) (string, *dbmodels.CorporationSigningInfo, error) {
+	return dbmodels.GetDB().GetCorpSigningInfo(platform, org, repo, email)
+}
+
 type CorporationSigningListOption dbmodels.CorporationSigningListOption
 
 func (this CorporationSigningListOption) List() (map[string][]dbmodels.CorporationSigningDetail, error) {

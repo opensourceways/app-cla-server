@@ -127,8 +127,10 @@ func (this *client) CheckCorporationManagerExist(opt dbmodels.CorporationManager
 	if opt.Email != "" {
 		filterOfArray = indexOfCorpManagerAndIndividual(opt.Email)
 	} else {
-		filterOfArray[fieldCorporationID] = opt.EmailSuffix
-		filterOfArray["id"] = opt.ID
+		filterOfArray = bson.M{
+			fieldCorporationID: opt.EmailSuffix,
+			"id":               opt.ID,
+		}
 	}
 	filterOfArray["password"] = opt.Password
 

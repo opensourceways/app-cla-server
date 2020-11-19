@@ -180,6 +180,43 @@ func (this *client) CheckCorporationSigning(orgCLAID, email string) (dbmodels.Co
 	return toDBModelCorporationSigningDetail(&orgCLA.Corporations[0], (len(orgCLA.CorporationManagers) > 0)), nil
 }
 
+func (this *client) GetCorpSigningInfo(platform, org, repo, email string) (string, *dbmodels.CorporationSigningInfo, error) {
+	var v []OrgCLA
+
+	project := bson.M{
+		corpSigningField("admin_email"): 1,
+		corpSigningField("admin_name"):  1,
+		corpSigningField("corp_name"):   1,
+		corpSigningField("date"):        1,
+		corpSigningField("info"):        1,
+	}
+
+	f := func(ctx context.Context) error {
+		return this.getArrayElem(
+			ctx, this.orgCLACollection, fieldCorporations,
+			filterOfDocForCorpSigning(platform, org, repo),
+			filterOfCorpID(email), project, &v,
+		)
+	}
+
+	if err := withContext(f); err != nil {
+		return "", nil, err
+	}
+
+	r, err := getSigningDoc(v, func(doc *OrgCLA) bool {
+		return len(doc.Corporations) > 0
+	})
+	if err != nil {
+		return "", nil, err
+	}
+
+	detail := toDBModelCorporationSigningDetail(&r.Corporations[0], false)
+	return objectIDToUID(r.ID), &dbmodels.CorporationSigningInfo{
+		CorporationSigningBasicInfo: detail.CorporationSigningBasicInfo,
+		Info:                        r.Corporations[0].SigningInfo,
+	}, nil
+}
+
 func toDBModelCorporationSigningDetail(cs *corporationSigningDoc, adminAdded bool) dbmodels.CorporationSigningDetail {
 	return dbmodels.CorporationSigningDetail{
 		CorporationSigningBasicInfo: dbmodels.CorporationSigningBasicInfo{

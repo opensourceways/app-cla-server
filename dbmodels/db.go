@@ -28,6 +28,7 @@ type ICorporationSigning interface {
 	UploadCorporationSigningPDF(orgCLAID, adminEmail string, pdf []byte) error
 	DownloadCorporationSigningPDF(orgCLAID, email string) ([]byte, error)
 	CheckCorporationSigning(orgCLAID, email string) (CorporationSigningDetail, error)
+	GetCorpSigningInfo(platform, org, repo, email string) (string, *CorporationSigningInfo, error)
 }
 
 type ICorporationManager interface {

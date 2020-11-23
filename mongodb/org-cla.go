@@ -137,7 +137,7 @@ func (this *client) ListOrgCLA(opt dbmodels.OrgCLAListOption) ([]dbmodels.OrgCLA
 
 	info := struct {
 		Platform string `json:"platform" required:"true"`
-		RepoID   string `json:"repo_id,omitempty"`
+		RepoID   string `json:"repo_id"`
 		ApplyTo  string `json:"apply_to,omitempty"`
 	}{
 		Platform: opt.Platform,

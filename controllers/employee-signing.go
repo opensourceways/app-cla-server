@@ -123,7 +123,7 @@ func (this *EmployeeSigningController) Post() {
 
 	info.Info = getSingingInfo(info.Info, cla.Fields)
 
-	err = (&info).Create(orgCLAID, orgCLA.Platform, orgCLA.OrgID, orgCLA.RepoID, false)
+	err = (&info).Create(orgCLA.Platform, orgCLA.OrgID, orgCLA.RepoID, false)
 	if err != nil {
 		reason = err
 		return

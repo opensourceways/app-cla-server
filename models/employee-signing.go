@@ -21,7 +21,7 @@ type EmployeeSigningListOption struct {
 	CLALanguage string `json:"cla_language"`
 }
 
-func (this EmployeeSigningListOption) List(corpEmail, platform, org, repo string) (map[string][]dbmodels.IndividualSigningBasicInfo, error) {
+func (this EmployeeSigningListOption) List(corpEmail, platform, org, repo string) ([]dbmodels.IndividualSigningBasicInfo, error) {
 	opt := dbmodels.IndividualSigningListOption{
 		Platform:         platform,
 		OrgID:            org,

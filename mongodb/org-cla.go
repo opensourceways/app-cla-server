@@ -12,14 +12,10 @@ import (
 )
 
 const (
-	fieldIndividuals     = "individuals"
-	fieldEmployees       = "employees"
-	fieldCorporations    = "corporations"
-	fieldCorpManagers    = "corp_managers"
-	fieldCorporationID   = "corp_id"
-	fieldOrgSignature    = "org_signature"
-	fieldOrgSignatureTag = "md5sum"
-	fieldRepo            = "repo_id"
+	fieldIndividuals   = "individuals"
+	fieldEmployees     = "employees"
+	fieldCorporations  = "corporations"
+	fieldCorporationID = "corp_id"
 )
 
 func filterForClaOrgDoc(filter bson.M) {
@@ -41,10 +37,6 @@ type OrgCLA struct {
 	OrgEmail    string    `bson:"org_email" json:"org_email" required:"true"`
 	Enabled     bool      `bson:"enabled" json:"enabled"`
 	Submitter   string    `bson:"submitter" json:"submitter" required:"true"`
-
-	// Individuals is the cla signing information of ordinary contributors
-	// key is the email of contributor
-	Individuals []individualSigningDoc `bson:"individuals" json:"-"`
 
 	// Corporations is the cla signing information of corporation
 	// key is the email suffix of corporation

@@ -52,11 +52,11 @@ type IOrgCLA interface {
 }
 
 type IIndividualSigning interface {
-	SignAsIndividual(orgCLAID, platform, org, repo string, info IndividualSigningInfo) error
+	SignAsIndividual(platform, org, repo string, info IndividualSigningInfo) error
 	DeleteIndividualSigning(platform, org, repo, email string) error
 	UpdateIndividualSigning(platform, org, repo, email string, enabled bool) error
 	IsIndividualSigned(platform, orgID, repoId, email string) (bool, error)
-	ListIndividualSigning(opt IndividualSigningListOption) (map[string][]IndividualSigningBasicInfo, error)
+	ListIndividualSigning(opt IndividualSigningListOption) ([]IndividualSigningBasicInfo, error)
 }
 
 type ICLA interface {

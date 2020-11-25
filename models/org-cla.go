@@ -149,3 +149,7 @@ type OrgCLAListOption dbmodels.OrgCLAListOption
 func (this OrgCLAListOption) List() ([]dbmodels.OrgCLA, error) {
 	return dbmodels.GetDB().ListOrgCLA(dbmodels.OrgCLAListOption(this))
 }
+
+func ListOrgs(platform string, orgs []string) ([]dbmodels.OrgCLA, error) {
+	return dbmodels.GetDB().ListOrgs(platform, orgs)
+}

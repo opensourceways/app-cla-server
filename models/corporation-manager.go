@@ -34,6 +34,7 @@ func CreateCorporationAdministrator(orgCLAID, name, email string) ([]dbmodels.Co
 
 	opt := []dbmodels.CorporationManagerCreateOption{
 		{
+			ID:       "admin",
 			Name:     name,
 			Email:    email,
 			Password: pw,

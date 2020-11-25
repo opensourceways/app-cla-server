@@ -69,14 +69,10 @@ func (this *OrgCLAController) Post() {
 	// check before creating to avoid downloading cla
 	opt := models.OrgCLAListOption{
 		Platform: input.Platform,
+		OrgID:    input.OrgID,
+		RepoID:   input.RepoID,
 		ApplyTo:  input.ApplyTo,
 	}
-	if input.RepoID != "" {
-		opt.RepoID = fmt.Sprintf("%s/%s", input.OrgID, input.RepoID)
-	} else {
-		opt.OrgID = []string{input.OrgID}
-	}
-
 	if r, err := opt.List(); err != nil {
 		reason = err
 		return
@@ -203,12 +199,7 @@ func (this *OrgCLAController) GetAll() {
 		orgs = append(orgs, k)
 	}
 
-	opt := models.OrgCLAListOption{
-		Platform: ac.Platform,
-		OrgID:    orgs,
-	}
-
-	r, err := opt.List()
+	r, err := models.ListOrgs(ac.Platform, orgs)
 	if err != nil {
 		reason = err
 		return
@@ -284,15 +275,11 @@ func (this *OrgCLAController) GetSigningPageInfo() {
 	}
 
 	org := this.GetString(":org_id")
-	repo := this.GetString("repo_id")
 	opt := models.OrgCLAListOption{
 		Platform: this.GetString(":platform"),
+		OrgID:    org,
+		RepoID:   this.GetString("repo_id"),
 		ApplyTo:  this.GetString(":apply_to"),
-	}
-	if repo != "" {
-		opt.RepoID = fmt.Sprintf("%s/%s", org, repo)
-	} else {
-		opt.OrgID = []string{org}
 	}
 
 	token := getHeader(&this.Controller, headerToken)

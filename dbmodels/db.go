@@ -45,6 +45,7 @@ type IOrgEmail interface {
 }
 
 type IOrgCLA interface {
+	ListOrgs(platform string, orgs []string) ([]OrgCLA, error)
 	ListOrgCLA(OrgCLAListOption) ([]OrgCLA, error)
 	GetOrgCLA(string) (OrgCLA, error)
 	CreateOrgCLA(OrgCLA) (string, error)

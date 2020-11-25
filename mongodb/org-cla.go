@@ -2,7 +2,6 @@ package mongodb
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -130,29 +129,41 @@ func (this *client) GetOrgCLA(uid string) (dbmodels.OrgCLA, error) {
 	return toModelOrgCLA(v), nil
 }
 
+func (this *client) ListOrgs(platform string, orgs []string) ([]dbmodels.OrgCLA, error) {
+	filter := bson.M{
+		"platform": platform,
+		"org_id":   bson.M{"$in": orgs},
+	}
+	filterForClaOrgDoc(filter)
+
+	var v []OrgCLA
+
+	f := func(ctx context.Context) error {
+		return this.getDocs(ctx, this.orgCLACollection, filter, projectOfClaOrg(), &v)
+	}
+
+	if err := withContext(f); err != nil {
+		return nil, err
+	}
+
+	n := len(v)
+	r := make([]dbmodels.OrgCLA, 0, n)
+	for _, item := range v {
+		r = append(r, toModelOrgCLA(item))
+	}
+
+	return r, nil
+}
+
 func (this *client) ListOrgCLA(opt dbmodels.OrgCLAListOption) ([]dbmodels.OrgCLA, error) {
-	if (opt.RepoID != "" && len(opt.OrgID) > 0) || (opt.RepoID == "" && len(opt.OrgID) == 0) {
-		return nil, fmt.Errorf("need specify multiple orgs or a single repo")
-	}
-
-	info := struct {
-		Platform string `json:"platform" required:"true"`
-		RepoID   string `json:"repo_id"`
-		ApplyTo  string `json:"apply_to,omitempty"`
-	}{
-		Platform: opt.Platform,
-		RepoID:   opt.RepoID,
-		ApplyTo:  opt.ApplyTo,
-	}
-
-	filter, err := structToMap(info)
+	filter, err := filterOfOrgRepo(opt.Platform, opt.OrgID, opt.RepoID)
 	if err != nil {
 		return nil, err
 	}
-	filterForClaOrgDoc(filter)
-	if len(opt.OrgID) > 0 {
-		filter["org_id"] = bson.M{"$in": opt.OrgID}
+	if opt.ApplyTo != "" {
+		filter["apply_to"] = opt.ApplyTo
 	}
+	filterForClaOrgDoc(filter)
 
 	var v []OrgCLA
 

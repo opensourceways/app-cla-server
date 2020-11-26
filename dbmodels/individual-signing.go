@@ -14,9 +14,6 @@ type IndividualSigningInfo struct {
 }
 
 type IndividualSigningListOption struct {
-	Platform         string `json:"platform"`
-	OrgID            string `json:"org_id"`
-	RepoID           string `json:"repo_id"`
 	CLALanguage      string `json:"cla_language"`
 	CorporationEmail string `json:"corporation_email"`
 }

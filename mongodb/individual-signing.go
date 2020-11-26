@@ -8,15 +8,15 @@ import (
 	"github.com/opensourceways/app-cla-server/dbmodels"
 )
 
-func docFilterOfEnabledLink(platform, org, repo string) bson.M {
+func docFilterOfEnabledLink(orgRepo *dbmodels.OrgRepo) bson.M {
 	return bson.M{
-		fieldOrgIdentity: orgIdentity(platform, org, repo),
+		fieldOrgIdentity: orgIdentity(orgRepo),
 		fieldLinkStatus:  linkStatusEnabled,
 	}
 }
 
-func docFilterOfIndividualSigning(platform, org, repo string) bson.M {
-	return docFilterOfEnabledLink(platform, org, repo)
+func docFilterOfIndividualSigning(orgRepo *dbmodels.OrgRepo) bson.M {
+	return docFilterOfEnabledLink(orgRepo)
 }
 
 func elemFilterOfIndividualSigning(email string) bson.M {
@@ -26,7 +26,7 @@ func elemFilterOfIndividualSigning(email string) bson.M {
 	}
 }
 
-func (this *client) SignAsIndividual(platform, org, repo string, info dbmodels.IndividualSigningInfo) error {
+func (this *client) SignAsIndividual(orgRepo *dbmodels.OrgRepo, info *dbmodels.IndividualSigningInfo) error {
 	signing := dIndividualSigning{
 		CLALanguage: "",
 		CorpID:      genCorpID(info.Email),
@@ -41,7 +41,7 @@ func (this *client) SignAsIndividual(platform, org, repo string, info dbmodels.I
 		return err
 	}
 
-	docFilter := docFilterOfIndividualSigning(platform, org, repo)
+	docFilter := docFilterOfIndividualSigning(orgRepo)
 	arrayFilterByElemMatch(
 		fieldSignings, false, elemFilterOfIndividualSigning(info.Email), docFilter,
 	)
@@ -53,11 +53,11 @@ func (this *client) SignAsIndividual(platform, org, repo string, info dbmodels.I
 	return withContext(f)
 }
 
-func (this *client) DeleteIndividualSigning(platform, org, repo, email string) error {
+func (this *client) DeleteIndividualSigning(orgRepo *dbmodels.OrgRepo, email string) error {
 	f := func(ctx context.Context) error {
 		return this.pullArrayElem(
 			ctx, this.individualSigningCollection, fieldSignings,
-			docFilterOfIndividualSigning(platform, org, repo),
+			docFilterOfIndividualSigning(orgRepo),
 			elemFilterOfIndividualSigning(email),
 		)
 	}
@@ -65,9 +65,9 @@ func (this *client) DeleteIndividualSigning(platform, org, repo, email string) e
 	return withContext(f)
 }
 
-func (this *client) UpdateIndividualSigning(platform, org, repo, email string, enabled bool) error {
+func (this *client) UpdateIndividualSigning(orgRepo *dbmodels.OrgRepo, email string, enabled bool) error {
 	elemFilter := elemFilterOfIndividualSigning(email)
-	docFilter := docFilterOfIndividualSigning(platform, org, repo)
+	docFilter := docFilterOfIndividualSigning(orgRepo)
 	arrayFilterByElemMatch(fieldSignings, true, elemFilter, docFilter)
 
 	f := func(ctx context.Context) error {
@@ -80,8 +80,8 @@ func (this *client) UpdateIndividualSigning(platform, org, repo, email string, e
 	return withContext(f)
 }
 
-func (this *client) isIndividualSignedToOrg(platform, org, email string) (bool, error) {
-	docFilter := docFilterOfIndividualSigning(platform, org, "")
+func (this *client) isIndividualSignedToOrg(orgRepo *dbmodels.OrgRepo, email string) (bool, error) {
+	docFilter := docFilterOfIndividualSigning(orgRepo)
 
 	elemFilter := elemFilterOfIndividualSigning(email)
 	elemFilter[memberNameOfSignings("enabled")] = true
@@ -99,16 +99,19 @@ func (this *client) isIndividualSignedToOrg(platform, org, email string) (bool, 
 	return signed, err
 }
 
-func (this *client) IsIndividualSigned(platform, org, repo, email string) (bool, error) {
-	if repo == "" {
-		return this.isIndividualSignedToOrg(platform, org, email)
+func (this *client) IsIndividualSigned(orgRepo *dbmodels.OrgRepo, email string) (bool, error) {
+	if orgRepo.RepoID == "" {
+		return this.isIndividualSignedToOrg(orgRepo, email)
 	}
 
-	identity := orgIdentity(platform, org, repo)
+	identity := orgIdentity(orgRepo)
 
 	docFilter := bson.M{
-		fieldLinkStatus:  linkStatusEnabled,
-		fieldOrgIdentity: bson.M{"$in": bson.A{orgIdentity(platform, org, ""), identity}},
+		fieldLinkStatus: linkStatusEnabled,
+		fieldOrgIdentity: bson.M{"$in": bson.A{
+			genOrgIdentity(orgRepo.Platform, orgRepo.OrgID, ""),
+			identity,
+		}},
 	}
 
 	fieldEnabled := memberNameOfSignings("enabled")
@@ -149,8 +152,8 @@ func (this *client) IsIndividualSigned(platform, org, repo, email string) (bool,
 	return false, nil
 }
 
-func (this *client) ListIndividualSigning(opt dbmodels.IndividualSigningListOption) ([]dbmodels.IndividualSigningBasicInfo, error) {
-	docFilter := docFilterOfIndividualSigning(opt.Platform, opt.OrgID, opt.RepoID)
+func (this *client) ListIndividualSigning(orgRepo *dbmodels.OrgRepo, opt *dbmodels.IndividualSigningListOption) ([]dbmodels.IndividualSigningBasicInfo, error) {
+	docFilter := docFilterOfIndividualSigning(orgRepo)
 
 	arrayFilter := bson.M{}
 	if opt.CorporationEmail != "" {

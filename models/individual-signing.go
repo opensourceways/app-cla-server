@@ -16,15 +16,15 @@ func (this *IndividualSigning) Validate(email string) (string, error) {
 	return checkEmailFormat(this.Email)
 }
 
-func (this *IndividualSigning) Create(platform, orgID, repoId string, enabled bool) error {
+func (this *IndividualSigning) Create(orgRepo *dbmodels.OrgRepo, enabled bool) error {
 	this.Date = util.Date()
 	this.Enabled = enabled
 
 	return dbmodels.GetDB().SignAsIndividual(
-		platform, orgID, repoId, *(*dbmodels.IndividualSigningInfo)(this),
+		orgRepo, (*dbmodels.IndividualSigningInfo)(this),
 	)
 }
 
-func IsIndividualSigned(platform, orgID, repoId, email string) (bool, error) {
-	return dbmodels.GetDB().IsIndividualSigned(platform, orgID, repoId, email)
+func IsIndividualSigned(orgRepo *dbmodels.OrgRepo, email string) (bool, error) {
+	return dbmodels.GetDB().IsIndividualSigned(orgRepo, email)
 }

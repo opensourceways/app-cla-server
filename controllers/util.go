@@ -421,3 +421,11 @@ func parseOrgAndRepo(s string) (string, string) {
 	}
 	return s, ""
 }
+
+func buildOrgRepo(platform, orgID, repoID string) dbmodels.OrgRepo {
+	return dbmodels.OrgRepo{
+		Platform: platform,
+		OrgID:    orgID,
+		RepoID:   repoID,
+	}
+}

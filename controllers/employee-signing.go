@@ -123,7 +123,8 @@ func (this *EmployeeSigningController) Post() {
 
 	info.Info = getSingingInfo(info.Info, cla.Fields)
 
-	err = (&info).Create(orgCLA.Platform, orgCLA.OrgID, orgCLA.RepoID, false)
+	orgRepo := buildOrgRepo(orgCLA.Platform, orgCLA.OrgID, orgCLA.RepoID)
+	err = (&info).Create(&orgRepo, false)
 	if err != nil {
 		reason = err
 		return
@@ -164,7 +165,8 @@ func (this *EmployeeSigningController) GetAll() {
 		CLALanguage: this.GetString("cla_language"),
 	}
 
-	r, err := opt.List(ac.Email, orgCLA.Platform, orgCLA.OrgID, orgCLA.RepoID)
+	orgRepo := buildOrgRepo(orgCLA.Platform, orgCLA.OrgID, orgCLA.RepoID)
+	r, err := opt.List(&orgRepo, ac.Email)
 	if err != nil {
 		reason = err
 		return
@@ -224,7 +226,8 @@ func (this *EmployeeSigningController) Update() {
 		return
 	}
 
-	err = (&info).Update(corpClaOrg.Platform, corpClaOrg.OrgID, corpClaOrg.RepoID, employeeEmail)
+	orgRepo := buildOrgRepo(corpClaOrg.Platform, corpClaOrg.OrgID, corpClaOrg.RepoID)
+	err = (&info).Update(&orgRepo, employeeEmail)
 	if err != nil {
 		reason = err
 		return
@@ -292,7 +295,8 @@ func (this *EmployeeSigningController) Delete() {
 		return
 	}
 
-	err = models.DeleteEmployeeSigning(corpClaOrg.Platform, corpClaOrg.OrgID, corpClaOrg.RepoID, employeeEmail)
+	orgRepo := buildOrgRepo(corpClaOrg.Platform, corpClaOrg.OrgID, corpClaOrg.RepoID)
+	err = models.DeleteEmployeeSigning(&orgRepo, employeeEmail)
 	if err != nil {
 		reason = err
 		return

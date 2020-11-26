@@ -148,22 +148,37 @@ type dCorpManager struct {
 	InitialPWChanged bool   `bson:"changed" json:"changed"`
 }
 
-func orgIdentity(platform, org, repo string) string {
+func orgIdentity(v *dbmodels.OrgRepo) string {
+	return genOrgIdentity(v.Platform, v.OrgID, v.RepoID)
+}
+
+func genOrgIdentity(platform, org, repo string) string {
 	if repo == "" {
 		return fmt.Sprintf("%s/%s", platform, org)
 	}
 	return fmt.Sprintf("%s/%s/%s", platform, org, repo)
 }
 
-func parseOrgIdentity(identity string) (string, string, string) {
+func parseOrgIdentity(identity string) *dbmodels.OrgRepo {
+	r := dbmodels.OrgRepo{}
+
 	v := strings.Split(identity, "/")
 	switch len(v) {
 	case 2:
-		return v[0], v[1], ""
+		r.Platform = v[0]
+		r.OrgID = v[1]
+		r.RepoID = ""
 	case 3:
-		return v[0], v[1], v[2]
+		r.Platform = v[0]
+		r.OrgID = v[1]
+		r.RepoID = v[2]
 	}
-	return identity, "", ""
+
+	r.Platform = identity
+	r.OrgID = ""
+	r.RepoID = ""
+
+	return &r
 }
 
 func memberNameOfSignings(key string) string {

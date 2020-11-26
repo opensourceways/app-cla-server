@@ -21,27 +21,22 @@ type EmployeeSigningListOption struct {
 	CLALanguage string `json:"cla_language"`
 }
 
-func (this EmployeeSigningListOption) List(corpEmail, platform, org, repo string) ([]dbmodels.IndividualSigningBasicInfo, error) {
+func (this EmployeeSigningListOption) List(orgRepo *dbmodels.OrgRepo, corpEmail string) ([]dbmodels.IndividualSigningBasicInfo, error) {
 	opt := dbmodels.IndividualSigningListOption{
-		Platform:         platform,
-		OrgID:            org,
-		RepoID:           repo,
 		CLALanguage:      this.CLALanguage,
 		CorporationEmail: corpEmail,
 	}
-	return dbmodels.GetDB().ListIndividualSigning(opt)
+	return dbmodels.GetDB().ListIndividualSigning(orgRepo, &opt)
 }
 
 type EmployeeSigningUdateInfo struct {
 	Enabled bool `json:"enabled"`
 }
 
-func (this *EmployeeSigningUdateInfo) Update(platform, org, repo, email string) error {
-	return dbmodels.GetDB().UpdateIndividualSigning(
-		platform, org, repo, email, this.Enabled,
-	)
+func (this *EmployeeSigningUdateInfo) Update(orgRepo *dbmodels.OrgRepo, email string) error {
+	return dbmodels.GetDB().UpdateIndividualSigning(orgRepo, email, this.Enabled)
 }
 
-func DeleteEmployeeSigning(platform, org, repo, email string) error {
-	return dbmodels.GetDB().DeleteIndividualSigning(platform, org, repo, email)
+func DeleteEmployeeSigning(orgRepo *dbmodels.OrgRepo, email string) error {
+	return dbmodels.GetDB().DeleteIndividualSigning(orgRepo, email)
 }

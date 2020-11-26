@@ -318,9 +318,9 @@ func sendEmail(to []string, from, subject string, builder email.IEmailMessageBul
 	worker.GetEmailWorker().SendSimpleMessage(from, msg)
 }
 
-func notifyCorpManagerWhenAdding(orgCLA *models.OrgCLA, info []dbmodels.CorporationManagerCreateOption) {
+func notifyCorpManagerWhenAdding(orgAlias, url, orgEmail string, info []dbmodels.CorporationManagerCreateOption) {
 	admin := (info[0].Role == dbmodels.RoleAdmin)
-	subject := fmt.Sprintf("Account on project of \"%s\"", orgCLA.OrgAlias)
+	subject := fmt.Sprintf("Account on project of \"%s\"", orgAlias)
 
 	for _, item := range info {
 		d := email.AddingCorpManager{
@@ -329,12 +329,12 @@ func notifyCorpManagerWhenAdding(orgCLA *models.OrgCLA, info []dbmodels.Corporat
 			User:             item.Name,
 			Email:            item.Email,
 			Password:         item.Password,
-			Org:              orgCLA.OrgAlias,
-			ProjectURL:       projectURL(orgCLA),
+			Org:              orgAlias,
+			ProjectURL:       url,
 			URLOfCLAPlatform: conf.AppConfig.CLAPlatformURL,
 		}
 
-		sendEmailToIndividual(item.Email, orgCLA.OrgEmail, subject, d)
+		sendEmailToIndividual(item.Email, orgEmail, subject, d)
 	}
 }
 

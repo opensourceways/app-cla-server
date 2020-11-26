@@ -140,7 +140,7 @@ func (this *CorporationPDFController) Review() {
 		return
 	}
 
-	pdf, err := models.DownloadCorporationSigningPDF(ac.OrgCLAID, ac.Email)
+	pdf, err := models.DownloadCorporationSigningPDF("", ac.Email)
 	if err != nil {
 		reason = err
 		return

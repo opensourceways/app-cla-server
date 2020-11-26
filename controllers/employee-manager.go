@@ -58,7 +58,8 @@ func (this *EmployeeManagerController) GetAll() {
 		return
 	}
 
-	r, err := models.ListCorporationManagers(ac.OrgCLAID, ac.Email, dbmodels.RoleManager)
+	orgRepo := buildOrgRepo(ac.Platform, ac.OrgID, ac.RepoID)
+	r, err := models.ListCorporationManagers(&orgRepo, ac.Email, dbmodels.RoleManager)
 	if err != nil {
 		reason = err
 		return
@@ -105,34 +106,29 @@ func (this *EmployeeManagerController) addOrDeleteManagers(toAdd bool) {
 		return
 	}
 
-	orgCLA := &models.OrgCLA{ID: ac.OrgCLAID}
-	if err := orgCLA.Get(); err != nil {
-		reason = err
-		return
-	}
-
+	orgRepo := buildOrgRepo(ac.Platform, ac.OrgID, ac.RepoID)
 	if toAdd {
-		added, err := (&info).Create(ac.OrgCLAID)
+		added, err := (&info).Create(&orgRepo)
 		if err != nil {
 			reason = err
 		} else {
-			notifyCorpManagerWhenAdding(orgCLA, added)
+			notifyCorpManagerWhenAdding(ac.OrgAlias, ac.orgRepoURL(), ac.OrgEmail, added)
 		}
 
 	} else {
-		deleted, err := (&info).Delete(ac.OrgCLAID)
+		deleted, err := (&info).Delete(&orgRepo)
 		if err != nil {
 			reason = err
 		} else {
-			subject := fmt.Sprintf("Revoking the authorization on project of \"%s\"", orgCLA.OrgAlias)
+			subject := fmt.Sprintf("Revoking the authorization on project of \"%s\"", ac.OrgAlias)
 
 			for _, item := range deleted {
 				msg := email.RemovingCorpManager{
 					User:       item.Name,
-					Org:        orgCLA.OrgAlias,
-					ProjectURL: projectURL(orgCLA),
+					Org:        ac.OrgAlias,
+					ProjectURL: ac.orgRepoURL(),
 				}
-				sendEmailToIndividual(item.Email, orgCLA.OrgEmail, subject, msg)
+				sendEmailToIndividual(item.Email, ac.OrgEmail, subject, msg)
 			}
 		}
 	}

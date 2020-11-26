@@ -65,7 +65,7 @@ func (this *EmployeeManagerCreateOption) Validate(adminEmail string) (string, er
 	return "", nil
 }
 
-func (this *EmployeeManagerCreateOption) Create(orgCLAID string) ([]dbmodels.CorporationManagerCreateOption, error) {
+func (this *EmployeeManagerCreateOption) Create(orgRepo *dbmodels.OrgRepo) ([]dbmodels.CorporationManagerCreateOption, error) {
 	opt := make([]dbmodels.CorporationManagerCreateOption, 0, len(this.Managers))
 
 	for _, item := range this.Managers {
@@ -80,26 +80,26 @@ func (this *EmployeeManagerCreateOption) Create(orgCLAID string) ([]dbmodels.Cor
 		})
 	}
 
-	r, err := dbmodels.GetDB().AddCorporationManager(orgCLAID, opt, conf.AppConfig.EmployeeManagersNumber)
-	if err != nil || len(r) == 0 {
-		return r, err
+	err := dbmodels.GetDB().AddCorporationManager(orgRepo, opt, conf.AppConfig.EmployeeManagersNumber)
+	if err != nil {
+		return nil, err
 	}
 
-	es := util.EmailSuffix(r[0].Email)
-	for i := range r {
-		if r[i].ID != "" {
-			r[i].ID = fmt.Sprintf("%s_%s", r[i].ID, es)
+	es := util.EmailSuffix(opt[0].Email)
+	for i := range opt {
+		if opt[i].ID != "" {
+			opt[i].ID = fmt.Sprintf("%s_%s", opt[i].ID, es)
 		}
 	}
-	return r, nil
+	return opt, nil
 }
 
-func (this *EmployeeManagerCreateOption) Delete(orgCLAID string) ([]dbmodels.CorporationManagerCreateOption, error) {
+func (this *EmployeeManagerCreateOption) Delete(orgRepo *dbmodels.OrgRepo) ([]dbmodels.CorporationManagerCreateOption, error) {
 	emails := make([]string, 0, len(this.Managers))
 
 	for _, item := range this.Managers {
 		emails = append(emails, item.Email)
 	}
 
-	return dbmodels.GetDB().DeleteCorporationManager(orgCLAID, dbmodels.RoleManager, emails)
+	return dbmodels.GetDB().DeleteCorporationManager(orgRepo, emails)
 }

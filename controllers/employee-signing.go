@@ -89,7 +89,7 @@ func (this *EmployeeSigningController) Post() {
 		return
 	}
 
-	corpSignedCla, corpSign, err := models.GetCorporationSigningDetail(
+	_, corpSign, err := models.GetCorporationSigningDetail(
 		orgCLA.Platform, orgCLA.OrgID, orgCLA.RepoID, info.Email)
 	if err != nil {
 		reason = err
@@ -103,7 +103,8 @@ func (this *EmployeeSigningController) Post() {
 		return
 	}
 
-	managers, err := models.ListCorporationManagers(corpSignedCla, info.Email, dbmodels.RoleManager)
+	orgRepo := buildOrgRepo(orgCLA.Platform, orgCLA.OrgID, orgCLA.RepoID)
+	managers, err := models.ListCorporationManagers(&orgRepo, info.Email, dbmodels.RoleManager)
 	if err != nil {
 		reason = err
 		return
@@ -123,7 +124,6 @@ func (this *EmployeeSigningController) Post() {
 
 	info.Info = getSingingInfo(info.Info, cla.Fields)
 
-	orgRepo := buildOrgRepo(orgCLA.Platform, orgCLA.OrgID, orgCLA.RepoID)
 	err = (&info).Create(&orgRepo, false)
 	if err != nil {
 		reason = err
@@ -155,17 +155,11 @@ func (this *EmployeeSigningController) GetAll() {
 		return
 	}
 
-	orgCLA := &models.OrgCLA{ID: ac.OrgCLAID}
-	if err := orgCLA.Get(); err != nil {
-		reason = err
-		return
-	}
-
 	opt := models.EmployeeSigningListOption{
 		CLALanguage: this.GetString("cla_language"),
 	}
 
-	orgRepo := buildOrgRepo(orgCLA.Platform, orgCLA.OrgID, orgCLA.RepoID)
+	orgRepo := buildOrgRepo(ac.Platform, ac.OrgID, ac.RepoID)
 	r, err := opt.List(&orgRepo, ac.Email)
 	if err != nil {
 		reason = err
@@ -212,12 +206,6 @@ func (this *EmployeeSigningController) Update() {
 		return
 	}
 
-	corpClaOrg := &models.OrgCLA{ID: ac.OrgCLAID}
-	if err := corpClaOrg.Get(); err != nil {
-		reason = err
-		return
-	}
-
 	var info models.EmployeeSigningUdateInfo
 	if err := fetchInputPayload(&this.Controller, &info); err != nil {
 		reason = err
@@ -226,7 +214,7 @@ func (this *EmployeeSigningController) Update() {
 		return
 	}
 
-	orgRepo := buildOrgRepo(corpClaOrg.Platform, corpClaOrg.OrgID, corpClaOrg.RepoID)
+	orgRepo := buildOrgRepo(ac.Platform, ac.OrgID, ac.RepoID)
 	err = (&info).Update(&orgRepo, employeeEmail)
 	if err != nil {
 		reason = err
@@ -238,8 +226,8 @@ func (this *EmployeeSigningController) Update() {
 	msg := email.EmployeeNotification{
 		Name:       employeeEmail,
 		Manager:    ac.Email,
-		ProjectURL: projectURL(corpClaOrg),
-		Org:        corpClaOrg.OrgAlias,
+		ProjectURL: ac.orgRepoURL(),
+		Org:        ac.OrgAlias,
 	}
 	subject := ""
 	if info.Enabled {
@@ -249,7 +237,7 @@ func (this *EmployeeSigningController) Update() {
 		msg.Inactive = true
 		subject = "Inavtivate the CLA signing"
 	}
-	sendEmailToIndividual(employeeEmail, corpClaOrg.OrgEmail, subject, msg)
+	sendEmailToIndividual(employeeEmail, ac.OrgEmail, subject, msg)
 }
 
 // @Title Delete
@@ -289,13 +277,7 @@ func (this *EmployeeSigningController) Delete() {
 		return
 	}
 
-	corpClaOrg := &models.OrgCLA{ID: ac.OrgCLAID}
-	if err := corpClaOrg.Get(); err != nil {
-		reason = err
-		return
-	}
-
-	orgRepo := buildOrgRepo(corpClaOrg.Platform, corpClaOrg.OrgID, corpClaOrg.RepoID)
+	orgRepo := buildOrgRepo(ac.Platform, ac.OrgID, ac.RepoID)
 	err = models.DeleteEmployeeSigning(&orgRepo, employeeEmail)
 	if err != nil {
 		reason = err
@@ -308,10 +290,10 @@ func (this *EmployeeSigningController) Delete() {
 		Removing:   true,
 		Name:       employeeEmail,
 		Manager:    ac.Email,
-		ProjectURL: projectURL(corpClaOrg),
-		Org:        corpClaOrg.OrgAlias,
+		ProjectURL: ac.orgRepoURL(),
+		Org:        ac.OrgAlias,
 	}
-	sendEmailToIndividual(employeeEmail, corpClaOrg.OrgEmail, "Remove employee", msg)
+	sendEmailToIndividual(employeeEmail, ac.OrgEmail, "Remove employee", msg)
 }
 
 func (this *EmployeeSigningController) notifyManagers(managers []dbmodels.CorporationManagerListResult, info *models.EmployeeSigning, orgCLA *models.OrgCLA) {

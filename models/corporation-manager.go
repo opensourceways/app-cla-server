@@ -13,7 +13,7 @@ type CorporationManagerAuthentication struct {
 	Password string `json:"password"`
 }
 
-func (this CorporationManagerAuthentication) Authenticate() (map[string]dbmodels.CorporationManagerCheckResult, error) {
+func (this CorporationManagerAuthentication) Authenticate() ([]dbmodels.CorporationManagerCheckResult, error) {
 	info := dbmodels.CorporationManagerCheckInfo{Password: this.Password}
 	if _, err := checkEmailFormat(this.User); err == nil {
 		info.Email = this.User
@@ -26,27 +26,28 @@ func (this CorporationManagerAuthentication) Authenticate() (map[string]dbmodels
 		info.EmailSuffix = this.User[(i + 1):]
 		info.ID = this.User[:i]
 	}
-	return dbmodels.GetDB().CheckCorporationManagerExist(info)
+	return dbmodels.GetDB().GetCorpManager(&info)
 }
 
-func CreateCorporationAdministrator(orgCLAID, name, email string) ([]dbmodels.CorporationManagerCreateOption, error) {
+func CreateCorporationAdministrator(orgRepo *dbmodels.OrgRepo, name, email string) ([]dbmodels.CorporationManagerCreateOption, error) {
 	pw := util.RandStr(8, "alphanum")
 
 	opt := []dbmodels.CorporationManagerCreateOption{
 		{
+			ID:       "admin",
 			Name:     name,
 			Email:    email,
 			Password: pw,
 			Role:     dbmodels.RoleAdmin,
 		},
 	}
-	r, err := dbmodels.GetDB().AddCorporationManager(orgCLAID, opt, 1)
-	if err != nil || len(r) == 0 {
-		return r, err
+	err := dbmodels.GetDB().AddCorporationManager(orgRepo, opt, 1)
+	if err != nil {
+		return nil, err
 	}
 
-	r[0].ID = fmt.Sprintf("admin_%s", util.EmailSuffix(r[0].Email))
-	return r, nil
+	opt[0].ID = fmt.Sprintf("admin_%s", util.EmailSuffix(opt[0].Email))
+	return opt, nil
 }
 
 type CorporationManagerResetPassword dbmodels.CorporationManagerResetPassword
@@ -58,12 +59,12 @@ func (this CorporationManagerResetPassword) Validate() (string, error) {
 	return "", nil
 }
 
-func (this CorporationManagerResetPassword) Reset(orgCLAID, email string) error {
+func (this CorporationManagerResetPassword) Reset(orgRepo *dbmodels.OrgRepo, email string) error {
 	return dbmodels.GetDB().ResetCorporationManagerPassword(
-		orgCLAID, email, dbmodels.CorporationManagerResetPassword(this),
+		orgRepo, email, (*dbmodels.CorporationManagerResetPassword)(&this),
 	)
 }
 
-func ListCorporationManagers(orgCLAID, email, role string) ([]dbmodels.CorporationManagerListResult, error) {
-	return dbmodels.GetDB().ListCorporationManager(orgCLAID, email, role)
+func ListCorporationManagers(orgRepo *dbmodels.OrgRepo, email, role string) ([]dbmodels.CorporationManagerListResult, error) {
+	return dbmodels.GetDB().ListCorporationManager(orgRepo, email, role)
 }

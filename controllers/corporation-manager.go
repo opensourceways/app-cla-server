@@ -69,8 +69,8 @@ func (this *CorporationManagerController) Auth() {
 
 	result := make([]authInfo, 0, len(v))
 
-	for orgCLAID, item := range v {
-		token, err := this.newAccessToken(orgCLAID, &item)
+	for _, item := range v {
+		token, err := this.newAccessToken(&item)
 		if err != nil {
 			continue
 		}
@@ -88,7 +88,7 @@ func (this *CorporationManagerController) Auth() {
 	body = result
 }
 
-func (this *CorporationManagerController) newAccessToken(orgCLAID string, info *dbmodels.CorporationManagerCheckResult) (string, error) {
+func (this *CorporationManagerController) newAccessToken(info *dbmodels.CorporationManagerCheckResult) (string, error) {
 	permission := ""
 	switch info.Role {
 	case dbmodels.RoleAdmin:
@@ -103,7 +103,11 @@ func (this *CorporationManagerController) newAccessToken(orgCLAID string, info *
 		Payload: &acForCorpManagerPayload{
 			Name:     info.Name,
 			Email:    info.Email,
-			OrgCLAID: orgCLAID,
+			OrgID:    info.OrgID,
+			RepoID:   info.RepoID,
+			Platform: info.Platform,
+			OrgEmail: info.OrgEmail,
+			OrgAlias: info.OrgAlias,
 		},
 	}
 
@@ -161,7 +165,8 @@ func (this *CorporationManagerController) Put() {
 		return
 	}
 
-	added, err := models.CreateCorporationAdministrator(orgCLAID, info.AdminName, adminEmail)
+	orgRepo := buildOrgRepo(orgCLA.Platform, orgCLA.OrgID, orgCLA.RepoID)
+	added, err := models.CreateCorporationAdministrator(&orgRepo, info.AdminName, adminEmail)
 	if err != nil {
 		reason = err
 		return
@@ -169,7 +174,7 @@ func (this *CorporationManagerController) Put() {
 
 	body = "add manager successfully"
 
-	notifyCorpManagerWhenAdding(orgCLA, added)
+	notifyCorpManagerWhenAdding(orgCLA.OrgAlias, projectURL(orgCLA), orgCLA.OrgEmail, added)
 }
 
 // @Title Patch
@@ -207,7 +212,8 @@ func (this *CorporationManagerController) Patch() {
 		return
 	}
 
-	if err := (&info).Reset(ac.OrgCLAID, ac.Email); err != nil {
+	orgRepo := buildOrgRepo(ac.Platform, ac.OrgID, ac.RepoID)
+	if err := (&info).Reset(&orgRepo, ac.Email); err != nil {
 		reason = err
 		return
 	}

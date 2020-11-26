@@ -34,6 +34,8 @@ type CorporationManagerCheckResult struct {
 	Platform string
 	OrgID    string
 	RepoID   string
+	OrgAlias string
+	OrgEmail string
 }
 
 type CorporationManagerListResult struct {

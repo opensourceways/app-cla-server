@@ -134,6 +134,8 @@ type cCorpManager struct {
 
 	OrgIdentity string `bson:"org_identity" json:"org_identity"`
 	LinkStatus  string `bson:"link_status" json:"link_status"`
+	OrgEmail    string `bson:"org_email" json:"org_email"`
+	OrgAlias    string `bson:"org_alias" json:"org_alias"`
 
 	CorpManagers []dCorpManager `bson:"corp_managers" json:"-"`
 }

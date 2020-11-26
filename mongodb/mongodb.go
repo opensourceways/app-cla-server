@@ -24,6 +24,7 @@ type client struct {
 	blankSigCollection          string
 	vcCollection                string
 	orgEmailCollection          string
+	corpManagerCollection       string
 	individualSigningCollection string
 }
 

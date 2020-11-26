@@ -32,11 +32,11 @@ type ICorporationSigning interface {
 }
 
 type ICorporationManager interface {
-	CheckCorporationManagerExist(CorporationManagerCheckInfo) (map[string]CorporationManagerCheckResult, error)
-	AddCorporationManager(orgCLAID string, opt []CorporationManagerCreateOption, managerNumber int) ([]CorporationManagerCreateOption, error)
-	DeleteCorporationManager(orgCLAID, role string, emails []string) ([]CorporationManagerCreateOption, error)
-	ResetCorporationManagerPassword(string, string, CorporationManagerResetPassword) error
-	ListCorporationManager(orgCLAID, email, role string) ([]CorporationManagerListResult, error)
+	AddCorporationManager(orgRepo *OrgRepo, opt []CorporationManagerCreateOption, managerNumber int) error
+	DeleteCorporationManager(orgRepo *OrgRepo, emails []string) ([]CorporationManagerCreateOption, error)
+	ResetCorporationManagerPassword(orgRepo *OrgRepo, email string, info *CorporationManagerResetPassword) error
+	GetCorpManager(*CorporationManagerCheckInfo) ([]CorporationManagerCheckResult, error)
+	ListCorporationManager(orgRepo *OrgRepo, email, role string) ([]CorporationManagerListResult, error)
 }
 
 type IOrgEmail interface {

@@ -112,7 +112,17 @@ func (this *acForCodePlatformPayload) addOrg(org string) {
 }
 
 type acForCorpManagerPayload struct {
-	Name     string `json:"name"`
-	Email    string `json:"email"`
-	OrgCLAID string `json:"org_cla_id"`
+	Name  string `json:"name"`
+	Email string `json:"email"`
+
+	OrgID    string `json:"org_id"`
+	RepoID   string `json:"repo_id"`
+	Platform string `json:"platform"`
+
+	OrgEmail string `json:"org_email"`
+	OrgAlias string `json:"org_alias"`
+}
+
+func (this *acForCorpManagerPayload) orgRepoURL() string {
+	return util.ProjectURL(this.Platform, this.OrgID, this.RepoID)
 }

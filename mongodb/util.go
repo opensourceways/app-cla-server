@@ -39,7 +39,7 @@ func structToMap(info interface{}) (bson.M, error) {
 }
 
 func addCorporationID(email string, body bson.M) {
-	body[fieldCorporationID] = genCorpID(email)
+	body[fieldCorpID] = genCorpID(email)
 }
 
 func genCorpID(email string) string {
@@ -47,7 +47,7 @@ func genCorpID(email string) string {
 }
 
 func filterOfCorpID(email string) bson.M {
-	return bson.M{fieldCorporationID: genCorpID(email)}
+	return bson.M{fieldCorpID: genCorpID(email)}
 }
 
 func filterOfDocID(oid primitive.ObjectID) bson.M {
@@ -56,7 +56,7 @@ func filterOfDocID(oid primitive.ObjectID) bson.M {
 
 func indexOfCorpManagerAndIndividual(email string) bson.M {
 	return bson.M{
-		fieldCorporationID: genCorpID(email),
+		fieldCorpID: genCorpID(email),
 		"email":            email,
 	}
 }

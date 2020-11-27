@@ -40,12 +40,11 @@ type ICorporationManager interface {
 }
 
 type IOrgEmail interface {
-	CreateOrgEmail(opt OrgEmailCreateInfo) error
-	GetOrgEmailInfo(email string) (OrgEmailCreateInfo, error)
+	CreateOrgEmail(opt *OrgEmailCreateInfo) error
+	GetOrgEmailInfo(email string) (*OrgEmailCreateInfo, error)
 }
 
 type IOrgCLA interface {
-	ListOrgCLA(OrgCLAListOption) ([]OrgCLA, error)
 	GetOrgCLA(string) (OrgCLA, error)
 	CreateOrgCLA(OrgCLA) (string, error)
 	DeleteOrgCLA(string) error

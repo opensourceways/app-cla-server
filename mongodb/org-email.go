@@ -4,20 +4,16 @@ import (
 	"context"
 
 	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 
 	"github.com/opensourceways/app-cla-server/dbmodels"
 )
 
-type OrgEmail struct {
-	ID       primitive.ObjectID `bson:"_id" json:"-"`
-	Email    string             `bson:"email" json:"email" required:"true"`
-	Platform string             `bson:"platform" json:"platform" required:"true"`
-	Token    []byte             `bson:"token" json:"-"`
+func docFilterOfOrgEmail(email string) bson.M {
+	return bson.M{fieldEmail: email}
 }
 
-func (this *client) CreateOrgEmail(opt dbmodels.OrgEmailCreateInfo) error {
-	info := OrgEmail{
+func (this *client) CreateOrgEmail(opt *dbmodels.OrgEmailCreateInfo) error {
+	info := dOrgEmail{
 		Email:    opt.Email,
 		Platform: opt.Platform,
 	}
@@ -25,10 +21,10 @@ func (this *client) CreateOrgEmail(opt dbmodels.OrgEmailCreateInfo) error {
 	if err != nil {
 		return err
 	}
-	body["token"] = opt.Token
+	body[fieldToken] = opt.Token
 
 	f := func(ctx context.Context) error {
-		_, err := this.newDocIfNotExist(ctx, this.orgEmailCollection, bson.M{"email": opt.Email}, body)
+		_, err := this.newDocIfNotExist(ctx, this.orgEmailCollection, docFilterOfOrgEmail(opt.Email), body)
 		if err != nil && isErrorOfRecordExists(err) {
 			return nil
 		}
@@ -38,18 +34,21 @@ func (this *client) CreateOrgEmail(opt dbmodels.OrgEmailCreateInfo) error {
 	return withContext(f)
 }
 
-func (this *client) GetOrgEmailInfo(email string) (dbmodels.OrgEmailCreateInfo, error) {
-	var v OrgEmail
+func (this *client) GetOrgEmailInfo(email string) (*dbmodels.OrgEmailCreateInfo, error) {
+	var v dOrgEmail
 
 	f := func(ctx context.Context) error {
-		return this.getDoc(ctx, this.orgEmailCollection, bson.M{"email": email}, bson.M{"email": 0}, &v)
+		return this.getDoc(
+			ctx, this.orgEmailCollection,
+			docFilterOfOrgEmail(email), bson.M{fieldEmail: 0}, &v,
+		)
 	}
 
 	if err := withContext(f); err != nil {
-		return dbmodels.OrgEmailCreateInfo{}, err
+		return nil, err
 	}
 
-	return dbmodels.OrgEmailCreateInfo{
+	return &dbmodels.OrgEmailCreateInfo{
 		Platform: v.Platform,
 		Token:    v.Token,
 	}, nil

@@ -3,44 +3,96 @@ package mongodb
 import (
 	"context"
 	"fmt"
-	"time"
 
-	"github.com/huaweicloud/golangsdk"
 	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.mongodb.org/mongo-driver/mongo"
 
 	"github.com/opensourceways/app-cla-server/dbmodels"
+	"github.com/opensourceways/app-cla-server/util"
 )
 
-type CLA struct {
-	ID        primitive.ObjectID `bson:"_id" json:"-"`
-	CreatedAt time.Time          `bson:"created_at" json:"-"`
-	UpdatedAt time.Time          `bson:"updated_at" json:"-"`
-	URL       string             `bson:"url" json:"url" required:"true"`
-	Text      string             `bson:"text" json:"text" required:"true"`
-	Language  string             `bson:"language" json:"language" required:"true"`
-	Fields    []Field            `bson:"fields" json:"fields,omitempty"`
+func (this *client) GetCLAForSigning(orgRepo *dbmodels.OrgRepo, applyTo string) ([]dbmodels.CLA, error) {
+	var project bson.M
+
+	if applyTo == dbmodels.ApplyToIndividual {
+		project = bson.M{fieldIndividualCLAs: 1}
+	} else {
+		project = bson.M{
+			fieldOrgEmail:       0,
+			fieldIndividualCLAs: 0,
+			fmt.Sprintf("%s.%s", fieldCorpCLAs, fieldOrgSignature): 0,
+		}
+	}
+
+	var v cOrgCLA
+	f := func(ctx context.Context) error {
+		return this.getDoc(
+			ctx, this.orgCLACollection,
+			docFilterOfLink(orgRepo),
+			project, &v,
+		)
+	}
+
+	if err := withContext(f); err != nil {
+		return nil, err
+	}
+
+	r := toModelOfOrgCLA(&v)
+
+	if applyTo == dbmodels.ApplyToIndividual {
+		return r.IndividualCLAs, nil
+	}
+	return r.CorpCLAs, nil
 }
 
-type Field struct {
-	ID          string `bson:"id" json:"id" required:"true"`
-	Title       string `bson:"title" json:"title" required:"true"`
-	Type        string `bson:"type" json:"type" required:"true"`
-	Description string `bson:"description" json:"description,omitempty"`
-	Required    bool   `bson:"required" json:"required"`
+func (this *client) AddCLA(orgRepo *dbmodels.OrgRepo, applyTo string, cla *dbmodels.CLA) error {
+	body, err := toDocOfCLA(cla)
+	if err != nil {
+		return err
+	}
+
+	claField := fieldNameOfCLA(applyTo)
+
+	docFilter := docFilterOfLink(orgRepo)
+	arrayFilterByElemMatch(
+		claField, false, docFilterOfCLA(cla.Language), docFilter,
+	)
+
+	f := func(ctx context.Context) error {
+		return this.pushArrayElem(
+			ctx, this.orgCLACollection, claField, docFilter, body,
+		)
+	}
+
+	return withContext(f)
 }
 
-func (this *client) CreateCLA(cla dbmodels.CLA) (string, error) {
-	info := CLA{
-		URL:      cla.Name,
+func (this *client) DeleteCLA(orgRepo *dbmodels.OrgRepo, applyTo, language string) error {
+	claField := fieldNameOfCLA(applyTo)
+	claFilter := docFilterOfCLA(language)
+
+	docFilter := docFilterOfLink(orgRepo)
+	// arrayFilterByElemMatch(claField, true, claFilter, docFilter)
+
+	f := func(ctx context.Context) error {
+		return this.pullArrayElem(
+			ctx, this.orgCLACollection, claField, docFilter, claFilter,
+		)
+	}
+
+	return withContext(f)
+}
+
+func toDocOfCLA(cla *dbmodels.CLA) (bson.M, error) {
+	info := &dCLA{
+		URL:      cla.URL,
 		Text:     cla.Text,
 		Language: cla.Language,
 	}
+
 	if len(cla.Fields) > 0 {
-		fields := make([]Field, 0, len(cla.Fields))
+		fields := make([]dField, 0, len(cla.Fields))
 		for _, item := range cla.Fields {
-			fields = append(fields, Field{
+			fields = append(fields, dField{
 				ID:          item.ID,
 				Title:       item.Title,
 				Type:        item.Type,
@@ -50,155 +102,35 @@ func (this *client) CreateCLA(cla dbmodels.CLA) (string, error) {
 		}
 		info.Fields = fields
 	}
-	body, err := structToMap(info)
-	if err != nil {
-		return "", err
+
+	if cla.OrgSignature != nil {
+		info.Md5sumOfOrgSignature = util.Md5sumOfBytes(cla.OrgSignature)
 	}
 
-	uid := ""
-	f := func(ctx context.Context) error {
-		s, err := this.insertDoc(ctx, this.clasCollection, body)
-		uid = s
-		return err
-	}
-
-	err = withContext(f)
-	return uid, err
-}
-
-func (this *client) DeleteCLA(uid string) error {
-	oid, err := toObjectID(uid)
-	if err != nil {
-		return err
-	}
-
-	f := func(ctx mongo.SessionContext) error {
-		col := this.collection(this.orgCLACollection)
-
-		sr := col.FindOne(ctx, bson.M{"cla_id": uid})
-		err := sr.Err()
-
-		if err != nil {
-			if isErrNoDocuments(err) {
-				col = this.collection(this.clasCollection)
-
-				_, err := col.DeleteOne(ctx, bson.M{"_id": oid})
-				return err
-
-			}
-			return fmt.Errorf("failed to check whether the cla(%s) is bound: %v", uid, err)
-		}
-
-		return fmt.Errorf("can't delete the cla which has already been bound to org")
-
-	}
-
-	return this.doTransaction(f)
-}
-
-func (this *client) ListCLA(opts dbmodels.CLAListOptions) ([]dbmodels.CLA, error) {
-	body, err := golangsdk.BuildRequestBody(opts, "")
-	if err != nil {
-		return nil, fmt.Errorf("build options to list cla failed, err:%v", err)
-	}
-
-	var v []CLA
-
-	f := func(ctx context.Context) error {
-		col := this.db.Collection(this.clasCollection)
-		filter := bson.M(body)
-
-		cursor, err := col.Find(ctx, filter)
-		if err != nil {
-			return fmt.Errorf("error find clas: %v", err)
-		}
-
-		err = cursor.All(ctx, &v)
-		if err != nil {
-			return fmt.Errorf("error decoding to bson struct of CLA: %v", err)
-		}
-		return nil
-	}
-
-	err = withContext(f)
+	r, err := structToMap(info)
 	if err != nil {
 		return nil, err
 	}
 
-	r := make([]dbmodels.CLA, 0, len(v))
-	for _, item := range v {
-		r = append(r, toModelCLA(item))
+	if cla.OrgSignature != nil {
+		r[fieldOrgSignature] = cla.OrgSignature
 	}
-
 	return r, nil
 }
 
-func (this *client) ListCLAByIDs(ids []string) ([]dbmodels.CLA, error) {
-	ids1 := make(bson.A, 0, len(ids))
-	for _, id := range ids {
-		id1, err := toObjectID(id)
-		if err != nil {
-			return nil, err
-		}
-		ids1 = append(ids1, id1)
+func toModelOfCLA(cla *dCLA) *dbmodels.CLA {
+	opt := &dbmodels.CLA{
+		Text:         cla.Text,
+		OrgSignature: cla.OrgSignature,
+		CLAInfo: dbmodels.CLAInfo{
+			URL:      cla.URL,
+			Language: cla.Language,
+		},
 	}
 
-	var v []CLA
-
-	f := func(ctx context.Context) error {
-		filter := bson.M{
-			"_id": bson.M{"$in": ids1},
-		}
-
-		return this.getDocs(ctx, this.clasCollection, filter, nil, &v)
-	}
-
-	if err := withContext(f); err != nil {
-		return nil, err
-	}
-
-	r := make([]dbmodels.CLA, 0, len(v))
-	for _, item := range v {
-		r = append(r, toModelCLA(item))
-	}
-
-	return r, nil
-}
-
-func (this *client) GetCLA(uid string, onlyFields bool) (dbmodels.CLA, error) {
-	oid, err := toObjectID(uid)
-	if err != nil {
-		return dbmodels.CLA{}, err
-	}
-
-	var v CLA
-
-	project := bson.M{}
-	if onlyFields {
-		project["fields"] = 1
-	}
-	f := func(ctx context.Context) error {
-		return this.getDoc(ctx, this.clasCollection, filterOfDocID(oid), project, &v)
-	}
-
-	if err := withContext(f); err != nil {
-		return dbmodels.CLA{}, err
-	}
-
-	return toModelCLA(v), nil
-}
-
-func toModelCLA(item CLA) dbmodels.CLA {
-	cla := dbmodels.CLA{
-		ID:       objectIDToUID(item.ID),
-		Name:     item.URL,
-		Text:     item.Text,
-		Language: item.Language,
-	}
-
-	if len(item.Fields) > 0 {
-		fs := make([]dbmodels.Field, 0, len(item.Fields))
-		for _, v := range item.Fields {
+	if len(cla.Fields) > 0 {
+		fs := make([]dbmodels.Field, 0, len(cla.Fields))
+		for _, v := range cla.Fields {
 			fs = append(fs, dbmodels.Field{
 				ID:          v.ID,
 				Title:       v.Title,
@@ -207,8 +139,19 @@ func toModelCLA(item CLA) dbmodels.CLA {
 				Required:    v.Required,
 			})
 		}
-		cla.Fields = fs
+		opt.Fields = fs
 	}
 
-	return cla
+	return opt
+}
+
+func fieldNameOfCLA(applyTo string) string {
+	if applyTo == dbmodels.ApplyToCorporation {
+		return fieldCorpCLAs
+	}
+	return fieldIndividualCLAs
+}
+
+func docFilterOfCLA(language string) bson.M {
+	return bson.M{fieldCLALanguage: language}
 }

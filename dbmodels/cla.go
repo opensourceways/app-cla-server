@@ -1,14 +1,14 @@
 package dbmodels
 
-const (
-	ApplyToCorporation = "corporation"
-	ApplyToIndividual  = "individual"
-)
-
 type CLA struct {
-	ID       string  `json:"id"`
-	Name     string  `json:"name"`
-	Text     string  `json:"text"`
+	Text         []byte `json:"text"`
+	OrgSignature []byte `json:"org_signature"`
+
+	CLAInfo
+}
+
+type CLAInfo struct {
+	URL      string  `json:"url"`
 	Language string  `json:"language"`
 	Fields   []Field `json:"fields"`
 }

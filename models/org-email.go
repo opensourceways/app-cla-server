@@ -9,9 +9,9 @@ import (
 )
 
 type OrgEmail struct {
-	Email string `json:"email"`
 	// Platform is the email platform, such as gmail
 	Platform string        `json:"platform"`
+	Email    string        `json:"email"`
 	Token    *oauth2.Token `json:"token"`
 }
 
@@ -26,7 +26,7 @@ func (this *OrgEmail) Create() error {
 		Platform: this.Platform,
 		Token:    b,
 	}
-	return dbmodels.GetDB().CreateOrgEmail(opt)
+	return dbmodels.GetDB().CreateOrgEmail(&opt)
 }
 
 func (this *OrgEmail) Get() error {

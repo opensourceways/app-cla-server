@@ -16,6 +16,7 @@ const (
 	fieldOrgSignature    = "org_signature"
 	fieldOrgSignatureTag = "md5sum"
 	fieldRepo            = "repo_id"
+	fieldEmail           = "email"
 	fieldOrgAlias        = "org_alias"
 	fieldOrgEmail        = "org_email"
 	fieldIndividualCLAs  = "individual_clas"
@@ -47,7 +48,7 @@ type cOrgCLA struct {
 	DOrgRepo `bson:",inline"`
 	OrgAlias string `bson:"org_alias" json:"org_alias"`
 
-	OrgEmail dOrgEmail `bson:"org_email" json:"-"`
+	OrgEmail string `bson:"org_email" json:"-"`
 
 	Submitter  string `bson:"submitter" json:"submitter" required:"true"`
 	LinkStatus string `bson:"link_status" json:"link_status"`

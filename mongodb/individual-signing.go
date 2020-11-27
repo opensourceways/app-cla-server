@@ -8,13 +8,6 @@ import (
 	"github.com/opensourceways/app-cla-server/dbmodels"
 )
 
-func docFilterOfEnabledLink(orgRepo *dbmodels.OrgRepo) bson.M {
-	return bson.M{
-		fieldOrgIdentity: orgIdentity(orgRepo),
-		fieldLinkStatus:  linkStatusEnabled,
-	}
-}
-
 func docFilterOfIndividualSigning(orgRepo *dbmodels.OrgRepo) bson.M {
 	return docFilterOfEnabledLink(orgRepo)
 }

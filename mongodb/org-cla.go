@@ -2,185 +2,122 @@ package mongodb
 
 import (
 	"context"
-	"fmt"
-	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 
 	"github.com/opensourceways/app-cla-server/dbmodels"
 )
 
-const (
-	fieldIndividuals   = "individuals"
-	fieldEmployees     = "employees"
-	fieldCorporations  = "corporations"
-	fieldCorporationID = "corp_id"
-)
-
-func filterForClaOrgDoc(filter bson.M) {
-	filter["enabled"] = true
-}
-
-type OrgCLA struct {
-	ID primitive.ObjectID `bson:"_id" json:"-"`
-
-	CreatedAt   time.Time `bson:"created_at" json:"-"`
-	UpdatedAt   time.Time `bson:"updated_at" json:"-"`
-	Platform    string    `bson:"platform" json:"platform" required:"true"`
-	OrgID       string    `bson:"org_id" json:"org_id" required:"true"`
-	RepoID      string    `bson:"repo_id" json:"repo_id"`
-	OrgAlias    string    `bson:"org_alias" json:"org_alias"`
-	CLAID       string    `bson:"cla_id" json:"cla_id" required:"true"`
-	CLALanguage string    `bson:"cla_language" json:"cla_language" required:"true"`
-	ApplyTo     string    `bson:"apply_to" json:"apply_to" required:"true"`
-	OrgEmail    string    `bson:"org_email" json:"org_email" required:"true"`
-	Enabled     bool      `bson:"enabled" json:"enabled"`
-	Submitter   string    `bson:"submitter" json:"submitter" required:"true"`
-
-	Md5sumOfOrgSignature string `bson:"md5sum" json:"md5sum"`
-	OrgSignature         []byte `bson:"org_signature" json:"-"`
-}
-
-func (this *client) CreateOrgCLA(info dbmodels.OrgCLA) (string, error) {
-	orgCLA := OrgCLA{
-		Platform:    info.Platform,
-		OrgID:       info.OrgID,
-		RepoID:      dbValueOfRepo(info.OrgID, info.RepoID),
-		CLAID:       info.CLAID,
-		CLALanguage: info.CLALanguage,
-		ApplyTo:     info.ApplyTo,
-		OrgEmail:    info.OrgEmail,
-		Enabled:     info.Enabled,
-		Submitter:   info.Submitter,
+func toDocOfOrgEmail(info *dbmodels.OrgEmailCreateInfo) (bson.M, error) {
+	opt := dOrgEmail{
+		Email:    info.Email,
+		Platform: info.Platform,
 	}
-	body, err := structToMap(orgCLA)
+
+	body, err := structToMap(opt)
+	if err != nil {
+		return nil, err
+	}
+
+	body[fieldToken] = info.Token
+	return body, nil
+}
+
+func toDocOfOrgCLA(info *dbmodels.OrgCLACreateOption) (bson.M, error) {
+	opt := cOrgCLA{
+		OrgIdentity: orgIdentity(&info.OrgRepo),
+		DOrgRepo: DOrgRepo{
+			Platform: info.Platform,
+			OrgID:    info.OrgID,
+			RepoID:   info.RepoID,
+		},
+		OrgAlias:   info.OrgAlias,
+		OrgEmail:   info.OrgEmail,
+		Submitter:  info.Submitter,
+		LinkStatus: linkStatusUnabled,
+	}
+	body, err := structToMap(opt)
+	if err != nil {
+		return nil, err
+	}
+
+	convertCLAs := func(field string, v []dbmodels.CLA) error {
+		clas := make(bson.A, 0, len(v))
+		for _, item := range v {
+			m, err := toDocOfCLA(&item)
+			if err != nil {
+				return err
+			}
+			clas = append(clas, m)
+		}
+
+		body[field] = clas
+		return nil
+	}
+
+	if len(info.IndividualCLAs) > 0 {
+		convertCLAs(fieldIndividualCLAs, info.IndividualCLAs)
+	}
+
+	if len(info.CorpCLAs) > 0 {
+		convertCLAs(fieldCorpCLAs, info.CorpCLAs)
+	}
+
+	return body, nil
+}
+
+func docFilterOfLink(orgRepo *dbmodels.OrgRepo) bson.M {
+	return bson.M{
+		fieldOrgIdentity: orgIdentity(orgRepo),
+		fieldLinkStatus:  bson.M{"$ne": linkStatusDeleted},
+	}
+}
+
+func (this *client) CreateLink(info *dbmodels.OrgCLACreateOption) (string, error) {
+	doc, err := toDocOfOrgCLA(info)
 	if err != nil {
 		return "", err
 	}
 
-	filterOfDoc, _ := filterOfOrgRepo(info.Platform, info.OrgID, info.RepoID)
-	filterOfDoc["cla_language"] = info.CLALanguage
-	filterOfDoc["apply_to"] = info.ApplyTo
-	filterOfDoc["enabled"] = true
+	docFilter := docFilterOfLink(&info.OrgRepo)
 
-	orgCLAID := ""
-
+	docID := ""
 	f := func(ctx context.Context) error {
-		s, err := this.newDocIfNotExist(ctx, this.orgCLACollection, filterOfDoc, body)
+		s, err := this.newDocIfNotExist(ctx, this.orgCLACollection, docFilter, doc)
 		if err != nil {
 			return err
 		}
-		orgCLAID = s
+		docID = s
 		return nil
 	}
 
 	if err = withContext(f); err != nil {
 		return "", err
 	}
-	return orgCLAID, nil
+	return docID, nil
 }
 
-func (this *client) DeleteOrgCLA(uid string) error {
-	oid, err := toObjectID(uid)
+func (this *client) DeleteLink(docID string) error {
+	oid, err := toObjectID(docID)
 	if err != nil {
 		return err
 	}
 
 	f := func(ctx context.Context) error {
-		return this.updateDoc(ctx, this.orgCLACollection, filterOfDocID(oid), bson.M{"enabled": false})
+		_, err := this.deleteDoc(ctx, this.orgCLACollection, docFilterByID(oid))
+		return err
 	}
-
 	return withContext(f)
 }
 
-func (this *client) GetOrgCLA(uid string) (dbmodels.OrgCLA, error) {
-	var r dbmodels.OrgCLA
-
-	oid, err := toObjectID(uid)
-	if err != nil {
-		return r, err
-	}
-
-	var v OrgCLA
-
+func (this *client) Unlink(platform, org, repo, applyTo string) error {
 	f := func(ctx context.Context) error {
-		return this.getDoc(ctx, this.orgCLACollection, filterOfDocID(oid), projectOfClaOrg(), &v)
+		return this.updateDoc(
+			ctx, this.orgCLACollection,
+			docFilterOfLink(platform, org, repo),
+			bson.M{fieldLinkStatus: linkStatusDeleted},
+		)
 	}
 
-	if err := withContext(f); err != nil {
-		return r, err
-	}
-
-	return toModelOrgCLA(v), nil
-}
-
-func (this *client) ListOrgCLA(opt dbmodels.OrgCLAListOption) ([]dbmodels.OrgCLA, error) {
-	if (opt.RepoID != "" && len(opt.OrgID) > 0) || (opt.RepoID == "" && len(opt.OrgID) == 0) {
-		return nil, fmt.Errorf("need specify multiple orgs or a single repo")
-	}
-
-	info := struct {
-		Platform string `json:"platform" required:"true"`
-		RepoID   string `json:"repo_id"`
-		ApplyTo  string `json:"apply_to,omitempty"`
-	}{
-		Platform: opt.Platform,
-		RepoID:   opt.RepoID,
-		ApplyTo:  opt.ApplyTo,
-	}
-
-	filter, err := structToMap(info)
-	if err != nil {
-		return nil, err
-	}
-	filterForClaOrgDoc(filter)
-	if len(opt.OrgID) > 0 {
-		filter["org_id"] = bson.M{"$in": opt.OrgID}
-	}
-
-	var v []OrgCLA
-
-	f := func(ctx context.Context) error {
-		return this.getDocs(ctx, this.orgCLACollection, filter, projectOfClaOrg(), &v)
-	}
-
-	if err = withContext(f); err != nil {
-		return nil, err
-	}
-
-	n := len(v)
-	r := make([]dbmodels.OrgCLA, 0, n)
-	for _, item := range v {
-		r = append(r, toModelOrgCLA(item))
-	}
-
-	return r, nil
-}
-
-func toModelOrgCLA(item OrgCLA) dbmodels.OrgCLA {
-	return dbmodels.OrgCLA{
-		ID:                   objectIDToUID(item.ID),
-		Platform:             item.Platform,
-		OrgID:                item.OrgID,
-		RepoID:               toNormalRepo(item.RepoID),
-		OrgAlias:             item.OrgAlias,
-		CLAID:                item.CLAID,
-		CLALanguage:          item.CLALanguage,
-		ApplyTo:              item.ApplyTo,
-		OrgEmail:             item.OrgEmail,
-		Enabled:              item.Enabled,
-		Submitter:            item.Submitter,
-		OrgSignatureUploaded: item.Md5sumOfOrgSignature != "",
-	}
-}
-
-func projectOfClaOrg() bson.M {
-	return bson.M{
-		fieldIndividuals:  0,
-		fieldEmployees:    0,
-		fieldCorporations: 0,
-		fieldCorpManagers: 0,
-		fieldOrgSignature: 0,
-	}
+	return withContext(f)
 }

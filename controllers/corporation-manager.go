@@ -147,7 +147,8 @@ func (this *CorporationManagerController) Put() {
 		return
 	}
 
-	info, err := models.CheckCorporationSigning(orgCLAID, adminEmail)
+	orgRepo := buildOrgRepo(orgCLA.Platform, orgCLA.OrgID, orgCLA.RepoID)
+	info, err := models.GetCorporationSigningSummary(&orgRepo, adminEmail)
 	if err != nil {
 		reason = err
 		return
@@ -160,12 +161,6 @@ func (this *CorporationManagerController) Put() {
 		return
 	}
 
-	if info.AdminAdded {
-		// TODO: send email failed
-		return
-	}
-
-	orgRepo := buildOrgRepo(orgCLA.Platform, orgCLA.OrgID, orgCLA.RepoID)
 	added, err := models.CreateCorporationAdministrator(&orgRepo, info.AdminName, adminEmail)
 	if err != nil {
 		reason = err

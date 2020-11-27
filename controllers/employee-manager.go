@@ -59,7 +59,7 @@ func (this *EmployeeManagerController) GetAll() {
 	}
 
 	orgRepo := buildOrgRepo(ac.Platform, ac.OrgID, ac.RepoID)
-	r, err := models.ListCorporationManagers(&orgRepo, ac.Email, dbmodels.RoleManager)
+	r, err := models.ListCorporationManager(&orgRepo, ac.Email, dbmodels.RoleManager)
 	if err != nil {
 		reason = err
 		return

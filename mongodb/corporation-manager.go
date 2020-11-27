@@ -168,9 +168,12 @@ func (c *client) ResetCorporationManagerPassword(orgRepo *dbmodels.OrgRepo, emai
 func (c *client) ListCorporationManager(orgRepo *dbmodels.OrgRepo, email, role string) ([]dbmodels.CorporationManagerListResult, error) {
 	docFilter := docFilterOfCorpManager(orgRepo)
 
-	elemFilter := bson.M{
-		fieldCorpID: genCorpID(email),
-		"role":      role,
+	elemFilter := bson.M{}
+	if email != "" {
+		elemFilter[fieldCorpID] = genCorpID(email)
+	}
+	if role != "" {
+		elemFilter["role"] = role
 	}
 
 	project := bson.M{

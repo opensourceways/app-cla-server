@@ -2,70 +2,60 @@ package mongodb
 
 import (
 	"context"
-	"fmt"
 
 	"go.mongodb.org/mongo-driver/bson"
 
 	"github.com/opensourceways/app-cla-server/dbmodels"
-	"github.com/opensourceways/app-cla-server/util"
 )
 
-func (this *client) UploadCorporationSigningPDF(orgCLAID, adminEmail string, pdf []byte) error {
-	oid, err := toObjectID(orgCLAID)
-	if err != nil {
-		return err
-	}
+func (c *client) UploadCorporationSigningPDF(orgRepo *dbmodels.OrgRepo, email string, pdf []byte) error {
+	elemFilter := elemFilterOfCorpSigning(email)
+
+	docFilter := docFilterOfCorpSigning(orgRepo)
+	arrayFilterByElemMatch(fieldSignings, true, elemFilter, docFilter)
 
 	f := func(ctx context.Context) error {
-		return this.updateArrayElem(
-			ctx, this.orgCLACollection, fieldCorporations,
-			filterOfDocID(oid),
-			filterOfCorpID(adminEmail),
+		return c.updateArrayElem(
+			ctx, c.corpSigningCollection, fieldSignings, docFilter, elemFilter,
 			bson.M{
 				"pdf":          pdf,
 				"pdf_uploaded": true,
-			}, true,
+			}, false,
 		)
 	}
 
 	return withContext(f)
+
 }
 
-func (this *client) DownloadCorporationSigningPDF(orgCLAID, email string) ([]byte, error) {
-	oid, err := toObjectID(orgCLAID)
-	if err != nil {
-		return nil, err
-	}
+func (c *client) DownloadCorporationSigningPDF(orgRepo *dbmodels.OrgRepo, email string) ([]byte, error) {
+	elemFilter := elemFilterOfCorpSigning(email)
 
-	var v []OrgCLA
+	docFilter := docFilterOfCorpSigning(orgRepo)
+	arrayFilterByElemMatch(fieldSignings, true, elemFilter, docFilter)
 
+	var v []cCorpSigning
 	f := func(ctx context.Context) error {
-		return this.getArrayElem(
-			ctx, this.orgCLACollection, fieldCorporations,
-			filterOfDocID(oid),
-			filterOfCorpID(email),
+		return c.getArrayElem(
+			ctx, c.corpSigningCollection, fieldCorporations, docFilter, elemFilter,
 			bson.M{
-				corpSigningField("pdf"):          1,
-				corpSigningField("pdf_uploaded"): 1,
+				memberNameOfSignings("pdf"):          1,
+				memberNameOfSignings("pdf_uploaded"): 1,
 			}, &v,
 		)
 	}
 
-	if err = withContext(f); err != nil {
+	if err := withContext(f); err != nil {
 		return nil, err
 	}
 
-	orgCLA, err := getSigningDoc(v, func(doc *OrgCLA) bool {
-		return len(doc.Corporations) > 0
-	})
-
-	item := orgCLA.Corporations[0]
-	if !item.PDFUploaded {
-		return nil, dbmodels.DBError{
-			ErrCode: util.ErrPDFHasNotUploaded,
-			Err:     fmt.Errorf("pdf has not yet been uploaded"),
-		}
+	if len(v) == 0 {
+		return nil, nil
 	}
 
+	item := v[0].Signings[0]
+	if !item.PDFUploaded {
+		return nil, nil
+	}
 	return item.PDF, nil
 }

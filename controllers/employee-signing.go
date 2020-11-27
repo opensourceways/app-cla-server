@@ -89,27 +89,13 @@ func (this *EmployeeSigningController) Post() {
 		return
 	}
 
-	_, corpSign, err := models.GetCorporationSigningDetail(
-		orgCLA.Platform, orgCLA.OrgID, orgCLA.RepoID, info.Email)
-	if err != nil {
-		reason = err
-		return
-	}
-
-	if !corpSign.AdminAdded {
-		reason = fmt.Errorf("the corp has not been enabled")
-		errCode = util.ErrSigningUncompleted
-		statusCode = 400
-		return
-	}
-
 	orgRepo := buildOrgRepo(orgCLA.Platform, orgCLA.OrgID, orgCLA.RepoID)
-	managers, err := models.ListCorporationManagers(&orgRepo, info.Email, dbmodels.RoleManager)
+	managers, err := models.ListCorporationManager(&orgRepo, info.Email, "")
 	if err != nil {
 		reason = err
 		return
 	}
-	if len(managers) == 0 {
+	if len(managers) <= 1 {
 		reason = fmt.Errorf("no managers")
 		errCode = util.ErrNoCorpManager
 		statusCode = 400
@@ -300,8 +286,10 @@ func (this *EmployeeSigningController) notifyManagers(managers []dbmodels.Corpor
 	ms := make([]string, 0, len(managers))
 	to := make([]string, 0, len(managers))
 	for _, item := range managers {
-		to = append(to, item.Email)
-		ms = append(ms, fmt.Sprintf("%s: %s", item.Name, item.Email))
+		if item.Role == dbmodels.RoleManager {
+			to = append(to, item.Email)
+			ms = append(ms, fmt.Sprintf("%s: %s", item.Name, item.Email))
+		}
 	}
 
 	msg := email.EmployeeSigning{

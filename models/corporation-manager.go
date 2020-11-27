@@ -65,6 +65,6 @@ func (this CorporationManagerResetPassword) Reset(orgRepo *dbmodels.OrgRepo, ema
 	)
 }
 
-func ListCorporationManagers(orgRepo *dbmodels.OrgRepo, email, role string) ([]dbmodels.CorporationManagerListResult, error) {
+func ListCorporationManager(orgRepo *dbmodels.OrgRepo, email, role string) ([]dbmodels.CorporationManagerListResult, error) {
 	return dbmodels.GetDB().ListCorporationManager(orgRepo, email, role)
 }

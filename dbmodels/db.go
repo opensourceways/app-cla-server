@@ -22,13 +22,13 @@ type IDB interface {
 }
 
 type ICorporationSigning interface {
-	SignAsCorporation(orgCLAID, platform, org, repo string, info CorporationSigningInfo) error
-	ListCorporationSigning(CorporationSigningListOption) (map[string][]CorporationSigningDetail, error)
-	GetCorporationSigningDetail(platform, org, repo, email string) (string, CorporationSigningDetail, error)
-	UploadCorporationSigningPDF(orgCLAID, adminEmail string, pdf []byte) error
-	DownloadCorporationSigningPDF(orgCLAID, email string) ([]byte, error)
-	CheckCorporationSigning(orgCLAID, email string) (CorporationSigningDetail, error)
-	GetCorpSigningInfo(platform, org, repo, email string) (string, *CorporationSigningInfo, error)
+	SignAsCorporation(orgRepo *OrgRepo, info *CorporationSigningInfo) error
+	ListCorporationSigning(orgRepo *OrgRepo, language string) ([]CorporationSigningSummary, error)
+	GetCorporationSigningSummary(orgRepo *OrgRepo, email string) (CorporationSigningSummary, error)
+	GetCorporationSigningDetail(orgRepo *OrgRepo, email string) (CorporationSigningDetail, error)
+
+	UploadCorporationSigningPDF(orgRepo *OrgRepo, adminEmail string, pdf []byte) error
+	DownloadCorporationSigningPDF(orgRepo *OrgRepo, email string) ([]byte, error)
 }
 
 type ICorporationManager interface {

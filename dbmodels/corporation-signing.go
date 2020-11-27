@@ -9,22 +9,20 @@ type CorporationSigningBasicInfo struct {
 	Date            string `json:"date"`
 }
 
-type CorporationSigningDetail struct {
+type CorporationSigningSummary struct {
 	CorporationSigningBasicInfo
 
 	PDFUploaded bool `json:"pdf_uploaded"`
-	AdminAdded  bool `json:"admin_added"`
+}
+
+type CorporationSigningDetail struct {
+	CorporationSigningSummary
+
+	Info TypeSigningInfo `json:"info"`
 }
 
 type CorporationSigningInfo struct {
 	CorporationSigningBasicInfo
 
 	Info TypeSigningInfo `json:"info"`
-}
-
-type CorporationSigningListOption struct {
-	Platform    string `json:"platform"`
-	OrgID       string `json:"org_id"`
-	RepoID      string `json:"repo_id"`
-	CLALanguage string `json:"cla_language"`
 }

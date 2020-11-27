@@ -22,37 +22,31 @@ func (this *CorporationSigningCreateOption) Validate(orgCLAID string) (string, e
 	return checkEmailFormat(this.AdminEmail)
 }
 
-func (this *CorporationSigningCreateOption) Create(orgCLAID, platform, orgID, repoId string) error {
+func (this *CorporationSigningCreateOption) Create(orgRepo *dbmodels.OrgRepo) error {
 	this.Date = util.Date()
 
 	return dbmodels.GetDB().SignAsCorporation(
-		orgCLAID, platform, orgID, repoId,
-		dbmodels.CorporationSigningInfo(this.CorporationSigning),
+		orgRepo,
+		(*dbmodels.CorporationSigningInfo)(&this.CorporationSigning),
 	)
 }
 
-func CheckCorporationSigning(orgCLAID, email string) (dbmodels.CorporationSigningDetail, error) {
-	return dbmodels.GetDB().CheckCorporationSigning(orgCLAID, email)
+func UploadCorporationSigningPDF(orgRepo *dbmodels.OrgRepo, email string, pdf []byte) error {
+	return dbmodels.GetDB().UploadCorporationSigningPDF(orgRepo, email, pdf)
 }
 
-func UploadCorporationSigningPDF(orgCLAID, email string, pdf []byte) error {
-	return dbmodels.GetDB().UploadCorporationSigningPDF(orgCLAID, email, pdf)
+func DownloadCorporationSigningPDF(orgRepo *dbmodels.OrgRepo, email string) ([]byte, error) {
+	return dbmodels.GetDB().DownloadCorporationSigningPDF(orgRepo, email)
 }
 
-func DownloadCorporationSigningPDF(orgCLAID, email string) ([]byte, error) {
-	return dbmodels.GetDB().DownloadCorporationSigningPDF(orgCLAID, email)
+func GetCorporationSigningDetail(orgRepo *dbmodels.OrgRepo, email string) (dbmodels.CorporationSigningDetail, error) {
+	return dbmodels.GetDB().GetCorporationSigningDetail(orgRepo, email)
 }
 
-func GetCorporationSigningDetail(platform, org, repo, email string) (string, dbmodels.CorporationSigningDetail, error) {
-	return dbmodels.GetDB().GetCorporationSigningDetail(platform, org, repo, email)
+func GetCorporationSigningSummary(orgRepo *dbmodels.OrgRepo, email string) (dbmodels.CorporationSigningSummary, error) {
+	return dbmodels.GetDB().GetCorporationSigningSummary(orgRepo, email)
 }
 
-func GetCorpSigningInfo(platform, org, repo, email string) (string, *dbmodels.CorporationSigningInfo, error) {
-	return dbmodels.GetDB().GetCorpSigningInfo(platform, org, repo, email)
-}
-
-type CorporationSigningListOption dbmodels.CorporationSigningListOption
-
-func (this CorporationSigningListOption) List() (map[string][]dbmodels.CorporationSigningDetail, error) {
-	return dbmodels.GetDB().ListCorporationSigning(dbmodels.CorporationSigningListOption(this))
+func ListCorporationSigning(orgRepo *dbmodels.OrgRepo, language string) ([]dbmodels.CorporationSigningSummary, error) {
+	return dbmodels.GetDB().ListCorporationSigning(orgRepo, language)
 }

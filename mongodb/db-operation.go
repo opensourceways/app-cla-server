@@ -34,27 +34,6 @@ func arrayElemFilter(array string, filterOfArray bson.M) bson.M {
 	}}
 }
 
-func getSigningDoc(v []OrgCLA, isOk func(doc *OrgCLA) bool) (*OrgCLA, error) {
-	if len(v) == 0 {
-		return nil, dbmodels.DBError{
-			ErrCode: util.ErrNoDBRecord,
-			Err:     fmt.Errorf("can't find any record"),
-		}
-	}
-
-	for i := 0; i < len(v); i++ {
-		doc := &v[i]
-		if isOk(doc) {
-			return doc, nil
-		}
-	}
-
-	return nil, dbmodels.DBError{
-		ErrCode: util.ErrHasNotSigned,
-		Err:     fmt.Errorf("has not signed"),
-	}
-}
-
 func errorIfMatchingNoDoc(r *mongo.UpdateResult) error {
 	if r.MatchedCount == 0 {
 		return dbmodels.DBError{

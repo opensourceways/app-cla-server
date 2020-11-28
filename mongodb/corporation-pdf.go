@@ -37,7 +37,7 @@ func (c *client) DownloadCorporationSigningPDF(orgRepo *dbmodels.OrgRepo, email 
 	var v []cCorpSigning
 	f := func(ctx context.Context) error {
 		return c.getArrayElem(
-			ctx, c.corpSigningCollection, fieldCorporations, docFilter, elemFilter,
+			ctx, c.corpSigningCollection, fieldSignings, docFilter, elemFilter,
 			bson.M{
 				memberNameOfSignings("pdf"):          1,
 				memberNameOfSignings("pdf_uploaded"): 1,

@@ -19,11 +19,11 @@ type client struct {
 	c  *mongo.Client
 	db *mongo.Database
 
-	clasCollection              string
-	orgCLACollection            string
-	blankSigCollection          string
-	vcCollection                string
-	orgEmailCollection          string
+	vcCollection       string
+	blankSigCollection string
+	orgEmailCollection string
+
+	linkCollection            string
 	corpManagerCollection       string
 	corpSigningCollection       string
 	individualSigningCollection string
@@ -44,10 +44,13 @@ func Initialize(cfg *conf.MongodbConfig) (*client, error) {
 		db: c.Database(cfg.DBName),
 
 		vcCollection:       cfg.VCCollection,
-		clasCollection:     cfg.CLACollection,
-		orgCLACollection:   cfg.LinkCollection,
 		orgEmailCollection: cfg.OrgEmailCollection,
 		blankSigCollection: cfg.BlankSignatureCollection,
+
+		linkCollection:            cfg.LinkCollection,
+		corpManagerCollection:       cfg.CorpManagerCollection,
+		corpSigningCollection:       cfg.CorpSigningCollection,
+		individualSigningCollection: cfg.IndividualSigningCollection,
 	}
 	return cli, nil
 }

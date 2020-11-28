@@ -2,122 +2,123 @@ package mongodb
 
 import (
 	"context"
+	"fmt"
 
 	"go.mongodb.org/mongo-driver/bson"
 
 	"github.com/opensourceways/app-cla-server/dbmodels"
 )
 
-func toDocOfOrgEmail(info *dbmodels.OrgEmailCreateInfo) (bson.M, error) {
-	opt := dOrgEmail{
-		Email:    info.Email,
-		Platform: info.Platform,
-	}
-
-	body, err := structToMap(opt)
-	if err != nil {
-		return nil, err
-	}
-
-	body[fieldToken] = info.Token
-	return body, nil
-}
-
-func toDocOfOrgCLA(info *dbmodels.OrgCLACreateOption) (bson.M, error) {
-	opt := cOrgCLA{
-		OrgIdentity: orgIdentity(&info.OrgRepo),
-		DOrgRepo: DOrgRepo{
-			Platform: info.Platform,
-			OrgID:    info.OrgID,
-			RepoID:   info.RepoID,
-		},
-		OrgAlias:   info.OrgAlias,
-		OrgEmail:   info.OrgEmail,
-		Submitter:  info.Submitter,
-		LinkStatus: linkStatusUnabled,
-	}
-	body, err := structToMap(opt)
-	if err != nil {
-		return nil, err
-	}
-
-	convertCLAs := func(field string, v []dbmodels.CLA) error {
-		clas := make(bson.A, 0, len(v))
-		for _, item := range v {
-			m, err := toDocOfCLA(&item)
-			if err != nil {
-				return err
-			}
-			clas = append(clas, m)
-		}
-
-		body[field] = clas
-		return nil
-	}
-
-	if len(info.IndividualCLAs) > 0 {
-		convertCLAs(fieldIndividualCLAs, info.IndividualCLAs)
-	}
-
-	if len(info.CorpCLAs) > 0 {
-		convertCLAs(fieldCorpCLAs, info.CorpCLAs)
-	}
-
-	return body, nil
-}
-
-func docFilterOfLink(orgRepo *dbmodels.OrgRepo) bson.M {
+func docFilterOfEnabledLink(orgRepo *dbmodels.OrgRepo) bson.M {
 	return bson.M{
 		fieldOrgIdentity: orgIdentity(orgRepo),
-		fieldLinkStatus:  bson.M{"$ne": linkStatusDeleted},
+		fieldLinkStatus:  linkStatusEnabled,
 	}
 }
 
-func (this *client) CreateLink(info *dbmodels.OrgCLACreateOption) (string, error) {
-	doc, err := toDocOfOrgCLA(info)
-	if err != nil {
-		return "", err
+func (this *client) getOrgCLAOfCorpCLA(orgRepo *dbmodels.OrgRepo, language, signatureMd5 string, result interface{}) error {
+	fieldOfOrgSignature := memberNameOfCorpCLA(fieldOrgSignature)
+	pipeline := bson.A{
+		bson.M{"$match": docFilterOfEnabledLink(orgRepo)},
+		bson.M{"$project": bson.M{
+			fieldOrgAlias: 1,
+			fieldOrgEmail: 1,
+			fieldCorpCLAs: arrayElemFilter(fieldCorpCLAs, elemFilterOfCLA(language)),
+		}},
+		bson.M{"$unwind": "$" + fieldCorpCLAs},
+		bson.M{"$project": bson.M{
+			fieldOrgAlias:                 1,
+			fieldOrgEmail:                 1,
+			memberNameOfCorpCLA("text"):   1,
+			memberNameOfCorpCLA("fields"): 1,
+			fieldOfOrgSignature: bson.M{"$cond": bson.M{
+				"if":   bson.M{"$eq": bson.A{signatureMd5, "$" + memberNameOfCorpCLA(fieldOrgSignatureTag)}},
+				"then": "$$REMOVE",
+				"else": "$" + fieldOfOrgSignature,
+			}},
+		}},
 	}
 
-	docFilter := docFilterOfLink(&info.OrgRepo)
-
-	docID := ""
 	f := func(ctx context.Context) error {
-		s, err := this.newDocIfNotExist(ctx, this.orgCLACollection, docFilter, doc)
+		col := this.collection(this.linkCollection)
+		cursor, err := col.Aggregate(ctx, pipeline)
 		if err != nil {
 			return err
 		}
-		docID = s
-		return nil
+
+		return cursor.All(ctx, result)
 	}
 
-	if err = withContext(f); err != nil {
-		return "", err
-	}
-	return docID, nil
-}
-
-func (this *client) DeleteLink(docID string) error {
-	oid, err := toObjectID(docID)
-	if err != nil {
-		return err
-	}
-
-	f := func(ctx context.Context) error {
-		_, err := this.deleteDoc(ctx, this.orgCLACollection, docFilterByID(oid))
-		return err
-	}
 	return withContext(f)
 }
 
-func (this *client) Unlink(platform, org, repo, applyTo string) error {
+func (this *client) GetOrgCLAWhenSigningAsCorp(orgRepo *dbmodels.OrgRepo, language, signatureMd5 string) (*dbmodels.OrgCLAForSigning, error) {
+	var v []struct {
+		OrgAlias string `bson:"org_alias" json:"org_alias"`
+		OrgEmail string `bson:"org_email" json:"-"`
+		CorpCLA  dCLA   `bson:"corp_clas"`
+	}
+	err := this.getOrgCLAOfCorpCLA(orgRepo, language, signatureMd5, &v)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(v) == 0 {
+		return nil, dbmodels.DBError{
+			ErrCode: dbmodels.ErrNoDBRecord,
+			Err:     fmt.Errorf("no cla binding found"),
+		}
+	}
+
+	doc := &v[0]
+	r := &dbmodels.OrgCLAForSigning{
+		OrgDetail: dbmodels.OrgDetail{
+			OrgInfo: dbmodels.OrgInfo{
+				OrgAlias: doc.OrgAlias,
+			},
+			OrgEmail: doc.OrgEmail,
+		},
+		CLAInfo: toModelOfCLA(&doc.CorpCLA),
+	}
+	return r, nil
+}
+
+func (this *client) GetOrgCLAWhenSigningAsIndividual(orgRepo *dbmodels.OrgRepo, language string) (*dbmodels.OrgCLAForSigning, error) {
+	var v []cOrgCLA
 	f := func(ctx context.Context) error {
-		return this.updateDoc(
-			ctx, this.orgCLACollection,
-			docFilterOfLink(platform, org, repo),
-			bson.M{fieldLinkStatus: linkStatusDeleted},
+		return this.getArrayElem(
+			ctx, this.linkCollection, fieldIndividualCLAs,
+			docFilterOfEnabledLink(orgRepo),
+			elemFilterOfCLA(language),
+			bson.M{
+				fieldOrgAlias: 1,
+				fieldOrgEmail: 1,
+				fmt.Sprintf("%s.%s", fieldIndividualCLAs, "fields"): 1,
+			},
+			&v,
 		)
 	}
 
-	return withContext(f)
+	if err := withContext(f); err != nil {
+		return nil, err
+	}
+
+	if len(v) == 0 || len(v[0].IndividualCLAs) == 0 {
+		return nil, dbmodels.DBError{
+			ErrCode: dbmodels.ErrNoDBRecord,
+			Err:     fmt.Errorf("no cla binding found"),
+		}
+	}
+
+	doc := &v[0]
+	r := &dbmodels.OrgCLAForSigning{
+		OrgDetail: dbmodels.OrgDetail{
+			OrgInfo: dbmodels.OrgInfo{
+				OrgAlias: doc.OrgAlias,
+			},
+			OrgEmail: doc.OrgEmail,
+		},
+		CLAInfo: toModelOfCLA(&doc.IndividualCLAs[0]),
+	}
+	return r, nil
 }

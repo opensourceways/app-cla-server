@@ -27,13 +27,17 @@ type appConfig struct {
 }
 
 type MongodbConfig struct {
-	MongodbConn              string `json:"mongodb_conn" required:"true"`
-	DBName                   string `json:"mongodb_db" required:"true"`
-	CLACollection            string `json:"cla_collection" required:"true"`
-	LinkCollection           string `json:"link_collection" required:"true"`
-	OrgEmailCollection       string `json:"org_email_collection" required:"true"`
+	MongodbConn string `json:"mongodb_conn" required:"true"`
+	DBName      string `json:"mongodb_db" required:"true"`
+
 	VCCollection             string `json:"verification_code_collection" required:"true"`
+	OrgEmailCollection       string `json:"org_email_collection" required:"true"`
 	BlankSignatureCollection string `json:"blank_signature_collection" required:"true"`
+
+	LinkCollection              string `json:"link_collection" required:"true"`
+	CorpManagerCollection       string `json:"corp_manager_collection" required:"true"`
+	CorpSigningCollection       string `json:"corp_signing_collection" required:"true"`
+	IndividualSigningCollection string `json:"individual_signing_collection" required:"true"`
 }
 
 func InitAppConfig() error {
@@ -70,13 +74,16 @@ func InitAppConfig() error {
 		EmployeeManagersNumber:  employeeMangers,
 		CLAPlatformURL:          beego.AppConfig.String("cla_platform_url"),
 		Mongodb: MongodbConfig{
-			MongodbConn:              beego.AppConfig.String("mongodb::mongodb_conn"),
-			DBName:                   beego.AppConfig.String("mongodb::mongodb_db"),
-			CLACollection:            beego.AppConfig.String("mongodb::cla_collection"),
-			LinkCollection:           beego.AppConfig.String("mongodb::link_collection"),
-			OrgEmailCollection:       beego.AppConfig.String("mongodb::org_email_collection"),
-			VCCollection:             beego.AppConfig.String("mongodb::verification_code_collection"),
-			BlankSignatureCollection: beego.AppConfig.String("mongodb::blank_signature_collection"),
+			MongodbConn: beego.AppConfig.String("mongodb::mongodb_conn"),
+			DBName:      beego.AppConfig.String("mongodb::mongodb_db"),
+
+			VCCollection:                beego.AppConfig.String("mongodb::verification_code_collection"),
+			OrgEmailCollection:          beego.AppConfig.String("mongodb::org_email_collection"),
+			BlankSignatureCollection:    beego.AppConfig.String("mongodb::blank_signature_collection"),
+			LinkCollection:              beego.AppConfig.String("mongodb::link_collection"),
+			CorpManagerCollection:       beego.AppConfig.String("mongodb::corp_manager_collection"),
+			CorpSigningCollection:       beego.AppConfig.String("mongodb::corp_signing_collection"),
+			IndividualSigningCollection: beego.AppConfig.String("mongodb::individual_signing_collection"),
 		},
 	}
 	return AppConfig.validate()

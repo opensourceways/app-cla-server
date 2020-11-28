@@ -13,12 +13,15 @@ func GetDB() IDB {
 type IDB interface {
 	ICorporationSigning
 	ICorporationManager
-	IOrgEmail
-	IOrgCLA
 	IIndividualSigning
+
+	IOrgCLA
+	ILink
 	ICLA
+
+	IOrgEmail
+	IBlankPDF
 	IVerificationCode
-	IPDF
 }
 
 type ICorporationSigning interface {
@@ -39,17 +42,6 @@ type ICorporationManager interface {
 	ListCorporationManager(orgRepo *OrgRepo, email, role string) ([]CorporationManagerListResult, error)
 }
 
-type IOrgEmail interface {
-	CreateOrgEmail(opt *OrgEmailCreateInfo) error
-	GetOrgEmailInfo(email string) (*OrgEmailCreateInfo, error)
-}
-
-type IOrgCLA interface {
-	GetOrgCLA(string) (OrgCLA, error)
-	CreateOrgCLA(OrgCLA) (string, error)
-	DeleteOrgCLA(string) error
-}
-
 type IIndividualSigning interface {
 	SignAsIndividual(orgRepo *OrgRepo, info *IndividualSigningInfo) error
 	DeleteIndividualSigning(orgRepo *OrgRepo, email string) error
@@ -58,12 +50,28 @@ type IIndividualSigning interface {
 	ListIndividualSigning(orgRepo *OrgRepo, opt *IndividualSigningListOption) ([]IndividualSigningBasicInfo, error)
 }
 
+type IOrgEmail interface {
+	CreateOrgEmail(opt *OrgEmailCreateInfo) error
+	GetOrgEmailInfo(email string) (*OrgEmailCreateInfo, error)
+}
+
+type IOrgCLA interface {
+	GetOrgCLAWhenSigningAsCorp(orgRepo *OrgRepo, language, signatureMd5 string) (*OrgCLAForSigning, error)
+	GetOrgCLAWhenSigningAsIndividual(orgRepo *OrgRepo, language string) (*OrgCLAForSigning, error)
+}
+
+type ILink interface {
+	CreateLink(info *LinkCreateOption) (string, error)
+	Unlink(orgRepo *OrgRepo) error
+	ListLinks(opt *LinkListOption) ([]LinkInfo, error)
+}
+
 type ICLA interface {
-	CreateCLA(CLA) (string, error)
-	ListCLA(CLAListOptions) ([]CLA, error)
-	GetCLA(string, bool) (CLA, error)
-	DeleteCLA(string) error
-	ListCLAByIDs(ids []string) ([]CLA, error)
+	GetCLAByType(orgRepo *OrgRepo, applyTo string) ([]CLA, error)
+	GetAllCLA(orgRepo *OrgRepo) (*CLAOfLink, error)
+	AddCLA(orgRepo *OrgRepo, applyTo string, cla *CLA) error
+	DeleteCLA(orgRepo *OrgRepo, applyTo, language string) error
+	DownloadOrgSignature(orgRepo *OrgRepo, language string) ([]byte, error)
 }
 
 type IVerificationCode interface {
@@ -71,11 +79,7 @@ type IVerificationCode interface {
 	GetVerificationCode(opt *VerificationCode) error
 }
 
-type IPDF interface {
-	UploadOrgSignature(orgCLAID string, pdf []byte) error
-	DownloadOrgSignature(orgCLAID string) ([]byte, error)
-	DownloadOrgSignatureByMd5(orgCLAID, md5sum string) ([]byte, error)
-
+type IBlankPDF interface {
 	UploadBlankSignature(language string, pdf []byte) error
 	DownloadBlankSignature(language string) ([]byte, error)
 }

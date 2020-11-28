@@ -13,3 +13,8 @@ func IsDBError(err error) (DBError, bool) {
 	e, ok := err.(DBError)
 	return e, ok
 }
+
+const (
+	ErrNoDBRecord       = "no_db_record"
+	ErrCLAHasBeenSigned = "cla_has_been_signed"
+)

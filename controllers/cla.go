@@ -3,17 +3,67 @@ package controllers
 import (
 	"fmt"
 
-	"github.com/astaxie/beego"
-
+	"github.com/opensourceways/app-cla-server/dbmodels"
 	"github.com/opensourceways/app-cla-server/models"
+	"github.com/opensourceways/app-cla-server/util"
 )
 
 type CLAController struct {
-	beego.Controller
+	baseController
 }
 
 func (this *CLAController) Prepare() {
-	apiPrepare(&this.Controller, []string{PermissionOwnerOfOrg})
+	this.apiPrepare(PermissionOwnerOfOrg)
+}
+
+// @Title Link
+// @Description link org and cla
+// @Param	body		body 	models.OrgCLA	true		"body for org-repo content"
+// @Success 201 {int} models.OrgCLA
+// @Failure 403 body is empty
+// @router /:org_id/:apply_to [post]
+func (this *CLAController) AddCLA() {
+	doWhat := "add cla"
+
+	pl, err := this.tokenPayloadOfCodePlatform()
+	if err != nil {
+		this.sendFailedResponse(500, util.ErrSystemError, err, doWhat)
+		return
+	}
+
+	org, repo := parseOrgAndRepo(this.GetString(":org_id"))
+	if r := isOwnerOfOrg(pl, org); r != nil {
+		this.sendFailedResponse(r.statusCode, r.errCode, r.reason, doWhat)
+		return
+	}
+
+	var input interface {
+		AddCLA(orgRepo *dbmodels.OrgRepo) error
+		Validate() (string, error)
+	}
+	if this.GetString(":apply_to") == dbmodels.ApplyToIndividual {
+		input = &models.CLACreateOption{}
+	} else {
+		input = &models.CorpCLACreateOption{}
+	}
+
+	if err := this.fetchInputPayload(input); err != nil {
+		this.sendFailedResponse(400, util.ErrInvalidParameter, err, doWhat)
+		return
+	}
+
+	if ec, err := input.Validate(); err != nil {
+		this.sendFailedResponse(400, ec, err, doWhat)
+		return
+	}
+
+	orgRepo := buildOrgRepo(pl.Platform, org, repo)
+	if err := input.AddCLA(&orgRepo); err != nil {
+		this.sendFailedResponse(0, "", err, doWhat)
+		return
+	}
+
+	this.sendResponse("add cla successfully", 0)
 }
 
 // @Title Delete CLA

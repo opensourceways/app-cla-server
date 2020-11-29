@@ -111,6 +111,8 @@ func (this *CorporationSigningController) ResendCorpSigningEmail() {
 		sendResponse(&this.Controller, statusCode, errCode, reason, body, "resend corp signing email")
 	}()
 
+	// TODO: resend if pdf has not been uploaded
+
 	err := checkAndVerifyAPIStringParameter(&this.Controller, map[string]string{":org_id": "", ":email": ""})
 	if err != nil {
 		reason = err

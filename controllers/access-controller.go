@@ -111,6 +111,14 @@ func (this *acForCodePlatformPayload) addOrg(org string) {
 	this.Orgs[org] = true
 }
 
+func (this *acForCodePlatformPayload) orgs() []string {
+	v := make([]string, 0, len(this.Orgs))
+	for k := range this.Orgs {
+		v = append(v, k)
+	}
+	return v
+}
+
 type acForCorpManagerPayload struct {
 	Name  string `json:"name"`
 	Email string `json:"email"`

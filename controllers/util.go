@@ -346,6 +346,27 @@ func isNotCorpCLA(orgCLA *models.OrgCLA) bool {
 	return orgCLA.ApplyTo != dbmodels.ApplyToCorporation
 }
 
+func isOwnerOfOrg(pl *acForCodePlatformPayload, org string) *failedResult {
+	if pl.hasOrg(org) {
+		return nil
+	}
+
+	p, err := platforms.NewPlatform(pl.PlatformToken, "", pl.Platform)
+	if err != nil {
+		return newFailedResult(400, util.ErrInvalidParameter, err)
+	}
+
+	if b, err := p.IsOrgExist(org); err != nil {
+		// TODO token expiry
+		return newFailedResult(500, util.ErrSystemError, err)
+	} else if !b {
+		return newFailedResult(400, util.ErrNotYoursOrg, fmt.Errorf("not the org of owner"))
+	}
+
+	pl.addOrg(org)
+	return nil
+}
+
 func canAccessOrgCLA(c *beego.Controller, orgCLAID string) (*models.OrgCLA, int, string, error) {
 	orgCLA := &models.OrgCLA{ID: orgCLAID}
 	if err := orgCLA.Get(); err != nil {

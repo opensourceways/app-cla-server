@@ -1,5 +1,11 @@
 package dbmodels
 
+type OrgRepo struct {
+	Platform string `json:"platform"`
+	OrgID    string `json:"org_id"`
+	RepoID   string `json:"repo_id"`
+}
+
 type OrgCLA struct {
 	ID                   string `json:"id"`
 	Platform             string `json:"platform"`

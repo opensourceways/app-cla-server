@@ -48,9 +48,19 @@ func (this *CorporationPDFController) Upload() {
 		return
 	}
 	orgCLAID := this.GetString(":org_cla_id")
+	corpEmail := this.GetString(":email")
 
-	_, statusCode, errCode, reason = canAccessOrgCLA(&this.Controller, orgCLAID)
+	var orgCLA *models.OrgCLA
+	orgCLA, statusCode, errCode, reason = canAccessOrgCLA(&this.Controller, orgCLAID)
 	if reason != nil {
+		return
+	}
+
+	_, _, err := models.GetCorporationSigningDetail(
+		orgCLA.Platform, orgCLA.OrgID, orgCLA.RepoID, corpEmail,
+	)
+	if err != nil {
+		reason = err
 		return
 	}
 
@@ -70,7 +80,8 @@ func (this *CorporationPDFController) Upload() {
 		return
 	}
 
-	err = models.UploadCorporationSigningPDF(orgCLAID, this.GetString(":email"), data)
+	orgRepo := buildOrgRepo(orgCLA.Platform, orgCLA.OrgID, orgCLA.RepoID)
+	err = models.UploadCorporationSigningPDF(orgRepo, corpEmail, &data)
 	if err != nil {
 		reason = err
 		return
@@ -103,12 +114,14 @@ func (this *CorporationPDFController) Download() {
 	}
 	orgCLAID := this.GetString(":org_cla_id")
 
-	_, statusCode, errCode, reason = canAccessOrgCLA(&this.Controller, orgCLAID)
+	var orgCLA *models.OrgCLA
+	orgCLA, statusCode, errCode, reason = canAccessOrgCLA(&this.Controller, orgCLAID)
 	if reason != nil {
 		return
 	}
 
-	pdf, err := models.DownloadCorporationSigningPDF(orgCLAID, this.GetString(":email"))
+	orgRepo := buildOrgRepo(orgCLA.Platform, orgCLA.OrgID, orgCLA.RepoID)
+	pdf, err := models.DownloadCorporationSigningPDF(orgRepo, this.GetString(":email"))
 	if err != nil {
 		reason = err
 		return
@@ -140,7 +153,14 @@ func (this *CorporationPDFController) Review() {
 		return
 	}
 
-	pdf, err := models.DownloadCorporationSigningPDF(ac.OrgCLAID, ac.Email)
+	orgCLA := &models.OrgCLA{ID: ac.OrgCLAID}
+	if err := orgCLA.Get(); err != nil {
+		reason = err
+		return
+	}
+
+	orgRepo := buildOrgRepo(orgCLA.Platform, orgCLA.OrgID, orgCLA.RepoID)
+	pdf, err := models.DownloadCorporationSigningPDF(orgRepo, ac.Email)
 	if err != nil {
 		reason = err
 		return

@@ -17,9 +17,6 @@ type corporationSigningDoc struct {
 	CorporationName string                   `bson:"corp_name" json:"corp_name" required:"true"`
 	Date            string                   `bson:"date" json:"date" required:"true"`
 	SigningInfo     dbmodels.TypeSigningInfo `bson:"info" json:"info,omitempty"`
-
-	PDFUploaded bool   `bson:"pdf_uploaded" json:"pdf_uploaded"`
-	PDF         []byte `bson:"pdf" json:"pdf,omitempty"`
 }
 
 func filterForCorpSigning(filter bson.M) {
@@ -164,22 +161,6 @@ func (this *client) GetCorporationSigningDetail(platform, org, repo, email strin
 	return objectIDToUID(orgCLA.ID), detail, nil
 }
 
-func (this *client) CheckCorporationSigning(orgCLAID, email string) (dbmodels.CorporationSigningDetail, error) {
-	var result dbmodels.CorporationSigningDetail
-
-	oid, err := toObjectID(orgCLAID)
-	if err != nil {
-		return result, err
-	}
-
-	orgCLA, err := this.getCorporationSigningDetail(filterOfDocID(oid), email)
-	if err != nil {
-		return result, err
-	}
-
-	return toDBModelCorporationSigningDetail(&orgCLA.Corporations[0], (len(orgCLA.CorporationManagers) > 0)), nil
-}
-
 func (this *client) GetCorpSigningInfo(platform, org, repo, email string) (string, *dbmodels.CorporationSigningInfo, error) {
 	var v []OrgCLA
 
@@ -225,18 +206,16 @@ func toDBModelCorporationSigningDetail(cs *corporationSigningDoc, adminAdded boo
 			CorporationName: cs.CorporationName,
 			Date:            cs.Date,
 		},
-		PDFUploaded: cs.PDFUploaded,
-		AdminAdded:  adminAdded,
+		AdminAdded: adminAdded,
 	}
 }
 
 func projectOfCorpSigning() bson.M {
 	return bson.M{
-		corpSigningField("admin_email"):  1,
-		corpSigningField("admin_name"):   1,
-		corpSigningField("corp_name"):    1,
-		corpSigningField("date"):         1,
-		corpSigningField("pdf_uploaded"): 1,
-		corpManagerField("email"):        1,
+		corpSigningField("admin_email"): 1,
+		corpSigningField("admin_name"):  1,
+		corpSigningField("corp_name"):   1,
+		corpSigningField("date"):        1,
+		corpManagerField("email"):       1,
 	}
 }

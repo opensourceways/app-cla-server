@@ -135,7 +135,7 @@ func (this *CorporationManagerController) Put() {
 		return
 	}
 	orgCLAID := this.GetString(":org_cla_id")
-	adminEmail := this.GetString(":email")
+	corpEmail := this.GetString(":email")
 
 	var orgCLA *models.OrgCLA
 	orgCLA, statusCode, errCode, reason = canAccessOrgCLA(&this.Controller, orgCLAID)
@@ -143,25 +143,28 @@ func (this *CorporationManagerController) Put() {
 		return
 	}
 
-	info, err := models.CheckCorporationSigning(orgCLAID, adminEmail)
+	orgRepo := buildOrgRepo(orgCLA.Platform, orgCLA.OrgID, orgCLA.RepoID)
+	uploaded, err := models.IsCorpSigningPDFUploaded(orgRepo, corpEmail)
 	if err != nil {
 		reason = err
 		return
 	}
-
-	if !info.PDFUploaded {
+	if !uploaded {
 		reason = fmt.Errorf("pdf corporation signed has not been uploaded")
 		errCode = util.ErrPDFHasNotUploaded
 		statusCode = 400
 		return
 	}
 
-	if info.AdminAdded {
-		// TODO: send email failed
+	_, corpSigning, err := models.GetCorporationSigningDetail(
+		orgCLA.Platform, orgCLA.OrgID, orgCLA.RepoID, corpEmail,
+	)
+	if err != nil {
+		reason = err
 		return
 	}
 
-	added, err := models.CreateCorporationAdministrator(orgCLAID, info.AdminName, adminEmail)
+	added, err := models.CreateCorporationAdministrator(orgCLAID, corpSigning.AdminName, corpEmail)
 	if err != nil {
 		reason = err
 		return

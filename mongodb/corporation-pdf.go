@@ -2,70 +2,98 @@ package mongodb
 
 import (
 	"context"
-	"fmt"
 
 	"go.mongodb.org/mongo-driver/bson"
 
 	"github.com/opensourceways/app-cla-server/dbmodels"
-	"github.com/opensourceways/app-cla-server/util"
 )
 
-func (this *client) UploadCorporationSigningPDF(orgCLAID, adminEmail string, pdf []byte) error {
-	oid, err := toObjectID(orgCLAID)
-	if err != nil {
-		return err
+type dCorpSigningPDF struct {
+	OrgIdentity string `bson:"org_identity" json:"org_identity" required:"true"`
+	CorpID      string `bson:"corp_id" json:"corp_id" required:"true"`
+	PDF         []byte `bson:"pdf" json:"pdf,omitempty"`
+}
+
+func docFilterOfCorpSigningPDF(orgRepo *dbmodels.OrgRepo, email string) bson.M {
+	return bson.M{
+		"org_identity":     orgIdentity(orgRepo),
+		fieldCorporationID: genCorpID(email),
+	}
+}
+
+func (this *client) UploadCorporationSigningPDF(orgRepo *dbmodels.OrgRepo, adminEmail string, pdf *[]byte) error {
+	docFilter := docFilterOfCorpSigningPDF(orgRepo, adminEmail)
+
+	doc := bson.M{"pdf": *pdf}
+	for k, v := range docFilter {
+		doc[k] = v
 	}
 
 	f := func(ctx context.Context) error {
-		return this.updateArrayElem(
-			ctx, this.orgCLACollection, fieldCorporations,
-			filterOfDocID(oid),
-			filterOfCorpID(adminEmail),
-			bson.M{
-				"pdf":          pdf,
-				"pdf_uploaded": true,
-			}, true,
-		)
+		_, err := this.replaceDoc(ctx, this.corpPDFCollection, docFilter, doc)
+		return err
 	}
 
 	return withContext(f)
 }
 
-func (this *client) DownloadCorporationSigningPDF(orgCLAID, email string) ([]byte, error) {
-	oid, err := toObjectID(orgCLAID)
-	if err != nil {
-		return nil, err
-	}
-
-	var v []OrgCLA
+func (this *client) DownloadCorporationSigningPDF(orgRepo *dbmodels.OrgRepo, email string) (*[]byte, error) {
+	var v dCorpSigningPDF
 
 	f := func(ctx context.Context) error {
-		return this.getArrayElem(
-			ctx, this.orgCLACollection, fieldCorporations,
-			filterOfDocID(oid),
-			filterOfCorpID(email),
-			bson.M{
-				corpSigningField("pdf"):          1,
-				corpSigningField("pdf_uploaded"): 1,
-			}, &v,
+		return this.getDoc(
+			ctx, this.corpPDFCollection,
+			docFilterOfCorpSigningPDF(orgRepo, email), bson.M{"pdf": 1}, &v,
 		)
 	}
 
-	if err = withContext(f); err != nil {
+	if err := withContext(f); err != nil {
 		return nil, err
 	}
 
-	orgCLA, err := getSigningDoc(v, func(doc *OrgCLA) bool {
-		return len(doc.Corporations) > 0
-	})
+	return &v.PDF, nil
+}
 
-	item := orgCLA.Corporations[0]
-	if !item.PDFUploaded {
-		return nil, dbmodels.DBError{
-			ErrCode: util.ErrPDFHasNotUploaded,
-			Err:     fmt.Errorf("pdf has not yet been uploaded"),
-		}
+func (this *client) IsCorpSigningPDFUploaded(orgRepo *dbmodels.OrgRepo, email string) (bool, error) {
+	var v dCorpSigningPDF
+
+	f := func(ctx context.Context) error {
+		return this.getDoc(
+			ctx, this.corpPDFCollection,
+			docFilterOfCorpSigningPDF(orgRepo, email), bson.M{"_id": 1}, &v,
+		)
 	}
 
-	return item.PDF, nil
+	if err := withContext(f); err != nil {
+		if isErrOfNoDocument(err) {
+			return false, nil
+		}
+		return false, err
+	}
+
+	return true, nil
+}
+
+func (this *client) ListCorpsWithPDFUploaded(orgRepo *dbmodels.OrgRepo) ([]string, error) {
+	var v []struct {
+		CorpID string `bson:"corp_id"`
+	}
+
+	f := func(ctx context.Context) error {
+		return this.getDocs(
+			ctx, this.corpPDFCollection,
+			bson.M{"org_identity": orgIdentity(orgRepo)},
+			bson.M{fieldCorporationID: 1}, &v,
+		)
+	}
+
+	if err := withContext(f); err != nil {
+		return nil, err
+	}
+
+	result := make([]string, 0, len(v))
+	for i := range v {
+		result = append(result, v[i].CorpID)
+	}
+	return result, nil
 }

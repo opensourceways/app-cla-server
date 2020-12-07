@@ -12,8 +12,7 @@ type CorporationSigningBasicInfo struct {
 type CorporationSigningDetail struct {
 	CorporationSigningBasicInfo
 
-	PDFUploaded bool `json:"pdf_uploaded"`
-	AdminAdded  bool `json:"admin_added"`
+	AdminAdded bool `json:"admin_added"`
 }
 
 type CorporationSigningInfo struct {

@@ -15,6 +15,10 @@ import (
 	"github.com/opensourceways/app-cla-server/util"
 )
 
+var (
+	errNoDBRecord = dbmodels.DBError{ErrCode: util.ErrNoDBRecord, Err: fmt.Errorf("no record")}
+)
+
 func dbValueOfRepo(org, repo string) string {
 	if repo == "" {
 		return ""
@@ -108,6 +112,10 @@ func toObjectID(uid string) (primitive.ObjectID, error) {
 
 func isErrNoDocuments(err error) bool {
 	return err.Error() == mongo.ErrNoDocuments.Error()
+}
+
+func isErrOfNoDocument(err error) bool {
+	return err.Error() == errNoDBRecord.Error()
 }
 
 func errorIfMatchingNoDoc(r *mongo.UpdateResult) error {
@@ -300,6 +308,25 @@ func getSigningDoc(v []OrgCLA, isOk func(doc *OrgCLA) bool) (*OrgCLA, error) {
 	}
 }
 
+func (this *client) replaceDoc(ctx context.Context, collection string, filterOfDoc, docInfo bson.M) (string, error) {
+	upsert := true
+
+	col := this.collection(collection)
+	r, err := col.ReplaceOne(
+		ctx, filterOfDoc, docInfo,
+		&options.ReplaceOptions{Upsert: &upsert},
+	)
+	if err != nil {
+		return "", err
+	}
+
+	if r.UpsertedID == nil {
+		return "", nil
+	}
+
+	return toUID(r.UpsertedID)
+}
+
 func (this *client) newDocIfNotExist(ctx context.Context, collection string, filterOfDoc, docInfo bson.M) (string, error) {
 	upsert := true
 
@@ -363,10 +390,7 @@ func (this *client) getDoc(ctx context.Context, collection string, filterOfDoc, 
 
 	if err := sr.Decode(result); err != nil {
 		if err == mongo.ErrNoDocuments {
-			return dbmodels.DBError{
-				ErrCode: util.ErrNoDBRecord,
-				Err:     fmt.Errorf("can't find record"),
-			}
+			return errNoDBRecord
 		}
 		return err
 	}
@@ -400,4 +424,15 @@ func (this *client) insertDoc(ctx context.Context, collection string, docInfo bs
 	}
 
 	return toUID(r.InsertedID)
+}
+
+func orgIdentity(v *dbmodels.OrgRepo) string {
+	return genOrgIdentity(v.Platform, v.OrgID, v.RepoID)
+}
+
+func genOrgIdentity(platform, org, repo string) string {
+	if repo == "" {
+		return fmt.Sprintf("%s/%s", platform, org)
+	}
+	return fmt.Sprintf("%s/%s/%s", platform, org, repo)
 }

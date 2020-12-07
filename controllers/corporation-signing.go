@@ -5,6 +5,7 @@ import (
 
 	"github.com/astaxie/beego"
 
+	"github.com/opensourceways/app-cla-server/dbmodels"
 	"github.com/opensourceways/app-cla-server/models"
 	"github.com/opensourceways/app-cla-server/util"
 	"github.com/opensourceways/app-cla-server/worker"
@@ -210,5 +211,33 @@ func (this *CorporationSigningController) GetAll() {
 		return
 	}
 
-	body = r
+	orgRepo := buildOrgRepo(ac.Platform, org, this.GetString("repo_id"))
+	corps, err := models.ListCorpsWithPDFUploaded(orgRepo)
+	if err != nil {
+		reason = err
+		return
+	}
+	corpMap := map[string]bool{}
+	for i := range corps {
+		corpMap[corps[i]] = true
+	}
+
+	type sInfo struct {
+		*dbmodels.CorporationSigningDetail
+		PDFUploaded bool `json:"pdf_uploaded"`
+	}
+
+	result := map[string][]sInfo{}
+	for k := range r {
+		items := r[k]
+		details := make([]sInfo, 0, len(items))
+		for i := range items {
+			details = append(details, sInfo{
+				CorporationSigningDetail: &items[i],
+				PDFUploaded:              corpMap[util.EmailSuffix(items[i].AdminEmail)]},
+			)
+		}
+		result[k] = details
+	}
+	body = result
 }

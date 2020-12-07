@@ -32,6 +32,7 @@ type MongodbConfig struct {
 	CLACollection            string `json:"cla_collection" required:"true"`
 	LinkCollection           string `json:"link_collection" required:"true"`
 	OrgEmailCollection       string `json:"org_email_collection" required:"true"`
+	CorpPDFCollection        string `json:"corp_pdf_collection" required:"true"`
 	VCCollection             string `json:"verification_code_collection" required:"true"`
 	BlankSignatureCollection string `json:"blank_signature_collection" required:"true"`
 }
@@ -75,6 +76,7 @@ func InitAppConfig() error {
 			CLACollection:            beego.AppConfig.String("mongodb::cla_collection"),
 			LinkCollection:           beego.AppConfig.String("mongodb::link_collection"),
 			OrgEmailCollection:       beego.AppConfig.String("mongodb::org_email_collection"),
+			CorpPDFCollection:        beego.AppConfig.String("mongodb::corp_pdf_collection"),
 			VCCollection:             beego.AppConfig.String("mongodb::verification_code_collection"),
 			BlankSignatureCollection: beego.AppConfig.String("mongodb::blank_signature_collection"),
 		},

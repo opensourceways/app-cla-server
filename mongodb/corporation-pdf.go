@@ -8,15 +8,10 @@ import (
 	"github.com/opensourceways/app-cla-server/dbmodels"
 )
 
-type dCorpSigningPDF struct {
-	OrgIdentity string `bson:"org_identity" json:"org_identity" required:"true"`
-	CorpID      string `bson:"corp_id" json:"corp_id" required:"true"`
-	PDF         []byte `bson:"pdf" json:"pdf,omitempty"`
-}
-
 func docFilterOfCorpSigningPDF(orgRepo *dbmodels.OrgRepo, email string) bson.M {
 	return bson.M{
-		"org_identity":     orgIdentity(orgRepo),
+		fieldOrgIdentity:   orgIdentity(orgRepo),
+		fieldLinkStatus:    linkStatusReady,
 		fieldCorporationID: genCorpID(email),
 	}
 }
@@ -82,7 +77,10 @@ func (this *client) ListCorpsWithPDFUploaded(orgRepo *dbmodels.OrgRepo) ([]strin
 	f := func(ctx context.Context) error {
 		return this.getDocs(
 			ctx, this.corpPDFCollection,
-			bson.M{"org_identity": orgIdentity(orgRepo)},
+			bson.M{
+				fieldOrgIdentity: orgIdentity(orgRepo),
+				fieldLinkStatus:  linkStatusReady,
+			},
 			bson.M{fieldCorporationID: 1}, &v,
 		)
 	}

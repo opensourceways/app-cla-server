@@ -211,15 +211,16 @@ func (this *CorporationSigningController) GetAll() {
 		return
 	}
 
-	orgRepo := buildOrgRepo(ac.Platform, org, this.GetString("repo_id"))
-	corps, err := models.ListCorpsWithPDFUploaded(orgRepo)
-	if err != nil {
-		reason = err
-		return
-	}
 	corpMap := map[string]bool{}
-	for i := range corps {
-		corpMap[corps[i]] = true
+	for k := range r {
+		corps, err := models.ListCorpsWithPDFUploaded(k)
+		if err != nil {
+			reason = err
+			return
+		}
+		for i := range corps {
+			corpMap[corps[i]] = true
+		}
 	}
 
 	type sInfo struct {

@@ -4,20 +4,17 @@ import (
 	"context"
 
 	"go.mongodb.org/mongo-driver/bson"
-
-	"github.com/opensourceways/app-cla-server/dbmodels"
 )
 
-func docFilterOfCorpSigningPDF(orgRepo *dbmodels.OrgRepo, email string) bson.M {
+func docFilterOfCorpSigningPDF(linkID string, email string) bson.M {
 	return bson.M{
-		fieldOrgIdentity:   orgIdentity(orgRepo),
-		fieldLinkStatus:    linkStatusReady,
+		fieldLinkID:        linkID,
 		fieldCorporationID: genCorpID(email),
 	}
 }
 
-func (this *client) UploadCorporationSigningPDF(orgRepo *dbmodels.OrgRepo, adminEmail string, pdf *[]byte) error {
-	docFilter := docFilterOfCorpSigningPDF(orgRepo, adminEmail)
+func (this *client) UploadCorporationSigningPDF(linkID string, adminEmail string, pdf *[]byte) error {
+	docFilter := docFilterOfCorpSigningPDF(linkID, adminEmail)
 
 	doc := bson.M{"pdf": *pdf}
 	for k, v := range docFilter {
@@ -32,13 +29,13 @@ func (this *client) UploadCorporationSigningPDF(orgRepo *dbmodels.OrgRepo, admin
 	return withContext(f)
 }
 
-func (this *client) DownloadCorporationSigningPDF(orgRepo *dbmodels.OrgRepo, email string) (*[]byte, error) {
+func (this *client) DownloadCorporationSigningPDF(linkID string, email string) (*[]byte, error) {
 	var v dCorpSigningPDF
 
 	f := func(ctx context.Context) error {
 		return this.getDoc(
 			ctx, this.corpPDFCollection,
-			docFilterOfCorpSigningPDF(orgRepo, email), bson.M{"pdf": 1}, &v,
+			docFilterOfCorpSigningPDF(linkID, email), bson.M{"pdf": 1}, &v,
 		)
 	}
 
@@ -49,13 +46,13 @@ func (this *client) DownloadCorporationSigningPDF(orgRepo *dbmodels.OrgRepo, ema
 	return &v.PDF, nil
 }
 
-func (this *client) IsCorpSigningPDFUploaded(orgRepo *dbmodels.OrgRepo, email string) (bool, error) {
+func (this *client) IsCorpSigningPDFUploaded(linkID string, email string) (bool, error) {
 	var v dCorpSigningPDF
 
 	f := func(ctx context.Context) error {
 		return this.getDoc(
 			ctx, this.corpPDFCollection,
-			docFilterOfCorpSigningPDF(orgRepo, email), bson.M{"_id": 1}, &v,
+			docFilterOfCorpSigningPDF(linkID, email), bson.M{"_id": 1}, &v,
 		)
 	}
 
@@ -69,7 +66,7 @@ func (this *client) IsCorpSigningPDFUploaded(orgRepo *dbmodels.OrgRepo, email st
 	return true, nil
 }
 
-func (this *client) ListCorpsWithPDFUploaded(orgRepo *dbmodels.OrgRepo) ([]string, error) {
+func (this *client) ListCorpsWithPDFUploaded(linkID string) ([]string, error) {
 	var v []struct {
 		CorpID string `bson:"corp_id"`
 	}
@@ -77,10 +74,7 @@ func (this *client) ListCorpsWithPDFUploaded(orgRepo *dbmodels.OrgRepo) ([]strin
 	f := func(ctx context.Context) error {
 		return this.getDocs(
 			ctx, this.corpPDFCollection,
-			bson.M{
-				fieldOrgIdentity: orgIdentity(orgRepo),
-				fieldLinkStatus:  linkStatusReady,
-			},
+			bson.M{fieldLinkID: linkID},
 			bson.M{fieldCorporationID: 1}, &v,
 		)
 	}

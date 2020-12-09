@@ -143,8 +143,7 @@ func (this *CorporationManagerController) Put() {
 		return
 	}
 
-	orgRepo := buildOrgRepo(orgCLA.Platform, orgCLA.OrgID, orgCLA.RepoID)
-	uploaded, err := models.IsCorpSigningPDFUploaded(orgRepo, corpEmail)
+	uploaded, err := models.IsCorpSigningPDFUploaded(orgCLAID, corpEmail)
 	if err != nil {
 		reason = err
 		return

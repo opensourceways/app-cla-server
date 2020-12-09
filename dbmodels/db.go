@@ -27,10 +27,10 @@ type ICorporationSigning interface {
 	GetCorporationSigningDetail(platform, org, repo, email string) (string, CorporationSigningDetail, error)
 	GetCorpSigningInfo(platform, org, repo, email string) (string, *CorporationSigningInfo, error)
 
-	UploadCorporationSigningPDF(orgRepo *OrgRepo, adminEmail string, pdf *[]byte) error
-	DownloadCorporationSigningPDF(orgRepo *OrgRepo, email string) (*[]byte, error)
-	IsCorpSigningPDFUploaded(orgRepo *OrgRepo, email string) (bool, error)
-	ListCorpsWithPDFUploaded(orgRepo *OrgRepo) ([]string, error)
+	UploadCorporationSigningPDF(linkID string, adminEmail string, pdf *[]byte) error
+	DownloadCorporationSigningPDF(linkID string, email string) (*[]byte, error)
+	IsCorpSigningPDFUploaded(linkID string, email string) (bool, error)
+	ListCorpsWithPDFUploaded(linkID string) ([]string, error)
 }
 
 type ICorporationManager interface {

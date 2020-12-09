@@ -436,3 +436,12 @@ func genOrgIdentity(platform, org, repo string) string {
 	}
 	return fmt.Sprintf("%s/%s/%s", platform, org, repo)
 }
+
+func arrayFilterByElemMatch(array string, exists bool, cond, filter bson.M) {
+	match := bson.M{"$elemMatch": cond}
+	if exists {
+		filter[array] = match
+	} else {
+		filter[array] = bson.M{"$not": match}
+	}
+}

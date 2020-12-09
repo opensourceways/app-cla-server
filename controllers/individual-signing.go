@@ -88,7 +88,7 @@ func (this *IndividualSigningController) Post() {
 
 	info.Info = getSingingInfo(info.Info, cla.Fields)
 
-	err = (&info).Create(orgCLAID, orgCLA.Platform, orgCLA.OrgID, orgCLA.RepoID, true)
+	err = (&info).Create(orgCLAID, true)
 	if err != nil {
 		reason = err
 		return
@@ -124,9 +124,7 @@ func (this *IndividualSigningController) Check() {
 	}
 
 	v, err := models.IsIndividualSigned(
-		this.GetString(":platform"),
-		this.GetString(":org"),
-		this.GetString(":repo"),
+		buildOrgRepo(this.GetString(":platform"), this.GetString(":org"), this.GetString(":repo")),
 		this.GetString("email"),
 	)
 	if err != nil {

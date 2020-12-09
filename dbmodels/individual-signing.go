@@ -10,7 +10,8 @@ type IndividualSigningBasicInfo struct {
 type IndividualSigningInfo struct {
 	IndividualSigningBasicInfo
 
-	Info TypeSigningInfo `json:"info"`
+	CLALanguage string          `json:"cla_language"`
+	Info        TypeSigningInfo `json:"info"`
 }
 
 type IndividualSigningListOption struct {

@@ -123,7 +123,7 @@ func (this *EmployeeSigningController) Post() {
 
 	info.Info = getSingingInfo(info.Info, cla.Fields)
 
-	err = (&info).Create(orgCLAID, orgCLA.Platform, orgCLA.OrgID, orgCLA.RepoID, false)
+	err = (&info).Create(orgCLAID, false)
 	if err != nil {
 		reason = err
 		return
@@ -164,7 +164,7 @@ func (this *EmployeeSigningController) GetAll() {
 		CLALanguage: this.GetString("cla_language"),
 	}
 
-	r, err := opt.List(ac.Email, orgCLA.Platform, orgCLA.OrgID, orgCLA.RepoID)
+	r, err := opt.List(ac.OrgCLAID, ac.Email)
 	if err != nil {
 		reason = err
 		return
@@ -224,7 +224,7 @@ func (this *EmployeeSigningController) Update() {
 		return
 	}
 
-	err = (&info).Update(corpClaOrg.Platform, corpClaOrg.OrgID, corpClaOrg.RepoID, employeeEmail)
+	err = (&info).Update(ac.OrgCLAID, employeeEmail)
 	if err != nil {
 		reason = err
 		return
@@ -292,7 +292,7 @@ func (this *EmployeeSigningController) Delete() {
 		return
 	}
 
-	err = models.DeleteEmployeeSigning(corpClaOrg.Platform, corpClaOrg.OrgID, corpClaOrg.RepoID, employeeEmail)
+	err = models.DeleteEmployeeSigning(ac.OrgCLAID, employeeEmail)
 	if err != nil {
 		reason = err
 		return

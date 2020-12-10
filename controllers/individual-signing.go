@@ -4,20 +4,22 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/astaxie/beego"
-
+	"github.com/opensourceways/app-cla-server/dbmodels"
 	"github.com/opensourceways/app-cla-server/models"
 	"github.com/opensourceways/app-cla-server/util"
 )
 
 type IndividualSigningController struct {
-	beego.Controller
+	baseController
 }
 
 func (this *IndividualSigningController) Prepare() {
-	// sign as individual
 	if getRequestMethod(&this.Controller) == http.MethodPost {
-		apiPrepare(&this.Controller, []string{PermissionIndividualSigner})
+		// sign as individual
+		this.apiPrepare(PermissionIndividualSigner)
+	} else {
+		// check sign
+		this.apiPrepare("")
 	}
 }
 
@@ -27,74 +29,50 @@ func (this *IndividualSigningController) Prepare() {
 // @Param	body		body 	models.IndividualSigning	true		"body for individual signing"
 // @Success 201 {int} map
 // @Failure util.ErrHasSigned
-// @router /:org_cla_id [post]
+// @router /:link_id/:cla_lang/:cla_hash [post]
 func (this *IndividualSigningController) Post() {
-	var statusCode = 0
-	var errCode = ""
-	var reason error
-	var body interface{}
+	doWhat := "sign as individual"
 
-	defer func() {
-		sendResponse(&this.Controller, statusCode, errCode, reason, body, "sign as individual")
-	}()
-
-	orgCLAID, err := fetchStringParameter(&this.Controller, ":org_cla_id")
+	pl, err := this.tokenPayloadOfCodePlatform()
 	if err != nil {
-		reason = err
-		errCode = util.ErrInvalidParameter
-		statusCode = 400
-		return
-	}
-
-	ac, ec, err := getACOfCodePlatform(&this.Controller)
-	if err != nil {
-		reason = err
-		errCode = ec
-		statusCode = 400
+		this.sendFailedResponse(500, util.ErrSystemError, err, doWhat)
 		return
 	}
 
 	var info models.IndividualSigning
-	if err := fetchInputPayload(&this.Controller, &info); err != nil {
-		reason = err
-		errCode = util.ErrInvalidParameter
-		statusCode = 400
+	if err := this.fetchInputPayload(&info); err != nil {
+		this.sendFailedResponse(400, util.ErrInvalidParameter, err, doWhat)
 		return
 	}
-	if ec, err := (&info).Validate(ac.Email); err != nil {
-		reason = err
-		errCode = ec
-		statusCode = 400
+	if ec, err := (&info).Validate(pl.Email); err != nil {
+		this.sendFailedResponse(400, ec, err, doWhat)
 		return
 	}
 
-	orgCLA := &models.OrgCLA{ID: orgCLAID}
-	if err := orgCLA.Get(); err != nil {
-		reason = err
-		return
-	}
-	if isNotIndividualCLA(orgCLA) {
-		reason = fmt.Errorf("invalid cla")
-		errCode = util.ErrInvalidParameter
-		statusCode = 400
-		return
-	}
-
-	cla := &models.CLA{ID: orgCLA.CLAID}
-	if err := cla.GetFields(); err != nil {
-		reason = err
-		return
-	}
-
-	info.Info = getSingingInfo(info.Info, cla.Fields)
-
-	err = (&info).Create(orgCLAID, true)
+	linkID := this.GetString(":link_id")
+	claLang := this.GetString(":cla_lang")
+	claInfo, err := models.GetCLAInfoSigned(linkID, claLang, dbmodels.ApplyToIndividual)
 	if err != nil {
-		reason = err
+		this.sendFailedResponse(0, "", err, doWhat)
+		return
+	}
+	if claInfo == nil {
+		// TODO get cla info again under lock
+	}
+	if claInfo.CLAHash != this.GetString(":cla_hash") {
+		this.sendFailedResponse(400, util.ErrInvalidParameter, fmt.Errorf("invalid cla"), doWhat)
 		return
 	}
 
-	body = "sign successfully"
+	info.Info = getSingingInfo(info.Info, claInfo.Fields)
+
+	err = (&info).Create(linkID, true)
+	if err != nil {
+		this.sendFailedResponse(0, "", err, doWhat)
+		return
+	}
+
+	this.sendResponse("sign successfully", 0)
 }
 
 // @Title Check
@@ -106,36 +84,20 @@ func (this *IndividualSigningController) Post() {
 // @Success 200
 // @router /:platform/:org/:repo [get]
 func (this *IndividualSigningController) Check() {
-	var statusCode = 0
-	var errCode = ""
-	var reason error
-	var body interface{}
-
-	defer func() {
-		sendResponse(&this.Controller, statusCode, errCode, reason, body, "check individual signing")
-	}()
-
-	params := []string{":platform", ":org", ":repo", "email"}
-	if err := checkAPIStringParameter(&this.Controller, params); err != nil {
-		reason = err
-		errCode = util.ErrInvalidParameter
-		statusCode = 400
-		return
-	}
+	doWhat := "check individual signing"
 
 	v, err := models.IsIndividualSigned(
 		buildOrgRepo(this.GetString(":platform"), this.GetString(":org"), this.GetString(":repo")),
 		this.GetString("email"),
 	)
 	if err != nil {
-		reason = err
-		statusCode, errCode = convertDBError(err)
-		if errCode == util.ErrHasNotSigned {
-			reason = nil
+		statusCode, errCode := convertDBError(err)
+		if errCode != util.ErrHasNotSigned {
+			this.sendFailedResponse(statusCode, errCode, err, doWhat)
+			return
 		}
+		v = false
 	}
 
-	body = map[string]bool{
-		"signed": v,
-	}
+	this.sendResponse(map[string]bool{"signed": v}, 0)
 }

@@ -91,8 +91,8 @@ func (this *baseController) getAccessController() (*accessController, error) {
 		return nil, fmt.Errorf("no access controller")
 	}
 
-	if v, ok := ac.(*accessController); ok {
-		return v, nil
+	if v, ok := ac.(accessController); ok {
+		return &v, nil
 	}
 
 	return nil, fmt.Errorf("can't convert to access controller instance")

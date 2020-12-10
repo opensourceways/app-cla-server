@@ -63,6 +63,8 @@ type IIndividualSigning interface {
 
 	GetCLAInfoSigned(linkID, claLang, applyTo string) (*CLAInfo, error)
 	GetCLAInfoToSign(linkID, claLang, applyTo string) (*CLAInfo, error)
+
+	GetOrgOfLink(linkID string) (*OrgRepo, error)
 }
 
 type ICLA interface {

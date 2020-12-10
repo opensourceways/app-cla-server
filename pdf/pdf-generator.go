@@ -26,13 +26,16 @@ func (this *pdfGenerator) GenPDFForCorporationSigning(orgCLA *models.OrgCLA, sig
 	}
 	defer os.Remove(tempPdf)
 
-	lock := util.NewFileLock(
-		util.LockedFilePath(this.pdfOrgSigDir, orgCLA.Platform, orgCLA.OrgID, orgCLA.RepoID),
+	unlock, err := util.Lock(
+		util.GenFilePath(
+			this.pdfOrgSigDir,
+			util.GenFileName("lock", orgCLA.Platform, orgCLA.OrgID, orgCLA.RepoID),
+		),
 	)
-	if err := lock.Lock(); err != nil {
+	if err != nil {
 		return "", fmt.Errorf("lock failed: %s", err.Error())
 	}
-	defer lock.Unlock()
+	defer unlock()
 
 	orgSigPdfFile := util.OrgSignaturePDFFILE(this.pdfOrgSigDir, orgCLA.ID)
 	file := util.CorporCLAPDFFile(this.pdfOutDir, orgCLA.ID, signing.AdminEmail, "")

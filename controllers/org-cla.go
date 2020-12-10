@@ -6,7 +6,6 @@ import (
 
 	"github.com/astaxie/beego"
 
-	"github.com/opensourceways/app-cla-server/conf"
 	"github.com/opensourceways/app-cla-server/dbmodels"
 	"github.com/opensourceways/app-cla-server/models"
 	"github.com/opensourceways/app-cla-server/util"
@@ -87,9 +86,9 @@ func (this *OrgCLAController) Post() {
 	// 1. A file lock needs the file exist first
 	// 2. It is safe to create the file here, evet if creating a org's cla concurrently.
 	//    Because it doesn't care the content of locked file
-	path := util.LockedFilePath(conf.AppConfig.PDFOrgSignatureDir, input.Platform, input.OrgID, input.RepoID)
+	path := genOrgFileLockPath(input.Platform, input.OrgID, input.RepoID)
 	if util.IsFileNotExist(path) {
-		if err := util.NewFileLock(path).CreateLockedFile(); err != nil {
+		if err := util.CreateLockedFile(path); err != nil {
 			reason = err
 			errCode = util.ErrSystemError
 			statusCode = 500

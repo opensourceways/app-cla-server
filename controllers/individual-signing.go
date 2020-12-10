@@ -51,14 +51,40 @@ func (this *IndividualSigningController) Post() {
 
 	linkID := this.GetString(":link_id")
 	claLang := this.GetString(":cla_lang")
+
 	claInfo, err := models.GetCLAInfoSigned(linkID, claLang, dbmodels.ApplyToIndividual)
 	if err != nil {
 		this.sendFailedResponse(0, "", err, doWhat)
 		return
 	}
 	if claInfo == nil {
-		// TODO get cla info again under lock
+		// no contributor signed for this language. lock to avoid the cla to be changed
+		// before writing to the db.
+
+		orgRepo, err := models.GetOrgOfLink(linkID)
+		if err != nil {
+			this.sendFailedResponse(0, "", err, doWhat)
+			return
+		}
+
+		unlock, err := util.Lock(genOrgFileLockPath(orgRepo.Platform, orgRepo.OrgID, orgRepo.RepoID))
+		if err != nil {
+			this.sendFailedResponse(500, util.ErrSystemError, err, doWhat)
+			return
+		}
+		defer unlock()
+
+		claInfo, err = models.GetCLAInfoToSign(linkID, claLang, dbmodels.ApplyToIndividual)
+		if err != nil {
+			this.sendFailedResponse(0, "", err, doWhat)
+			return
+		}
+		if claInfo == nil {
+			this.sendFailedResponse(400, util.ErrInvalidParameter, fmt.Errorf("no cla for this language"), doWhat)
+			return
+		}
 	}
+
 	if claInfo.CLAHash != this.GetString(":cla_hash") {
 		this.sendFailedResponse(400, util.ErrInvalidParameter, fmt.Errorf("invalid cla"), doWhat)
 		return

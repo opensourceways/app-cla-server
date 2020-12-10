@@ -429,3 +429,10 @@ func buildOrgRepo(platform, orgID, repoID string) *dbmodels.OrgRepo {
 		RepoID:   repoID,
 	}
 }
+
+func genOrgFileLockPath(platform, org, repo string) string {
+	return util.GenFilePath(
+		conf.AppConfig.PDFOrgSignatureDir,
+		util.GenFileName("lock", platform, org, repo),
+	)
+}

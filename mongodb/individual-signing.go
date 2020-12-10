@@ -217,3 +217,7 @@ func (this *client) getCLAInfo(col, claLang string, docFilter *bson.M) (*dbmodel
 func elemFilterOfCLAInfo(language string) bson.M {
 	return bson.M{fieldCLALang: language}
 }
+
+func (this *client) GetOrgOfLink(linkID string) (*dbmodels.OrgRepo, error) {
+	return nil, nil
+}

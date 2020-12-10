@@ -7,12 +7,13 @@ import (
 )
 
 const (
-	fieldCorpID      = "corp_id"
-	fieldLinkStatus  = "link_status"
-	fieldOrgIdentity = "org_identity"
-	fieldLinkID      = "link_id"
-	fieldSignings    = "signings"
-	fieldCLALang     = "cla_lang"
+	fieldCorpID         = "corp_id"
+	fieldLinkStatus     = "link_status"
+	fieldOrgIdentity    = "org_identity"
+	fieldLinkID         = "link_id"
+	fieldSignings       = "signings"
+	fieldCLALang        = "cla_lang"
+	fieldSingingCLAInfo = "cla_info"
 
 	// 'ready' means the doc is ready to record the signing data currently.
 	// 'unready' means the doc is not ready.
@@ -29,9 +30,10 @@ type dCorpSigningPDF struct {
 }
 
 type DCLAInfo struct {
-	Language string   `bson:"cla_lang" json:"cla_lang" required:"true"`
-	Fields   []dField `bson:"fields" json:"fields,omitempty"`
-	CLAHash  string   `bson:"cla_hash" json:"cla_hash" required:"true"`
+	Fields           []dField `bson:"fields" json:"fields,omitempty"`
+	Language         string   `bson:"cla_lang" json:"cla_lang" required:"true"`
+	CLAHash          string   `bson:"cla_hash" json:"cla_hash" required:"true"`
+	OrgSignatureHash string   `bson:"signature_hash" json:"signature_hash"`
 }
 
 type dField struct {
@@ -47,8 +49,7 @@ type cIndividualSigning struct {
 	OrgIdentity string `bson:"org_identity" json:"org_identity"`
 	LinkStatus  string `bson:"link_status" json:"link_status"`
 
-	DCLAInfo `bson:",inline"`
-
+	CLAInfo  []DCLAInfo           `bson:"cla_info" json:"cla_info"`
 	Signings []dIndividualSigning `bson:"signings" json:"-"`
 }
 
@@ -66,4 +67,18 @@ type dIndividualSigning struct {
 
 func memberNameOfSignings(key string) string {
 	return fmt.Sprintf("%s.%s", fieldSignings, key)
+}
+
+func toModelOfCLAFields(fields []dField) []dbmodels.Field {
+	fs := make([]dbmodels.Field, 0, len(fields))
+	for _, v := range fields {
+		fs = append(fs, dbmodels.Field{
+			ID:          v.ID,
+			Title:       v.Title,
+			Type:        v.Type,
+			Description: v.Description,
+			Required:    v.Required,
+		})
+	}
+	return fs
 }

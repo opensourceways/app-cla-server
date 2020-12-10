@@ -60,6 +60,9 @@ type IIndividualSigning interface {
 	UpdateIndividualSigning(linkID, email string, enabled bool) error
 	IsIndividualSigned(orgRepo *OrgRepo, email string) (bool, error)
 	ListIndividualSigning(linkID, corpEmail, claLang string) ([]IndividualSigningBasicInfo, error)
+
+	GetCLAInfoSigned(linkID, claLang, applyTo string) (*CLAInfo, error)
+	GetCLAInfoToSign(linkID, claLang, applyTo string) (*CLAInfo, error)
 }
 
 type ICLA interface {

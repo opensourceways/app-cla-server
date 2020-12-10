@@ -28,3 +28,11 @@ func (this *IndividualSigning) Create(orgCLAID string, enabled bool) error {
 func IsIndividualSigned(orgRepo *dbmodels.OrgRepo, email string) (bool, error) {
 	return dbmodels.GetDB().IsIndividualSigned(orgRepo, email)
 }
+
+func GetCLAInfoSigned(linkID, claLang, applyTo string) (*dbmodels.CLAInfo, error) {
+	return dbmodels.GetDB().GetCLAInfoSigned(linkID, claLang, applyTo)
+}
+
+func GetCLAInfoToSign(linkID, claLang, applyTo string) (*dbmodels.CLAInfo, error) {
+	return dbmodels.GetDB().GetCLAInfoToSign(linkID, claLang, applyTo)
+}

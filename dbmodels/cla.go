@@ -27,3 +27,9 @@ type CLAListOptions struct {
 	Language  string `json:"language"`
 	ApplyTo   string `json:"apply_to"`
 }
+
+type CLAInfo struct {
+	CLAHash          string
+	OrgSignatureHash string
+	Fields           []Field
+}

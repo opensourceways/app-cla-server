@@ -41,13 +41,13 @@ func CreateCorporationAdministrator(orgCLAID, name, email string) ([]dbmodels.Co
 			Role:     dbmodels.RoleAdmin,
 		},
 	}
-	r, err := dbmodels.GetDB().AddCorporationManager(orgCLAID, opt, 1)
-	if err != nil || len(r) == 0 {
-		return r, err
+	err := dbmodels.GetDB().AddCorporationManager(orgCLAID, opt, 1)
+	if err != nil {
+		return nil, err
 	}
 
-	r[0].ID = fmt.Sprintf("admin_%s", util.EmailSuffix(r[0].Email))
-	return r, nil
+	opt[0].ID = fmt.Sprintf("admin_%s", util.EmailSuffix(opt[0].Email))
+	return opt, nil
 }
 
 type CorporationManagerResetPassword dbmodels.CorporationManagerResetPassword

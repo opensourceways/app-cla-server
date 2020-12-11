@@ -2,6 +2,7 @@ package mongodb
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/opensourceways/app-cla-server/dbmodels"
 )
@@ -116,4 +117,26 @@ func toModelOfCLAFields(fields []dField) []dbmodels.Field {
 		})
 	}
 	return fs
+}
+
+func parseOrgIdentity(identity string) *dbmodels.OrgRepo {
+	r := dbmodels.OrgRepo{}
+
+	v := strings.Split(identity, "/")
+	switch len(v) {
+	case 2:
+		r.Platform = v[0]
+		r.OrgID = v[1]
+		r.RepoID = ""
+	case 3:
+		r.Platform = v[0]
+		r.OrgID = v[1]
+		r.RepoID = v[2]
+	}
+
+	r.Platform = identity
+	r.OrgID = ""
+	r.RepoID = ""
+
+	return &r
 }

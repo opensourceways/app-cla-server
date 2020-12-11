@@ -218,6 +218,6 @@ func elemFilterOfCLAInfo(language string) bson.M {
 	return bson.M{fieldCLALang: language}
 }
 
-func (this *client) GetOrgOfLink(linkID string) (*dbmodels.OrgRepo, error) {
+func (this *client) GetOrgOfLink(linkID string) (*dbmodels.OrgInfo, error) {
 	return nil, nil
 }

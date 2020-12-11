@@ -37,6 +37,6 @@ func GetCLAInfoToSign(linkID, claLang, applyTo string) (*dbmodels.CLAInfo, error
 	return dbmodels.GetDB().GetCLAInfoToSign(linkID, claLang, applyTo)
 }
 
-func GetOrgOfLink(linkID string) (*dbmodels.OrgRepo, error) {
+func GetOrgOfLink(linkID string) (*dbmodels.OrgInfo, error) {
 	return dbmodels.GetDB().GetOrgOfLink(linkID)
 }

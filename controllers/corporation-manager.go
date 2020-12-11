@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/astaxie/beego"
-
 	"github.com/opensourceways/app-cla-server/conf"
 	"github.com/opensourceways/app-cla-server/dbmodels"
 	"github.com/opensourceways/app-cla-server/models"
@@ -13,18 +11,18 @@ import (
 )
 
 type CorporationManagerController struct {
-	beego.Controller
+	baseController
 }
 
 func (this *CorporationManagerController) Prepare() {
-	switch getRequestMethod(&this.Controller) {
+	switch this.getRequestMethod() {
 	case http.MethodPut:
 		// add administrator
-		apiPrepare(&this.Controller, []string{PermissionOwnerOfOrg})
+		this.apiPrepare(PermissionOwnerOfOrg)
 
 	case http.MethodPatch:
 		// reset password of manager
-		apiPrepare(&this.Controller, []string{PermissionCorporAdmin, PermissionEmployeeManager})
+		this.apiPrepareForSettingPW()
 	}
 }
 
@@ -35,26 +33,17 @@ func (this *CorporationManagerController) Prepare() {
 // @Failure util.ErrNoCLABindingDoc	"no cla binding applied to corporation"
 // @router /auth [post]
 func (this *CorporationManagerController) Auth() {
-	var statusCode = 0
-	var errCode = ""
-	var reason error
-	var body interface{}
-
-	defer func() {
-		sendResponse(&this.Controller, statusCode, errCode, reason, body, "authenticate as corp/employee manager")
-	}()
+	doWhat := "authenticate as corp/employee manager"
 
 	var info models.CorporationManagerAuthentication
-	if err := fetchInputPayload(&this.Controller, &info); err != nil {
-		reason = err
-		errCode = util.ErrInvalidParameter
-		statusCode = 400
+	if err := this.fetchInputPayload(&info); err != nil {
+		this.sendFailedResponse(400, util.ErrInvalidParameter, err, doWhat)
 		return
 	}
 
 	v, err := (&info).Authenticate()
 	if err != nil {
-		reason = err
+		this.sendFailedResponse(0, "", err, doWhat)
 		return
 	}
 
@@ -85,7 +74,7 @@ func (this *CorporationManagerController) Auth() {
 		})
 	}
 
-	body = result
+	this.sendResponse(result, 0)
 }
 
 func (this *CorporationManagerController) newAccessToken(orgCLAID string, info *dbmodels.CorporationManagerCheckResult) (string, error) {
@@ -117,59 +106,45 @@ func (this *CorporationManagerController) newAccessToken(orgCLAID string, info *
 // @Success 202 {int} map
 // @Failure util.ErrPDFHasNotUploaded
 // @Failure util.ErrNumOfCorpManagersExceeded
-// @router /:org_cla_id/:email [put]
+// @router /:link_id/:email [put]
 func (this *CorporationManagerController) Put() {
-	var statusCode = 0
-	var errCode = ""
-	var reason error
-	var body interface{}
+	doWhat := "add corp administrator"
 
-	defer func() {
-		sendResponse(&this.Controller, statusCode, errCode, reason, body, "add corp administrator")
-	}()
-
-	if err := checkAPIStringParameter(&this.Controller, []string{":org_cla_id", ":email"}); err != nil {
-		reason = err
-		errCode = util.ErrInvalidParameter
-		statusCode = 400
-		return
-	}
-	orgCLAID := this.GetString(":org_cla_id")
+	linkID := this.GetString(":link_id")
 	corpEmail := this.GetString(":email")
 
-	var orgCLA *models.OrgCLA
-	orgCLA, statusCode, errCode, reason = canAccessOrgCLA(&this.Controller, orgCLAID)
-	if reason != nil {
-		return
+	pl, err := this.tokenPayloadOfCodePlatform()
+	if !pl.hasLink(linkID) {
+		//TODO
 	}
 
-	uploaded, err := models.IsCorpSigningPDFUploaded(orgCLAID, corpEmail)
+	uploaded, err := models.IsCorpSigningPDFUploaded(linkID, corpEmail)
 	if err != nil {
-		reason = err
+		this.sendFailedResponse(0, "", err, doWhat)
 		return
 	}
 	if !uploaded {
-		reason = fmt.Errorf("pdf corporation signed has not been uploaded")
-		errCode = util.ErrPDFHasNotUploaded
-		statusCode = 400
+		err = fmt.Errorf("pdf corporation signed has not been uploaded")
+		this.sendFailedResponse(400, util.ErrPDFHasNotUploaded, err, doWhat)
 		return
 	}
 
-	corpSigning, err := models.GetCorporationSigningBasicInfo(orgCLAID, corpEmail)
+	corpSigning, err := models.GetCorporationSigningBasicInfo(linkID, corpEmail)
 	if err != nil {
-		reason = err
+		this.sendFailedResponse(0, "", err, doWhat)
 		return
 	}
 
-	added, err := models.CreateCorporationAdministrator(orgCLAID, corpSigning.AdminName, corpEmail)
+	added, err := models.CreateCorporationAdministrator(linkID, corpSigning.AdminName, corpEmail)
 	if err != nil {
-		reason = err
+		this.sendFailedResponse(0, "", err, doWhat)
 		return
 	}
 
-	body = "add manager successfully"
+	this.sendResponse("add manager successfully", 0)
 
-	notifyCorpManagerWhenAdding(orgCLA, added)
+	//TODO
+	notifyCorpManagerWhenAdding(&models.OrgCLA{}, added)
 }
 
 // @Title Patch
@@ -178,39 +153,72 @@ func (this *CorporationManagerController) Put() {
 // @Failure util.ErrInvalidAccountOrPw
 // @router / [patch]
 func (this *CorporationManagerController) Patch() {
-	var statusCode = 0
-	var errCode = ""
-	var reason error
-	var body interface{}
+	doWhat := "reset password of corp's manager"
 
-	defer func() {
-		sendResponse(&this.Controller, statusCode, errCode, reason, body, "reset password of corp's manager")
-	}()
-
-	var ac *acForCorpManagerPayload
-	ac, errCode, reason = getACOfCorpManager(&this.Controller)
-	if reason != nil {
-		statusCode = 401
+	pl, err := this.tokenPayloadOfCorpManager()
+	if err != nil {
+		this.sendFailedResponse(500, util.ErrSystemError, err, doWhat)
 		return
 	}
 
 	var info models.CorporationManagerResetPassword
-	if err := fetchInputPayload(&this.Controller, &info); err != nil {
-		reason = err
-		errCode = util.ErrInvalidParameter
-		statusCode = 400
+	if err := this.fetchInputPayload(&info); err != nil {
+		this.sendFailedResponse(400, util.ErrInvalidParameter, err, doWhat)
 		return
 	}
 
-	if errCode, reason = info.Validate(); reason != nil {
-		statusCode = 400
+	if errCode, err := info.Validate(); err != nil {
+		this.sendFailedResponse(400, errCode, err, doWhat)
 		return
 	}
 
-	if err := (&info).Reset(ac.OrgCLAID, ac.Email); err != nil {
-		reason = err
+	if err := (&info).Reset(pl.OrgCLAID, pl.Email); err != nil {
+		this.sendFailedResponse(0, "", err, doWhat)
 		return
 	}
 
-	body = "reset password successfully"
+	this.sendResponse("reset password successfully", 0)
+}
+
+func (this *CorporationManagerController) apiPrepareForSettingPW() {
+	if err := this.checkPathParameter(); err != nil {
+		this.sendFailedResponse(400, util.ErrInvalidParameter, err, "")
+		this.StopRun()
+	}
+
+	if v := this.checkApiReqTokenForSettingPW(); v != nil {
+		this.sendFailedResponse(v.statusCode, v.errCode, v.reason, "")
+		this.StopRun()
+	}
+}
+
+func (this *CorporationManagerController) checkApiReqTokenForSettingPW() *failedResult {
+	token := this.apiReqHeader(headerToken)
+	if token == "" {
+		return &failedResult{
+			statusCode: 401,
+			errCode:    util.ErrMissingToken,
+			reason:     fmt.Errorf("no token passed"),
+		}
+	}
+
+	ac := &accessController{Payload: &acForCorpManagerPayload{}}
+	if err := ac.ParseToken(token, conf.AppConfig.APITokenKey); err != nil {
+		return &failedResult{
+			statusCode: 401,
+			errCode:    util.ErrUnknownToken,
+			reason:     err,
+		}
+	}
+
+	if err := ac.Verify([]string{PermissionCorporAdmin, PermissionEmployeeManager}); err != nil {
+		return &failedResult{
+			statusCode: 403,
+			errCode:    util.ErrInvalidToken,
+			reason:     err,
+		}
+	}
+
+	this.Data[apiAccessController] = *ac
+	return nil
 }

@@ -51,7 +51,7 @@ func (this *client) ListCorpSignings(linkID, language string) ([]dbmodels.Corpor
 	}
 
 	project := projectOfCorpSigning()
-	project[corpManagerField("email")] = 1
+	project[memberNameOfCorpManager("email")] = 1
 
 	var v []cCorpSigning
 	f := func(ctx context.Context) error {
@@ -112,6 +112,7 @@ func (this *client) GetCorpSigningBasicInfo(linkID, email string) (*dbmodels.Cor
 	return &detail.CorporationSigningBasicInfo, nil
 }
 
+//TODO this method can be optimize with above
 func (this *client) GetCorpSigningDetail(linkID, email string) (*dbmodels.CorporationSigningOption, error) {
 	project := bson.M{
 		fieldLinkID:   1,

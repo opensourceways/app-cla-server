@@ -34,11 +34,11 @@ type ICorporationSigning interface {
 }
 
 type ICorporationManager interface {
-	CheckCorporationManagerExist(CorporationManagerCheckInfo) (map[string]CorporationManagerCheckResult, error)
-	AddCorporationManager(orgCLAID string, opt []CorporationManagerCreateOption, managerNumber int) ([]CorporationManagerCreateOption, error)
-	DeleteCorporationManager(orgCLAID, role string, emails []string) ([]CorporationManagerCreateOption, error)
-	ResetCorporationManagerPassword(string, string, CorporationManagerResetPassword) error
-	ListCorporationManager(orgCLAID, email, role string) ([]CorporationManagerListResult, error)
+	AddCorporationManager(linkID string, opt []CorporationManagerCreateOption, managerNumber int) error
+	DeleteCorporationManager(linkID string, emails []string) ([]CorporationManagerCreateOption, error)
+	ResetCorporationManagerPassword(linkID, email string, opt CorporationManagerResetPassword) error
+	CheckCorporationManagerExist(opt CorporationManagerCheckInfo) (map[string]CorporationManagerCheckResult, error)
+	ListCorporationManager(linkID, email, role string) ([]CorporationManagerListResult, error)
 }
 
 type IOrgEmail interface {
@@ -64,7 +64,7 @@ type IIndividualSigning interface {
 	GetCLAInfoSigned(linkID, claLang, applyTo string) (*CLAInfo, error)
 	GetCLAInfoToSign(linkID, claLang, applyTo string) (*CLAInfo, error)
 
-	GetOrgOfLink(linkID string) (*OrgRepo, error)
+	GetOrgOfLink(linkID string) (*OrgInfo, error)
 }
 
 type ICLA interface {

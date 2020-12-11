@@ -219,3 +219,7 @@ func (this *baseController) checkApiReqToken(permission string) *failedResult {
 func (this *baseController) apiReqHeader(h string) string {
 	return this.Ctx.Input.Header(h)
 }
+
+func (this *baseController) getRequestMethod() string {
+	return this.Ctx.Request.Method
+}

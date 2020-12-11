@@ -6,6 +6,12 @@ type OrgRepo struct {
 	RepoID   string `json:"repo_id"`
 }
 
+type OrgInfo struct {
+	OrgRepo
+	OrgAlias string `json:"org_alias"`
+	OrgEmail string `json:"org_email"`
+}
+
 type OrgCLA struct {
 	ID                   string `json:"id"`
 	Platform             string `json:"platform"`

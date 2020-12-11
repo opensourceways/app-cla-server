@@ -3,8 +3,6 @@ package controllers
 import (
 	"fmt"
 
-	"github.com/astaxie/beego"
-
 	"github.com/opensourceways/app-cla-server/dbmodels"
 	"github.com/opensourceways/app-cla-server/email"
 	"github.com/opensourceways/app-cla-server/models"
@@ -12,11 +10,11 @@ import (
 )
 
 type EmployeeManagerController struct {
-	beego.Controller
+	baseController
 }
 
 func (this *EmployeeManagerController) Prepare() {
-	apiPrepare(&this.Controller, []string{PermissionCorporAdmin})
+	this.apiPrepare(PermissionCorporAdmin)
 }
 
 // @Title Post
@@ -42,32 +40,25 @@ func (this *EmployeeManagerController) Delete() {
 // @Success 200 {object} dbmodels.CorporationManagerListResult
 // @router / [get]
 func (this *EmployeeManagerController) GetAll() {
-	var statusCode = 0
-	var errCode = ""
-	var reason error
-	var body interface{}
+	doWhat := "list employee managers"
 
-	defer func() {
-		sendResponse(&this.Controller, statusCode, errCode, reason, body, "list employee managers")
-	}()
-
-	var ac *acForCorpManagerPayload
-	ac, errCode, reason = getACOfCorpManager(&this.Controller)
-	if reason != nil {
-		statusCode = 401
-		return
-	}
-
-	r, err := models.ListCorporationManagers(ac.OrgCLAID, ac.Email, dbmodels.RoleManager)
+	pl, err := this.tokenPayloadOfCorpManager()
 	if err != nil {
-		reason = err
+		this.sendFailedResponse(500, util.ErrSystemError, err, doWhat)
 		return
 	}
 
-	body = r
+	r, err := models.ListCorporationManagers(pl.OrgCLAID, pl.Email, dbmodels.RoleManager)
+	if err != nil {
+		this.sendFailedResponse(0, "", err, doWhat)
+		return
+	}
+
+	this.sendResponse(r, 0)
 }
 
 func (this *EmployeeManagerController) addOrDeleteManagers(toAdd bool) {
+	doWhat := fmt.Sprintf("add/remove employee managers")
 	var statusCode = 0
 	var errCode = ""
 	var reason error
@@ -83,57 +74,51 @@ func (this *EmployeeManagerController) addOrDeleteManagers(toAdd bool) {
 		sendResponse(&this.Controller, statusCode, errCode, reason, body, fmt.Sprintf("%s employee managers", op))
 	}()
 
-	var ac *acForCorpManagerPayload
-	ac, errCode, reason = getACOfCorpManager(&this.Controller)
-	if reason != nil {
-		statusCode = 401
+	pl, err := this.tokenPayloadOfCorpManager()
+	if err != nil {
+		this.sendFailedResponse(500, util.ErrSystemError, err, doWhat)
 		return
 	}
 
 	var info models.EmployeeManagerCreateOption
-	if err := fetchInputPayload(&this.Controller, &info); err != nil {
-		reason = err
-		errCode = util.ErrInvalidParameter
-		statusCode = 400
+	if err := this.fetchInputPayload(&info); err != nil {
+		this.sendFailedResponse(400, util.ErrInvalidParameter, err, doWhat)
 		return
 	}
 
-	if c, err := (&info).Validate(ac.Email); err != nil {
-		reason = err
-		errCode = c
-		statusCode = 400
+	if c, err := (&info).Validate(pl.Email); err != nil {
+		this.sendFailedResponse(400, c, err, doWhat)
 		return
 	}
 
-	orgCLA := &models.OrgCLA{ID: ac.OrgCLAID}
+	orgCLA := &models.OrgCLA{ID: pl.OrgCLAID}
 	if err := orgCLA.Get(); err != nil {
 		reason = err
 		return
 	}
 
 	if toAdd {
-		added, err := (&info).Create(ac.OrgCLAID)
+		added, err := (&info).Create(pl.OrgCLAID)
 		if err != nil {
-			reason = err
-		} else {
-			notifyCorpManagerWhenAdding(orgCLA, added)
+			this.sendFailedResponse(0, "", err, doWhat)
+			return
+		}
+		notifyCorpManagerWhenAdding(orgCLA, added)
+	} else {
+		deleted, err := (&info).Delete(pl.OrgCLAID)
+		if err != nil {
+			this.sendFailedResponse(0, "", err, doWhat)
+			return
 		}
 
-	} else {
-		deleted, err := (&info).Delete(ac.OrgCLAID)
-		if err != nil {
-			reason = err
-		} else {
-			subject := fmt.Sprintf("Revoking the authorization on project of \"%s\"", orgCLA.OrgAlias)
-
-			for _, item := range deleted {
-				msg := email.RemovingCorpManager{
-					User:       item.Name,
-					Org:        orgCLA.OrgAlias,
-					ProjectURL: projectURL(orgCLA),
-				}
-				sendEmailToIndividual(item.Email, orgCLA.OrgEmail, subject, msg)
+		subject := fmt.Sprintf("Revoking the authorization on project of \"%s\"", orgCLA.OrgAlias)
+		for _, item := range deleted {
+			msg := email.RemovingCorpManager{
+				User:       item.Name,
+				Org:        orgCLA.OrgAlias,
+				ProjectURL: projectURL(orgCLA),
 			}
+			sendEmailToIndividual(item.Email, orgCLA.OrgEmail, subject, msg)
 		}
 	}
 }

@@ -1,10 +1,6 @@
 package controllers
 
 import (
-	"fmt"
-
-	"github.com/astaxie/beego"
-
 	"github.com/opensourceways/app-cla-server/dbmodels"
 	"github.com/opensourceways/app-cla-server/models"
 	"github.com/opensourceways/app-cla-server/util"
@@ -12,13 +8,15 @@ import (
 )
 
 type CorporationSigningController struct {
-	beego.Controller
+	baseController
 }
 
 func (this *CorporationSigningController) Prepare() {
-	if getRouterPattern(&this.Controller) != "/v1/corporation-signing/:org_cla_id" {
-		// not signing
-		apiPrepare(&this.Controller, []string{PermissionOwnerOfOrg})
+	if getRouterPattern(&this.Controller) == "/v1/corporation-signing/:link_id" {
+		// signing
+		this.apiPrepare("")
+	} else {
+		this.apiPrepare(PermissionOwnerOfOrg)
 	}
 }
 
@@ -30,66 +28,41 @@ func (this *CorporationSigningController) Prepare() {
 // @Failure util.ErrHasSigned
 // @Failure util.ErrWrongVerificationCode
 // @Failure util.ErrVerificationCodeExpired
-// @router /:org_cla_id [post]
+// @router /:link_id [post]
 func (this *CorporationSigningController) Post() {
-	var statusCode = 0
-	var errCode = ""
-	var reason error
-	var body interface{}
-
-	defer func() {
-		sendResponse(&this.Controller, statusCode, errCode, reason, body, "sign as corporation")
-	}()
-
-	orgCLAID, err := fetchStringParameter(&this.Controller, ":org_cla_id")
-	if err != nil {
-		reason = err
-		errCode = util.ErrInvalidParameter
-		statusCode = 400
-		return
-	}
+	doWhat := "sign as corporation"
+	linkID := this.GetString(":link_id")
 
 	var info models.CorporationSigningCreateOption
-	if err := fetchInputPayload(&this.Controller, &info); err != nil {
-		reason = err
-		errCode = util.ErrInvalidParameter
-		statusCode = 400
+	if err := this.fetchInputPayload(&info); err != nil {
+		this.sendFailedResponse(400, util.ErrInvalidParameter, err, doWhat)
 		return
 	}
-	if ec, err := (&info).Validate(orgCLAID); err != nil {
-		reason = err
-		errCode = ec
-		statusCode = 400
+	if ec, err := (&info).Validate(linkID); err != nil {
+		this.sendFailedResponse(400, ec, err, doWhat)
 		return
 	}
 
-	orgCLA := &models.OrgCLA{ID: orgCLAID}
+	orgCLA := &models.OrgCLA{ID: linkID}
 	if err := orgCLA.Get(); err != nil {
-		reason = err
-		return
-	}
-	if isNotCorpCLA(orgCLA) {
-		reason = fmt.Errorf("invalid cla")
-		errCode = util.ErrInvalidParameter
-		statusCode = 400
+		this.sendFailedResponse(0, "", err, doWhat)
 		return
 	}
 
 	cla := &models.CLA{ID: orgCLA.CLAID}
 	if err := cla.Get(); err != nil {
-		reason = err
+		this.sendFailedResponse(0, "", err, doWhat)
 		return
 	}
 
 	info.Info = getSingingInfo(info.Info, cla.Fields)
 
-	err = (&info).Create(orgCLAID, orgCLA.Platform, orgCLA.OrgID, orgCLA.RepoID)
-	if err != nil {
-		reason = err
+	if err := (&info).Create(linkID); err != nil {
+		this.sendFailedResponse(0, "", err, doWhat)
 		return
 	}
 
-	body = "sign successfully"
+	this.sendResponse("sign successfully", 0)
 
 	worker.GetEmailWorker().GenCLAPDFForCorporationAndSendIt(orgCLA, &info.CorporationSigning, cla)
 }
@@ -99,58 +72,35 @@ func (this *CorporationSigningController) Post() {
 // @Param	:org_id		path 	string		true		"org cla id"
 // @Param	:email		path 	string		true		"corp email"
 // @Success 201 {int} map
-// @router /:org_id/:email [post]
+// @router /:link_id/:email [post]
 func (this *CorporationSigningController) ResendCorpSigningEmail() {
-	var statusCode = 0
-	var errCode = ""
-	var reason error
-	var body interface{}
+	doWhat := "resend corp signing email"
+	linkID := this.GetString(":link_id")
 
-	defer func() {
-		sendResponse(&this.Controller, statusCode, errCode, reason, body, "resend corp signing email")
-	}()
-
-	err := checkAndVerifyAPIStringParameter(&this.Controller, map[string]string{":org_id": "", ":email": ""})
+	pl, err := this.tokenPayloadOfCodePlatform()
 	if err != nil {
-		reason = err
-		errCode = util.ErrInvalidParameter
-		statusCode = 400
+		this.sendFailedResponse(500, util.ErrSystemError, err, doWhat)
 		return
 	}
+	if !pl.hasLink(linkID) {
+		// TODO
+	}
 
-	ac, ec, err := getACOfCodePlatform(&this.Controller)
+	signingInfo, err := models.GetCorpSigningDetail(linkID, this.GetString(":email"))
 	if err != nil {
-		reason = err
-		errCode = ec
-		statusCode = 400
+		this.sendFailedResponse(0, "", err, doWhat)
 		return
 	}
 
-	org, repo := parseOrgAndRepo(this.GetString(":org_id"))
-	if !ac.hasOrg(org) {
-		reason = fmt.Errorf("can't access org:%s", org)
-		errCode = util.ErrInvalidParameter
-		statusCode = 400
-		return
-	}
-
-	orgCLAID, signingInfo, err := models.GetCorpSigningInfo(
-		ac.Platform, org, repo, this.GetString(":email"),
-	)
-	if err != nil {
-		reason = err
-		return
-	}
-
-	orgCLA := &models.OrgCLA{ID: orgCLAID}
+	orgCLA := &models.OrgCLA{ID: linkID}
 	if err := orgCLA.Get(); err != nil {
-		reason = err
+		this.sendFailedResponse(0, "", err, doWhat)
 		return
 	}
 
 	cla := &models.CLA{ID: orgCLA.CLAID}
 	if err := cla.Get(); err != nil {
-		reason = err
+		this.sendFailedResponse(0, "", err, doWhat)
 		return
 	}
 
@@ -158,87 +108,53 @@ func (this *CorporationSigningController) ResendCorpSigningEmail() {
 		orgCLA, (*models.CorporationSigning)(signingInfo), cla,
 	)
 
-	body = "resend email successfully"
+	this.sendResponse("resend email successfully", 0)
 }
 
 // @Title GetAll
 // @Description get all the corporations which have signed to a org
-// @router /:org_id [get]
+// @router /:link_id [get]
 func (this *CorporationSigningController) GetAll() {
-	var statusCode = 0
-	var errCode = ""
-	var reason error
-	var body interface{}
+	doWhat := "list corporation"
+	linkID := this.GetString(":link_id")
 
-	defer func() {
-		sendResponse(&this.Controller, statusCode, errCode, reason, body, "list corporation")
-	}()
-
-	org, err := fetchStringParameter(&this.Controller, ":org_id")
+	pl, err := this.tokenPayloadOfCodePlatform()
 	if err != nil {
-		reason = err
-		errCode = util.ErrInvalidParameter
-		statusCode = 400
+		this.sendFailedResponse(500, util.ErrSystemError, err, doWhat)
 		return
 	}
+	if !pl.hasLink(linkID) {
+		// TODO
+	}
 
-	ac, ec, err := getACOfCodePlatform(&this.Controller)
+	r, err := models.ListCorpSignings(linkID, this.GetString("cla_language"))
 	if err != nil {
-		reason = err
-		errCode = ec
-		statusCode = 400
-		return
-	}
-
-	if !ac.hasOrg(org) {
-		reason = fmt.Errorf("can't access org:%s", org)
-		errCode = util.ErrInvalidParameter
-		statusCode = 400
-		return
-	}
-
-	opt := models.CorporationSigningListOption{
-		Platform:    ac.Platform,
-		OrgID:       org,
-		RepoID:      this.GetString("repo_id"),
-		CLALanguage: this.GetString("cla_language"),
-	}
-
-	r, err := opt.List()
-	if err != nil {
-		reason = err
-		statusCode, errCode = convertDBError(err)
+		this.sendFailedResponse(0, "", err, doWhat)
 		return
 	}
 
 	corpMap := map[string]bool{}
-	for k := range r {
-		corps, err := models.ListCorpsWithPDFUploaded(k)
-		if err != nil {
-			reason = err
-			return
-		}
-		for i := range corps {
-			corpMap[corps[i]] = true
-		}
+	corps, err := models.ListCorpsWithPDFUploaded(linkID)
+	if err != nil {
+		this.sendFailedResponse(0, "", err, doWhat)
+		return
+	}
+	for i := range corps {
+		corpMap[corps[i]] = true
 	}
 
 	type sInfo struct {
-		*dbmodels.CorporationSigningDetail
+		*dbmodels.CorporationSigningSummary
 		PDFUploaded bool `json:"pdf_uploaded"`
 	}
 
-	result := map[string][]sInfo{}
-	for k := range r {
-		items := r[k]
-		details := make([]sInfo, 0, len(items))
-		for i := range items {
-			details = append(details, sInfo{
-				CorporationSigningDetail: &items[i],
-				PDFUploaded:              corpMap[util.EmailSuffix(items[i].AdminEmail)]},
-			)
-		}
-		result[k] = details
+	result := make([]sInfo, 0, len(r))
+	for i := range r {
+		items := r[i]
+		result = append(result, sInfo{
+			CorporationSigningSummary: &items,
+			PDFUploaded:               corpMap[util.EmailSuffix(items.AdminEmail)]},
+		)
 	}
-	body = result
+	this.sendResponse(result, 0)
 }

@@ -92,6 +92,7 @@ type acForCodePlatformPayload struct {
 	Platform      string          `json:"platform"`
 	PlatformToken string          `json:"platform_token"`
 	Orgs          map[string]bool `json:"orgs"`
+	Links         map[string]bool `json:links`
 }
 
 func (this *acForCodePlatformPayload) hasOrg(org string) bool {
@@ -100,6 +101,15 @@ func (this *acForCodePlatformPayload) hasOrg(org string) bool {
 	}
 
 	_, ok := this.Orgs[org]
+	return ok
+}
+
+func (this *acForCodePlatformPayload) hasLink(link string) bool {
+	if this.Links == nil {
+		return false
+	}
+
+	_, ok := this.Links[link]
 	return ok
 }
 

@@ -50,15 +50,12 @@ func (this *CorporationPDFController) Upload() {
 	orgCLAID := this.GetString(":org_cla_id")
 	corpEmail := this.GetString(":email")
 
-	var orgCLA *models.OrgCLA
-	orgCLA, statusCode, errCode, reason = canAccessOrgCLA(&this.Controller, orgCLAID)
+	_, statusCode, errCode, reason = canAccessOrgCLA(&this.Controller, orgCLAID)
 	if reason != nil {
 		return
 	}
 
-	_, _, err := models.GetCorporationSigningDetail(
-		orgCLA.Platform, orgCLA.OrgID, orgCLA.RepoID, corpEmail,
-	)
+	_, err := models.GetCorporationSigningBasicInfo(orgCLAID, corpEmail)
 	if err != nil {
 		reason = err
 		return

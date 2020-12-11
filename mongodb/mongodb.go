@@ -25,6 +25,7 @@ type client struct {
 	vcCollection                string
 	orgEmailCollection          string
 	corpPDFCollection           string
+	corpSigningCollection       string
 	individualSigningCollection string
 }
 
@@ -48,6 +49,7 @@ func Initialize(cfg *conf.MongodbConfig) (*client, error) {
 		orgEmailCollection:          cfg.OrgEmailCollection,
 		corpPDFCollection:           cfg.CorpPDFCollection,
 		blankSigCollection:          cfg.BlankSignatureCollection,
+		corpSigningCollection:       cfg.CorpSigningCollection,
 		individualSigningCollection: cfg.IndividualSigningCollection,
 	}
 	return cli, nil

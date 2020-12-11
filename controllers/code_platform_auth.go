@@ -10,6 +10,7 @@ import (
 	platformAuth "github.com/opensourceways/app-cla-server/code-platform-auth"
 	"github.com/opensourceways/app-cla-server/code-platform-auth/platforms"
 	"github.com/opensourceways/app-cla-server/conf"
+	"github.com/opensourceways/app-cla-server/models"
 	"github.com/opensourceways/app-cla-server/util"
 )
 
@@ -97,10 +98,18 @@ func (this *AuthController) genACPayload(platform, permission, platformToken str
 	}
 
 	orgm := map[string]bool{}
+	links := map[string]bool{}
 	if permission == PermissionOwnerOfOrg {
-		if orgs, err := pt.ListOrg(); err == nil {
+		orgs, err := pt.ListOrg()
+		if err == nil {
 			for _, item := range orgs {
 				orgm[item] = true
+			}
+
+			if r, err := models.ListOrgs(platform, orgs); err == nil {
+				for i := range r {
+					links[r[i].ID] = true
+				}
 			}
 		}
 	}
@@ -126,6 +135,7 @@ func (this *AuthController) genACPayload(platform, permission, platformToken str
 		Platform:      platform,
 		PlatformToken: platformToken,
 		Orgs:          orgm,
+		Links:         links,
 	}, "", nil
 }
 

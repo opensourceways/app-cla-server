@@ -89,21 +89,7 @@ func (this *EmployeeSigningController) Post() {
 		return
 	}
 
-	corpSignedCla, corpSign, err := models.GetCorporationSigningDetail(
-		orgCLA.Platform, orgCLA.OrgID, orgCLA.RepoID, info.Email)
-	if err != nil {
-		reason = err
-		return
-	}
-
-	if !corpSign.AdminAdded {
-		reason = fmt.Errorf("the corp has not been enabled")
-		errCode = util.ErrSigningUncompleted
-		statusCode = 400
-		return
-	}
-
-	managers, err := models.ListCorporationManagers(corpSignedCla, info.Email, dbmodels.RoleManager)
+	managers, err := models.ListCorporationManagers(orgCLAID, info.Email, dbmodels.RoleManager)
 	if err != nil {
 		reason = err
 		return

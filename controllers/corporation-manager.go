@@ -155,9 +155,7 @@ func (this *CorporationManagerController) Put() {
 		return
 	}
 
-	_, corpSigning, err := models.GetCorporationSigningDetail(
-		orgCLA.Platform, orgCLA.OrgID, orgCLA.RepoID, corpEmail,
-	)
+	corpSigning, err := models.GetCorporationSigningBasicInfo(orgCLAID, corpEmail)
 	if err != nil {
 		reason = err
 		return

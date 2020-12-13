@@ -86,41 +86,6 @@ func (this *accessController) Verify(permission []string) error {
 	return fmt.Errorf("Not allowed permission")
 }
 
-type acForCodePlatformPayload struct {
-	User          string          `json:"user"`
-	Email         string          `json:"email"`
-	Platform      string          `json:"platform"`
-	PlatformToken string          `json:"platform_token"`
-	Orgs          map[string]bool `json:"orgs"`
-	Links         map[string]bool `json:links`
-}
-
-func (this *acForCodePlatformPayload) hasOrg(org string) bool {
-	if this.Orgs == nil {
-		return false
-	}
-
-	_, ok := this.Orgs[org]
-	return ok
-}
-
-func (this *acForCodePlatformPayload) hasLink(link string) bool {
-	if this.Links == nil {
-		return false
-	}
-
-	_, ok := this.Links[link]
-	return ok
-}
-
-func (this *acForCodePlatformPayload) addOrg(org string) {
-	if this.Orgs == nil {
-		this.Orgs = map[string]bool{}
-	}
-
-	this.Orgs[org] = true
-}
-
 type acForCorpManagerPayload struct {
 	Name     string `json:"name"`
 	Email    string `json:"email"`

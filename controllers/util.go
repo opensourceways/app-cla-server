@@ -3,8 +3,11 @@ package controllers
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net/http"
+	"os"
 	"strings"
+	"time"
 
 	"github.com/astaxie/beego"
 
@@ -20,6 +23,8 @@ import (
 const (
 	headerToken         = "Token"
 	apiAccessController = "access_controller"
+
+	fileNameOfUploadingOrgSignatue = "signature_page"
 )
 
 func buildStatusAndErrCode(statusCode int, errCode string, reason error) (int, string) {
@@ -435,4 +440,26 @@ func genOrgFileLockPath(platform, org, repo string) string {
 		conf.AppConfig.PDFOrgSignatureDir,
 		util.GenFileName("lock", platform, org, repo),
 	)
+}
+
+func writeOrgSignature(path string, signature *[]byte) error {
+	//path := fileForOrgSignature(platform, org, repo, language)
+	os.Remove(path)
+	return ioutil.WriteFile(path, *signature, 0644)
+}
+
+func genCLAFilePath(linkID, applyTo, language string) string {
+	return util.GenFilePath(
+		conf.AppConfig.PDFOrgSignatureDir,
+		util.GenFileName("cla", linkID, applyTo, language, ".txt"))
+}
+
+func genOrgSignatureFilePath(linkID, language string) string {
+	return util.GenFilePath(
+		conf.AppConfig.PDFOrgSignatureDir,
+		util.GenFileName("signature", linkID, language, ".pdf"))
+}
+
+func genLinkID(v *dbmodels.OrgRepo) string {
+	return fmt.Sprintf("%s_%s_%s:%d", v.Platform, v.OrgID, v.RepoID, time.Now().UnixNano())
 }

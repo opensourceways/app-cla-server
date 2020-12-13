@@ -140,6 +140,10 @@ func Md5sumOfFile(path string) (string, error) {
 }
 
 func Md5sumOfBytes(data []byte) string {
+	if data == nil {
+		return ""
+	}
+
 	return fmt.Sprintf("%x", md5.Sum(data))
 }
 

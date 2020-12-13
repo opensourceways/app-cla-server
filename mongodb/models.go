@@ -10,11 +10,15 @@ import (
 const (
 	fieldCorpID         = "corp_id"
 	fieldLinkStatus     = "link_status"
+	fieldOrgEmail       = "org_email"
+	fieldOrgAlias       = "org_alias"
 	fieldOrgIdentity    = "org_identity"
 	fieldLinkID         = "link_id"
 	fieldSignings       = "signings"
 	fieldCLALang        = "cla_lang"
 	fieldSingingCLAInfo = "cla_info"
+	fieldIndividualCLAs = "individual_clas"
+	fieldCorpCLAs       = "corp_clas"
 
 	// 'ready' means the doc is ready to record the signing data currently.
 	// 'unready' means the doc is not ready.
@@ -34,7 +38,30 @@ type DCLAInfo struct {
 	Fields           []dField `bson:"fields" json:"fields,omitempty"`
 	Language         string   `bson:"cla_lang" json:"cla_lang" required:"true"`
 	CLAHash          string   `bson:"cla_hash" json:"cla_hash" required:"true"`
-	OrgSignatureHash string   `bson:"org_signature_hash" json:"org_signature_hash"`
+	OrgSignatureHash string   `bson:"org_signature_hash" json:"org_signature_hash,omitempty"`
+}
+
+type cLink struct {
+	LinkID     string `bson:"link_id" json:"link_id" required:"true"`
+	LinkStatus string `bson:"link_status" json:"link_status"`
+
+	Platform  string `bson:"platform" json:"platform" required:"true"`
+	OrgID     string `bson:"org_id" json:"org_id" required:"true"`
+	RepoID    string `bson:"repo_id" json:"repo_id"`
+	OrgAlias  string `bson:"org_alias" json:"org_alias"`
+	OrgEmail  string `bson:"org_email" json:"org_email" required:"true"`
+	Submitter string `bson:"submitter" json:"submitter" required:"true"`
+
+	IndividualCLAs []dCLA `bson:"individual_clas"`
+	CorpCLAs       []dCLA `bson:"corp_clas"`
+}
+
+type dCLA struct {
+	URL          string `bson:"url" json:"url" required:"true"`
+	Text         []byte `bson:"text" json:"text" required:"true"`
+	OrgSignature []byte `bson:"org_signature" json:"-"`
+
+	DCLAInfo `bson:",inline"`
 }
 
 type dField struct {

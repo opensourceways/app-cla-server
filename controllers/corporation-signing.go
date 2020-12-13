@@ -3,7 +3,6 @@ package controllers
 import (
 	"fmt"
 
-	"github.com/opensourceways/app-cla-server/conf"
 	"github.com/opensourceways/app-cla-server/dbmodels"
 	"github.com/opensourceways/app-cla-server/models"
 	"github.com/opensourceways/app-cla-server/util"
@@ -46,6 +45,12 @@ func (this *CorporationSigningController) Post() {
 		return
 	}
 
+	orgInfo, err := models.GetOrgOfLink(linkID)
+	if err != nil {
+		this.sendFailedResponse(0, "", err, doWhat)
+		return
+	}
+
 	claLang := this.GetString(":cla_lang")
 	claInfo, err := models.GetCLAInfoSigned(linkID, claLang, dbmodels.ApplyToCorporation)
 	if err != nil {
@@ -56,13 +61,7 @@ func (this *CorporationSigningController) Post() {
 		// no contributor signed for this language. lock to avoid the cla to be changed
 		// before writing to the db.
 
-		orgRepo, err := models.GetOrgOfLink(linkID)
-		if err != nil {
-			this.sendFailedResponse(0, "", err, doWhat)
-			return
-		}
-
-		unlock, err := util.Lock(genOrgFileLockPath(orgRepo.Platform, orgRepo.OrgID, orgRepo.RepoID))
+		unlock, err := util.Lock(genOrgFileLockPath(orgInfo.Platform, orgInfo.OrgID, orgInfo.RepoID))
 		if err != nil {
 			this.sendFailedResponse(500, util.ErrSystemError, err, doWhat)
 			return
@@ -85,29 +84,14 @@ func (this *CorporationSigningController) Post() {
 		return
 	}
 
-	md5, err := util.Md5sumOfFile(util.OrgSignaturePDFFILE(conf.AppConfig.PDFOrgSignatureDir, linkID))
-	if err != nil {
-		this.sendFailedResponse(500, util.ErrSystemError, err, doWhat)
-		return
-	}
-	if md5 != claInfo.OrgSignatureHash {
-		this.sendFailedResponse(500, util.ErrSystemError, fmt.Errorf("org signature changed"), doWhat)
+	claFile := genCLAFilePath(linkID, dbmodels.ApplyToCorporation, claLang)
+	orgSignatureFile := genOrgSignatureFilePath(linkID, claLang)
+	if fr := this.checkCLAForSigning(claFile, orgSignatureFile, claInfo); fr != nil {
+		this.sendFailedResultAsResp(fr, doWhat)
 		return
 	}
 
-	orgCLA := &models.OrgCLA{ID: linkID}
-	if err := orgCLA.Get(); err != nil {
-		this.sendFailedResponse(0, "", err, doWhat)
-		return
-	}
-
-	cla := &models.CLA{ID: orgCLA.CLAID}
-	if err := cla.Get(); err != nil {
-		this.sendFailedResponse(0, "", err, doWhat)
-		return
-	}
-
-	info.Info = getSingingInfo(info.Info, cla.Fields)
+	info.Info = getSingingInfo(info.Info, claInfo.Fields)
 
 	if err := (&info).Create(linkID); err != nil {
 		this.sendFailedResponse(0, "", err, doWhat)
@@ -116,7 +100,28 @@ func (this *CorporationSigningController) Post() {
 
 	this.sendResponse("sign successfully", 0)
 
-	worker.GetEmailWorker().GenCLAPDFForCorporationAndSendIt(orgCLA, &info.CorporationSigning, cla)
+	worker.GetEmailWorker().GenCLAPDFForCorporationAndSendIt(
+		linkID, orgSignatureFile, claFile, *orgInfo, info.CorporationSigning, claInfo.Fields,
+	)
+}
+
+func (this *CorporationSigningController) checkCLAForSigning(claFile, orgSignatureFile string, claInfo *dbmodels.CLAInfo) *failedResult {
+	md5, err := util.Md5sumOfFile(claFile)
+	if err != nil {
+		return newFailedResult(500, util.ErrSystemError, err)
+	}
+	if md5 != claInfo.CLAHash {
+		return newFailedResult(500, util.ErrSystemError, fmt.Errorf("org signature changed"))
+	}
+
+	md5, err = util.Md5sumOfFile(orgSignatureFile)
+	if err != nil {
+		return newFailedResult(500, util.ErrSystemError, err)
+	}
+	if md5 != claInfo.OrgSignatureHash {
+		return newFailedResult(500, util.ErrSystemError, fmt.Errorf("org signature changed"))
+	}
+	return nil
 }
 
 // @Title ResendCorpSigningEmail
@@ -128,17 +133,17 @@ func (this *CorporationSigningController) Post() {
 func (this *CorporationSigningController) ResendCorpSigningEmail() {
 	doWhat := "resend corp signing email"
 	linkID := this.GetString(":link_id")
+	corpEmail := this.GetString(":email")
 
 	pl, err := this.tokenPayloadOfCodePlatform()
 	if err != nil {
 		this.sendFailedResponse(500, util.ErrSystemError, err, doWhat)
 		return
 	}
-	if !pl.hasLink(linkID) {
-		// TODO
+	if fr := pl.isOwnerOfLink(linkID); fr != nil {
+		this.sendFailedResultAsResp(fr, doWhat)
+		return
 	}
-
-	corpEmail := this.GetString(":email")
 
 	b, err := models.IsCorpSigningPDFUploaded(linkID, corpEmail)
 	if err != nil {
@@ -186,8 +191,9 @@ func (this *CorporationSigningController) GetAll() {
 		this.sendFailedResponse(500, util.ErrSystemError, err, doWhat)
 		return
 	}
-	if !pl.hasLink(linkID) {
-		// TODO
+	if fr := pl.isOwnerOfLink(linkID); fr != nil {
+		this.sendFailedResultAsResp(fr, doWhat)
+		return
 	}
 
 	r, err := models.ListCorpSignings(linkID, this.GetString("cla_language"))

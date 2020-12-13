@@ -19,9 +19,11 @@ type IDB interface {
 	ICLA
 	IVerificationCode
 	IPDF
+	ICLASigning
 }
 
 type ICorporationSigning interface {
+	InitializeCorpSigning(linkID string, info *OrgInfo, claInfo *CLAInfo) error
 	SignAsCorporation(linkID string, info *CorporationSigningOption) error
 	ListCorpSignings(linkID, language string) ([]CorporationSigningSummary, error)
 	GetCorpSigningBasicInfo(linkID, email string) (*CorporationSigningBasicInfo, error)
@@ -47,32 +49,34 @@ type IOrgEmail interface {
 }
 
 type IOrgCLA interface {
-	ListOrgs(platform string, orgs []string) ([]OrgCLA, error)
-	ListOrgCLA(OrgCLAListOption) ([]OrgCLA, error)
-	GetOrgCLA(string) (OrgCLA, error)
-	CreateOrgCLA(OrgCLA) (string, error)
-	DeleteOrgCLA(string) error
+	HasLink(orgRepo *OrgRepo) (bool, error)
+	CreateLink(info *LinkCreateOption) (string, error)
+	Unlink(linkID string) error
+	ListLinks(opt *LinkListOption) ([]LinkInfo, error)
+	GetOrgOfLink(linkID string) (*OrgInfo, error)
 }
 
 type IIndividualSigning interface {
+	InitializeIndividualSigning(linkID string, info *OrgRepo, claInfo *CLAInfo) error
 	SignAsIndividual(linkID string, info *IndividualSigningInfo) error
 	DeleteIndividualSigning(linkID, email string) error
 	UpdateIndividualSigning(linkID, email string, enabled bool) error
 	IsIndividualSigned(orgRepo *OrgRepo, email string) (bool, error)
 	ListIndividualSigning(linkID, corpEmail, claLang string) ([]IndividualSigningBasicInfo, error)
+}
 
+type ICLASigning interface {
+	AddCLAInfo(linkID, applyTo string, info *CLAInfo) error
 	GetCLAInfoSigned(linkID, claLang, applyTo string) (*CLAInfo, error)
 	GetCLAInfoToSign(linkID, claLang, applyTo string) (*CLAInfo, error)
-
-	GetOrgOfLink(linkID string) (*OrgInfo, error)
 }
 
 type ICLA interface {
-	CreateCLA(CLA) (string, error)
-	ListCLA(CLAListOptions) ([]CLA, error)
-	GetCLA(string, bool) (CLA, error)
-	DeleteCLA(string) error
-	ListCLAByIDs(ids []string) ([]CLA, error)
+	HasCLA(linkID, applyTo, language string) (bool, error)
+	AddCLA(linkID, applyTo string, cla *CLA) error
+	DeleteCLA(linkID, applyTo, language string) error
+	GetCLAByType(orgRepo *OrgRepo, applyTo string) ([]CLA, error)
+	GetAllCLA(linkID string) (*CLAOfLink, error)
 }
 
 type IVerificationCode interface {

@@ -32,4 +32,5 @@ const (
 	ErrAuthFailed                = "auth_failed"
 	ErrUnauthorized              = "unauthorized"
 	ErrSystemError               = "system_error"
+	ErrCLAIsUsed                 = "cla_is_used"
 )

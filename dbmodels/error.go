@@ -13,3 +13,12 @@ func IsDBError(err error) (DBError, bool) {
 	e, ok := err.(DBError)
 	return e, ok
 }
+
+const (
+	ErrNoDBRecord = "no_db_record"
+)
+
+func IsErrOfDB(err error, code string) bool {
+	e, ok := err.(DBError)
+	return ok && e.ErrCode == code
+}

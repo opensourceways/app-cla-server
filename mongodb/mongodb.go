@@ -25,6 +25,7 @@ type client struct {
 	vcCollection                string
 	orgEmailCollection          string
 	corpPDFCollection           string
+	linkCollection              string
 	corpSigningCollection       string
 	individualSigningCollection string
 }

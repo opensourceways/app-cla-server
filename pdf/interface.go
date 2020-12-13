@@ -10,7 +10,7 @@ import (
 )
 
 type IPDFGenerator interface {
-	GenPDFForCorporationSigning(orgCLA *models.OrgCLA, signing *models.CorporationSigning, cla *models.CLA) (string, error)
+	GenPDFForCorporationSigning(linkID, orgSigFile, claFile string, orgInfo *dbmodels.OrgInfo, signing *models.CorporationSigning, claFields []dbmodels.Field) (string, error)
 }
 
 var generator *pdfGenerator

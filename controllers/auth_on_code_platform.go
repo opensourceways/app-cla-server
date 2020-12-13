@@ -98,7 +98,7 @@ func (this *AuthController) genACPayload(platform, permission, platformToken str
 	}
 
 	orgm := map[string]bool{}
-	links := map[string]bool{}
+	links := map[string]string{}
 	if permission == PermissionOwnerOfOrg {
 		orgs, err := pt.ListOrg()
 		if err == nil {
@@ -106,9 +106,9 @@ func (this *AuthController) genACPayload(platform, permission, platformToken str
 				orgm[item] = true
 			}
 
-			if r, err := models.ListOrgs(platform, orgs); err == nil {
+			if r, err := models.ListLinks(platform, orgs); err == nil {
 				for i := range r {
-					links[r[i].ID] = true
+					links[r[i].LinkID] = r[i].OrgRepo.String()
 				}
 			}
 		}
@@ -185,4 +185,60 @@ func (this *AuthController) Get() {
 	body = map[string]string{
 		"url": cp.GetAuthCodeURL(authURLState),
 	}
+}
+
+type acForCodePlatformPayload struct {
+	User          string            `json:"user"`
+	Email         string            `json:"email"`
+	Platform      string            `json:"platform"`
+	PlatformToken string            `json:"platform_token"`
+	Orgs          map[string]bool   `json:"orgs"`
+	Links         map[string]string `json:links`
+}
+
+func (this *acForCodePlatformPayload) isOwnerOfLink(link string) *failedResult {
+	if this.Links == nil {
+		this.Links = map[string]string{}
+	}
+
+	if this.Links[link] != "" {
+		return nil
+	}
+
+	orgInfo, err := models.GetOrgOfLink(link)
+	if err != nil {
+		// TODO check if link is not exist
+	}
+
+	if err := this.isOwnerOfOrg(orgInfo.OrgID); err != nil {
+		return err
+	}
+
+	this.Links[link] = orgInfo.OrgRepo.String()
+	return nil
+}
+
+func (this *acForCodePlatformPayload) isOwnerOfOrg(org string) *failedResult {
+	if this.Orgs == nil {
+		this.Orgs = map[string]bool{}
+	}
+
+	if this.Orgs[org] {
+		return nil
+	}
+
+	p, err := platforms.NewPlatform(this.PlatformToken, "", this.Platform)
+	if err != nil {
+		return newFailedResult(400, util.ErrInvalidParameter, err)
+	}
+
+	if b, err := p.IsOrgExist(org); err != nil {
+		// TODO token expiry
+		return newFailedResult(500, util.ErrSystemError, err)
+	} else if !b {
+		return newFailedResult(400, util.ErrNotYoursOrg, fmt.Errorf("not the org of owner"))
+	}
+
+	this.Orgs[org] = true
+	return nil
 }

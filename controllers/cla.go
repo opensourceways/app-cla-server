@@ -2,18 +2,64 @@ package controllers
 
 import (
 	"fmt"
+	"os"
 
-	"github.com/astaxie/beego"
-
+	"github.com/opensourceways/app-cla-server/dbmodels"
 	"github.com/opensourceways/app-cla-server/models"
+	"github.com/opensourceways/app-cla-server/util"
 )
 
 type CLAController struct {
-	beego.Controller
+	baseController
 }
 
 func (this *CLAController) Prepare() {
-	apiPrepare(&this.Controller, []string{PermissionOwnerOfOrg})
+	this.apiPrepare(PermissionOwnerOfOrg)
+}
+
+// @Title Link
+// @Description link org and cla
+// @Param	body		body 	models.OrgCLA	true		"body for org-repo content"
+// @Success 201 {int} models.OrgCLA
+// @Failure 403 body is empty
+// @router /:link_id/:apply_to [post]
+func (this *CLAController) Add() {
+	doWhat := "add cla"
+	linkID := this.GetString(":link_id")
+	applyTo := this.GetString(":apply_to")
+
+	pl, err := this.tokenPayloadOfCodePlatform()
+	if err != nil {
+		this.sendFailedResponse(500, util.ErrSystemError, err, doWhat)
+		return
+	}
+	if r := pl.isOwnerOfLink(linkID); r != nil {
+		this.sendFailedResponse(r.statusCode, r.errCode, r.reason, doWhat)
+		return
+	}
+	orgRepo := dbmodels.ParseToOrgRepo(pl.Links[linkID])
+
+	input := &models.CLACreateOption{}
+	if err := this.fetchInputPayload(input); err != nil {
+		this.sendFailedResponse(400, util.ErrInvalidParameter, err, doWhat)
+		return
+	}
+
+	if applyTo == dbmodels.ApplyToCorporation {
+		data, r := this.readInputFile(fileNameOfUploadingOrgSignatue)
+		if r != nil {
+			this.sendFailedResponse(r.statusCode, r.errCode, r.reason, doWhat)
+			return
+		}
+		input.OrgSignature = data
+	}
+
+	if r := addCLA(linkID, applyTo, input, &orgRepo); r != nil {
+		this.sendFailedResponse(r.statusCode, r.errCode, r.reason, doWhat)
+		return
+	}
+
+	this.sendResponse("add cla successfully", 0)
 }
 
 // @Title Delete CLA
@@ -21,102 +67,100 @@ func (this *CLAController) Prepare() {
 // @Param	uid		path 	string	true		"cla id"
 // @Success 204 {string} delete success!
 // @Failure 403 uid is empty
-// @router /:uid [delete]
+// @router /:link_id/:apply_to:/:language [delete]
 func (this *CLAController) Delete() {
-	var statusCode = 0
-	var reason error
-	var body string
+	doWhat := "delete cla"
+	linkID := this.GetString(":link_id")
+	applyTo := this.GetString(":apply_to")
+	claLang := this.GetString(":language")
 
-	defer func() {
-		sendResponse1(&this.Controller, statusCode, reason, body)
-	}()
-
-	uid := this.GetString(":uid")
-	if uid == "" {
-		reason = fmt.Errorf("missing cla id")
-		statusCode = 400
-		return
-	}
-
-	cla := models.CLA{ID: uid}
-
-	if err := (&cla).Delete(); err != nil {
-		reason = err
-		statusCode = 500
-		return
-	}
-
-	body = "delete cla successfully"
-}
-
-// @Title Get
-// @Description get cla by uid
-// @Param	uid		path 	string	true		"The key for cla"
-// @Success 200 {object} models.CLA
-// @Failure 403 :uid is empty
-// @router /:uid [get]
-func (this *CLAController) Get() {
-	var statusCode = 0
-	var reason error
-	var body interface{}
-
-	defer func() {
-		sendResponse1(&this.Controller, statusCode, reason, body)
-	}()
-
-	uid := this.GetString(":uid")
-	if uid == "" {
-		reason = fmt.Errorf("missing cla id")
-		statusCode = 400
-		return
-	}
-
-	cla := models.CLA{ID: uid}
-
-	if err := (&cla).Get(); err != nil {
-		reason = err
-		statusCode = 500
-		return
-	}
-
-	body = cla
-}
-
-// @Title GetAllCLA
-// @Description get all clas
-// @Success 200 {object} models.CLA
-// @router / [get]
-func (this *CLAController) GetAll() {
-	var statusCode = 0
-	var reason error
-	var body interface{}
-
-	defer func() {
-		sendResponse1(&this.Controller, statusCode, reason, body)
-	}()
-
-	/*
-		user, err := getApiAccessUser(&this.Controller)
-		if err != nil {
-			reason = err
-			statusCode = 400
-			return
-		}
-	*/
-
-	clas := models.CLAListOptions{
-		// Submitter: user,
-		Name:     this.GetString("name"),
-		ApplyTo:  this.GetString("apply_to"),
-		Language: this.GetString("language"),
-	}
-
-	r, err := clas.Get()
+	pl, err := this.tokenPayloadOfCodePlatform()
 	if err != nil {
-		reason = err
-		statusCode = 500
+		this.sendFailedResponse(500, util.ErrSystemError, err, doWhat)
+		return
+	}
+	if err := pl.isOwnerOfLink(linkID); err != nil {
+		this.sendFailedResponse(err.statusCode, err.errCode, err.reason, doWhat)
+		return
+	}
+	orgRepo := dbmodels.ParseToOrgRepo(pl.Links[linkID])
+
+	if r := deleteCLA(linkID, applyTo, claLang, &orgRepo); r != nil {
+		this.sendFailedResponse(r.statusCode, r.errCode, r.reason, doWhat)
 		return
 	}
 
-	body = r
+	this.sendResponse("delete cla successfully", 0)
+}
+
+func addCLA(linkID, applyTo string, input *models.CLACreateOption, orgRepo *dbmodels.OrgRepo) *failedResult {
+	if ec, err := input.Validate(); err != nil {
+		return newFailedResult(400, ec, err)
+	}
+
+	filePath := genOrgFileLockPath(orgRepo.Platform, orgRepo.OrgID, orgRepo.RepoID)
+	unlock, err := util.Lock(filePath)
+	if err != nil {
+		return newFailedResult(500, util.ErrSystemError, err)
+	}
+	defer unlock()
+
+	hasCLA, err := models.HasCLA(linkID, applyTo, input.Language)
+	if err != nil {
+		return newFailedResult(0, "", err)
+	}
+	if hasCLA {
+		return newFailedResult(400, util.ErrRecordExists, fmt.Errorf("recreate cla"))
+	}
+
+	path := genCLAFilePath(linkID, applyTo, input.Language)
+	if err := input.SaveCLAAtLocal(path); err != nil {
+		return newFailedResult(0, "", err)
+	}
+
+	path = genOrgSignatureFilePath(linkID, input.Language)
+	if err := input.SaveSignatueAtLocal(path); err != nil {
+		return newFailedResult(0, "", err)
+	}
+
+	if err := input.AddCLAInfo(linkID); err != nil {
+		return newFailedResult(0, "", err)
+	}
+
+	if err := input.AddCLA(linkID); err != nil {
+		return newFailedResult(0, "", err)
+	}
+
+	return nil
+}
+
+func deleteCLA(linkID, applyTo, claLang string, orgRepo *dbmodels.OrgRepo) *failedResult {
+	filePath := genOrgFileLockPath(orgRepo.Platform, orgRepo.OrgID, orgRepo.RepoID)
+	unlock, err := util.Lock(filePath)
+	if err != nil {
+		return newFailedResult(500, util.ErrSystemError, err)
+	}
+	defer unlock()
+
+	claInfo, err := models.GetCLAInfoSigned(linkID, claLang, applyTo)
+	if err != nil {
+		return newFailedResult(0, "", err)
+	}
+	if claInfo != nil {
+		return newFailedResult(400, util.ErrCLAIsUsed, fmt.Errorf("cla is used"))
+	}
+
+	if err := models.DeleteCLA(linkID, applyTo, claLang); err != nil {
+		return newFailedResult(0, "", err)
+	}
+
+	models.DeleteCLAInfo(linkID, applyTo, claLang)
+
+	if applyTo == dbmodels.ApplyToCorporation {
+		path := genOrgSignatureFilePath(linkID, claLang)
+		if !util.IsFileNotExist(path) {
+			os.Remove(path)
+		}
+	}
+	return nil
 }

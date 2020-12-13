@@ -6,9 +6,14 @@ const (
 )
 
 type CLA struct {
-	ID       string  `json:"id"`
-	Name     string  `json:"name"`
-	Text     string  `json:"text"`
+	Text         []byte `json:"text"`
+	OrgSignature []byte `json:"org_signature"`
+
+	CLAData
+}
+
+type CLAData struct {
+	URL      string  `json:"url"`
 	Language string  `json:"language"`
 	Fields   []Field `json:"fields"`
 }
@@ -29,6 +34,7 @@ type CLAListOptions struct {
 }
 
 type CLAInfo struct {
+	CLALang          string
 	CLAHash          string
 	OrgSignatureHash string
 	Fields           []Field

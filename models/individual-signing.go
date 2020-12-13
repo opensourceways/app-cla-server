@@ -29,14 +29,10 @@ func IsIndividualSigned(orgRepo *dbmodels.OrgRepo, email string) (bool, error) {
 	return dbmodels.GetDB().IsIndividualSigned(orgRepo, email)
 }
 
-func GetCLAInfoSigned(linkID, claLang, applyTo string) (*dbmodels.CLAInfo, error) {
-	return dbmodels.GetDB().GetCLAInfoSigned(linkID, claLang, applyTo)
-}
-
-func GetCLAInfoToSign(linkID, claLang, applyTo string) (*dbmodels.CLAInfo, error) {
-	return dbmodels.GetDB().GetCLAInfoToSign(linkID, claLang, applyTo)
-}
-
 func GetOrgOfLink(linkID string) (*dbmodels.OrgInfo, error) {
 	return dbmodels.GetDB().GetOrgOfLink(linkID)
+}
+
+func InitializeIndividualSigning(linkID string, orgRepo *dbmodels.OrgRepo, claInfo *dbmodels.CLAInfo) error {
+	return dbmodels.GetDB().InitializeIndividualSigning(linkID, orgRepo, claInfo)
 }

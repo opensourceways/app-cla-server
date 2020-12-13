@@ -7,7 +7,9 @@ import (
 	"os/exec"
 	"sort"
 	"strconv"
+	"strings"
 
+	"github.com/opensourceways/app-cla-server/dbmodels"
 	"github.com/opensourceways/app-cla-server/models"
 	"github.com/opensourceways/app-cla-server/util"
 )
@@ -19,105 +21,73 @@ type pdfGenerator struct {
 	corp         *corpSigningPDF
 }
 
-func (this *pdfGenerator) GenPDFForCorporationSigning(orgCLA *models.OrgCLA, signing *models.CorporationSigning, cla *models.CLA) (string, error) {
-	tempPdf, err := genCorporPDFMissingSig(this.corp, orgCLA, signing, cla, this.pdfOutDir)
+func (this *pdfGenerator) GenPDFForCorporationSigning(linkID, orgSigFile, claFile string, orgCLA *dbmodels.OrgInfo, signing *models.CorporationSigning, claFields []dbmodels.Field) (string, error) {
+	tempPdf := util.GenFilePath(this.pdfOutDir, genPDFFileName(linkID, signing.AdminEmail, "_missing_sig"))
+	err := this.corp.genCorporPDFMissingSig(orgCLA, signing, claFields, claFile, tempPdf)
 	if err != nil {
 		return "", err
 	}
 	defer os.Remove(tempPdf)
 
-	unlock, err := util.Lock(
-		util.GenFilePath(
-			this.pdfOrgSigDir,
-			util.GenFileName("lock", orgCLA.Platform, orgCLA.OrgID, orgCLA.RepoID),
-		),
-	)
-	if err != nil {
-		return "", fmt.Errorf("lock failed: %s", err.Error())
-	}
-	defer unlock()
-
-	orgSigPdfFile := util.OrgSignaturePDFFILE(this.pdfOrgSigDir, orgCLA.ID)
-	file := util.CorporCLAPDFFile(this.pdfOutDir, orgCLA.ID, signing.AdminEmail, "")
-	if err := mergeCorporPDFSignaturePage(orgCLA.ID, this.pythonBin, tempPdf, orgSigPdfFile, file); err != nil {
+	file := util.GenFilePath(this.pdfOutDir, genPDFFileName(linkID, signing.AdminEmail, ""))
+	if err := mergeCorporPDFSignaturePage(this.pythonBin, tempPdf, orgSigFile, file); err != nil {
 		return "", err
 	}
 
 	return file, nil
 }
 
-func genCorporPDFMissingSig(c *corpSigningPDF, orgCLA *models.OrgCLA, signing *models.CorporationSigning, cla *models.CLA, outDir string) (string, error) {
+func (c *corpSigningPDF) genCorporPDFMissingSig(orgInfo *dbmodels.OrgInfo, signing *models.CorporationSigning, claFields []dbmodels.Field, claFile, path string) error {
+	text, err := ioutil.ReadFile(claFile)
+	if err != nil {
+		return fmt.Errorf("failed to read cla file(%s): %s", claFile, err.Error())
+	}
+
 	pdf := c.begin()
 
 	// first page
-	c.firstPage(pdf, fmt.Sprintf("The Project of %s", orgCLA.OrgAlias))
-	c.welcome(pdf, orgCLA.OrgAlias, orgCLA.OrgEmail)
+	c.firstPage(pdf, fmt.Sprintf("The Project of %s", orgInfo.OrgAlias))
+	c.welcome(pdf, orgInfo.OrgAlias, orgInfo.OrgEmail)
 
-	orders, titles := BuildCorpContact(cla)
+	orders, titles := BuildCorpContact(claFields)
 	c.contact(pdf, signing.Info, orders, titles)
 
 	c.declare(pdf)
-	c.cla(pdf, cla.Text)
-	c.projectURL(pdf, fmt.Sprintf("[1]. %s", util.ProjectURL(orgCLA.Platform, orgCLA.OrgID, orgCLA.RepoID)))
+	c.cla(pdf, string(text))
+	c.projectURL(pdf, fmt.Sprintf("[1]. %s", util.ProjectURL(orgInfo.Platform, orgInfo.OrgID, orgInfo.RepoID)))
 
 	// second page
 	c.secondPage(pdf, signing.Date)
 
-	path := util.CorporCLAPDFFile(outDir, orgCLA.ID, signing.AdminEmail, "_missing_sig")
 	if !util.IsFileNotExist(path) {
 		os.Remove(path)
 	}
 	if err := c.end(pdf, path); err != nil {
-		return "", fmt.Errorf("generate signing pdf of corp failed: %s", err.Error())
+		return fmt.Errorf("generate signing pdf of corp failed: %s", err.Error())
 	}
-	return path, nil
+	return nil
 }
 
-func mergeCorporPDFSignaturePage(orgCLAID, pythonBin, pdfFile, sigFile, outfile string) error {
-	md5sum := ""
-	var err error
+func mergeCorporPDFSignaturePage(pythonBin, pdfFile, sigFile, outfile string) error {
 	if !util.IsFileNotExist(sigFile) {
-		if md5sum, err = util.Md5sumOfFile(sigFile); err != nil {
-			return fmt.Errorf("calculate md5sum failed: %s", err.Error())
-		}
-	}
-
-	// fetch signature, it will be returned when md5sum is not matched.
-	signature, err := models.DownloadOrgSignatureByMd5(orgCLAID, md5sum)
-	if err != nil {
-		return fmt.Errorf("download org's signature failed: %s", err.Error())
-	}
-
-	if signature == nil {
-		if md5sum == "" {
-			return fmt.Errorf("the org's signature has not been uploaded")
-		}
-	} else {
-		// write signature
-		if err := ioutil.WriteFile(sigFile, signature, 0644); err != nil {
-			return fmt.Errorf("write org's signature failed: %s", err.Error())
-		}
+		return fmt.Errorf("org signature file(%s) is not exist", sigFile)
 	}
 
 	// merge file
-	cmd := exec.Command(
-		pythonBin, "./util/merge-signature.py",
-		pdfFile, sigFile, outfile,
-	)
-	_, err = cmd.Output()
-	if err != nil {
+	cmd := exec.Command(pythonBin, "./util/merge-signature.py", pdfFile, sigFile, outfile)
+	if _, err := cmd.Output(); err != nil {
 		return fmt.Errorf("merge signature page of pdf failed: %s", err.Error())
 	}
 
 	return nil
 }
 
-func BuildCorpContact(cla *models.CLA) ([]string, map[string]string) {
-	ids := make(sort.IntSlice, 0, len(cla.Fields))
+func BuildCorpContact(fields []dbmodels.Field) ([]string, map[string]string) {
+	ids := make(sort.IntSlice, 0, len(fields))
 	m := map[int]string{}
 	mk := map[string]string{}
 
-	for _, item := range cla.Fields {
+	for _, item := range fields {
 		v, err := strconv.Atoi(item.ID)
 		if err != nil {
 			continue
@@ -135,4 +105,9 @@ func BuildCorpContact(cla *models.CLA) ([]string, map[string]string) {
 		r = append(r, m[k])
 	}
 	return r, mk
+}
+
+func genPDFFileName(linkID, email, other string) string {
+	s := strings.ReplaceAll(util.EmailSuffix(email), ".", "_")
+	return fmt.Sprintf("%s_%s%s.pdf", linkID, s, other)
 }

@@ -58,3 +58,7 @@ func GetCorpSigningDetail(linkID, email string) (*dbmodels.CorporationSigningOpt
 func ListCorpSignings(linkID, language string) ([]dbmodels.CorporationSigningSummary, error) {
 	return dbmodels.GetDB().ListCorpSignings(linkID, language)
 }
+
+func InitializeCorpSigning(linkID string, info *dbmodels.OrgInfo, claInfo *dbmodels.CLAInfo) error {
+	return dbmodels.GetDB().InitializeCorpSigning(linkID, info, claInfo)
+}

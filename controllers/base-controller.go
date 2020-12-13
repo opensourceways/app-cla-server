@@ -3,6 +3,7 @@ package controllers
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"strings"
 
 	"github.com/astaxie/beego"
@@ -53,6 +54,10 @@ func (this *baseController) sendResponse(body interface{}, statusCode int) {
 	}
 
 	this.ServeJSON()
+}
+
+func (this *baseController) sendFailedResultAsResp(fr *failedResult, doWhat string) {
+	this.sendFailedResponse(fr.statusCode, fr.errCode, fr.reason, doWhat)
 }
 
 func (this *baseController) sendFailedResponse(statusCode int, errCode string, reason error, doWhat string) {
@@ -222,4 +227,18 @@ func (this *baseController) apiReqHeader(h string) string {
 
 func (this *baseController) getRequestMethod() string {
 	return this.Ctx.Request.Method
+}
+
+func (this *baseController) readInputFile(fileName string) ([]byte, *failedResult) {
+	f, _, err := this.GetFile(fileName)
+	if err != nil {
+		return nil, newFailedResult(400, util.ErrInvalidParameter, err)
+	}
+	defer f.Close()
+
+	data, err := ioutil.ReadAll(f)
+	if err != nil {
+		return nil, newFailedResult(500, util.ErrSystemError, err)
+	}
+	return data, nil
 }

@@ -130,12 +130,12 @@ func (this *client) getCorporationSigningDetail(filterOfDoc bson.M, email string
 	var v []OrgCLA
 
 	f := func(ctx context.Context) error {
-		admin := indexOfCorpManagerAndIndividual(email)
-		admin["role"] = dbmodels.RoleAdmin
-
 		ma := map[string]bson.M{
 			fieldCorporations: filterOfCorpID(email),
-			fieldCorpManagers: admin,
+			fieldCorpManagers: {
+				fieldCorporationID: genCorpID(email),
+				"role":             dbmodels.RoleAdmin,
+			},
 		}
 		return this.getMultiArrays(
 			ctx, this.orgCLACollection, filterOfDoc,

@@ -104,7 +104,7 @@ func (this *IndividualSigningController) Post() {
 // @Param	repo		path 	string	true		"repo"
 // @Param	email		query 	string	true		"email"
 // @Success 200
-// @router /:platform/:org/:repo [get]
+// @router /:platform/:org_repo [get]
 func (this *IndividualSigningController) Check() {
 	var statusCode = 0
 	var errCode = ""
@@ -115,7 +115,7 @@ func (this *IndividualSigningController) Check() {
 		sendResponse(&this.Controller, statusCode, errCode, reason, body, "check individual signing")
 	}()
 
-	params := []string{":platform", ":org", ":repo", "email"}
+	params := []string{":platform", ":org_repo", "email"}
 	if err := checkAPIStringParameter(&this.Controller, params); err != nil {
 		reason = err
 		errCode = util.ErrInvalidParameter
@@ -123,11 +123,9 @@ func (this *IndividualSigningController) Check() {
 		return
 	}
 
+	org, repo := parseOrgAndRepo(this.GetString(":org_repo"))
 	v, err := models.IsIndividualSigned(
-		this.GetString(":platform"),
-		this.GetString(":org"),
-		this.GetString(":repo"),
-		this.GetString("email"),
+		this.GetString(":platform"), org, repo, this.GetString("email"),
 	)
 	if err != nil {
 		reason = err

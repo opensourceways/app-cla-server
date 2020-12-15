@@ -5,7 +5,6 @@ import (
 	"net/http"
 
 	"github.com/opensourceways/app-cla-server/conf"
-	"github.com/opensourceways/app-cla-server/dbmodels"
 	"github.com/opensourceways/app-cla-server/models"
 	"github.com/opensourceways/app-cla-server/util"
 )
@@ -26,79 +25,6 @@ func (this *CorporationManagerController) Prepare() {
 	}
 }
 
-// @Title authenticate corporation manager
-// @Description authenticate corporation manager
-// @Param	body		body 	models.CorporationManagerAuthentication	true		"body for corporation manager info"
-// @Success 201 {int} map
-// @Failure util.ErrNoCLABindingDoc	"no cla binding applied to corporation"
-// @router /auth [post]
-func (this *CorporationManagerController) Auth() {
-	doWhat := "authenticate as corp/employee manager"
-
-	var info models.CorporationManagerAuthentication
-	if err := this.fetchInputPayload(&info); err != nil {
-		this.sendFailedResponse(400, util.ErrInvalidParameter, err, doWhat)
-		return
-	}
-
-	v, err := (&info).Authenticate()
-	if err != nil {
-		this.sendFailedResponse(0, "", err, doWhat)
-		return
-	}
-
-	type authInfo struct {
-		Role             string `json:"role"`
-		Platform         string `json:"platform"`
-		OrgID            string `json:"org_id"`
-		RepoID           string `json:"repo_id"`
-		Token            string `json:"token"`
-		InitialPWChanged bool   `json:"initial_pw_changed"`
-	}
-
-	result := make([]authInfo, 0, len(v))
-
-	for orgCLAID, item := range v {
-		token, err := this.newAccessToken(orgCLAID, &item)
-		if err != nil {
-			continue
-		}
-
-		result = append(result, authInfo{
-			Role:             item.Role,
-			Platform:         item.Platform,
-			OrgID:            item.OrgID,
-			RepoID:           item.RepoID,
-			Token:            token,
-			InitialPWChanged: item.InitialPWChanged,
-		})
-	}
-
-	this.sendResponse(result, 0)
-}
-
-func (this *CorporationManagerController) newAccessToken(orgCLAID string, info *dbmodels.CorporationManagerCheckResult) (string, error) {
-	permission := ""
-	switch info.Role {
-	case dbmodels.RoleAdmin:
-		permission = PermissionCorporAdmin
-	case dbmodels.RoleManager:
-		permission = PermissionEmployeeManager
-	}
-
-	ac := &accessController{
-		Expiry:     util.Expiry(conf.AppConfig.APITokenExpiry),
-		Permission: permission,
-		Payload: &acForCorpManagerPayload{
-			Name:     info.Name,
-			Email:    info.Email,
-			OrgCLAID: orgCLAID,
-		},
-	}
-
-	return ac.NewToken(conf.AppConfig.APITokenKey)
-}
-
 // @Title Put
 // @Description add corporation administrator
 // @Param	:org_cla_id	path 	string					true		"org cla id"
@@ -114,8 +40,9 @@ func (this *CorporationManagerController) Put() {
 	corpEmail := this.GetString(":email")
 
 	pl, err := this.tokenPayloadOfCodePlatform()
-	if !pl.hasLink(linkID) {
-		//TODO
+	if fr := pl.isOwnerOfLink(linkID); fr != nil {
+		this.sendFailedResultAsResp(fr, doWhat)
+		return
 	}
 
 	uploaded, err := models.IsCorpSigningPDFUploaded(linkID, corpEmail)
@@ -143,8 +70,7 @@ func (this *CorporationManagerController) Put() {
 
 	this.sendResponse("add manager successfully", 0)
 
-	//TODO
-	notifyCorpManagerWhenAdding(&models.OrgCLA{}, added)
+	notifyCorpManagerWhenAdding(pl.orgInfo(linkID), added)
 }
 
 // @Title Patch
@@ -172,7 +98,7 @@ func (this *CorporationManagerController) Patch() {
 		return
 	}
 
-	if err := (&info).Reset(pl.OrgCLAID, pl.Email); err != nil {
+	if err := (&info).Reset(pl.LinkID, pl.Email); err != nil {
 		this.sendFailedResponse(0, "", err, doWhat)
 		return
 	}

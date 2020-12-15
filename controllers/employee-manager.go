@@ -48,7 +48,7 @@ func (this *EmployeeManagerController) GetAll() {
 		return
 	}
 
-	r, err := models.ListCorporationManagers(pl.OrgCLAID, pl.Email, dbmodels.RoleManager)
+	r, err := models.ListCorporationManagers(pl.LinkID, pl.Email, dbmodels.RoleManager)
 	if err != nil {
 		this.sendFailedResponse(0, "", err, doWhat)
 		return
@@ -91,34 +91,28 @@ func (this *EmployeeManagerController) addOrDeleteManagers(toAdd bool) {
 		return
 	}
 
-	orgCLA := &models.OrgCLA{ID: pl.OrgCLAID}
-	if err := orgCLA.Get(); err != nil {
-		reason = err
-		return
-	}
-
 	if toAdd {
-		added, err := (&info).Create(pl.OrgCLAID)
+		added, err := (&info).Create(pl.LinkID)
 		if err != nil {
 			this.sendFailedResponse(0, "", err, doWhat)
 			return
 		}
-		notifyCorpManagerWhenAdding(orgCLA, added)
+		notifyCorpManagerWhenAdding(&pl.OrgInfo, added)
 	} else {
-		deleted, err := (&info).Delete(pl.OrgCLAID)
+		deleted, err := (&info).Delete(pl.LinkID)
 		if err != nil {
 			this.sendFailedResponse(0, "", err, doWhat)
 			return
 		}
 
-		subject := fmt.Sprintf("Revoking the authorization on project of \"%s\"", orgCLA.OrgAlias)
+		subject := fmt.Sprintf("Revoking the authorization on project of \"%s\"", pl.OrgAlias)
 		for _, item := range deleted {
 			msg := email.RemovingCorpManager{
 				User:       item.Name,
-				Org:        orgCLA.OrgAlias,
-				ProjectURL: projectURL(orgCLA),
+				Org:        pl.OrgAlias,
+				ProjectURL: pl.ProjectURL(),
 			}
-			sendEmailToIndividual(item.Email, orgCLA.OrgEmail, subject, msg)
+			sendEmailToIndividual(item.Email, pl.OrgEmail, subject, msg)
 		}
 	}
 }

@@ -19,6 +19,10 @@ const (
 	TmplActivatingEmployee  = "activating employee"
 	TmplInactivaingEmployee = "inactivating employee"
 	TmplRemovingingEmployee = "removing employee"
+
+	EmployeeActionRemoving = "remove"
+	EmployeeActionActive   = "active"
+	EmployeeActionInactive = "inactive"
 )
 
 var msgTmpl = map[string]*template.Template{}
@@ -157,26 +161,22 @@ func (this NotifyingManager) GenEmailMsg() (*EmailMessage, error) {
 }
 
 type EmployeeNotification struct {
-	Removing bool
-	Active   bool
-	Inactive bool
-
+	Action     string
 	Name       string
-	ProjectURL string
 	Manager    string
 	Org        string
+	ProjectURL string
 }
 
 func (this EmployeeNotification) GenEmailMsg() (*EmailMessage, error) {
-	if this.Active {
+	switch this.Action {
+	case EmployeeActionActive:
 		return genEmailMsg(TmplActivatingEmployee, this)
-	}
 
-	if this.Inactive {
+	case EmployeeActionInactive:
 		return genEmailMsg(TmplInactivaingEmployee, this)
-	}
 
-	if this.Removing {
+	case EmployeeActionRemoving:
 		return genEmailMsg(TmplRemovingingEmployee, this)
 	}
 

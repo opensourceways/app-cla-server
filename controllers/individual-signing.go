@@ -32,6 +32,8 @@ func (this *IndividualSigningController) Prepare() {
 // @router /:link_id/:cla_lang/:cla_hash [post]
 func (this *IndividualSigningController) Post() {
 	doWhat := "sign as individual"
+	linkID := this.GetString(":link_id")
+	claLang := this.GetString(":cla_lang")
 
 	pl, err := this.tokenPayloadOfCodePlatform()
 	if err != nil {
@@ -48,9 +50,6 @@ func (this *IndividualSigningController) Post() {
 		this.sendFailedResponse(400, ec, err, doWhat)
 		return
 	}
-
-	linkID := this.GetString(":link_id")
-	claLang := this.GetString(":cla_lang")
 
 	claInfo, err := models.GetCLAInfoSigned(linkID, claLang, dbmodels.ApplyToIndividual)
 	if err != nil {

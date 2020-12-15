@@ -37,7 +37,6 @@ func (this *CLAController) Add() {
 		this.sendFailedResponse(r.statusCode, r.errCode, r.reason, doWhat)
 		return
 	}
-	orgRepo := dbmodels.ParseToOrgRepo(pl.Links[linkID])
 
 	input := &models.CLACreateOption{}
 	if err := this.fetchInputPayload(input); err != nil {
@@ -54,7 +53,7 @@ func (this *CLAController) Add() {
 		input.OrgSignature = data
 	}
 
-	if r := addCLA(linkID, applyTo, input, &orgRepo); r != nil {
+	if r := addCLA(linkID, applyTo, input, pl); r != nil {
 		this.sendFailedResponse(r.statusCode, r.errCode, r.reason, doWhat)
 		return
 	}
@@ -83,9 +82,8 @@ func (this *CLAController) Delete() {
 		this.sendFailedResponse(err.statusCode, err.errCode, err.reason, doWhat)
 		return
 	}
-	orgRepo := dbmodels.ParseToOrgRepo(pl.Links[linkID])
 
-	if r := deleteCLA(linkID, applyTo, claLang, &orgRepo); r != nil {
+	if r := deleteCLA(linkID, applyTo, claLang, pl); r != nil {
 		this.sendFailedResponse(r.statusCode, r.errCode, r.reason, doWhat)
 		return
 	}
@@ -93,12 +91,13 @@ func (this *CLAController) Delete() {
 	this.sendResponse("delete cla successfully", 0)
 }
 
-func addCLA(linkID, applyTo string, input *models.CLACreateOption, orgRepo *dbmodels.OrgRepo) *failedResult {
+func addCLA(linkID, applyTo string, input *models.CLACreateOption, pl *acForCodePlatformPayload) *failedResult {
 	if ec, err := input.Validate(); err != nil {
 		return newFailedResult(400, ec, err)
 	}
 
-	filePath := genOrgFileLockPath(orgRepo.Platform, orgRepo.OrgID, orgRepo.RepoID)
+	orgInfo := pl.orgInfo(linkID)
+	filePath := genOrgFileLockPath(orgInfo.Platform, orgInfo.OrgID, orgInfo.RepoID)
 	unlock, err := util.Lock(filePath)
 	if err != nil {
 		return newFailedResult(500, util.ErrSystemError, err)
@@ -134,8 +133,9 @@ func addCLA(linkID, applyTo string, input *models.CLACreateOption, orgRepo *dbmo
 	return nil
 }
 
-func deleteCLA(linkID, applyTo, claLang string, orgRepo *dbmodels.OrgRepo) *failedResult {
-	filePath := genOrgFileLockPath(orgRepo.Platform, orgRepo.OrgID, orgRepo.RepoID)
+func deleteCLA(linkID, applyTo, claLang string, pl *acForCodePlatformPayload) *failedResult {
+	orgInfo := pl.orgInfo(linkID)
+	filePath := genOrgFileLockPath(orgInfo.Platform, orgInfo.OrgID, orgInfo.RepoID)
 	unlock, err := util.Lock(filePath)
 	if err != nil {
 		return newFailedResult(500, util.ErrSystemError, err)

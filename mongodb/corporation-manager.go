@@ -90,6 +90,8 @@ func (this *client) CheckCorporationManagerExist(opt dbmodels.CorporationManager
 	project := bson.M{
 		fieldLinkID:                        1,
 		fieldOrgIdentity:                   1,
+		fieldOrgEmail:                      1,
+		fieldOrgAlias:                      1,
 		memberNameOfCorpManager("role"):    1,
 		memberNameOfCorpManager("name"):    1,
 		memberNameOfCorpManager("email"):   1,
@@ -131,9 +133,15 @@ func (this *client) CheckCorporationManagerExist(opt dbmodels.CorporationManager
 			Role:             item.Role,
 			InitialPWChanged: item.InitialPWChanged,
 
-			Platform: orgRepo.Platform,
-			OrgID:    orgRepo.OrgID,
-			RepoID:   orgRepo.RepoID,
+			OrgInfo: dbmodels.OrgInfo{
+				OrgRepo: dbmodels.OrgRepo{
+					Platform: orgRepo.Platform,
+					OrgID:    orgRepo.OrgID,
+					RepoID:   orgRepo.RepoID,
+				},
+				OrgEmail: doc.OrgEmail,
+				OrgAlias: doc.OrgAlias,
+			},
 		}
 
 	}

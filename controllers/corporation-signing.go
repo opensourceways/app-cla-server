@@ -154,26 +154,24 @@ func (this *CorporationSigningController) ResendCorpSigningEmail() {
 		return
 	}
 
+	// TODO return cla info in GetCorpSigningDetail
 	signingInfo, err := models.GetCorpSigningDetail(linkID, corpEmail)
 	if err != nil {
 		this.sendFailedResponse(0, "", err, doWhat)
 		return
 	}
 
-	orgCLA := &models.OrgCLA{ID: linkID}
-	if err := orgCLA.Get(); err != nil {
-		this.sendFailedResponse(0, "", err, doWhat)
-		return
-	}
-
-	cla := &models.CLA{ID: orgCLA.CLAID}
-	if err := cla.Get(); err != nil {
-		this.sendFailedResponse(0, "", err, doWhat)
-		return
-	}
+	claFile := genCLAFilePath(linkID, dbmodels.ApplyToCorporation, signingInfo.CLALanguage)
+	orgSignatureFile := genOrgSignatureFilePath(linkID, signingInfo.CLALanguage)
 
 	worker.GetEmailWorker().GenCLAPDFForCorporationAndSendIt(
-		orgCLA, (*models.CorporationSigning)(signingInfo), cla,
+		linkID, orgSignatureFile, claFile, *pl.orgInfo(linkID),
+		models.CorporationSigning{
+			CorporationSigningBasicInfo: signingInfo.CorporationSigningBasicInfo,
+			Info:                        signingInfo.Info,
+		},
+		// TODO
+		[]dbmodels.Field{},
 	)
 
 	this.sendResponse("resend email successfully", 0)

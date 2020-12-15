@@ -3,22 +3,17 @@ package controllers
 import (
 	"fmt"
 
-	"github.com/astaxie/beego"
-
 	"github.com/opensourceways/app-cla-server/conf"
 	"github.com/opensourceways/app-cla-server/email"
 	"github.com/opensourceways/app-cla-server/models"
-	"github.com/opensourceways/app-cla-server/util"
 )
 
 type VerificationCodeController struct {
-	beego.Controller
+	baseController
 }
 
 func (this *VerificationCodeController) Prepare() {
-	if getHeader(&this.Controller, headerToken) != "" {
-		apiPrepare(&this.Controller, []string{PermissionIndividualSigner})
-	}
+	this.apiPrepare("")
 }
 
 // @Title Post
@@ -27,55 +22,39 @@ func (this *VerificationCodeController) Prepare() {
 // @Param	:email		path 	string					true		"email of corp"
 // @Success 201 {int} map
 // @Failure util.ErrSendingEmail
-// @router /:org_cla_id/:email [post]
+// @router /:link_id/:email [post]
 func (this *VerificationCodeController) Post() {
-	var statusCode = 0
-	var errCode = ""
-	var reason error
-	var body interface{}
+	action := "send verification code"
+	linkID := this.GetString(":link_id")
+	inputEmail := this.GetString(":email")
 
-	defer func() {
-		sendResponse(&this.Controller, statusCode, errCode, reason, body, "send verification code")
-	}()
-
-	if err := checkAPIStringParameter(&this.Controller, []string{":org_cla_id", ":email"}); err != nil {
-		reason = err
-		errCode = util.ErrInvalidParameter
-		statusCode = 400
-		return
-	}
-	orgCLAID := this.GetString(":org_cla_id")
-	individualEmail := this.GetString(":email")
-
-	orgCLA := &models.OrgCLA{ID: orgCLAID}
-	if err := orgCLA.Get(); err != nil {
-		reason = err
+	orgInfo, err := models.GetOrgOfLink(linkID)
+	if err != nil {
+		this.sendFailedResponse(0, "", err, action)
 		return
 	}
 
 	code, err := models.CreateVerificationCode(
-		individualEmail, orgCLAID,
-		conf.AppConfig.VerificationCodeExpiry,
+		inputEmail, linkID, conf.AppConfig.VerificationCodeExpiry,
 	)
 	if err != nil {
-		reason = err
+		this.sendFailedResponse(0, "", err, action)
 		return
 	}
 
-	body = "create verification code successfully"
+	this.sendResponse("create verification code successfully", 0)
 
-	msg := email.VerificationCode{
-		Email:      individualEmail,
-		Org:        orgCLA.OrgAlias,
-		Code:       code,
-		ProjectURL: projectURL(orgCLA),
-	}
 	sendEmailToIndividual(
-		individualEmail, orgCLA.OrgEmail,
+		inputEmail, orgInfo.OrgEmail,
 		fmt.Sprintf(
 			"Verification code for signing CLA on project of \"%s\"",
-			orgCLA.OrgAlias,
+			orgInfo.OrgAlias,
 		),
-		msg,
+		email.VerificationCode{
+			Email:      inputEmail,
+			Org:        orgInfo.OrgAlias,
+			Code:       code,
+			ProjectURL: orgInfo.ProjectURL(),
+		},
 	)
 }

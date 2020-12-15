@@ -102,8 +102,9 @@ func HasCLA(linkID, applyTo, language string) (bool, error) {
 	return dbmodels.GetDB().HasCLA(linkID, applyTo, language)
 }
 
-func DownloadOrgSignature(orgRepo *dbmodels.OrgRepo, language string) ([]byte, error) {
-	return dbmodels.GetDB().DownloadOrgSignature(orgRepo, language)
+func DownloadOrgSignature(linkID, language string) ([]byte, error) {
+	// return dbmodels.GetDB().DownloadOrgSignature(orgRepo, language)
+	return dbmodels.GetDB().DownloadOrgSignature(language)
 }
 
 func DownloadBlankSignature(language string) ([]byte, error) {

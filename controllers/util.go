@@ -11,11 +11,9 @@ import (
 
 	"github.com/astaxie/beego"
 
-	"github.com/opensourceways/app-cla-server/code-platform-auth/platforms"
 	"github.com/opensourceways/app-cla-server/conf"
 	"github.com/opensourceways/app-cla-server/dbmodels"
 	"github.com/opensourceways/app-cla-server/email"
-	"github.com/opensourceways/app-cla-server/models"
 	"github.com/opensourceways/app-cla-server/util"
 	"github.com/opensourceways/app-cla-server/worker"
 )
@@ -270,24 +268,6 @@ func fetchStringParameter(c *beego.Controller, param string) (string, error) {
 	return v, nil
 }
 
-func getEmailConfig(orgCLAID string) (*models.OrgCLA, *models.OrgEmail, error) {
-	orgCLA := &models.OrgCLA{ID: orgCLAID}
-	if err := orgCLA.Get(); err != nil {
-		return nil, nil, err
-	}
-
-	emailInfo := &models.OrgEmail{Email: orgCLA.OrgEmail}
-	if err := emailInfo.Get(); err != nil {
-		return nil, nil, err
-	}
-
-	return orgCLA, emailInfo, nil
-}
-
-func isSameCorp(email1, email2 string) bool {
-	return util.EmailSuffix(email1) == util.EmailSuffix(email2)
-}
-
 func convertDBError(err error) (int, string) {
 	e, ok := dbmodels.IsDBError(err)
 	if !ok {
@@ -323,9 +303,9 @@ func sendEmail(to []string, from, subject string, builder email.IEmailMessageBul
 	worker.GetEmailWorker().SendSimpleMessage(from, msg)
 }
 
-func notifyCorpManagerWhenAdding(orgCLA *models.OrgCLA, info []dbmodels.CorporationManagerCreateOption) {
+func notifyCorpManagerWhenAdding(orgInfo *dbmodels.OrgInfo, info []dbmodels.CorporationManagerCreateOption) {
 	admin := (info[0].Role == dbmodels.RoleAdmin)
-	subject := fmt.Sprintf("Account on project of \"%s\"", orgCLA.OrgAlias)
+	subject := fmt.Sprintf("Account on project of \"%s\"", orgInfo.OrgAlias)
 
 	for _, item := range info {
 		d := email.AddingCorpManager{
@@ -334,57 +314,13 @@ func notifyCorpManagerWhenAdding(orgCLA *models.OrgCLA, info []dbmodels.Corporat
 			User:             item.Name,
 			Email:            item.Email,
 			Password:         item.Password,
-			Org:              orgCLA.OrgAlias,
-			ProjectURL:       projectURL(orgCLA),
+			Org:              orgInfo.OrgAlias,
+			ProjectURL:       orgInfo.ProjectURL(),
 			URLOfCLAPlatform: conf.AppConfig.CLAPlatformURL,
 		}
 
-		sendEmailToIndividual(item.Email, orgCLA.OrgEmail, subject, d)
+		sendEmailToIndividual(item.Email, orgInfo.OrgEmail, subject, d)
 	}
-}
-
-func isNotIndividualCLA(orgCLA *models.OrgCLA) bool {
-	return orgCLA.ApplyTo != dbmodels.ApplyToIndividual
-}
-
-func isNotCorpCLA(orgCLA *models.OrgCLA) bool {
-	return orgCLA.ApplyTo != dbmodels.ApplyToCorporation
-}
-
-func canAccessOrgCLA(c *beego.Controller, orgCLAID string) (*models.OrgCLA, int, string, error) {
-	orgCLA := &models.OrgCLA{ID: orgCLAID}
-	if err := orgCLA.Get(); err != nil {
-		return nil, 400, util.ErrInvalidParameter, err
-	}
-
-	ac, ec, err := getACOfCodePlatform(c)
-	if err != nil {
-		return nil, 400, ec, err
-	}
-
-	org := orgCLA.OrgID
-	if ac.hasOrg(org) {
-		return orgCLA, 0, "", nil
-	}
-
-	p, err := platforms.NewPlatform(ac.PlatformToken, "", ac.Platform)
-	if err != nil {
-		return nil, 400, util.ErrInvalidParameter, err
-	}
-
-	b, err := p.IsOrgExist(org)
-	if err != nil {
-		// TODO token expiry
-		return nil, 500, util.ErrSystemError, err
-	}
-
-	if !b {
-		return nil, 400, util.ErrNotYoursOrg, fmt.Errorf("not the org of owner")
-	}
-
-	ac.addOrg(org)
-
-	return orgCLA, 0, "", nil
 }
 
 func getSingingInfo(info dbmodels.TypeSigningInfo, fields []dbmodels.Field) dbmodels.TypeSigningInfo {
@@ -399,10 +335,6 @@ func getSingingInfo(info dbmodels.TypeSigningInfo, fields []dbmodels.Field) dbmo
 		}
 	}
 	return r
-}
-
-func projectURL(orgCLA *models.OrgCLA) string {
-	return util.ProjectURL(orgCLA.Platform, orgCLA.RepoID, orgCLA.RepoID)
 }
 
 func rspOnAuthFailed(c *beego.Controller, webRedirectDir, errCode string, reason error) {

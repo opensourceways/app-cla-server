@@ -85,9 +85,3 @@ func (this *accessController) Verify(permission []string) error {
 
 	return fmt.Errorf("Not allowed permission")
 }
-
-type acForCorpManagerPayload struct {
-	Name     string `json:"name"`
-	Email    string `json:"email"`
-	OrgCLAID string `json:"org_cla_id"`
-}

@@ -1,27 +1,20 @@
 package controllers
 
 import (
-	"fmt"
-	"io/ioutil"
-
-	"github.com/astaxie/beego"
-
-	"github.com/opensourceways/app-cla-server/dbmodels"
 	"github.com/opensourceways/app-cla-server/models"
-	"github.com/opensourceways/app-cla-server/pdf"
 	"github.com/opensourceways/app-cla-server/util"
 )
 
 type CorporationPDFController struct {
-	beego.Controller
+	baseController
 }
 
 func (this *CorporationPDFController) Prepare() {
 	if getRouterPattern(&this.Controller) == "/v1/corporation-pdf" {
 		// admin reviews pdf
-		apiPrepare(&this.Controller, []string{PermissionCorporAdmin})
+		this.apiPrepare(PermissionCorporAdmin)
 	} else {
-		apiPrepare(&this.Controller, []string{PermissionOwnerOfOrg})
+		this.apiPrepare(PermissionOwnerOfOrg)
 	}
 }
 
@@ -32,58 +25,40 @@ func (this *CorporationPDFController) Prepare() {
 // @Success 204 {int} map
 // @router /:org_cla_id/:email [patch]
 func (this *CorporationPDFController) Upload() {
-	var statusCode = 0
-	var errCode = ""
-	var reason error
-	var body interface{}
-
-	defer func() {
-		sendResponse(&this.Controller, statusCode, errCode, reason, body, "upload corp's signing pdf")
-	}()
-
-	if err := checkAPIStringParameter(&this.Controller, []string{":org_cla_id", ":email"}); err != nil {
-		reason = err
-		errCode = util.ErrInvalidParameter
-		statusCode = 400
-		return
-	}
-	orgCLAID := this.GetString(":org_cla_id")
+	action := "upload corp's signing pdf"
+	linkID := this.GetString(":link_id")
 	corpEmail := this.GetString(":email")
 
-	_, statusCode, errCode, reason = canAccessOrgCLA(&this.Controller, orgCLAID)
-	if reason != nil {
-		return
-	}
-
-	_, err := models.GetCorporationSigningBasicInfo(orgCLAID, corpEmail)
+	pl, err := this.tokenPayloadOfCodePlatform()
 	if err != nil {
-		reason = err
+		this.sendFailedResponse(500, util.ErrSystemError, err, action)
+		return
+	}
+	if r := pl.isOwnerOfLink(linkID); r != nil {
+		this.sendFailedResponse(r.statusCode, r.errCode, r.reason, action)
 		return
 	}
 
-	f, _, err := this.GetFile("pdf")
+	// TODO repalce GetCorporationSigningBasicInfo by check method
+	_, err = models.GetCorporationSigningBasicInfo(linkID, corpEmail)
 	if err != nil {
-		reason = fmt.Errorf("missing pdf file")
-		errCode = util.ErrInvalidParameter
-		statusCode = 400
+		this.sendFailedResponse(0, "", err, action)
 		return
 	}
 
-	defer f.Close()
+	data, fr := this.readInputFile("pdf")
+	if fr != nil {
+		this.sendFailedResultAsResp(fr, action)
+		return
+	}
 
-	data, err := ioutil.ReadAll(f)
+	err = models.UploadCorporationSigningPDF(linkID, corpEmail, &data)
 	if err != nil {
-		reason = err
+		this.sendFailedResponse(0, "", err, action)
 		return
 	}
 
-	err = models.UploadCorporationSigningPDF(orgCLAID, corpEmail, &data)
-	if err != nil {
-		reason = err
-		return
-	}
-
-	body = "upload pdf of signature page successfully"
+	this.sendResponse("upload pdf of signature page successfully", 0)
 }
 
 // @Title Download
@@ -91,39 +66,29 @@ func (this *CorporationPDFController) Upload() {
 // @Param	:org_cla_id	path 	string					true		"org cla id"
 // @Param	:email		path 	string					true		"email of corp"
 // @Success 200 {int} map
-// @router /:org_cla_id/:email [get]
+// @router /:link_id/:email [get]
 func (this *CorporationPDFController) Download() {
-	var statusCode = 0
-	var errCode = ""
-	var reason error
-	var body interface{}
+	action := "download corp's signing pdf"
+	linkID := this.GetString(":link_id")
+	corpEmail := this.GetString(":email")
 
-	defer func() {
-		sendResponse(&this.Controller, statusCode, errCode, reason, body, "download corp's signing pdf")
-	}()
-
-	if err := checkAPIStringParameter(&this.Controller, []string{":org_cla_id", ":email"}); err != nil {
-		reason = err
-		errCode = util.ErrInvalidParameter
-		statusCode = 400
-		return
-	}
-	orgCLAID := this.GetString(":org_cla_id")
-
-	_, statusCode, errCode, reason = canAccessOrgCLA(&this.Controller, orgCLAID)
-	if reason != nil {
-		return
-	}
-
-	pdf, err := models.DownloadCorporationSigningPDF(orgCLAID, this.GetString(":email"))
+	pl, err := this.tokenPayloadOfCodePlatform()
 	if err != nil {
-		reason = err
+		this.sendFailedResponse(500, util.ErrSystemError, err, action)
+		return
+	}
+	if r := pl.isOwnerOfLink(linkID); r != nil {
+		this.sendFailedResponse(r.statusCode, r.errCode, r.reason, action)
 		return
 	}
 
-	body = map[string]interface{}{
-		"pdf": pdf,
+	pdf, err := models.DownloadCorporationSigningPDF(linkID, corpEmail)
+	if err != nil {
+		this.sendFailedResponse(0, "", err, action)
+		return
 	}
+
+	this.sendResponse(map[string]interface{}{"pdf": pdf}, 0)
 }
 
 // @Title Review
@@ -131,31 +96,21 @@ func (this *CorporationPDFController) Download() {
 // @Success 200 {int} map
 // @router / [get]
 func (this *CorporationPDFController) Review() {
-	var statusCode = 0
-	var errCode = ""
-	var reason error
-	var body interface{}
+	action := "download corp's signing pdf"
 
-	defer func() {
-		sendResponse(&this.Controller, statusCode, errCode, reason, body, "download corp's signing pdf")
-	}()
-
-	var ac *acForCorpManagerPayload
-	ac, errCode, reason = getACOfCorpManager(&this.Controller)
-	if reason != nil {
-		statusCode = 401
-		return
-	}
-
-	pdf, err := models.DownloadCorporationSigningPDF(ac.OrgCLAID, ac.Email)
+	pl, err := this.tokenPayloadOfCorpManager()
 	if err != nil {
-		reason = err
+		this.sendFailedResponse(500, util.ErrSystemError, err, action)
 		return
 	}
 
-	body = map[string]interface{}{
-		"pdf": pdf,
+	pdf, err := models.DownloadCorporationSigningPDF(pl.LinkID, pl.Email)
+	if err != nil {
+		this.sendFailedResponse(0, "", err, action)
+		return
 	}
+
+	this.sendResponse(map[string]interface{}{"pdf": pdf}, 0)
 }
 
 // @Title Preview
@@ -173,7 +128,7 @@ func (this *CorporationPDFController) Preview() {
 		sendResponse(&this.Controller, statusCode, errCode, reason, body, "preview the unsinged pdf of corp")
 	}()
 
-	orgCLAID, err := fetchStringParameter(&this.Controller, ":org_cla_id")
+	_, err := fetchStringParameter(&this.Controller, ":org_cla_id")
 	if err != nil {
 		reason = err
 		errCode = util.ErrInvalidParameter
@@ -181,37 +136,39 @@ func (this *CorporationPDFController) Preview() {
 		return
 	}
 
-	var orgCLA *models.OrgCLA
-	orgCLA, statusCode, errCode, reason = canAccessOrgCLA(&this.Controller, orgCLAID)
-	if reason != nil {
-		return
-	}
+	/*
+		var orgCLA *models.OrgCLA
+		orgCLA, statusCode, errCode, reason = canAccessOrgCLA(&this.Controller, orgCLAID)
+		if reason != nil {
+			return
+		}
 
-	if isNotCorpCLA(orgCLA) {
-		reason = fmt.Errorf("not cla applied to corp")
-		errCode = util.ErrInvalidParameter
-		statusCode = 400
-		return
-	}
+		if isNotCorpCLA(orgCLA) {
+			reason = fmt.Errorf("not cla applied to corp")
+			errCode = util.ErrInvalidParameter
+			statusCode = 400
+			return
+		}
 
-	cla := &models.CLA{ID: orgCLA.CLAID}
-	if err := cla.Get(); err != nil {
-		reason = err
-		return
-	}
+		cla := &models.CLA{ID: orgCLA.CLAID}
+		if err := cla.Get(); err != nil {
+			reason = err
+			return
+		}
 
-	value := map[string]string{}
-	for _, item := range cla.Fields {
-		value[item.ID] = ""
-	}
+		value := map[string]string{}
+		for _, item := range cla.Fields {
+			value[item.ID] = ""
+		}
 
-	signing := models.CorporationSigning{
-		CorporationSigningBasicInfo: dbmodels.CorporationSigningBasicInfo{
-			AdminEmail: "abc@blank_pdf.com",
-		},
-		Info: dbmodels.TypeSigningInfo(value),
-	}
+		signing := models.CorporationSigning{
+			CorporationSigningBasicInfo: dbmodels.CorporationSigningBasicInfo{
+				AdminEmail: "abc@blank_pdf.com",
+			},
+			Info: dbmodels.TypeSigningInfo(value),
+		}
 
-	pdf.GetPDFGenerator().GenPDFForCorporationSigning(orgCLA, &signing, cla)
-	// TODO: not finished
+		pdf.GetPDFGenerator().GenPDFForCorporationSigning(orgCLA, &signing, cla)
+		TODO: not finished
+	*/
 }

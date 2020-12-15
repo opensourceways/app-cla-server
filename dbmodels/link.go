@@ -3,6 +3,8 @@ package dbmodels
 import (
 	"fmt"
 	"strings"
+
+	"github.com/opensourceways/app-cla-server/util"
 )
 
 type OrgRepo struct {
@@ -16,6 +18,10 @@ func (this OrgRepo) String() string {
 		return fmt.Sprintf("%s/%s", this.Platform, this.OrgID)
 	}
 	return fmt.Sprintf("%s/%s/%s", this.Platform, this.OrgID, this.RepoID)
+}
+
+func (this OrgRepo) ProjectURL() string {
+	return util.ProjectURL(this.Platform, this.OrgID, this.RepoID)
 }
 
 func ParseToOrgRepo(s string) OrgRepo {

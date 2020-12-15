@@ -10,6 +10,7 @@ import (
 	platformAuth "github.com/opensourceways/app-cla-server/code-platform-auth"
 	"github.com/opensourceways/app-cla-server/code-platform-auth/platforms"
 	"github.com/opensourceways/app-cla-server/conf"
+	"github.com/opensourceways/app-cla-server/dbmodels"
 	"github.com/opensourceways/app-cla-server/models"
 	"github.com/opensourceways/app-cla-server/util"
 )
@@ -98,7 +99,7 @@ func (this *AuthController) genACPayload(platform, permission, platformToken str
 	}
 
 	orgm := map[string]bool{}
-	links := map[string]string{}
+	links := map[string]dbmodels.OrgInfo{}
 	if permission == PermissionOwnerOfOrg {
 		orgs, err := pt.ListOrg()
 		if err == nil {
@@ -108,7 +109,7 @@ func (this *AuthController) genACPayload(platform, permission, platformToken str
 
 			if r, err := models.ListLinks(platform, orgs); err == nil {
 				for i := range r {
-					links[r[i].LinkID] = r[i].OrgRepo.String()
+					links[r[i].LinkID] = r[i].OrgInfo
 				}
 			}
 		}
@@ -188,20 +189,31 @@ func (this *AuthController) Get() {
 }
 
 type acForCodePlatformPayload struct {
-	User          string            `json:"user"`
-	Email         string            `json:"email"`
-	Platform      string            `json:"platform"`
-	PlatformToken string            `json:"platform_token"`
-	Orgs          map[string]bool   `json:"orgs"`
-	Links         map[string]string `json:links`
+	User          string `json:"user"`
+	Email         string `json:"email"`
+	Platform      string `json:"platform"`
+	PlatformToken string `json:"platform_token"`
+
+	Orgs  map[string]bool             `json:"orgs"`
+	Links map[string]dbmodels.OrgInfo `json:links`
 }
 
-func (this *acForCodePlatformPayload) isOwnerOfLink(link string) *failedResult {
+func (this *acForCodePlatformPayload) orgInfo(linkID string) *dbmodels.OrgInfo {
 	if this.Links == nil {
-		this.Links = map[string]string{}
+		return nil
 	}
 
-	if this.Links[link] != "" {
+	if v, ok := this.Links[linkID]; ok {
+		return &v
+	}
+	return nil
+}
+func (this *acForCodePlatformPayload) isOwnerOfLink(link string) *failedResult {
+	if this.Links == nil {
+		this.Links = map[string]dbmodels.OrgInfo{}
+	}
+
+	if _, ok := this.Links[link]; ok {
 		return nil
 	}
 
@@ -214,7 +226,7 @@ func (this *acForCodePlatformPayload) isOwnerOfLink(link string) *failedResult {
 		return err
 	}
 
-	this.Links[link] = orgInfo.OrgRepo.String()
+	this.Links[link] = *orgInfo
 	return nil
 }
 

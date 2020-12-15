@@ -31,9 +31,7 @@ type CorporationManagerCheckResult struct {
 	Email            string
 	InitialPWChanged bool
 
-	Platform string
-	OrgID    string
-	RepoID   string
+	OrgInfo
 }
 
 type CorporationManagerListResult struct {

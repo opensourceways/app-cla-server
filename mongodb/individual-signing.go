@@ -78,12 +78,12 @@ func (this *client) UpdateIndividualSigning(linkID, email string, enabled bool) 
 }
 
 func (this *client) IsIndividualSigned(orgRepo *dbmodels.OrgRepo, email string) (bool, error) {
-	identity := orgIdentity(orgRepo)
+	identity := orgRepo.String()
 
 	docFilter := bson.M{
 		fieldLinkStatus: linkStatusReady,
 		fieldOrgIdentity: bson.M{"$in": bson.A{
-			genOrgIdentity(orgRepo.Platform, orgRepo.OrgID, ""),
+			dbmodels.OrgRepo{Platform: orgRepo.Platform, OrgID: orgRepo.OrgID}.String(),
 			identity,
 		}},
 	}

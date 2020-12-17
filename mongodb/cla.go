@@ -4,10 +4,10 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/astaxie/beego"
 	"go.mongodb.org/mongo-driver/bson"
 
 	"github.com/opensourceways/app-cla-server/dbmodels"
-	"github.com/opensourceways/app-cla-server/util"
 )
 
 func fieldNameOfCLA(applyTo string) string {
@@ -62,7 +62,7 @@ func (this *client) HasCLA(linkID, applyTo, language string) (bool, error) {
 	return false, nil
 }
 
-func (this *client) AddCLA(linkID, applyTo string, cla *dbmodels.CLA) error {
+func (this *client) AddCLA(linkID, applyTo string, cla *dbmodels.CLACreateOption) error {
 	body, err := toDocOfCLA(cla)
 	if err != nil {
 		return err
@@ -95,7 +95,7 @@ func (this *client) DeleteCLA(linkID, applyTo, language string) error {
 	return withContext(f)
 }
 
-func (this *client) GetCLAByType(orgRepo *dbmodels.OrgRepo, applyTo string) ([]dbmodels.CLA, error) {
+func (this *client) GetCLAByType(orgRepo *dbmodels.OrgRepo, applyTo string) ([]dbmodels.CLADetail, error) {
 	var project bson.M
 	if applyTo == dbmodels.ApplyToIndividual {
 		project = bson.M{fieldIndividualCLAs: 1}
@@ -192,13 +192,16 @@ func (this *client) GetCLAInfoToSign(linkID, claLang, applyTo string) (*dbmodels
 	}, nil
 }
 
-func toModelOfCLAs(data []dCLA) []dbmodels.CLA {
+func toModelOfCLAs(data []dCLA) []dbmodels.CLADetail {
 	if data == nil {
 		return nil
 	}
 
-	f := func(item *dCLA) *dbmodels.CLA {
-		cla := dbmodels.CLA{Text: item.Text}
+	f := func(item *dCLA) *dbmodels.CLADetail {
+		cla := dbmodels.CLADetail{
+			Text:    item.Text,
+			CLAHash: item.CLAHash,
+		}
 
 		cla.URL = item.URL
 		cla.Language = item.Language
@@ -220,21 +223,23 @@ func toModelOfCLAs(data []dCLA) []dbmodels.CLA {
 		return &cla
 	}
 
-	r := make([]dbmodels.CLA, 0, len(data))
+	r := make([]dbmodels.CLADetail, 0, len(data))
 	for i := range data {
 		r = append(r, *f(&data[i]))
 	}
 	return r
 }
 
-func toDocOfCLA(cla *dbmodels.CLA) (bson.M, error) {
+func toDocOfCLA(cla *dbmodels.CLACreateOption) (bson.M, error) {
+	beego.Info(fmt.Sprintf("toDocOfCLA: %#v", cla.CLAData))
 	info := &dCLA{
-		URL: cla.URL,
+		URL:  cla.URL,
+		Text: cla.Text,
 		DCLAInfo: DCLAInfo{
 			Fields:           toDocOfCLAField(cla.Fields),
 			Language:         cla.Language,
-			CLAHash:          util.Md5sumOfBytes(cla.Text),
-			OrgSignatureHash: util.Md5sumOfBytes(cla.OrgSignature),
+			CLAHash:          cla.CLAHash,
+			OrgSignatureHash: cla.OrgSignatureHash,
 		},
 	}
 	r, err := structToMap(info)
@@ -242,10 +247,8 @@ func toDocOfCLA(cla *dbmodels.CLA) (bson.M, error) {
 		return nil, err
 	}
 
-	r["text"] = cla.Text
-
 	if cla.OrgSignature != nil {
-		r[fieldOrgSignature] = cla.OrgSignature
+		r[fieldOrgSignature] = *cla.OrgSignature
 	}
 
 	return r, nil

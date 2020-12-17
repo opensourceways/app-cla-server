@@ -16,22 +16,22 @@ const (
 	fieldLinkID         = "link_id"
 	fieldSignings       = "signings"
 	fieldCLALang        = "cla_lang"
-	fieldSingingCLAInfo = "cla_info"
+	fieldSingingCLAInfo = "cla_infos"
 	fieldIndividualCLAs = "individual_clas"
 	fieldCorpCLAs       = "corp_clas"
+	fieldCorpManagers   = "corp_managers"
+	fieldOrgSignature   = "org_signature"
 
 	// 'ready' means the doc is ready to record the signing data currently.
-	// 'unready' means the doc is not ready.
 	// 'deleted' means the signing data is invalid.
 	linkStatusReady   = "ready"
-	linkStatusUnready = "unready"
 	linkStatusDeleted = "deleted"
 )
 
 type dCorpSigningPDF struct {
 	LinkID string `bson:"link_id" json:"link_id" required:"true"`
 	CorpID string `bson:"corp_id" json:"corp_id" required:"true"`
-	PDF    []byte `bson:"pdf" json:"pdf,omitempty"`
+	PDF    []byte `bson:"pdf" json:"-"`
 }
 
 type DCLAInfo struct {
@@ -52,13 +52,13 @@ type cLink struct {
 	OrgEmail  string `bson:"org_email" json:"org_email" required:"true"`
 	Submitter string `bson:"submitter" json:"submitter" required:"true"`
 
-	IndividualCLAs []dCLA `bson:"individual_clas"`
-	CorpCLAs       []dCLA `bson:"corp_clas"`
+	IndividualCLAs []dCLA `bson:"individual_clas" json:"-"`
+	CorpCLAs       []dCLA `bson:"corp_clas" json:"-"`
 }
 
 type dCLA struct {
 	URL          string `bson:"url" json:"url" required:"true"`
-	Text         []byte `bson:"text" json:"text" required:"true"`
+	Text         string `bson:"text" json:"text" required:"true"`
 	OrgSignature []byte `bson:"org_signature" json:"-"`
 
 	DCLAInfo `bson:",inline"`
@@ -74,11 +74,11 @@ type dField struct {
 
 type cIndividualSigning struct {
 	LinkID      string `bson:"link_id" json:"link_id" required:"true"`
-	LinkStatus  string `bson:"link_status" json:"link_status"`
-	OrgIdentity string `bson:"org_identity" json:"org_identity"`
+	LinkStatus  string `bson:"link_status" json:"link_status" required:"true"`
+	OrgIdentity string `bson:"org_identity" json:"org_identity" required:"true"`
 
-	CLAInfo  []DCLAInfo           `bson:"cla_info"`
-	Signings []dIndividualSigning `bson:"signings"`
+	CLAInfos []DCLAInfo           `bson:"cla_infos" json:"cla_infos" required:"true"`
+	Signings []dIndividualSigning `bson:"signings" json:"-"`
 }
 
 type dIndividualSigning struct {
@@ -95,15 +95,15 @@ type dIndividualSigning struct {
 
 type cCorpSigning struct {
 	LinkID     string `bson:"link_id" json:"link_id" required:"true"`
-	LinkStatus string `bson:"link_status" json:"link_status"`
+	LinkStatus string `bson:"link_status" json:"link_status" required:"true"`
 
-	OrgIdentity string `bson:"org_identity" json:"org_identity"`
-	OrgEmail    string `bson:"org_email" json:"org_email"`
-	OrgAlias    string `bson:"org_alias" json:"org_alias"`
+	OrgIdentity string `bson:"org_identity" json:"org_identity" required:"true"`
+	OrgEmail    string `bson:"org_email" json:"org_email" required:"true"`
+	OrgAlias    string `bson:"org_alias" json:"org_alias" required:"true"`
 
-	CLAInfo  []DCLAInfo     `bson:"cla_info"`
-	Signings []dCorpSigning `bson:"signings"`
-	Managers []dCorpManager `bson:"corp_managers"`
+	CLAInfos []DCLAInfo     `bson:"cla_infos" json:"cla_infos" required:"true"`
+	Signings []dCorpSigning `bson:"signings" json:"-"`
+	Managers []dCorpManager `bson:"corp_managers" json:"-"`
 }
 
 type dCorpSigning struct {

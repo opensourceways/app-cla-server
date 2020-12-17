@@ -14,7 +14,7 @@ type CorporationSigningController struct {
 }
 
 func (this *CorporationSigningController) Prepare() {
-	if getRouterPattern(&this.Controller) == "/v1/corporation-signing/:link_id" {
+	if getRouterPattern(&this.Controller) == "/v1/corporation-signing/:link_id/:cla_lang/:cla_hash" {
 		// signing
 		this.apiPrepare("")
 	} else {

@@ -1,7 +1,10 @@
 package controllers
 
 import (
+	"encoding/json"
 	"fmt"
+
+	"github.com/astaxie/beego"
 
 	"github.com/opensourceways/app-cla-server/dbmodels"
 	"github.com/opensourceways/app-cla-server/models"
@@ -37,8 +40,8 @@ func (this *LinkController) Link() {
 		return
 	}
 
-	var input models.LinkCreateOption
-	if err := this.fetchInputPayload(&input); err != nil {
+	input, err := this.fetchPayloadOfCreatingLink()
+	if err != nil {
 		this.sendFailedResponse(400, util.ErrInvalidParameter, err, doWhat)
 		return
 	}
@@ -49,13 +52,15 @@ func (this *LinkController) Link() {
 			this.sendFailedResultAsResp(fr, doWhat)
 			return
 		}
-		input.CorpCLA.OrgSignature = data
+		input.CorpCLA.SetOrgSignature(&data)
 	}
 
 	if ec, err := input.Validate(); err != nil {
 		this.sendFailedResponse(400, ec, err, doWhat)
 		return
 	}
+
+	beego.Info("abc")
 
 	if r := pl.isOwnerOfOrg(input.OrgID); r != nil {
 		this.sendFailedResponse(r.statusCode, r.errCode, r.reason, doWhat)
@@ -87,22 +92,31 @@ func (this *LinkController) Link() {
 	}
 
 	linkID := genLinkID(orgRepo)
-	if fr := this.writeLocalFileOfLink(&input, linkID); fr != nil {
+	if fr := this.writeLocalFileOfLink(input, linkID); fr != nil {
 		this.sendFailedResponse(fr.statusCode, fr.errCode, fr.reason, doWhat)
 		return
 	}
 
-	if fr := this.initializeSigning(&input, linkID, orgRepo); fr != nil {
+	if fr := this.initializeSigning(input, linkID, orgRepo); fr != nil {
 		this.sendFailedResponse(fr.statusCode, fr.errCode, fr.reason, doWhat)
 		return
 	}
 
-	if _, err := input.Create(pl.User, linkID); err != nil {
+	beego.Info("input.Create")
+	if _, err := input.Create(linkID, pl.User); err != nil {
 		this.sendFailedResponse(0, "", err, doWhat)
 		return
 	}
 
 	this.sendResponse("create org cla successfully", 0)
+}
+
+func (this *LinkController) fetchPayloadOfCreatingLink() (*models.LinkCreateOption, error) {
+	input := &models.LinkCreateOption{}
+	if err := json.Unmarshal([]byte(this.Ctx.Request.FormValue("data")), input); err != nil {
+		return nil, fmt.Errorf("invalid input payload: %s", err.Error())
+	}
+	return input, nil
 }
 
 func (this *LinkController) createFileLock(path string) error {
@@ -115,25 +129,23 @@ func (this *LinkController) createFileLock(path string) error {
 }
 
 func (this *LinkController) writeLocalFileOfLink(input *models.LinkCreateOption, linkID string) *failedResult {
-	if input.CorpCLA != nil {
-		cla := input.CorpCLA
-
+	cla := input.CorpCLA
+	if cla != nil {
 		path := genCLAFilePath(linkID, dbmodels.ApplyToCorporation, cla.Language)
-		if err := input.CorpCLA.SaveCLAAtLocal(path); err != nil {
+		if err := cla.SaveCLAAtLocal(path); err != nil {
 			return newFailedResult(500, util.ErrSystemError, err)
 		}
 
 		path = genOrgSignatureFilePath(linkID, cla.Language)
-		if err := input.CorpCLA.SaveSignatueAtLocal(path); err != nil {
+		if err := cla.SaveSignatueAtLocal(path); err != nil {
 			return newFailedResult(500, util.ErrSystemError, err)
 		}
 	}
 
-	if input.IndividualCLA != nil {
-		cla := input.IndividualCLA
-
+	cla = input.IndividualCLA
+	if cla != nil {
 		path := genCLAFilePath(linkID, dbmodels.ApplyToIndividual, cla.Language)
-		if err := input.CorpCLA.SaveCLAAtLocal(path); err != nil {
+		if err := cla.SaveCLAAtLocal(path); err != nil {
 			return newFailedResult(500, util.ErrSystemError, err)
 		}
 	}
@@ -142,23 +154,23 @@ func (this *LinkController) writeLocalFileOfLink(input *models.LinkCreateOption,
 }
 
 func (this *LinkController) initializeSigning(input *models.LinkCreateOption, linkID string, orgRepo *dbmodels.OrgRepo) *failedResult {
-	if input.CorpCLA != nil {
+	cla := input.CorpCLA
+	if cla != nil {
 		orgInfo := dbmodels.OrgInfo{
 			OrgRepo:  *orgRepo,
 			OrgEmail: input.OrgEmail,
 			OrgAlias: input.OrgAlias,
 		}
-		info := input.CorpCLA.GenCLAInfo()
+		info := cla.GenCLAInfo()
 
 		if err := models.InitializeCorpSigning(linkID, &orgInfo, info); err != nil {
 			return newFailedResult(500, util.ErrSystemError, err)
 		}
 	}
 
-	if input.IndividualCLA != nil {
-		info := input.CorpCLA.GenCLAInfo()
-
-		if err := models.InitializeIndividualSigning(linkID, orgRepo, info); err != nil {
+	cla = input.IndividualCLA
+	if cla != nil {
+		if err := models.InitializeIndividualSigning(linkID, orgRepo, cla.GenCLAInfo()); err != nil {
 			return newFailedResult(500, util.ErrSystemError, err)
 		}
 	}

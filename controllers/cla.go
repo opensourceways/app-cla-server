@@ -50,7 +50,12 @@ func (this *CLAController) Add() {
 			this.sendFailedResponse(r.statusCode, r.errCode, r.reason, doWhat)
 			return
 		}
-		input.OrgSignature = data
+		input.SetOrgSignature(&data)
+	}
+
+	if ec, err := input.Validate(applyTo); err != nil {
+		this.sendFailedResponse(400, ec, err, doWhat)
+		return
 	}
 
 	if r := addCLA(linkID, applyTo, input, pl); r != nil {
@@ -91,11 +96,36 @@ func (this *CLAController) Delete() {
 	this.sendResponse("delete cla successfully", 0)
 }
 
-func addCLA(linkID, applyTo string, input *models.CLACreateOption, pl *acForCodePlatformPayload) *failedResult {
-	if ec, err := input.Validate(); err != nil {
-		return newFailedResult(400, ec, err)
+// @Title List
+// @Description list clas of link
+// @Param	link_id		path 	string	true		"link id"
+// @Success 200 {string} delete success!
+// @Failure 403 uid is empty
+// @router /:link_id [get]
+func (this *CLAController) List() {
+	doWhat := "delete cla"
+	linkID := this.GetString(":link_id")
+
+	pl, err := this.tokenPayloadOfCodePlatform()
+	if err != nil {
+		this.sendFailedResponse(500, util.ErrSystemError, err, doWhat)
+		return
+	}
+	if err := pl.isOwnerOfLink(linkID); err != nil {
+		this.sendFailedResponse(err.statusCode, err.errCode, err.reason, doWhat)
+		return
 	}
 
+	clas, err := models.GetAllCLA(linkID)
+	if err != nil {
+		this.sendFailedResponse(0, "", err, doWhat)
+		return
+	}
+
+	this.sendResponse(clas, 0)
+}
+
+func addCLA(linkID, applyTo string, input *models.CLACreateOption, pl *acForCodePlatformPayload) *failedResult {
 	orgInfo := pl.orgInfo(linkID)
 	filePath := genOrgFileLockPath(orgInfo.Platform, orgInfo.OrgID, orgInfo.RepoID)
 	unlock, err := util.Lock(filePath)

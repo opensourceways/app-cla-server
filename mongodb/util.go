@@ -45,7 +45,7 @@ func structToMap(info interface{}) (bson.M, error) {
 }
 
 func addCorporationID(email string, body bson.M) {
-	body[fieldCorporationID] = genCorpID(email)
+	body[fieldCorpID] = genCorpID(email)
 }
 
 func genCorpID(email string) string {
@@ -53,7 +53,7 @@ func genCorpID(email string) string {
 }
 
 func filterOfCorpID(email string) bson.M {
-	return bson.M{fieldCorporationID: genCorpID(email)}
+	return bson.M{fieldCorpID: genCorpID(email)}
 }
 
 func filterOfDocID(oid primitive.ObjectID) bson.M {
@@ -62,31 +62,9 @@ func filterOfDocID(oid primitive.ObjectID) bson.M {
 
 func indexOfCorpManagerAndIndividual(email string) bson.M {
 	return bson.M{
-		fieldCorporationID: genCorpID(email),
-		"email":            email,
+		fieldCorpID: genCorpID(email),
+		"email":     email,
 	}
-}
-
-func filterOfOrgRepo(platform, org, repo string) (bson.M, error) {
-	if !(platform != "" && org != "") {
-		return nil, dbmodels.DBError{
-			ErrCode: util.ErrNoPlatformOrOrg,
-			Err:     fmt.Errorf("platform or org is empty"),
-		}
-	}
-
-	if repo == "" {
-		return bson.M{
-			"platform": platform,
-			"org_id":   org,
-			fieldRepo:  "",
-		}, nil
-	}
-
-	return bson.M{
-		"platform": platform,
-		fieldRepo:  dbValueOfRepo(org, repo),
-	}, nil
 }
 
 func isErrorOfNotSigned(err error) bool {
@@ -287,27 +265,6 @@ func conditionTofilterArray(filterOfArray bson.M) bson.M {
 	return bson.M{"$and": cond}
 }
 
-func getSigningDoc(v []OrgCLA, isOk func(doc *OrgCLA) bool) (*OrgCLA, error) {
-	if len(v) == 0 {
-		return nil, dbmodels.DBError{
-			ErrCode: util.ErrNoDBRecord,
-			Err:     fmt.Errorf("can't find any record"),
-		}
-	}
-
-	for i := 0; i < len(v); i++ {
-		doc := &v[i]
-		if isOk(doc) {
-			return doc, nil
-		}
-	}
-
-	return nil, dbmodels.DBError{
-		ErrCode: util.ErrHasNotSigned,
-		Err:     fmt.Errorf("has not signed"),
-	}
-}
-
 func (this *client) replaceDoc(ctx context.Context, collection string, filterOfDoc, docInfo bson.M) (string, error) {
 	upsert := true
 
@@ -424,17 +381,6 @@ func (this *client) insertDoc(ctx context.Context, collection string, docInfo bs
 	}
 
 	return toUID(r.InsertedID)
-}
-
-func orgIdentity(v *dbmodels.OrgRepo) string {
-	return genOrgIdentity(v.Platform, v.OrgID, v.RepoID)
-}
-
-func genOrgIdentity(platform, org, repo string) string {
-	if repo == "" {
-		return fmt.Sprintf("%s/%s", platform, org)
-	}
-	return fmt.Sprintf("%s/%s/%s", platform, org, repo)
 }
 
 func arrayFilterByElemMatch(array string, exists bool, cond, filter bson.M) {

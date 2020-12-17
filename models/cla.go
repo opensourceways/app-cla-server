@@ -17,18 +17,27 @@ import (
 type CLACreateOption struct {
 	dbmodels.CLAData
 
-	OrgSignature []byte `json:"-"`
-	content      []byte `json:"-"`
+	orgSignature *[]byte `json:"-"`
+	content      *[]byte `json:"-"`
 }
 
-func (this *CLACreateOption) AddCLA(linkID string) error {
-	cla := dbmodels.CLA{
-		Text:         this.content,
-		CLAData:      this.CLAData,
-		OrgSignature: this.OrgSignature,
-	}
+func (this *CLACreateOption) SetOrgSignature(data *[]byte) {
+	this.orgSignature = data
+}
 
-	return dbmodels.GetDB().AddCLA(linkID, dbmodels.ApplyToIndividual, &cla)
+func (this *CLACreateOption) toCLACreateOption() *dbmodels.CLACreateOption {
+	return &dbmodels.CLACreateOption{
+		CLADetail: dbmodels.CLADetail{
+			CLAData: this.CLAData,
+			Text:    string(*this.content),
+			CLAHash: util.Md5sumOfBytes(this.content),
+		},
+		OrgSignature:     this.orgSignature,
+		OrgSignatureHash: util.Md5sumOfBytes(this.orgSignature),
+	}
+}
+func (this *CLACreateOption) AddCLA(linkID string) error {
+	return dbmodels.GetDB().AddCLA(linkID, dbmodels.ApplyToIndividual, this.toCLACreateOption())
 }
 
 func (this *CLACreateOption) AddCLAInfo(linkID string) error {
@@ -37,7 +46,7 @@ func (this *CLACreateOption) AddCLAInfo(linkID string) error {
 
 func (this *CLACreateOption) GenCLAInfo() *dbmodels.CLAInfo {
 	return &dbmodels.CLAInfo{
-		OrgSignatureHash: util.Md5sumOfBytes(this.OrgSignature),
+		OrgSignatureHash: util.Md5sumOfBytes(this.orgSignature),
 		CLAHash:          util.Md5sumOfBytes(this.content),
 		CLALang:          this.Language,
 		Fields:           this.Fields,
@@ -45,12 +54,12 @@ func (this *CLACreateOption) GenCLAInfo() *dbmodels.CLAInfo {
 }
 
 func (this *CLACreateOption) SaveSignatueAtLocal(path string) error {
-	if this.OrgSignature == nil {
+	if this.orgSignature == nil {
 		return nil
 	}
 
 	os.Remove(path)
-	return ioutil.WriteFile(path, this.OrgSignature, 0644)
+	return ioutil.WriteFile(path, *this.orgSignature, 0644)
 }
 
 func (this *CLACreateOption) SaveCLAAtLocal(path string) error {
@@ -59,10 +68,10 @@ func (this *CLACreateOption) SaveCLAAtLocal(path string) error {
 	}
 
 	os.Remove(path)
-	return ioutil.WriteFile(path, this.content, 0644)
+	return ioutil.WriteFile(path, *this.content, 0644)
 }
 
-func (this *CLACreateOption) Validate() (string, error) {
+func (this *CLACreateOption) Validate(applyTo string) (string, error) {
 	if len(this.Fields) <= 0 {
 		return util.ErrInvalidParameter, fmt.Errorf("no fields")
 	}
@@ -83,6 +92,10 @@ func (this *CLACreateOption) Validate() (string, error) {
 	}
 	this.content = text
 
+	if applyTo == dbmodels.ApplyToCorporation && this.orgSignature == nil {
+		return util.ErrSystemError, fmt.Errorf("no signatrue")
+	}
+
 	return "", nil
 }
 
@@ -90,7 +103,7 @@ func DeleteCLA(linkID, applyTo, language string) error {
 	return dbmodels.GetDB().DeleteCLA(linkID, applyTo, language)
 }
 
-func GetCLAByType(orgRepo *dbmodels.OrgRepo, applyTo string) ([]dbmodels.CLA, error) {
+func GetCLAByType(orgRepo *dbmodels.OrgRepo, applyTo string) ([]dbmodels.CLADetail, error) {
 	return dbmodels.GetDB().GetCLAByType(orgRepo, applyTo)
 }
 
@@ -111,7 +124,7 @@ func DownloadBlankSignature(language string) ([]byte, error) {
 	return dbmodels.GetDB().DownloadBlankSignature(language)
 }
 
-func downloadCLA(url string) ([]byte, error) {
+func downloadCLA(url string) (*[]byte, error) {
 	var resp *http.Response
 
 	for i := 0; i < 3; i++ {
@@ -134,7 +147,7 @@ func downloadCLA(url string) ([]byte, error) {
 	}
 
 	if strings.HasPrefix(http.DetectContentType(data), "text/plain") {
-		return data, nil
+		return &data, nil
 	}
 
 	return nil, fmt.Errorf("it is not the content of cla")

@@ -9,7 +9,7 @@ import (
 func docFilterOfCorpSigningPDF(linkID string, email string) bson.M {
 	return bson.M{
 		fieldLinkID:        linkID,
-		fieldCorporationID: genCorpID(email),
+		fieldCorpID: genCorpID(email),
 	}
 }
 
@@ -75,7 +75,7 @@ func (this *client) ListCorpsWithPDFUploaded(linkID string) ([]string, error) {
 		return this.getDocs(
 			ctx, this.corpPDFCollection,
 			bson.M{fieldLinkID: linkID},
-			bson.M{fieldCorporationID: 1}, &v,
+			bson.M{fieldCorpID: 1}, &v,
 		)
 	}
 

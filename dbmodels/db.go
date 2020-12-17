@@ -73,9 +73,9 @@ type ICLASigning interface {
 
 type ICLA interface {
 	HasCLA(linkID, applyTo, language string) (bool, error)
-	AddCLA(linkID, applyTo string, cla *CLA) error
+	AddCLA(linkID, applyTo string, cla *CLACreateOption) error
 	DeleteCLA(linkID, applyTo, language string) error
-	GetCLAByType(orgRepo *OrgRepo, applyTo string) ([]CLA, error)
+	GetCLAByType(orgRepo *OrgRepo, applyTo string) ([]CLADetail, error)
 	GetAllCLA(linkID string) (*CLAOfLink, error)
 }
 
@@ -85,9 +85,7 @@ type IVerificationCode interface {
 }
 
 type IPDF interface {
-	UploadOrgSignature(orgCLAID string, pdf []byte) error
 	DownloadOrgSignature(orgCLAID string) ([]byte, error)
-	DownloadOrgSignatureByMd5(orgCLAID, md5sum string) ([]byte, error)
 
 	UploadBlankSignature(language string, pdf []byte) error
 	DownloadBlankSignature(language string) ([]byte, error)

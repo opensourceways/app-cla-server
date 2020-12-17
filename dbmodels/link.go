@@ -59,19 +59,15 @@ type LinkInfo struct {
 }
 
 type CLAOfLink struct {
-	IndividualCLAs []CLA `json:"individual_clas"`
-	CorpCLAs       []CLA `json:"corp_clas"`
+	IndividualCLAs []CLADetail `json:"individual_clas"`
+	CorpCLAs       []CLADetail `json:"corp_clas"`
 }
 
 type LinkCreateOption struct {
 	LinkInfo
 
-	CLAOfLink
-}
-
-type OrgCLAForSigning struct {
-	OrgInfo
-	CLAInfo *CLA
+	IndividualCLAs []CLACreateOption `json:"individual_clas"`
+	CorpCLAs       []CLACreateOption `json:"corp_clas"`
 }
 
 type LinkListOption struct {

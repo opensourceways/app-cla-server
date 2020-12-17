@@ -81,7 +81,7 @@ func (this *client) CheckCorporationManagerExist(opt dbmodels.CorporationManager
 		elemFilter = elemFilterOfCorpManager(opt.Email)
 	} else {
 		elemFilter = bson.M{
-			fieldCorporationID: opt.EmailSuffix,
+			fieldCorpID: opt.EmailSuffix,
 			"id":               opt.ID,
 		}
 	}

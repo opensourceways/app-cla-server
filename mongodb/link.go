@@ -2,7 +2,9 @@ package mongodb
 
 import (
 	"context"
+	"fmt"
 
+	"github.com/astaxie/beego"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 
@@ -34,11 +36,14 @@ func (this *client) HasLink(orgRepo *dbmodels.OrgRepo) (bool, error) {
 }
 
 func (this *client) CreateLink(info *dbmodels.LinkCreateOption) (string, error) {
+	beego.Info(" CreateLink")
+
 	doc, err := toDocOfLink(info)
 	if err != nil {
 		return "", err
 	}
 
+	beego.Info(fmt.Sprintf("%#v", doc))
 	docFilter := docFilterOfLink(&info.OrgRepo)
 
 	docID := ""
@@ -75,7 +80,7 @@ func (this *client) ListLinks(opt *dbmodels.LinkListOption) ([]dbmodels.LinkInfo
 	filter := bson.M{
 		"platform":      opt.Platform,
 		"org_id":        bson.M{"$in": opt.Orgs},
-		fieldLinkStatus: bson.M{"$ne": linkStatusDeleted},
+		fieldLinkStatus: linkStatusReady,
 	}
 
 	project := bson.M{
@@ -151,6 +156,7 @@ func toModelOfOrgInfo(doc *cLink) dbmodels.OrgInfo {
 }
 
 func toDocOfLink(info *dbmodels.LinkCreateOption) (bson.M, error) {
+	beego.Info(fmt.Sprintf("toDocOfLink: %#v", info))
 	opt := cLink{
 		LinkID:     info.LinkID,
 		Platform:   info.Platform,
@@ -159,17 +165,17 @@ func toDocOfLink(info *dbmodels.LinkCreateOption) (bson.M, error) {
 		OrgAlias:   info.OrgAlias,
 		OrgEmail:   info.OrgEmail,
 		Submitter:  info.Submitter,
-		LinkStatus: linkStatusUnready,
+		LinkStatus: linkStatusReady,
 	}
 	body, err := structToMap(opt)
 	if err != nil {
 		return nil, err
 	}
 
-	convertCLAs := func(field string, v []dbmodels.CLA) error {
+	convertCLAs := func(field string, v []dbmodels.CLACreateOption) error {
 		clas := make(bson.A, 0, len(v))
-		for _, item := range v {
-			m, err := toDocOfCLA(&item)
+		for i := range v {
+			m, err := toDocOfCLA(&v[i])
 			if err != nil {
 				return err
 			}
@@ -181,11 +187,15 @@ func toDocOfLink(info *dbmodels.LinkCreateOption) (bson.M, error) {
 	}
 
 	if len(info.IndividualCLAs) > 0 {
-		convertCLAs(fieldIndividualCLAs, info.IndividualCLAs)
+		if err := convertCLAs(fieldIndividualCLAs, info.IndividualCLAs); err != nil {
+			return nil, err
+		}
 	}
 
 	if len(info.CorpCLAs) > 0 {
-		convertCLAs(fieldCorpCLAs, info.CorpCLAs)
+		if err := convertCLAs(fieldCorpCLAs, info.CorpCLAs); err != nil {
+			return nil, err
+		}
 	}
 
 	return body, nil

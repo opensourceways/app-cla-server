@@ -22,7 +22,7 @@ const (
 	headerToken         = "Token"
 	apiAccessController = "access_controller"
 
-	fileNameOfUploadingOrgSignatue = "signature_page"
+	fileNameOfUploadingOrgSignatue = "org_signature_file"
 )
 
 func buildStatusAndErrCode(statusCode int, errCode string, reason error) (int, string) {
@@ -393,5 +393,9 @@ func genOrgSignatureFilePath(linkID, language string) string {
 }
 
 func genLinkID(v *dbmodels.OrgRepo) string {
-	return fmt.Sprintf("%s_%s_%s:%d", v.Platform, v.OrgID, v.RepoID, time.Now().UnixNano())
+	repo := ""
+	if v.RepoID != "" {
+		repo = fmt.Sprintf("_%s", v.RepoID)
+	}
+	return fmt.Sprintf("%s_%s%s-%d", v.Platform, v.OrgID, repo, time.Now().UnixNano())
 }

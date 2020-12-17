@@ -8,37 +8,32 @@ import (
 	"github.com/opensourceways/app-cla-server/dbmodels"
 )
 
-func toDocOfCLAInfo(info *dbmodels.CLAInfo) (bson.M, error) {
-	v := DCLAInfo{
+func toDocOfCLAInfo(info *dbmodels.CLAInfo) *DCLAInfo {
+	return &DCLAInfo{
 		Language:         info.CLALang,
 		CLAHash:          info.CLAHash,
 		OrgSignatureHash: info.OrgSignatureHash,
 		Fields:           toDocOfCLAField(info.Fields),
 	}
-	return structToMap(&v)
 }
 
 func (this *client) InitializeCorpSigning(linkID string, info *dbmodels.OrgInfo, claInfo *dbmodels.CLAInfo) error {
 	docFilter := bson.M{
-		fieldOrgIdentity: orgIdentity(&info.OrgRepo),
+		fieldOrgIdentity: info.String(),
 		fieldLinkStatus:  linkStatusReady,
 	}
 
-	docOfCLAInfo, err := toDocOfCLAInfo(claInfo)
+	data := cCorpSigning{
+		LinkID:      linkID,
+		LinkStatus:  linkStatusReady,
+		OrgIdentity: info.String(),
+		OrgEmail:    info.OrgEmail,
+		OrgAlias:    info.OrgAlias,
+		CLAInfos:    []DCLAInfo{*toDocOfCLAInfo(claInfo)},
+	}
+	doc, err := structToMap(data)
 	if err != nil {
 		return err
-	}
-
-	doc := bson.M{
-		fieldLinkID:         linkID,
-		fieldOrgEmail:       info.OrgEmail,
-		fieldOrgAlias:       info.OrgAlias,
-		fieldSignings:       "",
-		fieldSingingCLAInfo: bson.A{docOfCLAInfo},
-		fieldCorpManagers:   "",
-	}
-	for k, v := range docFilter {
-		doc[k] = v
 	}
 
 	f := func(ctx context.Context) error {
@@ -51,22 +46,19 @@ func (this *client) InitializeCorpSigning(linkID string, info *dbmodels.OrgInfo,
 
 func (this *client) InitializeIndividualSigning(linkID string, orgRepo *dbmodels.OrgRepo, claInfo *dbmodels.CLAInfo) error {
 	docFilter := bson.M{
-		fieldOrgIdentity: orgIdentity(orgRepo),
+		fieldOrgIdentity: orgRepo.String(),
 		fieldLinkStatus:  linkStatusReady,
 	}
 
-	docOfCLAInfo, err := toDocOfCLAInfo(claInfo)
+	data := cIndividualSigning{
+		LinkID:      linkID,
+		LinkStatus:  linkStatusReady,
+		OrgIdentity: orgRepo.String(),
+		CLAInfos:    []DCLAInfo{*toDocOfCLAInfo(claInfo)},
+	}
+	doc, err := structToMap(data)
 	if err != nil {
 		return err
-	}
-
-	doc := bson.M{
-		fieldLinkID:         linkID,
-		fieldSignings:       "",
-		fieldSingingCLAInfo: bson.A{docOfCLAInfo},
-	}
-	for k, v := range docFilter {
-		doc[k] = v
 	}
 
 	f := func(ctx context.Context) error {

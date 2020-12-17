@@ -34,3 +34,25 @@ const (
 	ErrSystemError               = "system_error"
 	ErrCLAIsUsed                 = "cla_is_used"
 )
+
+type IAppError interface {
+	Error() string
+	ErrCode() string
+}
+
+type AppError struct {
+	Code string
+	Err  error
+}
+
+func (this AppError) Error() string {
+	return this.Err.Error()
+}
+
+func (this AppError) ErrCode() string {
+	return this.Code
+}
+
+func (this AppError) IsErrorOf(code string) bool {
+	return this.Code == code
+}

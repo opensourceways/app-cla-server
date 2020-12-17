@@ -269,17 +269,15 @@ func fetchStringParameter(c *beego.Controller, param string) (string, error) {
 }
 
 func convertDBError(err error) (int, string) {
-	e, ok := dbmodels.IsDBError(err)
-	if !ok {
-		return 500, util.ErrSystemError
-	}
+	return 500, util.ErrSystemError
+	/*
+		e, ok := dbmodels.IsDBError(err)
+		if !ok {
+			return 500, util.ErrSystemError
+		}
 
-	return 400, e.ErrCode
-}
-
-func isNoClaBindingDoc(err error) bool {
-	_, c := convertDBError(err)
-	return c == util.ErrNoCLABindingDoc
+		return 400, e.ErrCode
+	*/
 }
 
 func getRequestMethod(c *beego.Controller) string {

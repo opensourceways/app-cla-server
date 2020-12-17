@@ -37,9 +37,9 @@ func checkVerificationCode(email, code, purpose string) (string, error) {
 		return "", err
 	}
 
-	ec, err := parseErrorOfDBApi(err)
-	if ec == util.ErrNoDBRecord {
+	if err.IsErrorOf(dbmodels.ErrNoDBRecord) {
 		return util.ErrWrongVerificationCode, err
 	}
-	return ec, err
+	e := parseDBError(err)
+	return e.ErrCode(), e.Err
 }

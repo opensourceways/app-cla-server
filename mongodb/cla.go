@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/astaxie/beego"
 	"go.mongodb.org/mongo-driver/bson"
 
 	"github.com/opensourceways/app-cla-server/dbmodels"
@@ -62,7 +61,7 @@ func (this *client) HasCLA(linkID, applyTo, language string) (bool, error) {
 	return false, nil
 }
 
-func (this *client) AddCLA(linkID, applyTo string, cla *dbmodels.CLACreateOption) error {
+func (this *client) AddCLA(linkID, applyTo string, cla *dbmodels.CLACreateOption) *dbmodels.DBError {
 	body, err := toDocOfCLA(cla)
 	if err != nil {
 		return err
@@ -75,13 +74,13 @@ func (this *client) AddCLA(linkID, applyTo string, cla *dbmodels.CLACreateOption
 		claField, false, elemFilterOfCLA(cla.Language), docFilter,
 	)
 
-	f := func(ctx context.Context) error {
+	f := func(ctx context.Context) *dbmodels.DBError {
 		return this.pushArrayElem(
 			ctx, this.linkCollection, claField, docFilter, body,
 		)
 	}
 
-	return withContext(f)
+	return withContextOfDB(f)
 }
 
 func (this *client) DeleteCLA(linkID, applyTo, language string) error {
@@ -95,7 +94,7 @@ func (this *client) DeleteCLA(linkID, applyTo, language string) error {
 	return withContext(f)
 }
 
-func (this *client) GetCLAByType(orgRepo *dbmodels.OrgRepo, applyTo string) ([]dbmodels.CLADetail, error) {
+func (this *client) GetCLAByType(orgRepo *dbmodels.OrgRepo, applyTo string) (string, []dbmodels.CLADetail, error) {
 	var project bson.M
 	if applyTo == dbmodels.ApplyToIndividual {
 		project = bson.M{fieldIndividualCLAs: 1}
@@ -114,13 +113,13 @@ func (this *client) GetCLAByType(orgRepo *dbmodels.OrgRepo, applyTo string) ([]d
 	}
 
 	if err := withContext(f); err != nil {
-		return nil, err
+		return "", nil, err
 	}
 
 	if applyTo == dbmodels.ApplyToIndividual {
-		return toModelOfCLAs(v.IndividualCLAs), nil
+		return v.LinkID, toModelOfCLAs(v.IndividualCLAs), nil
 	}
-	return toModelOfCLAs(v.CorpCLAs), nil
+	return v.LinkID, toModelOfCLAs(v.CorpCLAs), nil
 }
 
 func (this *client) GetAllCLA(linkID string) (*dbmodels.CLAOfLink, error) {
@@ -230,8 +229,7 @@ func toModelOfCLAs(data []dCLA) []dbmodels.CLADetail {
 	return r
 }
 
-func toDocOfCLA(cla *dbmodels.CLACreateOption) (bson.M, error) {
-	beego.Info(fmt.Sprintf("toDocOfCLA: %#v", cla.CLAData))
+func toDocOfCLA(cla *dbmodels.CLACreateOption) (bson.M, *dbmodels.DBError) {
 	info := &dCLA{
 		URL:  cla.URL,
 		Text: cla.Text,

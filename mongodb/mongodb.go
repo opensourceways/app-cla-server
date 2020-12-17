@@ -98,3 +98,9 @@ func withContext(f func(context.Context) error) error {
 	defer cancel()
 	return f(ctx)
 }
+
+func withContextOfDB(f func(context.Context) *dbmodels.DBError) *dbmodels.DBError {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	return f(ctx)
+}

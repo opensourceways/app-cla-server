@@ -2,7 +2,6 @@ package mongodb
 
 import (
 	"context"
-	"fmt"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -46,12 +45,12 @@ func (this *client) CreateVerificationCode(opt dbmodels.VerificationCode) error 
 	return this.doTransaction(f)
 }
 
-func (this *client) GetVerificationCode(opt *dbmodels.VerificationCode) error {
+func (this *client) GetVerificationCode(opt *dbmodels.VerificationCode) *dbmodels.DBError {
 	var v struct {
 		Expiry int64 `bson:"expiry"`
 	}
 
-	f := func(ctx context.Context) error {
+	f := func(ctx context.Context) *dbmodels.DBError {
 		col := this.collection(this.vcCollection)
 
 		filter := bson.M{
@@ -67,16 +66,13 @@ func (this *client) GetVerificationCode(opt *dbmodels.VerificationCode) error {
 
 		err := sr.Decode(&v)
 		if err != nil && isErrNoDocuments(err) {
-			return dbmodels.DBError{
-				ErrCode: util.ErrNoDBRecord,
-				Err:     fmt.Errorf("no db record"),
-			}
+			return errNoDBRecord
 		}
 
-		return err
+		return systemError(err)
 	}
 
-	if err := withContext(f); err != nil {
+	if err := withContextOfDB(f); err != nil {
 		return err
 	}
 

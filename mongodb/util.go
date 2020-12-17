@@ -15,10 +15,6 @@ import (
 	"github.com/opensourceways/app-cla-server/util"
 )
 
-var (
-	errNoDBRecord = dbmodels.DBError{ErrCode: util.ErrNoDBRecord, Err: fmt.Errorf("no record")}
-)
-
 func dbValueOfRepo(org, repo string) string {
 	if repo == "" {
 		return ""
@@ -33,13 +29,10 @@ func toNormalRepo(repo string) string {
 	return repo
 }
 
-func structToMap(info interface{}) (bson.M, error) {
+func structToMap(info interface{}) (bson.M, *dbmodels.DBError) {
 	body, err := golangsdk.BuildRequestBody(info, "")
 	if err != nil {
-		return nil, dbmodels.DBError{
-			ErrCode: util.ErrInvalidParameter,
-			Err:     err,
-		}
+		return nil, newDBError(dbmodels.ErrMarshalDataFaield, err)
 	}
 	return bson.M(body), nil
 }
@@ -67,22 +60,17 @@ func indexOfCorpManagerAndIndividual(email string) bson.M {
 	}
 }
 
-func isErrorOfNotSigned(err error) bool {
-	e, ok := dbmodels.IsDBError(err)
-	return ok && e.ErrCode == util.ErrHasNotSigned
-}
-
 func isErrorOfRecordExists(err error) bool {
-	e, ok := dbmodels.IsDBError(err)
-	return ok && e.ErrCode == util.ErrRecordExists
+	e, ok := err.(dbmodels.DBError)
+	return ok && e.Code == dbmodels.ErrRecordExists
 }
 
 func toObjectID(uid string) (primitive.ObjectID, error) {
 	v, err := primitive.ObjectIDFromHex(uid)
 	if err != nil {
 		return v, dbmodels.DBError{
-			ErrCode: util.ErrInvalidParameter,
-			Err:     fmt.Errorf("can't convert to object id"),
+			Code: util.ErrInvalidParameter,
+			Err:  fmt.Errorf("can't convert to object id"),
 		}
 	}
 	return v, err
@@ -98,24 +86,9 @@ func isErrOfNoDocument(err error) bool {
 
 func errorIfMatchingNoDoc(r *mongo.UpdateResult) error {
 	if r.MatchedCount == 0 {
-		return dbmodels.DBError{
-			ErrCode: util.ErrNoDBRecord,
-			Err:     fmt.Errorf("doesn't match any records"),
-		}
+		return errNoDBRecord
 	}
 	return nil
-}
-
-func (this *client) pushArrayElem(ctx context.Context, collection, array string, filterOfDoc, value bson.M) error {
-	update := bson.M{"$push": bson.M{array: value}}
-
-	col := this.collection(collection)
-	r, err := col.UpdateOne(ctx, filterOfDoc, update)
-	if err != nil {
-		return err
-	}
-
-	return errorIfMatchingNoDoc(r)
 }
 
 func (this *client) pushArrayElems(ctx context.Context, collection, array string, filterOfDoc bson.M, value bson.A) error {
@@ -144,7 +117,7 @@ func (this *client) pullArrayElem(ctx context.Context, collection, array string,
 
 // r, _ := col.UpdateOne; r.ModifiedCount == 0 will happen in two case: 1. no matched array item; 2 update repeatedly with same update cmd.
 // checkModified = true when it can't exclude any case of above two; otherwise it can be set as false.
-func (this *client) updateArrayElem(ctx context.Context, collection, array string, filterOfDoc, filterOfArray, updateCmd bson.M, checkModified bool) error {
+func (this *client) updateArrayElem(ctx context.Context, collection, array string, filterOfDoc, filterOfArray, updateCmd bson.M) error {
 	cmd := bson.M{}
 	for k, v := range updateCmd {
 		cmd[fmt.Sprintf("%s.$[i].%s", array, k)] = v
@@ -175,15 +148,6 @@ func (this *client) updateArrayElem(ctx context.Context, collection, array strin
 		return err
 	}
 
-	if r.ModifiedCount == 0 && checkModified {
-		b, err := this.isArrayElemNotExists(ctx, collection, array, filterOfDoc, filterOfArray)
-		if err == nil && b {
-			return dbmodels.DBError{
-				ErrCode: util.ErrNoDBRecord,
-				Err:     fmt.Errorf("can't find array element"),
-			}
-		}
-	}
 	return nil
 }
 
@@ -297,10 +261,7 @@ func (this *client) newDocIfNotExist(ctx context.Context, collection string, fil
 	}
 
 	if r.UpsertedID == nil {
-		return "", dbmodels.DBError{
-			ErrCode: util.ErrRecordExists,
-			Err:     fmt.Errorf("the doc exists"),
-		}
+		return "", errRecordExist
 	}
 
 	return toUID(r.UpsertedID)

@@ -30,15 +30,17 @@ func (this *OrgEmail) Create() error {
 }
 
 func (this *OrgEmail) Get() error {
-	info, err := dbmodels.GetDB().GetOrgEmailInfo(this.Email)
-	if err != nil {
-		return err
+	info, dbErr := dbmodels.GetDB().GetOrgEmailInfo(this.Email)
+	if dbErr != nil {
+		if dbErr.IsErrorOf(dbmodels.ErrNoDBRecord) {
+			return newModelError(ErrOrgEmailNotExist, dbErr.Err)
+		}
+		return parseDBError(dbErr)
 	}
 
 	var token oauth2.Token
 
-	err = json.Unmarshal(info.Token, &token)
-	if err != nil {
+	if err := json.Unmarshal(info.Token, &token); err != nil {
 		return fmt.Errorf("Failed to unmarshal oauth2 token: %s", err.Error())
 	}
 

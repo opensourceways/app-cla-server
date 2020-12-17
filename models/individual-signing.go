@@ -16,17 +16,29 @@ func (this *IndividualSigning) Validate(email string) (string, error) {
 	return checkEmailFormat(this.Email)
 }
 
-func (this *IndividualSigning) Create(orgCLAID string, enabled bool) error {
+func (this *IndividualSigning) Create(linkID string, enabled bool) *ModelError {
 	this.Date = util.Date()
 	this.Enabled = enabled
 
-	return dbmodels.GetDB().SignAsIndividual(
-		orgCLAID, (*dbmodels.IndividualSigningInfo)(this),
+	err := dbmodels.GetDB().SignAsIndividual(
+		linkID, (*dbmodels.IndividualSigningInfo)(this),
 	)
+
+	if err != nil {
+		if err.IsErrorOf(dbmodels.ErrNoDBRecord) {
+			return newModelError(ErrNoLinkOrResign, err.Err)
+		}
+		return parseDBError(err)
+	}
+	return nil
 }
 
-func IsIndividualSigned(orgRepo *dbmodels.OrgRepo, email string) (bool, error) {
-	return dbmodels.GetDB().IsIndividualSigned(orgRepo, email)
+func IsIndividualSigned(orgRepo *dbmodels.OrgRepo, email string) (bool, *ModelError) {
+	b, err := dbmodels.GetDB().IsIndividualSigned(orgRepo, email)
+	if err != nil {
+		return b, parseDBError(err)
+	}
+	return b, nil
 }
 
 func GetOrgOfLink(linkID string) (*dbmodels.OrgInfo, error) {

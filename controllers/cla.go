@@ -53,8 +53,8 @@ func (this *CLAController) Add() {
 		input.SetOrgSignature(&data)
 	}
 
-	if ec, err := input.Validate(applyTo); err != nil {
-		this.sendFailedResponse(400, ec, err, doWhat)
+	if merr := input.Validate(applyTo); merr != nil {
+		this.sendFailedResultAsResp(parseModelError(merr), doWhat)
 		return
 	}
 

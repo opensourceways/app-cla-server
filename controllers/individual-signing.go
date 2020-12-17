@@ -51,8 +51,8 @@ func (this *IndividualSigningController) Post() {
 		return
 	}
 
-	claInfo, err := models.GetCLAInfoSigned(linkID, claLang, dbmodels.ApplyToIndividual)
-	if err != nil {
+	claInfo, merr := models.GetCLAInfoSigned(linkID, claLang, dbmodels.ApplyToIndividual)
+	if merr != nil {
 		this.sendFailedResponse(0, "", err, doWhat)
 		return
 	}
@@ -91,9 +91,12 @@ func (this *IndividualSigningController) Post() {
 
 	info.Info = getSingingInfo(info.Info, claInfo.Fields)
 
-	err = (&info).Create(linkID, true)
-	if err != nil {
-		this.sendFailedResponse(0, "", err, doWhat)
+	if merr := (&info).Create(linkID, true); merr != nil {
+		if merr.IsErrorOf(models.ErrNoLinkOrResign) {
+			this.sendFailedResponse(400, errHasSigned, merr, doWhat)
+		} else {
+			this.sendFailedResultAsResp(parseModelError(merr), doWhat)
+		}
 		return
 	}
 
@@ -116,12 +119,8 @@ func (this *IndividualSigningController) Check() {
 		this.GetString("email"),
 	)
 	if err != nil {
-		statusCode, errCode := convertDBError(err)
-		if errCode != util.ErrHasNotSigned {
-			this.sendFailedResponse(statusCode, errCode, err, doWhat)
-			return
-		}
-		v = false
+		this.sendFailedResultAsResp(parseModelError(err), doWhat)
+		return
 	}
 
 	this.sendResponse(map[string]bool{"signed": v}, 0)

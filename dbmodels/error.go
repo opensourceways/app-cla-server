@@ -1,24 +1,27 @@
 package dbmodels
 
+type DBErrCode string
+
 type DBError struct {
-	ErrCode string
-	Err     error
+	Code DBErrCode
+	Err  error
 }
 
 func (this DBError) Error() string {
 	return this.Err.Error()
 }
 
-func IsDBError(err error) (DBError, bool) {
-	e, ok := err.(DBError)
-	return e, ok
+func (this DBError) IsErrorOf(code DBErrCode) bool {
+	return this.Code == code
+}
+
+func (this DBError) ErrCode() string {
+	return string(this.Code)
 }
 
 const (
-	ErrNoDBRecord = "no_db_record"
+	ErrMarshalDataFaield DBErrCode = "failed_to_marshal_data"
+	ErrNoDBRecord        DBErrCode = "no_db_record"
+	ErrSystemError       DBErrCode = "system_error"
+	ErrRecordExists      DBErrCode = "db_record_exists"
 )
-
-func IsErrOfDB(err error, code string) bool {
-	e, ok := err.(DBError)
-	return ok && e.ErrCode == code
-}

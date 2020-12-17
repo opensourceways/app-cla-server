@@ -55,8 +55,8 @@ func (this *LinkController) Link() {
 		input.CorpCLA.SetOrgSignature(&data)
 	}
 
-	if ec, err := input.Validate(); err != nil {
-		this.sendFailedResponse(400, ec, err, doWhat)
+	if merr := input.Validate(); merr != nil {
+		this.sendFailedResultAsResp(parseModelError(merr), doWhat)
 		return
 	}
 
@@ -261,9 +261,16 @@ func (this *LinkController) GetCLAForSigning() {
 	org, repo := parseOrgAndRepo(this.GetString(":org_id"))
 	orgRepo := buildOrgRepo(this.GetString(":platform"), org, repo)
 
-	if r, err := models.GetCLAByType(orgRepo, applyTo); err != nil {
+	if linkID, r, err := models.GetCLAByType(orgRepo, applyTo); err != nil {
 		this.sendFailedResponse(0, "", err, doWhat)
 	} else {
-		this.sendResponse(r, 0)
+		result := struct {
+			LinkID string               `json:"link_id"`
+			CLAs   []dbmodels.CLADetail `json:"clas"`
+		}{
+			LinkID: linkID,
+			CLAs:   r,
+		}
+		this.sendResponse(result, 0)
 	}
 }

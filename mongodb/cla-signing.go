@@ -74,36 +74,36 @@ func (this *client) AddCLAInfo(linkID, applyTo string, info *dbmodels.CLAInfo) e
 	return nil
 }
 
-func (this *client) GetCLAInfoSigned(linkID, claLang, applyTo string) (*dbmodels.CLAInfo, error) {
-	docFilter := docFilterOfIndividualSigning(linkID)
-	arrayFilterByElemMatch(fieldSignings, true, elemFilterOfCLA(claLang), docFilter)
+func (this *client) GetCLAInfoSigned(linkID, claLang, applyTo string) (*dbmodels.CLAInfo, *dbmodels.DBError) {
+	elemFilter := elemFilterOfCLA(claLang)
+
+	docFilter := docFilterOfSigning(linkID)
+	arrayFilterByElemMatch(fieldSignings, true, elemFilter, docFilter)
 
 	col := this.individualSigningCollection
-	return this.getCLAInfo(col, claLang, &docFilter)
-}
-
-func (this *client) getCLAInfo(col, claLang string, docFilter *bson.M) (*dbmodels.CLAInfo, error) {
-	var v []struct {
-		CLAInfo []DCLAInfo `bson:"cla_info" json:"cla_info"`
+	if applyTo == dbmodels.ApplyToCorporation {
+		col = this.corpSigningCollection
 	}
 
-	elemFilter := elemFilterOfCLA(claLang)
+	var v []struct {
+		CLAInfos []DCLAInfo `bson:"cla_infos" json:"cla_infos"`
+	}
 
 	f := func(ctx context.Context) error {
 		return this.getArrayElem(
-			ctx, col, fieldSingingCLAInfo, *docFilter, elemFilter, nil, &v,
+			ctx, col, fieldSingingCLAInfo, docFilter, elemFilter, nil, &v,
 		)
 	}
 
 	if err := withContext(f); err != nil {
-		return nil, err
+		return nil, systemError(err)
 	}
 
-	if len(v) == 0 || len(v[0].CLAInfo) == 0 {
+	if len(v) == 0 || len(v[0].CLAInfos) == 0 {
 		return nil, nil
 	}
 
-	doc := &(v[0].CLAInfo[0])
+	doc := &(v[0].CLAInfos[0])
 	return &dbmodels.CLAInfo{
 		CLAHash:          doc.CLAHash,
 		OrgSignatureHash: doc.OrgSignatureHash,

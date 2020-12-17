@@ -20,15 +20,15 @@ func docFilterOfLink(orgRepo *dbmodels.OrgRepo) bson.M {
 	}
 }
 
-func (this *client) HasLink(orgRepo *dbmodels.OrgRepo) (bool, error) {
+func (this *client) HasLink(orgRepo *dbmodels.OrgRepo) (bool, *dbmodels.DBError) {
 	var v cLink
-	f := func(ctx context.Context) error {
-		return this.getDoc(
+	f := func(ctx context.Context) *dbmodels.DBError {
+		return this.getDoc1(
 			ctx, this.linkCollection, docFilterOfLink(orgRepo), bson.M{"_id": 1}, &v,
 		)
 	}
 
-	if err := withContext(f); err != nil {
+	if err := withContextOfDB(f); err != nil {
 		return false, err
 	}
 

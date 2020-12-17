@@ -6,7 +6,6 @@ import (
 	"github.com/astaxie/beego"
 
 	"github.com/opensourceways/app-cla-server/dbmodels"
-	"github.com/opensourceways/app-cla-server/util"
 )
 
 type LinkCreateOption struct {
@@ -20,35 +19,37 @@ type LinkCreateOption struct {
 	CorpCLA       *CLACreateOption `json:"corp_cla"`
 }
 
-func (this *LinkCreateOption) Validate() (string, error) {
+func (this *LinkCreateOption) Validate() *ModelError {
 	individualcla := this.IndividualCLA
 	corpCLA := this.CorpCLA
 
 	if !(individualcla != nil || corpCLA != nil) {
-		return util.ErrInvalidParameter, fmt.Errorf("must specify one of individual and corp clas")
+		return newModelError(
+			ErrNoIndividualAndCorpCLA,
+			fmt.Errorf("must specify one of individual and corp clas"),
+		)
 	}
 
 	if individualcla != nil {
-		if ec, err := individualcla.Validate(""); err != nil {
-			return ec, err
+		if err := individualcla.Validate(""); err != nil {
+			return err
 		}
 	}
 
 	if corpCLA != nil {
-		if ec, err := corpCLA.Validate(dbmodels.ApplyToCorporation); err != nil {
-			return ec, err
+		if err := corpCLA.Validate(dbmodels.ApplyToCorporation); err != nil {
+			return err
 		}
 	}
 
 	if _, err := dbmodels.GetDB().GetOrgEmailInfo(this.OrgEmail); err != nil {
-		ec, err := parseErrorOfDBApi(err)
-		if ec == util.ErrNoDBRecord {
-			return util.ErrInvalidEmail, err
+		if err.IsErrorOf(dbmodels.ErrNoDBRecord) {
+			return newModelError(ErrOrgEmailNotExist, err)
 		}
-		return ec, err
+		return parseDBError(err)
 	}
 
-	return "", nil
+	return nil
 }
 
 func (this LinkCreateOption) Create(linkID, submitter string) (string, error) {
@@ -94,10 +95,10 @@ func ListLinks(platform string, orgs []string) ([]dbmodels.LinkInfo, error) {
 	})
 }
 
-func HasLink(orgRepo *dbmodels.OrgRepo) (bool, error) {
+func HasLink(orgRepo *dbmodels.OrgRepo) (bool, *ModelError) {
 	b, err := dbmodels.GetDB().HasLink(orgRepo)
-	if err != nil && dbmodels.IsErrOfDB(err, dbmodels.ErrNoDBRecord) {
+	if err != nil && err.IsErrorOf(dbmodels.ErrNoDBRecord) {
 		return false, nil
 	}
-	return b, err
+	return b, parseDBError(err)
 }

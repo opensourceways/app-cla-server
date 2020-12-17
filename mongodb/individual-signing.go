@@ -15,14 +15,14 @@ func elemFilterOfIndividualSigning(email string) bson.M {
 	}
 }
 
-func docFilterOfIndividualSigning(linkID string) bson.M {
+func docFilterOfSigning(linkID string) bson.M {
 	return bson.M{
 		fieldLinkID:     linkID,
 		fieldLinkStatus: linkStatusReady,
 	}
 }
 
-func (this *client) SignAsIndividual(linkID string, info *dbmodels.IndividualSigningInfo) error {
+func (this *client) SignAsIndividual(linkID string, info *dbmodels.IndividualSigningInfo) *dbmodels.DBError {
 	signing := dIndividualSigning{
 		CLALanguage: info.CLALanguage,
 		CorpID:      genCorpID(info.Email),
@@ -37,23 +37,23 @@ func (this *client) SignAsIndividual(linkID string, info *dbmodels.IndividualSig
 		return err
 	}
 
-	docFilter := docFilterOfIndividualSigning(linkID)
+	docFilter := docFilterOfSigning(linkID)
 	arrayFilterByElemMatch(
 		fieldSignings, false, elemFilterOfIndividualSigning(info.Email), docFilter,
 	)
 
-	f := func(ctx context.Context) error {
+	f := func(ctx context.Context) *dbmodels.DBError {
 		return this.pushArrayElem(ctx, this.individualSigningCollection, fieldSignings, docFilter, doc)
 	}
 
-	return withContext(f)
+	return withContextOfDB(f)
 }
 
 func (this *client) DeleteIndividualSigning(linkID, email string) error {
 	f := func(ctx context.Context) error {
 		return this.pullArrayElem(
 			ctx, this.individualSigningCollection, fieldSignings,
-			docFilterOfIndividualSigning(linkID),
+			docFilterOfSigning(linkID),
 			elemFilterOfIndividualSigning(email),
 		)
 	}
@@ -64,20 +64,20 @@ func (this *client) DeleteIndividualSigning(linkID, email string) error {
 func (this *client) UpdateIndividualSigning(linkID, email string, enabled bool) error {
 	elemFilter := elemFilterOfIndividualSigning(email)
 
-	docFilter := docFilterOfIndividualSigning(linkID)
+	docFilter := docFilterOfSigning(linkID)
 	arrayFilterByElemMatch(fieldSignings, true, elemFilter, docFilter)
 
 	f := func(ctx context.Context) error {
 		return this.updateArrayElem(
 			ctx, this.individualSigningCollection, fieldSignings, docFilter,
-			elemFilter, bson.M{"enabled": enabled}, false,
+			elemFilter, bson.M{"enabled": enabled},
 		)
 	}
 
 	return withContext(f)
 }
 
-func (this *client) IsIndividualSigned(orgRepo *dbmodels.OrgRepo, email string) (bool, error) {
+func (this *client) IsIndividualSigned(orgRepo *dbmodels.OrgRepo, email string) (bool, *dbmodels.DBError) {
 	identity := orgRepo.String()
 
 	docFilter := bson.M{
@@ -106,7 +106,7 @@ func (this *client) IsIndividualSigned(orgRepo *dbmodels.OrgRepo, email string) 
 	}
 
 	if err := withContext(f); err != nil {
-		return false, err
+		return false, systemError(err)
 	}
 
 	num := len(v)
@@ -127,7 +127,7 @@ func (this *client) IsIndividualSigned(orgRepo *dbmodels.OrgRepo, email string) 
 }
 
 func (this *client) ListIndividualSigning(linkID, corpEmail, claLang string) ([]dbmodels.IndividualSigningBasicInfo, error) {
-	docFilter := docFilterOfIndividualSigning(linkID)
+	docFilter := docFilterOfSigning(linkID)
 
 	arrayFilter := bson.M{fieldCorpID: genCorpID(corpEmail)}
 	if claLang != "" {
@@ -149,7 +149,7 @@ func (this *client) ListIndividualSigning(linkID, corpEmail, claLang string) ([]
 	}
 
 	if err := withContext(f); err != nil {
-		return nil, err
+		return nil, systemError(err)
 	}
 
 	if len(v) == 0 {

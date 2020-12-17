@@ -4,7 +4,7 @@ import (
 	"github.com/opensourceways/app-cla-server/dbmodels"
 )
 
-func GetCLAInfoSigned(linkID, claLang, applyTo string) (*dbmodels.CLAInfo, error) {
+func GetCLAInfoSigned(linkID, claLang, applyTo string) (*dbmodels.CLAInfo, *dbmodels.DBError) {
 	return dbmodels.GetDB().GetCLAInfoSigned(linkID, claLang, applyTo)
 }
 

@@ -71,39 +71,39 @@ func (this *CLACreateOption) SaveCLAAtLocal(path string) error {
 	return ioutil.WriteFile(path, *this.content, 0644)
 }
 
-func (this *CLACreateOption) Validate(applyTo string) (string, error) {
+func (this *CLACreateOption) Validate(applyTo string) *ModelError {
 	if len(this.Fields) <= 0 {
-		return util.ErrInvalidParameter, fmt.Errorf("no fields")
+		return newModelError(ErrNoCLAField, fmt.Errorf("no fields"))
 	}
 
 	if len(this.Fields) > conf.AppConfig.CLAFieldsNumber {
-		return util.ErrInvalidParameter, fmt.Errorf("exceeds the max fields number")
+		return newModelError(ErrManyCLAField, fmt.Errorf("exceeds the max fields number"))
 	}
 
 	for _, item := range this.Fields {
 		if _, err := strconv.Atoi(item.ID); err != nil {
-			return util.ErrInvalidParameter, fmt.Errorf("invalid field id")
+			return newModelError(ErrCLAFieldID, fmt.Errorf("invalid field id"))
 		}
 	}
 
 	text, err := downloadCLA(this.URL)
 	if err != nil {
-		return util.ErrSystemError, err
+		return newModelError(ErrSystemError, err)
 	}
 	this.content = text
 
 	if applyTo == dbmodels.ApplyToCorporation && this.orgSignature == nil {
-		return util.ErrSystemError, fmt.Errorf("no signatrue")
+		return newModelError(ErrNoOrgSignature, fmt.Errorf("no signatrue"))
 	}
 
-	return "", nil
+	return nil
 }
 
 func DeleteCLA(linkID, applyTo, language string) error {
 	return dbmodels.GetDB().DeleteCLA(linkID, applyTo, language)
 }
 
-func GetCLAByType(orgRepo *dbmodels.OrgRepo, applyTo string) ([]dbmodels.CLADetail, error) {
+func GetCLAByType(orgRepo *dbmodels.OrgRepo, applyTo string) (string, []dbmodels.CLADetail, error) {
 	return dbmodels.GetDB().GetCLAByType(orgRepo, applyTo)
 }
 

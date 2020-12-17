@@ -38,14 +38,14 @@ func (this *client) CreateOrgEmail(opt dbmodels.OrgEmailCreateInfo) error {
 	return withContext(f)
 }
 
-func (this *client) GetOrgEmailInfo(email string) (dbmodels.OrgEmailCreateInfo, error) {
+func (this *client) GetOrgEmailInfo(email string) (dbmodels.OrgEmailCreateInfo, *dbmodels.DBError) {
 	var v OrgEmail
 
-	f := func(ctx context.Context) error {
-		return this.getDoc(ctx, this.orgEmailCollection, bson.M{"email": email}, bson.M{"email": 0}, &v)
+	f := func(ctx context.Context) *dbmodels.DBError {
+		return this.getDoc1(ctx, this.orgEmailCollection, bson.M{"email": email}, bson.M{"email": 0}, &v)
 	}
 
-	if err := withContext(f); err != nil {
+	if err := withContextOfDB(f); err != nil {
 		return dbmodels.OrgEmailCreateInfo{}, err
 	}
 

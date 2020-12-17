@@ -7,7 +7,6 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 
 	"github.com/opensourceways/app-cla-server/dbmodels"
-	"github.com/opensourceways/app-cla-server/util"
 )
 
 func docFilterOfCorpManager(linkID string) bson.M {
@@ -82,7 +81,7 @@ func (this *client) CheckCorporationManagerExist(opt dbmodels.CorporationManager
 	} else {
 		elemFilter = bson.M{
 			fieldCorpID: opt.EmailSuffix,
-			"id":               opt.ID,
+			"id":        opt.ID,
 		}
 	}
 	elemFilter["password"] = opt.Password
@@ -112,10 +111,7 @@ func (this *client) CheckCorporationManagerExist(opt dbmodels.CorporationManager
 	}
 
 	if len(v) == 0 {
-		return nil, dbmodels.DBError{
-			ErrCode: util.ErrNoDBRecord,
-			Err:     fmt.Errorf("no cla binding found"),
-		}
+		return nil, errNoDBRecord
 	}
 
 	result := map[string]dbmodels.CorporationManagerCheckResult{}
@@ -163,7 +159,7 @@ func (this *client) ResetCorporationManagerPassword(linkID, email string, opt db
 	f := func(ctx context.Context) error {
 		return this.updateArrayElem(
 			ctx, this.corpSigningCollection, fieldCorpManagers,
-			docFilter, elemFilter, updateCmd, false)
+			docFilter, elemFilter, updateCmd)
 	}
 
 	return withContext(f)

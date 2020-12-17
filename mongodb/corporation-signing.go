@@ -8,13 +8,6 @@ import (
 	"github.com/opensourceways/app-cla-server/dbmodels"
 )
 
-func docFilterOfCorpSigning(linkID string) bson.M {
-	return bson.M{
-		fieldLinkID:     linkID,
-		fieldLinkStatus: linkStatusReady,
-	}
-}
-
 func elemFilterOfCorpSigning(email string) bson.M {
 	return filterOfCorpID(email)
 }
@@ -34,7 +27,7 @@ func (c *client) SignAsCorporation(linkID string, info *dbmodels.CorporationSign
 		return err
 	}
 
-	docFilter := docFilterOfCorpSigning(linkID)
+	docFilter := docFilterOfSigning(linkID)
 	arrayFilterByElemMatch(fieldSignings, false, elemFilterOfCorpSigning(info.AdminEmail), docFilter)
 
 	f := func(ctx context.Context) error {
@@ -56,7 +49,7 @@ func (this *client) ListCorpSignings(linkID, language string) ([]dbmodels.Corpor
 	var v []cCorpSigning
 	f := func(ctx context.Context) error {
 		return this.getMultiArrays(
-			ctx, this.corpSigningCollection, docFilterOfCorpSigning(linkID),
+			ctx, this.corpSigningCollection, docFilterOfSigning(linkID),
 			map[string]bson.M{
 				fieldCorpManagers: {"role": dbmodels.RoleAdmin},
 				fieldSignings:     elemFilter,
@@ -95,7 +88,7 @@ func (this *client) GetCorpSigningBasicInfo(linkID, email string) (*dbmodels.Cor
 	f := func(ctx context.Context) error {
 		return this.getArrayElem(
 			ctx, this.corpSigningCollection, fieldSignings,
-			docFilterOfCorpSigning(linkID), filterOfCorpID(email),
+			docFilterOfSigning(linkID), filterOfCorpID(email),
 			projectOfCorpSigning(), &v,
 		)
 	}
@@ -123,7 +116,7 @@ func (this *client) GetCorpSigningDetail(linkID, email string) (*dbmodels.Corpor
 	f := func(ctx context.Context) error {
 		return this.getArrayElem(
 			ctx, this.corpSigningCollection, fieldSignings,
-			docFilterOfCorpSigning(linkID), filterOfCorpID(email), project, &v,
+			docFilterOfSigning(linkID), filterOfCorpID(email), project, &v,
 		)
 	}
 

@@ -1,6 +1,8 @@
 package controllers
 
 import (
+	"fmt"
+
 	"github.com/opensourceways/app-cla-server/models"
 	"github.com/opensourceways/app-cla-server/util"
 )
@@ -23,7 +25,7 @@ func (this *CorporationPDFController) Prepare() {
 // @Param	:org_cla_id	path 	string					true		"org cla id"
 // @Param	:email		path 	string					true		"email of corp"
 // @Success 204 {int} map
-// @router /:org_cla_id/:email [patch]
+// @router /:link_id/:email [patch]
 func (this *CorporationPDFController) Upload() {
 	action := "upload corp's signing pdf"
 	linkID := this.GetString(":link_id")
@@ -35,14 +37,17 @@ func (this *CorporationPDFController) Upload() {
 		return
 	}
 	if r := pl.isOwnerOfLink(linkID); r != nil {
-		this.sendFailedResponse(r.statusCode, r.errCode, r.reason, action)
+		this.sendFailedResultAsResp(r, action)
 		return
 	}
 
-	// TODO repalce GetCorporationSigningBasicInfo by check method
-	_, err = models.GetCorporationSigningBasicInfo(linkID, corpEmail)
-	if err != nil {
-		this.sendFailedResponse(0, "", err, action)
+	b, merr := models.IsCorpSigned(linkID, corpEmail)
+	if merr != nil {
+		this.sendModelErrorAsResp(merr, action)
+		return
+	}
+	if !b {
+		this.sendFailedResponse(400, errHasNotSigned, fmt.Errorf("not signed"), action)
 		return
 	}
 
@@ -52,9 +57,8 @@ func (this *CorporationPDFController) Upload() {
 		return
 	}
 
-	err = models.UploadCorporationSigningPDF(linkID, corpEmail, &data)
-	if err != nil {
-		this.sendFailedResponse(0, "", err, action)
+	if merr = models.UploadCorporationSigningPDF(linkID, corpEmail, &data); merr != nil {
+		this.sendModelErrorAsResp(merr, action)
 		return
 	}
 
@@ -117,7 +121,7 @@ func (this *CorporationPDFController) Review() {
 // @Description preview the unsinged pdf of corp
 // @Param	:org_cla_id	path 	string					true		"org cla id"
 // @Success 200 {int} map
-// @router /:org_cla_id [get]
+// @router /:link_id [get]
 func (this *CorporationPDFController) Preview() {
 	var statusCode = 0
 	var errCode = ""

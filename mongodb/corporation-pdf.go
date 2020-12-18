@@ -3,17 +3,18 @@ package mongodb
 import (
 	"context"
 
+	"github.com/opensourceways/app-cla-server/dbmodels"
 	"go.mongodb.org/mongo-driver/bson"
 )
 
 func docFilterOfCorpSigningPDF(linkID string, email string) bson.M {
 	return bson.M{
-		fieldLinkID:        linkID,
+		fieldLinkID: linkID,
 		fieldCorpID: genCorpID(email),
 	}
 }
 
-func (this *client) UploadCorporationSigningPDF(linkID string, adminEmail string, pdf *[]byte) error {
+func (this *client) UploadCorporationSigningPDF(linkID string, adminEmail string, pdf *[]byte) *dbmodels.DBError {
 	docFilter := docFilterOfCorpSigningPDF(linkID, adminEmail)
 
 	doc := bson.M{"pdf": *pdf}
@@ -26,7 +27,10 @@ func (this *client) UploadCorporationSigningPDF(linkID string, adminEmail string
 		return err
 	}
 
-	return withContext(f)
+	if err := withContext(f); err != nil {
+		return systemError(err)
+	}
+	return nil
 }
 
 func (this *client) DownloadCorporationSigningPDF(linkID string, email string) (*[]byte, error) {

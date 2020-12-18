@@ -37,6 +37,21 @@ func (c *client) SignAsCorporation(linkID string, info *dbmodels.CorporationSign
 	return withContextOfDB(f)
 }
 
+func (this *client) IsCorpSigned(linkID, email string) (bool, *dbmodels.DBError) {
+	signed := false
+	f := func(ctx context.Context) *dbmodels.DBError {
+		v, err := this.isArrayElemNotExists(
+			ctx, this.corpSigningCollection, fieldSignings,
+			docFilterOfSigning(linkID), elemFilterOfCorpSigning(email),
+		)
+		signed = v
+		return err
+	}
+
+	err := withContextOfDB(f)
+	return signed, err
+}
+
 func (this *client) ListCorpSignings(linkID, language string) ([]dbmodels.CorporationSigningSummary, error) {
 	elemFilter := bson.M{}
 	if language != "" {

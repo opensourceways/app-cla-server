@@ -40,8 +40,9 @@ func (this *CorporationSigningCreateOption) Create(orgCLAID string) *ModelError 
 
 }
 
-func UploadCorporationSigningPDF(linkID string, email string, pdf *[]byte) error {
-	return dbmodels.GetDB().UploadCorporationSigningPDF(linkID, email, pdf)
+func UploadCorporationSigningPDF(linkID string, email string, pdf *[]byte) *ModelError {
+	err := dbmodels.GetDB().UploadCorporationSigningPDF(linkID, email, pdf)
+	return parseDBError(err)
 }
 
 func DownloadCorporationSigningPDF(linkID string, email string) (*[]byte, error) {
@@ -70,4 +71,13 @@ func ListCorpSignings(linkID, language string) ([]dbmodels.CorporationSigningSum
 
 func InitializeCorpSigning(linkID string, info *dbmodels.OrgInfo, claInfo *dbmodels.CLAInfo) error {
 	return dbmodels.GetDB().InitializeCorpSigning(linkID, info, claInfo)
+}
+
+func IsCorpSigned(linkID, email string) (bool, *ModelError) {
+	v, err := dbmodels.GetDB().IsCorpSigned(linkID, email)
+	if err == nil {
+		return v, nil
+	}
+
+	return v, parseDBError(err)
 }

@@ -4,6 +4,7 @@ import "github.com/opensourceways/app-cla-server/models"
 
 const (
 	errHasSigned             = "has_signed"
+	errHasNotSigned          = "has_not_signed"
 	errSystemError           = "system_error"
 	errUnmatchedCLA          = "unmatched_cla"
 	errUnknownLink           = "unknown_link"

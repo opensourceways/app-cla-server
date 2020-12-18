@@ -116,6 +116,11 @@ func (this *client) ListLinks(opt *dbmodels.LinkListOption) ([]dbmodels.LinkInfo
 }
 
 func (this *client) GetOrgOfLink(linkID string) (*dbmodels.OrgInfo, *dbmodels.DBError) {
+	docFilter := bson.M{
+		fieldLinkID:     linkID,
+		fieldLinkStatus: linkStatusReady,
+	}
+
 	project := bson.M{
 		fieldIndividualCLAs: 0,
 		fieldCorpCLAs:       0,
@@ -123,9 +128,7 @@ func (this *client) GetOrgOfLink(linkID string) (*dbmodels.OrgInfo, *dbmodels.DB
 
 	var v cLink
 	f := func(ctx context.Context) *dbmodels.DBError {
-		return this.getDoc1(
-			ctx, this.linkCollection, bson.M{fieldLinkID: linkID}, project, &v,
-		)
+		return this.getDoc1(ctx, this.linkCollection, docFilter, project, &v)
 	}
 
 	if err := withContextOfDB(f); err != nil {

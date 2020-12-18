@@ -14,7 +14,11 @@ func (this *EmployeeSigning) Validate(orgCLAID, email string) (string, error) {
 		return ec, err
 	}
 
-	return (&this.IndividualSigning).Validate(email)
+	merr := (&this.IndividualSigning).Validate(email)
+	if merr == nil {
+		return "", nil
+	}
+	return merr.ErrCode(), merr
 }
 
 type EmployeeSigningListOption struct {

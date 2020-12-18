@@ -28,9 +28,9 @@ func (this *VerificationCodeController) Post() {
 	linkID := this.GetString(":link_id")
 	inputEmail := this.GetString(":email")
 
-	orgInfo, err := models.GetOrgOfLink(linkID)
-	if err != nil {
-		this.sendFailedResponse(0, "", err, action)
+	orgInfo, merr := models.GetOrgOfLink(linkID)
+	if merr != nil {
+		this.sendFailedResponse(0, "", merr, action)
 		return
 	}
 
@@ -41,6 +41,7 @@ func (this *VerificationCodeController) Post() {
 		this.sendFailedResponse(0, "", err, action)
 		return
 	}
+	//err = merr.(error)
 
 	this.sendResponse("create verification code successfully", 0)
 

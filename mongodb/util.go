@@ -61,19 +61,8 @@ func indexOfCorpManagerAndIndividual(email string) bson.M {
 }
 
 func isErrorOfRecordExists(err error) bool {
-	e, ok := err.(dbmodels.DBError)
+	e, ok := err.(*dbmodels.DBError)
 	return ok && e.Code == dbmodels.ErrRecordExists
-}
-
-func toObjectID(uid string) (primitive.ObjectID, error) {
-	v, err := primitive.ObjectIDFromHex(uid)
-	if err != nil {
-		return v, dbmodels.DBError{
-			Code: util.ErrInvalidParameter,
-			Err:  fmt.Errorf("can't convert to object id"),
-		}
-	}
-	return v, err
 }
 
 func isErrNoDocuments(err error) bool {

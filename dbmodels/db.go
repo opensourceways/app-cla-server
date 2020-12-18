@@ -53,7 +53,7 @@ type IOrgCLA interface {
 	CreateLink(info *LinkCreateOption) (string, error)
 	Unlink(linkID string) error
 	ListLinks(opt *LinkListOption) ([]LinkInfo, error)
-	GetOrgOfLink(linkID string) (*OrgInfo, error)
+	GetOrgOfLink(linkID string) (*OrgInfo, *DBError)
 }
 
 type IIndividualSigning interface {
@@ -68,7 +68,6 @@ type IIndividualSigning interface {
 type ICLASigning interface {
 	AddCLAInfo(linkID, applyTo string, info *CLAInfo) error
 	GetCLAInfoSigned(linkID, claLang, applyTo string) (*CLAInfo, *DBError)
-	GetCLAInfoToSign(linkID, claLang, applyTo string) (*CLAInfo, error)
 }
 
 type ICLA interface {
@@ -77,6 +76,7 @@ type ICLA interface {
 	DeleteCLA(linkID, applyTo, language string) error
 	GetCLAByType(orgRepo *OrgRepo, applyTo string) (string, []CLADetail, error)
 	GetAllCLA(linkID string) (*CLAOfLink, error)
+	GetCLAInfoToSign(linkID, claLang, applyTo string) (*CLAInfo, *DBError)
 }
 
 type IVerificationCode interface {

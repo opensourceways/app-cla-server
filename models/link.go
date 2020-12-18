@@ -102,3 +102,14 @@ func HasLink(orgRepo *dbmodels.OrgRepo) (bool, *ModelError) {
 	}
 	return b, parseDBError(err)
 }
+
+func GetOrgOfLink(linkID string) (*dbmodels.OrgInfo, *ModelError) {
+	v, err := dbmodels.GetDB().GetOrgOfLink(linkID)
+	if err != nil {
+		if err.IsErrorOf(dbmodels.ErrNoDBRecord) {
+			return v, newModelError(ErrNoLink, err)
+		}
+		return v, parseDBError(err)
+	}
+	return v, nil
+}

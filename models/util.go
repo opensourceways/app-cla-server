@@ -7,13 +7,13 @@ import (
 	"github.com/opensourceways/app-cla-server/util"
 )
 
-func checkEmailFormat(email string) (string, error) {
+func checkEmailFormat(email string) *ModelError {
 	rg := regexp.MustCompile("^[a-zA-Z0-9_.-]+@[a-zA-Z0-9-]+(\\.[a-zA-Z0-9-]+)*\\.[a-zA-Z]{2,6}$")
 	if !rg.MatchString(email) {
-		return util.ErrInvalidEmail, fmt.Errorf("invalid email:%s", email)
+		return newModelError(ErrNotAnEmail, fmt.Errorf("invalid email:%s", email))
 	}
 
-	return "", nil
+	return nil
 }
 
 func checkManagerID(mid string) (string, error) {

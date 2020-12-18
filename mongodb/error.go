@@ -8,6 +8,7 @@ import (
 
 var (
 	errNoDBRecord  = newDBError(dbmodels.ErrNoDBRecord, fmt.Errorf("no record"))
+	ErrNoChildDoc  = newDBError(dbmodels.ErrNoChildElem, fmt.Errorf("no child record"))
 	errRecordExist = newDBError(dbmodels.ErrRecordExists, fmt.Errorf("record exist"))
 )
 

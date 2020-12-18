@@ -46,23 +46,25 @@ func (this *IndividualSigningController) Post() {
 		this.sendFailedResponse(400, util.ErrInvalidParameter, err, doWhat)
 		return
 	}
-	if ec, err := (&info).Validate(pl.Email); err != nil {
-		this.sendFailedResponse(400, ec, err, doWhat)
+	info.CLALanguage = claLang
+
+	if err := (&info).Validate(pl.Email); err != nil {
+		this.sendModelErrorAsResp(err, doWhat)
 		return
 	}
 
 	claInfo, merr := models.GetCLAInfoSigned(linkID, claLang, dbmodels.ApplyToIndividual)
 	if merr != nil {
-		this.sendFailedResponse(0, "", err, doWhat)
+		this.sendModelErrorAsResp(merr, doWhat)
 		return
 	}
 	if claInfo == nil {
 		// no contributor signed for this language. lock to avoid the cla to be changed
 		// before writing to the db.
 
-		orgRepo, err := models.GetOrgOfLink(linkID)
-		if err != nil {
-			this.sendFailedResponse(0, "", err, doWhat)
+		orgRepo, merr := models.GetOrgOfLink(linkID)
+		if merr != nil {
+			this.sendModelErrorAsResp(merr, doWhat)
 			return
 		}
 
@@ -73,13 +75,9 @@ func (this *IndividualSigningController) Post() {
 		}
 		defer unlock()
 
-		claInfo, err = models.GetCLAInfoToSign(linkID, claLang, dbmodels.ApplyToIndividual)
-		if err != nil {
-			this.sendFailedResponse(0, "", err, doWhat)
-			return
-		}
-		if claInfo == nil {
-			this.sendFailedResponse(400, util.ErrInvalidParameter, fmt.Errorf("no cla for this language"), doWhat)
+		claInfo, merr = models.GetCLAInfoToSign(linkID, claLang, dbmodels.ApplyToIndividual)
+		if merr != nil {
+			this.sendModelErrorAsResp(merr, doWhat)
 			return
 		}
 	}
@@ -95,7 +93,7 @@ func (this *IndividualSigningController) Post() {
 		if merr.IsErrorOf(models.ErrNoLinkOrResign) {
 			this.sendFailedResponse(400, errHasSigned, merr, doWhat)
 		} else {
-			this.sendFailedResultAsResp(parseModelError(merr), doWhat)
+			this.sendModelErrorAsResp(merr, doWhat)
 		}
 		return
 	}

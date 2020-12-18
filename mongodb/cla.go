@@ -97,7 +97,10 @@ func (this *client) DeleteCLA(linkID, applyTo, language string) error {
 func (this *client) GetCLAByType(orgRepo *dbmodels.OrgRepo, applyTo string) (string, []dbmodels.CLADetail, error) {
 	var project bson.M
 	if applyTo == dbmodels.ApplyToIndividual {
-		project = bson.M{fieldIndividualCLAs: 1}
+		project = bson.M{
+			fieldLinkID:         1,
+			fieldIndividualCLAs: 1,
+		}
 	} else {
 		project = bson.M{
 			fieldIndividualCLAs: 0,
@@ -144,7 +147,7 @@ func (this *client) GetAllCLA(linkID string) (*dbmodels.CLAOfLink, error) {
 	}, nil
 }
 
-func (this *client) GetCLAInfoToSign(linkID, claLang, applyTo string) (*dbmodels.CLAInfo, error) {
+func (this *client) GetCLAInfoToSign(linkID, claLang, applyTo string) (*dbmodels.CLAInfo, *dbmodels.DBError) {
 	claField := fieldNameOfCLA(applyTo)
 
 	fn := func(s string) string {
@@ -165,11 +168,11 @@ func (this *client) GetCLAInfoToSign(linkID, claLang, applyTo string) (*dbmodels
 	}
 
 	if err := withContext(f); err != nil {
-		return nil, err
+		return nil, systemError(err)
 	}
 
 	if len(v) == 0 {
-		return nil, nil
+		return nil, errNoDBRecord
 	}
 
 	var doc []dCLA
@@ -180,7 +183,7 @@ func (this *client) GetCLAInfoToSign(linkID, claLang, applyTo string) (*dbmodels
 	}
 
 	if len(doc) == 0 {
-		return nil, nil
+		return nil, ErrNoChildDoc
 	}
 
 	item := &(doc[0])

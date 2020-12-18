@@ -115,20 +115,20 @@ func (this *client) ListLinks(opt *dbmodels.LinkListOption) ([]dbmodels.LinkInfo
 	return r, nil
 }
 
-func (this *client) GetOrgOfLink(linkID string) (*dbmodels.OrgInfo, error) {
+func (this *client) GetOrgOfLink(linkID string) (*dbmodels.OrgInfo, *dbmodels.DBError) {
 	project := bson.M{
 		fieldIndividualCLAs: 0,
 		fieldCorpCLAs:       0,
 	}
 
 	var v cLink
-	f := func(ctx context.Context) error {
-		return this.getDoc(
+	f := func(ctx context.Context) *dbmodels.DBError {
+		return this.getDoc1(
 			ctx, this.linkCollection, bson.M{fieldLinkID: linkID}, project, &v,
 		)
 	}
 
-	if err := withContext(f); err != nil {
+	if err := withContextOfDB(f); err != nil {
 		return nil, err
 	}
 

@@ -152,3 +152,20 @@ func downloadCLA(url string) (*[]byte, error) {
 
 	return nil, fmt.Errorf("it is not the content of cla")
 }
+
+func GetCLAInfoToSign(linkID, claLang, applyTo string) (*dbmodels.CLAInfo, *ModelError) {
+	v, err := dbmodels.GetDB().GetCLAInfoToSign(linkID, claLang, applyTo)
+	if err == nil {
+		return v, nil
+	}
+
+	if err.IsErrorOf(dbmodels.ErrNoDBRecord) {
+		return v, newModelError(ErrNoLink, err)
+	}
+
+	if err.IsErrorOf(dbmodels.ErrNoChildElem) {
+		return v, newModelError(ErrNoCLA, err)
+	}
+
+	return v, parseDBError(err)
+}

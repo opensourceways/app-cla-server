@@ -9,6 +9,7 @@ import (
 	"github.com/astaxie/beego"
 
 	"github.com/opensourceways/app-cla-server/conf"
+	"github.com/opensourceways/app-cla-server/models"
 	"github.com/opensourceways/app-cla-server/util"
 )
 
@@ -58,6 +59,10 @@ func (this *baseController) sendResponse(body interface{}, statusCode int) {
 
 func (this *baseController) sendFailedResultAsResp(fr *failedResult, doWhat string) {
 	this.sendFailedResponse(fr.statusCode, fr.errCode, fr.reason, doWhat)
+}
+
+func (this *baseController) sendModelErrorAsResp(err *models.ModelError, doWhat string) {
+	this.sendFailedResultAsResp(parseModelError(err), doWhat)
 }
 
 func (this *baseController) sendFailedResponse(statusCode int, errCode string, reason error, doWhat string) {

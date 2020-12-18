@@ -15,10 +15,10 @@ type CorporationManagerAuthentication struct {
 
 func (this CorporationManagerAuthentication) Authenticate() (map[string]dbmodels.CorporationManagerCheckResult, error) {
 	info := dbmodels.CorporationManagerCheckInfo{Password: this.Password}
-	if _, err := checkEmailFormat(this.User); err == nil {
+	if merr := checkEmailFormat(this.User); merr == nil {
 		info.Email = this.User
 	} else {
-		if _, err = checkManagerID(this.User); err != nil {
+		if _, err := checkManagerID(this.User); err != nil {
 			return nil, err
 		}
 

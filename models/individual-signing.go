@@ -9,9 +9,9 @@ import (
 
 type IndividualSigning dbmodels.IndividualSigningInfo
 
-func (this *IndividualSigning) Validate(email string) (string, error) {
+func (this *IndividualSigning) Validate(email string) *ModelError {
 	if this.Email != email {
-		return util.ErrInvalidParameter, fmt.Errorf("not authorized email")
+		return newModelError(ErrUnmatchedEmail, fmt.Errorf("unmatched email"))
 	}
 	return checkEmailFormat(this.Email)
 }
@@ -39,10 +39,6 @@ func IsIndividualSigned(orgRepo *dbmodels.OrgRepo, email string) (bool, *ModelEr
 		return b, parseDBError(err)
 	}
 	return b, nil
-}
-
-func GetOrgOfLink(linkID string) (*dbmodels.OrgInfo, error) {
-	return dbmodels.GetDB().GetOrgOfLink(linkID)
 }
 
 func InitializeIndividualSigning(linkID string, orgRepo *dbmodels.OrgRepo, claInfo *dbmodels.CLAInfo) error {

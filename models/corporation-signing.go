@@ -19,7 +19,10 @@ func (this *CorporationSigningCreateOption) Validate(orgCLAID string) (string, e
 		return ec, err
 	}
 
-	return checkEmailFormat(this.AdminEmail)
+	if merr := checkEmailFormat(this.AdminEmail); merr != nil {
+		return merr.ErrCode(), merr
+	}
+	return "", nil
 }
 
 func (this *CorporationSigningCreateOption) Create(orgCLAID string) error {

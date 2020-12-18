@@ -36,8 +36,8 @@ func (this *EmployeeManagerCreateOption) Validate(adminEmail string) (string, er
 			return util.ErrInvalidParameter, fmt.Errorf("can't add/delete administrator himself/herself")
 		}
 
-		if ec, err := checkEmailFormat(item.Email); err != nil {
-			return ec, err
+		if merr := checkEmailFormat(item.Email); merr != nil {
+			return merr.ErrCode(), merr
 		}
 
 		es := util.EmailSuffix(item.Email)

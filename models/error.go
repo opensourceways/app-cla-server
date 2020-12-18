@@ -12,9 +12,13 @@ const (
 	ErrNoIndividualAndCorpCLA ModelErrCode = "no_individual_and_corp_cla"
 
 	ErrOrgEmailNotExist ModelErrCode = "org_email_not_exist"
+	ErrUnmatchedEmail   ModelErrCode = "unmatched_email"
+	ErrNotAnEmail       ModelErrCode = "not_an_email"
 	ErrMissingParameter ModelErrCode = "missing_parameter"
 	ErrSystemError      ModelErrCode = "system_error"
-	ErrNoLinkOrResign   ModelErrCode = "invalid_link_or_resign"
+	ErrNoLinkOrResign   ModelErrCode = "no_link_or_resign"
+	ErrNoLink           ModelErrCode = "no_link"
+	ErrNoCLA            ModelErrCode = "no_cla"
 	ErrUnknownDBError   ModelErrCode = "unknown_db_error"
 	ErrNoCLAField       ModelErrCode = "no_cla_field"
 	ErrManyCLAField     ModelErrCode = "many_cla_field"
@@ -50,15 +54,15 @@ type ModelError struct {
 	Err  error
 }
 
-func (this ModelError) Error() string {
+func (this *ModelError) Error() string {
 	return this.Err.Error()
 }
 
-func (this ModelError) IsErrorOf(code ModelErrCode) bool {
+func (this *ModelError) IsErrorOf(code ModelErrCode) bool {
 	return this.Code == code
 }
 
-func (this ModelError) ErrCode() string {
+func (this *ModelError) ErrCode() string {
 	return string(this.Code)
 }
 

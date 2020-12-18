@@ -20,6 +20,7 @@ const (
 	ErrNoLinkOrResign          ModelErrCode = "no_link_or_resign"
 	ErrNoLink                  ModelErrCode = "no_link"
 	ErrNoCLA                   ModelErrCode = "no_cla"
+	ErrNoCorp                  ModelErrCode = "no_corp"
 	ErrUnknownDBError          ModelErrCode = "unknown_db_error"
 	ErrNoCLAField              ModelErrCode = "no_cla_field"
 	ErrManyCLAField            ModelErrCode = "many_cla_field"

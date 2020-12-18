@@ -40,7 +40,7 @@ type ICorporationManager interface {
 	DeleteCorporationManager(linkID string, emails []string) ([]CorporationManagerCreateOption, error)
 	ResetCorporationManagerPassword(linkID, email string, opt CorporationManagerResetPassword) error
 	CheckCorporationManagerExist(opt CorporationManagerCheckInfo) (map[string]CorporationManagerCheckResult, error)
-	ListCorporationManager(linkID, email, role string) ([]CorporationManagerListResult, error)
+	ListCorporationManager(linkID, email, role string) ([]CorporationManagerListResult, *DBError)
 }
 
 type IOrgEmail interface {

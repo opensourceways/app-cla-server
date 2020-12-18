@@ -165,7 +165,7 @@ func (this *client) ResetCorporationManagerPassword(linkID, email string, opt db
 	return withContext(f)
 }
 
-func (this *client) ListCorporationManager(linkID, email, role string) ([]dbmodels.CorporationManagerListResult, error) {
+func (this *client) ListCorporationManager(linkID, email, role string) ([]dbmodels.CorporationManagerListResult, *dbmodels.DBError) {
 	filterOfArray := filterOfCorpID(email)
 	if role != "" {
 		filterOfArray["role"] = role
@@ -188,14 +188,18 @@ func (this *client) ListCorporationManager(linkID, email, role string) ([]dbmode
 	}
 
 	if err := withContext(f); err != nil {
-		return nil, err
+		return nil, systemError(err)
 	}
 
-	if len(v) != 1 || v[0].Managers == nil {
-		return nil, nil
+	if len(v) == 0 {
+		return nil, errNoDBRecord
 	}
 
 	ms := v[0].Managers
+	if ms == nil {
+		return nil, ErrNoChildDoc
+	}
+
 	r := make([]dbmodels.CorporationManagerListResult, 0, len(ms))
 	for i := range ms {
 		item := &ms[i]

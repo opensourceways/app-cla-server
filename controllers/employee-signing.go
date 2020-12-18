@@ -60,24 +60,24 @@ func (this *EmployeeSigningController) Post() {
 
 	orgInfo, merr := models.GetOrgOfLink(linkID)
 	if merr != nil {
-		this.sendFailedResponse(0, "", err, action)
+		this.sendModelErrorAsResp(merr, action)
 		return
 	}
 
 	// TODO: return orgInfo by ListCorporationManagers
-	managers, err := models.ListCorporationManagers(linkID, info.Email, "")
-	if err != nil {
-		this.sendFailedResponse(0, "", err, action)
+	managers, merr := models.ListCorporationManagers(linkID, info.Email, "")
+	if merr != nil {
+		this.sendModelErrorAsResp(merr, action)
 		return
 	}
 	if len(managers) <= 1 {
-		this.sendFailedResponse(400, util.ErrNoCorpManager, fmt.Errorf("no managers"), action)
+		this.sendFailedResponse(400, ErrNoCorpEmployeeManager, fmt.Errorf("no managers"), action)
 		return
 	}
 
 	claInfo, merr := models.GetCLAInfoSigned(linkID, claLang, dbmodels.ApplyToIndividual)
 	if merr != nil {
-		this.sendFailedResponse(0, "", err, action)
+		this.sendModelErrorAsResp(merr, action)
 		return
 	}
 	if claInfo == nil {
@@ -86,7 +86,7 @@ func (this *EmployeeSigningController) Post() {
 
 		orgRepo, merr := models.GetOrgOfLink(linkID)
 		if merr != nil {
-			this.sendFailedResponse(0, "", err, action)
+			this.sendModelErrorAsResp(merr, action)
 			return
 		}
 
@@ -98,24 +98,28 @@ func (this *EmployeeSigningController) Post() {
 		defer unlock()
 
 		claInfo, merr = models.GetCLAInfoToSign(linkID, claLang, dbmodels.ApplyToIndividual)
-		if err != nil {
-			this.sendFailedResponse(0, "", err, action)
+		if merr != nil {
+			this.sendModelErrorAsResp(merr, action)
 			return
 		}
 	}
 
 	if claInfo.CLAHash != this.GetString(":cla_hash") {
-		this.sendFailedResponse(400, util.ErrInvalidParameter, fmt.Errorf("invalid cla"), action)
+		this.sendFailedResponse(400, errUnmatchedCLA, fmt.Errorf("invalid cla"), action)
 		return
 	}
 
 	info.Info = getSingingInfo(info.Info, claInfo.Fields)
 
-	err = (&info).Create(linkID, false)
-	if err != nil {
-		this.sendFailedResponse(0, "", err, action)
+	if merr := (&info).Create(linkID, false); merr != nil {
+		if merr.IsErrorOf(models.ErrNoLinkOrResign) {
+			this.sendFailedResponse(400, errHasSigned, merr, action)
+		} else {
+			this.sendModelErrorAsResp(merr, action)
+		}
 		return
 	}
+
 	this.sendResponse("sign successfully", 0)
 
 	this.notifyManagers(managers, &info, orgInfo)

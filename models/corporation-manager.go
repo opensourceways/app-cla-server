@@ -65,6 +65,19 @@ func (this CorporationManagerResetPassword) Reset(orgCLAID, email string) error 
 	)
 }
 
-func ListCorporationManagers(orgCLAID, email, role string) ([]dbmodels.CorporationManagerListResult, error) {
-	return dbmodels.GetDB().ListCorporationManager(orgCLAID, email, role)
+func ListCorporationManagers(linkID, email, role string) ([]dbmodels.CorporationManagerListResult, *ModelError) {
+	v, err := dbmodels.GetDB().ListCorporationManager(linkID, email, role)
+	if err == nil {
+		return v, nil
+	}
+
+	if err.IsErrorOf(dbmodels.ErrNoDBRecord) {
+		return v, newModelError(ErrNoLink, err)
+	}
+
+	if err.IsErrorOf(dbmodels.ErrNoChildElem) {
+		return v, newModelError(ErrNoCorp, err)
+	}
+
+	return v, parseDBError(err)
 }

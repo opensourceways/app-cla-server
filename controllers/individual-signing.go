@@ -83,7 +83,7 @@ func (this *IndividualSigningController) Post() {
 	}
 
 	if claInfo.CLAHash != this.GetString(":cla_hash") {
-		this.sendFailedResponse(400, util.ErrInvalidParameter, fmt.Errorf("invalid cla"), doWhat)
+		this.sendFailedResponse(400, errUnmatchedCLA, fmt.Errorf("invalid cla"), doWhat)
 		return
 	}
 

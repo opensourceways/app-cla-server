@@ -21,7 +21,7 @@ func CreateVerificationCode(email, purpose string, expiry int64) (string, error)
 	return code, err
 }
 
-func checkVerificationCode(email, code, purpose string) (string, error) {
+func checkVerificationCode(email, code, purpose string) *ModelError {
 	vc := dbmodels.VerificationCode{
 		Email:   email,
 		Code:    code,
@@ -31,15 +31,15 @@ func checkVerificationCode(email, code, purpose string) (string, error) {
 	err := dbmodels.GetDB().GetVerificationCode(&vc)
 	if err == nil {
 		if vc.Expiry < util.Now() {
-			return util.ErrVerificationCodeExpired, fmt.Errorf("verification code is expired")
+			return newModelError(ErrVerificationCodeExpired, fmt.Errorf("verification code is expired"))
 		}
 
-		return "", err
+		return nil
 	}
 
 	if err.IsErrorOf(dbmodels.ErrNoDBRecord) {
-		return util.ErrWrongVerificationCode, err
+		return newModelError(ErrWrongVerificationCode, err)
 	}
-	e := parseDBError(err)
-	return e.ErrCode(), e.Err
+
+	return parseDBError(err)
 }

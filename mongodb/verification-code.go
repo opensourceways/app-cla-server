@@ -65,10 +65,13 @@ func (this *client) GetVerificationCode(opt *dbmodels.VerificationCode) *dbmodel
 		sr := col.FindOneAndDelete(ctx, filter, &opt)
 
 		err := sr.Decode(&v)
-		if err != nil && isErrNoDocuments(err) {
-			return errNoDBRecord
+		if err == nil {
+			return nil
 		}
 
+		if isErrNoDocuments(err) {
+			return errNoDBRecord
+		}
 		return systemError(err)
 	}
 

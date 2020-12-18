@@ -12,7 +12,7 @@ func elemFilterOfCorpSigning(email string) bson.M {
 	return filterOfCorpID(email)
 }
 
-func (c *client) SignAsCorporation(linkID string, info *dbmodels.CorporationSigningOption) error {
+func (c *client) SignAsCorporation(linkID string, info *dbmodels.CorporationSigningOption) *dbmodels.DBError {
 	signing := dCorpSigning{
 		CLALanguage:     info.CLALanguage,
 		CorpID:          genCorpID(info.AdminEmail),
@@ -30,11 +30,11 @@ func (c *client) SignAsCorporation(linkID string, info *dbmodels.CorporationSign
 	docFilter := docFilterOfSigning(linkID)
 	arrayFilterByElemMatch(fieldSignings, false, elemFilterOfCorpSigning(info.AdminEmail), docFilter)
 
-	f := func(ctx context.Context) error {
+	f := func(ctx context.Context) *dbmodels.DBError {
 		return c.pushArrayElem(ctx, c.corpSigningCollection, fieldSignings, docFilter, doc)
 	}
 
-	return withContext(f)
+	return withContextOfDB(f)
 }
 
 func (this *client) ListCorpSignings(linkID, language string) ([]dbmodels.CorporationSigningSummary, error) {

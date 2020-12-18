@@ -53,8 +53,8 @@ func (this *EmployeeSigningController) Post() {
 	}
 	info.CLALanguage = claLang
 
-	if ec, err := (&info).Validate(linkID, pl.Email); err != nil {
-		this.sendFailedResponse(400, ec, err, action)
+	if merr := (&info).Validate(linkID, pl.Email); err != nil {
+		this.sendModelErrorAsResp(merr, action)
 		return
 	}
 

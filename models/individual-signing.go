@@ -23,14 +23,14 @@ func (this *IndividualSigning) Create(linkID string, enabled bool) *ModelError {
 	err := dbmodels.GetDB().SignAsIndividual(
 		linkID, (*dbmodels.IndividualSigningInfo)(this),
 	)
-
-	if err != nil {
-		if err.IsErrorOf(dbmodels.ErrNoDBRecord) {
-			return newModelError(ErrNoLinkOrResign, err.Err)
-		}
-		return parseDBError(err)
+	if err == nil {
+		return nil
 	}
-	return nil
+
+	if err.IsErrorOf(dbmodels.ErrNoDBRecord) {
+		return newModelError(ErrNoLinkOrResign, err.Err)
+	}
+	return parseDBError(err)
 }
 
 func IsIndividualSigned(orgRepo *dbmodels.OrgRepo, email string) (bool, *ModelError) {

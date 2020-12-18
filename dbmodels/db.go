@@ -24,7 +24,7 @@ type IDB interface {
 
 type ICorporationSigning interface {
 	InitializeCorpSigning(linkID string, info *OrgInfo, claInfo *CLAInfo) error
-	SignAsCorporation(linkID string, info *CorporationSigningOption) error
+	SignAsCorporation(linkID string, info *CorporationSigningOption) *DBError
 	ListCorpSignings(linkID, language string) ([]CorporationSigningSummary, error)
 	GetCorpSigningBasicInfo(linkID, email string) (*CorporationSigningBasicInfo, error)
 	GetCorpSigningDetail(linkID, email string) (*CorporationSigningOption, error)

@@ -219,7 +219,10 @@ func (this *acForCodePlatformPayload) isOwnerOfLink(link string) *failedResult {
 
 	orgInfo, err := models.GetOrgOfLink(link)
 	if err != nil {
-		// TODO check if link is not exist
+		if err.IsErrorOf(models.ErrNoLink) {
+			return newFailedResult(400, errUnknownLink, err)
+		}
+		return parseModelError(err)
 	}
 
 	if err := this.isOwnerOfOrg(orgInfo.OrgID); err != nil {

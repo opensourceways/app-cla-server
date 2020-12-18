@@ -9,21 +9,22 @@ import (
 type ModelErrCode string
 
 const (
-	ErrNoIndividualAndCorpCLA ModelErrCode = "no_individual_and_corp_cla"
-
-	ErrOrgEmailNotExist ModelErrCode = "org_email_not_exist"
-	ErrUnmatchedEmail   ModelErrCode = "unmatched_email"
-	ErrNotAnEmail       ModelErrCode = "not_an_email"
-	ErrMissingParameter ModelErrCode = "missing_parameter"
-	ErrSystemError      ModelErrCode = "system_error"
-	ErrNoLinkOrResign   ModelErrCode = "no_link_or_resign"
-	ErrNoLink           ModelErrCode = "no_link"
-	ErrNoCLA            ModelErrCode = "no_cla"
-	ErrUnknownDBError   ModelErrCode = "unknown_db_error"
-	ErrNoCLAField       ModelErrCode = "no_cla_field"
-	ErrManyCLAField     ModelErrCode = "many_cla_field"
-	ErrCLAFieldID       ModelErrCode = "invalid_cla_field_id"
-	ErrNoOrgSignature   ModelErrCode = "missing_org_signature"
+	ErrNoIndividualAndCorpCLA  ModelErrCode = "no_individual_and_corp_cla"
+	ErrVerificationCodeExpired ModelErrCode = "expired_verification_code"
+	ErrWrongVerificationCode   ModelErrCode = "wrong_verification_code"
+	ErrOrgEmailNotExist        ModelErrCode = "org_email_not_exist"
+	ErrUnmatchedEmail          ModelErrCode = "unmatched_email"
+	ErrNotAnEmail              ModelErrCode = "not_an_email"
+	ErrMissingParameter        ModelErrCode = "missing_parameter"
+	ErrSystemError             ModelErrCode = "system_error"
+	ErrNoLinkOrResign          ModelErrCode = "no_link_or_resign"
+	ErrNoLink                  ModelErrCode = "no_link"
+	ErrNoCLA                   ModelErrCode = "no_cla"
+	ErrUnknownDBError          ModelErrCode = "unknown_db_error"
+	ErrNoCLAField              ModelErrCode = "no_cla_field"
+	ErrManyCLAField            ModelErrCode = "many_cla_field"
+	ErrCLAFieldID              ModelErrCode = "invalid_cla_field_id"
+	ErrNoOrgSignature          ModelErrCode = "missing_org_signature"
 )
 
 func parseDBError(err *dbmodels.DBError) *ModelError {

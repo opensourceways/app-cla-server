@@ -69,7 +69,7 @@ func (c *corpSigningPDF) genCorporPDFMissingSig(orgInfo *dbmodels.OrgInfo, signi
 }
 
 func mergeCorporPDFSignaturePage(pythonBin, pdfFile, sigFile, outfile string) error {
-	if !util.IsFileNotExist(sigFile) {
+	if util.IsFileNotExist(sigFile) {
 		return fmt.Errorf("org signature file(%s) is not exist", sigFile)
 	}
 

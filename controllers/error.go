@@ -3,8 +3,10 @@ package controllers
 import "github.com/opensourceways/app-cla-server/models"
 
 const (
-	errHasSigned   = "has_signed"
-	errSystemError = "system_error"
+	errHasSigned    = "has_signed"
+	errSystemError  = "system_error"
+	errUnmatchedCLA = "unmatched_cla"
+	errUnknownLink  = "unknown_link"
 )
 
 func parseModelError(err *models.ModelError) *failedResult {

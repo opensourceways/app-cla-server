@@ -13,25 +13,31 @@ type CorporationSigningCreateOption struct {
 	VerificationCode string `json:"verification_code"`
 }
 
-func (this *CorporationSigningCreateOption) Validate(orgCLAID string) (string, error) {
-	ec, err := checkVerificationCode(this.AdminEmail, this.VerificationCode, orgCLAID)
+func (this *CorporationSigningCreateOption) Validate(orgCLAID string) *ModelError {
+	err := checkVerificationCode(this.AdminEmail, this.VerificationCode, orgCLAID)
 	if err != nil {
-		return ec, err
+		return err
 	}
 
-	if merr := checkEmailFormat(this.AdminEmail); merr != nil {
-		return merr.ErrCode(), merr
-	}
-	return "", nil
+	return checkEmailFormat(this.AdminEmail)
 }
 
-func (this *CorporationSigningCreateOption) Create(orgCLAID string) error {
+func (this *CorporationSigningCreateOption) Create(orgCLAID string) *ModelError {
 	this.Date = util.Date()
 
-	return dbmodels.GetDB().SignAsCorporation(
+	err := dbmodels.GetDB().SignAsCorporation(
 		orgCLAID,
 		(*dbmodels.CorporationSigningOption)(&this.CorporationSigning),
 	)
+	if err == nil {
+		return nil
+	}
+
+	if err.IsErrorOf(dbmodels.ErrNoDBRecord) {
+		return newModelError(ErrNoLinkOrResign, err.Err)
+	}
+	return parseDBError(err)
+
 }
 
 func UploadCorporationSigningPDF(linkID string, email string, pdf *[]byte) error {

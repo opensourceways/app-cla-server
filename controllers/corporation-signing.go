@@ -34,27 +34,28 @@ func (this *CorporationSigningController) Prepare() {
 func (this *CorporationSigningController) Post() {
 	doWhat := "sign as corporation"
 	linkID := this.GetString(":link_id")
+	claLang := this.GetString(":cla_lang")
 
 	var info models.CorporationSigningCreateOption
 	if err := this.fetchInputPayload(&info); err != nil {
 		this.sendFailedResponse(400, util.ErrInvalidParameter, err, doWhat)
 		return
 	}
-	if ec, err := (&info).Validate(linkID); err != nil {
-		this.sendFailedResponse(400, ec, err, doWhat)
+	info.CLALanguage = claLang
+	if merr := (&info).Validate(linkID); merr != nil {
+		this.sendModelErrorAsResp(merr, doWhat)
 		return
 	}
 
-	orgInfo, err := models.GetOrgOfLink(linkID)
-	if err != nil {
-		this.sendFailedResponse(0, "", err, doWhat)
+	orgInfo, merr := models.GetOrgOfLink(linkID)
+	if merr != nil {
+		this.sendModelErrorAsResp(merr, doWhat)
 		return
 	}
 
-	claLang := this.GetString(":cla_lang")
-	claInfo, err := models.GetCLAInfoSigned(linkID, claLang, dbmodels.ApplyToCorporation)
-	if err != nil {
-		this.sendFailedResponse(0, "", err, doWhat)
+	claInfo, merr := models.GetCLAInfoSigned(linkID, claLang, dbmodels.ApplyToCorporation)
+	if merr != nil {
+		this.sendModelErrorAsResp(merr, doWhat)
 		return
 	}
 	if claInfo == nil {
@@ -68,19 +69,15 @@ func (this *CorporationSigningController) Post() {
 		}
 		defer unlock()
 
-		claInfo, err = models.GetCLAInfoToSign(linkID, claLang, dbmodels.ApplyToCorporation)
-		if err != nil {
-			this.sendFailedResponse(0, "", err, doWhat)
-			return
-		}
-		if claInfo == nil {
-			this.sendFailedResponse(400, util.ErrInvalidParameter, fmt.Errorf("no cla for this language"), doWhat)
+		claInfo, merr = models.GetCLAInfoToSign(linkID, claLang, dbmodels.ApplyToCorporation)
+		if merr != nil {
+			this.sendModelErrorAsResp(merr, doWhat)
 			return
 		}
 	}
 
 	if claInfo.CLAHash != this.GetString(":cla_hash") {
-		this.sendFailedResponse(400, util.ErrInvalidParameter, fmt.Errorf("invalid cla"), doWhat)
+		this.sendFailedResponse(400, errUnmatchedCLA, fmt.Errorf("unmatched cla"), doWhat)
 		return
 	}
 
@@ -93,8 +90,12 @@ func (this *CorporationSigningController) Post() {
 
 	info.Info = getSingingInfo(info.Info, claInfo.Fields)
 
-	if err := (&info).Create(linkID); err != nil {
-		this.sendFailedResponse(0, "", err, doWhat)
+	if merr := (&info).Create(linkID); merr != nil {
+		if merr.IsErrorOf(models.ErrNoLinkOrResign) {
+			this.sendFailedResponse(400, errHasSigned, merr, doWhat)
+		} else {
+			this.sendModelErrorAsResp(merr, doWhat)
+		}
 		return
 	}
 
@@ -111,7 +112,7 @@ func (this *CorporationSigningController) checkCLAForSigning(claFile, orgSignatu
 		return newFailedResult(500, util.ErrSystemError, err)
 	}
 	if md5 != claInfo.CLAHash {
-		return newFailedResult(500, util.ErrSystemError, fmt.Errorf("org signature changed"))
+		return newFailedResult(500, util.ErrSystemError, fmt.Errorf("local cla is unmatched"))
 	}
 
 	md5, err = util.Md5sumOfFile(orgSignatureFile)
@@ -119,7 +120,7 @@ func (this *CorporationSigningController) checkCLAForSigning(claFile, orgSignatu
 		return newFailedResult(500, util.ErrSystemError, err)
 	}
 	if md5 != claInfo.OrgSignatureHash {
-		return newFailedResult(500, util.ErrSystemError, fmt.Errorf("org signature changed"))
+		return newFailedResult(500, util.ErrSystemError, fmt.Errorf("local org signature is unmatched"))
 	}
 	return nil
 }

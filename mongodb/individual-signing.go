@@ -78,6 +78,10 @@ func (this *client) UpdateIndividualSigning(linkID, email string, enabled bool) 
 }
 
 func (this *client) IsIndividualSigned(orgRepo *dbmodels.OrgRepo, email string) (bool, *dbmodels.DBError) {
+	if orgRepo.RepoID == "" {
+		return this.isIndividualSignedToOrg(orgRepo, email)
+	}
+
 	identity := orgRepo.String()
 
 	docFilter := bson.M{
@@ -124,6 +128,28 @@ func (this *client) IsIndividualSigned(orgRepo *dbmodels.OrgRepo, email string) 
 	}
 
 	return false, nil
+}
+
+func (this *client) isIndividualSignedToOrg(orgRepo *dbmodels.OrgRepo, email string) (bool, *dbmodels.DBError) {
+	docFilter := bson.M{
+		fieldLinkStatus:  linkStatusReady,
+		fieldOrgIdentity: orgRepo.String(),
+	}
+
+	elemFilter := elemFilterOfIndividualSigning(email)
+	elemFilter[memberNameOfSignings("enabled")] = true
+
+	signed := false
+	f := func(ctx context.Context) *dbmodels.DBError {
+		v, err := this.isArrayElemNotExists(
+			ctx, this.individualSigningCollection, fieldSignings, docFilter, elemFilter,
+		)
+		signed = v
+		return err
+	}
+
+	err := withContextOfDB(f)
+	return signed, err
 }
 
 func (this *client) ListIndividualSigning(linkID, corpEmail, claLang string) ([]dbmodels.IndividualSigningBasicInfo, error) {

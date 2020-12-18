@@ -70,7 +70,7 @@ func (this *client) IsCorpSigningPDFUploaded(linkID string, email string) (bool,
 	return true, nil
 }
 
-func (this *client) ListCorpsWithPDFUploaded(linkID string) ([]string, error) {
+func (this *client) ListCorpsWithPDFUploaded(linkID string) ([]string, *dbmodels.DBError) {
 	var v []struct {
 		CorpID string `bson:"corp_id"`
 	}
@@ -84,7 +84,7 @@ func (this *client) ListCorpsWithPDFUploaded(linkID string) ([]string, error) {
 	}
 
 	if err := withContext(f); err != nil {
-		return nil, err
+		return nil, systemError(err)
 	}
 
 	result := make([]string, 0, len(v))

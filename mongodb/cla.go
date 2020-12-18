@@ -183,7 +183,7 @@ func (this *client) GetCLAInfoToSign(linkID, claLang, applyTo string) (*dbmodels
 	}
 
 	if len(doc) == 0 {
-		return nil, ErrNoChildDoc
+		return nil, errNoChildDoc
 	}
 
 	item := &(doc[0])

@@ -52,7 +52,7 @@ func (this *client) IsCorpSigned(linkID, email string) (bool, *dbmodels.DBError)
 	return signed, err
 }
 
-func (this *client) ListCorpSignings(linkID, language string) ([]dbmodels.CorporationSigningSummary, error) {
+func (this *client) ListCorpSignings(linkID, language string) ([]dbmodels.CorporationSigningSummary, *dbmodels.DBError) {
 	elemFilter := bson.M{}
 	if language != "" {
 		elemFilter[fieldCLALang] = language
@@ -74,11 +74,17 @@ func (this *client) ListCorpSignings(linkID, language string) ([]dbmodels.Corpor
 	}
 
 	if err := withContext(f); err != nil {
-		return nil, err
+		return nil, systemError(err)
 	}
 
-	if len(v) != 1 || v[0].Signings == nil {
-		return nil, nil
+	if len(v) == 0 {
+		return nil, errNoDBRecord
+	}
+
+	signings := v[0].Signings
+	n := len(signings)
+	if n == 0 {
+		return nil, errNoChildDoc
 	}
 
 	admins := map[string]bool{}
@@ -86,10 +92,7 @@ func (this *client) ListCorpSignings(linkID, language string) ([]dbmodels.Corpor
 		admins[item.Email] = true
 	}
 
-	signings := v[0].Signings
-	n := len(signings)
 	r := make([]dbmodels.CorporationSigningSummary, 0, n)
-
 	for i := 0; i < n; i++ {
 		r = append(r, toModelOfCorpSigningSummary(&signings[i], admins[signings[i].AdminEmail]))
 	}

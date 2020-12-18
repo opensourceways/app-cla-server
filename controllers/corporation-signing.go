@@ -195,16 +195,20 @@ func (this *CorporationSigningController) GetAll() {
 		return
 	}
 
-	r, err := models.ListCorpSignings(linkID, this.GetString("cla_language"))
-	if err != nil {
-		this.sendFailedResponse(0, "", err, doWhat)
+	r, merr := models.ListCorpSignings(linkID, this.GetString("cla_language"))
+	if merr != nil {
+		if merr.IsErrorOf(models.ErrNoCorp) {
+			this.sendResponse([]interface{}{}, 0)
+		} else {
+			this.sendModelErrorAsResp(merr, doWhat)
+		}
 		return
 	}
 
 	corpMap := map[string]bool{}
-	corps, err := models.ListCorpsWithPDFUploaded(linkID)
-	if err != nil {
-		this.sendFailedResponse(0, "", err, doWhat)
+	corps, merr := models.ListCorpsWithPDFUploaded(linkID)
+	if merr != nil {
+		this.sendModelErrorAsResp(merr, doWhat)
 		return
 	}
 	for i := range corps {

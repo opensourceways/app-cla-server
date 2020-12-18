@@ -197,7 +197,7 @@ func (this *client) ListCorporationManager(linkID, email, role string) ([]dbmode
 
 	ms := v[0].Managers
 	if ms == nil {
-		return nil, ErrNoChildDoc
+		return nil, errNoChildDoc
 	}
 
 	r := make([]dbmodels.CorporationManagerListResult, 0, len(ms))

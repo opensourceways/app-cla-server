@@ -53,8 +53,9 @@ func IsCorpSigningPDFUploaded(linkID string, email string) (bool, error) {
 	return dbmodels.GetDB().IsCorpSigningPDFUploaded(linkID, email)
 }
 
-func ListCorpsWithPDFUploaded(linkID string) ([]string, error) {
-	return dbmodels.GetDB().ListCorpsWithPDFUploaded(linkID)
+func ListCorpsWithPDFUploaded(linkID string) ([]string, *ModelError) {
+	v, err := dbmodels.GetDB().ListCorpsWithPDFUploaded(linkID)
+	return v, parseDBError(err)
 }
 
 func GetCorporationSigningBasicInfo(linkID, email string) (*dbmodels.CorporationSigningBasicInfo, error) {
@@ -65,8 +66,21 @@ func GetCorpSigningDetail(linkID, email string) (*dbmodels.CorporationSigningOpt
 	return dbmodels.GetDB().GetCorpSigningDetail(linkID, email)
 }
 
-func ListCorpSignings(linkID, language string) ([]dbmodels.CorporationSigningSummary, error) {
-	return dbmodels.GetDB().ListCorpSignings(linkID, language)
+func ListCorpSignings(linkID, language string) ([]dbmodels.CorporationSigningSummary, *ModelError) {
+	v, err := dbmodels.GetDB().ListCorpSignings(linkID, language)
+	if err == nil {
+		return v, nil
+	}
+
+	if err.IsErrorOf(dbmodels.ErrNoDBRecord) {
+		return v, newModelError(ErrNoLink, err)
+	}
+
+	if err.IsErrorOf(dbmodels.ErrNoChildElem) {
+		return v, newModelError(ErrNoCorp, err)
+	}
+
+	return v, parseDBError(err)
 }
 
 func InitializeCorpSigning(linkID string, info *dbmodels.OrgInfo, claInfo *dbmodels.CLAInfo) error {

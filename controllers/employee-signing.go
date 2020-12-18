@@ -160,19 +160,22 @@ func (this *EmployeeSigningController) Update() {
 	}
 
 	if !pl.hasEmployee(employeeEmail) {
-		this.sendFailedResponse(400, util.ErrNotSameCorp, fmt.Errorf("not same corp"), action)
+		this.sendFailedResponse(400, errNotSameCorp, fmt.Errorf("not same corp"), action)
 		return
 	}
 
-	var info models.EmployeeSigningUdateInfo
-	if err := this.fetchInputPayload(&info); err != nil {
+	info := &models.EmployeeSigningUdateInfo{}
+	if err := this.fetchInputPayload(info); err != nil {
 		this.sendFailedResponse(400, util.ErrInvalidParameter, err, action)
 		return
 	}
 
-	err = (&info).Update(pl.LinkID, employeeEmail)
-	if err != nil {
-		this.sendFailedResponse(0, "", err, action)
+	if merr := info.Update(pl.LinkID, employeeEmail); merr != nil {
+		if merr.IsErrorOf(models.ErrNoLinkOrUnsigned) {
+			this.sendFailedResponse(400, errHasNotSigned, merr, action)
+		} else {
+			this.sendModelErrorAsResp(merr, action)
+		}
 		return
 	}
 
@@ -206,7 +209,7 @@ func (this *EmployeeSigningController) Delete() {
 	}
 
 	if !pl.hasEmployee(employeeEmail) {
-		this.sendFailedResponse(400, util.ErrNotSameCorp, fmt.Errorf("not same corp"), action)
+		this.sendFailedResponse(400, errNotSameCorp, fmt.Errorf("not same corp"), action)
 		return
 	}
 

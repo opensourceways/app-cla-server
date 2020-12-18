@@ -52,17 +52,25 @@ func CreateCorporationAdministrator(orgCLAID, name, email string) ([]dbmodels.Co
 
 type CorporationManagerResetPassword dbmodels.CorporationManagerResetPassword
 
-func (this CorporationManagerResetPassword) Validate() (string, error) {
+func (this CorporationManagerResetPassword) Validate() *ModelError {
 	if this.NewPassword == this.OldPassword {
-		return util.ErrInvalidParameter, fmt.Errorf("the new password is same as old one")
+		return newModelError(ErrNewPWIsSameAsOld, fmt.Errorf("the new password is same as old one"))
 	}
-	return "", nil
+	return nil
 }
 
-func (this CorporationManagerResetPassword) Reset(orgCLAID, email string) error {
-	return dbmodels.GetDB().ResetCorporationManagerPassword(
-		orgCLAID, email, dbmodels.CorporationManagerResetPassword(this),
+func (this CorporationManagerResetPassword) Reset(linkID, email string) *ModelError {
+	err := dbmodels.GetDB().ResetCorporationManagerPassword(
+		linkID, email, dbmodels.CorporationManagerResetPassword(this),
 	)
+	if err == nil {
+		return nil
+	}
+
+	if err.IsErrorOf(dbmodels.ErrNoDBRecord) {
+		return newModelError(ErrNoLinkOrNoManager, err)
+	}
+	return parseDBError(err)
 }
 
 func ListCorporationManagers(linkID, email, role string) ([]dbmodels.CorporationManagerListResult, *ModelError) {

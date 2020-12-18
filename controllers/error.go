@@ -3,6 +3,7 @@ package controllers
 import "github.com/opensourceways/app-cla-server/models"
 
 const (
+	errNotSameCorp           = "not_same_corp"
 	errHasSigned             = "has_signed"
 	errHasNotSigned          = "has_not_signed"
 	errSystemError           = "system_error"

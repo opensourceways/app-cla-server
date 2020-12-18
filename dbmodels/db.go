@@ -39,7 +39,7 @@ type ICorporationSigning interface {
 type ICorporationManager interface {
 	AddCorporationManager(linkID string, opt []CorporationManagerCreateOption, managerNumber int) error
 	DeleteCorporationManager(linkID string, emails []string) ([]CorporationManagerCreateOption, error)
-	ResetCorporationManagerPassword(linkID, email string, opt CorporationManagerResetPassword) error
+	ResetCorporationManagerPassword(linkID, email string, opt CorporationManagerResetPassword) *DBError
 	CheckCorporationManagerExist(opt CorporationManagerCheckInfo) (map[string]CorporationManagerCheckResult, error)
 	ListCorporationManager(linkID, email, role string) ([]CorporationManagerListResult, *DBError)
 }
@@ -61,7 +61,7 @@ type IIndividualSigning interface {
 	InitializeIndividualSigning(linkID string, info *OrgRepo, claInfo *CLAInfo) error
 	SignAsIndividual(linkID string, info *IndividualSigningInfo) *DBError
 	DeleteIndividualSigning(linkID, email string) error
-	UpdateIndividualSigning(linkID, email string, enabled bool) error
+	UpdateIndividualSigning(linkID, email string, enabled bool) *DBError
 	IsIndividualSigned(orgRepo *OrgRepo, email string) (bool, *DBError)
 	ListIndividualSigning(linkID, corpEmail, claLang string) ([]IndividualSigningBasicInfo, *DBError)
 }

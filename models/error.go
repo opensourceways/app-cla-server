@@ -9,6 +9,7 @@ import (
 type ModelErrCode string
 
 const (
+	ErrNewPWIsSameAsOld        ModelErrCode = "new_pw_is_same_as_old"
 	ErrNoIndividualAndCorpCLA  ModelErrCode = "no_individual_and_corp_cla"
 	ErrVerificationCodeExpired ModelErrCode = "expired_verification_code"
 	ErrWrongVerificationCode   ModelErrCode = "wrong_verification_code"
@@ -18,6 +19,8 @@ const (
 	ErrMissingParameter        ModelErrCode = "missing_parameter"
 	ErrSystemError             ModelErrCode = "system_error"
 	ErrNoLinkOrResign          ModelErrCode = "no_link_or_resign"
+	ErrNoLinkOrUnsigned        ModelErrCode = "no_link_or_unsigned"
+	ErrNoLinkOrNoManager       ModelErrCode = "no_link_or_no_manager"
 	ErrNoLink                  ModelErrCode = "no_link"
 	ErrNoCLA                   ModelErrCode = "no_cla"
 	ErrNoCorp                  ModelErrCode = "no_corp"
@@ -57,6 +60,9 @@ type ModelError struct {
 }
 
 func (this *ModelError) Error() string {
+	if this.Err == nil {
+		return ""
+	}
 	return this.Err.Error()
 }
 

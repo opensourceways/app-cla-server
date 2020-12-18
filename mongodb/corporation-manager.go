@@ -144,7 +144,7 @@ func (this *client) CheckCorporationManagerExist(opt dbmodels.CorporationManager
 	return result, nil
 }
 
-func (this *client) ResetCorporationManagerPassword(linkID, email string, opt dbmodels.CorporationManagerResetPassword) error {
+func (this *client) ResetCorporationManagerPassword(linkID, email string, opt dbmodels.CorporationManagerResetPassword) *dbmodels.DBError {
 	updateCmd := bson.M{
 		"password": opt.NewPassword,
 		"changed":  true,
@@ -156,13 +156,13 @@ func (this *client) ResetCorporationManagerPassword(linkID, email string, opt db
 	docFilter := docFilterOfCorpManager(linkID)
 	arrayFilterByElemMatch(fieldCorpManagers, true, elemFilter, docFilter)
 
-	f := func(ctx context.Context) error {
+	f := func(ctx context.Context) *dbmodels.DBError {
 		return this.updateArrayElem(
 			ctx, this.corpSigningCollection, fieldCorpManagers,
 			docFilter, elemFilter, updateCmd)
 	}
 
-	return withContext(f)
+	return withContextOfDB(f)
 }
 
 func (this *client) ListCorporationManager(linkID, email, role string) ([]dbmodels.CorporationManagerListResult, *dbmodels.DBError) {

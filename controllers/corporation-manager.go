@@ -87,19 +87,19 @@ func (this *CorporationManagerController) Patch() {
 		return
 	}
 
-	var info models.CorporationManagerResetPassword
-	if err := this.fetchInputPayload(&info); err != nil {
+	info := &models.CorporationManagerResetPassword{}
+	if err := this.fetchInputPayload(info); err != nil {
 		this.sendFailedResponse(400, util.ErrInvalidParameter, err, doWhat)
 		return
 	}
 
-	if errCode, err := info.Validate(); err != nil {
-		this.sendFailedResponse(400, errCode, err, doWhat)
+	if merr := info.Validate(); merr != nil {
+		this.sendModelErrorAsResp(merr, doWhat)
 		return
 	}
 
-	if err := (&info).Reset(pl.LinkID, pl.Email); err != nil {
-		this.sendFailedResponse(0, "", err, doWhat)
+	if merr := info.Reset(pl.LinkID, pl.Email); merr != nil {
+		this.sendModelErrorAsResp(merr, doWhat)
 		return
 	}
 

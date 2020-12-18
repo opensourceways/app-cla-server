@@ -61,20 +61,20 @@ func (this *client) DeleteIndividualSigning(linkID, email string) error {
 	return withContext(f)
 }
 
-func (this *client) UpdateIndividualSigning(linkID, email string, enabled bool) error {
+func (this *client) UpdateIndividualSigning(linkID, email string, enabled bool) *dbmodels.DBError {
 	elemFilter := elemFilterOfIndividualSigning(email)
 
 	docFilter := docFilterOfSigning(linkID)
 	arrayFilterByElemMatch(fieldSignings, true, elemFilter, docFilter)
 
-	f := func(ctx context.Context) error {
+	f := func(ctx context.Context) *dbmodels.DBError {
 		return this.updateArrayElem(
 			ctx, this.individualSigningCollection, fieldSignings, docFilter,
 			elemFilter, bson.M{"enabled": enabled},
 		)
 	}
 
-	return withContext(f)
+	return withContextOfDB(f)
 }
 
 func (this *client) IsIndividualSigned(orgRepo *dbmodels.OrgRepo, email string) (bool, *dbmodels.DBError) {

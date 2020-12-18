@@ -48,9 +48,9 @@ func (this *EmployeeManagerController) GetAll() {
 		return
 	}
 
-	r, err := models.ListCorporationManagers(pl.LinkID, pl.Email, dbmodels.RoleManager)
-	if err != nil {
-		this.sendFailedResponse(0, "", err, doWhat)
+	r, merr := models.ListCorporationManagers(pl.LinkID, pl.Email, dbmodels.RoleManager)
+	if merr != nil {
+		this.sendModelErrorAsResp(merr, doWhat)
 		return
 	}
 

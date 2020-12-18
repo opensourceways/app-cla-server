@@ -37,8 +37,16 @@ type EmployeeSigningUdateInfo struct {
 	Enabled bool `json:"enabled"`
 }
 
-func (this *EmployeeSigningUdateInfo) Update(linkID, email string) error {
-	return dbmodels.GetDB().UpdateIndividualSigning(linkID, email, this.Enabled)
+func (this *EmployeeSigningUdateInfo) Update(linkID, email string) *ModelError {
+	err := dbmodels.GetDB().UpdateIndividualSigning(linkID, email, this.Enabled)
+	if err == nil {
+		return nil
+	}
+
+	if err.IsErrorOf(dbmodels.ErrNoDBRecord) {
+		return newModelError(ErrNoLinkOrUnsigned, err)
+	}
+	return parseDBError(err)
 }
 
 func DeleteEmployeeSigning(linkID, email string) error {

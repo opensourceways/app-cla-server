@@ -106,7 +106,7 @@ func (this *client) pullArrayElem(ctx context.Context, collection, array string,
 
 // r, _ := col.UpdateOne; r.ModifiedCount == 0 will happen in two case: 1. no matched array item; 2 update repeatedly with same update cmd.
 // checkModified = true when it can't exclude any case of above two; otherwise it can be set as false.
-func (this *client) updateArrayElem(ctx context.Context, collection, array string, filterOfDoc, filterOfArray, updateCmd bson.M) error {
+func (this *client) updateArrayElem(ctx context.Context, collection, array string, filterOfDoc, filterOfArray, updateCmd bson.M) *dbmodels.DBError {
 	cmd := bson.M{}
 	for k, v := range updateCmd {
 		cmd[fmt.Sprintf("%s.$[i].%s", array, k)] = v
@@ -130,11 +130,11 @@ func (this *client) updateArrayElem(ctx context.Context, collection, array strin
 		},
 	)
 	if err != nil {
-		return err
+		return systemError(err)
 	}
 
-	if err := errorIfMatchingNoDoc(r); err != nil {
-		return err
+	if r.MatchedCount == 0 {
+		return errNoDBRecord
 	}
 
 	return nil

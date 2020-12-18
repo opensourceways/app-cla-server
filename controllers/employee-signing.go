@@ -83,14 +83,7 @@ func (this *EmployeeSigningController) Post() {
 	if claInfo == nil {
 		// no contributor signed for this language. lock to avoid the cla to be changed
 		// before writing to the db.
-
-		orgRepo, merr := models.GetOrgOfLink(linkID)
-		if merr != nil {
-			this.sendModelErrorAsResp(merr, action)
-			return
-		}
-
-		unlock, err := util.Lock(genOrgFileLockPath(orgRepo.Platform, orgRepo.OrgID, orgRepo.RepoID))
+		unlock, err := util.Lock(genOrgFileLockPath(orgInfo.Platform, orgInfo.OrgID, orgInfo.RepoID))
 		if err != nil {
 			this.sendFailedResponse(500, util.ErrSystemError, err, action)
 			return
@@ -142,9 +135,9 @@ func (this *EmployeeSigningController) GetAll() {
 		CLALanguage: this.GetString("cla_language"),
 	}
 
-	r, err := opt.List(pl.LinkID, pl.Email)
-	if err != nil {
-		this.sendFailedResponse(0, "", err, action)
+	r, merr := opt.List(pl.LinkID, pl.Email)
+	if merr != nil {
+		this.sendModelErrorAsResp(merr, action)
 		return
 	}
 

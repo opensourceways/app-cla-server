@@ -21,8 +21,16 @@ type EmployeeSigningListOption struct {
 	CLALanguage string `json:"cla_language"`
 }
 
-func (this EmployeeSigningListOption) List(linkID, corpEmail string) ([]dbmodels.IndividualSigningBasicInfo, error) {
-	return dbmodels.GetDB().ListIndividualSigning(linkID, corpEmail, this.CLALanguage)
+func (this EmployeeSigningListOption) List(linkID, corpEmail string) ([]dbmodels.IndividualSigningBasicInfo, *ModelError) {
+	v, err := dbmodels.GetDB().ListIndividualSigning(linkID, corpEmail, this.CLALanguage)
+	if err == nil {
+		return v, nil
+	}
+
+	if err.IsErrorOf(dbmodels.ErrNoDBRecord) {
+		return nil, newModelError(ErrNoLink, err.Err)
+	}
+	return nil, parseDBError(err)
 }
 
 type EmployeeSigningUdateInfo struct {

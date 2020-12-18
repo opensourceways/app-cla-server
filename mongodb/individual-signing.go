@@ -152,7 +152,7 @@ func (this *client) isIndividualSignedToOrg(orgRepo *dbmodels.OrgRepo, email str
 	return signed, err
 }
 
-func (this *client) ListIndividualSigning(linkID, corpEmail, claLang string) ([]dbmodels.IndividualSigningBasicInfo, error) {
+func (this *client) ListIndividualSigning(linkID, corpEmail, claLang string) ([]dbmodels.IndividualSigningBasicInfo, *dbmodels.DBError) {
 	docFilter := docFilterOfSigning(linkID)
 
 	arrayFilter := bson.M{fieldCorpID: genCorpID(corpEmail)}
@@ -179,7 +179,7 @@ func (this *client) ListIndividualSigning(linkID, corpEmail, claLang string) ([]
 	}
 
 	if len(v) == 0 {
-		return nil, nil
+		return nil, errNoDBRecord
 	}
 
 	docs := v[0].Signings

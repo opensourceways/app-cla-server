@@ -63,7 +63,7 @@ type IIndividualSigning interface {
 	DeleteIndividualSigning(linkID, email string) error
 	UpdateIndividualSigning(linkID, email string, enabled bool) error
 	IsIndividualSigned(orgRepo *OrgRepo, email string) (bool, *DBError)
-	ListIndividualSigning(linkID, corpEmail, claLang string) ([]IndividualSigningBasicInfo, error)
+	ListIndividualSigning(linkID, corpEmail, claLang string) ([]IndividualSigningBasicInfo, *DBError)
 }
 
 type ICLASigning interface {

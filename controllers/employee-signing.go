@@ -213,9 +213,12 @@ func (this *EmployeeSigningController) Delete() {
 		return
 	}
 
-	err = models.DeleteEmployeeSigning(pl.LinkID, employeeEmail)
-	if err != nil {
-		this.sendFailedResponse(0, "", err, action)
+	if merr := models.DeleteEmployeeSigning(pl.LinkID, employeeEmail); merr != nil {
+		if merr.IsErrorOf(models.ErrNoLink) {
+			this.sendFailedResponse(500, errSystemError, fmt.Errorf("impossible"), action)
+		} else {
+			this.sendModelErrorAsResp(merr, action)
+		}
 		return
 	}
 

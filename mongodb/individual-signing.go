@@ -49,8 +49,8 @@ func (this *client) SignAsIndividual(linkID string, info *dbmodels.IndividualSig
 	return withContextOfDB(f)
 }
 
-func (this *client) DeleteIndividualSigning(linkID, email string) error {
-	f := func(ctx context.Context) error {
+func (this *client) DeleteIndividualSigning(linkID, email string) *dbmodels.DBError {
+	f := func(ctx context.Context) *dbmodels.DBError {
 		return this.pullArrayElem(
 			ctx, this.individualSigningCollection, fieldSignings,
 			docFilterOfSigning(linkID),
@@ -58,7 +58,7 @@ func (this *client) DeleteIndividualSigning(linkID, email string) error {
 		)
 	}
 
-	return withContext(f)
+	return withContextOfDB(f)
 }
 
 func (this *client) UpdateIndividualSigning(linkID, email string, enabled bool) *dbmodels.DBError {

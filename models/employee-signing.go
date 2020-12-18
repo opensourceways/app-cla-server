@@ -49,6 +49,14 @@ func (this *EmployeeSigningUdateInfo) Update(linkID, email string) *ModelError {
 	return parseDBError(err)
 }
 
-func DeleteEmployeeSigning(linkID, email string) error {
-	return dbmodels.GetDB().DeleteIndividualSigning(linkID, email)
+func DeleteEmployeeSigning(linkID, email string) *ModelError {
+	err := dbmodels.GetDB().DeleteIndividualSigning(linkID, email)
+	if err == nil {
+		return nil
+	}
+
+	if err.IsErrorOf(dbmodels.ErrNoDBRecord) {
+		return newModelError(ErrNoLink, err)
+	}
+	return parseDBError(err)
 }

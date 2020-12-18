@@ -180,8 +180,11 @@ func deleteCLA(linkID, applyTo, claLang string, pl *acForCodePlatformPayload) *f
 		return newFailedResult(400, util.ErrCLAIsUsed, fmt.Errorf("cla is used"))
 	}
 
-	if err := models.DeleteCLA(linkID, applyTo, claLang); err != nil {
-		return newFailedResult(0, "", err)
+	if merr := models.DeleteCLA(linkID, applyTo, claLang); merr != nil {
+		if merr.IsErrorOf(models.ErrNoLink) {
+			return newFailedResult(500, errSystemError, fmt.Errorf("impossible"))
+		}
+		return parseModelError(merr)
 	}
 
 	models.DeleteCLAInfo(linkID, applyTo, claLang)

@@ -92,16 +92,19 @@ func (this *client) pushArrayElems(ctx context.Context, collection, array string
 	return errorIfMatchingNoDoc(r)
 }
 
-func (this *client) pullArrayElem(ctx context.Context, collection, array string, filterOfDoc, filterOfArray bson.M) error {
+func (this *client) pullArrayElem(ctx context.Context, collection, array string, filterOfDoc, filterOfArray bson.M) *dbmodels.DBError {
 	update := bson.M{"$pull": bson.M{array: filterOfArray}}
 
 	col := this.collection(collection)
 	r, err := col.UpdateOne(ctx, filterOfDoc, update)
 	if err != nil {
-		return err
+		return systemError(err)
 	}
 
-	return errorIfMatchingNoDoc(r)
+	if r.MatchedCount == 0 {
+		return errNoDBRecord
+	}
+	return nil
 }
 
 // r, _ := col.UpdateOne; r.ModifiedCount == 0 will happen in two case: 1. no matched array item; 2 update repeatedly with same update cmd.
@@ -136,7 +139,6 @@ func (this *client) updateArrayElem(ctx context.Context, collection, array strin
 	if r.MatchedCount == 0 {
 		return errNoDBRecord
 	}
-
 	return nil
 }
 

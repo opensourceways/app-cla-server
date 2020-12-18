@@ -60,7 +60,7 @@ type IOrgCLA interface {
 type IIndividualSigning interface {
 	InitializeIndividualSigning(linkID string, info *OrgRepo, claInfo *CLAInfo) error
 	SignAsIndividual(linkID string, info *IndividualSigningInfo) *DBError
-	DeleteIndividualSigning(linkID, email string) error
+	DeleteIndividualSigning(linkID, email string) *DBError
 	UpdateIndividualSigning(linkID, email string, enabled bool) *DBError
 	IsIndividualSigned(orgRepo *OrgRepo, email string) (bool, *DBError)
 	ListIndividualSigning(linkID, corpEmail, claLang string) ([]IndividualSigningBasicInfo, *DBError)
@@ -74,7 +74,7 @@ type ICLASigning interface {
 type ICLA interface {
 	HasCLA(linkID, applyTo, language string) (bool, error)
 	AddCLA(linkID, applyTo string, cla *CLACreateOption) *DBError
-	DeleteCLA(linkID, applyTo, language string) error
+	DeleteCLA(linkID, applyTo, language string) *DBError
 	GetCLAByType(orgRepo *OrgRepo, applyTo string) (string, []CLADetail, error)
 	GetAllCLA(linkID string) (*CLAOfLink, error)
 	GetCLAInfoToSign(linkID, claLang, applyTo string) (*CLAInfo, *DBError)

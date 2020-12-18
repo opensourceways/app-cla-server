@@ -99,8 +99,16 @@ func (this *CLACreateOption) Validate(applyTo string) *ModelError {
 	return nil
 }
 
-func DeleteCLA(linkID, applyTo, language string) error {
-	return dbmodels.GetDB().DeleteCLA(linkID, applyTo, language)
+func DeleteCLA(linkID, applyTo, language string) *ModelError {
+	err := dbmodels.GetDB().DeleteCLA(linkID, applyTo, language)
+	if err == nil {
+		return nil
+	}
+
+	if err.IsErrorOf(dbmodels.ErrNoDBRecord) {
+		return newModelError(ErrNoLink, err)
+	}
+	return parseDBError(err)
 }
 
 func GetCLAByType(orgRepo *dbmodels.OrgRepo, applyTo string) (string, []dbmodels.CLADetail, error) {

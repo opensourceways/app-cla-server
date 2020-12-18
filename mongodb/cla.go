@@ -83,15 +83,15 @@ func (this *client) AddCLA(linkID, applyTo string, cla *dbmodels.CLACreateOption
 	return withContextOfDB(f)
 }
 
-func (this *client) DeleteCLA(linkID, applyTo, language string) error {
-	f := func(ctx context.Context) error {
+func (this *client) DeleteCLA(linkID, applyTo, language string) *dbmodels.DBError {
+	f := func(ctx context.Context) *dbmodels.DBError {
 		return this.pullArrayElem(
 			ctx, this.linkCollection, fieldNameOfCLA(applyTo),
 			docFilterOfCLA(linkID), elemFilterOfCLA(language),
 		)
 	}
 
-	return withContext(f)
+	return withContextOfDB(f)
 }
 
 func (this *client) GetCLAByType(orgRepo *dbmodels.OrgRepo, applyTo string) (string, []dbmodels.CLADetail, error) {

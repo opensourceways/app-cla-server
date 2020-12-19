@@ -71,7 +71,7 @@ func (this *client) Unlink(linkID string) error {
 	return this.doTransaction(f)
 }
 
-func (this *client) ListLinks(opt *dbmodels.LinkListOption) ([]dbmodels.LinkInfo, error) {
+func (this *client) ListLinks(opt *dbmodels.LinkListOption) ([]dbmodels.LinkInfo, *dbmodels.DBError) {
 	filter := bson.M{
 		"platform":      opt.Platform,
 		"org_id":        bson.M{"$in": opt.Orgs},
@@ -84,11 +84,11 @@ func (this *client) ListLinks(opt *dbmodels.LinkListOption) ([]dbmodels.LinkInfo
 	}
 
 	var v []cLink
-	f := func(ctx context.Context) error {
+	f := func(ctx context.Context) *dbmodels.DBError {
 		return this.getDocs(ctx, this.linkCollection, filter, project, &v)
 	}
 
-	if err := withContext(f); err != nil {
+	if err := withContextOfDB(f); err != nil {
 		return nil, err
 	}
 

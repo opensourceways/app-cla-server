@@ -292,7 +292,7 @@ func (this *client) getDoc(ctx context.Context, collection string, filterOfDoc, 
 	return nil
 }
 
-func (this *client) getDocs(ctx context.Context, collection string, filterOfDoc, project bson.M, result interface{}) error {
+func (this *client) getDocs(ctx context.Context, collection string, filterOfDoc, project bson.M, result interface{}) *dbmodels.DBError {
 	col := this.collection(collection)
 
 	var cursor *mongo.Cursor
@@ -304,11 +304,14 @@ func (this *client) getDocs(ctx context.Context, collection string, filterOfDoc,
 	} else {
 		cursor, err = col.Find(ctx, filterOfDoc)
 	}
-
 	if err != nil {
-		return err
+		return systemError(err)
 	}
-	return cursor.All(ctx, result)
+
+	if err := cursor.All(ctx, result); err != nil {
+		return systemError(err)
+	}
+	return nil
 }
 
 func (this *client) insertDoc(ctx context.Context, collection string, docInfo bson.M) (string, *dbmodels.DBError) {

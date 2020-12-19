@@ -229,8 +229,9 @@ func (this *LinkController) ListLinks() {
 	for k := range pl.Orgs {
 		orgs = append(orgs, k)
 	}
-	r, err := models.ListLinks(pl.Platform, orgs)
-	if err != nil {
+	r, merr := models.ListLinks(pl.Platform, orgs)
+	if merr != nil {
+		this.sendModelErrorAsResp(merr, doWhat)
 		this.sendFailedResponse(0, "", err, doWhat)
 		return
 	}

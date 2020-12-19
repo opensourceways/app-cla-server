@@ -98,11 +98,12 @@ func Unlink(linkID string) error {
 	return dbmodels.GetDB().Unlink(linkID)
 }
 
-func ListLinks(platform string, orgs []string) ([]dbmodels.LinkInfo, error) {
-	return dbmodels.GetDB().ListLinks(&dbmodels.LinkListOption{
+func ListLinks(platform string, orgs []string) ([]dbmodels.LinkInfo, *ModelError) {
+	v, err := dbmodels.GetDB().ListLinks(&dbmodels.LinkListOption{
 		Platform: platform,
 		Orgs:     orgs,
 	})
+	return v, parseDBError(err)
 }
 
 func HasLink(orgRepo *dbmodels.OrgRepo) (bool, *ModelError) {

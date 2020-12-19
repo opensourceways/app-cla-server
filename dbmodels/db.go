@@ -52,7 +52,7 @@ type IOrgCLA interface {
 	HasLink(orgRepo *OrgRepo) (bool, *DBError)
 	CreateLink(info *LinkCreateOption) (string, *DBError)
 	Unlink(linkID string) error
-	ListLinks(opt *LinkListOption) ([]LinkInfo, error)
+	ListLinks(opt *LinkListOption) ([]LinkInfo, *DBError)
 	GetOrgOfLink(linkID string) (*OrgInfo, *DBError)
 }
 

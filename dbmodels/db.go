@@ -45,13 +45,13 @@ type ICorporationManager interface {
 }
 
 type IOrgEmail interface {
-	CreateOrgEmail(opt OrgEmailCreateInfo) error
-	GetOrgEmailInfo(email string) (OrgEmailCreateInfo, *DBError)
+	CreateOrgEmail(opt OrgEmailCreateInfo) *DBError
+	GetOrgEmailInfo(email string) (*OrgEmailCreateInfo, *DBError)
 }
 
 type IOrgCLA interface {
 	HasLink(orgRepo *OrgRepo) (bool, *DBError)
-	CreateLink(info *LinkCreateOption) (string, error)
+	CreateLink(info *LinkCreateOption) (string, *DBError)
 	Unlink(linkID string) error
 	ListLinks(opt *LinkListOption) ([]LinkInfo, error)
 	GetOrgOfLink(linkID string) (*OrgInfo, *DBError)

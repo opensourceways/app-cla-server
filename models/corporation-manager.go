@@ -47,10 +47,6 @@ func CreateCorporationAdministrator(linkID, name, email string) ([]dbmodels.Corp
 		return opt, nil
 	}
 
-	if err.IsErrorOf(dbmodels.ErrMarshalDataFaield) {
-		return nil, newModelError(ErrSystemError, err)
-	}
-
 	if err.IsErrorOf(dbmodels.ErrNoDBRecord) {
 		return nil, newModelError(ErrNoLink, err)
 	}

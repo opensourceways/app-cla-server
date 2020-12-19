@@ -52,7 +52,7 @@ func (this *LinkCreateOption) Validate() *ModelError {
 	return nil
 }
 
-func (this LinkCreateOption) Create(linkID, submitter string) (string, error) {
+func (this LinkCreateOption) Create(linkID, submitter string) *ModelError {
 	info := dbmodels.LinkCreateOption{}
 	info.LinkID = linkID
 	info.Platform = this.Platform
@@ -81,7 +81,17 @@ func (this LinkCreateOption) Create(linkID, submitter string) (string, error) {
 	}
 
 	beego.Info("dbmodels.GetDB().CreateLink")
-	return dbmodels.GetDB().CreateLink(&info)
+	_, err := dbmodels.GetDB().CreateLink(&info)
+	if err == nil {
+		return nil
+	}
+
+	if err.IsErrorOf(dbmodels.ErrRecordExists) {
+		return newModelError(ErrLinkExists, err)
+	}
+
+	return parseDBError(err)
+
 }
 
 func Unlink(linkID string) error {

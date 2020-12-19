@@ -3,6 +3,7 @@ package controllers
 import "github.com/opensourceways/app-cla-server/models"
 
 const (
+	errUnknownEmailPlatform  = "unknown_email_platform"
 	errDuplicateManager      = "duplicate_manager"
 	errNoPDFOfCorp           = "no_pdf_of_corp"
 	errNotSameCorp           = "not_same_corp"

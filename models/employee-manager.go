@@ -91,10 +91,6 @@ func (this *EmployeeManagerCreateOption) Create(linkID string) ([]dbmodels.Corpo
 		return opt, nil
 	}
 
-	if err.IsErrorOf(dbmodels.ErrMarshalDataFaield) {
-		return nil, newModelError(ErrSystemError, err)
-	}
-
 	if err.IsErrorOf(dbmodels.ErrNoDBRecord) {
 		return nil, newModelError(ErrNoLinkOrDuplicateManager, err)
 	}

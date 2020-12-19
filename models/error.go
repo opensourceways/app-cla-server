@@ -9,7 +9,10 @@ import (
 type ModelErrCode string
 
 const (
-	ErrInvalidManagerID                      = "invalid_manager_id"
+	ErrLinkExists               ModelErrCode = "link_exists"
+	ErrOrgEmailExists           ModelErrCode = "org_email_exists"
+	ErrMarshalOauth2TokenFailed ModelErrCode = "marshal_oauth2_token_failed"
+	ErrInvalidManagerID         ModelErrCode = "invalid_manager_id"
 	ErrDuplicateManagerEmail    ModelErrCode = "duplicate_corp_manager_email"
 	ErrDuplicateManagerID       ModelErrCode = "duplicate_corp_manager_id"
 	ErrNotSameCorp              ModelErrCode = "not_same_corp"
@@ -47,7 +50,7 @@ func parseDBError(err *dbmodels.DBError) *ModelError {
 
 	switch err.Code {
 	case dbmodels.ErrMarshalDataFaield:
-		code = ErrMissingParameter
+		code = ErrSystemError
 
 	case dbmodels.ErrSystemError:
 		code = ErrSystemError

@@ -103,8 +103,8 @@ func (this *LinkController) Link() {
 	}
 
 	beego.Info("input.Create")
-	if _, err := input.Create(linkID, pl.User); err != nil {
-		this.sendFailedResponse(0, "", err, doWhat)
+	if merr := input.Create(linkID, pl.User); merr != nil {
+		this.sendModelErrorAsResp(merr, doWhat)
 		return
 	}
 

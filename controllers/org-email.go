@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/astaxie/beego"
-
 	"github.com/opensourceways/app-cla-server/email"
 	"github.com/opensourceways/app-cla-server/models"
 	"github.com/opensourceways/app-cla-server/util"
@@ -14,13 +12,16 @@ import (
 const authURLState = "state-token-cla"
 
 type EmailController struct {
-	beego.Controller
+	baseController
 }
 
 func (this *EmailController) Prepare() {
-	if getRouterPattern(&this.Controller) == "/v1/email/authcodeurl/:platform" {
-		apiPrepare(&this.Controller, []string{PermissionOwnerOfOrg})
+	if this.routerPattern() == "/v1/email/authcodeurl/:platform" {
+		this.apiPrepare(PermissionOwnerOfOrg)
+	} else {
+		this.apiPrepare("")
 	}
+
 }
 
 // @Title Auth
@@ -67,9 +68,11 @@ func (this *EmailController) Auth() {
 		Email:    emailAddr,
 		Platform: platform,
 	}
-	if err = opt.Create(); err != nil {
-		rs(util.ErrSystemError, err)
-		return
+	if merr := opt.Create(); merr != nil {
+		if !merr.IsErrorOf(models.ErrOrgEmailExists) {
+			rs(parseModelError(merr).errCode, merr)
+			return
+		}
 	}
 
 	this.Ctx.SetCookie("email", opt.Email, "3600", "/")
@@ -85,30 +88,16 @@ func (this *EmailController) Auth() {
 // @Success 200 {object}
 // @router /authcodeurl/:platform [get]
 func (this *EmailController) Get() {
-	var statusCode = 0
-	var errCode = ""
-	var reason error
-	var body interface{}
-
-	defer func() {
-		sendResponse(&this.Controller, statusCode, errCode, reason, body, "get auth code url of email")
-	}()
-
-	platform, err := fetchStringParameter(&this.Controller, ":platform")
-	if err != nil {
-		reason = err
-		errCode = util.ErrInvalidParameter
-		statusCode = 400
-		return
-	}
+	action := "get auth code url of email"
+	platform := this.GetString(":platform")
 
 	e, err := email.EmailAgent.GetEmailClient(platform)
 	if err != nil {
-		reason = err
+		this.sendFailedResponse(400, errUnknownEmailPlatform, err, action)
 		return
 	}
 
-	body = map[string]string{
+	this.sendResponse(map[string]string{
 		"url": e.GetOauth2CodeURL(authURLState),
-	}
+	}, 0)
 }

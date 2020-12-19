@@ -41,6 +41,12 @@ type DCLAInfo struct {
 	OrgSignatureHash string   `bson:"org_signature_hash" json:"org_signature_hash,omitempty"`
 }
 
+type cOrgEmail struct {
+	Email    string `bson:"email" json:"email" required:"true"`
+	Platform string `bson:"platform" json:"platform" required:"true"`
+	Token    []byte `bson:"token" json:"-"`
+}
+
 type cLink struct {
 	LinkID     string `bson:"link_id" json:"link_id" required:"true"`
 	LinkStatus string `bson:"link_status" json:"link_status"`

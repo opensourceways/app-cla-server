@@ -15,10 +15,10 @@ type OrgEmail struct {
 	Token    *oauth2.Token `json:"token"`
 }
 
-func (this *OrgEmail) Create() error {
+func (this *OrgEmail) Create() *ModelError {
 	b, err := json.Marshal(this.Token)
 	if err != nil {
-		return fmt.Errorf("Failed to marshal oauth2 token: %s", err.Error())
+		return newModelError(ErrMarshalOauth2TokenFailed, fmt.Errorf("Failed to marshal oauth2 token: %s", err.Error()))
 	}
 
 	opt := dbmodels.OrgEmailCreateInfo{
@@ -26,7 +26,16 @@ func (this *OrgEmail) Create() error {
 		Platform: this.Platform,
 		Token:    b,
 	}
-	return dbmodels.GetDB().CreateOrgEmail(opt)
+	dbErr := dbmodels.GetDB().CreateOrgEmail(opt)
+	if dbErr == nil {
+		return nil
+	}
+
+	if dbErr.IsErrorOf(dbmodels.ErrRecordExists) {
+		return newModelError(ErrOrgEmailExists, dbErr)
+	}
+
+	return parseDBError(dbErr)
 }
 
 func (this *OrgEmail) Get() error {

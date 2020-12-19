@@ -224,7 +224,7 @@ func (this *client) replaceDoc(ctx context.Context, collection string, filterOfD
 	return toUID(r.UpsertedID)
 }
 
-func (this *client) newDocIfNotExist(ctx context.Context, collection string, filterOfDoc, docInfo bson.M) (string, error) {
+func (this *client) newDocIfNotExist(ctx context.Context, collection string, filterOfDoc, docInfo bson.M) (string, *dbmodels.DBError) {
 	upsert := true
 
 	col := this.collection(collection)
@@ -233,14 +233,15 @@ func (this *client) newDocIfNotExist(ctx context.Context, collection string, fil
 		&options.UpdateOptions{Upsert: &upsert},
 	)
 	if err != nil {
-		return "", err
+		return "", systemError(err)
 	}
 
 	if r.UpsertedID == nil {
 		return "", errRecordExist
 	}
 
-	return toUID(r.UpsertedID)
+	docID, _ := toUID(r.UpsertedID)
+	return docID, nil
 }
 
 func (this *client) newDoc(ctx context.Context, collection string, filterOfDoc, docInfo bson.M) (string, error) {

@@ -2,9 +2,7 @@ package mongodb
 
 import (
 	"context"
-	"fmt"
 
-	"github.com/astaxie/beego"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 
@@ -35,19 +33,16 @@ func (this *client) HasLink(orgRepo *dbmodels.OrgRepo) (bool, *dbmodels.DBError)
 	return true, nil
 }
 
-func (this *client) CreateLink(info *dbmodels.LinkCreateOption) (string, error) {
-	beego.Info(" CreateLink")
-
+func (this *client) CreateLink(info *dbmodels.LinkCreateOption) (string, *dbmodels.DBError) {
 	doc, err := toDocOfLink(info)
 	if err != nil {
 		return "", err
 	}
 
-	beego.Info(fmt.Sprintf("%#v", doc))
 	docFilter := docFilterOfLink(&info.OrgRepo)
 
 	docID := ""
-	f := func(ctx context.Context) error {
+	f := func(ctx context.Context) *dbmodels.DBError {
 		s, err := this.newDocIfNotExist(ctx, this.linkCollection, docFilter, doc)
 		if err != nil {
 			return err
@@ -56,7 +51,7 @@ func (this *client) CreateLink(info *dbmodels.LinkCreateOption) (string, error) 
 		return nil
 	}
 
-	if err = withContext(f); err != nil {
+	if err = withContextOfDB(f); err != nil {
 		return "", err
 	}
 	return docID, nil
@@ -158,8 +153,7 @@ func toModelOfOrgInfo(doc *cLink) dbmodels.OrgInfo {
 	}
 }
 
-func toDocOfLink(info *dbmodels.LinkCreateOption) (bson.M, error) {
-	beego.Info(fmt.Sprintf("toDocOfLink: %#v", info))
+func toDocOfLink(info *dbmodels.LinkCreateOption) (bson.M, *dbmodels.DBError) {
 	opt := cLink{
 		LinkID:     info.LinkID,
 		Platform:   info.Platform,
@@ -175,7 +169,7 @@ func toDocOfLink(info *dbmodels.LinkCreateOption) (bson.M, error) {
 		return nil, err
 	}
 
-	convertCLAs := func(field string, v []dbmodels.CLACreateOption) error {
+	convertCLAs := func(field string, v []dbmodels.CLACreateOption) *dbmodels.DBError {
 		clas := make(bson.A, 0, len(v))
 		for i := range v {
 			m, err := toDocOfCLA(&v[i])

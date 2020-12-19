@@ -119,8 +119,16 @@ func GetAllCLA(linkID string) (*dbmodels.CLAOfLink, error) {
 	return dbmodels.GetDB().GetAllCLA(linkID)
 }
 
-func HasCLA(linkID, applyTo, language string) (bool, error) {
-	return dbmodels.GetDB().HasCLA(linkID, applyTo, language)
+func HasCLA(linkID, applyTo, language string) (bool, *ModelError) {
+	v, err := dbmodels.GetDB().HasCLA(linkID, applyTo, language)
+	if err == nil {
+		return v, nil
+	}
+
+	if err.IsErrorOf(dbmodels.ErrNoDBRecord) {
+		return v, newModelError(ErrNoLink, err)
+	}
+	return v, parseDBError(err)
 }
 
 func DownloadOrgSignature(linkID, language string) ([]byte, error) {

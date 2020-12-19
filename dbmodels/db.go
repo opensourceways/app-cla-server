@@ -73,7 +73,7 @@ type ICLASigning interface {
 }
 
 type ICLA interface {
-	HasCLA(linkID, applyTo, language string) (bool, error)
+	HasCLA(linkID, applyTo, language string) (bool, *DBError)
 	AddCLA(linkID, applyTo string, cla *CLACreateOption) *DBError
 	DeleteCLA(linkID, applyTo, language string) *DBError
 	GetCLAByType(orgRepo *OrgRepo, applyTo string) (string, []CLADetail, error)

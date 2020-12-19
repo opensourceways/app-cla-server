@@ -108,7 +108,11 @@ func ListLinks(platform string, orgs []string) ([]dbmodels.LinkInfo, *ModelError
 
 func HasLink(orgRepo *dbmodels.OrgRepo) (bool, *ModelError) {
 	b, err := dbmodels.GetDB().HasLink(orgRepo)
-	if err != nil && err.IsErrorOf(dbmodels.ErrNoDBRecord) {
+	if err == nil {
+		return b, nil
+	}
+
+	if err.IsErrorOf(dbmodels.ErrNoDBRecord) {
 		return false, nil
 	}
 	return b, parseDBError(err)

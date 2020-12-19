@@ -27,7 +27,7 @@ func elemFilterOfCLA(language string) bson.M {
 	return bson.M{fieldCLALang: language}
 }
 
-func (this *client) HasCLA(linkID, applyTo, language string) (bool, error) {
+func (this *client) HasCLA(linkID, applyTo, language string) (bool, *dbmodels.DBError) {
 	claField := fieldNameOfCLA(applyTo)
 
 	project := bson.M{fmt.Sprintf("%s.url", claField): 1}
@@ -40,11 +40,11 @@ func (this *client) HasCLA(linkID, applyTo, language string) (bool, error) {
 	}
 
 	if err := withContext(f); err != nil {
-		return false, err
+		return false, systemError(err)
 	}
 
 	if len(v) == 0 {
-		return false, nil
+		return false, errNoDBRecord
 	}
 
 	doc := &v[0]

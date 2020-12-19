@@ -81,13 +81,13 @@ func (this *LinkController) Link() {
 	defer unlock()
 
 	orgRepo := buildOrgRepo(input.Platform, input.OrgID, input.RepoID)
-	hasLink, err := models.HasLink(orgRepo)
-	if err != nil {
-		this.sendFailedResponse(500, util.ErrSystemError, err, doWhat)
+	hasLink, merr := models.HasLink(orgRepo)
+	if merr != nil {
+		this.sendModelErrorAsResp(merr, doWhat)
 		return
 	}
 	if hasLink {
-		this.sendFailedResponse(400, util.ErrRecordExists, fmt.Errorf("recreate link"), doWhat)
+		this.sendFailedResponse(400, errLinkExists, fmt.Errorf("recreate link"), doWhat)
 		return
 	}
 

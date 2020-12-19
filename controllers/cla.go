@@ -134,12 +134,12 @@ func addCLA(linkID, applyTo string, input *models.CLACreateOption, pl *acForCode
 	}
 	defer unlock()
 
-	hasCLA, err := models.HasCLA(linkID, applyTo, input.Language)
-	if err != nil {
-		return newFailedResult(0, "", err)
+	hasCLA, merr := models.HasCLA(linkID, applyTo, input.Language)
+	if merr != nil {
+		return parseModelError(merr)
 	}
 	if hasCLA {
-		return newFailedResult(400, util.ErrRecordExists, fmt.Errorf("recreate cla"))
+		return newFailedResult(400, errCLAExists, fmt.Errorf("recreate cla"))
 	}
 
 	path := genCLAFilePath(linkID, applyTo, input.Language)

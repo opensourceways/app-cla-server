@@ -17,7 +17,7 @@ func toDocOfCLAInfo(info *dbmodels.CLAInfo) *DCLAInfo {
 	}
 }
 
-func (this *client) InitializeCorpSigning(linkID string, info *dbmodels.OrgInfo, claInfo *dbmodels.CLAInfo) error {
+func (this *client) InitializeCorpSigning(linkID string, info *dbmodels.OrgInfo, claInfo *dbmodels.CLAInfo) *dbmodels.DBError {
 	docFilter := bson.M{
 		fieldOrgIdentity: info.String(),
 		fieldLinkStatus:  linkStatusReady,
@@ -36,15 +36,15 @@ func (this *client) InitializeCorpSigning(linkID string, info *dbmodels.OrgInfo,
 		return err
 	}
 
-	f := func(ctx context.Context) error {
+	f := func(ctx context.Context) *dbmodels.DBError {
 		_, err := this.replaceDoc(ctx, this.corpSigningCollection, docFilter, doc)
 		return err
 	}
 
-	return withContext(f)
+	return withContextOfDB(f)
 }
 
-func (this *client) InitializeIndividualSigning(linkID string, orgRepo *dbmodels.OrgRepo, claInfo *dbmodels.CLAInfo) error {
+func (this *client) InitializeIndividualSigning(linkID string, orgRepo *dbmodels.OrgRepo, claInfo *dbmodels.CLAInfo) *dbmodels.DBError {
 	docFilter := bson.M{
 		fieldOrgIdentity: orgRepo.String(),
 		fieldLinkStatus:  linkStatusReady,
@@ -61,12 +61,12 @@ func (this *client) InitializeIndividualSigning(linkID string, orgRepo *dbmodels
 		return err
 	}
 
-	f := func(ctx context.Context) error {
+	f := func(ctx context.Context) *dbmodels.DBError {
 		_, err := this.replaceDoc(ctx, this.individualSigningCollection, docFilter, doc)
 		return err
 	}
 
-	return withContext(f)
+	return withContextOfDB(f)
 }
 
 func (this *client) AddCLAInfo(linkID, applyTo string, info *dbmodels.CLAInfo) error {

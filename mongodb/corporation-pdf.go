@@ -22,15 +22,12 @@ func (this *client) UploadCorporationSigningPDF(linkID string, adminEmail string
 		doc[k] = v
 	}
 
-	f := func(ctx context.Context) error {
+	f := func(ctx context.Context) *dbmodels.DBError {
 		_, err := this.replaceDoc(ctx, this.corpPDFCollection, docFilter, doc)
 		return err
 	}
 
-	if err := withContext(f); err != nil {
-		return systemError(err)
-	}
-	return nil
+	return withContextOfDB(f)
 }
 
 func (this *client) DownloadCorporationSigningPDF(linkID string, email string) (*[]byte, error) {

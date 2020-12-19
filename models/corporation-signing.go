@@ -97,10 +97,6 @@ func ListCorpSignings(linkID, language string) ([]dbmodels.CorporationSigningSum
 	return v, parseDBError(err)
 }
 
-func InitializeCorpSigning(linkID string, info *dbmodels.OrgInfo, claInfo *dbmodels.CLAInfo) error {
-	return dbmodels.GetDB().InitializeCorpSigning(linkID, info, claInfo)
-}
-
 func IsCorpSigned(linkID, email string) (bool, *ModelError) {
 	v, err := dbmodels.GetDB().IsCorpSigned(linkID, email)
 	if err == nil {

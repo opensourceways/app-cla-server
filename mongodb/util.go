@@ -205,7 +205,7 @@ func conditionTofilterArray(filterOfArray bson.M) bson.M {
 	return bson.M{"$and": cond}
 }
 
-func (this *client) replaceDoc(ctx context.Context, collection string, filterOfDoc, docInfo bson.M) (string, error) {
+func (this *client) replaceDoc(ctx context.Context, collection string, filterOfDoc, docInfo bson.M) (string, *dbmodels.DBError) {
 	upsert := true
 
 	col := this.collection(collection)
@@ -214,14 +214,14 @@ func (this *client) replaceDoc(ctx context.Context, collection string, filterOfD
 		&options.ReplaceOptions{Upsert: &upsert},
 	)
 	if err != nil {
-		return "", err
+		return "", systemError(err)
 	}
 
-	if r.UpsertedID == nil {
-		return "", nil
+	uid := ""
+	if r.UpsertedID != nil {
+		uid, _ = toUID(r.UpsertedID)
 	}
-
-	return toUID(r.UpsertedID)
+	return uid, nil
 }
 
 func (this *client) newDocIfNotExist(ctx context.Context, collection string, filterOfDoc, docInfo bson.M) (string, *dbmodels.DBError) {

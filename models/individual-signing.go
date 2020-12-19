@@ -40,7 +40,3 @@ func IsIndividualSigned(orgRepo *dbmodels.OrgRepo, email string) (bool, *ModelEr
 	}
 	return b, nil
 }
-
-func InitializeIndividualSigning(linkID string, orgRepo *dbmodels.OrgRepo, claInfo *dbmodels.CLAInfo) error {
-	return dbmodels.GetDB().InitializeIndividualSigning(linkID, orgRepo, claInfo)
-}

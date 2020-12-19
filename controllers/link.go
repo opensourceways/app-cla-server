@@ -163,15 +163,15 @@ func (this *LinkController) initializeSigning(input *models.LinkCreateOption, li
 		}
 		info := cla.GenCLAInfo()
 
-		if err := models.InitializeCorpSigning(linkID, &orgInfo, info); err != nil {
-			return newFailedResult(500, util.ErrSystemError, err)
+		if merr := models.InitializeCorpSigning(linkID, &orgInfo, info); merr != nil {
+			return parseModelError(merr)
 		}
 	}
 
 	cla = input.IndividualCLA
 	if cla != nil {
-		if err := models.InitializeIndividualSigning(linkID, orgRepo, cla.GenCLAInfo()); err != nil {
-			return newFailedResult(500, util.ErrSystemError, err)
+		if merr := models.InitializeIndividualSigning(linkID, orgRepo, cla.GenCLAInfo()); merr != nil {
+			return parseModelError(merr)
 		}
 	}
 

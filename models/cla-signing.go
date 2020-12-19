@@ -16,3 +16,13 @@ func AddCLAInfo(linkID, applyTo string, info *dbmodels.CLAInfo) error {
 func DeleteCLAInfo(linkID, applyTo, language string) error {
 	return nil
 }
+
+func InitializeIndividualSigning(linkID string, orgRepo *dbmodels.OrgRepo, claInfo *dbmodels.CLAInfo) *ModelError {
+	err := dbmodels.GetDB().InitializeIndividualSigning(linkID, orgRepo, claInfo)
+	return parseDBError(err)
+}
+
+func InitializeCorpSigning(linkID string, info *dbmodels.OrgInfo, claInfo *dbmodels.CLAInfo) *ModelError {
+	err := dbmodels.GetDB().InitializeCorpSigning(linkID, info, claInfo)
+	return parseDBError(err)
+}

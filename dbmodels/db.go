@@ -23,7 +23,6 @@ type IDB interface {
 }
 
 type ICorporationSigning interface {
-	InitializeCorpSigning(linkID string, info *OrgInfo, claInfo *CLAInfo) error
 	SignAsCorporation(linkID string, info *CorporationSigningOption) *DBError
 	IsCorpSigned(linkID, email string) (bool, *DBError)
 	ListCorpSignings(linkID, language string) ([]CorporationSigningSummary, *DBError)
@@ -58,7 +57,6 @@ type IOrgCLA interface {
 }
 
 type IIndividualSigning interface {
-	InitializeIndividualSigning(linkID string, info *OrgRepo, claInfo *CLAInfo) error
 	SignAsIndividual(linkID string, info *IndividualSigningInfo) *DBError
 	DeleteIndividualSigning(linkID, email string) *DBError
 	UpdateIndividualSigning(linkID, email string, enabled bool) *DBError
@@ -67,6 +65,9 @@ type IIndividualSigning interface {
 }
 
 type ICLASigning interface {
+	InitializeCorpSigning(linkID string, info *OrgInfo, claInfo *CLAInfo) *DBError
+	InitializeIndividualSigning(linkID string, info *OrgRepo, claInfo *CLAInfo) *DBError
+
 	AddCLAInfo(linkID, applyTo string, info *CLAInfo) error
 	GetCLAInfoSigned(linkID, claLang, applyTo string) (*CLAInfo, *DBError)
 }

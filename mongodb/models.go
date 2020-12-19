@@ -134,6 +134,13 @@ type dCorpManager struct {
 	InitialPWChanged bool   `bson:"changed" json:"changed"`
 }
 
+type cVerificationCode struct {
+	Email   string `bson:"email" json:"email" required:"true"`
+	Code    string `bson:"code" json:"code" required:"true"`
+	Purpose string `bson:"purpose" json:"purpose" required:"true"`
+	Expiry  int64  `bson:"expiry" json:"expiry" required:"true"`
+}
+
 func memberNameOfSignings(key string) string {
 	return fmt.Sprintf("%s.%s", fieldSignings, key)
 }

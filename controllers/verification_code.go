@@ -34,14 +34,13 @@ func (this *VerificationCodeController) Post() {
 		return
 	}
 
-	code, err := models.CreateVerificationCode(
+	code, merr := models.CreateVerificationCode(
 		inputEmail, linkID, conf.AppConfig.VerificationCodeExpiry,
 	)
-	if err != nil {
-		this.sendFailedResponse(0, "", err, action)
+	if merr != nil {
+		this.sendModelErrorAsResp(merr, action)
 		return
 	}
-	//err = merr.(error)
 
 	this.sendResponse("create verification code successfully", 0)
 

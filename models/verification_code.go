@@ -7,7 +7,7 @@ import (
 	"github.com/opensourceways/app-cla-server/util"
 )
 
-func CreateVerificationCode(email, purpose string, expiry int64) (string, error) {
+func CreateVerificationCode(email, purpose string, expiry int64) (string, *ModelError) {
 	code := util.RandStr(6, "number")
 
 	vc := dbmodels.VerificationCode{
@@ -18,7 +18,7 @@ func CreateVerificationCode(email, purpose string, expiry int64) (string, error)
 	}
 
 	err := dbmodels.GetDB().CreateVerificationCode(vc)
-	return code, err
+	return code, parseDBError(err)
 }
 
 func checkVerificationCode(email, code, purpose string) *ModelError {

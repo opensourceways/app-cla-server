@@ -4,32 +4,25 @@ import (
 	"context"
 
 	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 
 	"github.com/opensourceways/app-cla-server/dbmodels"
 	"github.com/opensourceways/app-cla-server/util"
 )
 
-func (this *client) CreateVerificationCode(opt dbmodels.VerificationCode) error {
-	info := struct {
-		Email   string `json:"email" required:"true"`
-		Code    string `json:"code" required:"true"`
-		Purpose string `json:"purpose" required:"true"`
-		Expiry  int64  `json:"expiry" required:"true"`
-	}{
+func (this *client) CreateVerificationCode(opt dbmodels.VerificationCode) *dbmodels.DBError {
+	info := cVerificationCode{
 		Email:   opt.Email,
 		Code:    opt.Code,
 		Purpose: opt.Purpose,
 		Expiry:  opt.Expiry,
 	}
-
 	body, err := structToMap(info)
 	if err != nil {
 		return err
 	}
 
-	f := func(ctx mongo.SessionContext) error {
+	f := func(ctx context.Context) *dbmodels.DBError {
 		col := this.collection(this.vcCollection)
 
 		// delete the expired codes.
@@ -42,7 +35,7 @@ func (this *client) CreateVerificationCode(opt dbmodels.VerificationCode) error 
 		return err
 	}
 
-	return this.doTransaction(f)
+	return withContextOfDB(f)
 }
 
 func (this *client) GetVerificationCode(opt *dbmodels.VerificationCode) *dbmodels.DBError {

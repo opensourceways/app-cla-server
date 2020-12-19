@@ -82,7 +82,7 @@ type ICLA interface {
 }
 
 type IVerificationCode interface {
-	CreateVerificationCode(opt VerificationCode) error
+	CreateVerificationCode(opt VerificationCode) *DBError
 	GetVerificationCode(opt *VerificationCode) *DBError
 }
 

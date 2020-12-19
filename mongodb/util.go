@@ -311,14 +311,15 @@ func (this *client) getDocs(ctx context.Context, collection string, filterOfDoc,
 	return cursor.All(ctx, result)
 }
 
-func (this *client) insertDoc(ctx context.Context, collection string, docInfo bson.M) (string, error) {
+func (this *client) insertDoc(ctx context.Context, collection string, docInfo bson.M) (string, *dbmodels.DBError) {
 	col := this.collection(collection)
 	r, err := col.InsertOne(ctx, docInfo)
 	if err != nil {
-		return "", err
+		return "", systemError(err)
 	}
 
-	return toUID(r.InsertedID)
+	uid, _ := toUID(r.InsertedID)
+	return uid, nil
 }
 
 func arrayFilterByElemMatch(array string, exists bool, cond, filter bson.M) {

@@ -100,7 +100,7 @@ func (this *client) ListCorpSignings(linkID, language string) ([]dbmodels.Corpor
 	return r, nil
 }
 
-func (this *client) GetCorpSigningBasicInfo(linkID, email string) (*dbmodels.CorporationSigningBasicInfo, error) {
+func (this *client) GetCorpSigningBasicInfo(linkID, email string) (*dbmodels.CorporationSigningBasicInfo, *dbmodels.DBError) {
 	var v []cCorpSigning
 
 	f := func(ctx context.Context) error {
@@ -112,14 +112,19 @@ func (this *client) GetCorpSigningBasicInfo(linkID, email string) (*dbmodels.Cor
 	}
 
 	if err := withContext(f); err != nil {
-		return nil, err
+		return nil, systemError(err)
 	}
 
-	if len(v) != 1 || v[0].Signings == nil {
-		return nil, nil
+	if len(v) == 0 {
+		return nil, errNoDBRecord
 	}
 
-	detail := toModelOfCorpSigningSummary(&(v[0].Signings[0]), false)
+	signings := v[0].Signings
+	if len(signings) == 0 {
+		return nil, errNoChildDoc
+	}
+
+	detail := toModelOfCorpSigningSummary(&(signings[0]), false)
 	return &detail.CorporationSigningBasicInfo, nil
 }
 

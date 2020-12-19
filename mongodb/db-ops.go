@@ -46,16 +46,22 @@ func (this *client) pushArrayElem(ctx context.Context, collection, array string,
 	return nil
 }
 
-func (this *client) pullAndReturnArrayElem(ctx context.Context, collection, array string, filterOfDoc, filterOfArray bson.M, result interface{}) error {
+func (this *client) pullAndReturnArrayElem(ctx context.Context, collection, array string, filterOfDoc, filterOfArray bson.M, result interface{}) *dbmodels.DBError {
 	col := this.collection(collection)
-	r := col.FindOneAndUpdate(
+	sr := col.FindOneAndUpdate(
 		ctx, filterOfDoc,
 		bson.M{"$pull": bson.M{array: filterOfArray}},
 		&options.FindOneAndUpdateOptions{
 			Projection: bson.M{array: bson.M{"$elemMatch": filterOfArray}},
 		})
 
-	return r.Decode(result)
+	if err := sr.Decode(result); err != nil {
+		if err == mongo.ErrNoDocuments {
+			return errNoDBRecord
+		}
+		return systemError(err)
+	}
+	return nil
 }
 
 func (this *client) isArrayElemNotExists(ctx context.Context, collection, array string, filterOfDoc, filterOfArray bson.M) (bool, *dbmodels.DBError) {

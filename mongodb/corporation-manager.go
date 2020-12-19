@@ -27,7 +27,7 @@ func memberNameOfCorpManager(field string) string {
 	return fmt.Sprintf("%s.%s", fieldCorpManagers, field)
 }
 
-func (this *client) AddCorporationManager(linkID string, opt []dbmodels.CorporationManagerCreateOption, managerNumber int) error {
+func (this *client) AddCorporationManager(linkID string, opt []dbmodels.CorporationManagerCreateOption, managerNumber int) *dbmodels.DBError {
 	toAdd := make(bson.A, 0, len(opt))
 	emails := make(bson.A, 0, len(opt))
 	for _, item := range opt {
@@ -60,13 +60,13 @@ func (this *client) AddCorporationManager(linkID string, opt []dbmodels.Corporat
 		docFilter,
 	)
 
-	f := func(ctx context.Context) error {
+	f := func(ctx context.Context) *dbmodels.DBError {
 		return this.pushArrayElems(
 			ctx, this.corpSigningCollection, fieldCorpManagers, docFilter, toAdd,
 		)
 	}
 
-	return withContext(f)
+	return withContextOfDB(f)
 }
 
 func (this *client) CheckCorporationManagerExist(opt dbmodels.CorporationManagerCheckInfo) (map[string]dbmodels.CorporationManagerCheckResult, error) {
@@ -213,7 +213,7 @@ func (this *client) ListCorporationManager(linkID, email, role string) ([]dbmode
 	return r, nil
 }
 
-func (this *client) DeleteCorporationManager(linkID string, emails []string) ([]dbmodels.CorporationManagerCreateOption, error) {
+func (this *client) DeleteCorporationManager(linkID string, emails []string) ([]dbmodels.CorporationManagerCreateOption, *dbmodels.DBError) {
 	toDeleted := make(bson.A, 0, len(emails))
 	for _, item := range emails {
 		toDeleted = append(toDeleted, item)
@@ -225,7 +225,7 @@ func (this *client) DeleteCorporationManager(linkID string, emails []string) ([]
 	}
 
 	var v cCorpSigning
-	f := func(ctx context.Context) error {
+	f := func(ctx context.Context) *dbmodels.DBError {
 		return this.pullAndReturnArrayElem(
 			ctx, this.corpSigningCollection, fieldCorpManagers,
 			docFilterOfCorpManager(linkID), elemFilter,
@@ -233,7 +233,7 @@ func (this *client) DeleteCorporationManager(linkID string, emails []string) ([]
 		)
 	}
 
-	if err := withContext(f); err != nil {
+	if err := withContextOfDB(f); err != nil {
 		return nil, err
 	}
 

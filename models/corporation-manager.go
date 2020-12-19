@@ -18,7 +18,7 @@ func (this CorporationManagerAuthentication) Authenticate() (map[string]dbmodels
 	if merr := checkEmailFormat(this.User); merr == nil {
 		info.Email = this.User
 	} else {
-		if _, err := checkManagerID(this.User); err != nil {
+		if err := checkManagerID(this.User); err != nil {
 			return nil, err
 		}
 
@@ -29,7 +29,7 @@ func (this CorporationManagerAuthentication) Authenticate() (map[string]dbmodels
 	return dbmodels.GetDB().CheckCorporationManagerExist(info)
 }
 
-func CreateCorporationAdministrator(orgCLAID, name, email string) ([]dbmodels.CorporationManagerCreateOption, error) {
+func CreateCorporationAdministrator(linkID, name, email string) ([]dbmodels.CorporationManagerCreateOption, *ModelError) {
 	pw := util.RandStr(8, "alphanum")
 
 	opt := []dbmodels.CorporationManagerCreateOption{
@@ -41,13 +41,21 @@ func CreateCorporationAdministrator(orgCLAID, name, email string) ([]dbmodels.Co
 			Role:     dbmodels.RoleAdmin,
 		},
 	}
-	err := dbmodels.GetDB().AddCorporationManager(orgCLAID, opt, 1)
-	if err != nil {
-		return nil, err
+	err := dbmodels.GetDB().AddCorporationManager(linkID, opt, 1)
+	if err == nil {
+		opt[0].ID = fmt.Sprintf("admin_%s", util.EmailSuffix(opt[0].Email))
+		return opt, nil
 	}
 
-	opt[0].ID = fmt.Sprintf("admin_%s", util.EmailSuffix(opt[0].Email))
-	return opt, nil
+	if err.IsErrorOf(dbmodels.ErrMarshalDataFaield) {
+		return nil, newModelError(ErrSystemError, err)
+	}
+
+	if err.IsErrorOf(dbmodels.ErrNoDBRecord) {
+		return nil, newModelError(ErrNoLink, err)
+	}
+
+	return nil, parseDBError(err)
 }
 
 type CorporationManagerResetPassword dbmodels.CorporationManagerResetPassword

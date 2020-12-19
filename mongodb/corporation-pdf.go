@@ -50,18 +50,18 @@ func (this *client) DownloadCorporationSigningPDF(linkID string, email string) (
 	return &v.PDF, nil
 }
 
-func (this *client) IsCorpSigningPDFUploaded(linkID string, email string) (bool, error) {
+func (this *client) IsCorpSigningPDFUploaded(linkID string, email string) (bool, *dbmodels.DBError) {
 	var v dCorpSigningPDF
 
-	f := func(ctx context.Context) error {
-		return this.getDoc(
+	f := func(ctx context.Context) *dbmodels.DBError {
+		return this.getDoc1(
 			ctx, this.corpPDFCollection,
 			docFilterOfCorpSigningPDF(linkID, email), bson.M{"_id": 1}, &v,
 		)
 	}
 
-	if err := withContext(f); err != nil {
-		if isErrOfNoDocument(err) {
+	if err := withContextOfDB(f); err != nil {
+		if err == errNoDBRecord {
 			return false, nil
 		}
 		return false, err

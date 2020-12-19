@@ -35,36 +35,39 @@ func (this *CorporationManagerController) Prepare() {
 // @router /:link_id/:email [put]
 func (this *CorporationManagerController) Put() {
 	doWhat := "add corp administrator"
-
 	linkID := this.GetString(":link_id")
 	corpEmail := this.GetString(":email")
 
 	pl, err := this.tokenPayloadOfCodePlatform()
+	if err != nil {
+		this.sendFailedResponse(500, util.ErrSystemError, err, doWhat)
+		return
+	}
 	if fr := pl.isOwnerOfLink(linkID); fr != nil {
 		this.sendFailedResultAsResp(fr, doWhat)
 		return
 	}
 
-	uploaded, err := models.IsCorpSigningPDFUploaded(linkID, corpEmail)
-	if err != nil {
-		this.sendFailedResponse(0, "", err, doWhat)
+	uploaded, merr := models.IsCorpSigningPDFUploaded(linkID, corpEmail)
+	if merr != nil {
+		this.sendModelErrorAsResp(merr, doWhat)
 		return
 	}
 	if !uploaded {
 		err = fmt.Errorf("pdf corporation signed has not been uploaded")
-		this.sendFailedResponse(400, util.ErrPDFHasNotUploaded, err, doWhat)
+		this.sendFailedResponse(400, errNoPDFOfCorp, err, doWhat)
 		return
 	}
 
-	corpSigning, err := models.GetCorporationSigningBasicInfo(linkID, corpEmail)
-	if err != nil {
-		this.sendFailedResponse(0, "", err, doWhat)
+	corpSigning, merr := models.GetCorporationSigningBasicInfo(linkID, corpEmail)
+	if merr != nil {
+		this.sendModelErrorAsResp(merr, doWhat)
 		return
 	}
 
-	added, err := models.CreateCorporationAdministrator(linkID, corpSigning.AdminName, corpEmail)
-	if err != nil {
-		this.sendFailedResponse(0, "", err, doWhat)
+	added, merr := models.CreateCorporationAdministrator(linkID, corpSigning.AdminName, corpEmail)
+	if merr != nil {
+		this.sendModelErrorAsResp(merr, doWhat)
 		return
 	}
 

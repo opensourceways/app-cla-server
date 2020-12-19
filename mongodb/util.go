@@ -80,16 +80,19 @@ func errorIfMatchingNoDoc(r *mongo.UpdateResult) error {
 	return nil
 }
 
-func (this *client) pushArrayElems(ctx context.Context, collection, array string, filterOfDoc bson.M, value bson.A) error {
+func (this *client) pushArrayElems(ctx context.Context, collection, array string, filterOfDoc bson.M, value bson.A) *dbmodels.DBError {
 	update := bson.M{"$push": bson.M{array: bson.M{"$each": value}}}
 
 	col := this.collection(collection)
 	r, err := col.UpdateOne(ctx, filterOfDoc, update)
 	if err != nil {
-		return err
+		return systemError(err)
 	}
 
-	return errorIfMatchingNoDoc(r)
+	if r.MatchedCount == 0 {
+		return errNoDBRecord
+	}
+	return nil
 }
 
 func (this *client) pullArrayElem(ctx context.Context, collection, array string, filterOfDoc, filterOfArray bson.M) *dbmodels.DBError {

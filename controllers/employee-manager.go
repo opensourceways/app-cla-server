@@ -23,7 +23,33 @@ func (this *EmployeeManagerController) Prepare() {
 // @Success 201 {int} map
 // @router / [post]
 func (this *EmployeeManagerController) Post() {
-	this.addOrDeleteManagers(true)
+	doWhat := "add employee managers"
+
+	pl, err := this.tokenPayloadOfCorpManager()
+	if err != nil {
+		this.sendFailedResponse(500, util.ErrSystemError, err, doWhat)
+		return
+	}
+
+	opt, fr := this.fetchEmployeeManagerCreateOption(pl.Email)
+	if fr != nil {
+		this.sendFailedResultAsResp(fr, doWhat)
+		return
+	}
+
+	added, merr := opt.Create(pl.LinkID)
+	if merr != nil {
+		if merr.IsErrorOf(models.ErrNoLinkOrDuplicateManager) {
+			this.sendFailedResponse(400, errDuplicateManager, merr, doWhat)
+		} else {
+			this.sendModelErrorAsResp(merr, doWhat)
+		}
+		return
+	}
+
+	this.sendResponse(doWhat+" successfully", 0)
+
+	notifyCorpManagerWhenAdding(&pl.OrgInfo, added)
 }
 
 // @Title Delete
@@ -32,7 +58,38 @@ func (this *EmployeeManagerController) Post() {
 // @Success 204 {string} delete success!
 // @router / [delete]
 func (this *EmployeeManagerController) Delete() {
-	this.addOrDeleteManagers(false)
+	doWhat := "delete employee managers"
+
+	pl, err := this.tokenPayloadOfCorpManager()
+	if err != nil {
+		this.sendFailedResponse(500, util.ErrSystemError, err, doWhat)
+		return
+	}
+
+	opt, fr := this.fetchEmployeeManagerCreateOption(pl.Email)
+	if fr != nil {
+		this.sendFailedResultAsResp(fr, doWhat)
+		return
+	}
+
+	deleted, merr := opt.Delete(pl.LinkID)
+	if merr != nil {
+		this.sendModelErrorAsResp(merr, doWhat)
+		return
+	}
+
+	this.sendResponse(doWhat+"successfully", 0)
+
+	subject := fmt.Sprintf("Revoking the authorization on project of \"%s\"", pl.OrgAlias)
+
+	for _, item := range deleted {
+		msg := email.RemovingCorpManager{
+			User:       item.Name,
+			Org:        pl.OrgAlias,
+			ProjectURL: pl.ProjectURL(),
+		}
+		sendEmailToIndividual(item.Email, pl.OrgEmail, subject, msg)
+	}
 }
 
 // @Title GetAll
@@ -57,62 +114,16 @@ func (this *EmployeeManagerController) GetAll() {
 	this.sendResponse(r, 0)
 }
 
-func (this *EmployeeManagerController) addOrDeleteManagers(toAdd bool) {
-	doWhat := fmt.Sprintf("add/remove employee managers")
-	var statusCode = 0
-	var errCode = ""
-	var reason error
-	var body interface{}
+func (this *EmployeeManagerController) fetchEmployeeManagerCreateOption(corpEmail string) (*models.EmployeeManagerCreateOption, *failedResult) {
 
-	defer func() {
-		op := "add"
-		if !toAdd {
-			op = "delete"
-		}
-		body = fmt.Sprintf("%s employee manager successfully", op)
-
-		sendResponse(&this.Controller, statusCode, errCode, reason, body, fmt.Sprintf("%s employee managers", op))
-	}()
-
-	pl, err := this.tokenPayloadOfCorpManager()
-	if err != nil {
-		this.sendFailedResponse(500, util.ErrSystemError, err, doWhat)
-		return
+	info := &models.EmployeeManagerCreateOption{}
+	if err := this.fetchInputPayload(info); err != nil {
+		return nil, newFailedResult(400, util.ErrInvalidParameter, err)
 	}
 
-	var info models.EmployeeManagerCreateOption
-	if err := this.fetchInputPayload(&info); err != nil {
-		this.sendFailedResponse(400, util.ErrInvalidParameter, err, doWhat)
-		return
+	if merr := info.Validate(corpEmail); merr != nil {
+		return nil, parseModelError(merr)
 	}
 
-	if c, err := (&info).Validate(pl.Email); err != nil {
-		this.sendFailedResponse(400, c, err, doWhat)
-		return
-	}
-
-	if toAdd {
-		added, err := (&info).Create(pl.LinkID)
-		if err != nil {
-			this.sendFailedResponse(0, "", err, doWhat)
-			return
-		}
-		notifyCorpManagerWhenAdding(&pl.OrgInfo, added)
-	} else {
-		deleted, err := (&info).Delete(pl.LinkID)
-		if err != nil {
-			this.sendFailedResponse(0, "", err, doWhat)
-			return
-		}
-
-		subject := fmt.Sprintf("Revoking the authorization on project of \"%s\"", pl.OrgAlias)
-		for _, item := range deleted {
-			msg := email.RemovingCorpManager{
-				User:       item.Name,
-				Org:        pl.OrgAlias,
-				ProjectURL: pl.ProjectURL(),
-			}
-			sendEmailToIndividual(item.Email, pl.OrgEmail, subject, msg)
-		}
-	}
+	return info, nil
 }

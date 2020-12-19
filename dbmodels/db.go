@@ -27,18 +27,18 @@ type ICorporationSigning interface {
 	SignAsCorporation(linkID string, info *CorporationSigningOption) *DBError
 	IsCorpSigned(linkID, email string) (bool, *DBError)
 	ListCorpSignings(linkID, language string) ([]CorporationSigningSummary, *DBError)
-	GetCorpSigningBasicInfo(linkID, email string) (*CorporationSigningBasicInfo, error)
+	GetCorpSigningBasicInfo(linkID, email string) (*CorporationSigningBasicInfo, *DBError)
 	GetCorpSigningDetail(linkID, email string) (*CorporationSigningOption, error)
 
 	UploadCorporationSigningPDF(linkID string, adminEmail string, pdf *[]byte) *DBError
 	DownloadCorporationSigningPDF(linkID string, email string) (*[]byte, error)
-	IsCorpSigningPDFUploaded(linkID string, email string) (bool, error)
+	IsCorpSigningPDFUploaded(linkID string, email string) (bool, *DBError)
 	ListCorpsWithPDFUploaded(linkID string) ([]string, *DBError)
 }
 
 type ICorporationManager interface {
-	AddCorporationManager(linkID string, opt []CorporationManagerCreateOption, managerNumber int) error
-	DeleteCorporationManager(linkID string, emails []string) ([]CorporationManagerCreateOption, error)
+	AddCorporationManager(linkID string, opt []CorporationManagerCreateOption, managerNumber int) *DBError
+	DeleteCorporationManager(linkID string, emails []string) ([]CorporationManagerCreateOption, *DBError)
 	ResetCorporationManagerPassword(linkID, email string, opt CorporationManagerResetPassword) *DBError
 	CheckCorporationManagerExist(opt CorporationManagerCheckInfo) (map[string]CorporationManagerCheckResult, error)
 	ListCorporationManager(linkID, email, role string) ([]CorporationManagerListResult, *DBError)

@@ -18,9 +18,9 @@ type EmployeeManager struct {
 	Name  string `json:"name"`
 }
 
-func (this *EmployeeManagerCreateOption) Validate(adminEmail string) (string, error) {
+func (this *EmployeeManagerCreateOption) Validate(adminEmail string) *ModelError {
 	if len(this.Managers) == 0 {
-		return util.ErrInvalidParameter, fmt.Errorf("no employee mangers to add/delete")
+		return newModelError(ErrMissingParameter, fmt.Errorf("no employee mangers to add/delete"))
 	}
 
 	ids := map[string]bool{}
@@ -29,43 +29,43 @@ func (this *EmployeeManagerCreateOption) Validate(adminEmail string) (string, er
 
 	for _, item := range this.Managers {
 		if item.Email == "" {
-			return util.ErrInvalidParameter, fmt.Errorf("missing email")
+			return newModelError(ErrMissingParameter, fmt.Errorf("missing email"))
 		}
 
 		if item.Email == adminEmail {
-			return util.ErrInvalidParameter, fmt.Errorf("can't add/delete administrator himself/herself")
+			return newModelError(ErrAddAdminAsManager, fmt.Errorf("can't add/delete administrator himself/herself"))
 		}
 
 		if merr := checkEmailFormat(item.Email); merr != nil {
-			return merr.ErrCode(), merr
+			return merr
 		}
 
 		es := util.EmailSuffix(item.Email)
 		if es != suffix {
-			return util.ErrNotSameCorp, fmt.Errorf("not same email suffix")
+			return newModelError(ErrNotSameCorp, fmt.Errorf("not same email suffix"))
 		}
 
 		if _, ok := em[item.Email]; ok {
-			return util.ErrInvalidParameter, fmt.Errorf("duplicate email:%s", item.Email)
+			return newModelError(ErrDuplicateManagerEmail, fmt.Errorf("duplicate email:%s", item.Email))
 		}
 		em[item.Email] = true
 
 		if item.ID != "" {
-			if ec, err := checkManagerID(fmt.Sprintf("%s_%s", item.ID, es)); err != nil {
-				return ec, err
+			if err := checkManagerID(fmt.Sprintf("%s_%s", item.ID, es)); err != nil {
+				return err
 			}
 
 			if _, ok := ids[item.ID]; ok {
-				return util.ErrInvalidParameter, fmt.Errorf("duplicate manager ID:%s", item.ID)
+				return newModelError(ErrDuplicateManagerID, fmt.Errorf("duplicate manager ID:%s", item.ID))
 			}
 			ids[item.ID] = true
 		}
 	}
 
-	return "", nil
+	return nil
 }
 
-func (this *EmployeeManagerCreateOption) Create(orgCLAID string) ([]dbmodels.CorporationManagerCreateOption, error) {
+func (this *EmployeeManagerCreateOption) Create(linkID string) ([]dbmodels.CorporationManagerCreateOption, *ModelError) {
 	opt := make([]dbmodels.CorporationManagerCreateOption, 0, len(this.Managers))
 
 	for _, item := range this.Managers {
@@ -80,26 +80,44 @@ func (this *EmployeeManagerCreateOption) Create(orgCLAID string) ([]dbmodels.Cor
 		})
 	}
 
-	err := dbmodels.GetDB().AddCorporationManager(orgCLAID, opt, conf.AppConfig.EmployeeManagersNumber)
-	if err != nil {
-		return nil, err
+	err := dbmodels.GetDB().AddCorporationManager(linkID, opt, conf.AppConfig.EmployeeManagersNumber)
+	if err == nil {
+		es := util.EmailSuffix(opt[0].Email)
+		for i := range opt {
+			if opt[i].ID != "" {
+				opt[i].ID = fmt.Sprintf("%s_%s", opt[i].ID, es)
+			}
+		}
+		return opt, nil
 	}
 
-	es := util.EmailSuffix(opt[0].Email)
-	for i := range opt {
-		if opt[i].ID != "" {
-			opt[i].ID = fmt.Sprintf("%s_%s", opt[i].ID, es)
-		}
+	if err.IsErrorOf(dbmodels.ErrMarshalDataFaield) {
+		return nil, newModelError(ErrSystemError, err)
 	}
-	return opt, nil
+
+	if err.IsErrorOf(dbmodels.ErrNoDBRecord) {
+		return nil, newModelError(ErrNoLinkOrDuplicateManager, err)
+	}
+
+	return nil, parseDBError(err)
+
 }
 
-func (this *EmployeeManagerCreateOption) Delete(orgCLAID string) ([]dbmodels.CorporationManagerCreateOption, error) {
+func (this *EmployeeManagerCreateOption) Delete(linkID string) ([]dbmodels.CorporationManagerCreateOption, *ModelError) {
 	emails := make([]string, 0, len(this.Managers))
 
 	for _, item := range this.Managers {
 		emails = append(emails, item.Email)
 	}
 
-	return dbmodels.GetDB().DeleteCorporationManager(orgCLAID, emails)
+	v, err := dbmodels.GetDB().DeleteCorporationManager(linkID, emails)
+	if err == nil {
+		return v, nil
+	}
+
+	if err.IsErrorOf(dbmodels.ErrNoDBRecord) {
+		return nil, newModelError(ErrNoLink, err)
+	}
+
+	return nil, parseDBError(err)
 }

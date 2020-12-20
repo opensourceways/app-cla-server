@@ -22,9 +22,9 @@ func (this *CorporationManagerController) Auth() {
 		return
 	}
 
-	v, err := (&info).Authenticate()
-	if err != nil {
-		this.sendFailedResponse(0, "", err, action)
+	v, merr := (&info).Authenticate()
+	if merr != nil {
+		this.sendModelErrorAsResp(merr, action)
 		return
 	}
 

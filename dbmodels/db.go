@@ -39,7 +39,7 @@ type ICorporationManager interface {
 	AddCorporationManager(linkID string, opt []CorporationManagerCreateOption, managerNumber int) *DBError
 	DeleteCorporationManager(linkID string, emails []string) ([]CorporationManagerCreateOption, *DBError)
 	ResetCorporationManagerPassword(linkID, email string, opt CorporationManagerResetPassword) *DBError
-	CheckCorporationManagerExist(opt CorporationManagerCheckInfo) (map[string]CorporationManagerCheckResult, error)
+	CheckCorporationManagerExist(opt CorporationManagerCheckInfo) (map[string]CorporationManagerCheckResult, *DBError)
 	ListCorporationManager(linkID, email, role string) ([]CorporationManagerListResult, *DBError)
 }
 

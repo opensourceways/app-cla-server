@@ -69,7 +69,7 @@ func (this *client) AddCorporationManager(linkID string, opt []dbmodels.Corporat
 	return withContextOfDB(f)
 }
 
-func (this *client) CheckCorporationManagerExist(opt dbmodels.CorporationManagerCheckInfo) (map[string]dbmodels.CorporationManagerCheckResult, error) {
+func (this *client) CheckCorporationManagerExist(opt dbmodels.CorporationManagerCheckInfo) (map[string]dbmodels.CorporationManagerCheckResult, *dbmodels.DBError) {
 	docFilter := bson.M{
 		fieldLinkStatus:   linkStatusReady,
 		fieldCorpManagers: bson.M{"$type": "array"},
@@ -107,7 +107,7 @@ func (this *client) CheckCorporationManagerExist(opt dbmodels.CorporationManager
 	}
 
 	if err := withContext(f); err != nil {
-		return nil, err
+		return nil, systemError(err)
 	}
 
 	if len(v) == 0 {

@@ -94,7 +94,7 @@ func (this *client) DeleteCLA(linkID, applyTo, language string) *dbmodels.DBErro
 	return withContextOfDB(f)
 }
 
-func (this *client) GetCLAByType(orgRepo *dbmodels.OrgRepo, applyTo string) (string, []dbmodels.CLADetail, error) {
+func (this *client) GetCLAByType(orgRepo *dbmodels.OrgRepo, applyTo string) (string, []dbmodels.CLADetail, *dbmodels.DBError) {
 	var project bson.M
 	if applyTo == dbmodels.ApplyToIndividual {
 		project = bson.M{
@@ -109,13 +109,13 @@ func (this *client) GetCLAByType(orgRepo *dbmodels.OrgRepo, applyTo string) (str
 	}
 
 	var v cLink
-	f := func(ctx context.Context) error {
-		return this.getDoc(
+	f := func(ctx context.Context) *dbmodels.DBError {
+		return this.getDoc1(
 			ctx, this.linkCollection, docFilterOfLink(orgRepo), project, &v,
 		)
 	}
 
-	if err := withContext(f); err != nil {
+	if err := withContextOfDB(f); err != nil {
 		return "", nil, err
 	}
 
@@ -125,19 +125,19 @@ func (this *client) GetCLAByType(orgRepo *dbmodels.OrgRepo, applyTo string) (str
 	return v.LinkID, toModelOfCLAs(v.CorpCLAs), nil
 }
 
-func (this *client) GetAllCLA(linkID string) (*dbmodels.CLAOfLink, error) {
+func (this *client) GetAllCLA(linkID string) (*dbmodels.CLAOfLink, *dbmodels.DBError) {
 	project := bson.M{
 		fmt.Sprintf("%s.%s", fieldCorpCLAs, fieldOrgSignature): 0,
 	}
 
 	var v cLink
-	f := func(ctx context.Context) error {
-		return this.getDoc(
+	f := func(ctx context.Context) *dbmodels.DBError {
+		return this.getDoc1(
 			ctx, this.linkCollection, docFilterOfCLA(linkID), project, &v,
 		)
 	}
 
-	if err := withContext(f); err != nil {
+	if err := withContextOfDB(f); err != nil {
 		return nil, err
 	}
 

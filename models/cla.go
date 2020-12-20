@@ -111,12 +111,28 @@ func DeleteCLA(linkID, applyTo, language string) *ModelError {
 	return parseDBError(err)
 }
 
-func GetCLAByType(orgRepo *dbmodels.OrgRepo, applyTo string) (string, []dbmodels.CLADetail, error) {
-	return dbmodels.GetDB().GetCLAByType(orgRepo, applyTo)
+func GetCLAByType(orgRepo *dbmodels.OrgRepo, applyTo string) (string, []dbmodels.CLADetail, *ModelError) {
+	linkID, v, err := dbmodels.GetDB().GetCLAByType(orgRepo, applyTo)
+	if err == nil {
+		return linkID, v, nil
+	}
+
+	if err.IsErrorOf(dbmodels.ErrNoDBRecord) {
+		return linkID, v, newModelError(ErrNoOrgRepo, err)
+	}
+	return linkID, v, parseDBError(err)
 }
 
-func GetAllCLA(linkID string) (*dbmodels.CLAOfLink, error) {
-	return dbmodels.GetDB().GetAllCLA(linkID)
+func GetAllCLA(linkID string) (*dbmodels.CLAOfLink, *ModelError) {
+	v, err := dbmodels.GetDB().GetAllCLA(linkID)
+	if err == nil {
+		return v, nil
+	}
+
+	if err.IsErrorOf(dbmodels.ErrNoDBRecord) {
+		return v, newModelError(ErrNoLink, err)
+	}
+	return v, parseDBError(err)
 }
 
 func HasCLA(linkID, applyTo, language string) (bool, *ModelError) {

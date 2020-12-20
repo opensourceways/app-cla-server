@@ -251,8 +251,8 @@ func (this *LinkController) ListLinks() {
 func (this *LinkController) GetCLAForSigning() {
 	doWhat := "fetch signing page info"
 	applyTo := this.GetString(":apply_to")
-
 	token := this.apiReqHeader(headerToken)
+
 	if !((token == "" && applyTo == dbmodels.ApplyToCorporation) ||
 		(token != "" && applyTo == dbmodels.ApplyToIndividual)) {
 		this.sendFailedResponse(400, util.ErrInvalidParameter, fmt.Errorf("unmatched cla type"), doWhat)
@@ -263,7 +263,7 @@ func (this *LinkController) GetCLAForSigning() {
 	orgRepo := buildOrgRepo(this.GetString(":platform"), org, repo)
 
 	if linkID, r, err := models.GetCLAByType(orgRepo, applyTo); err != nil {
-		this.sendFailedResponse(0, "", err, doWhat)
+		this.sendModelErrorAsResp(err, doWhat)
 	} else {
 		result := struct {
 			LinkID string               `json:"link_id"`

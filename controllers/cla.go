@@ -111,14 +111,14 @@ func (this *CLAController) List() {
 		this.sendFailedResponse(500, util.ErrSystemError, err, doWhat)
 		return
 	}
-	if err := pl.isOwnerOfLink(linkID); err != nil {
-		this.sendFailedResponse(err.statusCode, err.errCode, err.reason, doWhat)
+	if fr := pl.isOwnerOfLink(linkID); fr != nil {
+		this.sendFailedResultAsResp(fr, doWhat)
 		return
 	}
 
-	clas, err := models.GetAllCLA(linkID)
-	if err != nil {
-		this.sendFailedResponse(0, "", err, doWhat)
+	clas, merr := models.GetAllCLA(linkID)
+	if merr != nil {
+		this.sendModelErrorAsResp(merr, doWhat)
 		return
 	}
 

@@ -76,8 +76,8 @@ type ICLA interface {
 	HasCLA(linkID, applyTo, language string) (bool, *DBError)
 	AddCLA(linkID, applyTo string, cla *CLACreateOption) *DBError
 	DeleteCLA(linkID, applyTo, language string) *DBError
-	GetCLAByType(orgRepo *OrgRepo, applyTo string) (string, []CLADetail, error)
-	GetAllCLA(linkID string) (*CLAOfLink, error)
+	GetCLAByType(orgRepo *OrgRepo, applyTo string) (string, []CLADetail, *DBError)
+	GetAllCLA(linkID string) (*CLAOfLink, *DBError)
 	GetCLAInfoToSign(linkID, claLang, applyTo string) (*CLAInfo, *DBError)
 }
 

@@ -2,7 +2,6 @@ package pdf
 
 import (
 	"fmt"
-	"io/ioutil"
 
 	"github.com/opensourceways/app-cla-server/dbmodels"
 	"github.com/opensourceways/app-cla-server/models"
@@ -10,6 +9,8 @@ import (
 )
 
 type IPDFGenerator interface {
+	GetBlankSignaturePath() string
+
 	GenPDFForCorporationSigning(linkID, orgSigFile, claFile string, orgInfo *dbmodels.OrgInfo, signing *models.CorporationSigning, claFields []dbmodels.Field) (string, error)
 }
 
@@ -26,30 +27,18 @@ func InitPDFGenerator(pythonBin, pdfOutDir, pdfOrgSigDir string) error {
 		pdfOrgSigDir: pdfOrgSigDir,
 		corp:         c,
 	}
-	return nil
+
+	path := util.GenFilePath(pdfOrgSigDir, "english_blank_signature.pdf")
+	err = generator.corp.genBlankSignaturePage(path)
+	if err == nil {
+		generator.blankSignaturePath = path
+	}
+
+	return err
 }
 
 func GetPDFGenerator() IPDFGenerator {
 	return generator
-}
-
-func GenBlankSignaturePage() error {
-	path := "./conf/blank_signature/english_blank_signature.pdf"
-	err := generator.corp.genBlankSignaturePage(path)
-	if err != nil {
-		return err
-	}
-
-	data, err := ioutil.ReadFile(path)
-	if err != nil {
-		return fmt.Errorf("Failed to update blank signature: %s", err.Error())
-	}
-
-	err = dbmodels.GetDB().UploadBlankSignature(generator.corp.language, data)
-	if err != nil {
-		return fmt.Errorf("Failed to update blank signature: %s", err.Error())
-	}
-	return nil
 }
 
 func newCorpSigningPDF() (*corpSigningPDF, error) {

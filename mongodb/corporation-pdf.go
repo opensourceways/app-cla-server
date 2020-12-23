@@ -30,17 +30,17 @@ func (this *client) UploadCorporationSigningPDF(linkID string, adminEmail string
 	return withContextOfDB(f)
 }
 
-func (this *client) DownloadCorporationSigningPDF(linkID string, email string) (*[]byte, error) {
+func (this *client) DownloadCorporationSigningPDF(linkID string, email string) (*[]byte, *dbmodels.DBError) {
 	var v dCorpSigningPDF
 
-	f := func(ctx context.Context) error {
-		return this.getDoc(
+	f := func(ctx context.Context) *dbmodels.DBError {
+		return this.getDoc1(
 			ctx, this.corpPDFCollection,
 			docFilterOfCorpSigningPDF(linkID, email), bson.M{"pdf": 1}, &v,
 		)
 	}
 
-	if err := withContext(f); err != nil {
+	if err := withContextOfDB(f); err != nil {
 		return nil, err
 	}
 
@@ -72,7 +72,7 @@ func (this *client) ListCorpsWithPDFUploaded(linkID string) ([]string, *dbmodels
 		CorpID string `bson:"corp_id"`
 	}
 
-	f := func(ctx context.Context) error {
+	f := func(ctx context.Context) *dbmodels.DBError {
 		return this.getDocs(
 			ctx, this.corpPDFCollection,
 			bson.M{fieldLinkID: linkID},
@@ -80,8 +80,8 @@ func (this *client) ListCorpsWithPDFUploaded(linkID string) ([]string, *dbmodels
 		)
 	}
 
-	if err := withContext(f); err != nil {
-		return nil, systemError(err)
+	if err := withContextOfDB(f); err != nil {
+		return nil, err
 	}
 
 	result := make([]string, 0, len(v))

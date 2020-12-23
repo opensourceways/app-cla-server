@@ -308,7 +308,7 @@ func (this *client) getDocs(ctx context.Context, collection string, filterOfDoc,
 		return systemError(err)
 	}
 
-	if err := cursor.All(ctx, result); err != nil {
+	if err = cursor.All(ctx, result); err != nil {
 		return systemError(err)
 	}
 	return nil

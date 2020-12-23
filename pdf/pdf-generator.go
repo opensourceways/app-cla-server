@@ -19,6 +19,12 @@ type pdfGenerator struct {
 	pdfOrgSigDir string
 	pythonBin    string
 	corp         *corpSigningPDF
+
+	blankSignaturePath string
+}
+
+func (this *pdfGenerator) GetBlankSignaturePath() string {
+	return this.blankSignaturePath
 }
 
 func (this *pdfGenerator) GenPDFForCorporationSigning(linkID, orgSigFile, claFile string, orgCLA *dbmodels.OrgInfo, signing *models.CorporationSigning, claFields []dbmodels.Field) (string, error) {

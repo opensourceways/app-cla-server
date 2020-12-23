@@ -43,7 +43,7 @@ func IsFileNotExist(file string) bool {
 func IsNotDir(dir string) bool {
 	v, err := os.Stat(dir)
 	if err != nil {
-		return false
+		return os.IsNotExist(err)
 	}
 	return !v.IsDir()
 }

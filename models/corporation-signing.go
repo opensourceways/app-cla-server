@@ -45,8 +45,9 @@ func UploadCorporationSigningPDF(linkID string, email string, pdf *[]byte) *Mode
 	return parseDBError(err)
 }
 
-func DownloadCorporationSigningPDF(linkID string, email string) (*[]byte, error) {
-	return dbmodels.GetDB().DownloadCorporationSigningPDF(linkID, email)
+func DownloadCorporationSigningPDF(linkID string, email string) (*[]byte, *ModelError) {
+	v, err := dbmodels.GetDB().DownloadCorporationSigningPDF(linkID, email)
+	return v, parseDBError(err)
 }
 
 func IsCorpSigningPDFUploaded(linkID string, email string) (bool, *ModelError) {

@@ -247,3 +247,7 @@ func (this *baseController) readInputFile(fileName string) ([]byte, *failedResul
 	}
 	return data, nil
 }
+
+func (this *baseController) download(path string) {
+	this.Ctx.Output.Download(path)
+}

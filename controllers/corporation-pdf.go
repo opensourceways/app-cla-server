@@ -2,7 +2,10 @@ package controllers
 
 import (
 	"fmt"
+	"io/ioutil"
+	"strings"
 
+	"github.com/opensourceways/app-cla-server/conf"
 	"github.com/opensourceways/app-cla-server/models"
 	"github.com/opensourceways/app-cla-server/util"
 )
@@ -18,6 +21,30 @@ func (this *CorporationPDFController) Prepare() {
 	} else {
 		this.apiPrepare(PermissionOwnerOfOrg)
 	}
+}
+
+func (this *CorporationPDFController) downloadCorpPDF(linkID, corpEmail string) *failedResult {
+	dir := util.GenFilePath(conf.AppConfig.PDFOutDir, "tmp")
+	s := strings.ReplaceAll(util.EmailSuffix(corpEmail), ".", "_")
+	name := fmt.Sprintf("%s_%s_*.pdf", linkID, s)
+
+	f, err := ioutil.TempFile(dir, name)
+	if err != nil {
+		return newFailedResult(500, errSystemError, err)
+	}
+
+	pdf, merr := models.DownloadCorporationSigningPDF(linkID, corpEmail)
+	if merr != nil {
+		return parseModelError(merr)
+	}
+
+	_, err = f.Write(*pdf)
+	if err != nil {
+		return newFailedResult(500, errSystemError, err)
+	}
+
+	this.download(f.Name())
+	return nil
 }
 
 // @Title Upload
@@ -86,13 +113,10 @@ func (this *CorporationPDFController) Download() {
 		return
 	}
 
-	pdf, err := models.DownloadCorporationSigningPDF(linkID, corpEmail)
-	if err != nil {
-		this.sendFailedResponse(0, "", err, action)
-		return
+	fr := this.downloadCorpPDF(linkID, corpEmail)
+	if fr != nil {
+		this.sendFailedResultAsResp(fr, action)
 	}
-
-	this.sendResponse(map[string]interface{}{"pdf": pdf}, 0)
 }
 
 // @Title Review
@@ -104,17 +128,14 @@ func (this *CorporationPDFController) Review() {
 
 	pl, err := this.tokenPayloadOfCorpManager()
 	if err != nil {
-		this.sendFailedResponse(500, util.ErrSystemError, err, action)
+		this.sendFailedResponse(500, errSystemError, err, action)
 		return
 	}
 
-	pdf, err := models.DownloadCorporationSigningPDF(pl.LinkID, pl.Email)
-	if err != nil {
-		this.sendFailedResponse(0, "", err, action)
-		return
+	fr := this.downloadCorpPDF(pl.LinkID, pl.Email)
+	if fr != nil {
+		this.sendFailedResultAsResp(fr, action)
 	}
-
-	this.sendResponse(map[string]interface{}{"pdf": pdf}, 0)
 }
 
 // @Title Preview

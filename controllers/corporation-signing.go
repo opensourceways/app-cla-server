@@ -146,9 +146,9 @@ func (this *CorporationSigningController) ResendCorpSigningEmail() {
 		return
 	}
 
-	b, err := models.IsCorpSigningPDFUploaded(linkID, corpEmail)
-	if err != nil {
-		this.sendFailedResponse(0, "", err, doWhat)
+	b, merr := models.IsCorpSigningPDFUploaded(linkID, corpEmail)
+	if merr != nil {
+		this.sendModelErrorAsResp(merr, doWhat)
 		return
 	}
 	if b {

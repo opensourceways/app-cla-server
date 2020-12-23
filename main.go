@@ -12,6 +12,7 @@ import (
 	"github.com/opensourceways/app-cla-server/mongodb"
 	"github.com/opensourceways/app-cla-server/pdf"
 	_ "github.com/opensourceways/app-cla-server/routers"
+	"github.com/opensourceways/app-cla-server/util"
 	"github.com/opensourceways/app-cla-server/worker"
 )
 
@@ -26,6 +27,15 @@ func main() {
 		os.Exit(1)
 	}
 	AppConfig := conf.AppConfig
+
+	path := util.GenFilePath(AppConfig.PDFOutDir, "tmp")
+	if util.IsNotDir(path) {
+		err := os.Mkdir(path, 0732)
+		if err != nil {
+			beego.Error(err)
+			os.Exit(1)
+		}
+	}
 
 	c, err := mongodb.Initialize(&AppConfig.Mongodb)
 	if err != nil {
@@ -50,12 +60,6 @@ func main() {
 		AppConfig.PDFOrgSignatureDir,
 	); err != nil {
 		beego.Error(err)
-		os.Exit(1)
-	}
-
-	// must run after pdf.InitPDFGenerator
-	if err := pdf.GenBlankSignaturePage(); err != nil {
-		beego.Info(err)
 		os.Exit(1)
 	}
 

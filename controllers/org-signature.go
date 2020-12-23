@@ -1,7 +1,7 @@
 package controllers
 
 import (
-	"github.com/opensourceways/app-cla-server/models"
+	"github.com/opensourceways/app-cla-server/pdf"
 	"github.com/opensourceways/app-cla-server/util"
 )
 
@@ -32,14 +32,8 @@ func (this *OrgSignatureController) Get() {
 		return
 	}
 
-	// TODO read from local
-	pdf, err := models.DownloadOrgSignature(linkID, claLang)
-	if err != nil {
-		this.sendFailedResponse(0, "", err, action)
-		return
-	}
-
-	this.sendResponse(map[string]interface{}{"pdf": pdf}, 0)
+	path := genOrgSignatureFilePath(linkID, claLang)
+	this.download(path)
 }
 
 // @Title BlankSignature
@@ -47,13 +41,10 @@ func (this *OrgSignatureController) Get() {
 // @Param	language		path 	string	true		"The language which the signature applies to"
 // @router /blank/:language [get]
 func (this *OrgSignatureController) BlankSignature() {
-	action := "download blank pdf of org signature"
+	// action := "download blank pdf of org signature"
 
-	pdf, err := models.DownloadBlankSignature(this.GetString(":language"))
-	if err != nil {
-		this.sendFailedResponse(0, "", err, action)
-		return
-	}
+	//lang := this.GetString(":language")
+	path := pdf.GetPDFGenerator().GetBlankSignaturePath()
 
-	this.sendResponse(map[string]interface{}{"pdf": pdf}, 0)
+	this.download(path)
 }

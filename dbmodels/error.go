@@ -8,6 +8,9 @@ type DBError struct {
 }
 
 func (this *DBError) Error() string {
+	if this.Err == nil {
+		return ""
+	}
 	return this.Err.Error()
 }
 

@@ -18,7 +18,6 @@ type IDB interface {
 	IIndividualSigning
 	ICLA
 	IVerificationCode
-	IPDF
 	ICLASigning
 }
 
@@ -30,7 +29,7 @@ type ICorporationSigning interface {
 	GetCorpSigningDetail(linkID, email string) (*CorporationSigningOption, error)
 
 	UploadCorporationSigningPDF(linkID string, adminEmail string, pdf *[]byte) *DBError
-	DownloadCorporationSigningPDF(linkID string, email string) (*[]byte, error)
+	DownloadCorporationSigningPDF(linkID string, email string) (*[]byte, *DBError)
 	IsCorpSigningPDFUploaded(linkID string, email string) (bool, *DBError)
 	ListCorpsWithPDFUploaded(linkID string) ([]string, *DBError)
 }
@@ -84,11 +83,4 @@ type ICLA interface {
 type IVerificationCode interface {
 	CreateVerificationCode(opt VerificationCode) *DBError
 	GetVerificationCode(opt *VerificationCode) *DBError
-}
-
-type IPDF interface {
-	DownloadOrgSignature(orgCLAID string) ([]byte, error)
-
-	UploadBlankSignature(language string, pdf []byte) error
-	DownloadBlankSignature(language string) ([]byte, error)
 }

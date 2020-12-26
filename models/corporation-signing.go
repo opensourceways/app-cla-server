@@ -77,8 +77,21 @@ func GetCorporationSigningBasicInfo(linkID, email string) (*dbmodels.Corporation
 	return v, parseDBError(err)
 }
 
-func GetCorpSigningDetail(linkID, email string) (*dbmodels.CorporationSigningOption, error) {
-	return dbmodels.GetDB().GetCorpSigningDetail(linkID, email)
+func GetCorpSigningDetail(linkID, email string) ([]dbmodels.Field, *dbmodels.CorporationSigningOption, *ModelError) {
+	f, s, err := dbmodels.GetDB().GetCorpSigningDetail(linkID, email)
+	if err == nil {
+		return f, s, nil
+	}
+
+	if err.IsErrorOf(dbmodels.ErrNoDBRecord) {
+		return f, s, newModelError(ErrNoLink, err)
+	}
+
+	if err.IsErrorOf(dbmodels.ErrNoChildElem) {
+		return f, s, newModelError(ErrUnsigned, err)
+	}
+
+	return f, s, parseDBError(err)
 }
 
 func ListCorpSignings(linkID, language string) ([]dbmodels.CorporationSigningSummary, *ModelError) {

@@ -26,7 +26,7 @@ type ICorporationSigning interface {
 	IsCorpSigned(linkID, email string) (bool, *DBError)
 	ListCorpSignings(linkID, language string) ([]CorporationSigningSummary, *DBError)
 	GetCorpSigningBasicInfo(linkID, email string) (*CorporationSigningBasicInfo, *DBError)
-	GetCorpSigningDetail(linkID, email string) (*CorporationSigningOption, error)
+	GetCorpSigningDetail(linkID, email string) ([]Field, *CorporationSigningOption, *DBError)
 
 	UploadCorporationSigningPDF(linkID string, adminEmail string, pdf *[]byte) *DBError
 	DownloadCorporationSigningPDF(linkID string, email string) (*[]byte, *DBError)

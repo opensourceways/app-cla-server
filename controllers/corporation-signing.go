@@ -155,10 +155,9 @@ func (this *CorporationSigningController) ResendCorpSigningEmail() {
 		return
 	}
 
-	// TODO return cla info in GetCorpSigningDetail
-	signingInfo, err := models.GetCorpSigningDetail(linkID, corpEmail)
-	if err != nil {
-		this.sendFailedResponse(0, "", err, doWhat)
+	fields, signingInfo, merr := models.GetCorpSigningDetail(linkID, corpEmail)
+	if merr != nil {
+		this.sendModelErrorAsResp(merr, doWhat)
 		return
 	}
 
@@ -171,8 +170,7 @@ func (this *CorporationSigningController) ResendCorpSigningEmail() {
 			CorporationSigningBasicInfo: signingInfo.CorporationSigningBasicInfo,
 			Info:                        signingInfo.Info,
 		},
-		// TODO
-		[]dbmodels.Field{},
+		fields,
 	)
 
 	this.sendResponse("resend email successfully", 0)

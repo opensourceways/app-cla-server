@@ -2,6 +2,7 @@ package mongodb
 
 import (
 	"context"
+	"fmt"
 
 	"go.mongodb.org/mongo-driver/bson"
 
@@ -128,35 +129,61 @@ func (this *client) GetCorpSigningBasicInfo(linkID, email string) (*dbmodels.Cor
 	return &detail.CorporationSigningBasicInfo, nil
 }
 
-//TODO this method can be optimize with above
-func (this *client) GetCorpSigningDetail(linkID, email string) (*dbmodels.CorporationSigningOption, error) {
-	project := bson.M{
-		fieldLinkID:   1,
-		fieldSignings: 1,
+func (this *client) GetCorpSigningDetail(linkID, email string) ([]dbmodels.Field, *dbmodels.CorporationSigningOption, *dbmodels.DBError) {
+	pipeline := bson.A{
+		bson.M{"$match": docFilterOfSigning(linkID)},
+		bson.M{"$project": bson.M{
+			fieldSingingCLAInfo: 1,
+			fieldSignings:       arrayElemFilter(fieldSignings, filterOfCorpID(email)),
+		}},
+		bson.M{"$unwind": "$" + fieldSignings},
+		bson.M{"$project": bson.M{
+			fieldSignings: 1,
+			fieldSingingCLAInfo: arrayElemFilter(
+				fieldSingingCLAInfo,
+				bson.M{fieldCLALang: fmt.Sprintf("$%s.%s", fieldSignings, fieldCLALang)},
+			),
+		}},
 	}
 
-	var v []cCorpSigning
+	var v []struct {
+		CLAInfos []DCLAInfo   `bson:"cla_infos"`
+		Signings dCorpSigning `bson:"signings"`
+	}
 	f := func(ctx context.Context) error {
-		return this.getArrayElem(
-			ctx, this.corpSigningCollection, fieldSignings,
-			docFilterOfSigning(linkID), filterOfCorpID(email), project, &v,
-		)
+		col := this.collection(this.corpSigningCollection)
+		cursor, err := col.Aggregate(ctx, pipeline)
+		if err != nil {
+			return err
+		}
+
+		return cursor.All(ctx, &v)
 	}
 
 	if err := withContext(f); err != nil {
-		return nil, err
+		return nil, nil, systemError(err)
 	}
 
-	if len(v) != 1 || v[0].Signings == nil {
-		return nil, nil
+	if len(v) == 0 {
+		return nil, nil, errNoDBRecord
 	}
 
-	signing := &(v[0].Signings[0])
+	signing := &(v[0].Signings)
+	if signing.CLALanguage == "" {
+		return nil, nil, errNoChildDoc
+	}
+
+	clas := v[0].CLAInfos
+	if len(clas) == 0 {
+		return nil, nil, systemError(fmt.Errorf("impossible"))
+	}
+
 	detail := toModelOfCorpSigningSummary(signing, false)
-	return &dbmodels.CorporationSigningOption{
+	info := &dbmodels.CorporationSigningOption{
 		CorporationSigningBasicInfo: detail.CorporationSigningBasicInfo,
 		Info:                        signing.SigningInfo,
-	}, nil
+	}
+	return toModelOfCLAFields(clas[0].Fields), info, nil
 }
 
 func toModelOfCorpSigningSummary(cs *dCorpSigning, adminAdded bool) dbmodels.CorporationSigningSummary {

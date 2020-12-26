@@ -205,6 +205,12 @@ func conditionTofilterArray(filterOfArray bson.M) bson.M {
 	return bson.M{"$and": cond}
 }
 
+func arrayElemFilter(array string, filterOfArray bson.M) bson.M {
+	return bson.M{"$filter": bson.M{
+		"input": fmt.Sprintf("$%s", array),
+		"cond":  conditionTofilterArray(filterOfArray),
+	}}
+}
 func (this *client) replaceDoc(ctx context.Context, collection string, filterOfDoc, docInfo bson.M) (string, *dbmodels.DBError) {
 	upsert := true
 

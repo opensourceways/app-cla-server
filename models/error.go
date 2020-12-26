@@ -29,6 +29,7 @@ const (
 	ErrSystemError              ModelErrCode = "system_error"
 	ErrNoLinkOrResign           ModelErrCode = "no_link_or_resign"
 	ErrNoLinkOrUnsigned         ModelErrCode = "no_link_or_unsigned"
+	ErrUnsigned                 ModelErrCode = "unsigned"
 	ErrNoLinkOrNoManager        ModelErrCode = "no_link_or_no_manager"
 	ErrNoLinkOrDuplicateManager ModelErrCode = "no_link_or_duplicate_manager"
 	ErrNoLink                   ModelErrCode = "no_link"

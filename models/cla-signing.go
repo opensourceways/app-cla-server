@@ -9,10 +9,6 @@ func GetCLAInfoSigned(linkID, claLang, applyTo string) (*dbmodels.CLAInfo, *Mode
 	return info, parseDBError(err)
 }
 
-func AddCLAInfo(linkID, applyTo string, info *dbmodels.CLAInfo) error {
-	return dbmodels.GetDB().AddCLAInfo(linkID, applyTo, info)
-}
-
 func DeleteCLAInfo(linkID, applyTo, language string) error {
 	return nil
 }

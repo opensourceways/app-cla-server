@@ -36,12 +36,29 @@ func (this *CLACreateOption) toCLACreateOption() *dbmodels.CLACreateOption {
 		OrgSignatureHash: util.Md5sumOfBytes(this.orgSignature),
 	}
 }
-func (this *CLACreateOption) AddCLA(linkID string) error {
-	return dbmodels.GetDB().AddCLA(linkID, dbmodels.ApplyToIndividual, this.toCLACreateOption())
+func (this *CLACreateOption) AddCLA(linkID, applyTo string) *ModelError {
+	err := dbmodels.GetDB().AddCLA(linkID, applyTo, this.toCLACreateOption())
+	if err == nil {
+		return nil
+	}
+
+	if err.IsErrorOf(dbmodels.ErrNoDBRecord) {
+		return newModelError(ErrCLAExists, err)
+	}
+
+	return parseDBError(err)
 }
 
-func (this *CLACreateOption) AddCLAInfo(linkID string) error {
-	return dbmodels.GetDB().AddCLAInfo(linkID, dbmodels.ApplyToIndividual, this.GenCLAInfo())
+func (this *CLACreateOption) AddCLAInfo(linkID, applyTo string) *ModelError {
+	err := dbmodels.GetDB().AddCLAInfo(linkID, applyTo, this.GenCLAInfo())
+	if err == nil {
+		return nil
+	}
+
+	if err.IsErrorOf(dbmodels.ErrNoDBRecord) {
+		return newModelError(ErrSystemError, err.Err)
+	}
+	return parseDBError(err)
 }
 
 func (this *CLACreateOption) GenCLAInfo() *dbmodels.CLAInfo {

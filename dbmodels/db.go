@@ -67,7 +67,7 @@ type ICLASigning interface {
 	InitializeCorpSigning(linkID string, info *OrgInfo, claInfo *CLAInfo) *DBError
 	InitializeIndividualSigning(linkID string, info *OrgRepo, claInfo *CLAInfo) *DBError
 
-	AddCLAInfo(linkID, applyTo string, info *CLAInfo) error
+	AddCLAInfo(linkID, applyTo string, info *CLAInfo) *DBError
 	GetCLAInfoSigned(linkID, claLang, applyTo string) (*CLAInfo, *DBError)
 }
 

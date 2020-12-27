@@ -11,6 +11,7 @@ type ModelErrCode string
 const (
 	ErrNoOrgRepo                ModelErrCode = "no_orgrepo"
 	ErrLinkExists               ModelErrCode = "link_exists"
+	ErrCLAExists                ModelErrCode = "cla_exists"
 	ErrOrgEmailExists           ModelErrCode = "org_email_exists"
 	ErrMarshalOauth2TokenFailed ModelErrCode = "marshal_oauth2_token_failed"
 	ErrInvalidManagerID         ModelErrCode = "invalid_manager_id"

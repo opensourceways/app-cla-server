@@ -69,9 +69,39 @@ func (this *client) InitializeIndividualSigning(linkID string, orgRepo *dbmodels
 	return withContextOfDB(f)
 }
 
-func (this *client) AddCLAInfo(linkID, applyTo string, info *dbmodels.CLAInfo) error {
-	// TODO maybe need pull and push
-	return nil
+func (this *client) AddCLAInfo(linkID, applyTo string, info *dbmodels.CLAInfo) *dbmodels.DBError {
+	col := this.individualSigningCollection
+	if applyTo == dbmodels.ApplyToCorporation {
+		col = this.corpSigningCollection
+	}
+
+	docFilter := docFilterOfSigning(linkID)
+	elemFilter := elemFilterOfCLA(info.CLALang)
+
+	f := func(ctx context.Context) *dbmodels.DBError {
+		return this.pullArrayElem(
+			ctx, col, fieldSingingCLAInfo, docFilter, elemFilter,
+		)
+	}
+
+	if err := withContextOfDB(f); err != nil {
+		return err
+	}
+
+	doc, err := structToMap(toDocOfCLAInfo(info))
+	if err != nil {
+		return err
+	}
+
+	arrayFilterByElemMatch(fieldSingingCLAInfo, false, elemFilter, docFilter)
+
+	f = func(ctx context.Context) *dbmodels.DBError {
+		return this.pushArrayElem(
+			ctx, col, fieldSingingCLAInfo, docFilter, doc,
+		)
+	}
+
+	return withContextOfDB(f)
 }
 
 func (this *client) GetCLAInfoSigned(linkID, claLang, applyTo string) (*dbmodels.CLAInfo, *dbmodels.DBError) {

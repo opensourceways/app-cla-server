@@ -152,12 +152,12 @@ func addCLA(linkID, applyTo string, input *models.CLACreateOption, pl *acForCode
 		return newFailedResult(0, "", err)
 	}
 
-	if err := input.AddCLAInfo(linkID); err != nil {
-		return newFailedResult(0, "", err)
+	if merr := input.AddCLAInfo(linkID, applyTo); merr != nil {
+		return parseModelError(merr)
 	}
 
-	if err := input.AddCLA(linkID); err != nil {
-		return newFailedResult(0, "", err)
+	if merr := input.AddCLA(linkID, applyTo); merr != nil {
+		return parseModelError(merr)
 	}
 
 	return nil

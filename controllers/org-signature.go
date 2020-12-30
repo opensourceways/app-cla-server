@@ -6,6 +6,7 @@ import (
 
 	"github.com/astaxie/beego"
 
+	"github.com/opensourceways/app-cla-server/conf"
 	"github.com/opensourceways/app-cla-server/models"
 	"github.com/opensourceways/app-cla-server/util"
 )
@@ -68,6 +69,12 @@ func (this *OrgSignatureController) Post() {
 		return
 	}
 
+	if len(data) > (200 << 10) {
+		reason = fmt.Errorf("big pdf file")
+		errCode = util.ErrInvalidParameter
+		statusCode = 400
+	}
+
 	err = models.UploadOrgSignature(orgCLAID, data)
 	if err != nil {
 		reason = err
@@ -77,42 +84,55 @@ func (this *OrgSignatureController) Post() {
 	body = "upload pdf of signature page successfully"
 }
 
+func (this *OrgSignatureController) downloadPDF(fileName string, pdf *[]byte) *failedResult {
+	dir := util.GenFilePath(conf.AppConfig.PDFOutDir, "tmp")
+	name := fmt.Sprintf("%s_*.pdf", fileName)
+
+	f, err := ioutil.TempFile(dir, name)
+	if err != nil {
+		return newFailedResult(500, util.ErrSystemError, err)
+	}
+
+	_, err = f.Write(*pdf)
+	if err != nil {
+		return newFailedResult(500, util.ErrSystemError, err)
+	}
+
+	downloadFile(&this.Controller, f.Name())
+	return nil
+}
+
 // @Title Get
 // @Description download org signature
 // @Param	org_cla_id		path 	string	true		"org cla id"
 // @router /:org_cla_id [get]
 func (this *OrgSignatureController) Get() {
-	var statusCode = 0
-	var errCode = ""
-	var reason error
-	var body interface{}
-
-	defer func() {
-		sendResponse(&this.Controller, statusCode, errCode, reason, body, "download org signature")
-	}()
+	rs := func(statusCode int, errCode string, reason error) {
+		sendResponse(&this.Controller, statusCode, errCode, reason, nil, "download org signature")
+	}
 
 	orgCLAID, err := fetchStringParameter(&this.Controller, ":org_cla_id")
 	if err != nil {
-		reason = err
-		errCode = util.ErrInvalidParameter
-		statusCode = 400
+		rs(400, util.ErrInvalidParameter, err)
 		return
 	}
 
-	_, statusCode, errCode, reason = canAccessOrgCLA(&this.Controller, orgCLAID)
+	_, statusCode, errCode, reason := canAccessOrgCLA(&this.Controller, orgCLAID)
 	if reason != nil {
+		rs(statusCode, errCode, reason)
 		return
 	}
 
 	pdf, err := models.DownloadOrgSignature(orgCLAID)
 	if err != nil {
-		reason = err
+		rs(0, "", err)
 		return
 	}
 
-	body = map[string]interface{}{
-		"pdf": pdf,
+	if fr := this.downloadPDF(orgCLAID, &pdf); fr != nil {
+		rs(fr.statusCode, fr.errCode, fr.reason)
 	}
+
 }
 
 // @Title BlankSignature
@@ -120,30 +140,26 @@ func (this *OrgSignatureController) Get() {
 // @Param	language		path 	string	true		"The language which the signature applies to"
 // @router /blank/:language [get]
 func (this *OrgSignatureController) BlankSignature() {
-	var statusCode = 0
-	var errCode = ""
-	var reason error
-	var body interface{}
-
-	defer func() {
-		sendResponse(&this.Controller, statusCode, errCode, reason, body, "download blank pdf of org signature")
-	}()
+	rs := func(statusCode int, errCode string, reason error) {
+		sendResponse(
+			&this.Controller, statusCode, errCode, reason, nil,
+			"download blank pdf of org signature",
+		)
+	}
 
 	language, err := fetchStringParameter(&this.Controller, ":language")
 	if err != nil {
-		reason = err
-		errCode = util.ErrInvalidParameter
-		statusCode = 400
+		rs(400, util.ErrInvalidParameter, err)
 		return
 	}
 
 	pdf, err := models.DownloadBlankSignature(language)
 	if err != nil {
-		reason = err
+		rs(0, "", err)
 		return
 	}
 
-	body = map[string]interface{}{
-		"pdf": pdf,
+	if fr := this.downloadPDF("blank_"+language, &pdf); fr != nil {
+		rs(fr.statusCode, fr.errCode, fr.reason)
 	}
 }

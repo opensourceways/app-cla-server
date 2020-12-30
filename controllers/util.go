@@ -22,6 +22,20 @@ const (
 	apiAccessController = "access_controller"
 )
 
+type failedResult struct {
+	reason     error
+	errCode    string
+	statusCode int
+}
+
+func newFailedResult(statusCode int, errCode string, err error) *failedResult {
+	return &failedResult{
+		statusCode: statusCode,
+		errCode:    errCode,
+		reason:     err,
+	}
+}
+
 func buildStatusAndErrCode(statusCode int, errCode string, reason error) (int, string) {
 	if errCode == "" {
 		sc, ec := convertDBError(reason)
@@ -412,6 +426,10 @@ func setCookies(c *beego.Controller, value map[string]string) {
 	for k, v := range value {
 		c.Ctx.SetCookie(k, v, "3600", "/")
 	}
+}
+
+func downloadFile(c *beego.Controller, path string) {
+	c.Ctx.Output.Download(path)
 }
 
 func parseOrgAndRepo(s string) (string, string) {

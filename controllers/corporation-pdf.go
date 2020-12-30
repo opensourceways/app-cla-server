@@ -3,9 +3,11 @@ package controllers
 import (
 	"fmt"
 	"io/ioutil"
+	"strings"
 
 	"github.com/astaxie/beego"
 
+	"github.com/opensourceways/app-cla-server/conf"
 	"github.com/opensourceways/app-cla-server/dbmodels"
 	"github.com/opensourceways/app-cla-server/models"
 	"github.com/opensourceways/app-cla-server/pdf"
@@ -80,6 +82,12 @@ func (this *CorporationPDFController) Upload() {
 		return
 	}
 
+	if len(data) > (2 << 20) {
+		reason = fmt.Errorf("big pdf file")
+		errCode = util.ErrInvalidParameter
+		statusCode = 400
+	}
+
 	err = models.UploadCorporationSigningPDF(orgCLAID, corpEmail, &data)
 	if err != nil {
 		reason = err
@@ -89,6 +97,30 @@ func (this *CorporationPDFController) Upload() {
 	body = "upload pdf of signature page successfully"
 }
 
+func (this *CorporationPDFController) downloadCorpPDF(linkID, corpEmail string) *failedResult {
+	dir := util.GenFilePath(conf.AppConfig.PDFOutDir, "tmp")
+	s := strings.ReplaceAll(util.EmailSuffix(corpEmail), ".", "_")
+	name := fmt.Sprintf("%s_%s_*.pdf", linkID, s)
+
+	f, err := ioutil.TempFile(dir, name)
+	if err != nil {
+		return newFailedResult(500, util.ErrSystemError, err)
+	}
+
+	pdf, err := models.DownloadCorporationSigningPDF(linkID, corpEmail)
+	if err != nil {
+		return newFailedResult(500, util.ErrSystemError, err)
+	}
+
+	_, err = f.Write(*pdf)
+	if err != nil {
+		return newFailedResult(500, util.ErrSystemError, err)
+	}
+
+	downloadFile(&this.Controller, f.Name())
+	return nil
+}
+
 // @Title Download
 // @Description download pdf of corporation signing
 // @Param	:org_cla_id	path 	string					true		"org cla id"
@@ -96,36 +128,24 @@ func (this *CorporationPDFController) Upload() {
 // @Success 200 {int} map
 // @router /:org_cla_id/:email [get]
 func (this *CorporationPDFController) Download() {
-	var statusCode = 0
-	var errCode = ""
-	var reason error
-	var body interface{}
-
-	defer func() {
-		sendResponse(&this.Controller, statusCode, errCode, reason, body, "download corp's signing pdf")
-	}()
+	rs := func(statusCode int, errCode string, reason error) {
+		sendResponse(&this.Controller, statusCode, errCode, reason, nil, "download corp's signing pdf")
+	}
 
 	if err := checkAPIStringParameter(&this.Controller, []string{":org_cla_id", ":email"}); err != nil {
-		reason = err
-		errCode = util.ErrInvalidParameter
-		statusCode = 400
+		rs(400, util.ErrInvalidParameter, err)
 		return
 	}
 	orgCLAID := this.GetString(":org_cla_id")
 
-	_, statusCode, errCode, reason = canAccessOrgCLA(&this.Controller, orgCLAID)
+	_, statusCode, errCode, reason := canAccessOrgCLA(&this.Controller, orgCLAID)
 	if reason != nil {
+		rs(statusCode, errCode, reason)
 		return
 	}
 
-	pdf, err := models.DownloadCorporationSigningPDF(orgCLAID, this.GetString(":email"))
-	if err != nil {
-		reason = err
-		return
-	}
-
-	body = map[string]interface{}{
-		"pdf": pdf,
+	if fr := this.downloadCorpPDF(orgCLAID, this.GetString(":email")); fr != nil {
+		rs(fr.statusCode, fr.errCode, fr.reason)
 	}
 }
 
@@ -134,30 +154,19 @@ func (this *CorporationPDFController) Download() {
 // @Success 200 {int} map
 // @router / [get]
 func (this *CorporationPDFController) Review() {
-	var statusCode = 0
-	var errCode = ""
-	var reason error
-	var body interface{}
-
-	defer func() {
-		sendResponse(&this.Controller, statusCode, errCode, reason, body, "download corp's signing pdf")
-	}()
+	rs := func(statusCode int, errCode string, reason error) {
+		sendResponse(&this.Controller, statusCode, errCode, reason, nil, "download corp's signing pdf")
+	}
 
 	var ac *acForCorpManagerPayload
-	ac, errCode, reason = getACOfCorpManager(&this.Controller)
+	ac, errCode, reason := getACOfCorpManager(&this.Controller)
 	if reason != nil {
-		statusCode = 401
+		rs(401, errCode, reason)
 		return
 	}
 
-	pdf, err := models.DownloadCorporationSigningPDF(ac.OrgCLAID, ac.Email)
-	if err != nil {
-		reason = err
-		return
-	}
-
-	body = map[string]interface{}{
-		"pdf": pdf,
+	if fr := this.downloadCorpPDF(ac.OrgCLAID, ac.Email); fr != nil {
+		rs(fr.statusCode, fr.errCode, fr.reason)
 	}
 }
 

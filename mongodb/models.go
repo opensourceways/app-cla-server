@@ -1,16 +1,7 @@
 package mongodb
 
 const (
-	fieldLinkStatus  = "link_status"
-	fieldOrgIdentity = "org_identity"
-	fieldLinkID      = "link_id"
-
-	// 'ready' means the doc is ready to record the signing data currently.
-	// 'unready' means the doc is not ready.
-	// 'deleted' means the signing data is invalid.
-	linkStatusReady   = "ready"
-	linkStatusUnready = "unready"
-	linkStatusDeleted = "deleted"
+	fieldLinkID = "link_id"
 )
 
 type dCorpSigningPDF struct {

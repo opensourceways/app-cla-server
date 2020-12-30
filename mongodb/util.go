@@ -425,14 +425,3 @@ func (this *client) insertDoc(ctx context.Context, collection string, docInfo bs
 
 	return toUID(r.InsertedID)
 }
-
-func orgIdentity(v *dbmodels.OrgRepo) string {
-	return genOrgIdentity(v.Platform, v.OrgID, v.RepoID)
-}
-
-func genOrgIdentity(platform, org, repo string) string {
-	if repo == "" {
-		return fmt.Sprintf("%s/%s", platform, org)
-	}
-	return fmt.Sprintf("%s/%s/%s", platform, org, repo)
-}

@@ -2,22 +2,19 @@ package controllers
 
 import (
 	"fmt"
-	"net/http"
-
-	"github.com/astaxie/beego"
 
 	"github.com/opensourceways/app-cla-server/models"
 	"github.com/opensourceways/app-cla-server/util"
 )
 
 type IndividualSigningController struct {
-	beego.Controller
+	baseController
 }
 
 func (this *IndividualSigningController) Prepare() {
 	// sign as individual
-	if getRequestMethod(&this.Controller) == http.MethodPost {
-		apiPrepare(&this.Controller, []string{PermissionIndividualSigner})
+	if this.isPostRequest() {
+		this.apiPrepare(PermissionIndividualSigner)
 	}
 }
 
@@ -29,72 +26,54 @@ func (this *IndividualSigningController) Prepare() {
 // @Failure util.ErrHasSigned
 // @router /:org_cla_id [post]
 func (this *IndividualSigningController) Post() {
-	var statusCode = 0
-	var errCode = ""
-	var reason error
-	var body interface{}
+	action := "sign as individual"
+	sendResp := this.newFuncForSendingFailedResp(action)
 
-	defer func() {
-		sendResponse(&this.Controller, statusCode, errCode, reason, body, "sign as individual")
-	}()
-
-	orgCLAID, err := fetchStringParameter(&this.Controller, ":org_cla_id")
-	if err != nil {
-		reason = err
-		errCode = util.ErrInvalidParameter
-		statusCode = 400
-		return
-	}
-
-	ac, ec, err := getACOfCodePlatform(&this.Controller)
-	if err != nil {
-		reason = err
-		errCode = ec
-		statusCode = 400
+	orgCLAID := this.GetString(":org_cla_id")
+	pl, fr := this.tokenPayloadBasedOnCodePlatform()
+	if fr != nil {
+		sendResp(fr)
 		return
 	}
 
 	var info models.IndividualSigning
-	if err := fetchInputPayload(&this.Controller, &info); err != nil {
-		reason = err
-		errCode = util.ErrInvalidParameter
-		statusCode = 400
+	if fr := this.fetchInputPayload(&info); fr != nil {
+		sendResp(fr)
 		return
 	}
-	if ec, err := (&info).Validate(ac.Email); err != nil {
-		reason = err
-		errCode = ec
-		statusCode = 400
+	if ec, err := (&info).Validate(pl.Email); err != nil {
+		this.sendFailedResponse(400, ec, err, action)
 		return
 	}
 
 	orgCLA := &models.OrgCLA{ID: orgCLAID}
 	if err := orgCLA.Get(); err != nil {
-		reason = err
+		statusCode, errCode := convertDBError(err)
+		this.sendFailedResponse(statusCode, errCode, err, action)
 		return
 	}
 	if isNotIndividualCLA(orgCLA) {
-		reason = fmt.Errorf("invalid cla")
-		errCode = util.ErrInvalidParameter
-		statusCode = 400
+		this.sendFailedResponse(400, util.ErrInvalidParameter, fmt.Errorf("invalid cla"), action)
 		return
 	}
 
 	cla := &models.CLA{ID: orgCLA.CLAID}
 	if err := cla.GetFields(); err != nil {
-		reason = err
+		statusCode, errCode := convertDBError(err)
+		this.sendFailedResponse(statusCode, errCode, err, action)
 		return
 	}
 
 	info.Info = getSingingInfo(info.Info, cla.Fields)
 
-	err = (&info).Create(orgCLAID, orgCLA.Platform, orgCLA.OrgID, orgCLA.RepoID, true)
+	err := (&info).Create(orgCLAID, orgCLA.Platform, orgCLA.OrgID, orgCLA.RepoID, true)
 	if err != nil {
-		reason = err
+		statusCode, errCode := convertDBError(err)
+		this.sendFailedResponse(statusCode, errCode, err, action)
 		return
 	}
 
-	body = "sign successfully"
+	this.sendSuccessResp("sign successfully")
 }
 
 // @Title Check
@@ -106,36 +85,18 @@ func (this *IndividualSigningController) Post() {
 // @Success 200
 // @router /:platform/:org_repo [get]
 func (this *IndividualSigningController) Check() {
-	var statusCode = 0
-	var errCode = ""
-	var reason error
-	var body interface{}
-
-	defer func() {
-		sendResponse(&this.Controller, statusCode, errCode, reason, body, "check individual signing")
-	}()
-
-	params := []string{":platform", ":org_repo", "email"}
-	if err := checkAPIStringParameter(&this.Controller, params); err != nil {
-		reason = err
-		errCode = util.ErrInvalidParameter
-		statusCode = 400
-		return
-	}
-
+	action := "check individual signing"
 	org, repo := parseOrgAndRepo(this.GetString(":org_repo"))
+
 	v, err := models.IsIndividualSigned(
 		this.GetString(":platform"), org, repo, this.GetString("email"),
 	)
 	if err != nil {
-		reason = err
-		statusCode, errCode = convertDBError(err)
-		if errCode == util.ErrHasNotSigned {
-			reason = nil
+		if statusCode, errCode := convertDBError(err); errCode != util.ErrHasNotSigned {
+			this.sendFailedResponse(statusCode, errCode, err, action)
+			return
 		}
 	}
 
-	body = map[string]bool{
-		"signed": v,
-	}
+	this.sendSuccessResp(map[string]bool{"signed": v})
 }

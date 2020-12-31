@@ -97,24 +97,24 @@ func (this *CorporationPDFController) Upload() {
 	body = "upload pdf of signature page successfully"
 }
 
-func (this *CorporationPDFController) downloadCorpPDF(linkID, corpEmail string) *failedResult {
+func (this *CorporationPDFController) downloadCorpPDF(linkID, corpEmail string) *failedApiResult {
 	dir := util.GenFilePath(conf.AppConfig.PDFOutDir, "tmp")
 	s := strings.ReplaceAll(util.EmailSuffix(corpEmail), ".", "_")
 	name := fmt.Sprintf("%s_%s_*.pdf", linkID, s)
 
 	f, err := ioutil.TempFile(dir, name)
 	if err != nil {
-		return newFailedResult(500, util.ErrSystemError, err)
+		return newFailedApiResult(500, util.ErrSystemError, err)
 	}
 
 	pdf, err := models.DownloadCorporationSigningPDF(linkID, corpEmail)
 	if err != nil {
-		return newFailedResult(500, util.ErrSystemError, err)
+		return newFailedApiResult(500, util.ErrSystemError, err)
 	}
 
 	_, err = f.Write(*pdf)
 	if err != nil {
-		return newFailedResult(500, util.ErrSystemError, err)
+		return newFailedApiResult(500, util.ErrSystemError, err)
 	}
 
 	downloadFile(&this.Controller, f.Name())

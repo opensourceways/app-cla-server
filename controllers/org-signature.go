@@ -84,18 +84,18 @@ func (this *OrgSignatureController) Post() {
 	body = "upload pdf of signature page successfully"
 }
 
-func (this *OrgSignatureController) downloadPDF(fileName string, pdf *[]byte) *failedResult {
+func (this *OrgSignatureController) downloadPDF(fileName string, pdf *[]byte) *failedApiResult {
 	dir := util.GenFilePath(conf.AppConfig.PDFOutDir, "tmp")
 	name := fmt.Sprintf("%s_*.pdf", fileName)
 
 	f, err := ioutil.TempFile(dir, name)
 	if err != nil {
-		return newFailedResult(500, util.ErrSystemError, err)
+		return newFailedApiResult(500, util.ErrSystemError, err)
 	}
 
 	_, err = f.Write(*pdf)
 	if err != nil {
-		return newFailedResult(500, util.ErrSystemError, err)
+		return newFailedApiResult(500, util.ErrSystemError, err)
 	}
 
 	downloadFile(&this.Controller, f.Name())

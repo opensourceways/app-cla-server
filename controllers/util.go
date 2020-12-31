@@ -22,20 +22,6 @@ const (
 	apiAccessController = "access_controller"
 )
 
-type failedResult struct {
-	reason     error
-	errCode    string
-	statusCode int
-}
-
-func newFailedResult(statusCode int, errCode string, err error) *failedResult {
-	return &failedResult{
-		statusCode: statusCode,
-		errCode:    errCode,
-		reason:     err,
-	}
-}
-
 func buildStatusAndErrCode(statusCode int, errCode string, reason error) (int, string) {
 	if errCode == "" {
 		sc, ec := convertDBError(reason)

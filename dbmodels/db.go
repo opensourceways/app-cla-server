@@ -25,10 +25,12 @@ type ICorporationSigning interface {
 	SignAsCorporation(orgCLAID, platform, org, repo string, info CorporationSigningInfo) error
 	ListCorporationSigning(CorporationSigningListOption) (map[string][]CorporationSigningDetail, error)
 	GetCorporationSigningDetail(platform, org, repo, email string) (string, CorporationSigningDetail, error)
-	UploadCorporationSigningPDF(orgCLAID, adminEmail string, pdf []byte) error
-	DownloadCorporationSigningPDF(orgCLAID, email string) ([]byte, error)
-	CheckCorporationSigning(orgCLAID, email string) (CorporationSigningDetail, error)
 	GetCorpSigningInfo(platform, org, repo, email string) (string, *CorporationSigningInfo, error)
+
+	UploadCorporationSigningPDF(linkID string, adminEmail string, pdf *[]byte) error
+	DownloadCorporationSigningPDF(linkID string, email string) (*[]byte, error)
+	IsCorpSigningPDFUploaded(linkID string, email string) (bool, error)
+	ListCorpsWithPDFUploaded(linkID string) ([]string, error)
 }
 
 type ICorporationManager interface {

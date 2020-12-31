@@ -35,17 +35,24 @@ func OrgSignaturePDFFILE(out, claOrgID string) string {
 	return filepath.Join(out, fmt.Sprintf("%s.pdf", claOrgID))
 }
 
+func GenFilePath(dir, fileName string) string {
+	return filepath.Join(dir, fileName)
+}
+
 func IsFileNotExist(file string) bool {
 	_, err := os.Stat(file)
-	return os.IsNotExist(err)
+	if err == nil {
+		return false
+	}
+	return true
 }
 
 func IsNotDir(dir string) bool {
 	v, err := os.Stat(dir)
-	if err != nil {
-		return false
+	if err == nil {
+		return !v.IsDir()
 	}
-	return !v.IsDir()
+	return true
 }
 
 // CopyBetweenStructs copy between two structs. Note: if some elements

@@ -16,7 +16,7 @@ const (
 	ErrUnmatchedEmail          ModelErrCode = "unmatched_email"
 	ErrNotAnEmail              ModelErrCode = "not_an_email"
 	ErrNoLink                  ModelErrCode = "no_link"
-	ErrNoLinkOrResign          ModelErrCode = "no_link_or_resign"
+	ErrNoLinkOrResigned        ModelErrCode = "no_link_or_resigned"
 	ErrNoLinkOrUnsigned        ModelErrCode = "no_link_or_unsigned"
 )
 

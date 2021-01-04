@@ -31,7 +31,7 @@ func (this *IndividualSigning) Create(linkID string, enabled bool) IModelError {
 	}
 
 	if err.IsErrorOf(dbmodels.ErrNoDBRecord) {
-		return newModelError(ErrNoLinkOrResign, err)
+		return newModelError(ErrNoLinkOrResigned, err)
 	}
 	return parseDBError(err)
 }

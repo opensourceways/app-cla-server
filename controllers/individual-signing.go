@@ -66,7 +66,11 @@ func (this *IndividualSigningController) Post() {
 	info.Info = getSingingInfo(info.Info, cla.Fields)
 
 	if err := (&info).Create(orgCLAID, true); err != nil {
-		sendResp(parseModelError(err))
+		if err.IsErrorOf(models.ErrNoLinkOrResigned) {
+			this.sendFailedResponse(400, errResigned, err, action)
+		} else {
+			sendResp(parseModelError(err))
+		}
 		return
 	}
 

@@ -37,7 +37,6 @@ func (this *EmployeeSigningController) Prepare() {
 func (this *EmployeeSigningController) Post() {
 	action := "sign employeee cla"
 	sendResp := this.newFuncForSendingFailedResp(action)
-
 	orgCLAID := this.GetString(":org_cla_id")
 
 	pl, fr := this.tokenPayloadBasedOnCodePlatform()
@@ -99,7 +98,11 @@ func (this *EmployeeSigningController) Post() {
 	info.Info = getSingingInfo(info.Info, cla.Fields)
 
 	if err := (&info).Create(orgCLAID, false); err != nil {
-		sendResp(parseModelError(err))
+		if err.IsErrorOf(models.ErrNoLinkOrResigned) {
+			this.sendFailedResponse(400, errResigned, err, action)
+		} else {
+			sendResp(parseModelError(err))
+		}
 		return
 	}
 
@@ -200,7 +203,11 @@ func (this *EmployeeSigningController) Update() {
 	}
 
 	if err := (&info).Update(signings[0].ID, employeeEmail); err != nil {
-		sendResp(parseModelError(err))
+		if err.IsErrorOf(models.ErrNoLinkOrUnsigned) {
+			this.sendFailedResponse(400, errUnsigned, err, action)
+		} else {
+			sendResp(parseModelError(err))
+		}
 		return
 	}
 

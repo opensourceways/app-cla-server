@@ -46,26 +46,26 @@ func parseDBError(err dbmodels.IDBError) IModelError {
 	return newModelError(code, e)
 }
 
-type ModelError struct {
+type modelError struct {
 	code ModelErrCode
 	err  error
 }
 
-func (this ModelError) Error() string {
+func (this modelError) Error() string {
 	if this.err == nil {
 		return ""
 	}
 	return this.err.Error()
 }
 
-func (this ModelError) IsErrorOf(code ModelErrCode) bool {
+func (this modelError) IsErrorOf(code ModelErrCode) bool {
 	return this.code == code
 }
 
-func (this ModelError) ErrCode() ModelErrCode {
+func (this modelError) ErrCode() ModelErrCode {
 	return this.code
 }
 
-func newModelError(code ModelErrCode, err error) ModelError {
-	return ModelError{code: code, err: err}
+func newModelError(code ModelErrCode, err error) IModelError {
+	return modelError{code: code, err: err}
 }

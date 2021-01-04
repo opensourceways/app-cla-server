@@ -24,7 +24,7 @@ func (this *VerificationCodeController) Prepare() {
 // @Failure util.ErrSendingEmail
 // @router /:org_cla_id/:email [post]
 func (this *VerificationCodeController) Post() {
-	sendResp := this.newFuncForSendingFailedResp("send verification code")
+	sendResp := this.newFuncForSendingFailedResp("create verification code")
 
 	orgCLAID := this.GetString(":org_cla_id")
 	emailOfSigner := this.GetString(":email")

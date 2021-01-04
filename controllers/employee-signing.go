@@ -127,9 +127,24 @@ func (this *EmployeeSigningController) GetAll() {
 		return
 	}
 
-	r, err := models.ListIndividualSigning("", pl.Email, this.GetString("cla_language"))
+	opt := models.OrgCLAListOption{
+		Platform: orgCLA.Platform,
+		OrgID:    orgCLA.OrgID,
+		RepoID:   orgCLA.RepoID,
+		ApplyTo:  dbmodels.ApplyToIndividual,
+	}
+	signings, err := opt.List()
 	if err != nil {
-		sendResp(parseModelError(err))
+		sendResp(convertDBError1(err))
+		return
+	}
+	if len(signings) == 0 {
+		return
+	}
+
+	r, merr := models.ListIndividualSigning(signings[0].ID, pl.Email, this.GetString("cla_language"))
+	if merr != nil {
+		sendResp(parseModelError(merr))
 		return
 	}
 
@@ -144,14 +159,13 @@ func (this *EmployeeSigningController) GetAll() {
 func (this *EmployeeSigningController) Update() {
 	action := "enable/unable employeee"
 	sendResp := this.newFuncForSendingFailedResp(action)
+	employeeEmail := this.GetString(":email")
 
 	pl, fr := this.tokenPayloadBasedOnCorpManager()
 	if fr != nil {
 		sendResp(fr)
 		return
 	}
-
-	employeeEmail := this.GetString(":email")
 
 	if !pl.hasEmployee(employeeEmail) {
 		this.sendFailedResponse(400, util.ErrNotSameCorp, fmt.Errorf("not same corp"), action)
@@ -164,13 +178,28 @@ func (this *EmployeeSigningController) Update() {
 		return
 	}
 
+	opt := models.OrgCLAListOption{
+		Platform: corpClaOrg.Platform,
+		OrgID:    corpClaOrg.OrgID,
+		RepoID:   corpClaOrg.RepoID,
+		ApplyTo:  dbmodels.ApplyToIndividual,
+	}
+	signings, err := opt.List()
+	if err != nil {
+		sendResp(convertDBError1(err))
+		return
+	}
+	if len(signings) == 0 {
+		return
+	}
+
 	var info models.EmployeeSigningUdateInfo
 	if fr := this.fetchInputPayload(&info); fr != nil {
 		sendResp(fr)
 		return
 	}
 
-	if err := (&info).Update("", employeeEmail); err != nil {
+	if err := (&info).Update(signings[0].ID, employeeEmail); err != nil {
 		sendResp(parseModelError(err))
 		return
 	}
@@ -202,14 +231,13 @@ func (this *EmployeeSigningController) Update() {
 func (this *EmployeeSigningController) Delete() {
 	action := "delete employee signing"
 	sendResp := this.newFuncForSendingFailedResp(action)
+	employeeEmail := this.GetString(":email")
 
 	pl, fr := this.tokenPayloadBasedOnCorpManager()
 	if fr != nil {
 		sendResp(fr)
 		return
 	}
-
-	employeeEmail := this.GetString(":email")
 
 	if !pl.hasEmployee(employeeEmail) {
 		this.sendFailedResponse(400, util.ErrNotSameCorp, fmt.Errorf("not same corp"), action)
@@ -222,7 +250,22 @@ func (this *EmployeeSigningController) Delete() {
 		return
 	}
 
-	if err := models.DeleteEmployeeSigning("", employeeEmail); err != nil {
+	opt := models.OrgCLAListOption{
+		Platform: corpClaOrg.Platform,
+		OrgID:    corpClaOrg.OrgID,
+		RepoID:   corpClaOrg.RepoID,
+		ApplyTo:  dbmodels.ApplyToIndividual,
+	}
+	signings, err := opt.List()
+	if err != nil {
+		sendResp(convertDBError1(err))
+		return
+	}
+	if len(signings) == 0 {
+		return
+	}
+
+	if err := models.DeleteEmployeeSigning(signings[0].ID, employeeEmail); err != nil {
 		sendResp(parseModelError(err))
 		return
 	}

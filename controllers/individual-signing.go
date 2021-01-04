@@ -3,6 +3,7 @@ package controllers
 import (
 	"fmt"
 
+	"github.com/opensourceways/app-cla-server/dbmodels"
 	"github.com/opensourceways/app-cla-server/models"
 	"github.com/opensourceways/app-cla-server/util"
 )
@@ -82,11 +83,24 @@ func (this *IndividualSigningController) Post() {
 // @router /:platform/:org_repo [get]
 func (this *IndividualSigningController) Check() {
 	action := "check individual signing"
-	// org, repo := parseOrgAndRepo(this.GetString(":org_repo"))
+	org, repo := parseOrgAndRepo(this.GetString(":org_repo"))
 
-	v, err := models.IsIndividualSigned(
-		"", this.GetString("email"),
-	)
+	opt := models.OrgCLAListOption{
+		Platform: this.GetString(":platform"),
+		OrgID:    org,
+		RepoID:   repo,
+		ApplyTo:  dbmodels.ApplyToIndividual,
+	}
+	signings, err := opt.List()
+	if err != nil {
+		this.sendFailedResultAsResp(convertDBError1(err), action)
+		return
+	}
+	if len(signings) == 0 {
+		return
+	}
+
+	v, err := models.IsIndividualSigned(signings[0].ID, this.GetString("email"))
 	if err != nil {
 		if statusCode, errCode := convertDBError(err); errCode != util.ErrHasNotSigned {
 			this.sendFailedResponse(statusCode, errCode, err, action)

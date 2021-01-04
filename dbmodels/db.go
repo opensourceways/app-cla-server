@@ -71,8 +71,8 @@ type ICLA interface {
 }
 
 type IVerificationCode interface {
-	CreateVerificationCode(opt VerificationCode) error
-	GetVerificationCode(opt *VerificationCode) error
+	CreateVerificationCode(opt VerificationCode) IDBError
+	GetVerificationCode(opt *VerificationCode) IDBError
 }
 
 type IPDF interface {

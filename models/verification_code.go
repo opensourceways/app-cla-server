@@ -7,7 +7,7 @@ import (
 	"github.com/opensourceways/app-cla-server/util"
 )
 
-func CreateVerificationCode(email, purpose string, expiry int64) (string, error) {
+func CreateVerificationCode(email, purpose string, expiry int64) (string, IModelError) {
 	code := util.RandStr(6, "number")
 
 	vc := dbmodels.VerificationCode{
@@ -18,10 +18,13 @@ func CreateVerificationCode(email, purpose string, expiry int64) (string, error)
 	}
 
 	err := dbmodels.GetDB().CreateVerificationCode(vc)
-	return code, err
+	if err == nil {
+		return code, nil
+	}
+	return code, parseDBError(err)
 }
 
-func checkVerificationCode(email, code, purpose string) (string, error) {
+func checkVerificationCode(email, code, purpose string) IModelError {
 	vc := dbmodels.VerificationCode{
 		Email:   email,
 		Code:    code,
@@ -31,15 +34,14 @@ func checkVerificationCode(email, code, purpose string) (string, error) {
 	err := dbmodels.GetDB().GetVerificationCode(&vc)
 	if err == nil {
 		if vc.Expiry < util.Now() {
-			return util.ErrVerificationCodeExpired, fmt.Errorf("verification code is expired")
+			return newModelError(ErrVerificationCodeExpired, fmt.Errorf("verification code is expired"))
 		}
 
-		return "", err
+		return nil
 	}
 
-	ec, err := parseErrorOfDBApi(err)
-	if ec == util.ErrNoDBRecord {
-		return util.ErrWrongVerificationCode, err
+	if err.IsErrorOf(dbmodels.ErrNoDBRecord) {
+		return newModelError(ErrWrongVerificationCode, err)
 	}
-	return ec, err
+	return parseDBError(err)
 }

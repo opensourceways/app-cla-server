@@ -9,9 +9,9 @@ type EmployeeSigning struct {
 }
 
 func (this *EmployeeSigning) Validate(orgCLAID, email string) (string, error) {
-	ec, err := checkVerificationCode(this.Email, this.VerificationCode, orgCLAID)
+	err := checkVerificationCode(this.Email, this.VerificationCode, orgCLAID)
 	if err != nil {
-		return ec, err
+		return string(err.ErrCode()), err
 	}
 
 	return (&this.IndividualSigning).Validate(email)

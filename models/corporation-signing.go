@@ -14,9 +14,9 @@ type CorporationSigningCreateOption struct {
 }
 
 func (this *CorporationSigningCreateOption) Validate(orgCLAID string) (string, error) {
-	ec, err := checkVerificationCode(this.AdminEmail, this.VerificationCode, orgCLAID)
+	err := checkVerificationCode(this.AdminEmail, this.VerificationCode, orgCLAID)
 	if err != nil {
-		return ec, err
+		return string(err.ErrCode()), err
 	}
 
 	return checkEmailFormat(this.AdminEmail)

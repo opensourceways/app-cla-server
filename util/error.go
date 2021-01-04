@@ -11,8 +11,6 @@ const (
 	ErrSigningUncompleted        = "uncompleted_signing"
 	ErrUnknownEmailPlatform      = "unknown_email_platform"
 	ErrSendingEmail              = "failed_to_send_email"
-	ErrWrongVerificationCode     = "wrong_verification_code"
-	ErrVerificationCodeExpired   = "expired_verification_code"
 	ErrPDFHasNotUploaded         = "pdf_has_not_uploaded"
 	ErrNumOfCorpManagersExceeded = "num_of_corp_managers_exceeded"
 	ErrCorpManagerHasAdded       = "corp_manager_exists"

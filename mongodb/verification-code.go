@@ -2,35 +2,27 @@ package mongodb
 
 import (
 	"context"
-	"fmt"
 
 	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 
 	"github.com/opensourceways/app-cla-server/dbmodels"
 	"github.com/opensourceways/app-cla-server/util"
 )
 
-func (this *client) CreateVerificationCode(opt dbmodels.VerificationCode) error {
-	info := struct {
-		Email   string `json:"email" required:"true"`
-		Code    string `json:"code" required:"true"`
-		Purpose string `json:"purpose" required:"true"`
-		Expiry  int64  `json:"expiry" required:"true"`
-	}{
+func (this *client) CreateVerificationCode(opt dbmodels.VerificationCode) dbmodels.IDBError {
+	info := cVerificationCode{
 		Email:   opt.Email,
 		Code:    opt.Code,
 		Purpose: opt.Purpose,
 		Expiry:  opt.Expiry,
 	}
-
-	body, err := structToMap(info)
+	body, err := structToMap1(info)
 	if err != nil {
 		return err
 	}
 
-	f := func(ctx mongo.SessionContext) error {
+	f := func(ctx context.Context) dbmodels.IDBError {
 		col := this.collection(this.vcCollection)
 
 		// delete the expired codes.
@@ -40,43 +32,46 @@ func (this *client) CreateVerificationCode(opt dbmodels.VerificationCode) error 
 		// email + purpose can't be the index, for example: a corp signs a community concurrently.
 		// so, it should use insertDoc to record each verification codes.
 		_, err := this.insertDoc(ctx, this.vcCollection, body)
-		return err
+		if err != nil {
+			return newSystemError(err)
+		}
+		return nil
 	}
 
-	return this.doTransaction(f)
+	return withContext1(f)
 }
 
-func (this *client) GetVerificationCode(opt *dbmodels.VerificationCode) error {
+func (this *client) GetVerificationCode(opt *dbmodels.VerificationCode) dbmodels.IDBError {
 	var v struct {
 		Expiry int64 `bson:"expiry"`
 	}
 
-	f := func(ctx context.Context) error {
+	f := func(ctx context.Context) dbmodels.IDBError {
 		col := this.collection(this.vcCollection)
 
-		filter := bson.M{
-			"email":   opt.Email,
-			"purpose": opt.Purpose,
-			"code":    opt.Code,
-		}
-		opt := options.FindOneAndDeleteOptions{
-			Projection: bson.M{"expiry": 1},
-		}
-
-		sr := col.FindOneAndDelete(ctx, filter, &opt)
+		sr := col.FindOneAndDelete(
+			ctx,
+			bson.M{
+				"email":   opt.Email,
+				"purpose": opt.Purpose,
+				"code":    opt.Code,
+			},
+			&options.FindOneAndDeleteOptions{
+				Projection: bson.M{"expiry": 1},
+			},
+		)
 
 		err := sr.Decode(&v)
-		if err != nil && isErrNoDocuments(err) {
-			return dbmodels.DBError{
-				ErrCode: util.ErrNoDBRecord,
-				Err:     fmt.Errorf("no db record"),
-			}
+		if err == nil {
+			return nil
 		}
-
-		return err
+		if isErrNoDocuments(err) {
+			return errNoDBRecord1
+		}
+		return newSystemError(err)
 	}
 
-	if err := withContext(f); err != nil {
+	if err := withContext1(f); err != nil {
 		return err
 	}
 

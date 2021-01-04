@@ -116,3 +116,7 @@ type acForCorpManagerPayload struct {
 	Email    string `json:"email"`
 	OrgCLAID string `json:"org_cla_id"`
 }
+
+func (this *acForCorpManagerPayload) hasEmployee(email string) bool {
+	return util.EmailSuffix(this.Email) == util.EmailSuffix(email)
+}

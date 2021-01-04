@@ -8,40 +8,50 @@ type EmployeeSigning struct {
 	VerificationCode string `json:"verification_code"`
 }
 
-func (this *EmployeeSigning) Validate(orgCLAID, email string) (string, error) {
-	err := checkVerificationCode(this.Email, this.VerificationCode, orgCLAID)
-	if err != nil {
-		return string(err.ErrCode()), err
+func (this *EmployeeSigning) Validate(linkID, email string) IModelError {
+	if err := checkVerificationCode(this.Email, this.VerificationCode, linkID); err != nil {
+		return err
 	}
 
 	return (&this.IndividualSigning).Validate(email)
 }
 
-type EmployeeSigningListOption struct {
-	CLALanguage string `json:"cla_language"`
-}
-
-func (this EmployeeSigningListOption) List(corpEmail, platform, org, repo string) (map[string][]dbmodels.IndividualSigningBasicInfo, error) {
-	opt := dbmodels.IndividualSigningListOption{
-		Platform:         platform,
-		OrgID:            org,
-		RepoID:           repo,
-		CLALanguage:      this.CLALanguage,
-		CorporationEmail: corpEmail,
+func ListIndividualSigning(linkID, corpEmail, claLang string) ([]dbmodels.IndividualSigningBasicInfo, IModelError) {
+	v, err := dbmodels.GetDB().ListIndividualSigning(linkID, corpEmail, claLang)
+	if err == nil {
+		return v, nil
 	}
-	return dbmodels.GetDB().ListIndividualSigning(opt)
+
+	if err.IsErrorOf(dbmodels.ErrNoDBRecord) {
+		return nil, newModelError(ErrNoLink, err)
+	}
+	return nil, parseDBError(err)
 }
 
 type EmployeeSigningUdateInfo struct {
 	Enabled bool `json:"enabled"`
 }
 
-func (this *EmployeeSigningUdateInfo) Update(platform, org, repo, email string) error {
-	return dbmodels.GetDB().UpdateIndividualSigning(
-		platform, org, repo, email, this.Enabled,
-	)
+func (this *EmployeeSigningUdateInfo) Update(linkID, email string) IModelError {
+	err := dbmodels.GetDB().UpdateIndividualSigning(linkID, email, this.Enabled)
+	if err == nil {
+		return nil
+	}
+
+	if err.IsErrorOf(dbmodels.ErrNoDBRecord) {
+		return newModelError(ErrNoLinkOrUnsigned, err)
+	}
+	return parseDBError(err)
 }
 
-func DeleteEmployeeSigning(platform, org, repo, email string) error {
-	return dbmodels.GetDB().DeleteIndividualSigning(platform, org, repo, email)
+func DeleteEmployeeSigning(linkID, email string) IModelError {
+	err := dbmodels.GetDB().DeleteIndividualSigning(linkID, email)
+	if err == nil {
+		return nil
+	}
+
+	if err.IsErrorOf(dbmodels.ErrNoDBRecord) {
+		return newModelError(ErrNoLink, err)
+	}
+	return parseDBError(err)
 }

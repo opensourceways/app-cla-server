@@ -23,7 +23,9 @@ type IDBError interface {
 }
 
 const (
-	ErrMarshalDataFaield DBErrCode = "failed_to_marshal_data"
-	ErrNoDBRecord        DBErrCode = "no_db_record"
 	ErrSystemError       DBErrCode = "system_error"
+	ErrNoDBRecord        DBErrCode = "no_db_record"
+	ErrNoChildElem       DBErrCode = "no_child_element"
+	ErrRecordExists      DBErrCode = "record_exists"
+	ErrMarshalDataFaield DBErrCode = "failed_to_marshal_data"
 )

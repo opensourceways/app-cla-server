@@ -2,10 +2,7 @@ package controllers
 
 import (
 	"fmt"
-	"net/http"
 	"strings"
-
-	"github.com/astaxie/beego"
 
 	"github.com/opensourceways/app-cla-server/conf"
 	"github.com/opensourceways/app-cla-server/dbmodels"
@@ -15,16 +12,16 @@ import (
 )
 
 type EmployeeSigningController struct {
-	beego.Controller
+	baseController
 }
 
 func (this *EmployeeSigningController) Prepare() {
-	if getRequestMethod(&this.Controller) == http.MethodPost {
+	if this.isPostRequest() {
 		// sign as employee
-		apiPrepare(&this.Controller, []string{PermissionIndividualSigner})
+		this.apiPrepare(PermissionIndividualSigner)
 	} else {
 		// get, update and delete employee
-		apiPrepare(&this.Controller, []string{PermissionEmployeeManager})
+		this.apiPrepare(PermissionEmployeeManager)
 	}
 }
 
@@ -38,97 +35,75 @@ func (this *EmployeeSigningController) Prepare() {
 // @Failure util.ErrSigningUncompleted	"corp has not been enabled"
 // @router /:org_cla_id [post]
 func (this *EmployeeSigningController) Post() {
-	var statusCode = 0
-	var errCode = ""
-	var reason error
-	var body interface{}
+	action := "sign employeee cla"
+	sendResp := this.newFuncForSendingFailedResp(action)
 
-	defer func() {
-		sendResponse(&this.Controller, statusCode, errCode, reason, body, "sign as employee")
-	}()
+	orgCLAID := this.GetString(":org_cla_id")
 
-	orgCLAID, err := fetchStringParameter(&this.Controller, ":org_cla_id")
-	if err != nil {
-		reason = err
-		errCode = util.ErrInvalidParameter
-		statusCode = 400
-		return
-	}
-
-	ac, ec, err := getACOfCodePlatform(&this.Controller)
-	if err != nil {
-		reason = err
-		errCode = ec
-		statusCode = 400
+	pl, fr := this.tokenPayloadBasedOnCodePlatform()
+	if fr != nil {
+		sendResp(fr)
 		return
 	}
 
 	var info models.EmployeeSigning
-	if err := fetchInputPayload(&this.Controller, &info); err != nil {
-		reason = err
-		errCode = util.ErrInvalidParameter
-		statusCode = 400
+	if fr := this.fetchInputPayload(&info); fr != nil {
+		sendResp(fr)
 		return
 	}
-	if ec, err := (&info).Validate(orgCLAID, ac.Email); err != nil {
-		reason = err
-		errCode = ec
-		statusCode = 400
+	if err := (&info).Validate(orgCLAID, pl.Email); err != nil {
+		sendResp(parseModelError(err))
 		return
 	}
 
 	orgCLA := &models.OrgCLA{ID: orgCLAID}
 	if err := orgCLA.Get(); err != nil {
-		reason = err
+		sendResp(convertDBError1(err))
 		return
 	}
 	if isNotIndividualCLA(orgCLA) {
-		reason = fmt.Errorf("invalid cla")
-		errCode = util.ErrInvalidParameter
-		statusCode = 400
+		this.sendFailedResponse(400, util.ErrInvalidParameter, fmt.Errorf("invalid cla"), action)
 		return
 	}
 
 	corpSignedCla, corpSign, err := models.GetCorporationSigningDetail(
 		orgCLA.Platform, orgCLA.OrgID, orgCLA.RepoID, info.Email)
 	if err != nil {
-		reason = err
+		sendResp(convertDBError1(err))
 		return
 	}
 
 	if !corpSign.AdminAdded {
-		reason = fmt.Errorf("the corp has not been enabled")
-		errCode = util.ErrSigningUncompleted
-		statusCode = 400
+		this.sendFailedResponse(
+			400, util.ErrSigningUncompleted, fmt.Errorf("the corp has not been enabled"), action,
+		)
 		return
 	}
 
 	managers, err := models.ListCorporationManagers(corpSignedCla, info.Email, dbmodels.RoleManager)
 	if err != nil {
-		reason = err
+		sendResp(convertDBError1(err))
 		return
 	}
 	if len(managers) == 0 {
-		reason = fmt.Errorf("no managers")
-		errCode = util.ErrNoCorpManager
-		statusCode = 400
+		this.sendFailedResponse(400, util.ErrNoCorpManager, fmt.Errorf("no managers"), action)
 		return
 	}
 
 	cla := &models.CLA{ID: orgCLA.CLAID}
 	if err := cla.GetFields(); err != nil {
-		reason = err
+		sendResp(convertDBError1(err))
 		return
 	}
 
 	info.Info = getSingingInfo(info.Info, cla.Fields)
 
-	err = (&info).Create(orgCLAID, orgCLA.Platform, orgCLA.OrgID, orgCLA.RepoID, false)
-	if err != nil {
-		reason = err
+	if err := (&info).Create(orgCLAID, false); err != nil {
+		sendResp(parseModelError(err))
 		return
 	}
-	body = "sign successfully"
+
+	this.sendSuccessResp("sign successfully")
 
 	this.notifyManagers(managers, &info, orgCLA)
 }
@@ -138,39 +113,27 @@ func (this *EmployeeSigningController) Post() {
 // @Success 200 {int} map
 // @router / [get]
 func (this *EmployeeSigningController) GetAll() {
-	var statusCode = 0
-	var errCode = ""
-	var reason error
-	var body interface{}
+	sendResp := this.newFuncForSendingFailedResp("list employeee")
 
-	defer func() {
-		sendResponse(&this.Controller, statusCode, errCode, reason, body, "list employees")
-	}()
-
-	var ac *acForCorpManagerPayload
-	ac, errCode, reason = getACOfCorpManager(&this.Controller)
-	if reason != nil {
-		statusCode = 401
+	pl, fr := this.tokenPayloadBasedOnCorpManager()
+	if fr != nil {
+		sendResp(fr)
 		return
 	}
 
-	orgCLA := &models.OrgCLA{ID: ac.OrgCLAID}
+	orgCLA := &models.OrgCLA{ID: pl.OrgCLAID}
 	if err := orgCLA.Get(); err != nil {
-		reason = err
+		sendResp(convertDBError1(err))
 		return
 	}
 
-	opt := models.EmployeeSigningListOption{
-		CLALanguage: this.GetString("cla_language"),
-	}
-
-	r, err := opt.List(ac.Email, orgCLA.Platform, orgCLA.OrgID, orgCLA.RepoID)
+	r, err := models.ListIndividualSigning("", pl.Email, this.GetString("cla_language"))
 	if err != nil {
-		reason = err
+		sendResp(parseModelError(err))
 		return
 	}
 
-	body = r
+	this.sendSuccessResp(r)
 }
 
 // @Title Update
@@ -179,62 +142,44 @@ func (this *EmployeeSigningController) GetAll() {
 // @Success 202 {int} map
 // @router /:email [put]
 func (this *EmployeeSigningController) Update() {
-	var statusCode = 0
-	var errCode = ""
-	var reason error
-	var body interface{}
+	action := "enable/unable employeee"
+	sendResp := this.newFuncForSendingFailedResp(action)
 
-	defer func() {
-		sendResponse(&this.Controller, statusCode, errCode, reason, body, "enable/unable employee signing")
-	}()
-
-	employeeEmail, err := fetchStringParameter(&this.Controller, ":email")
-	if err != nil {
-		reason = err
-		errCode = util.ErrInvalidParameter
-		statusCode = 400
+	pl, fr := this.tokenPayloadBasedOnCorpManager()
+	if fr != nil {
+		sendResp(fr)
 		return
 	}
 
-	var ac *acForCorpManagerPayload
-	ac, errCode, reason = getACOfCorpManager(&this.Controller)
-	if reason != nil {
-		statusCode = 401
+	employeeEmail := this.GetString(":email")
+
+	if !pl.hasEmployee(employeeEmail) {
+		this.sendFailedResponse(400, util.ErrNotSameCorp, fmt.Errorf("not same corp"), action)
 		return
 	}
 
-	if !isSameCorp(ac.Email, employeeEmail) {
-		reason = fmt.Errorf("not same corp")
-		errCode = util.ErrNotSameCorp
-		statusCode = 400
-		return
-	}
-
-	corpClaOrg := &models.OrgCLA{ID: ac.OrgCLAID}
+	corpClaOrg := &models.OrgCLA{ID: pl.OrgCLAID}
 	if err := corpClaOrg.Get(); err != nil {
-		reason = err
+		sendResp(convertDBError1(err))
 		return
 	}
 
 	var info models.EmployeeSigningUdateInfo
-	if err := fetchInputPayload(&this.Controller, &info); err != nil {
-		reason = err
-		errCode = util.ErrInvalidParameter
-		statusCode = 400
+	if fr := this.fetchInputPayload(&info); fr != nil {
+		sendResp(fr)
 		return
 	}
 
-	err = (&info).Update(corpClaOrg.Platform, corpClaOrg.OrgID, corpClaOrg.RepoID, employeeEmail)
-	if err != nil {
-		reason = err
+	if err := (&info).Update("", employeeEmail); err != nil {
+		sendResp(parseModelError(err))
 		return
 	}
 
-	body = "enabled employee successfully"
+	this.sendSuccessResp("enabled employee successfully")
 
 	msg := email.EmployeeNotification{
 		Name:       employeeEmail,
-		Manager:    ac.Email,
+		Manager:    pl.Email,
 		ProjectURL: projectURL(corpClaOrg),
 		Org:        corpClaOrg.OrgAlias,
 	}
@@ -255,55 +200,39 @@ func (this *EmployeeSigningController) Update() {
 // @Success 204 {string} delete success!
 // @router /:email [delete]
 func (this *EmployeeSigningController) Delete() {
-	var statusCode = 0
-	var errCode = ""
-	var reason error
-	var body string
+	action := "delete employee signing"
+	sendResp := this.newFuncForSendingFailedResp(action)
 
-	defer func() {
-		sendResponse(&this.Controller, statusCode, errCode, reason, body, "delete employee signing")
-	}()
-
-	employeeEmail, err := fetchStringParameter(&this.Controller, ":email")
-	if err != nil {
-		reason = err
-		errCode = util.ErrInvalidParameter
-		statusCode = 400
+	pl, fr := this.tokenPayloadBasedOnCorpManager()
+	if fr != nil {
+		sendResp(fr)
 		return
 	}
 
-	var ac *acForCorpManagerPayload
-	ac, errCode, reason = getACOfCorpManager(&this.Controller)
-	if reason != nil {
-		statusCode = 401
+	employeeEmail := this.GetString(":email")
+
+	if !pl.hasEmployee(employeeEmail) {
+		this.sendFailedResponse(400, util.ErrNotSameCorp, fmt.Errorf("not same corp"), action)
 		return
 	}
 
-	if !isSameCorp(ac.Email, employeeEmail) {
-		reason = fmt.Errorf("not same corp")
-		errCode = util.ErrNotSameCorp
-		statusCode = 400
-		return
-	}
-
-	corpClaOrg := &models.OrgCLA{ID: ac.OrgCLAID}
+	corpClaOrg := &models.OrgCLA{ID: pl.OrgCLAID}
 	if err := corpClaOrg.Get(); err != nil {
-		reason = err
+		sendResp(convertDBError1(err))
 		return
 	}
 
-	err = models.DeleteEmployeeSigning(corpClaOrg.Platform, corpClaOrg.OrgID, corpClaOrg.RepoID, employeeEmail)
-	if err != nil {
-		reason = err
+	if err := models.DeleteEmployeeSigning("", employeeEmail); err != nil {
+		sendResp(parseModelError(err))
 		return
 	}
 
-	body = "delete employee successfully"
+	this.sendSuccessResp("delete employee successfully")
 
 	msg := email.EmployeeNotification{
 		Removing:   true,
 		Name:       employeeEmail,
-		Manager:    ac.Email,
+		Manager:    pl.Email,
 		ProjectURL: projectURL(corpClaOrg),
 		Org:        corpClaOrg.OrgAlias,
 	}

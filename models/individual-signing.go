@@ -9,22 +9,37 @@ import (
 
 type IndividualSigning dbmodels.IndividualSigningInfo
 
-func (this *IndividualSigning) Validate(email string) (string, error) {
+func (this *IndividualSigning) Validate(email string) IModelError {
 	if this.Email != email {
-		return util.ErrInvalidParameter, fmt.Errorf("not authorized email")
+		return newModelError(ErrUnmatchedEmail, fmt.Errorf("unmatched email"))
 	}
-	return checkEmailFormat(this.Email)
+	if _, err := checkEmailFormat(this.Email); err != nil {
+		return newModelError(ErrNotAnEmail, err)
+	}
+	return nil
 }
 
-func (this *IndividualSigning) Create(orgCLAID, platform, orgID, repoId string, enabled bool) error {
+func (this *IndividualSigning) Create(linkID string, enabled bool) IModelError {
 	this.Date = util.Date()
 	this.Enabled = enabled
 
-	return dbmodels.GetDB().SignAsIndividual(
-		orgCLAID, platform, orgID, repoId, *(*dbmodels.IndividualSigningInfo)(this),
+	err := dbmodels.GetDB().SignIndividualCLA(
+		linkID, (*dbmodels.IndividualSigningInfo)(this),
 	)
+	if err == nil {
+		return nil
+	}
+
+	if err.IsErrorOf(dbmodels.ErrNoDBRecord) {
+		return newModelError(ErrNoLinkOrResign, err)
+	}
+	return parseDBError(err)
 }
 
-func IsIndividualSigned(platform, orgID, repoId, email string) (bool, error) {
-	return dbmodels.GetDB().IsIndividualSigned(platform, orgID, repoId, email)
+func IsIndividualSigned(linkID, email string) (bool, IModelError) {
+	b, err := dbmodels.GetDB().IsIndividualSigned(linkID, email)
+	if err == nil {
+		return b, nil
+	}
+	return b, parseDBError(err)
 }

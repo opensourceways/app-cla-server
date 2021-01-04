@@ -55,11 +55,11 @@ type IOrgCLA interface {
 }
 
 type IIndividualSigning interface {
-	SignAsIndividual(orgCLAID, platform, org, repo string, info IndividualSigningInfo) error
-	DeleteIndividualSigning(platform, org, repo, email string) error
-	UpdateIndividualSigning(platform, org, repo, email string, enabled bool) error
-	IsIndividualSigned(platform, orgID, repoId, email string) (bool, error)
-	ListIndividualSigning(opt IndividualSigningListOption) (map[string][]IndividualSigningBasicInfo, error)
+	SignIndividualCLA(linkID string, info *IndividualSigningInfo) IDBError
+	DeleteIndividualSigning(linkID, email string) IDBError
+	UpdateIndividualSigning(linkID, email string, enabled bool) IDBError
+	IsIndividualSigned(linkID, email string) (bool, IDBError)
+	ListIndividualSigning(linkID, corpEmail, claLang string) ([]IndividualSigningBasicInfo, IDBError)
 }
 
 type ICLA interface {

@@ -26,7 +26,7 @@ func (this *IndividualSigningController) Prepare() {
 // @Failure util.ErrHasSigned
 // @router /:org_cla_id [post]
 func (this *IndividualSigningController) Post() {
-	action := "sign as individual"
+	action := "sign individual cla"
 	sendResp := this.newFuncForSendingFailedResp(action)
 
 	orgCLAID := this.GetString(":org_cla_id")
@@ -41,15 +41,14 @@ func (this *IndividualSigningController) Post() {
 		sendResp(fr)
 		return
 	}
-	if ec, err := (&info).Validate(pl.Email); err != nil {
-		this.sendFailedResponse(400, ec, err, action)
+	if err := (&info).Validate(pl.Email); err != nil {
+		sendResp(parseModelError(err))
 		return
 	}
 
 	orgCLA := &models.OrgCLA{ID: orgCLAID}
 	if err := orgCLA.Get(); err != nil {
-		statusCode, errCode := convertDBError(err)
-		this.sendFailedResponse(statusCode, errCode, err, action)
+		sendResp(convertDBError1(err))
 		return
 	}
 	if isNotIndividualCLA(orgCLA) {
@@ -59,17 +58,14 @@ func (this *IndividualSigningController) Post() {
 
 	cla := &models.CLA{ID: orgCLA.CLAID}
 	if err := cla.GetFields(); err != nil {
-		statusCode, errCode := convertDBError(err)
-		this.sendFailedResponse(statusCode, errCode, err, action)
+		sendResp(convertDBError1(err))
 		return
 	}
 
 	info.Info = getSingingInfo(info.Info, cla.Fields)
 
-	err := (&info).Create(orgCLAID, orgCLA.Platform, orgCLA.OrgID, orgCLA.RepoID, true)
-	if err != nil {
-		statusCode, errCode := convertDBError(err)
-		this.sendFailedResponse(statusCode, errCode, err, action)
+	if err := (&info).Create(orgCLAID, true); err != nil {
+		sendResp(parseModelError(err))
 		return
 	}
 
@@ -86,10 +82,10 @@ func (this *IndividualSigningController) Post() {
 // @router /:platform/:org_repo [get]
 func (this *IndividualSigningController) Check() {
 	action := "check individual signing"
-	org, repo := parseOrgAndRepo(this.GetString(":org_repo"))
+	// org, repo := parseOrgAndRepo(this.GetString(":org_repo"))
 
 	v, err := models.IsIndividualSigned(
-		this.GetString(":platform"), org, repo, this.GetString("email"),
+		"", this.GetString("email"),
 	)
 	if err != nil {
 		if statusCode, errCode := convertDBError(err); errCode != util.ErrHasNotSigned {

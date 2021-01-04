@@ -279,10 +279,6 @@ func getEmailConfig(orgCLAID string) (*models.OrgCLA, *models.OrgEmail, error) {
 	return orgCLA, emailInfo, nil
 }
 
-func isSameCorp(email1, email2 string) bool {
-	return util.EmailSuffix(email1) == util.EmailSuffix(email2)
-}
-
 func convertDBError(err error) (int, string) {
 	e, ok := dbmodels.IsDBError(err)
 	if !ok {

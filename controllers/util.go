@@ -292,6 +292,11 @@ func convertDBError(err error) (int, string) {
 	return 400, e.ErrCode
 }
 
+func convertDBError1(err error) *failedApiResult {
+	sc, code := convertDBError(err)
+	return newFailedApiResult(sc, code, err)
+}
+
 func isNoClaBindingDoc(err error) bool {
 	_, c := convertDBError(err)
 	return c == util.ErrNoCLABindingDoc

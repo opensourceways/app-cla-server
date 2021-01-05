@@ -99,6 +99,24 @@ func (this *client) ListCorpSignings(linkID, language string) ([]dbmodels.Corpor
 	return r, nil
 }
 
+func (this *client) IsCorpSigned(linkID, email string) (bool, dbmodels.IDBError) {
+	signed := false
+	f := func(ctx context.Context) dbmodels.IDBError {
+		v, err := this.isArrayElemNotExists(
+			ctx, this.corpSigningCollection, fieldSignings,
+			docFilterOfSigning(linkID), elemFilterOfCorpSigning(email),
+		)
+		if err != nil {
+			return newSystemError(err)
+		}
+		signed = !v
+		return nil
+	}
+
+	err := withContext1(f)
+	return signed, err
+}
+
 func (this *client) getCorporationSigningDetail(filterOfDoc bson.M, email string) (*OrgCLA, error) {
 	var v []OrgCLA
 

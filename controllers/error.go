@@ -10,6 +10,8 @@ const (
 	errMissingParameter = "missing_parameter"
 	errReadingFile      = "error_reading_file"
 	errParsingApiBody   = "error_parsing_api_body"
+	errResigned         = "resigned"
+	errUnsigned         = "unsigned"
 )
 
 func parseModelError(err models.IModelError) *failedApiResult {

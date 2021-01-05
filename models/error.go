@@ -13,6 +13,11 @@ const (
 	ErrUnknownDBError          ModelErrCode = "unknown_db_error"
 	ErrWrongVerificationCode   ModelErrCode = "wrong_verification_code"
 	ErrVerificationCodeExpired ModelErrCode = "expired_verification_code"
+	ErrUnmatchedEmail          ModelErrCode = "unmatched_email"
+	ErrNotAnEmail              ModelErrCode = "not_an_email"
+	ErrNoLink                  ModelErrCode = "no_link"
+	ErrNoLinkOrResigned        ModelErrCode = "no_link_or_resigned"
+	ErrNoLinkOrUnsigned        ModelErrCode = "no_link_or_unsigned"
 )
 
 type IModelError interface {

@@ -41,10 +41,6 @@ type OrgCLA struct {
 	Enabled     bool      `bson:"enabled" json:"enabled"`
 	Submitter   string    `bson:"submitter" json:"submitter" required:"true"`
 
-	// Individuals is the cla signing information of ordinary contributors
-	// key is the email of contributor
-	Individuals []individualSigningDoc `bson:"individuals" json:"-"`
-
 	// Corporations is the cla signing information of corporation
 	// key is the email suffix of corporation
 	Corporations []corporationSigningDoc `bson:"corporations" json:"-"`

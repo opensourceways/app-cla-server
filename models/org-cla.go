@@ -153,3 +153,8 @@ func (this OrgCLAListOption) List() ([]dbmodels.OrgCLA, error) {
 func ListOrgs(platform string, orgs []string) ([]dbmodels.OrgCLA, error) {
 	return dbmodels.GetDB().ListOrgs(platform, orgs)
 }
+
+func InitializeIndividualSigning(linkID string) IModelError {
+	err := dbmodels.GetDB().InitializeIndividualSigning(linkID)
+	return parseDBError(err)
+}

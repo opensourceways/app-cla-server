@@ -10,13 +10,6 @@ type IndividualSigningBasicInfo struct {
 type IndividualSigningInfo struct {
 	IndividualSigningBasicInfo
 
-	Info TypeSigningInfo `json:"info"`
-}
-
-type IndividualSigningListOption struct {
-	Platform         string `json:"platform"`
-	OrgID            string `json:"org_id"`
-	RepoID           string `json:"repo_id"`
-	CLALanguage      string `json:"cla_language"`
-	CorporationEmail string `json:"corporation_email"`
+	CLALanguage string          `json:"cla_language"`
+	Info        TypeSigningInfo `json:"info"`
 }

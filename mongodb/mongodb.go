@@ -19,12 +19,13 @@ type client struct {
 	c  *mongo.Client
 	db *mongo.Database
 
-	clasCollection     string
-	orgCLACollection   string
-	blankSigCollection string
-	vcCollection       string
-	orgEmailCollection string
-	corpPDFCollection  string
+	clasCollection              string
+	orgCLACollection            string
+	blankSigCollection          string
+	vcCollection                string
+	orgEmailCollection          string
+	corpPDFCollection           string
+	individualSigningCollection string
 }
 
 func Initialize(cfg *conf.MongodbConfig) (*client, error) {

@@ -3,6 +3,7 @@ package controllers
 import (
 	"fmt"
 
+	"github.com/opensourceways/app-cla-server/dbmodels"
 	"github.com/opensourceways/app-cla-server/models"
 	"github.com/opensourceways/app-cla-server/util"
 )
@@ -26,7 +27,7 @@ func (this *IndividualSigningController) Prepare() {
 // @Failure util.ErrHasSigned
 // @router /:org_cla_id [post]
 func (this *IndividualSigningController) Post() {
-	action := "sign as individual"
+	action := "sign individual cla"
 	sendResp := this.newFuncForSendingFailedResp(action)
 
 	orgCLAID := this.GetString(":org_cla_id")
@@ -41,15 +42,14 @@ func (this *IndividualSigningController) Post() {
 		sendResp(fr)
 		return
 	}
-	if ec, err := (&info).Validate(pl.Email); err != nil {
-		this.sendFailedResponse(400, ec, err, action)
+	if err := (&info).Validate(pl.Email); err != nil {
+		sendResp(parseModelError(err))
 		return
 	}
 
 	orgCLA := &models.OrgCLA{ID: orgCLAID}
 	if err := orgCLA.Get(); err != nil {
-		statusCode, errCode := convertDBError(err)
-		this.sendFailedResponse(statusCode, errCode, err, action)
+		sendResp(convertDBError1(err))
 		return
 	}
 	if isNotIndividualCLA(orgCLA) {
@@ -59,17 +59,18 @@ func (this *IndividualSigningController) Post() {
 
 	cla := &models.CLA{ID: orgCLA.CLAID}
 	if err := cla.GetFields(); err != nil {
-		statusCode, errCode := convertDBError(err)
-		this.sendFailedResponse(statusCode, errCode, err, action)
+		sendResp(convertDBError1(err))
 		return
 	}
 
 	info.Info = getSingingInfo(info.Info, cla.Fields)
 
-	err := (&info).Create(orgCLAID, orgCLA.Platform, orgCLA.OrgID, orgCLA.RepoID, true)
-	if err != nil {
-		statusCode, errCode := convertDBError(err)
-		this.sendFailedResponse(statusCode, errCode, err, action)
+	if err := (&info).Create(orgCLAID, true); err != nil {
+		if err.IsErrorOf(models.ErrNoLinkOrResigned) {
+			this.sendFailedResponse(400, errResigned, err, action)
+		} else {
+			sendResp(parseModelError(err))
+		}
 		return
 	}
 
@@ -85,18 +86,28 @@ func (this *IndividualSigningController) Post() {
 // @Success 200
 // @router /:platform/:org_repo [get]
 func (this *IndividualSigningController) Check() {
-	action := "check individual signing"
+	sendResp := this.newFuncForSendingFailedResp("check individual signing")
 	org, repo := parseOrgAndRepo(this.GetString(":org_repo"))
+	emailOfSigner := this.GetString("email")
 
-	v, err := models.IsIndividualSigned(
-		this.GetString(":platform"), org, repo, this.GetString("email"),
-	)
+	opt := models.OrgCLAListOption{
+		Platform: this.GetString(":platform"),
+		OrgID:    org,
+		RepoID:   repo,
+		ApplyTo:  dbmodels.ApplyToIndividual,
+	}
+	signings, err := opt.List()
 	if err != nil {
-		if statusCode, errCode := convertDBError(err); errCode != util.ErrHasNotSigned {
-			this.sendFailedResponse(statusCode, errCode, err, action)
-			return
-		}
+		sendResp(convertDBError1(err))
+		return
+	}
+	if len(signings) == 0 {
+		return
 	}
 
-	this.sendSuccessResp(map[string]bool{"signed": v})
+	if v, merr := models.IsIndividualSigned(signings[0].ID, emailOfSigner); merr != nil {
+		sendResp(parseModelError(merr))
+	} else {
+		this.sendSuccessResp(map[string]bool{"signed": v})
+	}
 }

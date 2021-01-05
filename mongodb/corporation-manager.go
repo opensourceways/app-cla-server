@@ -12,6 +12,10 @@ import (
 	"github.com/opensourceways/app-cla-server/util"
 )
 
+func memberNameOfCorpManager(field string) string {
+	return fmt.Sprintf("%s.%s", fieldCorpManagers, field)
+}
+
 type corporationManagerDoc struct {
 	ID               string `bson:"id" json:"id"`
 	Name             string `bson:"name" json:"name" required:"true"`

@@ -118,7 +118,19 @@ func (this *OrgCLAController) Post() {
 		return
 	}
 
-	models.InitializeIndividualSigning(uid)
+	if input.ApplyTo == dbmodels.ApplyToIndividual {
+		models.InitializeIndividualSigning(uid)
+	} else {
+		models.InitializeCorpSigning(uid, &models.OrgInfo{
+			OrgRepo: models.OrgRepo{
+				Platform: input.Platform,
+				OrgID:    input.OrgID,
+				RepoID:   input.RepoID,
+			},
+			OrgEmail: input.OrgEmail,
+			OrgAlias: input.OrgAlias,
+		})
+	}
 
 	body = struct {
 		OrgClaID string `json:"org_cla_id"`

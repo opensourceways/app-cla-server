@@ -426,3 +426,20 @@ func parseOrgAndRepo(s string) (string, string) {
 	}
 	return s, ""
 }
+
+func getLinkID(platform, org, repo, applyTo string) (string, *failedApiResult) {
+	opt := models.OrgCLAListOption{
+		Platform: platform,
+		OrgID:    org,
+		RepoID:   repo,
+		ApplyTo:  applyTo,
+	}
+	signings, err := opt.List()
+	if err != nil {
+		return "", convertDBError1(err)
+	}
+	if len(signings) == 0 {
+		return "", newFailedApiResult(400, errNoLink, fmt.Errorf("no link"))
+	}
+	return signings[0].ID, nil
+}

@@ -5,8 +5,6 @@ import (
 	"io/ioutil"
 	"strings"
 
-	"github.com/astaxie/beego"
-
 	"github.com/opensourceways/app-cla-server/conf"
 	"github.com/opensourceways/app-cla-server/dbmodels"
 	"github.com/opensourceways/app-cla-server/models"
@@ -15,7 +13,7 @@ import (
 )
 
 type CorporationPDFController struct {
-	beego.Controller
+	baseController
 }
 
 func (this *CorporationPDFController) Prepare() {
@@ -34,67 +32,43 @@ func (this *CorporationPDFController) Prepare() {
 // @Success 204 {int} map
 // @router /:org_cla_id/:email [patch]
 func (this *CorporationPDFController) Upload() {
-	var statusCode = 0
-	var errCode = ""
-	var reason error
-	var body interface{}
-
-	defer func() {
-		sendResponse(&this.Controller, statusCode, errCode, reason, body, "upload corp's signing pdf")
-	}()
-
-	if err := checkAPIStringParameter(&this.Controller, []string{":org_cla_id", ":email"}); err != nil {
-		reason = err
-		errCode = util.ErrInvalidParameter
-		statusCode = 400
-		return
-	}
+	action := "upload corp's signing pdf"
+	sendResp := this.newFuncForSendingFailedResp(action)
 	orgCLAID := this.GetString(":org_cla_id")
 	corpEmail := this.GetString(":email")
 
-	var orgCLA *models.OrgCLA
-	orgCLA, statusCode, errCode, reason = canAccessOrgCLA(&this.Controller, orgCLAID)
+	_, statusCode, errCode, reason := canAccessOrgCLA(&this.Controller, orgCLAID)
 	if reason != nil {
+		this.sendFailedResponse(statusCode, errCode, reason, action)
 		return
 	}
 
-	_, _, err := models.GetCorporationSigningDetail(
-		orgCLA.Platform, orgCLA.OrgID, orgCLA.RepoID, corpEmail,
-	)
-	if err != nil {
-		reason = err
+	b, merr := models.IsCorpSigned(orgCLAID, corpEmail)
+	if merr != nil {
+		sendResp(parseModelError(merr))
+		return
+	}
+	if !b {
+		this.sendFailedResponse(400, errUnsigned, fmt.Errorf("not signed"), action)
 		return
 	}
 
-	f, _, err := this.GetFile("pdf")
-	if err != nil {
-		reason = fmt.Errorf("missing pdf file")
-		errCode = util.ErrInvalidParameter
-		statusCode = 400
+	data, fr := this.readInputFile("pdf")
+	if fr != nil {
+		sendResp(fr)
 		return
 	}
-
-	defer f.Close()
-
-	data, err := ioutil.ReadAll(f)
-	if err != nil {
-		reason = err
-		return
-	}
-
 	if len(data) > (2 << 20) {
-		reason = fmt.Errorf("big pdf file")
-		errCode = util.ErrInvalidParameter
-		statusCode = 400
-	}
-
-	err = models.UploadCorporationSigningPDF(orgCLAID, corpEmail, &data)
-	if err != nil {
-		reason = err
+		this.sendFailedResponse(400, util.ErrInvalidParameter, fmt.Errorf("big pdf file"), action)
 		return
 	}
 
-	body = "upload pdf of signature page successfully"
+	if err := models.UploadCorporationSigningPDF(orgCLAID, corpEmail, &data); err != nil {
+		sendResp(convertDBError1(err))
+		return
+	}
+
+	this.sendSuccessResp("upload pdf of signature page successfully")
 }
 
 func (this *CorporationPDFController) downloadCorpPDF(linkID, corpEmail string) *failedApiResult {

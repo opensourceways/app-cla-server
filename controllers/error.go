@@ -11,7 +11,8 @@ const (
 	errReadingFile      = "error_reading_file"
 	errParsingApiBody   = "error_parsing_api_body"
 	errResigned         = "resigned"
-	errUnsigned         = "unsigned"
+	errUnsigned         = string(models.ErrUnsigned)
+	errNoLink           = string(models.ErrNoLink)
 )
 
 func parseModelError(err models.IModelError) *failedApiResult {

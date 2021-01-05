@@ -73,6 +73,7 @@ func (this *OrgSignatureController) Post() {
 		reason = fmt.Errorf("big pdf file")
 		errCode = util.ErrInvalidParameter
 		statusCode = 400
+		return
 	}
 
 	err = models.UploadOrgSignature(orgCLAID, data)

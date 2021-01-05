@@ -87,28 +87,31 @@ func (this *CorporationSigningController) Post() {
 func (this *CorporationSigningController) ResendCorpSigningEmail() {
 	action := "resend corp signing email"
 	sendResp := this.newFuncForSendingFailedResp(action)
+	org, repo := parseOrgAndRepo(this.GetString(":org_id"))
 
 	pl, fr := this.tokenPayloadBasedOnCodePlatform()
 	if fr != nil {
 		sendResp(fr)
 		return
 	}
-
-	org, repo := parseOrgAndRepo(this.GetString(":org_id"))
 	if !pl.hasOrg(org) {
 		this.sendFailedResponse(400, util.ErrInvalidParameter, fmt.Errorf("can't access org:%s", org), action)
 		return
 	}
 
-	orgCLAID, signingInfo, err := models.GetCorpSigningInfo(
-		pl.Platform, org, repo, this.GetString(":email"),
-	)
-	if err != nil {
-		sendResp(convertDBError1(err))
+	linkID, fr := getLinkID(pl.Platform, org, repo, dbmodels.ApplyToCorporation)
+	if fr != nil {
+		sendResp(fr)
 		return
 	}
 
-	orgCLA := &models.OrgCLA{ID: orgCLAID}
+	signingInfo, err := models.GetCorpSigningDetail(linkID, this.GetString(":email"))
+	if err != nil {
+		sendResp(parseModelError(err))
+		return
+	}
+
+	orgCLA := &models.OrgCLA{ID: linkID}
 	if err := orgCLA.Get(); err != nil {
 		sendResp(convertDBError1(err))
 		return

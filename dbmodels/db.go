@@ -26,7 +26,7 @@ type ICorporationSigning interface {
 	SignCorpCLA(orgCLAID string, info *CorpSigningCreateOpt) IDBError
 	IsCorpSigned(linkID, email string) (bool, IDBError)
 	ListCorpSignings(linkID, language string) ([]CorporationSigningSummary, IDBError)
-	GetCorpSigningInfo(platform, org, repo, email string) (string, *CorpSigningCreateOpt, error)
+	GetCorpSigningDetail(linkID, email string) (*CorpSigningCreateOpt, IDBError)
 	GetCorpSigningBasicInfo(linkID, email string) (*CorporationSigningBasicInfo, IDBError)
 
 	UploadCorporationSigningPDF(linkID string, adminEmail string, pdf *[]byte) error

@@ -2,27 +2,11 @@ package mongodb
 
 import (
 	"context"
-	"fmt"
 
 	"go.mongodb.org/mongo-driver/bson"
 
 	"github.com/opensourceways/app-cla-server/dbmodels"
 )
-
-func filterForCorpSigning(filter bson.M) {
-	filter["apply_to"] = dbmodels.ApplyToCorporation
-	filter["enabled"] = true
-}
-
-func filterOfDocForCorpSigning(platform, org, repo string) bson.M {
-	m, _ := filterOfOrgRepo(platform, org, repo)
-	filterForCorpSigning(m)
-	return m
-}
-
-func corpSigningField(field string) string {
-	return fmt.Sprintf("%s.%s", fieldCorporations, field)
-}
 
 func elemFilterOfCorpSigning(email string) bson.M {
 	return filterOfCorpID(email)
@@ -145,40 +129,42 @@ func (this *client) GetCorpSigningBasicInfo(linkID, email string) (*dbmodels.Cor
 	return &detail.CorporationSigningBasicInfo, nil
 }
 
-func (this *client) GetCorpSigningInfo(platform, org, repo, email string) (string, *dbmodels.CorpSigningCreateOpt, error) {
-	var v []OrgCLA
-
+func (this *client) GetCorpSigningDetail(linkID, email string) (*dbmodels.CorpSigningCreateOpt, dbmodels.IDBError) {
 	project := bson.M{
-		corpSigningField("admin_email"): 1,
-		corpSigningField("admin_name"):  1,
-		corpSigningField("corp_name"):   1,
-		corpSigningField("date"):        1,
-		corpSigningField("info"):        1,
+		memberNameOfSignings("admin_email"): 1,
+		memberNameOfSignings("admin_name"):  1,
+		memberNameOfSignings("corp_name"):   1,
+		memberNameOfSignings("date"):        1,
+		memberNameOfSignings("info"):        1,
 	}
 
+	var v []cCorpSigning
 	f := func(ctx context.Context) error {
 		return this.getArrayElem(
-			ctx, this.orgCLACollection, fieldCorporations,
-			filterOfDocForCorpSigning(platform, org, repo),
-			filterOfCorpID(email), project, &v,
+			ctx, this.corpSigningCollection, fieldSignings,
+			docFilterOfSigning(linkID), elemFilterOfCorpSigning(email),
+			project, &v,
 		)
 	}
 
 	if err := withContext(f); err != nil {
-		return "", nil, err
+		return nil, newSystemError(err)
 	}
 
-	r, err := getSigningDoc(v, func(doc *OrgCLA) bool {
-		return len(doc.Corporations) > 0
-	})
-	if err != nil {
-		return "", nil, err
+	if len(v) == 0 {
+		return nil, errNoDBRecord1
 	}
 
-	detail := toDBModelCorporationSigningDetail(&r.Corporations[0], false)
-	return objectIDToUID(r.ID), &dbmodels.CorpSigningCreateOpt{
+	signings := v[0].Signings
+	if len(signings) == 0 {
+		return nil, nil
+	}
+
+	detail := toDBModelCorporationSigningDetail(&(signings[0]), false)
+
+	return &dbmodels.CorpSigningCreateOpt{
 		CorporationSigningBasicInfo: detail.CorporationSigningBasicInfo,
-		Info:                        r.Corporations[0].SigningInfo,
+		Info:                        signings[0].SigningInfo,
 	}, nil
 }
 
@@ -197,10 +183,10 @@ func toDBModelCorporationSigningDetail(cs *dCorpSigning, adminAdded bool) dbmode
 
 func projectOfCorpSigning() bson.M {
 	return bson.M{
-		corpSigningField("admin_email"): 1,
-		corpSigningField("admin_name"):  1,
-		corpSigningField("corp_name"):   1,
-		corpSigningField("date"):        1,
-		corpManagerField("email"):       1,
+		memberNameOfSignings("admin_email"): 1,
+		memberNameOfSignings("admin_name"):  1,
+		memberNameOfSignings("corp_name"):   1,
+		memberNameOfSignings("date"):        1,
+		corpManagerField("email"):           1,
 	}
 }

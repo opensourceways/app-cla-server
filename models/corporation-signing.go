@@ -58,10 +58,6 @@ func ListCorpsWithPDFUploaded(linkID string) ([]string, error) {
 	return dbmodels.GetDB().ListCorpsWithPDFUploaded(linkID)
 }
 
-func GetCorpSigningInfo(platform, org, repo, email string) (string, *dbmodels.CorpSigningCreateOpt, error) {
-	return dbmodels.GetDB().GetCorpSigningInfo(platform, org, repo, email)
-}
-
 func ListCorpSignings(linkID, language string) ([]dbmodels.CorporationSigningSummary, IModelError) {
 	v, err := dbmodels.GetDB().ListCorpSignings(linkID, language)
 	if err == nil {
@@ -97,4 +93,20 @@ func GetCorpSigningBasicInfo(linkID, email string) (*dbmodels.CorporationSigning
 	}
 
 	return v, parseDBError(err)
+}
+
+func GetCorpSigningDetail(linkID, email string) (*dbmodels.CorpSigningCreateOpt, IModelError) {
+	s, err := dbmodels.GetDB().GetCorpSigningDetail(linkID, email)
+	if err == nil {
+		if s == nil {
+			return nil, newModelError(ErrUnsigned, fmt.Errorf("unsigned"))
+		}
+		return s, nil
+	}
+
+	if err.IsErrorOf(dbmodels.ErrNoDBRecord) {
+		return s, newModelError(ErrNoLink, err)
+	}
+
+	return s, parseDBError(err)
 }

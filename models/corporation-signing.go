@@ -5,7 +5,7 @@ import (
 	"github.com/opensourceways/app-cla-server/util"
 )
 
-type CorporationSigning dbmodels.CorporationSigningInfo
+type CorporationSigning = dbmodels.CorpSigningCreateOpt
 
 type CorporationSigningCreateOption struct {
 	CorporationSigning
@@ -13,22 +13,31 @@ type CorporationSigningCreateOption struct {
 	VerificationCode string `json:"verification_code"`
 }
 
-func (this *CorporationSigningCreateOption) Validate(orgCLAID string) (string, error) {
+func (this *CorporationSigningCreateOption) Validate(orgCLAID string) IModelError {
 	err := checkVerificationCode(this.AdminEmail, this.VerificationCode, orgCLAID)
 	if err != nil {
-		return string(err.ErrCode()), err
+		return err
 	}
 
-	return checkEmailFormat(this.AdminEmail)
+	if _, err := checkEmailFormat(this.AdminEmail); err != nil {
+		return newModelError(ErrNotAnEmail, err)
+	}
+	return nil
+
 }
 
-func (this *CorporationSigningCreateOption) Create(orgCLAID, platform, orgID, repoId string) error {
+func (this *CorporationSigningCreateOption) Create(orgCLAID string) IModelError {
 	this.Date = util.Date()
 
-	return dbmodels.GetDB().SignAsCorporation(
-		orgCLAID, platform, orgID, repoId,
-		dbmodels.CorporationSigningInfo(this.CorporationSigning),
-	)
+	err := dbmodels.GetDB().SignCorpCLA(orgCLAID, &this.CorporationSigning)
+	if err == nil {
+		return nil
+	}
+
+	if err.IsErrorOf(dbmodels.ErrNoDBRecord) {
+		return newModelError(ErrNoLinkOrResigned, err)
+	}
+	return parseDBError(err)
 }
 
 func UploadCorporationSigningPDF(linkID string, email string, pdf *[]byte) error {
@@ -47,16 +56,22 @@ func ListCorpsWithPDFUploaded(linkID string) ([]string, error) {
 	return dbmodels.GetDB().ListCorpsWithPDFUploaded(linkID)
 }
 
-func GetCorporationSigningDetail(platform, org, repo, email string) (string, dbmodels.CorporationSigningDetail, error) {
+func GetCorporationSigningDetail(platform, org, repo, email string) (string, dbmodels.CorporationSigningSummary, error) {
 	return dbmodels.GetDB().GetCorporationSigningDetail(platform, org, repo, email)
 }
 
-func GetCorpSigningInfo(platform, org, repo, email string) (string, *dbmodels.CorporationSigningInfo, error) {
+func GetCorpSigningInfo(platform, org, repo, email string) (string, *dbmodels.CorpSigningCreateOpt, error) {
 	return dbmodels.GetDB().GetCorpSigningInfo(platform, org, repo, email)
 }
 
-type CorporationSigningListOption dbmodels.CorporationSigningListOption
+func ListCorpSignings(linkID, language string) ([]dbmodels.CorporationSigningSummary, IModelError) {
+	v, err := dbmodels.GetDB().ListCorpSignings(linkID, language)
+	if err == nil {
+		return v, nil
+	}
 
-func (this CorporationSigningListOption) List() (map[string][]dbmodels.CorporationSigningDetail, error) {
-	return dbmodels.GetDB().ListCorporationSigning(dbmodels.CorporationSigningListOption(this))
+	if err.IsErrorOf(dbmodels.ErrNoDBRecord) {
+		return v, newModelError(ErrNoLink, err)
+	}
+	return v, parseDBError(err)
 }

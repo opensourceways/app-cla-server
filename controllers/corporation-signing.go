@@ -41,8 +41,8 @@ func (this *CorporationSigningController) Post() {
 		sendResp(fr)
 		return
 	}
-	if ec, err := (&info).Validate(orgCLAID); err != nil {
-		this.sendFailedResponse(400, ec, err, action)
+	if err := (&info).Validate(orgCLAID); err != nil {
+		sendResp(parseModelError(err))
 		return
 	}
 
@@ -64,9 +64,12 @@ func (this *CorporationSigningController) Post() {
 
 	info.Info = getSingingInfo(info.Info, cla.Fields)
 
-	err := (&info).Create(orgCLAID, orgCLA.Platform, orgCLA.OrgID, orgCLA.RepoID)
-	if err != nil {
-		sendResp(convertDBError1(err))
+	if err := (&info).Create(orgCLAID); err != nil {
+		if err.IsErrorOf(models.ErrNoLinkOrResigned) {
+			this.sendFailedResponse(400, errResigned, err, action)
+		} else {
+			sendResp(parseModelError(err))
+		}
 		return
 	}
 
@@ -132,59 +135,66 @@ func (this *CorporationSigningController) GetAll() {
 	action := "list corporation"
 	sendResp := this.newFuncForSendingFailedResp(action)
 	org := this.GetString(":org_id")
+	repo := this.GetString("repo_id")
 
 	pl, fr := this.tokenPayloadBasedOnCodePlatform()
 	if fr != nil {
 		sendResp(fr)
 		return
 	}
-
 	if !pl.hasOrg(org) {
 		this.sendFailedResponse(400, util.ErrInvalidParameter, fmt.Errorf("can't access org:%s", org), action)
 		return
 	}
 
-	opt := models.CorporationSigningListOption{
-		Platform:    pl.Platform,
-		OrgID:       org,
-		RepoID:      this.GetString("repo_id"),
-		CLALanguage: this.GetString("cla_language"),
+	opt := models.OrgCLAListOption{
+		Platform: pl.Platform,
+		OrgID:    org,
+		RepoID:   repo,
+		ApplyTo:  dbmodels.ApplyToCorporation,
 	}
-
-	r, err := opt.List()
+	signings, err := opt.List()
 	if err != nil {
 		sendResp(convertDBError1(err))
 		return
 	}
+	if len(signings) == 0 {
+		return
+	}
+	linkID := signings[0].ID
 
-	corpMap := map[string]bool{}
-	for k := range r {
-		corps, err := models.ListCorpsWithPDFUploaded(k)
-		if err != nil {
-			sendResp(convertDBError1(err))
-			return
-		}
-		for i := range corps {
-			corpMap[corps[i]] = true
-		}
+	r, merr := models.ListCorpSignings(linkID, this.GetString("cla_language"))
+	if merr != nil {
+		sendResp(parseModelError(merr))
+		return
+	}
+	if r == nil {
+		this.sendSuccessResp(map[string]bool{})
+		return
+	}
+
+	pdfs, err := models.ListCorpsWithPDFUploaded(linkID)
+	if err != nil {
+		sendResp(convertDBError1(err))
+		return
+	}
+	pdfMap := map[string]bool{}
+	for i := range pdfs {
+		pdfMap[pdfs[i]] = true
 	}
 
 	type sInfo struct {
-		*dbmodels.CorporationSigningDetail
+		*dbmodels.CorporationSigningSummary
 		PDFUploaded bool `json:"pdf_uploaded"`
 	}
 
-	result := map[string][]sInfo{}
+	details := make([]sInfo, 0, len(r))
 	for k := range r {
 		items := r[k]
-		details := make([]sInfo, 0, len(items))
-		for i := range items {
-			details = append(details, sInfo{
-				CorporationSigningDetail: &items[i],
-				PDFUploaded:              corpMap[util.EmailSuffix(items[i].AdminEmail)]},
-			)
-		}
-		result[k] = details
+		details = append(details, sInfo{
+			CorporationSigningSummary: &items,
+			PDFUploaded:               pdfMap[util.EmailSuffix(items.AdminEmail)]},
+		)
 	}
-	this.sendSuccessResp(result)
+	this.sendSuccessResp(map[string][]sInfo{linkID: details})
 }

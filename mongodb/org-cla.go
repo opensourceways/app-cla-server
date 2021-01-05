@@ -43,7 +43,7 @@ type OrgCLA struct {
 
 	// Corporations is the cla signing information of corporation
 	// key is the email suffix of corporation
-	Corporations []corporationSigningDoc `bson:"corporations" json:"-"`
+	Corporations []dCorpSigning `bson:"corporations" json:"-"`
 
 	// CorporationManagers is the managers of corporation who can manage the employee
 	CorporationManagers []corporationManagerDoc `bson:"corp_managers" json:"-"`

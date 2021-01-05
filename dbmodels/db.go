@@ -22,6 +22,7 @@ type IDB interface {
 }
 
 type ICorporationSigning interface {
+	InitializeCorpSigning(linkID string, info *OrgInfo) IDBError
 	SignAsCorporation(orgCLAID, platform, org, repo string, info CorporationSigningInfo) error
 	ListCorporationSigning(CorporationSigningListOption) (map[string][]CorporationSigningDetail, error)
 	GetCorporationSigningDetail(platform, org, repo, email string) (string, CorporationSigningDetail, error)

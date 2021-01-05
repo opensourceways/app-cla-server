@@ -51,6 +51,40 @@ type dIndividualSigning struct {
 	SigningInfo dbmodels.TypeSigningInfo `bson:"info" json:"info,omitempty"`
 }
 
+type cCorpSigning struct {
+	LinkID     string `bson:"link_id" json:"link_id" required:"true"`
+	LinkStatus string `bson:"link_status" json:"link_status" required:"true"`
+
+	OrgIdentity string `bson:"org_identity" json:"org_identity" required:"true"`
+	OrgEmail    string `bson:"org_email" json:"org_email" required:"true"`
+	OrgAlias    string `bson:"org_alias" json:"org_alias" required:"true"`
+
+	Signings []dCorpSigning `bson:"signings" json:"-"`
+	Managers []dCorpManager `bson:"corp_managers" json:"-"`
+}
+
+type dCorpSigning struct {
+	CLALanguage string `bson:"cla_lang" json:"cla_lang" required:"true"`
+	CorpID      string `bson:"corp_id" json:"corp_id" required:"true"`
+
+	CorporationName string `bson:"corp_name" json:"corp_name" required:"true"`
+	AdminEmail      string `bson:"admin_email" json:"admin_email" required:"true"`
+	AdminName       string `bson:"admin_name" json:"admin_name" required:"true"`
+	Date            string `bson:"date" json:"date" required:"true"`
+
+	SigningInfo dbmodels.TypeSigningInfo `bson:"info" json:"info,omitempty"`
+}
+
+type dCorpManager struct {
+	ID               string `bson:"id" json:"id" required:"true"`
+	Name             string `bson:"name" json:"name" required:"true"`
+	Role             string `bson:"role" json:"role" required:"true"`
+	Email            string `bson:"email"  json:"email" required:"true"`
+	CorpID           string `bson:"corp_id" json:"corp_id" required:"true"`
+	Password         string `bson:"password" json:"password" required:"true"`
+	InitialPWChanged bool   `bson:"changed" json:"changed"`
+}
+
 func memberNameOfSignings(key string) string {
 	return fmt.Sprintf("%s.%s", fieldSignings, key)
 }

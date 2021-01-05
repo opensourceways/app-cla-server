@@ -158,3 +158,11 @@ func InitializeIndividualSigning(linkID string) IModelError {
 	err := dbmodels.GetDB().InitializeIndividualSigning(linkID)
 	return parseDBError(err)
 }
+
+type OrgInfo = dbmodels.OrgInfo
+type OrgRepo = dbmodels.OrgRepo
+
+func InitializeCorpSigning(linkID string, info *OrgInfo) IModelError {
+	err := dbmodels.GetDB().InitializeCorpSigning(linkID, info)
+	return parseDBError(err)
+}

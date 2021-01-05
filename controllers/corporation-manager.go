@@ -47,6 +47,14 @@ func (this *CorporationManagerController) Put() {
 		return
 	}
 
+	// call models.GetCorpSigningBasicInfo before models.IsCorpSigningPDFUploaded
+	// to check wheather corp has signed
+	corpSigning, merr := models.GetCorpSigningBasicInfo(orgCLAID, corpEmail)
+	if merr != nil {
+		sendResp(parseModelError(merr))
+		return
+	}
+
 	uploaded, err := models.IsCorpSigningPDFUploaded(orgCLAID, corpEmail)
 	if err != nil {
 		sendResp(convertDBError1(err))
@@ -56,14 +64,6 @@ func (this *CorporationManagerController) Put() {
 		this.sendFailedResponse(
 			400, util.ErrPDFHasNotUploaded,
 			fmt.Errorf("pdf corporation signed has not been uploaded"), action)
-		return
-	}
-
-	_, corpSigning, err := models.GetCorporationSigningDetail(
-		orgCLA.Platform, orgCLA.OrgID, orgCLA.RepoID, corpEmail,
-	)
-	if err != nil {
-		sendResp(convertDBError1(err))
 		return
 	}
 

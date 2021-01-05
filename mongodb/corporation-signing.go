@@ -117,6 +117,34 @@ func (this *client) IsCorpSigned(linkID, email string) (bool, dbmodels.IDBError)
 	return signed, err
 }
 
+func (this *client) GetCorpSigningBasicInfo(linkID, email string) (*dbmodels.CorporationSigningBasicInfo, dbmodels.IDBError) {
+	var v []cCorpSigning
+
+	f := func(ctx context.Context) error {
+		return this.getArrayElem(
+			ctx, this.corpSigningCollection, fieldSignings,
+			docFilterOfSigning(linkID), elemFilterOfCorpSigning(email),
+			projectOfCorpSigning(), &v,
+		)
+	}
+
+	if err := withContext(f); err != nil {
+		return nil, newSystemError(err)
+	}
+
+	if len(v) == 0 {
+		return nil, errNoDBRecord1
+	}
+
+	signings := v[0].Signings
+	if len(signings) == 0 {
+		return nil, nil
+	}
+
+	detail := toDBModelCorporationSigningDetail(&(signings[0]), false)
+	return &detail.CorporationSigningBasicInfo, nil
+}
+
 func (this *client) getCorporationSigningDetail(filterOfDoc bson.M, email string) (*OrgCLA, error) {
 	var v []OrgCLA
 

@@ -28,6 +28,7 @@ type ICorporationSigning interface {
 	ListCorpSignings(linkID, language string) ([]CorporationSigningSummary, IDBError)
 	GetCorporationSigningDetail(platform, org, repo, email string) (string, CorporationSigningSummary, error)
 	GetCorpSigningInfo(platform, org, repo, email string) (string, *CorpSigningCreateOpt, error)
+	GetCorpSigningBasicInfo(linkID, email string) (*CorporationSigningBasicInfo, IDBError)
 
 	UploadCorporationSigningPDF(linkID string, adminEmail string, pdf *[]byte) error
 	DownloadCorporationSigningPDF(linkID string, email string) (*[]byte, error)

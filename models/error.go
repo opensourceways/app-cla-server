@@ -18,6 +18,7 @@ const (
 	ErrNoLink                  ModelErrCode = "no_link"
 	ErrNoLinkOrResigned        ModelErrCode = "no_link_or_resigned"
 	ErrNoLinkOrUnsigned        ModelErrCode = "no_link_or_unsigned"
+	ErrUnsigned                ModelErrCode = "unsigned"
 )
 
 type IModelError interface {

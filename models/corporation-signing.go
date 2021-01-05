@@ -1,6 +1,8 @@
 package models
 
 import (
+	"fmt"
+
 	"github.com/opensourceways/app-cla-server/dbmodels"
 	"github.com/opensourceways/app-cla-server/util"
 )
@@ -80,6 +82,22 @@ func IsCorpSigned(linkID, email string) (bool, IModelError) {
 	v, err := dbmodels.GetDB().IsCorpSigned(linkID, email)
 	if err == nil {
 		return v, nil
+	}
+
+	return v, parseDBError(err)
+}
+
+func GetCorpSigningBasicInfo(linkID, email string) (*dbmodels.CorporationSigningBasicInfo, IModelError) {
+	v, err := dbmodels.GetDB().GetCorpSigningBasicInfo(linkID, email)
+	if err == nil {
+		if v == nil {
+			return nil, newModelError(ErrUnsigned, fmt.Errorf("unsigned"))
+		}
+		return v, nil
+	}
+
+	if err.IsErrorOf(dbmodels.ErrNoDBRecord) {
+		return v, newModelError(ErrNoLink, err)
 	}
 
 	return v, parseDBError(err)

@@ -58,10 +58,6 @@ func ListCorpsWithPDFUploaded(linkID string) ([]string, error) {
 	return dbmodels.GetDB().ListCorpsWithPDFUploaded(linkID)
 }
 
-func GetCorporationSigningDetail(platform, org, repo, email string) (string, dbmodels.CorporationSigningSummary, error) {
-	return dbmodels.GetDB().GetCorporationSigningDetail(platform, org, repo, email)
-}
-
 func GetCorpSigningInfo(platform, org, repo, email string) (string, *dbmodels.CorpSigningCreateOpt, error) {
 	return dbmodels.GetDB().GetCorpSigningInfo(platform, org, repo, email)
 }

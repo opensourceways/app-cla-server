@@ -147,21 +147,11 @@ func (this *CorporationSigningController) GetAll() {
 		return
 	}
 
-	opt := models.OrgCLAListOption{
-		Platform: pl.Platform,
-		OrgID:    org,
-		RepoID:   repo,
-		ApplyTo:  dbmodels.ApplyToCorporation,
-	}
-	signings, err := opt.List()
-	if err != nil {
-		sendResp(convertDBError1(err))
+	linkID, fr := getLinkID(pl.Platform, org, repo, dbmodels.ApplyToCorporation)
+	if fr != nil {
+		sendResp(fr)
 		return
 	}
-	if len(signings) == 0 {
-		return
-	}
-	linkID := signings[0].ID
 
 	r, merr := models.ListCorpSignings(linkID, this.GetString("cla_language"))
 	if merr != nil {

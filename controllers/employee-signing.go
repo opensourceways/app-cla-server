@@ -65,21 +65,15 @@ func (this *EmployeeSigningController) Post() {
 		return
 	}
 
-	corpSignedCla, corpSign, err := models.GetCorporationSigningDetail(
-		orgCLA.Platform, orgCLA.OrgID, orgCLA.RepoID, info.Email)
-	if err != nil {
-		sendResp(convertDBError1(err))
+	linkID, fr := getLinkID(
+		orgCLA.Platform, orgCLA.OrgID, orgCLA.RepoID, dbmodels.ApplyToCorporation,
+	)
+	if fr != nil {
+		sendResp(fr)
 		return
 	}
 
-	if !corpSign.AdminAdded {
-		this.sendFailedResponse(
-			400, util.ErrSigningUncompleted, fmt.Errorf("the corp has not been enabled"), action,
-		)
-		return
-	}
-
-	managers, err := models.ListCorporationManagers(corpSignedCla, info.Email, dbmodels.RoleManager)
+	managers, err := models.ListCorporationManagers(linkID, info.Email, dbmodels.RoleManager)
 	if err != nil {
 		sendResp(convertDBError1(err))
 		return
@@ -130,22 +124,15 @@ func (this *EmployeeSigningController) GetAll() {
 		return
 	}
 
-	opt := models.OrgCLAListOption{
-		Platform: orgCLA.Platform,
-		OrgID:    orgCLA.OrgID,
-		RepoID:   orgCLA.RepoID,
-		ApplyTo:  dbmodels.ApplyToIndividual,
-	}
-	signings, err := opt.List()
-	if err != nil {
-		sendResp(convertDBError1(err))
-		return
-	}
-	if len(signings) == 0 {
+	linkID, fr := getLinkID(
+		orgCLA.Platform, orgCLA.OrgID, orgCLA.RepoID, dbmodels.ApplyToIndividual,
+	)
+	if fr != nil {
+		sendResp(fr)
 		return
 	}
 
-	r, merr := models.ListIndividualSigning(signings[0].ID, pl.Email, this.GetString("cla_language"))
+	r, merr := models.ListIndividualSigning(linkID, pl.Email, this.GetString("cla_language"))
 	if merr != nil {
 		sendResp(parseModelError(merr))
 		return
@@ -181,18 +168,11 @@ func (this *EmployeeSigningController) Update() {
 		return
 	}
 
-	opt := models.OrgCLAListOption{
-		Platform: corpClaOrg.Platform,
-		OrgID:    corpClaOrg.OrgID,
-		RepoID:   corpClaOrg.RepoID,
-		ApplyTo:  dbmodels.ApplyToIndividual,
-	}
-	signings, err := opt.List()
-	if err != nil {
-		sendResp(convertDBError1(err))
-		return
-	}
-	if len(signings) == 0 {
+	linkID, fr := getLinkID(
+		corpClaOrg.Platform, corpClaOrg.OrgID, corpClaOrg.RepoID, dbmodels.ApplyToIndividual,
+	)
+	if fr != nil {
+		sendResp(fr)
 		return
 	}
 
@@ -202,7 +182,7 @@ func (this *EmployeeSigningController) Update() {
 		return
 	}
 
-	if err := (&info).Update(signings[0].ID, employeeEmail); err != nil {
+	if err := (&info).Update(linkID, employeeEmail); err != nil {
 		if err.IsErrorOf(models.ErrNoLinkOrUnsigned) {
 			this.sendFailedResponse(400, errUnsigned, err, action)
 		} else {
@@ -257,22 +237,15 @@ func (this *EmployeeSigningController) Delete() {
 		return
 	}
 
-	opt := models.OrgCLAListOption{
-		Platform: corpClaOrg.Platform,
-		OrgID:    corpClaOrg.OrgID,
-		RepoID:   corpClaOrg.RepoID,
-		ApplyTo:  dbmodels.ApplyToIndividual,
-	}
-	signings, err := opt.List()
-	if err != nil {
-		sendResp(convertDBError1(err))
-		return
-	}
-	if len(signings) == 0 {
+	linkID, fr := getLinkID(
+		corpClaOrg.Platform, corpClaOrg.OrgID, corpClaOrg.RepoID, dbmodels.ApplyToIndividual,
+	)
+	if fr != nil {
+		sendResp(fr)
 		return
 	}
 
-	if err := models.DeleteEmployeeSigning(signings[0].ID, employeeEmail); err != nil {
+	if err := models.DeleteEmployeeSigning(linkID, employeeEmail); err != nil {
 		sendResp(parseModelError(err))
 		return
 	}

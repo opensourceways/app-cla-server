@@ -90,22 +90,15 @@ func (this *IndividualSigningController) Check() {
 	org, repo := parseOrgAndRepo(this.GetString(":org_repo"))
 	emailOfSigner := this.GetString("email")
 
-	opt := models.OrgCLAListOption{
-		Platform: this.GetString(":platform"),
-		OrgID:    org,
-		RepoID:   repo,
-		ApplyTo:  dbmodels.ApplyToIndividual,
-	}
-	signings, err := opt.List()
-	if err != nil {
-		sendResp(convertDBError1(err))
-		return
-	}
-	if len(signings) == 0 {
+	linkID, fr := getLinkID(
+		this.GetString(":platform"), org, repo, dbmodels.ApplyToIndividual,
+	)
+	if fr != nil {
+		sendResp(fr)
 		return
 	}
 
-	if v, merr := models.IsIndividualSigned(signings[0].ID, emailOfSigner); merr != nil {
+	if v, merr := models.IsIndividualSigned(linkID, emailOfSigner); merr != nil {
 		sendResp(parseModelError(merr))
 	} else {
 		this.sendSuccessResp(map[string]bool{"signed": v})

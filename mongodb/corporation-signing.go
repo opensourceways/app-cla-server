@@ -145,44 +145,6 @@ func (this *client) GetCorpSigningBasicInfo(linkID, email string) (*dbmodels.Cor
 	return &detail.CorporationSigningBasicInfo, nil
 }
 
-func (this *client) getCorporationSigningDetail(filterOfDoc bson.M, email string) (*OrgCLA, error) {
-	var v []OrgCLA
-
-	f := func(ctx context.Context) error {
-		ma := map[string]bson.M{
-			fieldCorporations: filterOfCorpID(email),
-			fieldCorpManagers: {
-				fieldCorporationID: genCorpID(email),
-				"role":             dbmodels.RoleAdmin,
-			},
-		}
-		return this.getMultiArrays(
-			ctx, this.orgCLACollection, filterOfDoc,
-			ma, projectOfCorpSigning(), &v,
-		)
-	}
-
-	if err := withContext(f); err != nil {
-		return nil, err
-	}
-
-	return getSigningDoc(v, func(doc *OrgCLA) bool {
-		return len(doc.Corporations) > 0
-	})
-}
-
-func (this *client) GetCorporationSigningDetail(platform, org, repo, email string) (string, dbmodels.CorporationSigningSummary, error) {
-	orgCLA, err := this.getCorporationSigningDetail(
-		filterOfDocForCorpSigning(platform, org, repo), email,
-	)
-	if err != nil {
-		return "", dbmodels.CorporationSigningSummary{}, err
-	}
-
-	detail := toDBModelCorporationSigningDetail(&orgCLA.Corporations[0], (len(orgCLA.CorporationManagers) > 0))
-	return objectIDToUID(orgCLA.ID), detail, nil
-}
-
 func (this *client) GetCorpSigningInfo(platform, org, repo, email string) (string, *dbmodels.CorpSigningCreateOpt, error) {
 	var v []OrgCLA
 

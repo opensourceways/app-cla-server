@@ -159,25 +159,33 @@ func (this *baseController) routerPattern() string {
 }
 
 func (this *baseController) apiPrepare(permission string) {
+	if permission != "" {
+		this.apiPrepareWithAC(
+			this.newAccessController(permission),
+			[]string{permission},
+		)
+	} else {
+		this.apiPrepareWithAC(nil, nil)
+	}
+}
+
+func (this *baseController) apiPrepareWithAC(ac *accessController, permission []string) {
 	if fr := this.checkPathParameter(); fr != nil {
 		this.sendFailedResultAsResp(fr, "")
 		this.StopRun()
 	}
 
-	if permission != "" {
-		if fr := this.checkApiReqToken(permission); fr != nil {
+	if ac != nil && permission != nil {
+		if fr := this.checkApiReqToken(ac, permission); fr != nil {
 			this.sendFailedResultAsResp(fr, "")
 			this.StopRun()
 		}
+
+		this.Data[apiAccessController] = *ac
 	}
 }
 
-func (this *baseController) checkApiReqToken(permission string) *failedApiResult {
-	token := this.apiReqHeader(headerToken)
-	if token == "" {
-		return newFailedApiResult(401, errMissingToken, fmt.Errorf("no token passed"))
-	}
-
+func (this *baseController) newAccessController(permission string) *accessController {
 	var acp interface{}
 
 	switch permission {
@@ -191,17 +199,23 @@ func (this *baseController) checkApiReqToken(permission string) *failedApiResult
 		acp = &acForCorpManagerPayload{}
 	}
 
-	ac := &accessController{Payload: acp}
+	return &accessController{Payload: acp}
+}
+
+func (this *baseController) checkApiReqToken(ac *accessController, permission []string) *failedApiResult {
+	token := this.apiReqHeader(headerToken)
+	if token == "" {
+		return newFailedApiResult(401, errMissingToken, fmt.Errorf("no token passed"))
+	}
 
 	if err := ac.ParseToken(token, conf.AppConfig.APITokenKey); err != nil {
 		return newFailedApiResult(401, errUnknownToken, err)
 	}
 
-	if err := ac.Verify([]string{permission}); err != nil {
+	if err := ac.Verify(permission); err != nil {
 		return newFailedApiResult(403, errInvalidToken, err)
 	}
 
-	this.Data[apiAccessController] = *ac
 	return nil
 }
 

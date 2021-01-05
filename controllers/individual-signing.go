@@ -86,8 +86,9 @@ func (this *IndividualSigningController) Post() {
 // @Success 200
 // @router /:platform/:org_repo [get]
 func (this *IndividualSigningController) Check() {
-	action := "check individual signing"
+	sendResp := this.newFuncForSendingFailedResp("check individual signing")
 	org, repo := parseOrgAndRepo(this.GetString(":org_repo"))
+	emailOfSigner := this.GetString("email")
 
 	opt := models.OrgCLAListOption{
 		Platform: this.GetString(":platform"),
@@ -97,20 +98,16 @@ func (this *IndividualSigningController) Check() {
 	}
 	signings, err := opt.List()
 	if err != nil {
-		this.sendFailedResultAsResp(convertDBError1(err), action)
+		sendResp(convertDBError1(err))
 		return
 	}
 	if len(signings) == 0 {
 		return
 	}
 
-	v, err := models.IsIndividualSigned(signings[0].ID, this.GetString("email"))
-	if err != nil {
-		if statusCode, errCode := convertDBError(err); errCode != util.ErrHasNotSigned {
-			this.sendFailedResponse(statusCode, errCode, err, action)
-			return
-		}
+	if v, merr := models.IsIndividualSigned(signings[0].ID, emailOfSigner); merr != nil {
+		sendResp(parseModelError(merr))
+	} else {
+		this.sendSuccessResp(map[string]bool{"signed": v})
 	}
-
-	this.sendSuccessResp(map[string]bool{"signed": v})
 }

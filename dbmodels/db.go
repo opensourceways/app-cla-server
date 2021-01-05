@@ -55,6 +55,7 @@ type IOrgCLA interface {
 }
 
 type IIndividualSigning interface {
+	InitializeIndividualSigning(linkID string) IDBError
 	SignIndividualCLA(linkID string, info *IndividualSigningInfo) IDBError
 	DeleteIndividualSigning(linkID, email string) IDBError
 	UpdateIndividualSigning(linkID, email string, enabled bool) IDBError

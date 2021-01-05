@@ -25,7 +25,5 @@ type IDBError interface {
 const (
 	ErrSystemError       DBErrCode = "system_error"
 	ErrNoDBRecord        DBErrCode = "no_db_record"
-	ErrNoChildElem       DBErrCode = "no_child_element"
-	ErrRecordExists      DBErrCode = "record_exists"
 	ErrMarshalDataFaield DBErrCode = "failed_to_marshal_data"
 )

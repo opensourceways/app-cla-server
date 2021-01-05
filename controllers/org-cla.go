@@ -118,6 +118,8 @@ func (this *OrgCLAController) Post() {
 		return
 	}
 
+	models.InitializeIndividualSigning(uid)
+
 	body = struct {
 		OrgClaID string `json:"org_cla_id"`
 		models.OrgCLACreateOption

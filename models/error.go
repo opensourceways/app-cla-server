@@ -21,6 +21,7 @@ const (
 	ErrUnsigned                ModelErrCode = "unsigned"
 	ErrSamePassword            ModelErrCode = "same_password"
 	ErrNoLinkOrNoManager       ModelErrCode = "no_link_or_no_manager"
+	ErrNoLinkOrManagerExists   ModelErrCode = "no_link_or_manager_exists"
 	ErrInvalidManagerID        ModelErrCode = "invalid_manager_id"
 )
 

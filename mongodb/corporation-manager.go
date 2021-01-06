@@ -46,6 +46,39 @@ func filterForCorpManager(filter bson.M) {
 	filter[fieldCorpManagers] = bson.M{"$type": "array"}
 }
 
+func (this *client) AddCorpAdministrator(linkID string, opt *dbmodels.CorporationManagerCreateOption) dbmodels.IDBError {
+	info := dCorpManager{
+		ID:       opt.ID,
+		Name:     opt.Name,
+		Email:    opt.Email,
+		Role:     dbmodels.RoleAdmin,
+		Password: opt.Password,
+		CorpID:   genCorpID(opt.Email),
+	}
+	body, err := structToMap1(info)
+	if err != nil {
+		return err
+	}
+
+	docFilter := docFilterOfCorpManager(linkID)
+	arrayFilterByElemMatch(
+		fieldCorpManagers, false,
+		bson.M{
+			fieldCorpID: genCorpID(opt.Email),
+			"role":      dbmodels.RoleAdmin,
+		},
+		docFilter,
+	)
+
+	f := func(ctx context.Context) dbmodels.IDBError {
+		return this.pushArrayElem1(
+			ctx, this.corpSigningCollection, fieldCorpManagers, docFilter, body,
+		)
+	}
+
+	return withContext1(f)
+}
+
 func managersToAdd(
 	ctx context.Context, c *client, oid primitive.ObjectID,
 	opt []dbmodels.CorporationManagerCreateOption, managerNumber int,

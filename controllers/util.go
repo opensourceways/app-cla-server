@@ -319,6 +319,10 @@ func sendEmail(to []string, from, subject string, builder email.IEmailMessageBul
 	worker.GetEmailWorker().SendSimpleMessage(from, msg)
 }
 
+func notifyCorpAdmin(orgCLA *models.OrgCLA, info *dbmodels.CorporationManagerCreateOption) {
+	notifyCorpManagerWhenAdding(orgCLA, []dbmodels.CorporationManagerCreateOption{*info})
+}
+
 func notifyCorpManagerWhenAdding(orgCLA *models.OrgCLA, info []dbmodels.CorporationManagerCreateOption) {
 	admin := (info[0].Role == dbmodels.RoleAdmin)
 	subject := fmt.Sprintf("Account on project of \"%s\"", orgCLA.OrgAlias)

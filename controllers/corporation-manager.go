@@ -67,15 +67,19 @@ func (this *CorporationManagerController) Put() {
 		return
 	}
 
-	added, err := models.CreateCorporationAdministrator(orgCLAID, corpSigning.AdminName, corpEmail)
-	if err != nil {
-		sendResp(convertDBError1(err))
+	added, merr := models.CreateCorporationAdministrator(orgCLAID, corpSigning.AdminName, corpEmail)
+	if merr != nil {
+		if merr.IsErrorOf(models.ErrNoLinkOrManagerExists) {
+			sendResp(newFailedApiResult(400, errCorpManagerExists, merr))
+		} else {
+			sendResp(parseModelError(merr))
+		}
 		return
 	}
 
-	this.sendSuccessResp("add manager successfully")
+	this.sendSuccessResp(action + " successfully")
 
-	notifyCorpManagerWhenAdding(orgCLA, added)
+	notifyCorpAdmin(orgCLA, added)
 }
 
 // @Title Patch

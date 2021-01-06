@@ -61,6 +61,9 @@ func ListCorpsWithPDFUploaded(linkID string) ([]string, error) {
 func ListCorpSignings(linkID, language string) ([]dbmodels.CorporationSigningSummary, IModelError) {
 	v, err := dbmodels.GetDB().ListCorpSignings(linkID, language)
 	if err == nil {
+		if v == nil {
+			v = []dbmodels.CorporationSigningSummary{}
+		}
 		return v, nil
 	}
 

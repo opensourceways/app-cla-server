@@ -75,11 +75,11 @@ func (this *EmployeeSigningController) Post() {
 
 	managers, err := models.ListCorporationManagers(linkID, info.Email, dbmodels.RoleManager)
 	if err != nil {
-		sendResp(convertDBError1(err))
+		sendResp(parseModelError(err))
 		return
 	}
 	if len(managers) == 0 {
-		this.sendFailedResponse(400, util.ErrNoCorpManager, fmt.Errorf("no managers"), action)
+		sendResp(newFailedApiResult(400, errNoEmployeeManager, fmt.Errorf("no managers")))
 		return
 	}
 

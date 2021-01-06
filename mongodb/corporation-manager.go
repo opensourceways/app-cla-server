@@ -12,6 +12,10 @@ import (
 	"github.com/opensourceways/app-cla-server/util"
 )
 
+func docFilterOfCorpManager(linkID string) bson.M {
+	return docFilterOfSigning(linkID)
+}
+
 func memberNameOfCorpManager(field string) string {
 	return fmt.Sprintf("%s.%s", fieldCorpManagers, field)
 }
@@ -239,34 +243,52 @@ func (this *client) listCorporationManager(ctx context.Context, orgCLAID primiti
 	return v[0].CorporationManagers, nil
 }
 
-func (this *client) ListCorporationManager(orgCLAID, email, role string) ([]dbmodels.CorporationManagerListResult, error) {
-	oid, err := toObjectID(orgCLAID)
-	if err != nil {
-		return nil, err
+func (this *client) ListCorporationManager(linkID, email, role string) ([]dbmodels.CorporationManagerListResult, dbmodels.IDBError) {
+	elemFilter := filterOfCorpID(email)
+	if role != "" {
+		elemFilter["role"] = role
 	}
 
-	var v []corporationManagerDoc
+	project := bson.M{
+		memberNameOfCorpManager("id"):    1,
+		memberNameOfCorpManager("name"):  1,
+		memberNameOfCorpManager("email"): 1,
+		memberNameOfCorpManager("role"):  1,
+	}
+
+	var v []cCorpSigning
 
 	f := func(ctx context.Context) error {
-		r, err := this.listCorporationManager(ctx, oid, email, role)
-		v = r
-		return err
+		return this.getArrayElem(
+			ctx, this.corpSigningCollection, fieldCorpManagers,
+			docFilterOfCorpManager(linkID), elemFilter, project, &v,
+		)
 	}
 
-	if err = withContext(f); err != nil {
-		return nil, err
+	if err := withContext(f); err != nil {
+		return nil, newSystemError(err)
 	}
 
-	ms := make([]dbmodels.CorporationManagerListResult, 0, len(v))
-	for _, item := range v {
-		ms = append(ms, dbmodels.CorporationManagerListResult{
+	if len(v) == 0 {
+		return nil, errNoDBRecord1
+	}
+
+	ms := v[0].Managers
+	if ms == nil {
+		return nil, nil
+	}
+
+	r := make([]dbmodels.CorporationManagerListResult, 0, len(ms))
+	for i := range ms {
+		item := &ms[i]
+		r = append(r, dbmodels.CorporationManagerListResult{
 			ID:    item.ID,
 			Name:  item.Name,
 			Email: item.Email,
 			Role:  item.Role,
 		})
 	}
-	return ms, nil
+	return r, nil
 }
 
 func (this *client) DeleteCorporationManager(orgCLAID, role string, emails []string) ([]dbmodels.CorporationManagerCreateOption, error) {

@@ -13,20 +13,26 @@ type CorporationManagerAuthentication struct {
 	Password string `json:"password"`
 }
 
-func (this CorporationManagerAuthentication) Authenticate() (map[string]dbmodels.CorporationManagerCheckResult, error) {
+func (this CorporationManagerAuthentication) Authenticate() (map[string]dbmodels.CorporationManagerCheckResult, IModelError) {
 	info := dbmodels.CorporationManagerCheckInfo{Password: this.Password}
-	if _, err := checkEmailFormat(this.User); err == nil {
+	if _, merr := checkEmailFormat(this.User); merr == nil {
 		info.Email = this.User
 	} else {
-		if _, err = checkManagerID(this.User); err != nil {
-			return nil, err
+		if _, merr := checkManagerID(this.User); merr != nil {
+			return nil, newModelError(ErrInvalidManagerID, fmt.Errorf("invalid corp manger id"))
 		}
 
 		i := strings.LastIndex(this.User, "_")
 		info.EmailSuffix = this.User[(i + 1):]
 		info.ID = this.User[:i]
 	}
-	return dbmodels.GetDB().CheckCorporationManagerExist(info)
+
+	v, err := dbmodels.GetDB().CheckCorporationManagerExist(info)
+	if err == nil {
+		return v, nil
+	}
+
+	return nil, parseDBError(err)
 }
 
 func CreateCorporationAdministrator(orgCLAID, name, email string) ([]dbmodels.CorporationManagerCreateOption, error) {
@@ -52,19 +58,39 @@ func CreateCorporationAdministrator(orgCLAID, name, email string) ([]dbmodels.Co
 
 type CorporationManagerResetPassword dbmodels.CorporationManagerResetPassword
 
-func (this CorporationManagerResetPassword) Validate() (string, error) {
+func (this CorporationManagerResetPassword) Validate() IModelError {
 	if this.NewPassword == this.OldPassword {
-		return util.ErrInvalidParameter, fmt.Errorf("the new password is same as old one")
+		return newModelError(ErrSamePassword, fmt.Errorf("the new password is same as old one"))
 	}
-	return "", nil
+	return nil
 }
 
-func (this CorporationManagerResetPassword) Reset(orgCLAID, email string) error {
-	return dbmodels.GetDB().ResetCorporationManagerPassword(
-		orgCLAID, email, dbmodels.CorporationManagerResetPassword(this),
+func (this CorporationManagerResetPassword) Reset(linkID, email string) IModelError {
+	err := dbmodels.GetDB().ResetCorporationManagerPassword(
+		linkID, email, dbmodels.CorporationManagerResetPassword(this),
 	)
+	if err == nil {
+		return nil
+	}
+
+	if err.IsErrorOf(dbmodels.ErrNoDBRecord) {
+		return newModelError(ErrNoLinkOrNoManager, err)
+	}
+	return parseDBError(err)
 }
 
-func ListCorporationManagers(orgCLAID, email, role string) ([]dbmodels.CorporationManagerListResult, error) {
-	return dbmodels.GetDB().ListCorporationManager(orgCLAID, email, role)
+func ListCorporationManagers(linkID, email, role string) ([]dbmodels.CorporationManagerListResult, IModelError) {
+	v, err := dbmodels.GetDB().ListCorporationManager(linkID, email, role)
+	if err == nil {
+		if v == nil {
+			v = []dbmodels.CorporationManagerListResult{}
+		}
+		return v, nil
+	}
+
+	if err.IsErrorOf(dbmodels.ErrNoDBRecord) {
+		return v, newModelError(ErrNoLink, err)
+	}
+
+	return v, parseDBError(err)
 }

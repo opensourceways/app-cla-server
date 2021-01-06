@@ -19,6 +19,9 @@ const (
 	ErrNoLinkOrResigned        ModelErrCode = "no_link_or_resigned"
 	ErrNoLinkOrUnsigned        ModelErrCode = "no_link_or_unsigned"
 	ErrUnsigned                ModelErrCode = "unsigned"
+	ErrSamePassword            ModelErrCode = "same_password"
+	ErrNoLinkOrNoManager       ModelErrCode = "no_link_or_no_manager"
+	ErrInvalidManagerID        ModelErrCode = "invalid_manager_id"
 )
 
 type IModelError interface {

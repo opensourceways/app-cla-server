@@ -161,7 +161,7 @@ func (this *CorporationSigningController) GetAll() {
 		sendResp(parseModelError(merr))
 		return
 	}
-	if r == nil {
+	if len(r) == 0 {
 		this.sendSuccessResp(map[string]bool{})
 		return
 	}

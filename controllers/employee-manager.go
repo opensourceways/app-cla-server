@@ -3,8 +3,6 @@ package controllers
 import (
 	"fmt"
 
-	"github.com/astaxie/beego"
-
 	"github.com/opensourceways/app-cla-server/dbmodels"
 	"github.com/opensourceways/app-cla-server/email"
 	"github.com/opensourceways/app-cla-server/models"
@@ -12,11 +10,11 @@ import (
 )
 
 type EmployeeManagerController struct {
-	beego.Controller
+	baseController
 }
 
 func (this *EmployeeManagerController) Prepare() {
-	apiPrepare(&this.Controller, []string{PermissionCorporAdmin})
+	this.apiPrepare(PermissionCorporAdmin)
 }
 
 // @Title Post
@@ -42,29 +40,20 @@ func (this *EmployeeManagerController) Delete() {
 // @Success 200 {object} dbmodels.CorporationManagerListResult
 // @router / [get]
 func (this *EmployeeManagerController) GetAll() {
-	var statusCode = 0
-	var errCode = ""
-	var reason error
-	var body interface{}
+	sendResp := this.newFuncForSendingFailedResp("list employee managers")
 
-	defer func() {
-		sendResponse(&this.Controller, statusCode, errCode, reason, body, "list employee managers")
-	}()
-
-	var ac *acForCorpManagerPayload
-	ac, errCode, reason = getACOfCorpManager(&this.Controller)
-	if reason != nil {
-		statusCode = 401
+	pl, fr := this.tokenPayloadBasedOnCorpManager()
+	if fr != nil {
+		sendResp(fr)
 		return
 	}
 
-	r, err := models.ListCorporationManagers(ac.OrgCLAID, ac.Email, dbmodels.RoleManager)
-	if err != nil {
-		reason = err
-		return
+	r, err := models.ListCorporationManagers(pl.OrgCLAID, pl.Email, dbmodels.RoleManager)
+	if err == nil {
+		this.sendSuccessResp(r)
+	} else {
+		sendResp(parseModelError(err))
 	}
-
-	body = r
 }
 
 func (this *EmployeeManagerController) addOrDeleteManagers(toAdd bool) {

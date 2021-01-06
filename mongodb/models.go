@@ -7,11 +7,14 @@ import (
 )
 
 const (
-	fieldLinkID     = "link_id"
-	fieldLinkStatus = "link_status"
-	fieldCorpID     = "corp_id"
-	fieldSignings   = "signings"
-	fieldCLALang    = "cla_lang"
+	fieldLinkID      = "link_id"
+	fieldLinkStatus  = "link_status"
+	fieldCorpID      = "corp_id"
+	fieldSignings    = "signings"
+	fieldCLALang     = "cla_lang"
+	fieldOrgEmail    = "org_email"
+	fieldOrgAlias    = "org_alias"
+	fieldOrgIdentity = "org_identity"
 
 	// 'ready' means the doc is ready to record the signing data currently.
 	// 'deleted' means the signing data is invalid.

@@ -12,6 +12,17 @@ import (
 	"github.com/opensourceways/app-cla-server/util"
 )
 
+func docFilterOfCorpManager(linkID string) bson.M {
+	return docFilterOfSigning(linkID)
+}
+
+func elemFilterOfCorpManager(email string) bson.M {
+	return bson.M{
+		fieldCorpID: genCorpID(email),
+		"email":     email,
+	}
+}
+
 func memberNameOfCorpManager(field string) string {
 	return fmt.Sprintf("%s.%s", fieldCorpManagers, field)
 }
@@ -123,89 +134,98 @@ func (this *client) AddCorporationManager(orgCLAID string, opt []dbmodels.Corpor
 	return toAdd, err
 }
 
-func (this *client) CheckCorporationManagerExist(opt dbmodels.CorporationManagerCheckInfo) (map[string]dbmodels.CorporationManagerCheckResult, error) {
-	filterOfDoc := bson.M{}
-	filterForCorpManager(filterOfDoc)
+func (this *client) CheckCorporationManagerExist(opt dbmodels.CorporationManagerCheckInfo) (map[string]dbmodels.CorporationManagerCheckResult, dbmodels.IDBError) {
+	docFilter := bson.M{
+		fieldLinkStatus:   linkStatusReady,
+		fieldCorpManagers: bson.M{"$type": "array"},
+	}
 
-	var filterOfArray bson.M
+	var elemFilter bson.M
 	if opt.Email != "" {
-		filterOfArray = indexOfCorpManagerAndIndividual(opt.Email)
+		elemFilter = elemFilterOfCorpManager(opt.Email)
 	} else {
-		filterOfArray = bson.M{
-			fieldCorporationID: opt.EmailSuffix,
-			"id":               opt.ID,
+		elemFilter = bson.M{
+			fieldCorpID: opt.EmailSuffix,
+			"id":        opt.ID,
 		}
 	}
-	filterOfArray["password"] = opt.Password
+	elemFilter["password"] = opt.Password
 
 	project := bson.M{
-		"platform":                  1,
-		"org_id":                    1,
-		fieldRepo:                   1,
-		corpManagerField("role"):    1,
-		corpManagerField("name"):    1,
-		corpManagerField("email"):   1,
-		corpManagerField("changed"): 1,
+		fieldLinkID:                        1,
+		fieldOrgIdentity:                   1,
+		fieldOrgEmail:                      1,
+		fieldOrgAlias:                      1,
+		memberNameOfCorpManager("role"):    1,
+		memberNameOfCorpManager("name"):    1,
+		memberNameOfCorpManager("email"):   1,
+		memberNameOfCorpManager("changed"): 1,
 	}
 
-	var v []OrgCLA
-
+	var v []cCorpSigning
 	f := func(ctx context.Context) error {
-		return this.getArrayElem(ctx, this.orgCLACollection, fieldCorpManagers, filterOfDoc, filterOfArray, project, &v)
+		return this.getArrayElem(
+			ctx, this.corpSigningCollection, fieldCorpManagers,
+			docFilter, elemFilter, project, &v,
+		)
 	}
 
 	if err := withContext(f); err != nil {
-		return nil, err
+		return nil, newSystemError(err)
 	}
-
 	if len(v) == 0 {
-		return nil, dbmodels.DBError{
-			ErrCode: util.ErrNoDBRecord,
-			Err:     fmt.Errorf("no cla binding found"),
-		}
+		return nil, nil
 	}
 
 	result := map[string]dbmodels.CorporationManagerCheckResult{}
 	for _, doc := range v {
-		cm := doc.CorporationManagers
+		cm := doc.Managers
 		if len(cm) == 0 {
 			continue
 		}
 
 		item := &cm[0]
-		result[objectIDToUID(doc.ID)] = dbmodels.CorporationManagerCheckResult{
+		orgRepo := dbmodels.ParseToOrgRepo(doc.OrgIdentity)
+		result[doc.LinkID] = dbmodels.CorporationManagerCheckResult{
 			Name:             item.Name,
 			Email:            item.Email,
 			Role:             item.Role,
 			InitialPWChanged: item.InitialPWChanged,
 
-			Platform: doc.Platform,
-			OrgID:    doc.OrgID,
-			RepoID:   toNormalRepo(doc.RepoID),
+			OrgInfo: dbmodels.OrgInfo{
+				OrgRepo: dbmodels.OrgRepo{
+					Platform: orgRepo.Platform,
+					OrgID:    orgRepo.OrgID,
+					RepoID:   orgRepo.RepoID,
+				},
+				OrgEmail: doc.OrgEmail,
+				OrgAlias: doc.OrgAlias,
+			},
 		}
+
 	}
 	return result, nil
 }
 
-func (this *client) ResetCorporationManagerPassword(orgCLAID, email string, opt dbmodels.CorporationManagerResetPassword) error {
-	oid, err := toObjectID(orgCLAID)
-	if err != nil {
-		return err
-	}
-
+func (this *client) ResetCorporationManagerPassword(linkID, email string, opt dbmodels.CorporationManagerResetPassword) dbmodels.IDBError {
 	updateCmd := bson.M{
 		"password": opt.NewPassword,
 		"changed":  true,
 	}
 
-	filterOfArray := indexOfCorpManagerAndIndividual(email)
-	filterOfArray["password"] = opt.OldPassword
+	elemFilter := elemFilterOfCorpManager(email)
+	elemFilter["password"] = opt.OldPassword
 
-	f := func(ctx context.Context) error {
-		return this.updateArrayElem(ctx, this.orgCLACollection, fieldCorpManagers, filterOfDocID(oid), filterOfArray, updateCmd, true)
+	docFilter := docFilterOfCorpManager(linkID)
+	arrayFilterByElemMatch(fieldCorpManagers, true, elemFilter, docFilter)
+
+	f := func(ctx context.Context) dbmodels.IDBError {
+		return this.updateArrayElem1(
+			ctx, this.corpSigningCollection, fieldCorpManagers,
+			docFilter, elemFilter, updateCmd)
 	}
 
-	return withContext(f)
+	return withContext1(f)
 }
 
 func (this *client) listCorporationManager(ctx context.Context, orgCLAID primitive.ObjectID, email, role string) ([]corporationManagerDoc, error) {
@@ -239,34 +259,52 @@ func (this *client) listCorporationManager(ctx context.Context, orgCLAID primiti
 	return v[0].CorporationManagers, nil
 }
 
-func (this *client) ListCorporationManager(orgCLAID, email, role string) ([]dbmodels.CorporationManagerListResult, error) {
-	oid, err := toObjectID(orgCLAID)
-	if err != nil {
-		return nil, err
+func (this *client) ListCorporationManager(linkID, email, role string) ([]dbmodels.CorporationManagerListResult, dbmodels.IDBError) {
+	elemFilter := filterOfCorpID(email)
+	if role != "" {
+		elemFilter["role"] = role
 	}
 
-	var v []corporationManagerDoc
+	project := bson.M{
+		memberNameOfCorpManager("id"):    1,
+		memberNameOfCorpManager("name"):  1,
+		memberNameOfCorpManager("email"): 1,
+		memberNameOfCorpManager("role"):  1,
+	}
+
+	var v []cCorpSigning
 
 	f := func(ctx context.Context) error {
-		r, err := this.listCorporationManager(ctx, oid, email, role)
-		v = r
-		return err
+		return this.getArrayElem(
+			ctx, this.corpSigningCollection, fieldCorpManagers,
+			docFilterOfCorpManager(linkID), elemFilter, project, &v,
+		)
 	}
 
-	if err = withContext(f); err != nil {
-		return nil, err
+	if err := withContext(f); err != nil {
+		return nil, newSystemError(err)
 	}
 
-	ms := make([]dbmodels.CorporationManagerListResult, 0, len(v))
-	for _, item := range v {
-		ms = append(ms, dbmodels.CorporationManagerListResult{
+	if len(v) == 0 {
+		return nil, errNoDBRecord1
+	}
+
+	ms := v[0].Managers
+	if ms == nil {
+		return nil, nil
+	}
+
+	r := make([]dbmodels.CorporationManagerListResult, 0, len(ms))
+	for i := range ms {
+		item := &ms[i]
+		r = append(r, dbmodels.CorporationManagerListResult{
 			ID:    item.ID,
 			Name:  item.Name,
 			Email: item.Email,
 			Role:  item.Role,
 		})
 	}
-	return ms, nil
+	return r, nil
 }
 
 func (this *client) DeleteCorporationManager(orgCLAID, role string, emails []string) ([]dbmodels.CorporationManagerCreateOption, error) {

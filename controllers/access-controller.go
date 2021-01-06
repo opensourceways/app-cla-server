@@ -110,13 +110,3 @@ func (this *acForCodePlatformPayload) addOrg(org string) {
 
 	this.Orgs[org] = true
 }
-
-type acForCorpManagerPayload struct {
-	Name     string `json:"name"`
-	Email    string `json:"email"`
-	OrgCLAID string `json:"org_cla_id"`
-}
-
-func (this *acForCorpManagerPayload) hasEmployee(email string) bool {
-	return util.EmailSuffix(this.Email) == util.EmailSuffix(email)
-}

@@ -99,13 +99,13 @@ func (this *CorporationManagerController) Patch() {
 		return
 	}
 
-	if errCode, reason := info.Validate(); reason != nil {
-		this.sendFailedResponse(400, errCode, reason, action)
+	if err := info.Validate(); err != nil {
+		sendResp(parseModelError(err))
 		return
 	}
 
 	if err := (&info).Reset(pl.OrgCLAID, pl.Email); err != nil {
-		sendResp(convertDBError1(err))
+		sendResp(parseModelError(err))
 		return
 	}
 

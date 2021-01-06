@@ -1,7 +1,8 @@
 package controllers
 
 import (
-	"github.com/opensourceways/app-cla-server/conf"
+	"fmt"
+
 	"github.com/opensourceways/app-cla-server/dbmodels"
 	"github.com/opensourceways/app-cla-server/models"
 	"github.com/opensourceways/app-cla-server/util"
@@ -28,9 +29,12 @@ func (this *CorporationManagerController) Auth() {
 		sendResp(parseModelError(merr))
 		return
 	}
+	if len(v) == 0 {
+		sendResp(newFailedApiResult(400, errWrongIDOrPassword, fmt.Errorf("wrong id or pw")))
+	}
 
 	type authInfo struct {
-		models.OrgRepo
+		*models.OrgRepo
 
 		Role             string `json:"role"`
 		Token            string `json:"token"`
@@ -46,7 +50,7 @@ func (this *CorporationManagerController) Auth() {
 		}
 
 		result = append(result, authInfo{
-			OrgRepo:          item.OrgRepo,
+			OrgRepo:          &item.OrgRepo,
 			Role:             item.Role,
 			Token:            token,
 			InitialPWChanged: item.InitialPWChanged,
@@ -65,18 +69,15 @@ func (this *CorporationManagerController) newAccessToken(linkID string, info *db
 		permission = PermissionEmployeeManager
 	}
 
-	ac := &accessController{
-		Expiry:     util.Expiry(conf.AppConfig.APITokenExpiry),
-		Permission: permission,
-		Payload: &acForCorpManagerPayload{
+	return this.newApiToken(
+		permission,
+		&acForCorpManagerPayload{
 			Name:     info.Name,
 			Email:    info.Email,
 			OrgCLAID: linkID,
 			OrgInfo:  info.OrgInfo,
 		},
-	}
-
-	return ac.NewToken(conf.AppConfig.APITokenKey)
+	)
 }
 
 type acForCorpManagerPayload struct {

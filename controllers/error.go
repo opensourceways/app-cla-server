@@ -14,6 +14,7 @@ const (
 	errUnsigned          = string(models.ErrUnsigned)
 	errNoLink            = string(models.ErrNoLink)
 	errNoEmployeeManager = "no_employee_manager"
+	errWrongIDOrPassword = "wrong_id_or_pw"
 )
 
 func parseModelError(err models.IModelError) *failedApiResult {

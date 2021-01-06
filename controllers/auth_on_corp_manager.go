@@ -23,34 +23,31 @@ func (this *CorporationManagerController) Auth() {
 		return
 	}
 
-	v, err := (&info).Authenticate()
-	if err != nil {
-		sendResp(convertDBError1(err))
+	v, merr := (&info).Authenticate()
+	if merr != nil {
+		sendResp(parseModelError(merr))
 		return
 	}
 
 	type authInfo struct {
+		models.OrgRepo
+
 		Role             string `json:"role"`
-		Platform         string `json:"platform"`
-		OrgID            string `json:"org_id"`
-		RepoID           string `json:"repo_id"`
 		Token            string `json:"token"`
 		InitialPWChanged bool   `json:"initial_pw_changed"`
 	}
 
 	result := make([]authInfo, 0, len(v))
 
-	for orgCLAID, item := range v {
-		token, err := this.newAccessToken(orgCLAID, &item)
+	for linkID, item := range v {
+		token, err := this.newAccessToken(linkID, &item)
 		if err != nil {
 			continue
 		}
 
 		result = append(result, authInfo{
+			OrgRepo:          item.OrgRepo,
 			Role:             item.Role,
-			Platform:         item.Platform,
-			OrgID:            item.OrgID,
-			RepoID:           item.RepoID,
 			Token:            token,
 			InitialPWChanged: item.InitialPWChanged,
 		})
@@ -59,7 +56,7 @@ func (this *CorporationManagerController) Auth() {
 	this.sendSuccessResp(result)
 }
 
-func (this *CorporationManagerController) newAccessToken(orgCLAID string, info *dbmodels.CorporationManagerCheckResult) (string, error) {
+func (this *CorporationManagerController) newAccessToken(linkID string, info *dbmodels.CorporationManagerCheckResult) (string, error) {
 	permission := ""
 	switch info.Role {
 	case dbmodels.RoleAdmin:
@@ -74,9 +71,22 @@ func (this *CorporationManagerController) newAccessToken(orgCLAID string, info *
 		Payload: &acForCorpManagerPayload{
 			Name:     info.Name,
 			Email:    info.Email,
-			OrgCLAID: orgCLAID,
+			OrgCLAID: linkID,
+			OrgInfo:  info.OrgInfo,
 		},
 	}
 
 	return ac.NewToken(conf.AppConfig.APITokenKey)
+}
+
+type acForCorpManagerPayload struct {
+	Name     string `json:"name"`
+	Email    string `json:"email"`
+	OrgCLAID string `json:"link_id"`
+
+	models.OrgInfo
+}
+
+func (this *acForCorpManagerPayload) hasEmployee(email string) bool {
+	return util.EmailSuffix(this.Email) == util.EmailSuffix(email)
 }

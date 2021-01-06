@@ -13,20 +13,26 @@ type CorporationManagerAuthentication struct {
 	Password string `json:"password"`
 }
 
-func (this CorporationManagerAuthentication) Authenticate() (map[string]dbmodels.CorporationManagerCheckResult, error) {
+func (this CorporationManagerAuthentication) Authenticate() (map[string]dbmodels.CorporationManagerCheckResult, IModelError) {
 	info := dbmodels.CorporationManagerCheckInfo{Password: this.Password}
-	if _, err := checkEmailFormat(this.User); err == nil {
+	if _, merr := checkEmailFormat(this.User); merr == nil {
 		info.Email = this.User
 	} else {
-		if _, err = checkManagerID(this.User); err != nil {
-			return nil, err
+		if _, merr := checkManagerID(this.User); merr != nil {
+			return nil, newModelError(ErrInvalidManagerID, fmt.Errorf("invalid corp manger id"))
 		}
 
 		i := strings.LastIndex(this.User, "_")
 		info.EmailSuffix = this.User[(i + 1):]
 		info.ID = this.User[:i]
 	}
-	return dbmodels.GetDB().CheckCorporationManagerExist(info)
+
+	v, err := dbmodels.GetDB().CheckCorporationManagerExist(info)
+	if err == nil {
+		return v, nil
+	}
+
+	return nil, parseDBError(err)
 }
 
 func CreateCorporationAdministrator(orgCLAID, name, email string) ([]dbmodels.CorporationManagerCreateOption, error) {

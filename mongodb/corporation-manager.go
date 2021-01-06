@@ -134,66 +134,75 @@ func (this *client) AddCorporationManager(orgCLAID string, opt []dbmodels.Corpor
 	return toAdd, err
 }
 
-func (this *client) CheckCorporationManagerExist(opt dbmodels.CorporationManagerCheckInfo) (map[string]dbmodels.CorporationManagerCheckResult, error) {
-	filterOfDoc := bson.M{}
-	filterForCorpManager(filterOfDoc)
+func (this *client) CheckCorporationManagerExist(opt dbmodels.CorporationManagerCheckInfo) (map[string]dbmodels.CorporationManagerCheckResult, dbmodels.IDBError) {
+	docFilter := bson.M{
+		fieldLinkStatus:   linkStatusReady,
+		fieldCorpManagers: bson.M{"$type": "array"},
+	}
 
-	var filterOfArray bson.M
+	var elemFilter bson.M
 	if opt.Email != "" {
-		filterOfArray = indexOfCorpManagerAndIndividual(opt.Email)
+		elemFilter = elemFilterOfCorpManager(opt.Email)
 	} else {
-		filterOfArray = bson.M{
-			fieldCorporationID: opt.EmailSuffix,
-			"id":               opt.ID,
+		elemFilter = bson.M{
+			fieldCorpID: opt.EmailSuffix,
+			"id":        opt.ID,
 		}
 	}
-	filterOfArray["password"] = opt.Password
+	elemFilter["password"] = opt.Password
 
 	project := bson.M{
-		"platform":                  1,
-		"org_id":                    1,
-		fieldRepo:                   1,
-		corpManagerField("role"):    1,
-		corpManagerField("name"):    1,
-		corpManagerField("email"):   1,
-		corpManagerField("changed"): 1,
+		fieldLinkID:                        1,
+		fieldOrgIdentity:                   1,
+		fieldOrgEmail:                      1,
+		fieldOrgAlias:                      1,
+		memberNameOfCorpManager("role"):    1,
+		memberNameOfCorpManager("name"):    1,
+		memberNameOfCorpManager("email"):   1,
+		memberNameOfCorpManager("changed"): 1,
 	}
 
-	var v []OrgCLA
-
+	var v []cCorpSigning
 	f := func(ctx context.Context) error {
-		return this.getArrayElem(ctx, this.orgCLACollection, fieldCorpManagers, filterOfDoc, filterOfArray, project, &v)
+		return this.getArrayElem(
+			ctx, this.corpSigningCollection, fieldCorpManagers,
+			docFilter, elemFilter, project, &v,
+		)
 	}
 
 	if err := withContext(f); err != nil {
-		return nil, err
+		return nil, newSystemError(err)
 	}
-
 	if len(v) == 0 {
-		return nil, dbmodels.DBError{
-			ErrCode: util.ErrNoDBRecord,
-			Err:     fmt.Errorf("no cla binding found"),
-		}
+		return nil, nil
 	}
 
 	result := map[string]dbmodels.CorporationManagerCheckResult{}
 	for _, doc := range v {
-		cm := doc.CorporationManagers
+		cm := doc.Managers
 		if len(cm) == 0 {
 			continue
 		}
 
 		item := &cm[0]
-		result[objectIDToUID(doc.ID)] = dbmodels.CorporationManagerCheckResult{
+		orgRepo := dbmodels.ParseToOrgRepo(doc.OrgIdentity)
+		result[doc.LinkID] = dbmodels.CorporationManagerCheckResult{
 			Name:             item.Name,
 			Email:            item.Email,
 			Role:             item.Role,
 			InitialPWChanged: item.InitialPWChanged,
 
-			Platform: doc.Platform,
-			OrgID:    doc.OrgID,
-			RepoID:   toNormalRepo(doc.RepoID),
+			OrgInfo: dbmodels.OrgInfo{
+				OrgRepo: dbmodels.OrgRepo{
+					Platform: orgRepo.Platform,
+					OrgID:    orgRepo.OrgID,
+					RepoID:   orgRepo.RepoID,
+				},
+				OrgEmail: doc.OrgEmail,
+				OrgAlias: doc.OrgAlias,
+			},
 		}
+
 	}
 	return result, nil
 }

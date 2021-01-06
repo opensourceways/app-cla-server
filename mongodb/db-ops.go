@@ -122,3 +122,21 @@ func (this *client) updateArrayElem1(ctx context.Context, collection, array stri
 	}
 	return nil
 }
+
+func (this *client) pullAndReturnArrayElem(ctx context.Context, collection, array string, filterOfDoc, filterOfArray bson.M, result interface{}) dbmodels.IDBError {
+	col := this.collection(collection)
+	sr := col.FindOneAndUpdate(
+		ctx, filterOfDoc,
+		bson.M{"$pull": bson.M{array: filterOfArray}},
+		&options.FindOneAndUpdateOptions{
+			Projection: bson.M{array: bson.M{"$elemMatch": filterOfArray}},
+		})
+
+	if err := sr.Decode(result); err != nil {
+		if isErrNoDocuments(err) {
+			return errNoDBRecord1
+		}
+		return newSystemError(err)
+	}
+	return nil
+}

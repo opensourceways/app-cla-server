@@ -94,12 +94,21 @@ func (this *EmployeeManagerCreateOption) Create(orgCLAID string) ([]dbmodels.Cor
 	return r, nil
 }
 
-func (this *EmployeeManagerCreateOption) Delete(orgCLAID string) ([]dbmodels.CorporationManagerCreateOption, error) {
+func (this *EmployeeManagerCreateOption) Delete(linkID string) ([]dbmodels.CorporationManagerCreateOption, IModelError) {
 	emails := make([]string, 0, len(this.Managers))
 
 	for _, item := range this.Managers {
 		emails = append(emails, item.Email)
 	}
 
-	return dbmodels.GetDB().DeleteCorporationManager(orgCLAID, dbmodels.RoleManager, emails)
+	v, err := dbmodels.GetDB().DeleteCorporationManager(linkID, emails)
+	if err == nil {
+		return v, nil
+	}
+
+	if err.IsErrorOf(dbmodels.ErrNoDBRecord) {
+		return nil, newModelError(ErrNoLink, err)
+	}
+
+	return nil, parseDBError(err)
 }

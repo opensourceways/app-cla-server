@@ -32,7 +32,44 @@ func (this *EmployeeManagerController) Post() {
 // @Success 204 {string} delete success!
 // @router / [delete]
 func (this *EmployeeManagerController) Delete() {
-	this.addOrDeleteManagers(false)
+	action := "delete employee managers"
+	sendResp := this.newFuncForSendingFailedResp(action)
+
+	pl, fr := this.tokenPayloadBasedOnCorpManager()
+	if fr != nil {
+		sendResp(fr)
+		return
+	}
+
+	info := &models.EmployeeManagerCreateOption{}
+	if fr := this.fetchInputPayload(info); fr != nil {
+		sendResp(fr)
+		return
+	}
+
+	if code, err := info.Validate(pl.Email); err != nil {
+		sendResp(newFailedApiResult(400, code, err))
+		return
+	}
+
+	deleted, merr := info.Delete(pl.OrgCLAID)
+	if merr != nil {
+		sendResp(parseModelError(merr))
+		return
+	}
+
+	this.sendSuccessResp(action + "successfully")
+
+	subject := fmt.Sprintf("Revoking the authorization on project of \"%s\"", pl.OrgAlias)
+
+	for _, item := range deleted {
+		msg := email.RemovingCorpManager{
+			User:       item.Name,
+			Org:        pl.OrgAlias,
+			ProjectURL: pl.ProjectURL(),
+		}
+		sendEmailToIndividual(item.Email, pl.OrgEmail, subject, msg)
+	}
 }
 
 // @Title GetAll

@@ -307,48 +307,38 @@ func (this *client) ListCorporationManager(linkID, email, role string) ([]dbmode
 	return r, nil
 }
 
-func (this *client) DeleteCorporationManager(orgCLAID, role string, emails []string) ([]dbmodels.CorporationManagerCreateOption, error) {
-	oid, err := toObjectID(orgCLAID)
-	if err != nil {
-		return nil, err
+func (this *client) DeleteCorporationManager(linkID string, emails []string) ([]dbmodels.CorporationManagerCreateOption, dbmodels.IDBError) {
+	toDeleted := make(bson.A, 0, len(emails))
+	for _, item := range emails {
+		toDeleted = append(toDeleted, item)
 	}
 
-	deleted := make([]dbmodels.CorporationManagerCreateOption, 0, len(emails))
+	elemFilter := bson.M{
+		fieldCorpID: genCorpID(emails[0]),
+		"email":     bson.M{"$in": toDeleted},
+	}
 
-	f := func(ctx mongo.SessionContext) error {
-		ms, err := this.listCorporationManager(ctx, oid, emails[0], role)
-		if err != nil {
-			return err
-		}
-
-		all := map[string]int{}
-		for i, item := range ms {
-			all[item.Email] = i
-		}
-
-		toDelete := make(bson.A, 0, len(emails))
-		for _, email := range emails {
-			if i, ok := all[email]; ok {
-				toDelete = append(toDelete, email)
-				deleted = append(deleted, dbmodels.CorporationManagerCreateOption{
-					Email: ms[i].Email,
-					Name:  ms[i].Name,
-				})
-			}
-		}
-		if len(toDelete) == 0 {
-			return nil
-		}
-
-		filterOfArray := filterOfCorpID(emails[0])
-		filterOfArray["email"] = bson.M{"$in": toDelete}
-
-		return this.pullArrayElem(
-			ctx, this.orgCLACollection, fieldCorpManagers,
-			filterOfDocID(oid), filterOfArray,
+	var v cCorpSigning
+	f := func(ctx context.Context) dbmodels.IDBError {
+		return this.pullAndReturnArrayElem(
+			ctx, this.corpSigningCollection, fieldCorpManagers,
+			docFilterOfCorpManager(linkID), elemFilter,
+			&v,
 		)
 	}
 
-	err = this.doTransaction(f)
-	return deleted, err
+	if err := withContext1(f); err != nil {
+		return nil, err
+	}
+
+	ms := v.Managers
+	deleted := make([]dbmodels.CorporationManagerCreateOption, 0, len(ms))
+	for _, item := range ms {
+		deleted = append(deleted, dbmodels.CorporationManagerCreateOption{
+			Email: item.Email,
+			Name:  item.Name,
+		})
+	}
+
+	return deleted, nil
 }

@@ -16,6 +16,13 @@ func docFilterOfCorpManager(linkID string) bson.M {
 	return docFilterOfSigning(linkID)
 }
 
+func elemFilterOfCorpManager(email string) bson.M {
+	return bson.M{
+		fieldCorpID: genCorpID(email),
+		"email":     email,
+	}
+}
+
 func memberNameOfCorpManager(field string) string {
 	return fmt.Sprintf("%s.%s", fieldCorpManagers, field)
 }
@@ -191,25 +198,25 @@ func (this *client) CheckCorporationManagerExist(opt dbmodels.CorporationManager
 	return result, nil
 }
 
-func (this *client) ResetCorporationManagerPassword(orgCLAID, email string, opt dbmodels.CorporationManagerResetPassword) error {
-	oid, err := toObjectID(orgCLAID)
-	if err != nil {
-		return err
-	}
-
+func (this *client) ResetCorporationManagerPassword(linkID, email string, opt dbmodels.CorporationManagerResetPassword) dbmodels.IDBError {
 	updateCmd := bson.M{
 		"password": opt.NewPassword,
 		"changed":  true,
 	}
 
-	filterOfArray := indexOfCorpManagerAndIndividual(email)
-	filterOfArray["password"] = opt.OldPassword
+	elemFilter := elemFilterOfCorpManager(email)
+	elemFilter["password"] = opt.OldPassword
 
-	f := func(ctx context.Context) error {
-		return this.updateArrayElem(ctx, this.orgCLACollection, fieldCorpManagers, filterOfDocID(oid), filterOfArray, updateCmd, true)
+	docFilter := docFilterOfCorpManager(linkID)
+	arrayFilterByElemMatch(fieldCorpManagers, true, elemFilter, docFilter)
+
+	f := func(ctx context.Context) dbmodels.IDBError {
+		return this.updateArrayElem1(
+			ctx, this.corpSigningCollection, fieldCorpManagers,
+			docFilter, elemFilter, updateCmd)
 	}
 
-	return withContext(f)
+	return withContext1(f)
 }
 
 func (this *client) listCorporationManager(ctx context.Context, orgCLAID primitive.ObjectID, email, role string) ([]corporationManagerDoc, error) {

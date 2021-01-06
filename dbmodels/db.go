@@ -39,7 +39,7 @@ type ICorporationManager interface {
 	CheckCorporationManagerExist(CorporationManagerCheckInfo) (map[string]CorporationManagerCheckResult, error)
 	AddCorporationManager(orgCLAID string, opt []CorporationManagerCreateOption, managerNumber int) ([]CorporationManagerCreateOption, error)
 	DeleteCorporationManager(orgCLAID, role string, emails []string) ([]CorporationManagerCreateOption, error)
-	ResetCorporationManagerPassword(string, string, CorporationManagerResetPassword) error
+	ResetCorporationManagerPassword(string, string, CorporationManagerResetPassword) IDBError
 	ListCorporationManager(orgCLAID, email, role string) ([]CorporationManagerListResult, IDBError)
 }
 

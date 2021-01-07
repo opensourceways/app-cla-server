@@ -79,7 +79,7 @@ func (this *CorporationManagerController) Put() {
 
 	this.sendSuccessResp(action + " successfully")
 
-	notifyCorpAdmin(orgCLA, added)
+	notifyCorpAdmin(orgCLA.OrgAlias, projectURL(orgCLA), orgCLA.OrgEmail, added)
 }
 
 // @Title Patch

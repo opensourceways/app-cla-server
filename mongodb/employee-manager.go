@@ -1,0 +1,75 @@
+package mongodb
+
+import (
+	"context"
+
+	"go.mongodb.org/mongo-driver/bson"
+
+	"github.com/opensourceways/app-cla-server/dbmodels"
+)
+
+func (this *client) AddEmployeeManager(linkID string, opt []dbmodels.CorporationManagerCreateOption) dbmodels.IDBError {
+	toAdd := make(bson.A, 0, len(opt))
+	for _, item := range opt {
+		info := dCorpManager{
+			ID:       item.ID,
+			Name:     item.Name,
+			Email:    item.Email,
+			Role:     item.Role,
+			Password: item.Password,
+			CorpID:   genCorpID(item.Email),
+		}
+
+		body, err := structToMap1(info)
+		if err != nil {
+			return err
+		}
+
+		toAdd = append(toAdd, body)
+	}
+
+	f := func(ctx context.Context) dbmodels.IDBError {
+		return this.pushArrayElems(
+			ctx, this.corpSigningCollection, fieldCorpManagers,
+			docFilterOfCorpManager(linkID), toAdd,
+		)
+	}
+
+	return withContext1(f)
+}
+
+func (this *client) DeleteEmployeeManager(linkID string, emails []string) ([]dbmodels.CorporationManagerCreateOption, dbmodels.IDBError) {
+	toDeleted := make(bson.A, 0, len(emails))
+	for _, item := range emails {
+		toDeleted = append(toDeleted, item)
+	}
+
+	elemFilter := bson.M{
+		fieldCorpID: genCorpID(emails[0]),
+		"email":     bson.M{"$in": toDeleted},
+	}
+
+	var v cCorpSigning
+	f := func(ctx context.Context) dbmodels.IDBError {
+		return this.pullAndReturnArrayElem(
+			ctx, this.corpSigningCollection, fieldCorpManagers,
+			docFilterOfCorpManager(linkID), elemFilter,
+			&v,
+		)
+	}
+
+	if err := withContext1(f); err != nil {
+		return nil, err
+	}
+
+	ms := v.Managers
+	deleted := make([]dbmodels.CorporationManagerCreateOption, 0, len(ms))
+	for _, item := range ms {
+		deleted = append(deleted, dbmodels.CorporationManagerCreateOption{
+			Email: item.Email,
+			Name:  item.Name,
+		})
+	}
+
+	return deleted, nil
+}

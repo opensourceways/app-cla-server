@@ -22,7 +22,13 @@ const (
 	ErrSamePassword            ModelErrCode = "same_password"
 	ErrNoLinkOrNoManager       ModelErrCode = "no_link_or_no_manager"
 	ErrNoLinkOrManagerExists   ModelErrCode = "no_link_or_manager_exists"
+	ErrCorpManagerExists       ModelErrCode = "corp_manager_exists"
 	ErrInvalidManagerID        ModelErrCode = "invalid_manager_id"
+	ErrDuplicateManagerID      ModelErrCode = "duplicate_manager_id"
+	ErrEmptyPayload            ModelErrCode = "empty_payload"
+	ErrAdminAsManager          ModelErrCode = "admin_as_manager"
+	ErrNotSameCorp             ModelErrCode = "not_same_corp"
+	ErrManyEmployeeManagers    ModelErrCode = "many_employee_managers"
 )
 
 type IModelError interface {

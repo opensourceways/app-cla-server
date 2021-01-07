@@ -15,7 +15,7 @@ const (
 	errNoLink            = string(models.ErrNoLink)
 	errNoEmployeeManager = "no_employee_manager"
 	errWrongIDOrPassword = "wrong_id_or_pw"
-	errCorpManagerExists = "corp_manager_exists"
+	errCorpManagerExists = string(models.ErrCorpManagerExists)
 )
 
 func parseModelError(err models.IModelError) *failedApiResult {

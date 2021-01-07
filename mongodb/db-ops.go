@@ -54,6 +54,21 @@ func (this *client) pushArrayElem1(ctx context.Context, collection, array string
 	return nil
 }
 
+func (this *client) pushArrayElems(ctx context.Context, collection, array string, filterOfDoc bson.M, value bson.A) dbmodels.IDBError {
+	update := bson.M{"$push": bson.M{array: bson.M{"$each": value}}}
+
+	col := this.collection(collection)
+	r, err := col.UpdateOne(ctx, filterOfDoc, update)
+	if err != nil {
+		return newSystemError(err)
+	}
+
+	if r.MatchedCount == 0 {
+		return errNoDBRecord1
+	}
+	return nil
+}
+
 func (this *client) replaceDoc1(ctx context.Context, collection string, filterOfDoc, docInfo bson.M) (string, dbmodels.IDBError) {
 	upsert := true
 

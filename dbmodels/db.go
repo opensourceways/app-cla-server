@@ -45,8 +45,8 @@ type ICorporationManager interface {
 }
 
 type IOrgEmail interface {
-	CreateOrgEmail(opt OrgEmailCreateInfo) error
-	GetOrgEmailInfo(email string) (OrgEmailCreateInfo, error)
+	CreateOrgEmail(opt OrgEmailCreateInfo) IDBError
+	GetOrgEmailInfo(email string) (*OrgEmailCreateInfo, IDBError)
 }
 
 type IOrgCLA interface {

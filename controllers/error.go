@@ -3,19 +3,21 @@ package controllers
 import "github.com/opensourceways/app-cla-server/models"
 
 const (
-	errSystemError       = "system_error"
-	errMissingToken      = "missing_token"
-	errUnknownToken      = "unknown_token"
-	errInvalidToken      = "invalid_token"
-	errMissingParameter  = "missing_parameter"
-	errReadingFile       = "error_reading_file"
-	errParsingApiBody    = "error_parsing_api_body"
-	errResigned          = "resigned"
-	errUnsigned          = string(models.ErrUnsigned)
-	errNoLink            = string(models.ErrNoLink)
-	errNoEmployeeManager = "no_employee_manager"
-	errWrongIDOrPassword = "wrong_id_or_pw"
-	errCorpManagerExists = string(models.ErrCorpManagerExists)
+	errSystemError          = "system_error"
+	errMissingToken         = "missing_token"
+	errUnknownToken         = "unknown_token"
+	errInvalidToken         = "invalid_token"
+	errMissingParameter     = "missing_parameter"
+	errReadingFile          = "error_reading_file"
+	errParsingApiBody       = "error_parsing_api_body"
+	errResigned             = "resigned"
+	errUnsigned             = string(models.ErrUnsigned)
+	errNoLink               = string(models.ErrNoLink)
+	errNoEmployeeManager    = "no_employee_manager"
+	errWrongIDOrPassword    = "wrong_id_or_pw"
+	errCorpManagerExists    = string(models.ErrCorpManagerExists)
+	errNoRefreshToken       = "no_refresh_token"
+	errUnknownEmailPlatform = "unknown_email_platform"
 )
 
 func parseModelError(err models.IModelError) *failedApiResult {

@@ -29,6 +29,7 @@ const (
 	ErrAdminAsManager          ModelErrCode = "admin_as_manager"
 	ErrNotSameCorp             ModelErrCode = "not_same_corp"
 	ErrManyEmployeeManagers    ModelErrCode = "many_employee_managers"
+	ErrOrgEmailNotExists       ModelErrCode = "org_email_not_exists"
 )
 
 type IModelError interface {

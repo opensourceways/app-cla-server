@@ -51,11 +51,10 @@ func (this OrgCLACreateOption) Validate() (string, error) {
 		return "", nil
 	}
 
-	ec, err := parseErrorOfDBApi(err)
-	if ec == util.ErrNoDBRecord {
+	if err.IsErrorOf(dbmodels.ErrNoDBRecord) {
 		return util.ErrInvalidEmail, err
 	}
-	return ec, err
+	return string(parseDBError(err).ErrCode()), err
 }
 
 func (this OrgCLACreateOption) Create(claID string) (string, error) {

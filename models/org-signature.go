@@ -15,7 +15,3 @@ func DownloadOrgSignature(orgCLAID string) ([]byte, error) {
 func DownloadOrgSignatureByMd5(orgCLAID, md5sum string) ([]byte, error) {
 	return dbmodels.GetDB().DownloadOrgSignatureByMd5(orgCLAID, md5sum)
 }
-
-func DownloadBlankSignature(language string) ([]byte, error) {
-	return dbmodels.GetDB().DownloadBlankSignature(language)
-}

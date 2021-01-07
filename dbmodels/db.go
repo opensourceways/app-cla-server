@@ -83,7 +83,4 @@ type IPDF interface {
 	UploadOrgSignature(orgCLAID string, pdf []byte) error
 	DownloadOrgSignature(orgCLAID string) ([]byte, error)
 	DownloadOrgSignatureByMd5(orgCLAID, md5sum string) ([]byte, error)
-
-	UploadBlankSignature(language string, pdf []byte) error
-	DownloadBlankSignature(language string) ([]byte, error)
 }

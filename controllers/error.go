@@ -18,6 +18,7 @@ const (
 	errCorpManagerExists    = string(models.ErrCorpManagerExists)
 	errNoRefreshToken       = "no_refresh_token"
 	errUnknownEmailPlatform = "unknown_email_platform"
+	errFileNotExists        = "file_not_exists"
 )
 
 func parseModelError(err models.IModelError) *failedApiResult {

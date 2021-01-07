@@ -145,10 +145,10 @@ func next(err error) {
 }
 
 func getEmailClient(orgEmail string) (*models.OrgEmail, email.IEmail, error) {
-	emailCfg := &models.OrgEmail{Email: orgEmail}
-	if err := emailCfg.Get(); err != nil {
-		beego.Info(err.Error())
-		return nil, nil, err
+	emailCfg, merr := models.GetOrgEmailInfo(orgEmail)
+	if merr != nil {
+		beego.Info(merr.Error())
+		return nil, nil, merr
 	}
 
 	ec, err := email.EmailAgent.GetEmailClient(emailCfg.Platform)

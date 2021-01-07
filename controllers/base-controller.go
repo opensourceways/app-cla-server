@@ -272,3 +272,15 @@ func (this *baseController) readInputFile(fileName string) ([]byte, *failedApiRe
 func (this *baseController) downloadFile(path string) {
 	this.Ctx.Output.Download(path)
 }
+
+func (this *baseController) redirect(webRedirectDir string) {
+	http.Redirect(
+		this.Ctx.ResponseWriter, this.Ctx.Request, webRedirectDir, http.StatusFound,
+	)
+}
+
+func (this *baseController) setCookies(value map[string]string) {
+	for k, v := range value {
+		this.Ctx.SetCookie(k, v, "3600", "/")
+	}
+}

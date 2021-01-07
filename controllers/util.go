@@ -265,20 +265,6 @@ func fetchStringParameter(c *beego.Controller, param string) (string, error) {
 	return v, nil
 }
 
-func getEmailConfig(orgCLAID string) (*models.OrgCLA, *models.OrgEmail, error) {
-	orgCLA := &models.OrgCLA{ID: orgCLAID}
-	if err := orgCLA.Get(); err != nil {
-		return nil, nil, err
-	}
-
-	emailInfo := &models.OrgEmail{Email: orgCLA.OrgEmail}
-	if err := emailInfo.Get(); err != nil {
-		return nil, nil, err
-	}
-
-	return orgCLA, emailInfo, nil
-}
-
 func convertDBError(err error) (int, string) {
 	e, ok := dbmodels.IsDBError(err)
 	if !ok {

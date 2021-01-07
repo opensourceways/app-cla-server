@@ -7,6 +7,7 @@ import (
 
 	"github.com/huaweicloud/golangsdk"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 
 	"github.com/opensourceways/app-cla-server/dbmodels"
@@ -146,6 +147,27 @@ func (this *client) pullAndReturnArrayElem(ctx context.Context, collection, arra
 		&options.FindOneAndUpdateOptions{
 			Projection: bson.M{array: bson.M{"$elemMatch": filterOfArray}},
 		})
+
+	if err := sr.Decode(result); err != nil {
+		if isErrNoDocuments(err) {
+			return errNoDBRecord1
+		}
+		return newSystemError(err)
+	}
+	return nil
+}
+
+func (this *client) getDoc1(ctx context.Context, collection string, filterOfDoc, project bson.M, result interface{}) dbmodels.IDBError {
+	col := this.collection(collection)
+
+	var sr *mongo.SingleResult
+	if len(project) > 0 {
+		sr = col.FindOne(ctx, filterOfDoc, &options.FindOneOptions{
+			Projection: project,
+		})
+	} else {
+		sr = col.FindOne(ctx, filterOfDoc)
+	}
 
 	if err := sr.Decode(result); err != nil {
 		if isErrNoDocuments(err) {

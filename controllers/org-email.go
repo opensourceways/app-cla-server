@@ -2,9 +2,6 @@ package controllers
 
 import (
 	"fmt"
-	"net/http"
-
-	"github.com/astaxie/beego"
 
 	"github.com/opensourceways/app-cla-server/email"
 	"github.com/opensourceways/app-cla-server/models"
@@ -14,12 +11,12 @@ import (
 const authURLState = "state-token-cla"
 
 type EmailController struct {
-	beego.Controller
+	baseController
 }
 
 func (this *EmailController) Prepare() {
-	if getRouterPattern(&this.Controller) == "/v1/email/authcodeurl/:platform" {
-		apiPrepare(&this.Controller, []string{PermissionOwnerOfOrg})
+	if this.routerPattern() == "/v1/email/authcodeurl/:platform" {
+		this.apiPrepare(PermissionOwnerOfOrg)
 	}
 }
 
@@ -29,7 +26,8 @@ func (this *EmailController) Prepare() {
 // @router /auth/:platform [get]
 func (this *EmailController) Auth() {
 	rs := func(errCode string, reason error) {
-		rspOnAuthFailed(&this.Controller, email.EmailAgent.WebRedirectDir(false), errCode, reason)
+		this.setCookies(map[string]string{"error_code": errCode, "error_msg": reason.Error()})
+		this.redirect(email.EmailAgent.WebRedirectDir(false))
 	}
 
 	if err := this.GetString("error"); err != "" {
@@ -62,21 +60,25 @@ func (this *EmailController) Auth() {
 		return
 	}
 
-	opt := models.OrgEmail{
-		Token:    token,
-		Email:    emailAddr,
-		Platform: platform,
-	}
-	if err = opt.Create(); err != nil {
-		rs(util.ErrSystemError, err)
-		return
+	if token.RefreshToken == "" {
+		if _, err := models.GetOrgEmailInfo(emailAddr); err != nil {
+			rs(errNoRefreshToken, fmt.Errorf("no refresh token"))
+			return
+		}
+	} else {
+		opt := models.OrgEmail{
+			Token:    token,
+			Email:    emailAddr,
+			Platform: platform,
+		}
+		if err = opt.Create(); err != nil {
+			rs(util.ErrSystemError, err)
+			return
+		}
 	}
 
-	this.Ctx.SetCookie("email", opt.Email, "3600", "/")
-	http.Redirect(
-		this.Ctx.ResponseWriter, this.Ctx.Request,
-		email.EmailAgent.WebRedirectDir(true), http.StatusFound,
-	)
+	this.setCookies(map[string]string{"email": emailAddr})
+	this.redirect(email.EmailAgent.WebRedirectDir(true))
 }
 
 // @Title Get
@@ -85,30 +87,15 @@ func (this *EmailController) Auth() {
 // @Success 200 {object}
 // @router /authcodeurl/:platform [get]
 func (this *EmailController) Get() {
-	var statusCode = 0
-	var errCode = ""
-	var reason error
-	var body interface{}
+	sendResp := this.newFuncForSendingFailedResp("get auth code url of email")
 
-	defer func() {
-		sendResponse(&this.Controller, statusCode, errCode, reason, body, "get auth code url of email")
-	}()
-
-	platform, err := fetchStringParameter(&this.Controller, ":platform")
+	e, err := email.EmailAgent.GetEmailClient(this.GetString(":platform"))
 	if err != nil {
-		reason = err
-		errCode = util.ErrInvalidParameter
-		statusCode = 400
+		sendResp(newFailedApiResult(400, errUnknownEmailPlatform, err))
 		return
 	}
 
-	e, err := email.EmailAgent.GetEmailClient(platform)
-	if err != nil {
-		reason = err
-		return
-	}
-
-	body = map[string]string{
+	this.sendSuccessResp(map[string]string{
 		"url": e.GetOauth2CodeURL(authURLState),
-	}
+	})
 }

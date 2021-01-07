@@ -37,8 +37,9 @@ type ICorporationSigning interface {
 
 type ICorporationManager interface {
 	CheckCorporationManagerExist(CorporationManagerCheckInfo) (map[string]CorporationManagerCheckResult, IDBError)
-	AddCorporationManager(orgCLAID string, opt []CorporationManagerCreateOption, managerNumber int) ([]CorporationManagerCreateOption, error)
-	DeleteCorporationManager(orgCLAID, role string, emails []string) ([]CorporationManagerCreateOption, error)
+	AddCorpAdministrator(linkID string, opt *CorporationManagerCreateOption) IDBError
+	AddEmployeeManager(linkID string, opt []CorporationManagerCreateOption) IDBError
+	DeleteEmployeeManager(orgCLAID string, emails []string) ([]CorporationManagerCreateOption, IDBError)
 	ResetCorporationManagerPassword(string, string, CorporationManagerResetPassword) IDBError
 	ListCorporationManager(orgCLAID, email, role string) ([]CorporationManagerListResult, IDBError)
 }

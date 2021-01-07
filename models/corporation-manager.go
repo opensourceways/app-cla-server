@@ -35,25 +35,27 @@ func (this CorporationManagerAuthentication) Authenticate() (map[string]dbmodels
 	return nil, parseDBError(err)
 }
 
-func CreateCorporationAdministrator(orgCLAID, name, email string) ([]dbmodels.CorporationManagerCreateOption, error) {
+func CreateCorporationAdministrator(linkID, name, email string) (*dbmodels.CorporationManagerCreateOption, IModelError) {
 	pw := util.RandStr(8, "alphanum")
 
-	opt := []dbmodels.CorporationManagerCreateOption{
-		{
-			ID:       "admin",
-			Name:     name,
-			Email:    email,
-			Password: pw,
-			Role:     dbmodels.RoleAdmin,
-		},
+	opt := &dbmodels.CorporationManagerCreateOption{
+		ID:       "admin",
+		Name:     name,
+		Email:    email,
+		Password: pw,
+		Role:     dbmodels.RoleAdmin,
 	}
-	r, err := dbmodels.GetDB().AddCorporationManager(orgCLAID, opt, 1)
-	if err != nil || len(r) == 0 {
-		return r, err
+	err := dbmodels.GetDB().AddCorpAdministrator(linkID, opt)
+	if err == nil {
+		opt.ID = fmt.Sprintf("admin_%s", util.EmailSuffix(email))
+		return opt, nil
 	}
 
-	r[0].ID = fmt.Sprintf("admin_%s", util.EmailSuffix(r[0].Email))
-	return r, nil
+	if err.IsErrorOf(dbmodels.ErrNoDBRecord) {
+		return nil, newModelError(ErrNoLinkOrManagerExists, err)
+	}
+
+	return nil, parseDBError(err)
 }
 
 type CorporationManagerResetPassword dbmodels.CorporationManagerResetPassword

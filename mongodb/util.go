@@ -140,18 +140,6 @@ func (this *client) pushArrayElem(ctx context.Context, collection, array string,
 	return errorIfMatchingNoDoc(r)
 }
 
-func (this *client) pushArrayElems(ctx context.Context, collection, array string, filterOfDoc bson.M, value bson.A) error {
-	update := bson.M{"$push": bson.M{array: bson.M{"$each": value}}}
-
-	col := this.collection(collection)
-	r, err := col.UpdateOne(ctx, filterOfDoc, update)
-	if err != nil {
-		return err
-	}
-
-	return errorIfMatchingNoDoc(r)
-}
-
 func (this *client) pullArrayElem(ctx context.Context, collection, array string, filterOfDoc, filterOfArray bson.M) error {
 	update := bson.M{"$pull": bson.M{array: filterOfArray}}
 

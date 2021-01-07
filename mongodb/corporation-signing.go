@@ -187,6 +187,6 @@ func projectOfCorpSigning() bson.M {
 		memberNameOfSignings("admin_name"):  1,
 		memberNameOfSignings("corp_name"):   1,
 		memberNameOfSignings("date"):        1,
-		corpManagerField("email"):           1,
+		memberNameOfCorpManager("email"):    1,
 	}
 }

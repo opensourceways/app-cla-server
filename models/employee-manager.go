@@ -18,54 +18,66 @@ type EmployeeManager struct {
 	Name  string `json:"name"`
 }
 
-func (this *EmployeeManagerCreateOption) Validate(adminEmail string) (string, error) {
+func (this *EmployeeManagerCreateOption) ValidateWhenAdding(linkID, adminEmail string) IModelError {
 	if len(this.Managers) == 0 {
-		return util.ErrInvalidParameter, fmt.Errorf("no employee mangers to add/delete")
+		return newModelError(ErrEmptyPayload, fmt.Errorf("no employee mangers"))
+	}
+
+	managers, err := ListCorporationManagers(linkID, adminEmail, dbmodels.RoleManager)
+	if err != nil {
+		return err
+	}
+
+	if len(this.Managers)+len(managers) > conf.AppConfig.EmployeeManagersNumber {
+		return newModelError(ErrManyEmployeeManagers, fmt.Errorf("too many employee managers"))
 	}
 
 	ids := map[string]bool{}
 	em := map[string]bool{}
+	for i := range managers {
+		item := &managers[i]
+		ids[item.ID] = true
+		em[item.Email] = true
+	}
+
 	suffix := util.EmailSuffix(adminEmail)
 
-	for _, item := range this.Managers {
-		if item.Email == "" {
-			return util.ErrInvalidParameter, fmt.Errorf("missing email")
+	for i := range this.Managers {
+		item := &this.Managers[i]
+
+		if _, err := checkEmailFormat(item.Email); err != nil {
+			return newModelError(ErrNotAnEmail, err)
+		}
+
+		if util.EmailSuffix(item.Email) != suffix {
+			return newModelError(ErrNotSameCorp, fmt.Errorf("not same email suffix"))
 		}
 
 		if item.Email == adminEmail {
-			return util.ErrInvalidParameter, fmt.Errorf("can't add/delete administrator himself/herself")
-		}
-
-		if ec, err := checkEmailFormat(item.Email); err != nil {
-			return ec, err
-		}
-
-		es := util.EmailSuffix(item.Email)
-		if es != suffix {
-			return util.ErrNotSameCorp, fmt.Errorf("not same email suffix")
+			return newModelError(ErrAdminAsManager, fmt.Errorf("can't add administrator"))
 		}
 
 		if _, ok := em[item.Email]; ok {
-			return util.ErrInvalidParameter, fmt.Errorf("duplicate email:%s", item.Email)
+			return newModelError(ErrCorpManagerExists, fmt.Errorf("duplicate email:%s", item.Email))
 		}
 		em[item.Email] = true
 
 		if item.ID != "" {
-			if ec, err := checkManagerID(fmt.Sprintf("%s_%s", item.ID, es)); err != nil {
-				return ec, err
+			if _, err := checkManagerID(fmt.Sprintf("%s_%s", item.ID, suffix)); err != nil {
+				return newModelError(ErrInvalidManagerID, err)
 			}
 
 			if _, ok := ids[item.ID]; ok {
-				return util.ErrInvalidParameter, fmt.Errorf("duplicate manager ID:%s", item.ID)
+				return newModelError(ErrDuplicateManagerID, fmt.Errorf("duplicate manager ID:%s", item.ID))
 			}
 			ids[item.ID] = true
 		}
 	}
 
-	return "", nil
+	return nil
 }
 
-func (this *EmployeeManagerCreateOption) Create(orgCLAID string) ([]dbmodels.CorporationManagerCreateOption, error) {
+func (this *EmployeeManagerCreateOption) Create(linkID string) ([]dbmodels.CorporationManagerCreateOption, IModelError) {
 	opt := make([]dbmodels.CorporationManagerCreateOption, 0, len(this.Managers))
 
 	for _, item := range this.Managers {
@@ -80,26 +92,67 @@ func (this *EmployeeManagerCreateOption) Create(orgCLAID string) ([]dbmodels.Cor
 		})
 	}
 
-	r, err := dbmodels.GetDB().AddCorporationManager(orgCLAID, opt, conf.AppConfig.EmployeeManagersNumber)
-	if err != nil || len(r) == 0 {
-		return r, err
+	err := dbmodels.GetDB().AddEmployeeManager(linkID, opt)
+	if err != nil {
+		if err.IsErrorOf(dbmodels.ErrNoDBRecord) {
+			return nil, newModelError(ErrNoLink, err)
+		}
+		return nil, parseDBError(err)
 	}
 
-	es := util.EmailSuffix(r[0].Email)
-	for i := range r {
-		if r[i].ID != "" {
-			r[i].ID = fmt.Sprintf("%s_%s", r[i].ID, es)
+	es := util.EmailSuffix(opt[0].Email)
+	for i := range opt {
+		if opt[i].ID != "" {
+			opt[i].ID = fmt.Sprintf("%s_%s", opt[i].ID, es)
 		}
 	}
-	return r, nil
+	return opt, nil
 }
 
-func (this *EmployeeManagerCreateOption) Delete(orgCLAID string) ([]dbmodels.CorporationManagerCreateOption, error) {
-	emails := make([]string, 0, len(this.Managers))
-
-	for _, item := range this.Managers {
-		emails = append(emails, item.Email)
+func (this *EmployeeManagerCreateOption) ValidateWhenDeleting(adminEmail string) IModelError {
+	if len(this.Managers) == 0 {
+		return newModelError(ErrEmptyPayload, fmt.Errorf("no employee mangers"))
 	}
 
-	return dbmodels.GetDB().DeleteCorporationManager(orgCLAID, dbmodels.RoleManager, emails)
+	suffix := util.EmailSuffix(adminEmail)
+
+	for i := range this.Managers {
+		item := &this.Managers[i]
+
+		if _, err := checkEmailFormat(item.Email); err != nil {
+			return newModelError(ErrNotAnEmail, err)
+		}
+
+		if util.EmailSuffix(item.Email) != suffix {
+			return newModelError(ErrNotSameCorp, fmt.Errorf("not same email suffix"))
+		}
+
+		if item.Email == adminEmail {
+			return newModelError(ErrAdminAsManager, fmt.Errorf("can't delete administrator"))
+		}
+	}
+
+	return nil
+}
+
+func (this *EmployeeManagerCreateOption) Delete(linkID string) ([]dbmodels.CorporationManagerCreateOption, IModelError) {
+	emails := make([]string, 0, len(this.Managers))
+	es := map[string]bool{}
+	for _, item := range this.Managers {
+		if !es[item.Email] {
+			es[item.Email] = true
+			emails = append(emails, item.Email)
+		}
+	}
+
+	v, err := dbmodels.GetDB().DeleteEmployeeManager(linkID, emails)
+	if err == nil {
+		return v, nil
+	}
+
+	if err.IsErrorOf(dbmodels.ErrNoDBRecord) {
+		return nil, newModelError(ErrNoLink, err)
+	}
+
+	return nil, parseDBError(err)
 }

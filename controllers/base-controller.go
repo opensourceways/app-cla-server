@@ -10,6 +10,7 @@ import (
 	"github.com/astaxie/beego"
 
 	"github.com/opensourceways/app-cla-server/conf"
+	"github.com/opensourceways/app-cla-server/util"
 )
 
 type failedApiResult struct {
@@ -87,6 +88,16 @@ func (this *baseController) sendFailedResponse(statusCode int, errCode string, r
 	}
 
 	this.sendResponse(d, statusCode)
+}
+
+func (this *baseController) newApiToken(permission string, pl interface{}) (string, error) {
+	ac := &accessController{
+		Expiry:     util.Expiry(conf.AppConfig.APITokenExpiry),
+		Permission: permission,
+		Payload:    pl,
+	}
+
+	return ac.NewToken(conf.AppConfig.APITokenKey)
 }
 
 func (this *baseController) refreshAccessToken() (string, *failedApiResult) {

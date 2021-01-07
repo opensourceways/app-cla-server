@@ -41,13 +41,6 @@ type OrgCLA struct {
 	Enabled     bool      `bson:"enabled" json:"enabled"`
 	Submitter   string    `bson:"submitter" json:"submitter" required:"true"`
 
-	// Corporations is the cla signing information of corporation
-	// key is the email suffix of corporation
-	Corporations []dCorpSigning `bson:"corporations" json:"-"`
-
-	// CorporationManagers is the managers of corporation who can manage the employee
-	CorporationManagers []corporationManagerDoc `bson:"corp_managers" json:"-"`
-
 	Md5sumOfOrgSignature string `bson:"md5sum" json:"md5sum"`
 	OrgSignature         []byte `bson:"org_signature" json:"-"`
 }

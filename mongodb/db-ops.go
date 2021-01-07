@@ -54,6 +54,21 @@ func (this *client) pushArrayElem1(ctx context.Context, collection, array string
 	return nil
 }
 
+func (this *client) pushArrayElems(ctx context.Context, collection, array string, filterOfDoc bson.M, value bson.A) dbmodels.IDBError {
+	update := bson.M{"$push": bson.M{array: bson.M{"$each": value}}}
+
+	col := this.collection(collection)
+	r, err := col.UpdateOne(ctx, filterOfDoc, update)
+	if err != nil {
+		return newSystemError(err)
+	}
+
+	if r.MatchedCount == 0 {
+		return errNoDBRecord1
+	}
+	return nil
+}
+
 func (this *client) replaceDoc1(ctx context.Context, collection string, filterOfDoc, docInfo bson.M) (string, dbmodels.IDBError) {
 	upsert := true
 
@@ -119,6 +134,24 @@ func (this *client) updateArrayElem1(ctx context.Context, collection, array stri
 
 	if r.MatchedCount == 0 {
 		return errNoDBRecord1
+	}
+	return nil
+}
+
+func (this *client) pullAndReturnArrayElem(ctx context.Context, collection, array string, filterOfDoc, filterOfArray bson.M, result interface{}) dbmodels.IDBError {
+	col := this.collection(collection)
+	sr := col.FindOneAndUpdate(
+		ctx, filterOfDoc,
+		bson.M{"$pull": bson.M{array: filterOfArray}},
+		&options.FindOneAndUpdateOptions{
+			Projection: bson.M{array: bson.M{"$elemMatch": filterOfArray}},
+		})
+
+	if err := sr.Decode(result); err != nil {
+		if isErrNoDocuments(err) {
+			return errNoDBRecord1
+		}
+		return newSystemError(err)
 	}
 	return nil
 }

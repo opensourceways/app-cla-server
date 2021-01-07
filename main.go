@@ -63,12 +63,6 @@ func main() {
 		os.Exit(1)
 	}
 
-	// must run after pdf.InitPDFGenerator
-	if err := pdf.GenBlankSignaturePage(); err != nil {
-		beego.Info(err)
-		os.Exit(1)
-	}
-
 	worker.InitEmailWorker(pdf.GetPDFGenerator())
 
 	beego.Run()

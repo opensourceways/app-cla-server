@@ -4,15 +4,14 @@ import (
 	"fmt"
 	"io/ioutil"
 
-	"github.com/astaxie/beego"
-
 	"github.com/opensourceways/app-cla-server/conf"
 	"github.com/opensourceways/app-cla-server/models"
+	"github.com/opensourceways/app-cla-server/pdf"
 	"github.com/opensourceways/app-cla-server/util"
 )
 
 type OrgSignatureController struct {
-	beego.Controller
+	baseController
 }
 
 func (this *OrgSignatureController) Prepare() {
@@ -141,26 +140,15 @@ func (this *OrgSignatureController) Get() {
 // @Param	language		path 	string	true		"The language which the signature applies to"
 // @router /blank/:language [get]
 func (this *OrgSignatureController) BlankSignature() {
-	rs := func(statusCode int, errCode string, reason error) {
-		sendResponse(
-			&this.Controller, statusCode, errCode, reason, nil,
-			"download blank pdf of org signature",
-		)
-	}
+	sendResp := this.newFuncForSendingFailedResp("download blank signature")
 
-	language, err := fetchStringParameter(&this.Controller, ":language")
-	if err != nil {
-		rs(400, util.ErrInvalidParameter, err)
+	lang := this.GetString(":language")
+	path := pdf.GetPDFGenerator().GetBlankSignaturePath(lang)
+
+	if util.IsFileNotExist(path) {
+		sendResp(newFailedApiResult(400, errFileNotExists, fmt.Errorf(errFileNotExists)))
 		return
 	}
 
-	pdf, err := models.DownloadBlankSignature(language)
-	if err != nil {
-		rs(0, "", err)
-		return
-	}
-
-	if fr := this.downloadPDF("blank_"+language, &pdf); fr != nil {
-		rs(fr.statusCode, fr.errCode, fr.reason)
-	}
+	this.downloadFile(path)
 }

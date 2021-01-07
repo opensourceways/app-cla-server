@@ -7,6 +7,7 @@ import (
 	"os/exec"
 	"sort"
 	"strconv"
+	"strings"
 
 	"github.com/opensourceways/app-cla-server/models"
 	"github.com/opensourceways/app-cla-server/util"
@@ -17,6 +18,10 @@ type pdfGenerator struct {
 	pdfOrgSigDir string
 	pythonBin    string
 	corp         *corpSigningPDF
+}
+
+func (this *pdfGenerator) GetBlankSignaturePath(claLang string) string {
+	return util.GenFilePath(this.pdfOrgSigDir, strings.ToLower(claLang)+"_blank_signature.pdf")
 }
 
 func (this *pdfGenerator) GenPDFForCorporationSigning(orgCLA *models.OrgCLA, signing *models.CorporationSigning, cla *models.CLA) (string, error) {

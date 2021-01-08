@@ -10,6 +10,7 @@ import (
 	platformAuth "github.com/opensourceways/app-cla-server/code-platform-auth"
 	"github.com/opensourceways/app-cla-server/code-platform-auth/platforms"
 	"github.com/opensourceways/app-cla-server/conf"
+	"github.com/opensourceways/app-cla-server/models"
 	"github.com/opensourceways/app-cla-server/util"
 )
 
@@ -175,6 +176,58 @@ func (this *AuthController) Get() {
 	body = map[string]string{
 		"url": cp.GetAuthCodeURL(authURLState),
 	}
+}
+
+type acForCodePlatformPayload struct {
+	User          string `json:"user"`
+	Email         string `json:"email"`
+	Platform      string `json:"platform"`
+	PlatformToken string `json:"platform_token"`
+
+	Orgs  map[string]bool           `json:"orgs"`
+	Links map[string]models.OrgInfo `json:"links"`
+}
+
+func (this *acForCodePlatformPayload) hasOrg(org string) bool {
+	if this.Orgs == nil {
+		return false
+	}
+
+	_, ok := this.Orgs[org]
+	return ok
+}
+
+func (this *acForCodePlatformPayload) addOrg(org string) {
+	if this.Orgs == nil {
+		this.Orgs = map[string]bool{}
+	}
+
+	this.Orgs[org] = true
+}
+
+func (this *acForCodePlatformPayload) isOwnerOfLink(link string) *failedApiResult {
+	if this.Links == nil {
+		this.Links = map[string]models.OrgInfo{}
+	}
+
+	if _, ok := this.Links[link]; ok {
+		return nil
+	}
+
+	orgInfo, err := models.GetOrgOfLink(link)
+	if err != nil {
+		if err.IsErrorOf(models.ErrNoLink) {
+			return newFailedApiResult(400, errUnknownLink, err)
+		}
+		return parseModelError(err)
+	}
+
+	if err := this.isOwnerOfOrg(orgInfo.OrgID); err != nil {
+		return err
+	}
+
+	this.Links[link] = *orgInfo
+	return nil
 }
 
 func (this *acForCodePlatformPayload) isOwnerOfOrg(org string) *failedApiResult {

@@ -20,6 +20,7 @@ const (
 	errUnknownEmailPlatform = "unknown_email_platform"
 	errFileNotExists        = "file_not_exists"
 	errLinkExists           = string(models.ErrLinkExists)
+	errUnknownLink          = "unknown_link"
 )
 
 func parseModelError(err models.IModelError) *failedApiResult {

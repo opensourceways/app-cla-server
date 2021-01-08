@@ -56,6 +56,55 @@ func (this *client) CreateLink(info *dbmodels.LinkCreateOption) (string, dbmodel
 	return docID, nil
 }
 
+func (this *client) Unlink(linkID string) dbmodels.IDBError {
+	status := bson.M{fieldLinkStatus: linkStatusDeleted}
+	docFilter := bson.M{fieldLinkID: linkID}
+
+	f := func(ctx context.Context) dbmodels.IDBError {
+		err := this.updateDoc1(ctx, this.linkCollection, docFilter, status)
+		if err != nil {
+			return err
+		}
+
+		this.updateDoc(ctx, this.corpSigningCollection, docFilter, status)
+		this.updateDoc(ctx, this.individualSigningCollection, docFilter, status)
+		return nil
+	}
+
+	return withContext1(f)
+}
+
+func (this *client) GetOrgOfLink(linkID string) (*dbmodels.OrgInfo, dbmodels.IDBError) {
+	var v cLink
+	f := func(ctx context.Context) dbmodels.IDBError {
+		return this.getDoc1(
+			ctx, this.linkCollection,
+			bson.M{
+				fieldLinkID:     linkID,
+				fieldLinkStatus: linkStatusReady,
+			},
+			bson.M{
+				fieldIndividualCLAs: 0,
+				fieldCorpCLAs:       0,
+			}, &v,
+		)
+	}
+
+	if err := withContext1(f); err != nil {
+		return nil, err
+	}
+
+	return &dbmodels.OrgInfo{
+		OrgRepo: dbmodels.OrgRepo{
+			Platform: v.Platform,
+			OrgID:    v.OrgID,
+			RepoID:   v.RepoID,
+		},
+		OrgAlias: v.OrgAlias,
+		OrgEmail: v.OrgEmail.Email,
+	}, nil
+}
+
 func toDocOfLink(info *dbmodels.LinkCreateOption) (bson.M, dbmodels.IDBError) {
 	opt := cLink{
 		LinkID:     info.LinkID,

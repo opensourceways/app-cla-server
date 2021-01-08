@@ -105,3 +105,27 @@ func GetLinkID(orgRepo *OrgRepo) (string, IModelError) {
 	}
 	return "", parseDBError(err)
 }
+
+func Unlink(linkID string) IModelError {
+	err := dbmodels.GetDB().Unlink(linkID)
+	if err == nil {
+		return nil
+	}
+
+	if err.IsErrorOf(dbmodels.ErrNoDBRecord) {
+		return newModelError(ErrNoLink, err)
+	}
+	return parseDBError(err)
+}
+
+func GetOrgOfLink(linkID string) (*OrgInfo, IModelError) {
+	v, err := dbmodels.GetDB().GetOrgOfLink(linkID)
+	if err == nil {
+		return v, nil
+	}
+
+	if err.IsErrorOf(dbmodels.ErrNoDBRecord) {
+		return v, newModelError(ErrNoLink, err)
+	}
+	return v, parseDBError(err)
+}

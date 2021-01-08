@@ -169,3 +169,33 @@ func (this *LinkController) initializeSigning(input *models.LinkCreateOption, li
 
 	return nil
 }
+
+// @Title Unlink
+// @Description unlink cla
+// @Param	uid		path 	string	true		"The uid of binding"
+// @Success 204 {string} delete success!
+// @Failure 403 uid is empty
+// @router /:link_id [delete]
+func (this *LinkController) Unlink() {
+	doWhat := "unlink"
+	sendResp := this.newFuncForSendingFailedResp(doWhat)
+	linkID := this.GetString(":link_id")
+
+	pl, fr := this.tokenPayloadBasedOnCodePlatform()
+	if fr != nil {
+		sendResp(fr)
+		return
+	}
+
+	if fr := pl.isOwnerOfLink(linkID); fr != nil {
+		sendResp(fr)
+		return
+	}
+
+	if err := models.Unlink(linkID); err != nil {
+		sendResp(parseModelError(err))
+		return
+	}
+
+	this.sendSuccessResp(doWhat + "successfully")
+}

@@ -23,7 +23,7 @@ type IDB interface {
 }
 
 type ICorporationSigning interface {
-	InitializeCorpSigning(linkID string, info *OrgInfo) IDBError
+	InitializeCorpSigning(linkID string, info *OrgInfo, cla *CLAInfo) IDBError
 	SignCorpCLA(orgCLAID string, info *CorpSigningCreateOpt) IDBError
 	IsCorpSigned(linkID, email string) (bool, IDBError)
 	ListCorpSignings(linkID, language string) ([]CorporationSigningSummary, IDBError)
@@ -59,7 +59,7 @@ type IOrgCLA interface {
 }
 
 type IIndividualSigning interface {
-	InitializeIndividualSigning(linkID string) IDBError
+	InitializeIndividualSigning(linkID string, info *CLAInfo) IDBError
 	SignIndividualCLA(linkID string, info *IndividualSigningInfo) IDBError
 	DeleteIndividualSigning(linkID, email string) IDBError
 	UpdateIndividualSigning(linkID, email string, enabled bool) IDBError

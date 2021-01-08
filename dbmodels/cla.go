@@ -46,3 +46,10 @@ type CLACreateOption struct {
 
 	CLADetail
 }
+
+type CLAInfo struct {
+	CLALang          string
+	CLAHash          string
+	OrgSignatureHash string
+	Fields           []Field
+}

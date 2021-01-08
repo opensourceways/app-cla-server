@@ -153,15 +153,17 @@ func ListOrgs(platform string, orgs []string) ([]dbmodels.OrgCLA, error) {
 	return dbmodels.GetDB().ListOrgs(platform, orgs)
 }
 
-func InitializeIndividualSigning(linkID string) IModelError {
-	err := dbmodels.GetDB().InitializeIndividualSigning(linkID)
+type CLAInfo = dbmodels.CLAInfo
+
+func InitializeIndividualSigning(linkID string, cla *CLAInfo) IModelError {
+	err := dbmodels.GetDB().InitializeIndividualSigning(linkID, cla)
 	return parseDBError(err)
 }
 
 type OrgInfo = dbmodels.OrgInfo
 type OrgRepo = dbmodels.OrgRepo
 
-func InitializeCorpSigning(linkID string, info *OrgInfo) IModelError {
-	err := dbmodels.GetDB().InitializeCorpSigning(linkID, info)
+func InitializeCorpSigning(linkID string, info *OrgInfo, cla *CLAInfo) IModelError {
+	err := dbmodels.GetDB().InitializeCorpSigning(linkID, info, cla)
 	return parseDBError(err)
 }

@@ -88,6 +88,15 @@ func (this *CLACreateOpt) SaveCLAAtLocal(path string) error {
 	return ioutil.WriteFile(path, *this.content, 0644)
 }
 
+func (this *CLACreateOpt) GenCLAInfo() *dbmodels.CLAInfo {
+	return &dbmodels.CLAInfo{
+		OrgSignatureHash: util.Md5sumOfBytes(this.orgSignature),
+		CLAHash:          util.Md5sumOfBytes(this.content),
+		CLALang:          this.Language,
+		Fields:           this.Fields,
+	}
+}
+
 func (this *CLACreateOpt) Validate(applyTo string, langs map[string]bool) IModelError {
 	this.Language = strings.ToLower(this.Language)
 

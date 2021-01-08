@@ -8,6 +8,7 @@ import (
 )
 
 type IPDFGenerator interface {
+	LangSupported() map[string]bool
 	GetBlankSignaturePath(string) string
 
 	GenPDFForCorporationSigning(orgCLA *models.OrgCLA, signing *models.CorporationSigning, cla *models.CLA) (string, error)

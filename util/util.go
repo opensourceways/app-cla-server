@@ -143,11 +143,11 @@ func Md5sumOfFile(path string) (string, error) {
 		return "", err
 	}
 
-	return Md5sumOfBytes(data), nil
+	return Md5sumOfBytes(&data), nil
 }
 
-func Md5sumOfBytes(data []byte) string {
-	return fmt.Sprintf("%x", md5.Sum(data))
+func Md5sumOfBytes(data *[]byte) string {
+	return fmt.Sprintf("%x", md5.Sum(*data))
 }
 
 func ProjectURL(platform, org, repo string) string {

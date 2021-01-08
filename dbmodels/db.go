@@ -11,6 +11,7 @@ func GetDB() IDB {
 }
 
 type IDB interface {
+	ILink
 	ICorporationSigning
 	ICorporationManager
 	IOrgEmail
@@ -83,4 +84,8 @@ type IPDF interface {
 	UploadOrgSignature(orgCLAID string, pdf []byte) error
 	DownloadOrgSignature(orgCLAID string) ([]byte, error)
 	DownloadOrgSignatureByMd5(orgCLAID, md5sum string) ([]byte, error)
+}
+
+type ILink interface {
+	CreateLink(info *LinkCreateOption) (string, IDBError)
 }

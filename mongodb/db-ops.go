@@ -177,3 +177,23 @@ func (this *client) getDoc1(ctx context.Context, collection string, filterOfDoc,
 	}
 	return nil
 }
+
+func (this *client) newDocIfNotExist1(ctx context.Context, collection string, filterOfDoc, docInfo bson.M) (string, dbmodels.IDBError) {
+	upsert := true
+
+	col := this.collection(collection)
+	r, err := col.UpdateOne(
+		ctx, filterOfDoc, bson.M{"$setOnInsert": docInfo},
+		&options.UpdateOptions{Upsert: &upsert},
+	)
+	if err != nil {
+		return "", newSystemError(err)
+	}
+
+	if r.UpsertedID == nil {
+		return "", newDBError(dbmodels.ErrRecordExists, fmt.Errorf("the doc exists"))
+	}
+
+	v, _ := toUID(r.UpsertedID)
+	return v, nil
+}

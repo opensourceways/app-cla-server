@@ -8,16 +8,25 @@ import (
 	"github.com/opensourceways/app-cla-server/dbmodels"
 )
 
-func (this *client) CreateOrgEmail(opt dbmodels.OrgEmailCreateInfo) dbmodels.IDBError {
+func toDocOfOrgEmail(opt *dbmodels.OrgEmailCreateInfo) (bson.M, dbmodels.IDBError) {
 	info := cOrgEmail{
 		Email:    opt.Email,
 		Platform: opt.Platform,
 	}
 	body, err := structToMap1(info)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	body["token"] = opt.Token
+
+	return body, nil
+}
+
+func (this *client) CreateOrgEmail(opt dbmodels.OrgEmailCreateInfo) dbmodels.IDBError {
+	body, err := toDocOfOrgEmail(&opt)
+	if err != nil {
+		return err
+	}
 
 	f := func(ctx context.Context) dbmodels.IDBError {
 		_, err := this.replaceDoc1(ctx, this.orgEmailCollection, bson.M{"email": opt.Email}, body)
@@ -39,6 +48,7 @@ func (this *client) GetOrgEmailInfo(email string) (*dbmodels.OrgEmailCreateInfo,
 	}
 
 	return &dbmodels.OrgEmailCreateInfo{
+		Email:    email,
 		Platform: v.Platform,
 		Token:    v.Token,
 	}, nil

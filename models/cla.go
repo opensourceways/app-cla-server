@@ -88,8 +88,8 @@ func (this *CLACreateOpt) SaveCLAAtLocal(path string) error {
 	return ioutil.WriteFile(path, *this.content, 0644)
 }
 
-func (this *CLACreateOpt) GenCLAInfo() *dbmodels.CLAInfo {
-	return &dbmodels.CLAInfo{
+func (this *CLACreateOpt) GenCLAInfo() *CLAInfo {
+	return &CLAInfo{
 		OrgSignatureHash: util.Md5sumOfBytes(this.orgSignature),
 		CLAHash:          util.Md5sumOfBytes(this.content),
 		CLALang:          this.Language,

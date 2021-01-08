@@ -103,5 +103,5 @@ func GetLinkID(orgRepo *OrgRepo) (string, IModelError) {
 	if err.IsErrorOf(dbmodels.ErrNoDBRecord) {
 		return "", newModelError(ErrNoLink, err)
 	}
-	return b, parseDBError(err)
+	return "", parseDBError(err)
 }

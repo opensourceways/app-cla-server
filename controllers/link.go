@@ -63,19 +63,19 @@ func (this *LinkController) Link() {
 	}
 
 	if r := pl.isOwnerOfOrg(input.OrgID); r != nil {
-		this.sendFailedResponse(r.statusCode, r.errCode, r.reason, doWhat)
+		sendResp(r)
 		return
 	}
 
 	filePath := genOrgFileLockPath(input.Platform, input.OrgID, input.RepoID)
-	if err := this.createFileLock(filePath); err != nil {
-		this.sendFailedResponse(500, util.ErrSystemError, err, doWhat)
+	if err := util.CreateLockedFile(filePath); err != nil {
+		sendResp(newFailedApiResult(500, errSystemError, err))
 		return
 	}
 
 	unlock, err := util.Lock(filePath)
 	if err != nil {
-		this.sendFailedResponse(500, util.ErrSystemError, err, doWhat)
+		sendResp(newFailedApiResult(500, errSystemError, err))
 		return
 	}
 	defer unlock()
@@ -93,12 +93,12 @@ func (this *LinkController) Link() {
 
 	linkID := genLinkID(orgRepo)
 	if fr := this.writeLocalFileOfLink(input, linkID); fr != nil {
-		this.sendFailedResponse(fr.statusCode, fr.errCode, fr.reason, doWhat)
+		sendResp(fr)
 		return
 	}
 
 	if fr := this.initializeSigning(input, linkID, orgRepo); fr != nil {
-		this.sendFailedResponse(fr.statusCode, fr.errCode, fr.reason, doWhat)
+		sendResp(fr)
 		return
 	}
 
@@ -119,26 +119,17 @@ func (this *LinkController) fetchPayloadOfCreatingLink() (*models.LinkCreateOpti
 	return input, nil
 }
 
-func (this *LinkController) createFileLock(path string) error {
-	// Create a file as a file lock for this org. The reasons is:
-	// A file lock needs the file exist first
-	if util.IsFileNotExist(path) {
-		return util.CreateLockedFile(path)
-	}
-	return nil
-}
-
 func (this *LinkController) writeLocalFileOfLink(input *models.LinkCreateOption, linkID string) *failedApiResult {
 	cla := input.CorpCLA
 	if cla != nil {
 		path := genCLAFilePath(linkID, dbmodels.ApplyToCorporation, cla.Language)
 		if err := cla.SaveCLAAtLocal(path); err != nil {
-			return newFailedApiResult(500, util.ErrSystemError, err)
+			return newFailedApiResult(500, errSystemError, err)
 		}
 
 		path = genOrgSignatureFilePath(linkID, cla.Language)
 		if err := cla.SaveSignatueAtLocal(path); err != nil {
-			return newFailedApiResult(500, util.ErrSystemError, err)
+			return newFailedApiResult(500, errSystemError, err)
 		}
 	}
 
@@ -146,7 +137,7 @@ func (this *LinkController) writeLocalFileOfLink(input *models.LinkCreateOption,
 	if cla != nil {
 		path := genCLAFilePath(linkID, dbmodels.ApplyToIndividual, cla.Language)
 		if err := cla.SaveCLAAtLocal(path); err != nil {
-			return newFailedApiResult(500, util.ErrSystemError, err)
+			return newFailedApiResult(500, errSystemError, err)
 		}
 	}
 

@@ -197,3 +197,16 @@ func (this *client) newDocIfNotExist1(ctx context.Context, collection string, fi
 	v, _ := toUID(r.UpsertedID)
 	return v, nil
 }
+
+func (this *client) updateDoc1(ctx context.Context, collection string, filterOfDoc, update bson.M) dbmodels.IDBError {
+	col := this.collection(collection)
+	r, err := col.UpdateOne(ctx, filterOfDoc, bson.M{"$set": update})
+	if err != nil {
+		return newSystemError(err)
+	}
+
+	if r.MatchedCount == 0 {
+		return errNoDBRecord1
+	}
+	return nil
+}

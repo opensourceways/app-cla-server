@@ -19,6 +19,7 @@ const (
 	errNoRefreshToken       = "no_refresh_token"
 	errUnknownEmailPlatform = "unknown_email_platform"
 	errFileNotExists        = "file_not_exists"
+	errLinkExists           = string(models.ErrLinkExists)
 )
 
 func parseModelError(err models.IModelError) *failedApiResult {

@@ -20,7 +20,7 @@ func (this *client) UploadOrgSignature(orgCLAID string, pdf []byte) error {
 			ctx, this.orgCLACollection, filterOfDocID(oid),
 			bson.M{
 				fieldOrgSignature:    pdf,
-				fieldOrgSignatureTag: util.Md5sumOfBytes(pdf),
+				fieldOrgSignatureTag: util.Md5sumOfBytes(&pdf),
 			},
 		)
 	}

@@ -120,7 +120,7 @@ func (this *OrgCLAController) Post() {
 	}
 
 	if input.ApplyTo == dbmodels.ApplyToIndividual {
-		models.InitializeIndividualSigning(uid)
+		models.InitializeIndividualSigning(uid, nil)
 	} else {
 		models.InitializeCorpSigning(uid, &models.OrgInfo{
 			OrgRepo: models.OrgRepo{
@@ -130,7 +130,7 @@ func (this *OrgCLAController) Post() {
 			},
 			OrgEmail: input.OrgEmail,
 			OrgAlias: input.OrgAlias,
-		})
+		}, nil)
 	}
 
 	body = struct {

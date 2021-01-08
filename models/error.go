@@ -30,6 +30,13 @@ const (
 	ErrNotSameCorp             ModelErrCode = "not_same_corp"
 	ErrManyEmployeeManagers    ModelErrCode = "many_employee_managers"
 	ErrOrgEmailNotExists       ModelErrCode = "org_email_not_exists"
+	ErrLinkExists              ModelErrCode = "link_exists"
+	ErrUnsupportedCLALang      ModelErrCode = "unsupported_cla_lang"
+	ErrNoCLAField              ModelErrCode = "no_cla_field"
+	ErrManyCLAField            ModelErrCode = "many_cla_field"
+	ErrCLAFieldID              ModelErrCode = "invalid_cla_field_id"
+	ErrNoOrgSignature          ModelErrCode = "missing_org_signature"
+	ErrMissgingCLA             ModelErrCode = "missing_cla"
 )
 
 type IModelError interface {

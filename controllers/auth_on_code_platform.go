@@ -176,3 +176,28 @@ func (this *AuthController) Get() {
 		"url": cp.GetAuthCodeURL(authURLState),
 	}
 }
+
+func (this *acForCodePlatformPayload) isOwnerOfOrg(org string) *failedApiResult {
+	if this.Orgs == nil {
+		this.Orgs = map[string]bool{}
+	}
+
+	if this.Orgs[org] {
+		return nil
+	}
+
+	p, err := platforms.NewPlatform(this.PlatformToken, "", this.Platform)
+	if err != nil {
+		return newFailedApiResult(400, util.ErrInvalidParameter, err)
+	}
+
+	if b, err := p.IsOrgExist(org); err != nil {
+		// TODO token expiry
+		return newFailedApiResult(500, util.ErrSystemError, err)
+	} else if !b {
+		return newFailedApiResult(400, util.ErrNotYoursOrg, fmt.Errorf("not the org of owner"))
+	}
+
+	this.Orgs[org] = true
+	return nil
+}

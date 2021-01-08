@@ -91,13 +91,11 @@ func (this *OrgCLAController) Post() {
 		conf.AppConfig.PDFOrgSignatureDir,
 		util.GenFileName(input.Platform, input.OrgID, input.RepoID),
 	)
-	if util.IsFileNotExist(path) {
-		if err := util.CreateLockedFile(path); err != nil {
-			reason = err
-			errCode = util.ErrSystemError
-			statusCode = 500
-			return
-		}
+	if err := util.CreateLockedFile(path); err != nil {
+		reason = err
+		errCode = util.ErrSystemError
+		statusCode = 500
+		return
 	}
 
 	cla := &input.CLA

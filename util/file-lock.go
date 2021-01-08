@@ -29,6 +29,10 @@ func (this *fileLock) tryLock() error {
 }
 
 func CreateLockedFile(path string) error {
+	if !IsFileNotExist(path) {
+		return nil
+	}
+
 	f, err := os.OpenFile(path, os.O_CREATE|os.O_RDONLY, 0644)
 	if err != nil {
 		return err

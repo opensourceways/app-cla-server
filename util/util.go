@@ -156,3 +156,8 @@ func ProjectURL(platform, org, repo string) string {
 	}
 	return fmt.Sprintf("https://%s.com/%s/%s", platform, org, repo)
 }
+
+func GenFileName(fileNameParts ...string) string {
+	s := filepath.Join(fileNameParts...)
+	return strings.ReplaceAll(s, string(filepath.Separator), "_")
+}

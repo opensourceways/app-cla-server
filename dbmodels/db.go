@@ -87,5 +87,6 @@ type IPDF interface {
 }
 
 type ILink interface {
+	GetLinkID(orgRepo *OrgRepo) (string, IDBError)
 	CreateLink(info *LinkCreateOption) (string, IDBError)
 }

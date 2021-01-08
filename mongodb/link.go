@@ -17,6 +17,21 @@ func docFilterOfLink(orgRepo *dbmodels.OrgRepo) bson.M {
 	}
 }
 
+func (this *client) GetLinkID(orgRepo *dbmodels.OrgRepo) (string, dbmodels.IDBError) {
+	var v cLink
+	f := func(ctx context.Context) dbmodels.IDBError {
+		return this.getDoc1(
+			ctx, this.linkCollection, docFilterOfLink(orgRepo), bson.M{fieldLinkID: 1}, &v,
+		)
+	}
+
+	if err := withContext1(f); err != nil {
+		return "", err
+	}
+
+	return v.LinkID, nil
+}
+
 func (this *client) CreateLink(info *dbmodels.LinkCreateOption) (string, dbmodels.IDBError) {
 	doc, err := toDocOfLink(info)
 	if err != nil {

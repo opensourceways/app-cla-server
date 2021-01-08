@@ -93,3 +93,15 @@ func (this LinkCreateOption) Create(linkID, submitter string) IModelError {
 
 	return parseDBError(err)
 }
+
+func GetLinkID(orgRepo *OrgRepo) (string, IModelError) {
+	b, err := dbmodels.GetDB().GetLinkID(orgRepo)
+	if err == nil {
+		return b, nil
+	}
+
+	if err.IsErrorOf(dbmodels.ErrNoDBRecord) {
+		return "", newModelError(ErrNoLink, err)
+	}
+	return b, parseDBError(err)
+}

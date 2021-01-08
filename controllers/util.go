@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/astaxie/beego"
 
@@ -18,8 +19,9 @@ import (
 )
 
 const (
-	headerToken         = "Token"
-	apiAccessController = "access_controller"
+	headerToken                    = "Token"
+	apiAccessController            = "access_controller"
+	fileNameOfUploadingOrgSignatue = "org_signature_file"
 )
 
 func buildStatusAndErrCode(statusCode int, errCode string, reason error) (int, string) {
@@ -434,4 +436,39 @@ func getLinkID(platform, org, repo, applyTo string) (string, *failedApiResult) {
 		return "", newFailedApiResult(400, errNoLink, fmt.Errorf("no link"))
 	}
 	return signings[0].ID, nil
+}
+
+func buildOrgRepo(platform, orgID, repoID string) *models.OrgRepo {
+	return &models.OrgRepo{
+		Platform: platform,
+		OrgID:    orgID,
+		RepoID:   repoID,
+	}
+}
+
+func genOrgFileLockPath(platform, org, repo string) string {
+	return util.GenFilePath(
+		conf.AppConfig.PDFOrgSignatureDir,
+		util.GenFileName("lock", platform, org, repo),
+	)
+}
+
+func genCLAFilePath(linkID, applyTo, language string) string {
+	return util.GenFilePath(
+		conf.AppConfig.PDFOrgSignatureDir,
+		util.GenFileName("cla", linkID, applyTo, language, ".txt"))
+}
+
+func genOrgSignatureFilePath(linkID, language string) string {
+	return util.GenFilePath(
+		conf.AppConfig.PDFOrgSignatureDir,
+		util.GenFileName("signature", linkID, language, ".pdf"))
+}
+
+func genLinkID(v *dbmodels.OrgRepo) string {
+	repo := ""
+	if v.RepoID != "" {
+		repo = fmt.Sprintf("_%s", v.RepoID)
+	}
+	return fmt.Sprintf("%s_%s%s-%d", v.Platform, v.OrgID, repo, time.Now().UnixNano())
 }

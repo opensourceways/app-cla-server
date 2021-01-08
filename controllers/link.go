@@ -1,0 +1,180 @@
+package controllers
+
+import (
+	"encoding/json"
+	"fmt"
+
+	"github.com/astaxie/beego"
+
+	"github.com/opensourceways/app-cla-server/dbmodels"
+	"github.com/opensourceways/app-cla-server/models"
+	"github.com/opensourceways/app-cla-server/pdf"
+	"github.com/opensourceways/app-cla-server/util"
+)
+
+type LinkController struct {
+	baseController
+}
+
+func (this *LinkController) Prepare() {
+	if this.routerPattern() == "/v1/link/:platform/:org_id/:apply_to" {
+		if this.apiReqHeader(headerToken) != "" {
+			this.apiPrepare(PermissionIndividualSigner)
+		}
+	} else {
+		this.apiPrepare(PermissionOwnerOfOrg)
+	}
+}
+
+// @Title Link
+// @Description link org and cla
+// @Param	body		body 	models.OrgCLA	true		"body for org-repo content"
+// @Success 201 {int} models.OrgCLA
+// @Failure 403 body is empty
+// @router / [post]
+func (this *LinkController) Link() {
+	doWhat := "create link"
+	sendResp := this.newFuncForSendingFailedResp(doWhat)
+
+	pl, fr := this.tokenPayloadBasedOnCodePlatform()
+	if fr != nil {
+		sendResp(fr)
+		return
+	}
+
+	input, err := this.fetchPayloadOfCreatingLink()
+	if err != nil {
+		sendResp(newFailedApiResult(400, errParsingApiBody, err))
+		return
+	}
+
+	if input.CorpCLA != nil {
+		data, fr := this.readInputFile(fileNameOfUploadingOrgSignatue)
+		if fr != nil {
+			sendResp(fr)
+			return
+		}
+		input.CorpCLA.SetOrgSignature(&data)
+	}
+
+	if merr := input.Validate(pdf.GetPDFGenerator().LangSupported()); merr != nil {
+		sendResp(parseModelError(merr))
+		return
+	}
+
+	if r := pl.isOwnerOfOrg(input.OrgID); r != nil {
+		this.sendFailedResponse(r.statusCode, r.errCode, r.reason, doWhat)
+		return
+	}
+
+	filePath := genOrgFileLockPath(input.Platform, input.OrgID, input.RepoID)
+	if err := this.createFileLock(filePath); err != nil {
+		this.sendFailedResponse(500, util.ErrSystemError, err, doWhat)
+		return
+	}
+
+	unlock, err := util.Lock(filePath)
+	if err != nil {
+		this.sendFailedResponse(500, util.ErrSystemError, err, doWhat)
+		return
+	}
+	defer unlock()
+
+	orgRepo := buildOrgRepo(input.Platform, input.OrgID, input.RepoID)
+	_, merr := models.GetLinkID(orgRepo)
+	if merr == nil {
+		sendResp(newFailedApiResult(400, errLinkExists, fmt.Errorf("recreate link")))
+		return
+	}
+	if !merr.IsErrorOf(models.ErrNoLink) {
+		sendResp(parseModelError(merr))
+		return
+	}
+
+	linkID := genLinkID(orgRepo)
+	if fr := this.writeLocalFileOfLink(input, linkID); fr != nil {
+		this.sendFailedResponse(fr.statusCode, fr.errCode, fr.reason, doWhat)
+		return
+	}
+
+	if fr := this.initializeSigning(input, linkID, orgRepo); fr != nil {
+		this.sendFailedResponse(fr.statusCode, fr.errCode, fr.reason, doWhat)
+		return
+	}
+
+	beego.Info("input.Create")
+	if merr := input.Create(linkID, pl.User); merr != nil {
+		sendResp(parseModelError(merr))
+		return
+	}
+
+	this.sendResponse("create org cla successfully", 0)
+}
+
+func (this *LinkController) fetchPayloadOfCreatingLink() (*models.LinkCreateOption, error) {
+	input := &models.LinkCreateOption{}
+	if err := json.Unmarshal([]byte(this.Ctx.Request.FormValue("data")), input); err != nil {
+		return nil, fmt.Errorf("invalid input payload: %s", err.Error())
+	}
+	return input, nil
+}
+
+func (this *LinkController) createFileLock(path string) error {
+	// Create a file as a file lock for this org. The reasons is:
+	// A file lock needs the file exist first
+	if util.IsFileNotExist(path) {
+		return util.CreateLockedFile(path)
+	}
+	return nil
+}
+
+func (this *LinkController) writeLocalFileOfLink(input *models.LinkCreateOption, linkID string) *failedApiResult {
+	cla := input.CorpCLA
+	if cla != nil {
+		path := genCLAFilePath(linkID, dbmodels.ApplyToCorporation, cla.Language)
+		if err := cla.SaveCLAAtLocal(path); err != nil {
+			return newFailedApiResult(500, util.ErrSystemError, err)
+		}
+
+		path = genOrgSignatureFilePath(linkID, cla.Language)
+		if err := cla.SaveSignatueAtLocal(path); err != nil {
+			return newFailedApiResult(500, util.ErrSystemError, err)
+		}
+	}
+
+	cla = input.IndividualCLA
+	if cla != nil {
+		path := genCLAFilePath(linkID, dbmodels.ApplyToIndividual, cla.Language)
+		if err := cla.SaveCLAAtLocal(path); err != nil {
+			return newFailedApiResult(500, util.ErrSystemError, err)
+		}
+	}
+
+	return nil
+}
+
+func (this *LinkController) initializeSigning(input *models.LinkCreateOption, linkID string, orgRepo *dbmodels.OrgRepo) *failedApiResult {
+	var info *dbmodels.CLAInfo
+
+	if input.IndividualCLA != nil {
+		info = input.IndividualCLA.GenCLAInfo()
+	}
+	if merr := models.InitializeIndividualSigning(linkID, info); merr != nil {
+		return parseModelError(merr)
+	}
+
+	orgInfo := dbmodels.OrgInfo{
+		OrgRepo:  *orgRepo,
+		OrgEmail: input.OrgEmail,
+		OrgAlias: input.OrgAlias,
+	}
+	info = nil
+	if input.CorpCLA != nil {
+		info = input.CorpCLA.GenCLAInfo()
+	}
+	if merr := models.InitializeCorpSigning(linkID, &orgInfo, info); merr != nil {
+		return parseModelError(merr)
+	}
+
+	return nil
+}

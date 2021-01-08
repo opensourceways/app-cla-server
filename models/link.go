@@ -7,16 +7,16 @@ import (
 )
 
 type LinkCreateOption struct {
-	Platform  string `json:"platform"`
-	OrgID     string `json:"org_id"`
-	RepoID    string `json:"repo_id"`
-	OrgAlias  string `json:"org_alias"`
-	EmailAddr string `json:"org_email"`
+	Platform string `json:"platform"`
+	OrgID    string `json:"org_id"`
+	RepoID   string `json:"repo_id"`
+	OrgAlias string `json:"org_alias"`
+	OrgEmail string `json:"org_email"`
 
 	IndividualCLA *CLACreateOpt `json:"individual_cla"`
 	CorpCLA       *CLACreateOpt `json:"corp_cla"`
 
-	orgEmail *dbmodels.OrgEmailCreateInfo
+	orgEmailInfo *dbmodels.OrgEmailCreateInfo
 }
 
 func (this *LinkCreateOption) Validate(langs map[string]bool) IModelError {
@@ -42,14 +42,14 @@ func (this *LinkCreateOption) Validate(langs map[string]bool) IModelError {
 		}
 	}
 
-	orgEmail, err := dbmodels.GetDB().GetOrgEmailInfo(this.EmailAddr)
+	orgEmail, err := dbmodels.GetDB().GetOrgEmailInfo(this.OrgEmail)
 	if err != nil {
 		if err.IsErrorOf(dbmodels.ErrNoDBRecord) {
 			return newModelError(ErrOrgEmailNotExists, err)
 		}
 		return parseDBError(err)
 	}
-	this.orgEmail = orgEmail
+	this.orgEmailInfo = orgEmail
 
 	return nil
 }
@@ -60,7 +60,7 @@ func (this LinkCreateOption) Create(linkID, submitter string) IModelError {
 	info.Platform = this.Platform
 	info.OrgID = this.OrgID
 	info.RepoID = this.RepoID
-	info.OrgEmail = *this.orgEmail
+	info.OrgEmail = *this.orgEmailInfo
 	info.Submitter = submitter
 
 	info.OrgAlias = this.OrgAlias

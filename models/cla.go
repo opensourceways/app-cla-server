@@ -88,6 +88,18 @@ func (this *CLACreateOpt) SaveCLAAtLocal(path string) error {
 	return ioutil.WriteFile(path, *this.content, 0644)
 }
 
+func (this *CLACreateOpt) AddCLAInfo(linkID, applyTo string) IModelError {
+	err := dbmodels.GetDB().AddCLAInfo(linkID, applyTo, this.GenCLAInfo())
+	if err == nil {
+		return nil
+	}
+
+	if err.IsErrorOf(dbmodels.ErrNoDBRecord) {
+		return newModelError(ErrNoLinkOrCLAExists, err)
+	}
+	return parseDBError(err)
+}
+
 func (this *CLACreateOpt) GenCLAInfo() *CLAInfo {
 	return &CLAInfo{
 		OrgSignatureHash: util.Md5sumOfBytes(this.orgSignature),
@@ -194,4 +206,18 @@ func HasCLA(linkID, applyTo, language string) (bool, IModelError) {
 		return v, newModelError(ErrNoLink, err)
 	}
 	return v, parseDBError(err)
+}
+
+func DeleteCLAInfo(linkID, applyTo, language string) error {
+	err := dbmodels.GetDB().DeleteCLAInfo(linkID, applyTo, language)
+	if err == nil {
+		return nil
+	}
+
+	if err.IsErrorOf(dbmodels.ErrNoDBRecord) {
+		return newModelError(ErrNoLink, err)
+	}
+	return parseDBError(err)
+
+	return nil
 }

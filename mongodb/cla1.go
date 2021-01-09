@@ -9,6 +9,13 @@ import (
 	"github.com/opensourceways/app-cla-server/dbmodels"
 )
 
+func docFilterOfCLA(linkID string) bson.M {
+	return bson.M{
+		fieldLinkID:     linkID,
+		fieldLinkStatus: linkStatusReady,
+	}
+}
+
 func (this *client) GetCLAByType(orgRepo *dbmodels.OrgRepo, applyTo string) (string, []dbmodels.CLADetail, dbmodels.IDBError) {
 	var project bson.M
 	if applyTo == dbmodels.ApplyToIndividual {
@@ -39,6 +46,29 @@ func (this *client) GetCLAByType(orgRepo *dbmodels.OrgRepo, applyTo string) (str
 		return v.LinkID, toModelOfCLAs(v.IndividualCLAs), nil
 	}
 	return v.LinkID, toModelOfCLAs(v.CorpCLAs), nil
+}
+
+func (this *client) GetAllCLA(linkID string) (*dbmodels.CLAOfLink, dbmodels.IDBError) {
+	project := bson.M{
+		fieldOrgEmail: 0,
+		fmt.Sprintf("%s.%s", fieldCorpCLAs, fieldOrgSignature): 0,
+	}
+
+	var v cLink
+	f := func(ctx context.Context) dbmodels.IDBError {
+		return this.getDoc1(
+			ctx, this.linkCollection, docFilterOfCLA(linkID), project, &v,
+		)
+	}
+
+	if err := withContext1(f); err != nil {
+		return nil, err
+	}
+
+	return &dbmodels.CLAOfLink{
+		IndividualCLAs: toModelOfCLAs(v.IndividualCLAs),
+		CorpCLAs:       toModelOfCLAs(v.CorpCLAs),
+	}, nil
 }
 
 func toModelOfCLAs(data []dCLA) []dbmodels.CLADetail {

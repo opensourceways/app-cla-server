@@ -75,6 +75,7 @@ type ICLA interface {
 	ListCLAByIDs(ids []string) ([]CLA, error)
 
 	GetCLAByType(orgRepo *OrgRepo, applyTo string) (string, []CLADetail, IDBError)
+	GetAllCLA(linkID string) (*CLAOfLink, IDBError)
 }
 
 type IVerificationCode interface {

@@ -171,3 +171,15 @@ func GetCLAByType(orgRepo *dbmodels.OrgRepo, applyTo string) (string, []dbmodels
 	}
 	return linkID, v, parseDBError(err)
 }
+
+func GetAllCLA(linkID string) (*dbmodels.CLAOfLink, IModelError) {
+	v, err := dbmodels.GetDB().GetAllCLA(linkID)
+	if err == nil {
+		return v, nil
+	}
+
+	if err.IsErrorOf(dbmodels.ErrNoDBRecord) {
+		return v, newModelError(ErrNoLink, err)
+	}
+	return v, parseDBError(err)
+}

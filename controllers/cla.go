@@ -3,13 +3,11 @@ package controllers
 import (
 	"fmt"
 
-	"github.com/astaxie/beego"
-
 	"github.com/opensourceways/app-cla-server/models"
 )
 
 type CLAController struct {
-	beego.Controller
+	baseController
 }
 
 func (this *CLAController) Prepare() {
@@ -82,41 +80,31 @@ func (this *CLAController) Get() {
 	body = cla
 }
 
-// @Title GetAllCLA
-// @Description get all clas
-// @Success 200 {object} models.CLA
-// @router / [get]
-func (this *CLAController) GetAll() {
-	var statusCode = 0
-	var reason error
-	var body interface{}
+// @Title List
+// @Description list clas of link
+// @Param	link_id		path 	string	true		"link id"
+// @Success 200 {string} delete success!
+// @Failure 403 uid is empty
+// @router /:link_id [get]
+func (this *CLAController) List() {
+	doWhat := "delete cla"
+	linkID := this.GetString(":link_id")
 
-	defer func() {
-		sendResponse1(&this.Controller, statusCode, reason, body)
-	}()
-
-	/*
-		user, err := getApiAccessUser(&this.Controller)
-		if err != nil {
-			reason = err
-			statusCode = 400
-			return
-		}
-	*/
-
-	clas := models.CLAListOptions{
-		// Submitter: user,
-		Name:     this.GetString("name"),
-		ApplyTo:  this.GetString("apply_to"),
-		Language: this.GetString("language"),
+	pl, fr := this.tokenPayloadBasedOnCodePlatform()
+	if fr != nil {
+		this.sendFailedResultAsResp(fr, doWhat)
+		return
 	}
-
-	r, err := clas.Get()
-	if err != nil {
-		reason = err
-		statusCode = 500
+	if fr := pl.isOwnerOfLink(linkID); fr != nil {
+		this.sendFailedResultAsResp(fr, doWhat)
 		return
 	}
 
-	body = r
+	clas, merr := models.GetAllCLA(linkID)
+	if merr != nil {
+		this.sendModelErrorAsResp(merr, doWhat)
+		return
+	}
+
+	this.sendSuccessResp(clas)
 }

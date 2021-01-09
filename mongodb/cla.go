@@ -8,7 +8,6 @@ import (
 	"github.com/huaweicloud/golangsdk"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.mongodb.org/mongo-driver/mongo"
 
 	"github.com/opensourceways/app-cla-server/dbmodels"
 )
@@ -64,36 +63,6 @@ func (this *client) CreateCLA(cla dbmodels.CLA) (string, error) {
 
 	err = withContext(f)
 	return uid, err
-}
-
-func (this *client) DeleteCLA(uid string) error {
-	oid, err := toObjectID(uid)
-	if err != nil {
-		return err
-	}
-
-	f := func(ctx mongo.SessionContext) error {
-		col := this.collection(this.orgCLACollection)
-
-		sr := col.FindOne(ctx, bson.M{"cla_id": uid})
-		err := sr.Err()
-
-		if err != nil {
-			if isErrNoDocuments(err) {
-				col = this.collection(this.clasCollection)
-
-				_, err := col.DeleteOne(ctx, bson.M{"_id": oid})
-				return err
-
-			}
-			return fmt.Errorf("failed to check whether the cla(%s) is bound: %v", uid, err)
-		}
-
-		return fmt.Errorf("can't delete the cla which has already been bound to org")
-
-	}
-
-	return this.doTransaction(f)
 }
 
 func (this *client) ListCLA(opts dbmodels.CLAListOptions) ([]dbmodels.CLA, error) {

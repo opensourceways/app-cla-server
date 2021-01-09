@@ -33,10 +33,6 @@ func (this *CLA) GetFields() error {
 	return this.get(true)
 }
 
-func (this *CLA) Delete() error {
-	return dbmodels.GetDB().DeleteCLA(this.ID)
-}
-
 type CLAListOptions dbmodels.CLAListOptions
 
 func (this CLAListOptions) Get() ([]dbmodels.CLA, error) {
@@ -231,4 +227,28 @@ func DeleteCLAInfo(linkID, applyTo, language string) IModelError {
 		return newModelError(ErrNoLink, err)
 	}
 	return parseDBError(err)
+}
+
+func DeleteCLA(linkID, applyTo, language string) IModelError {
+	err := dbmodels.GetDB().DeleteCLA(linkID, applyTo, language)
+	if err == nil {
+		return nil
+	}
+
+	if err.IsErrorOf(dbmodels.ErrNoDBRecord) {
+		return newModelError(ErrNoLink, err)
+	}
+	return parseDBError(err)
+}
+
+func GetCLAInfoSigned(linkID, claLang, applyTo string) (*dbmodels.CLAInfo, IModelError) {
+	info, err := dbmodels.GetDB().GetCLAInfoSigned(linkID, claLang, applyTo)
+	if err == nil {
+		return info, nil
+	}
+
+	if err.IsErrorOf(dbmodels.ErrNoDBRecord) {
+		return info, newModelError(ErrNoLinkOrUnsigned, err)
+	}
+	return info, parseDBError(err)
 }

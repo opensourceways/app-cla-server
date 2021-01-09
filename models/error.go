@@ -38,7 +38,6 @@ const (
 	ErrNoOrgSignature          ModelErrCode = "missing_org_signature"
 	ErrMissgingCLA             ModelErrCode = "missing_cla"
 	ErrNoLinkOrCLAExists       ModelErrCode = "no_link_or_cla_exists"
-	ErrCLAExists               ModelErrCode = "cla_exists"
 )
 
 type IModelError interface {

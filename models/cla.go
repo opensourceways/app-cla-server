@@ -95,7 +95,7 @@ func (this *CLACreateOpt) AddCLA(linkID, applyTo string) IModelError {
 	}
 
 	if err.IsErrorOf(dbmodels.ErrNoDBRecord) {
-		return newModelError(ErrCLAExists, err)
+		return newModelError(ErrNoLinkOrCLAExists, err)
 	}
 
 	return parseDBError(err)

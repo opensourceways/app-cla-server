@@ -148,22 +148,22 @@ func (this *CLAController) Get() {
 // @Failure 403 uid is empty
 // @router /:link_id [get]
 func (this *CLAController) List() {
-	doWhat := "delete cla"
+	action := "list cla"
 	linkID := this.GetString(":link_id")
 
 	pl, fr := this.tokenPayloadBasedOnCodePlatform()
 	if fr != nil {
-		this.sendFailedResultAsResp(fr, doWhat)
+		this.sendFailedResultAsResp(fr, action)
 		return
 	}
 	if fr := pl.isOwnerOfLink(linkID); fr != nil {
-		this.sendFailedResultAsResp(fr, doWhat)
+		this.sendFailedResultAsResp(fr, action)
 		return
 	}
 
 	clas, merr := models.GetAllCLA(linkID)
 	if merr != nil {
-		this.sendModelErrorAsResp(merr, doWhat)
+		this.sendModelErrorAsResp(merr, action)
 		return
 	}
 

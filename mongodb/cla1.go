@@ -49,16 +49,9 @@ func (this *client) HasCLA(linkID, applyTo, language string) (bool, dbmodels.IDB
 
 	doc := &v[0]
 	if applyTo == dbmodels.ApplyToIndividual {
-		if len(doc.IndividualCLAs) > 0 {
-			return true, nil
-		}
-	} else {
-		if len(doc.CorpCLAs) > 0 {
-			return true, nil
-		}
+		return len(doc.IndividualCLAs) > 0, nil
 	}
-
-	return false, nil
+	return len(doc.CorpCLAs) > 0, nil
 }
 
 func (this *client) AddCLA(linkID, applyTo string, cla *dbmodels.CLACreateOption) dbmodels.IDBError {

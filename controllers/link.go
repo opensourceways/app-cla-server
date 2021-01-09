@@ -199,3 +199,34 @@ func (this *LinkController) Unlink() {
 
 	this.sendSuccessResp(doWhat + "successfully")
 }
+
+// @Title ListOrgs
+// @Description get all orgs
+// @Success 200 {object} models.OrgInfo
+// @router / [get]
+func (this *LinkController) ListLinks() {
+	sendResp := this.newFuncForSendingFailedResp("list links")
+
+	pl, fr := this.tokenPayloadBasedOnCodePlatform()
+	if fr != nil {
+		sendResp(fr)
+		return
+	}
+
+	if len(pl.Orgs) == 0 {
+		this.sendSuccessResp(nil)
+		return
+	}
+
+	orgs := make([]string, 0, len(pl.Orgs))
+	for k := range pl.Orgs {
+		orgs = append(orgs, k)
+	}
+	r, merr := models.ListLinks(pl.Platform, orgs)
+	if merr != nil {
+		sendResp(parseModelError(merr))
+		return
+	}
+
+	this.sendSuccessResp(r)
+}

@@ -12,3 +12,15 @@ type LinkCreateOption struct {
 	IndividualCLAs []CLACreateOption `json:"individual_clas"`
 	CorpCLAs       []CLACreateOption `json:"corp_clas"`
 }
+
+type LinkListOption struct {
+	Platform string
+	Orgs     []string
+}
+
+type LinkInfo struct {
+	OrgInfo
+
+	LinkID    string `json:"link_id"`
+	Submitter string `json:"submitter"`
+}

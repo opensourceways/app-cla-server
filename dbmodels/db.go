@@ -91,4 +91,5 @@ type ILink interface {
 	CreateLink(info *LinkCreateOption) (string, IDBError)
 	Unlink(linkID string) IDBError
 	GetOrgOfLink(linkID string) (*OrgInfo, IDBError)
+	ListLinks(opt *LinkListOption) ([]LinkInfo, IDBError)
 }

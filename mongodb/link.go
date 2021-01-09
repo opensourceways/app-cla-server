@@ -105,6 +105,49 @@ func (this *client) GetOrgOfLink(linkID string) (*dbmodels.OrgInfo, dbmodels.IDB
 	}, nil
 }
 
+func (this *client) ListLinks(opt *dbmodels.LinkListOption) ([]dbmodels.LinkInfo, dbmodels.IDBError) {
+	filter := bson.M{
+		"platform":      opt.Platform,
+		"org":           bson.M{"$in": opt.Orgs},
+		fieldLinkStatus: linkStatusReady,
+	}
+
+	project := bson.M{
+		fieldIndividualCLAs: 0,
+		fieldCorpCLAs:       0,
+	}
+
+	var v []cLink
+	f := func(ctx context.Context) dbmodels.IDBError {
+		err := this.getDocs(ctx, this.linkCollection, filter, project, &v)
+		if err != nil {
+			return newSystemError(err)
+		}
+		return nil
+	}
+
+	if err := withContext1(f); err != nil {
+		return nil, err
+	}
+
+	n := len(v)
+	if n == 0 {
+		return nil, nil
+	}
+
+	r := make([]dbmodels.LinkInfo, 0, n)
+	for i := range v {
+		item := &v[i]
+		r = append(r, dbmodels.LinkInfo{
+			LinkID:    item.LinkID,
+			OrgInfo:   toModelOfOrgInfo(item),
+			Submitter: item.Submitter,
+		})
+	}
+
+	return r, nil
+}
+
 func toDocOfLink(info *dbmodels.LinkCreateOption) (bson.M, dbmodels.IDBError) {
 	opt := cLink{
 		LinkID:     info.LinkID,
@@ -194,4 +237,16 @@ func toDocOfCLAField(fs []dbmodels.Field) []dField {
 		})
 	}
 	return fields
+}
+
+func toModelOfOrgInfo(doc *cLink) dbmodels.OrgInfo {
+	return dbmodels.OrgInfo{
+		OrgRepo: dbmodels.OrgRepo{
+			Platform: doc.Platform,
+			OrgID:    doc.OrgID,
+			RepoID:   doc.RepoID,
+		},
+		OrgAlias: doc.OrgAlias,
+		OrgEmail: doc.OrgEmail.Email,
+	}
 }

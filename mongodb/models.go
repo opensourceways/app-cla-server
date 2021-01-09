@@ -110,8 +110,8 @@ type cLink struct {
 	LinkStatus string `bson:"link_status" json:"link_status"`
 
 	Platform  string `bson:"platform" json:"platform" required:"true"`
-	OrgID     string `bson:"org_id" json:"org_id" required:"true"`
-	RepoID    string `bson:"repo_id" json:"repo_id"`
+	OrgID     string `bson:"org" json:"org" required:"true"`
+	RepoID    string `bson:"repo" json:"repo"`
 	OrgAlias  string `bson:"org_alias" json:"org_alias"`
 	Submitter string `bson:"submitter" json:"submitter" required:"true"`
 

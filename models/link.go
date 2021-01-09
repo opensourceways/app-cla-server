@@ -129,3 +129,11 @@ func GetOrgOfLink(linkID string) (*OrgInfo, IModelError) {
 	}
 	return v, parseDBError(err)
 }
+
+func ListLinks(platform string, orgs []string) ([]dbmodels.LinkInfo, IModelError) {
+	v, err := dbmodels.GetDB().ListLinks(&dbmodels.LinkListOption{
+		Platform: platform,
+		Orgs:     orgs,
+	})
+	return v, parseDBError(err)
+}

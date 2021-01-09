@@ -183,3 +183,15 @@ func GetAllCLA(linkID string) (*dbmodels.CLAOfLink, IModelError) {
 	}
 	return v, parseDBError(err)
 }
+
+func HasCLA(linkID, applyTo, language string) (bool, IModelError) {
+	v, err := dbmodels.GetDB().HasCLA(linkID, applyTo, language)
+	if err == nil {
+		return v, nil
+	}
+
+	if err.IsErrorOf(dbmodels.ErrNoDBRecord) {
+		return v, newModelError(ErrNoLink, err)
+	}
+	return v, parseDBError(err)
+}

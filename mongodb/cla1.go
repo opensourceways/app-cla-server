@@ -9,11 +9,56 @@ import (
 	"github.com/opensourceways/app-cla-server/dbmodels"
 )
 
+func fieldNameOfCLA(applyTo string) string {
+	if applyTo == dbmodels.ApplyToCorporation {
+		return fieldCorpCLAs
+	}
+	return fieldIndividualCLAs
+}
+
 func docFilterOfCLA(linkID string) bson.M {
 	return bson.M{
 		fieldLinkID:     linkID,
 		fieldLinkStatus: linkStatusReady,
 	}
+}
+
+func elemFilterOfCLA(language string) bson.M {
+	return bson.M{fieldCLALang: language}
+}
+
+func (this *client) HasCLA(linkID, applyTo, language string) (bool, dbmodels.IDBError) {
+	claField := fieldNameOfCLA(applyTo)
+
+	project := bson.M{fmt.Sprintf("%s.url", claField): 1}
+
+	var v []cLink
+	f := func(ctx context.Context) error {
+		return this.getArrayElem(
+			ctx, this.linkCollection, claField, docFilterOfCLA(linkID),
+			elemFilterOfCLA(language), project, &v)
+	}
+
+	if err := withContext(f); err != nil {
+		return false, newSystemError(err)
+	}
+
+	if len(v) == 0 {
+		return false, errNoDBRecord1
+	}
+
+	doc := &v[0]
+	if applyTo == dbmodels.ApplyToIndividual {
+		if len(doc.IndividualCLAs) > 0 {
+			return true, nil
+		}
+	} else {
+		if len(doc.CorpCLAs) > 0 {
+			return true, nil
+		}
+	}
+
+	return false, nil
 }
 
 func (this *client) GetCLAByType(orgRepo *dbmodels.OrgRepo, applyTo string) (string, []dbmodels.CLADetail, dbmodels.IDBError) {

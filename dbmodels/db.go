@@ -76,6 +76,7 @@ type ICLA interface {
 
 	GetCLAByType(orgRepo *OrgRepo, applyTo string) (string, []CLADetail, IDBError)
 	GetAllCLA(linkID string) (*CLAOfLink, IDBError)
+	HasCLA(linkID, applyTo, language string) (bool, IDBError)
 }
 
 type IVerificationCode interface {

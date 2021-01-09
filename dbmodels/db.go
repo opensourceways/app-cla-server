@@ -78,6 +78,7 @@ type ICLA interface {
 	GetAllCLA(linkID string) (*CLAOfLink, IDBError)
 	HasCLA(linkID, applyTo, language string) (bool, IDBError)
 
+	AddCLA(linkID, applyTo string, cla *CLACreateOption) IDBError
 	DeleteCLAInfo(linkID, applyTo, claLang string) IDBError
 	AddCLAInfo(linkID, applyTo string, info *CLAInfo) IDBError
 }

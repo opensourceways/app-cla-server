@@ -61,6 +61,26 @@ func (this *client) HasCLA(linkID, applyTo, language string) (bool, dbmodels.IDB
 	return false, nil
 }
 
+func (this *client) AddCLA(linkID, applyTo string, cla *dbmodels.CLACreateOption) dbmodels.IDBError {
+	body, err := toDocOfCLA(cla)
+	if err != nil {
+		return err
+	}
+
+	claField := fieldNameOfCLA(applyTo)
+
+	docFilter := docFilterOfCLA(linkID)
+	arrayFilterByElemMatch(claField, false, elemFilterOfCLA(cla.Language), docFilter)
+
+	f := func(ctx context.Context) dbmodels.IDBError {
+		return this.pushArrayElem1(
+			ctx, this.linkCollection, claField, docFilter, body,
+		)
+	}
+
+	return withContext1(f)
+}
+
 func (this *client) GetCLAByType(orgRepo *dbmodels.OrgRepo, applyTo string) (string, []dbmodels.CLADetail, dbmodels.IDBError) {
 	var project bson.M
 	if applyTo == dbmodels.ApplyToIndividual {

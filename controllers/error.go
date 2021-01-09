@@ -21,6 +21,7 @@ const (
 	errFileNotExists        = "file_not_exists"
 	errLinkExists           = string(models.ErrLinkExists)
 	errUnknownLink          = "unknown_link"
+	errUnmatchedCLAType     = "unmatched_cla_type"
 )
 
 func parseModelError(err models.IModelError) *failedApiResult {

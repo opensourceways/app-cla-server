@@ -73,6 +73,8 @@ type ICLA interface {
 	GetCLA(string, bool) (CLA, error)
 	DeleteCLA(string) error
 	ListCLAByIDs(ids []string) ([]CLA, error)
+
+	GetCLAByType(orgRepo *OrgRepo, applyTo string) (string, []CLADetail, IDBError)
 }
 
 type IVerificationCode interface {

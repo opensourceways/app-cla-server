@@ -10,6 +10,7 @@ import (
 	"github.com/astaxie/beego"
 
 	"github.com/opensourceways/app-cla-server/conf"
+	"github.com/opensourceways/app-cla-server/models"
 	"github.com/opensourceways/app-cla-server/util"
 )
 
@@ -65,6 +66,10 @@ func (this *baseController) newFuncForSendingFailedResp(action string) func(fr *
 	return func(fr *failedApiResult) {
 		this.sendFailedResponse(fr.statusCode, fr.errCode, fr.reason, action)
 	}
+}
+
+func (this *baseController) sendModelErrorAsResp(err models.IModelError, action string) {
+	this.sendFailedResultAsResp(parseModelError(err), action)
 }
 
 func (this *baseController) sendFailedResultAsResp(fr *failedApiResult, action string) {

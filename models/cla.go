@@ -88,6 +88,31 @@ func (this *CLACreateOpt) SaveCLAAtLocal(path string) error {
 	return ioutil.WriteFile(path, *this.content, 0644)
 }
 
+func (this *CLACreateOpt) AddCLA(linkID, applyTo string) IModelError {
+	err := dbmodels.GetDB().AddCLA(linkID, applyTo, this.toCLACreateOption())
+	if err == nil {
+		return nil
+	}
+
+	if err.IsErrorOf(dbmodels.ErrNoDBRecord) {
+		return newModelError(ErrNoLinkOrCLAExists, err)
+	}
+
+	return parseDBError(err)
+}
+
+func (this *CLACreateOpt) AddCLAInfo(linkID, applyTo string) IModelError {
+	err := dbmodels.GetDB().AddCLAInfo(linkID, applyTo, this.GenCLAInfo())
+	if err == nil {
+		return nil
+	}
+
+	if err.IsErrorOf(dbmodels.ErrNoDBRecord) {
+		return newModelError(ErrNoLinkOrCLAExists, err)
+	}
+	return parseDBError(err)
+}
+
 func (this *CLACreateOpt) GenCLAInfo() *CLAInfo {
 	return &CLAInfo{
 		OrgSignatureHash: util.Md5sumOfBytes(this.orgSignature),
@@ -170,4 +195,40 @@ func GetCLAByType(orgRepo *dbmodels.OrgRepo, applyTo string) (string, []dbmodels
 		return linkID, v, newModelError(ErrNoLink, err)
 	}
 	return linkID, v, parseDBError(err)
+}
+
+func GetAllCLA(linkID string) (*dbmodels.CLAOfLink, IModelError) {
+	v, err := dbmodels.GetDB().GetAllCLA(linkID)
+	if err == nil {
+		return v, nil
+	}
+
+	if err.IsErrorOf(dbmodels.ErrNoDBRecord) {
+		return v, newModelError(ErrNoLink, err)
+	}
+	return v, parseDBError(err)
+}
+
+func HasCLA(linkID, applyTo, language string) (bool, IModelError) {
+	v, err := dbmodels.GetDB().HasCLA(linkID, applyTo, language)
+	if err == nil {
+		return v, nil
+	}
+
+	if err.IsErrorOf(dbmodels.ErrNoDBRecord) {
+		return v, newModelError(ErrNoLink, err)
+	}
+	return v, parseDBError(err)
+}
+
+func DeleteCLAInfo(linkID, applyTo, language string) IModelError {
+	err := dbmodels.GetDB().DeleteCLAInfo(linkID, applyTo, language)
+	if err == nil {
+		return nil
+	}
+
+	if err.IsErrorOf(dbmodels.ErrNoDBRecord) {
+		return newModelError(ErrNoLink, err)
+	}
+	return parseDBError(err)
 }

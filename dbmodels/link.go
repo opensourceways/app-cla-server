@@ -24,3 +24,8 @@ type LinkInfo struct {
 	LinkID    string `json:"link_id"`
 	Submitter string `json:"submitter"`
 }
+
+type CLAOfLink struct {
+	IndividualCLAs []CLADetail `json:"individual_clas"`
+	CorpCLAs       []CLADetail `json:"corp_clas"`
+}

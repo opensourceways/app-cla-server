@@ -205,6 +205,17 @@ func (this *acForCodePlatformPayload) addOrg(org string) {
 	this.Orgs[org] = true
 }
 
+func (this *acForCodePlatformPayload) orgInfo(linkID string) *models.OrgInfo {
+	if this.Links == nil {
+		return nil
+	}
+
+	if v, ok := this.Links[linkID]; ok {
+		return &v
+	}
+	return nil
+}
+
 func (this *acForCodePlatformPayload) isOwnerOfLink(link string) *failedApiResult {
 	if this.Links == nil {
 		this.Links = map[string]models.OrgInfo{}

@@ -23,6 +23,7 @@ const (
 	errUnknownLink          = "unknown_link"
 	errUnmatchedCLAType     = "unmatched_cla_type"
 	errCLAExists            = "cla_exists"
+	errCLAIsUsed            = "cla_is_used"
 )
 
 func parseModelError(err models.IModelError) *failedApiResult {

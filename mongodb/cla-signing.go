@@ -91,6 +91,42 @@ func (this *client) AddCLAInfo(linkID, applyTo string, info *dbmodels.CLAInfo) d
 	return withContext1(f)
 }
 
+func (this *client) GetCLAInfoSigned(linkID, claLang, applyTo string) (*dbmodels.CLAInfo, dbmodels.IDBError) {
+	elemFilter := elemFilterOfCLA(claLang)
+
+	docFilter := docFilterOfSigning(linkID)
+	arrayFilterByElemMatch(fieldSignings, true, elemFilter, docFilter)
+
+	var v []struct {
+		CLAInfos []DCLAInfo `bson:"cla_infos" json:"cla_infos"`
+	}
+
+	f := func(ctx context.Context) error {
+		return this.getArrayElem(
+			ctx, this.collectionOfSigning(applyTo), fieldCLAInfos, docFilter, elemFilter, nil, &v,
+		)
+	}
+
+	if err := withContext(f); err != nil {
+		return nil, newSystemError(err)
+	}
+
+	if len(v) == 0 {
+		return nil, errNoDBRecord1
+	}
+
+	if len(v[0].CLAInfos) == 0 {
+		return nil, nil
+	}
+
+	doc := &(v[0].CLAInfos[0])
+	return &dbmodels.CLAInfo{
+		CLAHash:          doc.CLAHash,
+		OrgSignatureHash: doc.OrgSignatureHash,
+		Fields:           toModelOfCLAFields(doc.Fields),
+	}, nil
+}
+
 func toDocOfCLAInfo(info *dbmodels.CLAInfo) *DCLAInfo {
 	return &DCLAInfo{
 		Language:         info.CLALang,

@@ -65,13 +65,15 @@ type IIndividualSigning interface {
 	UpdateIndividualSigning(linkID, email string, enabled bool) IDBError
 	IsIndividualSigned(linkID, email string) (bool, IDBError)
 	ListIndividualSigning(linkID, corpEmail, claLang string) ([]IndividualSigningBasicInfo, IDBError)
+
+	GetCLAInfoSigned(linkID, claLang, applyTo string) (*CLAInfo, IDBError)
 }
 
 type ICLA interface {
 	CreateCLA(CLA) (string, error)
 	ListCLA(CLAListOptions) ([]CLA, error)
 	GetCLA(string, bool) (CLA, error)
-	DeleteCLA(string) error
+
 	ListCLAByIDs(ids []string) ([]CLA, error)
 
 	GetCLAByType(orgRepo *OrgRepo, applyTo string) (string, []CLADetail, IDBError)
@@ -79,6 +81,7 @@ type ICLA interface {
 	HasCLA(linkID, applyTo, language string) (bool, IDBError)
 
 	AddCLA(linkID, applyTo string, cla *CLACreateOption) IDBError
+	DeleteCLA(linkID, applyTo, language string) IDBError
 	DeleteCLAInfo(linkID, applyTo, claLang string) IDBError
 	AddCLAInfo(linkID, applyTo string, info *CLAInfo) IDBError
 }

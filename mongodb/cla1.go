@@ -74,6 +74,17 @@ func (this *client) AddCLA(linkID, applyTo string, cla *dbmodels.CLACreateOption
 	return withContext1(f)
 }
 
+func (this *client) DeleteCLA(linkID, applyTo, language string) dbmodels.IDBError {
+	f := func(ctx context.Context) dbmodels.IDBError {
+		return this.pullArrayElem1(
+			ctx, this.linkCollection, fieldNameOfCLA(applyTo),
+			docFilterOfCLA(linkID), elemFilterOfCLA(language),
+		)
+	}
+
+	return withContext1(f)
+}
+
 func (this *client) GetCLAByType(orgRepo *dbmodels.OrgRepo, applyTo string) (string, []dbmodels.CLADetail, dbmodels.IDBError) {
 	var project bson.M
 	if applyTo == dbmodels.ApplyToIndividual {
@@ -129,6 +140,20 @@ func (this *client) GetAllCLA(linkID string) (*dbmodels.CLAOfLink, dbmodels.IDBE
 	}, nil
 }
 
+func toModelOfCLAFields(fields []dField) []dbmodels.Field {
+	fs := make([]dbmodels.Field, 0, len(fields))
+	for _, v := range fields {
+		fs = append(fs, dbmodels.Field{
+			ID:          v.ID,
+			Title:       v.Title,
+			Type:        v.Type,
+			Description: v.Description,
+			Required:    v.Required,
+		})
+	}
+	return fs
+}
+
 func toModelOfCLAs(data []dCLA) []dbmodels.CLADetail {
 	if data == nil {
 		return nil
@@ -144,17 +169,7 @@ func toModelOfCLAs(data []dCLA) []dbmodels.CLADetail {
 		cla.Language = item.Language
 
 		if len(item.Fields) > 0 {
-			fs := make([]dbmodels.Field, 0, len(item.Fields))
-			for _, v := range item.Fields {
-				fs = append(fs, dbmodels.Field{
-					ID:          v.ID,
-					Title:       v.Title,
-					Type:        v.Type,
-					Description: v.Description,
-					Required:    v.Required,
-				})
-			}
-			cla.Fields = fs
+			cla.Fields = toModelOfCLAFields(item.Fields)
 		}
 
 		return &cla

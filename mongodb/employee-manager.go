@@ -39,14 +39,9 @@ func (this *client) AddEmployeeManager(linkID string, opt []dbmodels.Corporation
 }
 
 func (this *client) DeleteEmployeeManager(linkID string, emails []string) ([]dbmodels.CorporationManagerCreateOption, dbmodels.IDBError) {
-	toDeleted := make(bson.A, 0, len(emails))
-	for _, item := range emails {
-		toDeleted = append(toDeleted, item)
-	}
-
 	elemFilter := bson.M{
 		fieldCorpID: genCorpID(emails[0]),
-		"email":     bson.M{"$in": toDeleted},
+		"email":     bson.M{"$in": emails},
 	}
 
 	var v cCorpSigning

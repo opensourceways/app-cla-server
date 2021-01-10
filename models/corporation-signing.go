@@ -42,20 +42,31 @@ func (this *CorporationSigningCreateOption) Create(orgCLAID string) IModelError 
 	return parseDBError(err)
 }
 
-func UploadCorporationSigningPDF(linkID string, email string, pdf *[]byte) error {
-	return dbmodels.GetDB().UploadCorporationSigningPDF(linkID, email, pdf)
+func UploadCorporationSigningPDF(linkID string, email string, pdf *[]byte) IModelError {
+	err := dbmodels.GetDB().UploadCorporationSigningPDF(linkID, email, pdf)
+	return parseDBError(err)
 }
 
-func DownloadCorporationSigningPDF(linkID string, email string) (*[]byte, error) {
-	return dbmodels.GetDB().DownloadCorporationSigningPDF(linkID, email)
+func DownloadCorporationSigningPDF(linkID string, email string) (*[]byte, IModelError) {
+	v, err := dbmodels.GetDB().DownloadCorporationSigningPDF(linkID, email)
+	if err == nil {
+		return v, nil
+	}
+
+	if err.IsErrorOf(dbmodels.ErrNoDBRecord) {
+		return v, newModelError(ErrNoLinkOrUnuploaed, err)
+	}
+	return v, parseDBError(err)
 }
 
-func IsCorpSigningPDFUploaded(linkID string, email string) (bool, error) {
-	return dbmodels.GetDB().IsCorpSigningPDFUploaded(linkID, email)
+func IsCorpSigningPDFUploaded(linkID string, email string) (bool, IModelError) {
+	v, err := dbmodels.GetDB().IsCorpSigningPDFUploaded(linkID, email)
+	return v, parseDBError(err)
 }
 
-func ListCorpsWithPDFUploaded(linkID string) ([]string, error) {
-	return dbmodels.GetDB().ListCorpsWithPDFUploaded(linkID)
+func ListCorpsWithPDFUploaded(linkID string) ([]string, IModelError) {
+	v, err := dbmodels.GetDB().ListCorpsWithPDFUploaded(linkID)
+	return v, parseDBError(err)
 }
 
 func ListCorpSignings(linkID, language string) ([]dbmodels.CorporationSigningSummary, IModelError) {

@@ -153,7 +153,7 @@ func apiPrepare(c *beego.Controller, permission []string) {
 		acp = &acForCodePlatformPayload{}
 	case PermissionIndividualSigner:
 		acp = &acForCodePlatformPayload{}
-	case PermissionCorporAdmin:
+	case PermissionCorpAdmin:
 		acp = &acForCorpManagerPayload{}
 	case PermissionEmployeeManager:
 		acp = &acForCorpManagerPayload{}

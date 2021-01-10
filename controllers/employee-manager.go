@@ -13,7 +13,7 @@ type EmployeeManagerController struct {
 }
 
 func (this *EmployeeManagerController) Prepare() {
-	this.apiPrepare(PermissionCorporAdmin)
+	this.apiPrepare(PermissionCorpAdmin)
 }
 
 // @Title Post

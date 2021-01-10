@@ -31,10 +31,6 @@ func CorporCLAPDFFile(out, claOrgID, email, other string) string {
 	return filepath.Join(out, f)
 }
 
-func OrgSignaturePDFFILE(out, claOrgID string) string {
-	return filepath.Join(out, fmt.Sprintf("%s.pdf", claOrgID))
-}
-
 func GenFilePath(dir, fileName string) string {
 	return filepath.Join(dir, fileName)
 }

@@ -30,6 +30,8 @@ const (
 	errEmailIsUnauthorized      = "email_is_unauthorized"
 	errUnkownPurposeForAuth     = "unkown_purpose_for_auth"
 	errNotYoursOrg              = "not_yours_org"
+	errUnuploaded               = "unuploaded"
+	errTooBigPDF                = "too_big_pdf"
 )
 
 func parseModelError(err models.IModelError) *failedApiResult {

@@ -13,7 +13,7 @@ import (
 const (
 	PermissionOwnerOfOrg       = "owner of org"
 	PermissionIndividualSigner = "individual signer"
-	PermissionCorporAdmin      = "corporation administrator"
+	PermissionCorpAdmin        = "corporation administrator"
 	PermissionEmployeeManager  = "employee manager"
 )
 

@@ -75,7 +75,9 @@ func (this *CorporationSigningController) Post() {
 
 	this.sendSuccessResp("sign successfully")
 
-	worker.GetEmailWorker().GenCLAPDFForCorporationAndSendIt(orgCLA, &info.CorporationSigning, cla)
+	worker.GetEmailWorker().GenCLAPDFForCorporationAndSendIt(
+		genOrgSignatureFilePath(orgCLAID, cla.Language),
+		orgCLA, &info.CorporationSigning, cla)
 }
 
 // @Title ResendCorpSigningEmail
@@ -126,6 +128,7 @@ func (this *CorporationSigningController) ResendCorpSigningEmail() {
 	this.sendSuccessResp("resend email successfully")
 
 	worker.GetEmailWorker().GenCLAPDFForCorporationAndSendIt(
+		genOrgSignatureFilePath(linkID, cla.Language),
 		orgCLA, (*models.CorporationSigning)(signingInfo), cla,
 	)
 

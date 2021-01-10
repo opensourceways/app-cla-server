@@ -22,7 +22,7 @@ func (this *CorporationManagerController) Prepare() {
 		// reset password of manager
 		this.apiPrepareWithAC(
 			&accessController{Payload: &acForCorpManagerPayload{}},
-			[]string{PermissionCorporAdmin, PermissionEmployeeManager},
+			[]string{PermissionCorpAdmin, PermissionEmployeeManager},
 		)
 	}
 }

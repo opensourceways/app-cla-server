@@ -33,6 +33,7 @@ const (
 	errUnuploaded               = "unuploaded"
 	errTooBigPDF                = "too_big_pdf"
 	errUnmatchedCLA             = "unmatched_cla"
+	errNoCorpEmployeeManager    = "no_employee_manager"
 )
 
 func parseModelError(err models.IModelError) *failedApiResult {

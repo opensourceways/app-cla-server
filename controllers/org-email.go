@@ -5,7 +5,6 @@ import (
 
 	"github.com/opensourceways/app-cla-server/email"
 	"github.com/opensourceways/app-cla-server/models"
-	"github.com/opensourceways/app-cla-server/util"
 )
 
 const authURLState = "state-token-cla"
@@ -31,32 +30,32 @@ func (this *EmailController) Auth() {
 	}
 
 	if err := this.GetString("error"); err != "" {
-		rs(util.ErrAuthFailed, fmt.Errorf("%s, %s", err, this.GetString("error_description")))
+		rs(errAuthFailed, fmt.Errorf("%s, %s", err, this.GetString("error_description")))
 		return
 	}
 
 	platform := this.GetString(":platform")
 	emailClient, err := email.EmailAgent.GetEmailClient(platform)
 	if err != nil {
-		rs(util.ErrNotSupportedPlatform, err)
+		rs(errUnsupportedEmailPlatform, err)
 		return
 	}
 
 	params := map[string]string{"code": "", "scope": "", "state": authURLState}
 	if err := checkAndVerifyAPIStringParameter(&this.Controller, params); err != nil {
-		rs(util.ErrInvalidParameter, err)
+		rs(errSystemError, err)
 		return
 	}
 
 	token, err := emailClient.GetToken(this.GetString("code"), this.GetString("scope"))
 	if err != nil {
-		rs(util.ErrSystemError, err)
+		rs(errSystemError, err)
 		return
 	}
 
 	emailAddr, err := emailClient.GetAuthorizedEmail(token)
 	if err != nil {
-		rs(util.ErrSystemError, err)
+		rs(errSystemError, err)
 		return
 	}
 
@@ -71,8 +70,8 @@ func (this *EmailController) Auth() {
 			Email:    emailAddr,
 			Platform: platform,
 		}
-		if err = opt.Create(); err != nil {
-			rs(util.ErrSystemError, err)
+		if err := opt.Create(); err != nil {
+			rs(parseModelError(err).errCode, err)
 			return
 		}
 	}
@@ -87,11 +86,9 @@ func (this *EmailController) Auth() {
 // @Success 200 {object}
 // @router /authcodeurl/:platform [get]
 func (this *EmailController) Get() {
-	sendResp := this.newFuncForSendingFailedResp("get auth code url of email")
-
 	e, err := email.EmailAgent.GetEmailClient(this.GetString(":platform"))
 	if err != nil {
-		sendResp(newFailedApiResult(400, errUnknownEmailPlatform, err))
+		this.sendFailedResponse(400, errUnknownEmailPlatform, err, "get auth code url of email")
 		return
 	}
 

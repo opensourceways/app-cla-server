@@ -139,7 +139,7 @@ func (this *CorporationPDFController) Review() {
 		return
 	}
 
-	if fr := this.downloadCorpPDF(ac.OrgCLAID, ac.Email); fr != nil {
+	if fr := this.downloadCorpPDF(ac.LinkID, ac.Email); fr != nil {
 		rs(fr.statusCode, fr.errCode, fr.reason)
 	}
 }

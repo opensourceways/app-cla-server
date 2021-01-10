@@ -2,20 +2,21 @@ package controllers
 
 import (
 	"fmt"
-	"net/http"
 	"strings"
-
-	"github.com/astaxie/beego"
 
 	platformAuth "github.com/opensourceways/app-cla-server/code-platform-auth"
 	"github.com/opensourceways/app-cla-server/code-platform-auth/platforms"
-	"github.com/opensourceways/app-cla-server/conf"
 	"github.com/opensourceways/app-cla-server/models"
-	"github.com/opensourceways/app-cla-server/util"
 )
 
 type AuthController struct {
-	beego.Controller
+	baseController
+}
+
+func (this *AuthController) Prepare() {
+	if this.routerPattern() == "/v1/auth/authcodeurl/:platform/:purpose" {
+		this.apiPrepare("")
+	}
 }
 
 // @Title Auth
@@ -32,29 +33,31 @@ func (this *AuthController) Auth() {
 		return
 	}
 
+	rs := func(errCode string, reason error) {
+		this.setCookies(map[string]string{"error_code": errCode, "error_msg": reason.Error()})
+		this.redirect(authHelper.WebRedirectDir(false))
+	}
+
 	if this.GetString("state") != authURLState {
+		rs(errSystemError, fmt.Errorf("unkown state"))
 		return
 	}
 
-	rs := func(errCode string, reason error) {
-		rspOnAuthFailed(&this.Controller, authHelper.WebRedirectDir(false), errCode, reason)
-	}
-
 	if err := this.GetString("error"); err != "" {
-		rs(util.ErrAuthFailed, fmt.Errorf("%s, %s", err, this.GetString("error_description")))
+		rs(errAuthFailed, fmt.Errorf("%s, %s", err, this.GetString("error_description")))
 		return
 	}
 
 	cp, err := authHelper.GetAuthInstance(platform)
 	if err != nil {
-		rs(util.ErrNotSupportedPlatform, err)
+		rs(errUnsupportedCodePlatform, err)
 		return
 	}
 
 	// gitee don't pass the scope paramter
 	token, err := cp.GetToken(this.GetString("code"), this.GetString("scope"))
 	if err != nil {
-		rs(util.ErrSystemError, err)
+		rs(errSystemError, err)
 		return
 	}
 
@@ -72,9 +75,9 @@ func (this *AuthController) Auth() {
 		return
 	}
 
-	at, err := this.newAccessToken(permission, pl)
+	at, err := this.newApiToken(permission, pl)
 	if err != nil {
-		rs(util.ErrSystemError, err)
+		rs(errSystemError, err)
 		return
 	}
 
@@ -83,25 +86,29 @@ func (this *AuthController) Auth() {
 		cookies["sign_user"] = pl.User
 		cookies["sign_email"] = pl.Email
 	}
-	setCookies(&this.Controller, cookies)
-
-	http.Redirect(
-		this.Ctx.ResponseWriter, this.Ctx.Request,
-		authHelper.WebRedirectDir(true), http.StatusFound,
-	)
+	this.setCookies(cookies)
+	this.redirect(authHelper.WebRedirectDir(true))
 }
 
 func (this *AuthController) genACPayload(platform, permission, platformToken string) (*acForCodePlatformPayload, string, error) {
 	pt, err := platforms.NewPlatform(platformToken, "", platform)
 	if err != nil {
-		return nil, util.ErrNotSupportedPlatform, err
+		return nil, errSystemError, err
 	}
 
 	orgm := map[string]bool{}
+	links := map[string]models.OrgInfo{}
 	if permission == PermissionOwnerOfOrg {
-		if orgs, err := pt.ListOrg(); err == nil {
+		orgs, err := pt.ListOrg()
+		if err == nil {
 			for _, item := range orgs {
 				orgm[item] = true
+			}
+
+			if r, err := models.ListLinks(platform, orgs); err == nil {
+				for i := range r {
+					links[r[i].LinkID] = r[i].OrgInfo
+				}
 			}
 		}
 	}
@@ -110,15 +117,15 @@ func (this *AuthController) genACPayload(platform, permission, platformToken str
 	if permission == PermissionIndividualSigner {
 		if email, err = pt.GetAuthorizedEmail(); err != nil {
 			if strings.Index(err.Error(), "401") >= 0 {
-				return nil, util.ErrUnauthorized, err
+				return nil, errEmailIsUnauthorized, err
 			}
-			return nil, util.ErrSystemError, err
+			return nil, errSystemError, err
 		}
 	}
 
 	user, err := pt.GetUser()
 	if err != nil {
-		return nil, util.ErrSystemError, err
+		return nil, errSystemError, err
 	}
 
 	return &acForCodePlatformPayload{
@@ -127,17 +134,8 @@ func (this *AuthController) genACPayload(platform, permission, platformToken str
 		Platform:      platform,
 		PlatformToken: platformToken,
 		Orgs:          orgm,
+		Links:         links,
 	}, "", nil
-}
-
-func (this *AuthController) newAccessToken(permission string, pl *acForCodePlatformPayload) (string, error) {
-	ac := &accessController{
-		Expiry:     util.Expiry(conf.AppConfig.APITokenExpiry),
-		Permission: permission,
-		Payload:    pl,
-	}
-
-	return ac.NewToken(conf.AppConfig.APITokenKey)
 }
 
 // @Title Get
@@ -148,34 +146,23 @@ func (this *AuthController) newAccessToken(permission string, pl *acForCodePlatf
 // @Failure util.ErrNotSupportedPlatform
 // @router /authcodeurl/:platform/:purpose [get]
 func (this *AuthController) Get() {
-	var statusCode = 0
-	var errCode = ""
-	var reason error
-	var body interface{}
-
-	defer func() {
-		sendResponse(&this.Controller, statusCode, errCode, reason, body, "fetch auth code url of gitee/github")
-	}()
+	action := "fetch auth code url of gitee/github"
 
 	authHelper, ok := platformAuth.Auth[this.GetString(":purpose")]
 	if !ok {
-		reason = fmt.Errorf("unkonw purpose")
-		errCode = util.ErrInvalidParameter
-		statusCode = 400
+		this.sendFailedResponse(400, errUnkownPurposeForAuth, fmt.Errorf("unkonw purpose"), action)
 		return
 	}
 
 	cp, err := authHelper.GetAuthInstance(this.GetString(":platform"))
 	if err != nil {
-		reason = err
-		errCode = util.ErrNotSupportedPlatform
-		statusCode = 400
+		this.sendFailedResponse(400, errUnsupportedCodePlatform, err, action)
 		return
 	}
 
-	body = map[string]string{
+	this.sendSuccessResp(map[string]string{
 		"url": cp.GetAuthCodeURL(authURLState),
-	}
+	})
 }
 
 type acForCodePlatformPayload struct {
@@ -252,14 +239,14 @@ func (this *acForCodePlatformPayload) isOwnerOfOrg(org string) *failedApiResult 
 
 	p, err := platforms.NewPlatform(this.PlatformToken, "", this.Platform)
 	if err != nil {
-		return newFailedApiResult(400, util.ErrInvalidParameter, err)
+		return newFailedApiResult(400, errSystemError, err)
 	}
 
 	if b, err := p.IsOrgExist(org); err != nil {
 		// TODO token expiry
-		return newFailedApiResult(500, util.ErrSystemError, err)
+		return newFailedApiResult(500, errSystemError, err)
 	} else if !b {
-		return newFailedApiResult(400, util.ErrNotYoursOrg, fmt.Errorf("not the org of owner"))
+		return newFailedApiResult(400, errNotYoursOrg, fmt.Errorf("not the org of owner"))
 	}
 
 	this.Orgs[org] = true

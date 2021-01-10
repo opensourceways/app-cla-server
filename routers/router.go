@@ -20,9 +20,9 @@ func init() {
 				&controllers.CLAController{},
 			),
 		),
-		beego.NSNamespace("/org-cla",
+		beego.NSNamespace("/link",
 			beego.NSInclude(
-				&controllers.OrgCLAController{},
+				&controllers.LinkController{},
 			),
 		),
 		beego.NSNamespace("/individual-signing",

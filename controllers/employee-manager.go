@@ -37,12 +37,12 @@ func (this *EmployeeManagerController) Post() {
 		return
 	}
 
-	if err := info.ValidateWhenAdding(pl.OrgCLAID, pl.Email); err != nil {
+	if err := info.ValidateWhenAdding(pl.LinkID, pl.Email); err != nil {
 		sendResp(parseModelError(err))
 		return
 	}
 
-	added, merr := info.Create(pl.OrgCLAID)
+	added, merr := info.Create(pl.LinkID)
 	if merr != nil {
 		sendResp(parseModelError(merr))
 		return
@@ -79,7 +79,7 @@ func (this *EmployeeManagerController) Delete() {
 		return
 	}
 
-	deleted, merr := info.Delete(pl.OrgCLAID)
+	deleted, merr := info.Delete(pl.LinkID)
 	if merr != nil {
 		sendResp(parseModelError(merr))
 		return
@@ -112,7 +112,7 @@ func (this *EmployeeManagerController) GetAll() {
 		return
 	}
 
-	r, err := models.ListCorporationManagers(pl.OrgCLAID, pl.Email, dbmodels.RoleManager)
+	r, err := models.ListCorporationManagers(pl.LinkID, pl.Email, dbmodels.RoleManager)
 	if err == nil {
 		this.sendSuccessResp(r)
 	} else {

@@ -108,7 +108,7 @@ func (this *CorporationManagerController) Patch() {
 		return
 	}
 
-	if err := (&info).Reset(pl.OrgCLAID, pl.Email); err != nil {
+	if err := (&info).Reset(pl.LinkID, pl.Email); err != nil {
 		sendResp(parseModelError(err))
 		return
 	}

@@ -30,10 +30,10 @@ type ICorporationSigning interface {
 	GetCorpSigningDetail(linkID, email string) (*CorpSigningCreateOpt, IDBError)
 	GetCorpSigningBasicInfo(linkID, email string) (*CorporationSigningBasicInfo, IDBError)
 
-	UploadCorporationSigningPDF(linkID string, adminEmail string, pdf *[]byte) error
-	DownloadCorporationSigningPDF(linkID string, email string) (*[]byte, error)
-	IsCorpSigningPDFUploaded(linkID string, email string) (bool, error)
-	ListCorpsWithPDFUploaded(linkID string) ([]string, error)
+	UploadCorporationSigningPDF(linkID string, adminEmail string, pdf *[]byte) IDBError
+	DownloadCorporationSigningPDF(linkID string, email string) (*[]byte, IDBError)
+	IsCorpSigningPDFUploaded(linkID string, email string) (bool, IDBError)
+	ListCorpsWithPDFUploaded(linkID string) ([]string, IDBError)
 }
 
 type ICorporationManager interface {

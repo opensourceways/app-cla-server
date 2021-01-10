@@ -3,6 +3,7 @@ package controllers
 import (
 	"fmt"
 	"io/ioutil"
+	"os"
 	"strings"
 
 	"github.com/opensourceways/app-cla-server/conf"
@@ -17,58 +18,12 @@ type CorporationPDFController struct {
 }
 
 func (this *CorporationPDFController) Prepare() {
-	if getRouterPattern(&this.Controller) == "/v1/corporation-pdf" {
+	if this.routerPattern() == "/v1/corporation-pdf" {
 		// admin reviews pdf
-		apiPrepare(&this.Controller, []string{PermissionCorporAdmin})
+		this.apiPrepare(PermissionCorpAdmin)
 	} else {
-		apiPrepare(&this.Controller, []string{PermissionOwnerOfOrg})
+		this.apiPrepare(PermissionOwnerOfOrg)
 	}
-}
-
-// @Title Upload
-// @Description upload pdf of corporation signing
-// @Param	:org_cla_id	path 	string					true		"org cla id"
-// @Param	:email		path 	string					true		"email of corp"
-// @Success 204 {int} map
-// @router /:org_cla_id/:email [patch]
-func (this *CorporationPDFController) Upload() {
-	action := "upload corp's signing pdf"
-	sendResp := this.newFuncForSendingFailedResp(action)
-	orgCLAID := this.GetString(":org_cla_id")
-	corpEmail := this.GetString(":email")
-
-	_, statusCode, errCode, reason := canAccessOrgCLA(&this.Controller, orgCLAID)
-	if reason != nil {
-		this.sendFailedResponse(statusCode, errCode, reason, action)
-		return
-	}
-
-	b, merr := models.IsCorpSigned(orgCLAID, corpEmail)
-	if merr != nil {
-		sendResp(parseModelError(merr))
-		return
-	}
-	if !b {
-		this.sendFailedResponse(400, errUnsigned, fmt.Errorf("not signed"), action)
-		return
-	}
-
-	data, fr := this.readInputFile("pdf")
-	if fr != nil {
-		sendResp(fr)
-		return
-	}
-	if len(data) > (2 << 20) {
-		this.sendFailedResponse(400, util.ErrInvalidParameter, fmt.Errorf("big pdf file"), action)
-		return
-	}
-
-	if err := models.UploadCorporationSigningPDF(orgCLAID, corpEmail, &data); err != nil {
-		sendResp(convertDBError1(err))
-		return
-	}
-
-	this.sendSuccessResp("upload pdf of signature page successfully")
 }
 
 func (this *CorporationPDFController) downloadCorpPDF(linkID, corpEmail string) *failedApiResult {
@@ -78,21 +33,76 @@ func (this *CorporationPDFController) downloadCorpPDF(linkID, corpEmail string) 
 
 	f, err := ioutil.TempFile(dir, name)
 	if err != nil {
-		return newFailedApiResult(500, util.ErrSystemError, err)
+		return newFailedApiResult(500, errSystemError, err)
+	}
+	defer func() {
+		f.Close()
+		os.Remove(f.Name())
+	}()
+
+	pdf, merr := models.DownloadCorporationSigningPDF(linkID, corpEmail)
+	if merr != nil {
+		if merr.IsErrorOf(models.ErrNoLinkOrUnuploaed) {
+			return newFailedApiResult(400, errUnuploaded, merr)
+		}
+		return parseModelError(merr)
 	}
 
-	pdf, err := models.DownloadCorporationSigningPDF(linkID, corpEmail)
-	if err != nil {
-		return newFailedApiResult(500, util.ErrSystemError, err)
+	if _, err = f.Write(*pdf); err != nil {
+		return newFailedApiResult(500, errSystemError, err)
 	}
 
-	_, err = f.Write(*pdf)
-	if err != nil {
-		return newFailedApiResult(500, util.ErrSystemError, err)
-	}
-
-	downloadFile(&this.Controller, f.Name())
+	this.downloadFile(f.Name())
 	return nil
+}
+
+// @Title Upload
+// @Description upload pdf of corporation signing
+// @Param	:org_cla_id	path 	string					true		"org cla id"
+// @Param	:email		path 	string					true		"email of corp"
+// @Success 204 {int} map
+// @router /:link_id/:email [patch]
+func (this *CorporationPDFController) Upload() {
+	action := "upload corp's signing pdf"
+	linkID := this.GetString(":link_id")
+	corpEmail := this.GetString(":email")
+
+	pl, fr := this.tokenPayloadBasedOnCodePlatform()
+	if fr != nil {
+		this.sendFailedResultAsResp(fr, action)
+		return
+	}
+	if fr := pl.isOwnerOfLink(linkID); fr != nil {
+		this.sendFailedResultAsResp(fr, action)
+		return
+	}
+
+	b, merr := models.IsCorpSigned(linkID, corpEmail)
+	if merr != nil {
+		this.sendModelErrorAsResp(merr, action)
+		return
+	}
+	if !b {
+		this.sendFailedResponse(400, errUnsigned, fmt.Errorf("not signed"), action)
+		return
+	}
+
+	data, fr := this.readInputFile("pdf")
+	if fr != nil {
+		this.sendFailedResultAsResp(fr, action)
+		return
+	}
+	if len(data) > (2 << 20) {
+		this.sendFailedResponse(400, errTooBigPDF, fmt.Errorf("big pdf file"), action)
+		return
+	}
+
+	if err := models.UploadCorporationSigningPDF(linkID, corpEmail, &data); err != nil {
+		this.sendModelErrorAsResp(err, action)
+		return
+	}
+
+	this.sendSuccessResp("upload pdf of signature page successfully")
 }
 
 // @Title Download
@@ -100,26 +110,24 @@ func (this *CorporationPDFController) downloadCorpPDF(linkID, corpEmail string) 
 // @Param	:org_cla_id	path 	string					true		"org cla id"
 // @Param	:email		path 	string					true		"email of corp"
 // @Success 200 {int} map
-// @router /:org_cla_id/:email [get]
+// @router /:link_id/:email [get]
 func (this *CorporationPDFController) Download() {
-	rs := func(statusCode int, errCode string, reason error) {
-		sendResponse(&this.Controller, statusCode, errCode, reason, nil, "download corp's signing pdf")
-	}
+	action := "download corp's signing pdf"
+	linkID := this.GetString(":link_id")
+	corpEmail := this.GetString(":email")
 
-	if err := checkAPIStringParameter(&this.Controller, []string{":org_cla_id", ":email"}); err != nil {
-		rs(400, util.ErrInvalidParameter, err)
+	pl, fr := this.tokenPayloadBasedOnCodePlatform()
+	if fr != nil {
+		this.sendFailedResultAsResp(fr, action)
 		return
 	}
-	orgCLAID := this.GetString(":org_cla_id")
-
-	_, statusCode, errCode, reason := canAccessOrgCLA(&this.Controller, orgCLAID)
-	if reason != nil {
-		rs(statusCode, errCode, reason)
+	if r := pl.isOwnerOfLink(linkID); r != nil {
+		this.sendFailedResponse(r.statusCode, r.errCode, r.reason, action)
 		return
 	}
 
-	if fr := this.downloadCorpPDF(orgCLAID, this.GetString(":email")); fr != nil {
-		rs(fr.statusCode, fr.errCode, fr.reason)
+	if fr := this.downloadCorpPDF(linkID, corpEmail); fr != nil {
+		this.sendFailedResultAsResp(fr, action)
 	}
 }
 
@@ -128,19 +136,16 @@ func (this *CorporationPDFController) Download() {
 // @Success 200 {int} map
 // @router / [get]
 func (this *CorporationPDFController) Review() {
-	rs := func(statusCode int, errCode string, reason error) {
-		sendResponse(&this.Controller, statusCode, errCode, reason, nil, "download corp's signing pdf")
-	}
+	action := "download corp's signing pdf"
 
-	var ac *acForCorpManagerPayload
-	ac, errCode, reason := getACOfCorpManager(&this.Controller)
-	if reason != nil {
-		rs(401, errCode, reason)
+	pl, fr := this.tokenPayloadBasedOnCorpManager()
+	if fr != nil {
+		this.sendFailedResultAsResp(fr, action)
 		return
 	}
 
-	if fr := this.downloadCorpPDF(ac.LinkID, ac.Email); fr != nil {
-		rs(fr.statusCode, fr.errCode, fr.reason)
+	if fr := this.downloadCorpPDF(pl.LinkID, pl.Email); fr != nil {
+		this.sendFailedResultAsResp(fr, action)
 	}
 }
 
@@ -159,7 +164,7 @@ func (this *CorporationPDFController) Preview() {
 		sendResponse(&this.Controller, statusCode, errCode, reason, body, "preview the unsinged pdf of corp")
 	}()
 
-	orgCLAID, err := fetchStringParameter(&this.Controller, ":org_cla_id")
+	linkID, err := fetchStringParameter(&this.Controller, ":org_cla_id")
 	if err != nil {
 		reason = err
 		errCode = util.ErrInvalidParameter
@@ -168,7 +173,7 @@ func (this *CorporationPDFController) Preview() {
 	}
 
 	var orgCLA *models.OrgCLA
-	orgCLA, statusCode, errCode, reason = canAccessOrgCLA(&this.Controller, orgCLAID)
+	orgCLA, statusCode, errCode, reason = canAccessOrgCLA(&this.Controller, linkID)
 	if reason != nil {
 		return
 	}

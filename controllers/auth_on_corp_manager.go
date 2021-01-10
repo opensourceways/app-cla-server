@@ -63,7 +63,7 @@ func (this *CorporationManagerController) newAccessToken(linkID string, info *db
 	permission := ""
 	switch info.Role {
 	case dbmodels.RoleAdmin:
-		permission = PermissionCorporAdmin
+		permission = PermissionCorpAdmin
 	case dbmodels.RoleManager:
 		permission = PermissionEmployeeManager
 	}

@@ -209,7 +209,7 @@ func (this *baseController) newAccessController(permission string) *accessContro
 		acp = &acForCodePlatformPayload{}
 	case PermissionIndividualSigner:
 		acp = &acForCodePlatformPayload{}
-	case PermissionCorporAdmin:
+	case PermissionCorpAdmin:
 		acp = &acForCorpManagerPayload{}
 	case PermissionEmployeeManager:
 		acp = &acForCorpManagerPayload{}

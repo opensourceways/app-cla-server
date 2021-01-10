@@ -3,7 +3,6 @@ package controllers
 import (
 	"encoding/json"
 	"fmt"
-	"net/http"
 	"strings"
 	"time"
 
@@ -393,14 +392,6 @@ func getSingingInfo(info dbmodels.TypeSigningInfo, fields []dbmodels.Field) dbmo
 
 func projectURL(orgCLA *models.OrgCLA) string {
 	return util.ProjectURL(orgCLA.Platform, orgCLA.RepoID, orgCLA.RepoID)
-}
-
-func rspOnAuthFailed(c *beego.Controller, webRedirectDir, errCode string, reason error) {
-	setCookies(c, map[string]string{"error_code": errCode, "error_msg": reason.Error()})
-
-	http.Redirect(
-		c.Ctx.ResponseWriter, c.Ctx.Request, webRedirectDir, http.StatusFound,
-	)
 }
 
 func setCookies(c *beego.Controller, value map[string]string) {

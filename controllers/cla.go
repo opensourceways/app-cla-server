@@ -115,39 +115,6 @@ func (this *CLAController) Delete() {
 	this.sendSuccessResp("delete cla successfully")
 }
 
-// @Title Get
-// @Description get cla by uid
-// @Param	uid		path 	string	true		"The key for cla"
-// @Success 200 {object} models.CLA
-// @Failure 403 :uid is empty
-// @router /:uid [get]
-func (this *CLAController) Get() {
-	var statusCode = 0
-	var reason error
-	var body interface{}
-
-	defer func() {
-		sendResponse1(&this.Controller, statusCode, reason, body)
-	}()
-
-	uid := this.GetString(":uid")
-	if uid == "" {
-		reason = fmt.Errorf("missing cla id")
-		statusCode = 400
-		return
-	}
-
-	cla := models.CLA{ID: uid}
-
-	if err := (&cla).Get(); err != nil {
-		reason = err
-		statusCode = 500
-		return
-	}
-
-	body = cla
-}
-
 // @Title List
 // @Description list clas of link
 // @Param	link_id		path 	string	true		"link id"

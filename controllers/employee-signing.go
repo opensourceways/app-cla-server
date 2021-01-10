@@ -118,7 +118,7 @@ func (this *EmployeeSigningController) GetAll() {
 		return
 	}
 
-	orgCLA := &models.OrgCLA{ID: pl.OrgCLAID}
+	orgCLA := &models.OrgCLA{ID: pl.LinkID}
 	if err := orgCLA.Get(); err != nil {
 		sendResp(convertDBError1(err))
 		return
@@ -162,7 +162,7 @@ func (this *EmployeeSigningController) Update() {
 		return
 	}
 
-	corpClaOrg := &models.OrgCLA{ID: pl.OrgCLAID}
+	corpClaOrg := &models.OrgCLA{ID: pl.LinkID}
 	if err := corpClaOrg.Get(); err != nil {
 		sendResp(convertDBError1(err))
 		return
@@ -231,7 +231,7 @@ func (this *EmployeeSigningController) Delete() {
 		return
 	}
 
-	corpClaOrg := &models.OrgCLA{ID: pl.OrgCLAID}
+	corpClaOrg := &models.OrgCLA{ID: pl.LinkID}
 	if err := corpClaOrg.Get(); err != nil {
 		sendResp(convertDBError1(err))
 		return

@@ -16,21 +16,20 @@ import (
 // @router /auth [post]
 func (this *CorporationManagerController) Auth() {
 	action := "authenticate as corp/employee manager"
-	sendResp := this.newFuncForSendingFailedResp(action)
 
 	var info models.CorporationManagerAuthentication
 	if fr := this.fetchInputPayload(&info); fr != nil {
-		sendResp(fr)
+		this.sendFailedResultAsResp(fr, action)
 		return
 	}
 
 	v, merr := (&info).Authenticate()
 	if merr != nil {
-		sendResp(parseModelError(merr))
+		this.sendModelErrorAsResp(merr, action)
 		return
 	}
 	if len(v) == 0 {
-		sendResp(newFailedApiResult(400, errWrongIDOrPassword, fmt.Errorf("wrong id or pw")))
+		this.sendFailedResponse(400, errWrongIDOrPassword, fmt.Errorf("wrong id or pw"), action)
 	}
 
 	type authInfo struct {
@@ -72,18 +71,18 @@ func (this *CorporationManagerController) newAccessToken(linkID string, info *db
 	return this.newApiToken(
 		permission,
 		&acForCorpManagerPayload{
-			Name:     info.Name,
-			Email:    info.Email,
-			OrgCLAID: linkID,
-			OrgInfo:  info.OrgInfo,
+			Name:    info.Name,
+			Email:   info.Email,
+			LinkID:  linkID,
+			OrgInfo: info.OrgInfo,
 		},
 	)
 }
 
 type acForCorpManagerPayload struct {
-	Name     string `json:"name"`
-	Email    string `json:"email"`
-	OrgCLAID string `json:"link_id"`
+	Name   string `json:"name"`
+	Email  string `json:"email"`
+	LinkID string `json:"link_id"`
 
 	models.OrgInfo
 }

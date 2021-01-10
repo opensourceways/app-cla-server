@@ -121,8 +121,8 @@ func (this *CorporationPDFController) Download() {
 		this.sendFailedResultAsResp(fr, action)
 		return
 	}
-	if r := pl.isOwnerOfLink(linkID); r != nil {
-		this.sendFailedResponse(r.statusCode, r.errCode, r.reason, action)
+	if fr := pl.isOwnerOfLink(linkID); fr != nil {
+		this.sendFailedResultAsResp(fr, action)
 		return
 	}
 

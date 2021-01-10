@@ -203,6 +203,6 @@ func (this *CorporationPDFController) Preview() {
 		Info: dbmodels.TypeSigningInfo(value),
 	}
 
-	pdf.GetPDFGenerator().GenPDFForCorporationSigning(orgCLA, &signing, cla)
+	pdf.GetPDFGenerator().GenPDFForCorporationSigning("", orgCLA, &signing, cla)
 	// TODO: not finished
 }

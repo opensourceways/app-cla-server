@@ -19,7 +19,6 @@ type IDB interface {
 	IIndividualSigning
 	ICLA
 	IVerificationCode
-	IPDF
 }
 
 type ICorporationSigning interface {
@@ -89,12 +88,6 @@ type ICLA interface {
 type IVerificationCode interface {
 	CreateVerificationCode(opt VerificationCode) IDBError
 	GetVerificationCode(opt *VerificationCode) IDBError
-}
-
-type IPDF interface {
-	UploadOrgSignature(orgCLAID string, pdf []byte) error
-	DownloadOrgSignature(orgCLAID string) ([]byte, error)
-	DownloadOrgSignatureByMd5(orgCLAID, md5sum string) ([]byte, error)
 }
 
 type ILink interface {

@@ -16,6 +16,8 @@ func (this *IndividualSigningController) Prepare() {
 	// sign as individual
 	if this.isPostRequest() {
 		this.apiPrepare(PermissionIndividualSigner)
+	} else {
+		this.apiPrepare("")
 	}
 }
 
@@ -25,51 +27,75 @@ func (this *IndividualSigningController) Prepare() {
 // @Param	body		body 	models.IndividualSigning	true		"body for individual signing"
 // @Success 201 {int} map
 // @Failure util.ErrHasSigned
-// @router /:org_cla_id [post]
+// @router /:link_id/:cla_lang/:cla_hash [post]
 func (this *IndividualSigningController) Post() {
 	action := "sign individual cla"
-	sendResp := this.newFuncForSendingFailedResp(action)
+	linkID := this.GetString(":link_id")
+	claLang := this.GetString(":cla_lang")
 
-	orgCLAID := this.GetString(":org_cla_id")
 	pl, fr := this.tokenPayloadBasedOnCodePlatform()
 	if fr != nil {
-		sendResp(fr)
+		this.sendFailedResultAsResp(fr, action)
 		return
 	}
 
 	var info models.IndividualSigning
 	if fr := this.fetchInputPayload(&info); fr != nil {
-		sendResp(fr)
+		this.sendFailedResultAsResp(fr, action)
 		return
 	}
+	info.CLALanguage = claLang
+
 	if err := (&info).Validate(pl.Email); err != nil {
-		sendResp(parseModelError(err))
+		this.sendModelErrorAsResp(err, action)
 		return
 	}
 
-	orgCLA := &models.OrgCLA{ID: orgCLAID}
-	if err := orgCLA.Get(); err != nil {
-		sendResp(convertDBError1(err))
+	claInfo, fr := getCLAInfoSigned(linkID, claLang, dbmodels.ApplyToIndividual)
+	if fr != nil {
+		this.sendFailedResultAsResp(fr, action)
 		return
 	}
-	if isNotIndividualCLA(orgCLA) {
-		this.sendFailedResponse(400, util.ErrInvalidParameter, fmt.Errorf("invalid cla"), action)
+	if claInfo == nil {
+		// no contributor signed for this language. lock to avoid the cla to be changed
+		// before writing to the db.
+
+		orgRepo, merr := models.GetOrgOfLink(linkID)
+		if merr != nil {
+			this.sendModelErrorAsResp(merr, action)
+			return
+		}
+
+		unlock, err := util.Lock(genOrgFileLockPath(orgRepo.Platform, orgRepo.OrgID, orgRepo.RepoID))
+		if err != nil {
+			this.sendFailedResponse(500, util.ErrSystemError, err, action)
+			return
+		}
+		defer unlock()
+
+		claInfo, merr = models.GetCLAInfoToSign(linkID, claLang, dbmodels.ApplyToIndividual)
+		if merr != nil {
+			this.sendModelErrorAsResp(merr, action)
+			return
+		}
+		if claInfo == nil {
+			this.sendFailedResponse(500, errSystemError, fmt.Errorf("no cla info, impossible"), action)
+			return
+		}
+	}
+
+	if claInfo.CLAHash != this.GetString(":cla_hash") {
+		this.sendFailedResponse(400, errUnmatchedCLA, fmt.Errorf("invalid cla"), action)
 		return
 	}
 
-	cla := &models.CLA{ID: orgCLA.CLAID}
-	if err := cla.GetFields(); err != nil {
-		sendResp(convertDBError1(err))
-		return
-	}
+	info.Info = getSingingInfo(info.Info, claInfo.Fields)
 
-	info.Info = getSingingInfo(info.Info, cla.Fields)
-
-	if err := (&info).Create(orgCLAID, true); err != nil {
+	if err := (&info).Create(linkID, true); err != nil {
 		if err.IsErrorOf(models.ErrNoLinkOrResigned) {
 			this.sendFailedResponse(400, errResigned, err, action)
 		} else {
-			sendResp(parseModelError(err))
+			this.sendModelErrorAsResp(err, action)
 		}
 		return
 	}

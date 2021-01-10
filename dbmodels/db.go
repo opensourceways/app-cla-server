@@ -83,6 +83,7 @@ type ICLA interface {
 	DeleteCLA(linkID, applyTo, language string) IDBError
 	DeleteCLAInfo(linkID, applyTo, claLang string) IDBError
 	AddCLAInfo(linkID, applyTo string, info *CLAInfo) IDBError
+	GetCLAInfoToSign(linkID, claLang, applyTo string) (*CLAInfo, IDBError)
 }
 
 type IVerificationCode interface {

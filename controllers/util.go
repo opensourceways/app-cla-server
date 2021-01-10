@@ -463,3 +463,18 @@ func genLinkID(v *dbmodels.OrgRepo) string {
 	}
 	return fmt.Sprintf("%s_%s%s-%d", v.Platform, v.OrgID, repo, time.Now().UnixNano())
 }
+
+func getCLAInfoSigned(linkID, claLang, applyTo string) (*models.CLAInfo, *failedApiResult) {
+	claInfo, merr := models.GetCLAInfoSigned(linkID, claLang, applyTo)
+	if merr == nil {
+		if claInfo == nil {
+			return nil, newFailedApiResult(500, errSystemError, fmt.Errorf("cla info is empty, impossible"))
+		}
+		return claInfo, nil
+	}
+
+	if merr.IsErrorOf(models.ErrNoLinkOrUnsigned) {
+		return nil, nil
+	}
+	return nil, parseModelError(merr)
+}

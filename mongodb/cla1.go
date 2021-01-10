@@ -140,6 +140,53 @@ func (this *client) GetAllCLA(linkID string) (*dbmodels.CLAOfLink, dbmodels.IDBE
 	}, nil
 }
 
+func (this *client) GetCLAInfoToSign(linkID, claLang, applyTo string) (*dbmodels.CLAInfo, dbmodels.IDBError) {
+	claField := fieldNameOfCLA(applyTo)
+
+	fn := func(s string) string {
+		return fmt.Sprintf("%s.%s", claField, s)
+	}
+
+	var v []cLink
+	f := func(ctx context.Context) error {
+		return this.getArrayElem(
+			ctx, this.linkCollection, claField,
+			docFilterOfCLA(linkID), elemFilterOfCLA(claLang),
+			bson.M{
+				fn("fields"):             1,
+				fn("cla_hash"):           1,
+				fn("org_signature_hash"): 1,
+			}, &v,
+		)
+	}
+
+	if err := withContext(f); err != nil {
+		return nil, newSystemError(err)
+	}
+
+	if len(v) == 0 {
+		return nil, errNoDBRecord1
+	}
+
+	var doc []dCLA
+	if applyTo == dbmodels.ApplyToIndividual {
+		doc = v[0].IndividualCLAs
+	} else {
+		doc = v[0].CorpCLAs
+	}
+
+	if len(doc) == 0 {
+		return nil, nil
+	}
+
+	item := &(doc[0])
+	return &dbmodels.CLAInfo{
+		CLAHash:          item.CLAHash,
+		OrgSignatureHash: item.OrgSignatureHash,
+		Fields:           toModelOfCLAFields(item.Fields),
+	}, nil
+}
+
 func toModelOfCLAFields(fields []dField) []dbmodels.Field {
 	fs := make([]dbmodels.Field, 0, len(fields))
 	for _, v := range fields {

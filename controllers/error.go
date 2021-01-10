@@ -32,6 +32,7 @@ const (
 	errNotYoursOrg              = "not_yours_org"
 	errUnuploaded               = "unuploaded"
 	errTooBigPDF                = "too_big_pdf"
+	errUnmatchedCLA             = "unmatched_cla"
 )
 
 func parseModelError(err models.IModelError) *failedApiResult {

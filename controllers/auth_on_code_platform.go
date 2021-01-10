@@ -13,6 +13,12 @@ type AuthController struct {
 	baseController
 }
 
+func (this *AuthController) Prepare() {
+	if this.routerPattern() == "/v1/auth/authcodeurl/:platform/:purpose" {
+		this.apiPrepare("")
+	}
+}
+
 // @Title Auth
 // @Description authorized by gitee/github
 // @Param	:platform	path 	string				true		"gitee/github"
@@ -27,13 +33,14 @@ func (this *AuthController) Auth() {
 		return
 	}
 
-	if this.GetString("state") != authURLState {
-		return
-	}
-
 	rs := func(errCode string, reason error) {
 		this.setCookies(map[string]string{"error_code": errCode, "error_msg": reason.Error()})
 		this.redirect(authHelper.WebRedirectDir(false))
+	}
+
+	if this.GetString("state") != authURLState {
+		rs(errSystemError, fmt.Errorf("unkown state"))
+		return
 	}
 
 	if err := this.GetString("error"); err != "" {

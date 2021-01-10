@@ -112,20 +112,17 @@ func (this *IndividualSigningController) Post() {
 // @Success 200
 // @router /:platform/:org_repo [get]
 func (this *IndividualSigningController) Check() {
-	sendResp := this.newFuncForSendingFailedResp("check individual signing")
+	action := "check individual signing"
 	org, repo := parseOrgAndRepo(this.GetString(":org_repo"))
-	emailOfSigner := this.GetString("email")
 
-	linkID, fr := getLinkID(
-		this.GetString(":platform"), org, repo, dbmodels.ApplyToIndividual,
-	)
-	if fr != nil {
-		sendResp(fr)
+	linkID, err := models.GetLinkID(buildOrgRepo(this.GetString(":platform"), org, repo))
+	if err != nil {
+		this.sendModelErrorAsResp(err, action)
 		return
 	}
 
-	if v, merr := models.IsIndividualSigned(linkID, emailOfSigner); merr != nil {
-		sendResp(parseModelError(merr))
+	if v, merr := models.IsIndividualSigned(linkID, this.GetString("email")); merr != nil {
+		this.sendModelErrorAsResp(merr, action)
 	} else {
 		this.sendSuccessResp(map[string]bool{"signed": v})
 	}

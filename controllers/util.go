@@ -400,10 +400,6 @@ func setCookies(c *beego.Controller, value map[string]string) {
 	}
 }
 
-func downloadFile(c *beego.Controller, path string) {
-	c.Ctx.Output.Download(path)
-}
-
 func parseOrgAndRepo(s string) (string, string) {
 	v := strings.Split(s, ":")
 	if len(v) == 2 {

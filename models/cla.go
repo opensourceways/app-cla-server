@@ -33,6 +33,8 @@ func (this *CLA) GetFields() error {
 	return this.get(true)
 }
 
+type CLAField = dbmodels.Field
+
 type CLAListOptions dbmodels.CLAListOptions
 
 func (this CLAListOptions) Get() ([]dbmodels.CLA, error) {

@@ -2,6 +2,7 @@ package mongodb
 
 import (
 	"context"
+	"fmt"
 
 	"go.mongodb.org/mongo-driver/bson"
 
@@ -129,43 +130,62 @@ func (this *client) GetCorpSigningBasicInfo(linkID, email string) (*dbmodels.Cor
 	return &detail.CorporationSigningBasicInfo, nil
 }
 
-func (this *client) GetCorpSigningDetail(linkID, email string) (*dbmodels.CorpSigningCreateOpt, dbmodels.IDBError) {
-	project := bson.M{
-		memberNameOfSignings("admin_email"): 1,
-		memberNameOfSignings("admin_name"):  1,
-		memberNameOfSignings("corp_name"):   1,
-		memberNameOfSignings("date"):        1,
-		memberNameOfSignings("info"):        1,
+func (this *client) GetCorpSigningDetail(linkID, email string) ([]dbmodels.Field, *dbmodels.CorpSigningCreateOpt, dbmodels.IDBError) {
+	pipeline := bson.A{
+		bson.M{"$match": docFilterOfSigning(linkID)},
+		bson.M{"$project": bson.M{
+			fieldCLAInfos: 1,
+			fieldSignings: arrayElemFilter(fieldSignings, filterOfCorpID(email)),
+		}},
+		bson.M{"$unwind": "$" + fieldSignings},
+		bson.M{"$project": bson.M{
+			fieldSignings: 1,
+			fieldCLAInfos: arrayElemFilter(
+				fieldCLAInfos,
+				bson.M{fieldCLALang: fmt.Sprintf("$%s.%s", fieldSignings, fieldCLALang)},
+			),
+		}},
 	}
 
-	var v []cCorpSigning
+	var v []struct {
+		CLAInfos []DCLAInfo   `bson:"cla_infos"`
+		Signings dCorpSigning `bson:"signings"`
+	}
 	f := func(ctx context.Context) error {
-		return this.getArrayElem(
-			ctx, this.corpSigningCollection, fieldSignings,
-			docFilterOfSigning(linkID), elemFilterOfCorpSigning(email),
-			project, &v,
-		)
+		col := this.collection(this.corpSigningCollection)
+		cursor, err := col.Aggregate(ctx, pipeline)
+		if err != nil {
+			return err
+		}
+
+		return cursor.All(ctx, &v)
 	}
 
 	if err := withContext(f); err != nil {
-		return nil, newSystemError(err)
+		return nil, nil, newSystemError(err)
 	}
 
 	if len(v) == 0 {
-		return nil, errNoDBRecord1
+		return nil, nil, errNoDBRecord1
 	}
 
-	signings := v[0].Signings
-	if len(signings) == 0 {
-		return nil, nil
+	signing := &(v[0].Signings)
+	if signing.CLALanguage == "" {
+		return nil, nil, nil
 	}
 
-	detail := toDBModelCorporationSigningDetail(&(signings[0]), false)
+	clas := v[0].CLAInfos
+	if len(clas) == 0 {
+		return nil, nil, nil
+	}
 
-	return &dbmodels.CorpSigningCreateOpt{
+	detail := toDBModelCorporationSigningDetail(signing, false)
+
+	info := &dbmodels.CorpSigningCreateOpt{
 		CorporationSigningBasicInfo: detail.CorporationSigningBasicInfo,
-		Info:                        signings[0].SigningInfo,
-	}, nil
+		Info:                        signing.SigningInfo,
+	}
+	return toModelOfCLAFields(clas[0].Fields), info, nil
 }
 
 func toDBModelCorporationSigningDetail(cs *dCorpSigning, adminAdded bool) dbmodels.CorporationSigningSummary {

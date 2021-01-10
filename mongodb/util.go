@@ -275,6 +275,13 @@ func conditionTofilterArray(filterOfArray bson.M) bson.M {
 	return bson.M{"$and": cond}
 }
 
+func arrayElemFilter(array string, filterOfArray bson.M) bson.M {
+	return bson.M{"$filter": bson.M{
+		"input": fmt.Sprintf("$%s", array),
+		"cond":  conditionTofilterArray(filterOfArray),
+	}}
+}
+
 func getSigningDoc(v []OrgCLA, isOk func(doc *OrgCLA) bool) (*OrgCLA, error) {
 	if len(v) == 0 {
 		return nil, dbmodels.DBError{

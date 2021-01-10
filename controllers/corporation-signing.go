@@ -14,7 +14,7 @@ type CorporationSigningController struct {
 }
 
 func (this *CorporationSigningController) Prepare() {
-	if this.routerPattern() == "/v1/corporation-signing/:org_cla_id" {
+	if this.routerPattern() == "/v1/corporation-signing/:link_id/:cla_lang/:cla_hash" {
 		this.apiPrepare("")
 	} else {
 		// not signing
@@ -30,45 +30,76 @@ func (this *CorporationSigningController) Prepare() {
 // @Failure util.ErrHasSigned
 // @Failure util.ErrWrongVerificationCode
 // @Failure util.ErrVerificationCodeExpired
-// @router /:org_cla_id [post]
+// @router /:link_id/:cla_lang/:cla_hash [post]
 func (this *CorporationSigningController) Post() {
 	action := "sign as corporation"
-	sendResp := this.newFuncForSendingFailedResp(action)
-	orgCLAID := this.GetString(":org_cla_id")
+	linkID := this.GetString(":link_id")
+	claLang := this.GetString(":cla_lang")
 
 	var info models.CorporationSigningCreateOption
 	if fr := this.fetchInputPayload(&info); fr != nil {
-		sendResp(fr)
+		this.sendFailedResultAsResp(fr, action)
 		return
 	}
-	if err := (&info).Validate(orgCLAID); err != nil {
-		sendResp(parseModelError(err))
+	info.CLALanguage = claLang
+
+	if err := (&info).Validate(linkID); err != nil {
+		this.sendModelErrorAsResp(err, action)
 		return
 	}
 
-	orgCLA := &models.OrgCLA{ID: orgCLAID}
-	if err := orgCLA.Get(); err != nil {
-		sendResp(convertDBError1(err))
-		return
-	}
-	if isNotCorpCLA(orgCLA) {
-		this.sendFailedResponse(400, util.ErrInvalidParameter, fmt.Errorf("invalid cla"), action)
+	orgInfo, merr := models.GetOrgOfLink(linkID)
+	if merr != nil {
+		this.sendModelErrorAsResp(merr, action)
 		return
 	}
 
-	cla := &models.CLA{ID: orgCLA.CLAID}
-	if err := cla.Get(); err != nil {
-		sendResp(convertDBError1(err))
+	claInfo, fr := getCLAInfoSigned(linkID, claLang, dbmodels.ApplyToCorporation)
+	if fr != nil {
+		this.sendFailedResultAsResp(fr, action)
+		return
+	}
+	if claInfo == nil {
+		// no contributor signed for this language. lock to avoid the cla to be changed
+		// before writing to the db.
+
+		unlock, err := util.Lock(genOrgFileLockPath(orgInfo.Platform, orgInfo.OrgID, orgInfo.RepoID))
+		if err != nil {
+			this.sendFailedResponse(500, util.ErrSystemError, err, action)
+			return
+		}
+		defer unlock()
+
+		claInfo, merr = models.GetCLAInfoToSign(linkID, claLang, dbmodels.ApplyToCorporation)
+		if merr != nil {
+			this.sendModelErrorAsResp(merr, action)
+			return
+		}
+		if claInfo == nil {
+			this.sendFailedResponse(500, errSystemError, fmt.Errorf("no cla info, impossible"), action)
+			return
+		}
+	}
+
+	if claInfo.CLAHash != this.GetString(":cla_hash") {
+		this.sendFailedResponse(400, errUnmatchedCLA, fmt.Errorf("unmatched cla"), action)
 		return
 	}
 
-	info.Info = getSingingInfo(info.Info, cla.Fields)
+	claFile := genCLAFilePath(linkID, dbmodels.ApplyToCorporation, claLang)
+	orgSignatureFile := genOrgSignatureFilePath(linkID, claLang)
+	if fr := this.checkCLAForSigning(claFile, orgSignatureFile, claInfo); fr != nil {
+		this.sendFailedResultAsResp(fr, action)
+		return
+	}
 
-	if err := (&info).Create(orgCLAID); err != nil {
+	info.Info = getSingingInfo(info.Info, claInfo.Fields)
+
+	if err := (&info).Create(linkID); err != nil {
 		if err.IsErrorOf(models.ErrNoLinkOrResigned) {
 			this.sendFailedResponse(400, errResigned, err, action)
 		} else {
-			sendResp(parseModelError(err))
+			this.sendModelErrorAsResp(err, action)
 		}
 		return
 	}
@@ -76,8 +107,26 @@ func (this *CorporationSigningController) Post() {
 	this.sendSuccessResp("sign successfully")
 
 	worker.GetEmailWorker().GenCLAPDFForCorporationAndSendIt(
-		genOrgSignatureFilePath(orgCLAID, cla.Language),
-		orgCLA, &info.CorporationSigning, cla)
+		linkID, orgSignatureFile, claFile, *orgInfo, info.CorporationSigning, claInfo.Fields)
+}
+
+func (this *CorporationSigningController) checkCLAForSigning(claFile, orgSignatureFile string, claInfo *dbmodels.CLAInfo) *failedApiResult {
+	md5, err := util.Md5sumOfFile(claFile)
+	if err != nil {
+		return newFailedApiResult(500, errSystemError, err)
+	}
+	if md5 != claInfo.CLAHash {
+		return newFailedApiResult(500, errSystemError, fmt.Errorf("local cla is unmatched"))
+	}
+
+	md5, err = util.Md5sumOfFile(orgSignatureFile)
+	if err != nil {
+		return newFailedApiResult(500, errSystemError, err)
+	}
+	if md5 != claInfo.OrgSignatureHash {
+		return newFailedApiResult(500, errSystemError, fmt.Errorf("local org signature is unmatched"))
+	}
+	return nil
 }
 
 // @Title ResendCorpSigningEmail
@@ -85,53 +134,45 @@ func (this *CorporationSigningController) Post() {
 // @Param	:org_id		path 	string		true		"org cla id"
 // @Param	:email		path 	string		true		"corp email"
 // @Success 201 {int} map
-// @router /:org_id/:email [post]
+// @router /:link_id/:email [post]
 func (this *CorporationSigningController) ResendCorpSigningEmail() {
 	action := "resend corp signing email"
-	sendResp := this.newFuncForSendingFailedResp(action)
-	org, repo := parseOrgAndRepo(this.GetString(":org_id"))
+	linkID := this.GetString(":link_id")
+	corpEmail := this.GetString(":email")
 
 	pl, fr := this.tokenPayloadBasedOnCodePlatform()
 	if fr != nil {
-		sendResp(fr)
+		this.sendFailedResultAsResp(fr, action)
 		return
 	}
-	if !pl.hasOrg(org) {
-		this.sendFailedResponse(400, util.ErrInvalidParameter, fmt.Errorf("can't access org:%s", org), action)
-		return
-	}
-
-	linkID, fr := getLinkID(pl.Platform, org, repo, dbmodels.ApplyToCorporation)
-	if fr != nil {
-		sendResp(fr)
+	if fr := pl.isOwnerOfLink(linkID); fr != nil {
+		this.sendFailedResultAsResp(fr, action)
 		return
 	}
 
-	signingInfo, err := models.GetCorpSigningDetail(linkID, this.GetString(":email"))
-	if err != nil {
-		sendResp(parseModelError(err))
+	fields, signingInfo, merr := models.GetCorpSigningDetail(linkID, corpEmail)
+	if merr != nil {
+		this.sendModelErrorAsResp(merr, action)
+		return
+	}
+	if fields == nil {
+		this.sendFailedResponse(400, errUnsigned, fmt.Errorf("no data"), action)
 		return
 	}
 
-	orgCLA := &models.OrgCLA{ID: linkID}
-	if err := orgCLA.Get(); err != nil {
-		sendResp(convertDBError1(err))
-		return
-	}
-
-	cla := &models.CLA{ID: orgCLA.CLAID}
-	if err := cla.Get(); err != nil {
-		sendResp(convertDBError1(err))
-		return
-	}
-
-	this.sendSuccessResp("resend email successfully")
+	claFile := genCLAFilePath(linkID, dbmodels.ApplyToCorporation, signingInfo.CLALanguage)
+	orgSignatureFile := genOrgSignatureFilePath(linkID, signingInfo.CLALanguage)
 
 	worker.GetEmailWorker().GenCLAPDFForCorporationAndSendIt(
-		genOrgSignatureFilePath(linkID, cla.Language),
-		orgCLA, (*models.CorporationSigning)(signingInfo), cla,
+		linkID, orgSignatureFile, claFile, *pl.orgInfo(linkID),
+		models.CorporationSigning{
+			CorporationSigningBasicInfo: signingInfo.CorporationSigningBasicInfo,
+			Info:                        signingInfo.Info,
+		},
+		fields,
 	)
 
+	this.sendSuccessResp("resend email successfully")
 }
 
 // @Title GetAll

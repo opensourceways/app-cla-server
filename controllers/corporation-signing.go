@@ -158,42 +158,34 @@ func (this *CorporationSigningController) ResendCorpSigningEmail() {
 
 // @Title GetAll
 // @Description get all the corporations which have signed to a org
-// @router /:org_id [get]
+// @router /:link_id [get]
 func (this *CorporationSigningController) GetAll() {
 	action := "list corporation"
-	sendResp := this.newFuncForSendingFailedResp(action)
-	org := this.GetString(":org_id")
-	repo := this.GetString("repo_id")
+	linkID := this.GetString(":link_id")
 
 	pl, fr := this.tokenPayloadBasedOnCodePlatform()
 	if fr != nil {
-		sendResp(fr)
+		this.sendFailedResultAsResp(fr, action)
 		return
 	}
-	if !pl.hasOrg(org) {
-		this.sendFailedResponse(400, util.ErrInvalidParameter, fmt.Errorf("can't access org:%s", org), action)
-		return
-	}
-
-	linkID, fr := getLinkID(pl.Platform, org, repo, dbmodels.ApplyToCorporation)
-	if fr != nil {
-		sendResp(fr)
+	if fr := pl.isOwnerOfLink(linkID); fr != nil {
+		this.sendFailedResultAsResp(fr, action)
 		return
 	}
 
 	r, merr := models.ListCorpSignings(linkID, this.GetString("cla_language"))
 	if merr != nil {
-		sendResp(parseModelError(merr))
+		this.sendModelErrorAsResp(merr, action)
 		return
 	}
 	if len(r) == 0 {
-		this.sendSuccessResp(map[string]bool{})
+		this.sendSuccessResp(nil)
 		return
 	}
 
 	pdfs, err := models.ListCorpsWithPDFUploaded(linkID)
 	if err != nil {
-		sendResp(convertDBError1(err))
+		this.sendModelErrorAsResp(err, action)
 		return
 	}
 	pdfMap := map[string]bool{}
@@ -214,5 +206,5 @@ func (this *CorporationSigningController) GetAll() {
 			PDFUploaded:               pdfMap[util.EmailSuffix(items.AdminEmail)]},
 		)
 	}
-	this.sendSuccessResp(map[string][]sInfo{linkID: details})
+	this.sendSuccessResp(details)
 }

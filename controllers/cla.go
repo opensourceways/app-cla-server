@@ -15,7 +15,7 @@ type CLAController struct {
 }
 
 func (this *CLAController) Prepare() {
-	apiPrepare(&this.Controller, []string{PermissionOwnerOfOrg})
+	this.apiPrepare(PermissionOwnerOfOrg)
 }
 
 // @Title Link
@@ -179,12 +179,12 @@ func addCLA(linkID, applyTo string, input *models.CLACreateOpt) *failedApiResult
 }
 
 func deleteCLA(linkID, applyTo, claLang string) *failedApiResult {
-	_, err := models.GetCLAInfoSigned(linkID, claLang, applyTo)
-	if err == nil {
-		return newFailedApiResult(400, errCLAIsUsed, fmt.Errorf("cla is used"))
+	claInfo, fr := getCLAInfoSigned(linkID, claLang, applyTo)
+	if fr != nil {
+		return fr
 	}
-	if !err.IsErrorOf(models.ErrNoLinkOrUnsigned) {
-		return parseModelError(err)
+	if claInfo != nil {
+		return newFailedApiResult(400, errCLAIsUsed, fmt.Errorf("cla is used"))
 	}
 
 	if merr := models.DeleteCLA(linkID, applyTo, claLang); merr != nil {

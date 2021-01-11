@@ -41,9 +41,8 @@ func (this *EmailController) Auth() {
 		return
 	}
 
-	params := map[string]string{"code": "", "scope": "", "state": authURLState}
-	if err := checkAndVerifyAPIStringParameter(&this.Controller, params); err != nil {
-		rs(errSystemError, err)
+	if this.GetString("state") != authURLState {
+		rs(errSystemError, fmt.Errorf("unkown state"))
 		return
 	}
 

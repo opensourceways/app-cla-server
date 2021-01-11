@@ -22,40 +22,39 @@ func (this *VerificationCodeController) Prepare() {
 // @Param	:email		path 	string					true		"email of corp"
 // @Success 201 {int} map
 // @Failure util.ErrSendingEmail
-// @router /:org_cla_id/:email [post]
+// @router /:link_id/:email [post]
 func (this *VerificationCodeController) Post() {
-	sendResp := this.newFuncForSendingFailedResp("create verification code")
-
-	orgCLAID := this.GetString(":org_cla_id")
+	action := "create verification code"
+	linkID := this.GetString(":link_id")
 	emailOfSigner := this.GetString(":email")
 
-	orgCLA := &models.OrgCLA{ID: orgCLAID}
-	if err := orgCLA.Get(); err != nil {
-		sendResp(convertDBError1(err))
+	orgInfo, merr := models.GetOrgOfLink(linkID)
+	if merr != nil {
+		this.sendFailedResponse(0, "", merr, action)
 		return
 	}
 
 	code, err := models.CreateVerificationCode(
-		emailOfSigner, orgCLAID, conf.AppConfig.VerificationCodeExpiry,
+		emailOfSigner, linkID, conf.AppConfig.VerificationCodeExpiry,
 	)
 	if err != nil {
-		sendResp(parseModelError(err))
+		this.sendModelErrorAsResp(err, action)
 		return
 	}
 
 	this.sendSuccessResp("create verification code successfully")
 
 	sendEmailToIndividual(
-		emailOfSigner, orgCLA.OrgEmail,
+		emailOfSigner, orgInfo.OrgEmail,
 		fmt.Sprintf(
 			"Verification code for signing CLA on project of \"%s\"",
-			orgCLA.OrgAlias,
+			orgInfo.OrgAlias,
 		),
 		email.VerificationCode{
 			Email:      emailOfSigner,
-			Org:        orgCLA.OrgAlias,
+			Org:        orgInfo.OrgAlias,
 			Code:       code,
-			ProjectURL: projectURL(orgCLA),
+			ProjectURL: orgInfo.ProjectURL(),
 		},
 	)
 }

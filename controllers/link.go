@@ -33,8 +33,8 @@ func (this *LinkController) Prepare() {
 // @Failure 403 body is empty
 // @router / [post]
 func (this *LinkController) Link() {
-	doWhat := "create link"
-	sendResp := this.newFuncForSendingFailedResp(doWhat)
+	action := "create link"
+	sendResp := this.newFuncForSendingFailedResp(action)
 
 	pl, fr := this.tokenPayloadBasedOnCodePlatform()
 	if fr != nil {
@@ -44,7 +44,7 @@ func (this *LinkController) Link() {
 
 	input, err := this.fetchPayloadOfCreatingLink()
 	if err != nil {
-		sendResp(newFailedApiResult(400, errParsingApiBody, err))
+		this.sendFailedResponse(400, errParsingApiBody, err, action)
 		return
 	}
 
@@ -58,24 +58,24 @@ func (this *LinkController) Link() {
 	}
 
 	if merr := input.Validate(pdf.GetPDFGenerator().LangSupported()); merr != nil {
-		sendResp(parseModelError(merr))
+		this.sendModelErrorAsResp(merr, action)
 		return
 	}
 
-	if r := pl.isOwnerOfOrg(input.OrgID); r != nil {
-		sendResp(r)
+	if fr := pl.isOwnerOfOrg(input.OrgID); fr != nil {
+		sendResp(fr)
 		return
 	}
 
 	filePath := genOrgFileLockPath(input.Platform, input.OrgID, input.RepoID)
 	if err := util.CreateLockedFile(filePath); err != nil {
-		sendResp(newFailedApiResult(500, errSystemError, err))
+		this.sendFailedResponse(500, errSystemError, err, action)
 		return
 	}
 
 	unlock, err := util.Lock(filePath)
 	if err != nil {
-		sendResp(newFailedApiResult(500, errSystemError, err))
+		this.sendFailedResponse(500, errSystemError, err, action)
 		return
 	}
 	defer unlock()
@@ -83,11 +83,11 @@ func (this *LinkController) Link() {
 	orgRepo := buildOrgRepo(input.Platform, input.OrgID, input.RepoID)
 	_, merr := models.GetLinkID(orgRepo)
 	if merr == nil {
-		sendResp(newFailedApiResult(400, errLinkExists, fmt.Errorf("recreate link")))
+		this.sendFailedResponse(400, errLinkExists, fmt.Errorf("recreate link"), action)
 		return
 	}
 	if !merr.IsErrorOf(models.ErrNoLink) {
-		sendResp(parseModelError(merr))
+		this.sendModelErrorAsResp(merr, action)
 		return
 	}
 
@@ -104,7 +104,7 @@ func (this *LinkController) Link() {
 
 	beego.Info("input.Create")
 	if merr := input.Create(linkID, pl.User); merr != nil {
-		sendResp(parseModelError(merr))
+		this.sendModelErrorAsResp(merr, action)
 		return
 	}
 
@@ -177,8 +177,8 @@ func (this *LinkController) initializeSigning(input *models.LinkCreateOption, li
 // @Failure 403 uid is empty
 // @router /:link_id [delete]
 func (this *LinkController) Unlink() {
-	doWhat := "unlink"
-	sendResp := this.newFuncForSendingFailedResp(doWhat)
+	action := "unlink"
+	sendResp := this.newFuncForSendingFailedResp(action)
 	linkID := this.GetString(":link_id")
 
 	pl, fr := this.tokenPayloadBasedOnCodePlatform()
@@ -193,11 +193,11 @@ func (this *LinkController) Unlink() {
 	}
 
 	if err := models.Unlink(linkID); err != nil {
-		sendResp(parseModelError(err))
+		this.sendModelErrorAsResp(err, action)
 		return
 	}
 
-	this.sendSuccessResp(doWhat + "successfully")
+	this.sendSuccessResp(action + "successfully")
 }
 
 // @Title ListOrgs
@@ -205,11 +205,11 @@ func (this *LinkController) Unlink() {
 // @Success 200 {object} models.OrgInfo
 // @router / [get]
 func (this *LinkController) ListLinks() {
-	sendResp := this.newFuncForSendingFailedResp("list links")
+	action := "list links"
 
 	pl, fr := this.tokenPayloadBasedOnCodePlatform()
 	if fr != nil {
-		sendResp(fr)
+		this.sendFailedResultAsResp(fr, action)
 		return
 	}
 
@@ -224,7 +224,7 @@ func (this *LinkController) ListLinks() {
 	}
 	r, merr := models.ListLinks(pl.Platform, orgs)
 	if merr != nil {
-		sendResp(parseModelError(merr))
+		this.sendModelErrorAsResp(merr, action)
 		return
 	}
 

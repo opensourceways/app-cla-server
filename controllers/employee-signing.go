@@ -73,49 +73,29 @@ func (this *EmployeeSigningController) Post() {
 		return
 	}
 
-	claInfo, fr := getCLAInfoSigned(linkID, claLang, dbmodels.ApplyToIndividual)
+	fr = signHelper(
+		linkID, claLang, dbmodels.ApplyToIndividual, orgInfo,
+		func(claInfo *models.CLAInfo) *failedApiResult {
+			if claInfo.CLAHash != this.GetString(":cla_hash") {
+				return newFailedApiResult(400, errUnmatchedCLA, fmt.Errorf("invalid cla"))
+			}
+
+			info.Info = getSingingInfo(info.Info, claInfo.Fields)
+
+			if err := (&info).Create(linkID, false); err != nil {
+				if err.IsErrorOf(models.ErrNoLinkOrResigned) {
+					return newFailedApiResult(400, errResigned, err)
+				}
+				return parseModelError(err)
+			}
+			return nil
+		},
+	)
 	if fr != nil {
 		this.sendFailedResultAsResp(fr, action)
-		return
+	} else {
+		this.sendSuccessResp("sign successfully")
 	}
-	if claInfo == nil {
-		// no contributor signed for this language. lock to avoid the cla to be changed
-		// before writing to the db.
-		unlock, err := util.Lock(genOrgFileLockPath(orgInfo.Platform, orgInfo.OrgID, orgInfo.RepoID))
-		if err != nil {
-			this.sendFailedResponse(500, util.ErrSystemError, err, action)
-			return
-		}
-		defer unlock()
-
-		claInfo, merr = models.GetCLAInfoToSign(linkID, claLang, dbmodels.ApplyToIndividual)
-		if merr != nil {
-			this.sendModelErrorAsResp(merr, action)
-			return
-		}
-		if claInfo == nil {
-			this.sendFailedResponse(500, errSystemError, fmt.Errorf("no cla info, impossible"), action)
-			return
-		}
-	}
-
-	if claInfo.CLAHash != this.GetString(":cla_hash") {
-		this.sendFailedResponse(400, errUnmatchedCLA, fmt.Errorf("invalid cla"), action)
-		return
-	}
-
-	info.Info = getSingingInfo(info.Info, claInfo.Fields)
-
-	if err := (&info).Create(linkID, false); err != nil {
-		if err.IsErrorOf(models.ErrNoLinkOrResigned) {
-			this.sendFailedResponse(400, errResigned, err, action)
-		} else {
-			this.sendModelErrorAsResp(err, action)
-		}
-		return
-	}
-
-	this.sendSuccessResp("sign successfully")
 
 	this.notifyManagers(managers, &info, orgInfo)
 }

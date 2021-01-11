@@ -54,60 +54,41 @@ func (this *CorporationSigningController) Post() {
 		return
 	}
 
-	claInfo, fr := getCLAInfoSigned(linkID, claLang, dbmodels.ApplyToCorporation)
+	fr := signHelper(
+		linkID, claLang, dbmodels.ApplyToCorporation, orgInfo,
+		func(claInfo *models.CLAInfo) *failedApiResult {
+			if claInfo.CLAHash != this.GetString(":cla_hash") {
+				return newFailedApiResult(400, errUnmatchedCLA, fmt.Errorf("unmatched cla"))
+			}
+
+			claFile := genCLAFilePath(linkID, dbmodels.ApplyToCorporation, claLang)
+			orgSignatureFile := genOrgSignatureFilePath(linkID, claLang)
+			if fr := this.checkCLAForSigning(claFile, orgSignatureFile, claInfo); fr != nil {
+				return fr
+			}
+
+			info.Info = getSingingInfo(info.Info, claInfo.Fields)
+
+			if err := (&info).Create(linkID); err != nil {
+				if err.IsErrorOf(models.ErrNoLinkOrResigned) {
+					return newFailedApiResult(400, errResigned, err)
+				}
+				return parseModelError(err)
+			}
+
+			worker.GetEmailWorker().GenCLAPDFForCorporationAndSendIt(
+				linkID, orgSignatureFile, claFile, *orgInfo,
+				info.CorporationSigning, claInfo.Fields,
+			)
+
+			return nil
+		},
+	)
 	if fr != nil {
 		this.sendFailedResultAsResp(fr, action)
-		return
+	} else {
+		this.sendSuccessResp("sign successfully")
 	}
-	if claInfo == nil {
-		// no contributor signed for this language. lock to avoid the cla to be changed
-		// before writing to the db.
-
-		unlock, err := util.Lock(genOrgFileLockPath(orgInfo.Platform, orgInfo.OrgID, orgInfo.RepoID))
-		if err != nil {
-			this.sendFailedResponse(500, util.ErrSystemError, err, action)
-			return
-		}
-		defer unlock()
-
-		claInfo, merr = models.GetCLAInfoToSign(linkID, claLang, dbmodels.ApplyToCorporation)
-		if merr != nil {
-			this.sendModelErrorAsResp(merr, action)
-			return
-		}
-		if claInfo == nil {
-			this.sendFailedResponse(500, errSystemError, fmt.Errorf("no cla info, impossible"), action)
-			return
-		}
-	}
-
-	if claInfo.CLAHash != this.GetString(":cla_hash") {
-		this.sendFailedResponse(400, errUnmatchedCLA, fmt.Errorf("unmatched cla"), action)
-		return
-	}
-
-	claFile := genCLAFilePath(linkID, dbmodels.ApplyToCorporation, claLang)
-	orgSignatureFile := genOrgSignatureFilePath(linkID, claLang)
-	if fr := this.checkCLAForSigning(claFile, orgSignatureFile, claInfo); fr != nil {
-		this.sendFailedResultAsResp(fr, action)
-		return
-	}
-
-	info.Info = getSingingInfo(info.Info, claInfo.Fields)
-
-	if err := (&info).Create(linkID); err != nil {
-		if err.IsErrorOf(models.ErrNoLinkOrResigned) {
-			this.sendFailedResponse(400, errResigned, err, action)
-		} else {
-			this.sendModelErrorAsResp(err, action)
-		}
-		return
-	}
-
-	this.sendSuccessResp("sign successfully")
-
-	worker.GetEmailWorker().GenCLAPDFForCorporationAndSendIt(
-		linkID, orgSignatureFile, claFile, *orgInfo, info.CorporationSigning, claInfo.Fields)
 }
 
 func (this *CorporationSigningController) checkCLAForSigning(claFile, orgSignatureFile string, claInfo *dbmodels.CLAInfo) *failedApiResult {

@@ -4,8 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/astaxie/beego"
-
 	"github.com/opensourceways/app-cla-server/dbmodels"
 	"github.com/opensourceways/app-cla-server/models"
 	"github.com/opensourceways/app-cla-server/pdf"
@@ -102,7 +100,6 @@ func (this *LinkController) Link() {
 		return
 	}
 
-	beego.Info("input.Create")
 	if merr := input.Create(linkID, pl.User); merr != nil {
 		this.sendModelErrorAsResp(merr, action)
 		return

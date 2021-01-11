@@ -154,7 +154,7 @@ func signHelper(linkID, claLang, applyTo string, doSign func(*models.CLAInfo) *f
 		}
 		defer unlock()
 
-		claInfo, merr := models.GetCLAInfoToSign(linkID, claLang, applyTo)
+		claInfo, merr = models.GetCLAInfoToSign(linkID, claLang, applyTo)
 		if merr != nil {
 			return parseModelError(merr)
 		}

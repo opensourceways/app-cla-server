@@ -65,6 +65,12 @@ func (this *emailWorker) GenCLAPDFForCorporationAndSendIt(linkID, orgSignatureFi
 		var msg *email.EmailMessage
 		file := ""
 
+		defer func() {
+			if !util.IsFileNotExist(file) {
+				os.Remove(file)
+			}
+		}()
+
 		for i := 0; i < 10; i++ {
 			if this.shutdown {
 				beego.Info("email worker exits forcedly")
@@ -96,11 +102,9 @@ func (this *emailWorker) GenCLAPDFForCorporationAndSendIt(linkID, orgSignatureFi
 
 			if err := ec.SendEmail(emailCfg.Token, msg); err != nil {
 				next(err)
-				continue
+			} else {
+				break
 			}
-
-			os.Remove(file)
-			break
 		}
 	}
 

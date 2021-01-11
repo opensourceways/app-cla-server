@@ -52,6 +52,7 @@ func (this *CorporationPDFController) downloadCorpPDF(linkID, corpEmail string) 
 		return newFailedApiResult(500, errSystemError, err)
 	}
 
+	f.Close()
 	this.downloadFile(f.Name())
 	return nil
 }
@@ -208,5 +209,6 @@ func (this *CorporationPDFController) Preview() {
 		return
 	}
 
+	defer func() { os.Remove(outFile) }()
 	this.downloadFile(outFile)
 }

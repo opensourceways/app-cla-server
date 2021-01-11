@@ -58,7 +58,7 @@ func (this *emailWorker) GenCLAPDFForCorporationAndSendIt(linkID, orgSignatureFi
 			Org:         orgInfo.OrgAlias,
 			Date:        signing.Date,
 			AdminName:   signing.AdminName,
-			ProjectURL:  util.ProjectURL(orgInfo.Platform, orgInfo.OrgID, orgInfo.RepoID),
+			ProjectURL:  orgInfo.ProjectURL(),
 			SigningInfo: buildCorpSigningInfo(&signing, claFields),
 		}
 

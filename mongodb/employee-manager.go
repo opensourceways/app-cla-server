@@ -20,7 +20,7 @@ func (this *client) AddEmployeeManager(linkID string, opt []dbmodels.Corporation
 			CorpID:   genCorpID(item.Email),
 		}
 
-		body, err := structToMap1(info)
+		body, err := structToMap(info)
 		if err != nil {
 			return err
 		}

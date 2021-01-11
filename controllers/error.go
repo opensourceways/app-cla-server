@@ -35,6 +35,7 @@ const (
 	errUnmatchedCLA             = "unmatched_cla"
 	errNoCorpEmployeeManager    = "no_employee_manager"
 	errUnsupportedCLALang       = "unsupported_cla_lang"
+	errNotSameCorp              = string(models.ErrNotSameCorp)
 )
 
 func parseModelError(err models.IModelError) *failedApiResult {

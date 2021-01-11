@@ -15,7 +15,6 @@ type IDB interface {
 	ICorporationSigning
 	ICorporationManager
 	IOrgEmail
-	IOrgCLA
 	IIndividualSigning
 	ICLA
 	IVerificationCode
@@ -49,14 +48,6 @@ type IOrgEmail interface {
 	GetOrgEmailInfo(email string) (*OrgEmailCreateInfo, IDBError)
 }
 
-type IOrgCLA interface {
-	ListOrgs(platform string, orgs []string) ([]OrgCLA, error)
-	ListOrgCLA(OrgCLAListOption) ([]OrgCLA, error)
-	GetOrgCLA(string) (OrgCLA, error)
-	CreateOrgCLA(OrgCLA) (string, error)
-	DeleteOrgCLA(string) error
-}
-
 type IIndividualSigning interface {
 	InitializeIndividualSigning(linkID string, info *CLAInfo) IDBError
 	SignIndividualCLA(linkID string, info *IndividualSigningInfo) IDBError
@@ -69,12 +60,6 @@ type IIndividualSigning interface {
 }
 
 type ICLA interface {
-	CreateCLA(CLA) (string, error)
-	ListCLA(CLAListOptions) ([]CLA, error)
-	GetCLA(string, bool) (CLA, error)
-
-	ListCLAByIDs(ids []string) ([]CLA, error)
-
 	GetCLAByType(orgRepo *OrgRepo, applyTo string) (string, []CLADetail, IDBError)
 	GetAllCLA(linkID string) (*CLAOfLink, IDBError)
 	HasCLA(linkID, applyTo, language string) (bool, IDBError)

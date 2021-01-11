@@ -7,6 +7,11 @@ import (
 	"github.com/opensourceways/app-cla-server/util"
 )
 
+func InitializeCorpSigning(linkID string, info *OrgInfo, cla *CLAInfo) IModelError {
+	err := dbmodels.GetDB().InitializeCorpSigning(linkID, info, cla)
+	return parseDBError(err)
+}
+
 type CorporationSigning = dbmodels.CorpSigningCreateOpt
 
 type CorporationSigningCreateOption struct {
@@ -20,12 +25,7 @@ func (this *CorporationSigningCreateOption) Validate(orgCLAID string) IModelErro
 	if err != nil {
 		return err
 	}
-
-	if _, err := checkEmailFormat(this.AdminEmail); err != nil {
-		return newModelError(ErrNotAnEmail, err)
-	}
-	return nil
-
+	return checkEmailFormat(this.AdminEmail)
 }
 
 func (this *CorporationSigningCreateOption) Create(orgCLAID string) IModelError {

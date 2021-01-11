@@ -7,16 +7,18 @@ import (
 	"github.com/opensourceways/app-cla-server/util"
 )
 
+func InitializeIndividualSigning(linkID string, cla *CLAInfo) IModelError {
+	err := dbmodels.GetDB().InitializeIndividualSigning(linkID, cla)
+	return parseDBError(err)
+}
+
 type IndividualSigning dbmodels.IndividualSigningInfo
 
 func (this *IndividualSigning) Validate(email string) IModelError {
 	if this.Email != email {
 		return newModelError(ErrUnmatchedEmail, fmt.Errorf("unmatched email"))
 	}
-	if _, err := checkEmailFormat(this.Email); err != nil {
-		return newModelError(ErrNotAnEmail, err)
-	}
-	return nil
+	return checkEmailFormat(this.Email)
 }
 
 func (this *IndividualSigning) Create(linkID string, enabled bool) IModelError {

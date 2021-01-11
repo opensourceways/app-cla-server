@@ -6,6 +6,9 @@ import (
 	"github.com/opensourceways/app-cla-server/dbmodels"
 )
 
+type OrgInfo = dbmodels.OrgInfo
+type OrgRepo = dbmodels.OrgRepo
+
 type LinkCreateOption struct {
 	Platform string `json:"platform"`
 	OrgID    string `json:"org_id"`

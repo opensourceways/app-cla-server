@@ -175,23 +175,6 @@ type acForCodePlatformPayload struct {
 	Links map[string]models.OrgInfo `json:"links"`
 }
 
-func (this *acForCodePlatformPayload) hasOrg(org string) bool {
-	if this.Orgs == nil {
-		return false
-	}
-
-	_, ok := this.Orgs[org]
-	return ok
-}
-
-func (this *acForCodePlatformPayload) addOrg(org string) {
-	if this.Orgs == nil {
-		this.Orgs = map[string]bool{}
-	}
-
-	this.Orgs[org] = true
-}
-
 func (this *acForCodePlatformPayload) orgInfo(linkID string) *models.OrgInfo {
 	if this.Links == nil {
 		return nil

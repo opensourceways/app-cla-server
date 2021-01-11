@@ -32,7 +32,7 @@ func (this *client) SignIndividualCLA(linkID string, info *dbmodels.IndividualSi
 		Enabled:     info.Enabled,
 		SigningInfo: info.Info,
 	}
-	doc, err := structToMap1(signing)
+	doc, err := structToMap(signing)
 	if err != nil {
 		return err
 	}
@@ -43,7 +43,7 @@ func (this *client) SignIndividualCLA(linkID string, info *dbmodels.IndividualSi
 	)
 
 	f := func(ctx context.Context) dbmodels.IDBError {
-		return this.pushArrayElem1(ctx, this.individualSigningCollection, fieldSignings, docFilter, doc)
+		return this.pushArrayElem(ctx, this.individualSigningCollection, fieldSignings, docFilter, doc)
 	}
 
 	return withContext1(f)
@@ -51,7 +51,7 @@ func (this *client) SignIndividualCLA(linkID string, info *dbmodels.IndividualSi
 
 func (this *client) DeleteIndividualSigning(linkID, email string) dbmodels.IDBError {
 	f := func(ctx context.Context) dbmodels.IDBError {
-		return this.pullArrayElem1(
+		return this.pullArrayElem(
 			ctx, this.individualSigningCollection, fieldSignings,
 			docFilterOfSigning(linkID),
 			elemFilterOfIndividualSigning(email),
@@ -68,7 +68,7 @@ func (this *client) UpdateIndividualSigning(linkID, email string, enabled bool) 
 	arrayFilterByElemMatch(fieldSignings, true, elemFilter, docFilter)
 
 	f := func(ctx context.Context) dbmodels.IDBError {
-		return this.updateArrayElem1(
+		return this.updateArrayElem(
 			ctx, this.individualSigningCollection, fieldSignings, docFilter,
 			elemFilter, bson.M{"enabled": enabled},
 		)

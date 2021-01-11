@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"crypto/md5"
 	"crypto/rand"
-	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -25,12 +24,6 @@ func EmailSuffix(email string) string {
 	return email
 }
 
-func CorporCLAPDFFile(out, claOrgID, email, other string) string {
-	s := strings.ReplaceAll(EmailSuffix(email), ".", "_")
-	f := fmt.Sprintf("%s_%s%s.pdf", claOrgID, s, other)
-	return filepath.Join(out, f)
-}
-
 func GenFilePath(dir, fileName string) string {
 	return filepath.Join(dir, fileName)
 }
@@ -49,17 +42,6 @@ func IsNotDir(dir string) bool {
 		return !v.IsDir()
 	}
 	return true
-}
-
-// CopyBetweenStructs copy between two structs. Note: if some elements
-// of 'to' are set tag of `json:"-'`, these elements will not be copied
-// and should copy them manually.
-func CopyBetweenStructs(from, to interface{}) error {
-	d, err := json.Marshal(from)
-	if err != nil {
-		return err
-	}
-	return json.Unmarshal(d, to)
 }
 
 func LoadFromYaml(path string, cfg interface{}) error {
@@ -148,13 +130,6 @@ func Md5sumOfBytes(data *[]byte) string {
 	}
 
 	return fmt.Sprintf("%x", md5.Sum(*data))
-}
-
-func ProjectURL(platform, org, repo string) string {
-	if repo == "" {
-		return fmt.Sprintf("https://%s.com/%s", platform, org)
-	}
-	return fmt.Sprintf("https://%s.com/%s/%s", platform, org, repo)
 }
 
 func GenFileName(fileNameParts ...string) string {

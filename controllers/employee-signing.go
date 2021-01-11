@@ -8,7 +8,6 @@ import (
 	"github.com/opensourceways/app-cla-server/dbmodels"
 	"github.com/opensourceways/app-cla-server/email"
 	"github.com/opensourceways/app-cla-server/models"
-	"github.com/opensourceways/app-cla-server/util"
 )
 
 type EmployeeSigningController struct {
@@ -105,31 +104,17 @@ func (this *EmployeeSigningController) Post() {
 // @Success 200 {int} map
 // @router / [get]
 func (this *EmployeeSigningController) GetAll() {
-	sendResp := this.newFuncForSendingFailedResp("list employeee")
+	action := "list employees"
 
 	pl, fr := this.tokenPayloadBasedOnCorpManager()
 	if fr != nil {
-		sendResp(fr)
+		this.sendFailedResultAsResp(fr, action)
 		return
 	}
 
-	orgCLA := &models.OrgCLA{ID: pl.LinkID}
-	if err := orgCLA.Get(); err != nil {
-		sendResp(convertDBError1(err))
-		return
-	}
-
-	linkID, fr := getLinkID(
-		orgCLA.Platform, orgCLA.OrgID, orgCLA.RepoID, dbmodels.ApplyToIndividual,
-	)
-	if fr != nil {
-		sendResp(fr)
-		return
-	}
-
-	r, merr := models.ListIndividualSigning(linkID, pl.Email, this.GetString("cla_language"))
+	r, merr := models.ListIndividualSigning(pl.LinkID, pl.Email, this.GetString("cla_language"))
 	if merr != nil {
-		sendResp(parseModelError(merr))
+		this.sendModelErrorAsResp(merr, action)
 		return
 	}
 
@@ -142,7 +127,7 @@ func (this *EmployeeSigningController) GetAll() {
 // @Success 202 {int} map
 // @router /:email [put]
 func (this *EmployeeSigningController) Update() {
-	action := "enable/unable employeee"
+	action := "enable/unable employee signing"
 	sendResp := this.newFuncForSendingFailedResp(action)
 	employeeEmail := this.GetString(":email")
 
@@ -153,21 +138,7 @@ func (this *EmployeeSigningController) Update() {
 	}
 
 	if !pl.hasEmployee(employeeEmail) {
-		this.sendFailedResponse(400, util.ErrNotSameCorp, fmt.Errorf("not same corp"), action)
-		return
-	}
-
-	corpClaOrg := &models.OrgCLA{ID: pl.LinkID}
-	if err := corpClaOrg.Get(); err != nil {
-		sendResp(convertDBError1(err))
-		return
-	}
-
-	linkID, fr := getLinkID(
-		corpClaOrg.Platform, corpClaOrg.OrgID, corpClaOrg.RepoID, dbmodels.ApplyToIndividual,
-	)
-	if fr != nil {
-		sendResp(fr)
+		this.sendFailedResponse(400, errNotSameCorp, fmt.Errorf("not same corp"), action)
 		return
 	}
 
@@ -177,32 +148,25 @@ func (this *EmployeeSigningController) Update() {
 		return
 	}
 
-	if err := (&info).Update(linkID, employeeEmail); err != nil {
+	if err := (&info).Update(pl.LinkID, employeeEmail); err != nil {
 		if err.IsErrorOf(models.ErrNoLinkOrUnsigned) {
 			this.sendFailedResponse(400, errUnsigned, err, action)
 		} else {
-			sendResp(parseModelError(err))
+			this.sendModelErrorAsResp(err, action)
 		}
 		return
 	}
 
 	this.sendSuccessResp("enabled employee successfully")
 
-	msg := email.EmployeeNotification{
-		Name:       employeeEmail,
-		Manager:    pl.Email,
-		ProjectURL: projectURL(corpClaOrg),
-		Org:        corpClaOrg.OrgAlias,
-	}
-	subject := ""
+	msg := this.newEmployeeNotification(pl, employeeEmail)
 	if info.Enabled {
 		msg.Active = true
-		subject = "Activate the CLA signing"
+		sendEmailToIndividual(employeeEmail, pl.OrgEmail, "Activate CLA signing", msg)
 	} else {
 		msg.Inactive = true
-		subject = "Inavtivate the CLA signing"
+		sendEmailToIndividual(employeeEmail, pl.OrgEmail, "Inactivate CLA signing", msg)
 	}
-	sendEmailToIndividual(employeeEmail, corpClaOrg.OrgEmail, subject, msg)
 }
 
 // @Title Delete
@@ -212,49 +176,29 @@ func (this *EmployeeSigningController) Update() {
 // @router /:email [delete]
 func (this *EmployeeSigningController) Delete() {
 	action := "delete employee signing"
-	sendResp := this.newFuncForSendingFailedResp(action)
 	employeeEmail := this.GetString(":email")
 
 	pl, fr := this.tokenPayloadBasedOnCorpManager()
 	if fr != nil {
-		sendResp(fr)
+		this.sendFailedResultAsResp(fr, action)
 		return
 	}
 
 	if !pl.hasEmployee(employeeEmail) {
-		this.sendFailedResponse(400, util.ErrNotSameCorp, fmt.Errorf("not same corp"), action)
+		this.sendFailedResponse(400, errNotSameCorp, fmt.Errorf("not same corp"), action)
 		return
 	}
 
-	corpClaOrg := &models.OrgCLA{ID: pl.LinkID}
-	if err := corpClaOrg.Get(); err != nil {
-		sendResp(convertDBError1(err))
-		return
-	}
-
-	linkID, fr := getLinkID(
-		corpClaOrg.Platform, corpClaOrg.OrgID, corpClaOrg.RepoID, dbmodels.ApplyToIndividual,
-	)
-	if fr != nil {
-		sendResp(fr)
-		return
-	}
-
-	if err := models.DeleteEmployeeSigning(linkID, employeeEmail); err != nil {
-		sendResp(parseModelError(err))
+	if err := models.DeleteEmployeeSigning(pl.LinkID, employeeEmail); err != nil {
+		this.sendModelErrorAsResp(err, action)
 		return
 	}
 
 	this.sendSuccessResp("delete employee successfully")
 
-	msg := email.EmployeeNotification{
-		Removing:   true,
-		Name:       employeeEmail,
-		Manager:    pl.Email,
-		ProjectURL: projectURL(corpClaOrg),
-		Org:        corpClaOrg.OrgAlias,
-	}
-	sendEmailToIndividual(employeeEmail, corpClaOrg.OrgEmail, "Remove employee", msg)
+	msg := this.newEmployeeNotification(pl, employeeEmail)
+	msg.Removing = true
+	sendEmailToIndividual(employeeEmail, pl.OrgEmail, "Remove employee", msg)
 }
 
 func (this *EmployeeSigningController) notifyManagers(managers []dbmodels.CorporationManagerListResult, info *models.EmployeeSigning, orgInfo *models.OrgInfo) {
@@ -284,4 +228,13 @@ func (this *EmployeeSigningController) notifyManagers(managers []dbmodels.Corpor
 		URLOfCLAPlatform: conf.AppConfig.CLAPlatformURL,
 	}
 	sendEmail(to, orgInfo.OrgEmail, "An employee has signed CLA", msg1)
+}
+
+func (this *EmployeeSigningController) newEmployeeNotification(pl *acForCorpManagerPayload, employeeName string) *email.EmployeeNotification {
+	return &email.EmployeeNotification{
+		Name:       employeeName,
+		Manager:    pl.Email,
+		Org:        pl.OrgAlias,
+		ProjectURL: pl.ProjectURL(),
+	}
 }

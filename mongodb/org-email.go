@@ -13,7 +13,7 @@ func toDocOfOrgEmail(opt *dbmodels.OrgEmailCreateInfo) (bson.M, dbmodels.IDBErro
 		Email:    opt.Email,
 		Platform: opt.Platform,
 	}
-	body, err := structToMap1(info)
+	body, err := structToMap(info)
 	if err != nil {
 		return nil, err
 	}
@@ -29,7 +29,7 @@ func (this *client) CreateOrgEmail(opt dbmodels.OrgEmailCreateInfo) dbmodels.IDB
 	}
 
 	f := func(ctx context.Context) dbmodels.IDBError {
-		_, err := this.replaceDoc1(ctx, this.orgEmailCollection, bson.M{"email": opt.Email}, body)
+		_, err := this.replaceDoc(ctx, this.orgEmailCollection, bson.M{"email": opt.Email}, body)
 		return err
 	}
 
@@ -40,7 +40,7 @@ func (this *client) GetOrgEmailInfo(email string) (*dbmodels.OrgEmailCreateInfo,
 	var v cOrgEmail
 
 	f := func(ctx context.Context) dbmodels.IDBError {
-		return this.getDoc1(ctx, this.orgEmailCollection, bson.M{"email": email}, bson.M{"email": 0}, &v)
+		return this.getDoc(ctx, this.orgEmailCollection, bson.M{"email": email}, bson.M{"email": 0}, &v)
 	}
 
 	if err := withContext1(f); err != nil {

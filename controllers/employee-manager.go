@@ -38,19 +38,19 @@ func (this *EmployeeManagerController) Post() {
 	}
 
 	if err := info.ValidateWhenAdding(pl.LinkID, pl.Email); err != nil {
-		sendResp(parseModelError(err))
+		this.sendModelErrorAsResp(err, action)
 		return
 	}
 
 	added, merr := info.Create(pl.LinkID)
 	if merr != nil {
-		sendResp(parseModelError(merr))
+		this.sendModelErrorAsResp(merr, action)
 		return
 	}
 
 	this.sendSuccessResp(action + " successfully")
 
-	notifyCorpManagerWhenAdding(pl.OrgAlias, pl.ProjectURL(), pl.OrgEmail, added)
+	notifyCorpManagerWhenAdding(&pl.OrgInfo, added)
 }
 
 // @Title Delete
@@ -75,13 +75,13 @@ func (this *EmployeeManagerController) Delete() {
 	}
 
 	if err := info.ValidateWhenDeleting(pl.Email); err != nil {
-		sendResp(parseModelError(err))
+		this.sendModelErrorAsResp(err, action)
 		return
 	}
 
 	deleted, merr := info.Delete(pl.LinkID)
 	if merr != nil {
-		sendResp(parseModelError(merr))
+		this.sendModelErrorAsResp(merr, action)
 		return
 	}
 

@@ -23,7 +23,7 @@ func (c *client) SignCorpCLA(linkID string, info *dbmodels.CorpSigningCreateOpt)
 		Date:            info.Date,
 		SigningInfo:     info.Info,
 	}
-	doc, err := structToMap1(signing)
+	doc, err := structToMap(signing)
 	if err != nil {
 		return err
 	}
@@ -32,7 +32,7 @@ func (c *client) SignCorpCLA(linkID string, info *dbmodels.CorpSigningCreateOpt)
 	arrayFilterByElemMatch(fieldSignings, false, elemFilterOfCorpSigning(info.AdminEmail), docFilter)
 
 	f := func(ctx context.Context) dbmodels.IDBError {
-		return c.pushArrayElem1(ctx, c.corpSigningCollection, fieldSignings, docFilter, doc)
+		return c.pushArrayElem(ctx, c.corpSigningCollection, fieldSignings, docFilter, doc)
 	}
 
 	return withContext1(f)

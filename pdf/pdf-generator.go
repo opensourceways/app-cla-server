@@ -36,7 +36,7 @@ func (this *pdfGenerator) GenPDFForCorporationSigning(linkID, orgSignatureFile, 
 	}
 	defer os.Remove(tempPdf)
 
-	outfile := util.CorporCLAPDFFile(this.pdfOutDir, linkID, signing.AdminEmail, "")
+	outfile := util.GenFilePath(this.pdfOutDir, genPDFFileName(linkID, signing.AdminEmail, ""))
 	if err := mergeCorporPDFSignaturePage(this.pythonBin, tempPdf, orgSignatureFile, outfile); err != nil {
 		return "", err
 	}
@@ -61,7 +61,7 @@ func genCorporPDFMissingSig(c *corpSigningPDF, orgInfo *models.OrgInfo, signing 
 
 	c.declare(pdf)
 	c.cla(pdf, string(text))
-	c.projectURL(pdf, fmt.Sprintf("[1]. %s", util.ProjectURL(orgInfo.Platform, orgInfo.OrgID, orgInfo.RepoID)))
+	c.projectURL(pdf, fmt.Sprintf("[1]. %s", orgInfo.ProjectURL()))
 
 	// second page
 	c.secondPage(pdf, signing.Date)

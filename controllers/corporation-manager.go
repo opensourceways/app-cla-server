@@ -5,7 +5,6 @@ import (
 	"net/http"
 
 	"github.com/opensourceways/app-cla-server/models"
-	"github.com/opensourceways/app-cla-server/util"
 )
 
 type CorporationManagerController struct {
@@ -34,52 +33,61 @@ func (this *CorporationManagerController) Prepare() {
 // @Success 202 {int} map
 // @Failure util.ErrPDFHasNotUploaded
 // @Failure util.ErrNumOfCorpManagersExceeded
-// @router /:org_cla_id/:email [put]
+// @router /:link_id/:email [put]
 func (this *CorporationManagerController) Put() {
 	action := "add corp administrator"
-	sendResp := this.newFuncForSendingFailedResp(action)
-	orgCLAID := this.GetString(":org_cla_id")
+	linkID := this.GetString(":link_id")
 	corpEmail := this.GetString(":email")
 
-	orgCLA, statusCode, errCode, reason := canAccessOrgCLA(&this.Controller, orgCLAID)
-	if reason != nil {
-		this.sendFailedResponse(statusCode, errCode, reason, action)
+	pl, fr := this.tokenPayloadBasedOnCodePlatform()
+	if fr != nil {
+		this.sendFailedResultAsResp(fr, action)
+		return
+	}
+	if fr := pl.isOwnerOfLink(linkID); fr != nil {
+		this.sendFailedResultAsResp(fr, action)
+		return
+	}
+
+	orgInfo, merr := models.GetOrgOfLink(linkID)
+	if merr != nil {
+		this.sendModelErrorAsResp(merr, action)
 		return
 	}
 
 	// call models.GetCorpSigningBasicInfo before models.IsCorpSigningPDFUploaded
 	// to check wheather corp has signed
-	corpSigning, merr := models.GetCorpSigningBasicInfo(orgCLAID, corpEmail)
+	corpSigning, merr := models.GetCorpSigningBasicInfo(linkID, corpEmail)
 	if merr != nil {
-		sendResp(parseModelError(merr))
+		this.sendModelErrorAsResp(merr, action)
 		return
 	}
 
-	uploaded, err := models.IsCorpSigningPDFUploaded(orgCLAID, corpEmail)
+	uploaded, err := models.IsCorpSigningPDFUploaded(linkID, corpEmail)
 	if err != nil {
-		sendResp(convertDBError1(err))
+		this.sendModelErrorAsResp(err, action)
 		return
 	}
 	if !uploaded {
 		this.sendFailedResponse(
-			400, util.ErrPDFHasNotUploaded,
+			400, errUnuploaded,
 			fmt.Errorf("pdf corporation signed has not been uploaded"), action)
 		return
 	}
 
-	added, merr := models.CreateCorporationAdministrator(orgCLAID, corpSigning.AdminName, corpEmail)
+	added, merr := models.CreateCorporationAdministrator(linkID, corpSigning.AdminName, corpEmail)
 	if merr != nil {
 		if merr.IsErrorOf(models.ErrNoLinkOrManagerExists) {
-			sendResp(newFailedApiResult(400, errCorpManagerExists, merr))
+			this.sendFailedResponse(400, errCorpManagerExists, merr, action)
 		} else {
-			sendResp(parseModelError(merr))
+			this.sendModelErrorAsResp(merr, action)
 		}
 		return
 	}
 
 	this.sendSuccessResp(action + " successfully")
 
-	notifyCorpAdmin(orgCLA.OrgAlias, projectURL(orgCLA), orgCLA.OrgEmail, added)
+	notifyCorpAdmin(orgInfo, added)
 }
 
 // @Title Patch
@@ -109,7 +117,7 @@ func (this *CorporationManagerController) Patch() {
 	}
 
 	if err := (&info).Reset(pl.LinkID, pl.Email); err != nil {
-		sendResp(parseModelError(err))
+		this.sendModelErrorAsResp(err, action)
 		return
 	}
 

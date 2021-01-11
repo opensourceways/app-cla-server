@@ -45,8 +45,8 @@ func (this *EmployeeManagerCreateOption) ValidateWhenAdding(linkID, adminEmail s
 	for i := range this.Managers {
 		item := &this.Managers[i]
 
-		if _, err := checkEmailFormat(item.Email); err != nil {
-			return newModelError(ErrNotAnEmail, err)
+		if err := checkEmailFormat(item.Email); err != nil {
+			return err
 		}
 
 		if util.EmailSuffix(item.Email) != suffix {
@@ -63,8 +63,8 @@ func (this *EmployeeManagerCreateOption) ValidateWhenAdding(linkID, adminEmail s
 		em[item.Email] = true
 
 		if item.ID != "" {
-			if _, err := checkManagerID(fmt.Sprintf("%s_%s", item.ID, suffix)); err != nil {
-				return newModelError(ErrInvalidManagerID, err)
+			if err := checkManagerID(fmt.Sprintf("%s_%s", item.ID, suffix)); err != nil {
+				return err
 			}
 
 			if _, ok := ids[item.ID]; ok {
@@ -119,8 +119,8 @@ func (this *EmployeeManagerCreateOption) ValidateWhenDeleting(adminEmail string)
 	for i := range this.Managers {
 		item := &this.Managers[i]
 
-		if _, err := checkEmailFormat(item.Email); err != nil {
-			return newModelError(ErrNotAnEmail, err)
+		if err := checkEmailFormat(item.Email); err != nil {
+			return err
 		}
 
 		if util.EmailSuffix(item.Email) != suffix {

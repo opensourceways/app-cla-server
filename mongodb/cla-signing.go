@@ -16,13 +16,13 @@ func (this *client) InitializeIndividualSigning(linkID string, claInfo *dbmodels
 	if claInfo != nil {
 		data.CLAInfos = []DCLAInfo{*toDocOfCLAInfo(claInfo)}
 	}
-	doc, err := structToMap1(data)
+	doc, err := structToMap(data)
 	if err != nil {
 		return err
 	}
 
 	f := func(ctx context.Context) dbmodels.IDBError {
-		_, err := this.replaceDoc1(ctx, this.individualSigningCollection, docFilter, doc)
+		_, err := this.replaceDoc(ctx, this.individualSigningCollection, docFilter, doc)
 		return err
 	}
 
@@ -42,13 +42,13 @@ func (this *client) InitializeCorpSigning(linkID string, info *dbmodels.OrgInfo,
 	if claInfo != nil {
 		data.CLAInfos = []DCLAInfo{*toDocOfCLAInfo(claInfo)}
 	}
-	doc, err := structToMap1(data)
+	doc, err := structToMap(data)
 	if err != nil {
 		return err
 	}
 
 	f := func(ctx context.Context) dbmodels.IDBError {
-		_, err := this.replaceDoc1(ctx, this.corpSigningCollection, docFilter, doc)
+		_, err := this.replaceDoc(ctx, this.corpSigningCollection, docFilter, doc)
 		return err
 	}
 
@@ -64,7 +64,7 @@ func (this *client) collectionOfSigning(applyTo string) string {
 
 func (this *client) DeleteCLAInfo(linkID, applyTo, claLang string) dbmodels.IDBError {
 	f := func(ctx context.Context) dbmodels.IDBError {
-		return this.pullArrayElem1(
+		return this.pullArrayElem(
 			ctx, this.collectionOfSigning(applyTo), fieldCLAInfos,
 			docFilterOfSigning(linkID), elemFilterOfCLA(claLang),
 		)
@@ -74,7 +74,7 @@ func (this *client) DeleteCLAInfo(linkID, applyTo, claLang string) dbmodels.IDBE
 }
 
 func (this *client) AddCLAInfo(linkID, applyTo string, info *dbmodels.CLAInfo) dbmodels.IDBError {
-	doc, err := structToMap1(toDocOfCLAInfo(info))
+	doc, err := structToMap(toDocOfCLAInfo(info))
 	if err != nil {
 		return err
 	}
@@ -83,7 +83,7 @@ func (this *client) AddCLAInfo(linkID, applyTo string, info *dbmodels.CLAInfo) d
 	arrayFilterByElemMatch(fieldCLAInfos, false, elemFilterOfCLA(info.CLALang), docFilter)
 
 	f := func(ctx context.Context) dbmodels.IDBError {
-		return this.pushArrayElem1(
+		return this.pushArrayElem(
 			ctx, this.collectionOfSigning(applyTo), fieldCLAInfos, docFilter, doc,
 		)
 	}

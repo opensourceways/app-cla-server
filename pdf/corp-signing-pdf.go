@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"text/template"
 
-	"github.com/jung-kurt/gofpdf"
+	"github.com/opensourceways/gofpdf"
 )
 
 type fontInfo struct {
@@ -36,10 +36,15 @@ type corpSigningPDF struct {
 	signatureDate  string
 }
 
-func (this *corpSigningPDF) begin() *gofpdf.Fpdf {
+func (this *corpSigningPDF) newPDF() *gofpdf.Fpdf {
 	pdf := gofpdf.New("P", "mm", "A4", "./conf/pdf-font") // 210mm x 297mm
-
 	pdf.AddUTF8Font("NotoSansSC-Regular", "", "NotoSansSC-Regular.ttf")
+	pdf.AddUTF8Font("NotoSansSC-Regular", "I", "NotoSansSC-Regular.ttf")
+	return pdf
+}
+
+func (this *corpSigningPDF) begin() *gofpdf.Fpdf {
+	pdf := this.newPDF()
 
 	pdf.SetFooterFunc(func() {
 		// Position at 1.5 cm from bottom
@@ -154,7 +159,7 @@ func (this *corpSigningPDF) secondPage(pdf *gofpdf.Fpdf, date string) {
 }
 
 func (this *corpSigningPDF) genBlankSignaturePage(path string) error {
-	pdf := gofpdf.New("P", "mm", "A4", "") // 210mm x 297mm
+	pdf := this.newPDF()
 
 	this.genSignatureItems(pdf, this.signatureItems)
 

@@ -20,8 +20,6 @@ type client struct {
 	db *mongo.Database
 
 	clasCollection              string
-	orgCLACollection            string
-	blankSigCollection          string
 	vcCollection                string
 	orgEmailCollection          string
 	corpPDFCollection           string
@@ -46,7 +44,6 @@ func Initialize(cfg *conf.MongodbConfig) (*client, error) {
 
 		vcCollection:                cfg.VCCollection,
 		clasCollection:              cfg.CLACollection,
-		orgCLACollection:            cfg.LinkCollection,
 		orgEmailCollection:          cfg.OrgEmailCollection,
 		corpPDFCollection:           cfg.CorpPDFCollection,
 		linkCollection:              cfg.LinkCollection,

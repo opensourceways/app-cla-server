@@ -66,7 +66,7 @@ func (this *client) AddCLA(linkID, applyTo string, cla *dbmodels.CLACreateOption
 	arrayFilterByElemMatch(claField, false, elemFilterOfCLA(cla.Language), docFilter)
 
 	f := func(ctx context.Context) dbmodels.IDBError {
-		return this.pushArrayElem1(
+		return this.pushArrayElem(
 			ctx, this.linkCollection, claField, docFilter, body,
 		)
 	}
@@ -76,7 +76,7 @@ func (this *client) AddCLA(linkID, applyTo string, cla *dbmodels.CLACreateOption
 
 func (this *client) DeleteCLA(linkID, applyTo, language string) dbmodels.IDBError {
 	f := func(ctx context.Context) dbmodels.IDBError {
-		return this.pullArrayElem1(
+		return this.pullArrayElem(
 			ctx, this.linkCollection, fieldNameOfCLA(applyTo),
 			docFilterOfCLA(linkID), elemFilterOfCLA(language),
 		)
@@ -102,7 +102,7 @@ func (this *client) GetCLAByType(orgRepo *dbmodels.OrgRepo, applyTo string) (str
 
 	var v cLink
 	f := func(ctx context.Context) dbmodels.IDBError {
-		return this.getDoc1(
+		return this.getDoc(
 			ctx, this.linkCollection, docFilterOfLink(orgRepo), project, &v,
 		)
 	}
@@ -125,7 +125,7 @@ func (this *client) GetAllCLA(linkID string) (*dbmodels.CLAOfLink, dbmodels.IDBE
 
 	var v cLink
 	f := func(ctx context.Context) dbmodels.IDBError {
-		return this.getDoc1(
+		return this.getDoc(
 			ctx, this.linkCollection, docFilterOfCLA(linkID), project, &v,
 		)
 	}

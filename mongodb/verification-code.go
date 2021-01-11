@@ -17,7 +17,7 @@ func (this *client) CreateVerificationCode(opt dbmodels.VerificationCode) dbmode
 		Purpose: opt.Purpose,
 		Expiry:  opt.Expiry,
 	}
-	body, err := structToMap1(info)
+	body, err := structToMap(info)
 	if err != nil {
 		return err
 	}

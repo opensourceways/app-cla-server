@@ -18,6 +18,8 @@ const (
 	fieldIndividualCLAs = "individual_clas"
 	fieldCorpCLAs       = "corp_clas"
 	fieldCLAInfos       = "cla_infos"
+	fieldCorpManagers   = "corp_managers"
+	fieldOrgSignature   = "org_signature"
 
 	// 'ready' means the doc is ready to record the signing data currently.
 	// 'deleted' means the signing data is invalid.

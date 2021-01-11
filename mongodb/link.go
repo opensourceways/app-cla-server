@@ -20,7 +20,7 @@ func docFilterOfLink(orgRepo *dbmodels.OrgRepo) bson.M {
 func (this *client) GetLinkID(orgRepo *dbmodels.OrgRepo) (string, dbmodels.IDBError) {
 	var v cLink
 	f := func(ctx context.Context) dbmodels.IDBError {
-		return this.getDoc1(
+		return this.getDoc(
 			ctx, this.linkCollection, docFilterOfLink(orgRepo), bson.M{fieldLinkID: 1}, &v,
 		)
 	}
@@ -42,7 +42,7 @@ func (this *client) CreateLink(info *dbmodels.LinkCreateOption) (string, dbmodel
 
 	docID := ""
 	f := func(ctx context.Context) dbmodels.IDBError {
-		s, err := this.newDocIfNotExist1(ctx, this.linkCollection, docFilter, doc)
+		s, err := this.newDocIfNotExist(ctx, this.linkCollection, docFilter, doc)
 		if err != nil {
 			return err
 		}
@@ -61,7 +61,7 @@ func (this *client) Unlink(linkID string) dbmodels.IDBError {
 	docFilter := bson.M{fieldLinkID: linkID}
 
 	f := func(ctx context.Context) dbmodels.IDBError {
-		err := this.updateDoc1(ctx, this.linkCollection, docFilter, status)
+		err := this.updateDoc(ctx, this.linkCollection, docFilter, status)
 		if err != nil {
 			return err
 		}
@@ -77,7 +77,7 @@ func (this *client) Unlink(linkID string) dbmodels.IDBError {
 func (this *client) GetOrgOfLink(linkID string) (*dbmodels.OrgInfo, dbmodels.IDBError) {
 	var v cLink
 	f := func(ctx context.Context) dbmodels.IDBError {
-		return this.getDoc1(
+		return this.getDoc(
 			ctx, this.linkCollection,
 			bson.M{
 				fieldLinkID:     linkID,
@@ -158,7 +158,7 @@ func toDocOfLink(info *dbmodels.LinkCreateOption) (bson.M, dbmodels.IDBError) {
 		Submitter:  info.Submitter,
 		LinkStatus: linkStatusReady,
 	}
-	body, err := structToMap1(opt)
+	body, err := structToMap(opt)
 	if err != nil {
 		return nil, err
 	}
@@ -209,7 +209,7 @@ func toDocOfCLA(cla *dbmodels.CLACreateOption) (bson.M, dbmodels.IDBError) {
 			OrgSignatureHash: cla.OrgSignatureHash,
 		},
 	}
-	r, err := structToMap1(info)
+	r, err := structToMap(info)
 	if err != nil {
 		return nil, err
 	}

@@ -23,7 +23,7 @@ func withContext1(f func(context.Context) dbmodels.IDBError) dbmodels.IDBError {
 	return f(ctx)
 }
 
-func structToMap1(info interface{}) (bson.M, dbmodels.IDBError) {
+func structToMap(info interface{}) (bson.M, dbmodels.IDBError) {
 	body, err := golangsdk.BuildRequestBody(info, "")
 	if err != nil {
 		return nil, newDBError(dbmodels.ErrMarshalDataFaield, err)
@@ -40,7 +40,7 @@ func arrayFilterByElemMatch(array string, exists bool, cond, filter bson.M) {
 	}
 }
 
-func (this *client) pushArrayElem1(ctx context.Context, collection, array string, filterOfDoc, value bson.M) dbmodels.IDBError {
+func (this *client) pushArrayElem(ctx context.Context, collection, array string, filterOfDoc, value bson.M) dbmodels.IDBError {
 	update := bson.M{"$push": bson.M{array: value}}
 
 	col := this.collection(collection)
@@ -70,7 +70,7 @@ func (this *client) pushArrayElems(ctx context.Context, collection, array string
 	return nil
 }
 
-func (this *client) replaceDoc1(ctx context.Context, collection string, filterOfDoc, docInfo bson.M) (string, dbmodels.IDBError) {
+func (this *client) replaceDoc(ctx context.Context, collection string, filterOfDoc, docInfo bson.M) (string, dbmodels.IDBError) {
 	upsert := true
 
 	col := this.collection(collection)
@@ -90,7 +90,7 @@ func (this *client) replaceDoc1(ctx context.Context, collection string, filterOf
 	return v, nil
 }
 
-func (this *client) pullArrayElem1(ctx context.Context, collection, array string, filterOfDoc, filterOfArray bson.M) dbmodels.IDBError {
+func (this *client) pullArrayElem(ctx context.Context, collection, array string, filterOfDoc, filterOfArray bson.M) dbmodels.IDBError {
 	update := bson.M{"$pull": bson.M{array: filterOfArray}}
 
 	col := this.collection(collection)
@@ -106,7 +106,7 @@ func (this *client) pullArrayElem1(ctx context.Context, collection, array string
 }
 
 // r, _ := col.UpdateOne; r.ModifiedCount == 0 will happen in two case: 1. no matched array item; 2 update repeatedly with same update cmd.
-func (this *client) updateArrayElem1(ctx context.Context, collection, array string, filterOfDoc, filterOfArray, updateCmd bson.M) dbmodels.IDBError {
+func (this *client) updateArrayElem(ctx context.Context, collection, array string, filterOfDoc, filterOfArray, updateCmd bson.M) dbmodels.IDBError {
 	cmd := bson.M{}
 	for k, v := range updateCmd {
 		cmd[fmt.Sprintf("%s.$[i].%s", array, k)] = v
@@ -157,7 +157,7 @@ func (this *client) pullAndReturnArrayElem(ctx context.Context, collection, arra
 	return nil
 }
 
-func (this *client) getDoc1(ctx context.Context, collection string, filterOfDoc, project bson.M, result interface{}) dbmodels.IDBError {
+func (this *client) getDoc(ctx context.Context, collection string, filterOfDoc, project bson.M, result interface{}) dbmodels.IDBError {
 	col := this.collection(collection)
 
 	var sr *mongo.SingleResult
@@ -178,7 +178,7 @@ func (this *client) getDoc1(ctx context.Context, collection string, filterOfDoc,
 	return nil
 }
 
-func (this *client) newDocIfNotExist1(ctx context.Context, collection string, filterOfDoc, docInfo bson.M) (string, dbmodels.IDBError) {
+func (this *client) newDocIfNotExist(ctx context.Context, collection string, filterOfDoc, docInfo bson.M) (string, dbmodels.IDBError) {
 	upsert := true
 
 	col := this.collection(collection)
@@ -198,7 +198,7 @@ func (this *client) newDocIfNotExist1(ctx context.Context, collection string, fi
 	return v, nil
 }
 
-func (this *client) updateDoc1(ctx context.Context, collection string, filterOfDoc, update bson.M) dbmodels.IDBError {
+func (this *client) updateDoc(ctx context.Context, collection string, filterOfDoc, update bson.M) dbmodels.IDBError {
 	col := this.collection(collection)
 	r, err := col.UpdateOne(ctx, filterOfDoc, bson.M{"$set": update})
 	if err != nil {

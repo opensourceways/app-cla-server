@@ -33,7 +33,7 @@ func (this *client) AddCorpAdministrator(linkID string, opt *dbmodels.Corporatio
 		Password: opt.Password,
 		CorpID:   genCorpID(opt.Email),
 	}
-	body, err := structToMap1(info)
+	body, err := structToMap(info)
 	if err != nil {
 		return err
 	}
@@ -49,7 +49,7 @@ func (this *client) AddCorpAdministrator(linkID string, opt *dbmodels.Corporatio
 	)
 
 	f := func(ctx context.Context) dbmodels.IDBError {
-		return this.pushArrayElem1(
+		return this.pushArrayElem(
 			ctx, this.corpSigningCollection, fieldCorpManagers, docFilter, body,
 		)
 	}
@@ -143,7 +143,7 @@ func (this *client) ResetCorporationManagerPassword(linkID, email string, opt db
 	arrayFilterByElemMatch(fieldCorpManagers, true, elemFilter, docFilter)
 
 	f := func(ctx context.Context) dbmodels.IDBError {
-		return this.updateArrayElem1(
+		return this.updateArrayElem(
 			ctx, this.corpSigningCollection, fieldCorpManagers,
 			docFilter, elemFilter, updateCmd)
 	}

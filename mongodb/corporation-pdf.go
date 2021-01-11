@@ -24,7 +24,7 @@ func (this *client) UploadCorporationSigningPDF(linkID string, adminEmail string
 	}
 
 	f := func(ctx context.Context) dbmodels.IDBError {
-		_, err := this.replaceDoc1(ctx, this.corpPDFCollection, docFilter, doc)
+		_, err := this.replaceDoc(ctx, this.corpPDFCollection, docFilter, doc)
 		return err
 	}
 
@@ -35,7 +35,7 @@ func (this *client) DownloadCorporationSigningPDF(linkID string, email string) (
 	var v dCorpSigningPDF
 
 	f := func(ctx context.Context) dbmodels.IDBError {
-		return this.getDoc1(
+		return this.getDoc(
 			ctx, this.corpPDFCollection,
 			docFilterOfCorpSigningPDF(linkID, email), bson.M{"pdf": 1}, &v,
 		)
@@ -52,7 +52,7 @@ func (this *client) IsCorpSigningPDFUploaded(linkID string, email string) (bool,
 	var v dCorpSigningPDF
 
 	f := func(ctx context.Context) dbmodels.IDBError {
-		return this.getDoc1(
+		return this.getDoc(
 			ctx, this.corpPDFCollection,
 			docFilterOfCorpSigningPDF(linkID, email), bson.M{"_id": 1}, &v,
 		)
@@ -77,7 +77,7 @@ func (this *client) ListCorpsWithPDFUploaded(linkID string) ([]string, dbmodels.
 		return this.getDocs(
 			ctx, this.corpPDFCollection,
 			bson.M{fieldLinkID: linkID},
-			bson.M{fieldCorporationID: 1}, &v,
+			bson.M{fieldCorpID: 1}, &v,
 		)
 	}
 

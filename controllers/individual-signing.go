@@ -50,14 +50,8 @@ func (this *IndividualSigningController) Post() {
 		return
 	}
 
-	orgRepo, merr := models.GetOrgOfLink(linkID)
-	if merr != nil {
-		this.sendModelErrorAsResp(merr, action)
-		return
-	}
-
 	fr = signHelper(
-		linkID, claLang, dbmodels.ApplyToIndividual, orgRepo,
+		linkID, claLang, dbmodels.ApplyToIndividual,
 		func(claInfo *models.CLAInfo) *failedApiResult {
 			if claInfo.CLAHash != this.GetString(":cla_hash") {
 				return newFailedApiResult(400, errUnmatchedCLA, fmt.Errorf("invalid cla"))

@@ -475,13 +475,18 @@ func getCLAInfoSigned(linkID, claLang, applyTo string) (*models.CLAInfo, *failed
 	return nil, parseModelError(merr)
 }
 
-func signHelper(linkID, claLang, applyTo string, orgInfo *models.OrgInfo, doSign func(*models.CLAInfo) *failedApiResult) *failedApiResult {
+func signHelper(linkID, claLang, applyTo string, doSign func(*models.CLAInfo) *failedApiResult) *failedApiResult {
 	claInfo, fr := getCLAInfoSigned(linkID, claLang, applyTo)
 	if fr != nil {
 		return fr
 	}
 
 	if claInfo == nil {
+		orgInfo, merr := models.GetOrgOfLink(linkID)
+		if merr != nil {
+			return parseModelError(merr)
+		}
+
 		// no contributor signed for this language. lock to avoid the cla to be changed
 		// before writing to the db.
 		unlock, err := util.Lock(genOrgFileLockPath(orgInfo.Platform, orgInfo.OrgID, orgInfo.RepoID))

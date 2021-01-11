@@ -55,7 +55,7 @@ func (this *CorporationSigningController) Post() {
 	}
 
 	fr := signHelper(
-		linkID, claLang, dbmodels.ApplyToCorporation, orgInfo,
+		linkID, claLang, dbmodels.ApplyToCorporation,
 		func(claInfo *models.CLAInfo) *failedApiResult {
 			if claInfo.CLAHash != this.GetString(":cla_hash") {
 				return newFailedApiResult(400, errUnmatchedCLA, fmt.Errorf("unmatched cla"))

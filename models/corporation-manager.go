@@ -15,11 +15,11 @@ type CorporationManagerAuthentication struct {
 
 func (this CorporationManagerAuthentication) Authenticate() (map[string]dbmodels.CorporationManagerCheckResult, IModelError) {
 	info := dbmodels.CorporationManagerCheckInfo{Password: this.Password}
-	if _, merr := checkEmailFormat(this.User); merr == nil {
+	if merr := checkEmailFormat(this.User); merr == nil {
 		info.Email = this.User
 	} else {
-		if _, merr := checkManagerID(this.User); merr != nil {
-			return nil, newModelError(ErrInvalidManagerID, fmt.Errorf("invalid corp manger id"))
+		if merr := checkManagerID(this.User); merr != nil {
+			return nil, merr
 		}
 
 		i := strings.LastIndex(this.User, "_")

@@ -400,10 +400,6 @@ func setCookies(c *beego.Controller, value map[string]string) {
 	}
 }
 
-func downloadFile(c *beego.Controller, path string) {
-	c.Ctx.Output.Download(path)
-}
-
 func parseOrgAndRepo(s string) (string, string) {
 	v := strings.Split(s, ":")
 	if len(v) == 2 {
@@ -462,4 +458,51 @@ func genLinkID(v *dbmodels.OrgRepo) string {
 		repo = fmt.Sprintf("_%s", v.RepoID)
 	}
 	return fmt.Sprintf("%s_%s%s-%d", v.Platform, v.OrgID, repo, time.Now().UnixNano())
+}
+
+func getCLAInfoSigned(linkID, claLang, applyTo string) (*models.CLAInfo, *failedApiResult) {
+	claInfo, merr := models.GetCLAInfoSigned(linkID, claLang, applyTo)
+	if merr == nil {
+		if claInfo == nil {
+			return nil, newFailedApiResult(500, errSystemError, fmt.Errorf("cla info is empty, impossible"))
+		}
+		return claInfo, nil
+	}
+
+	if merr.IsErrorOf(models.ErrNoLinkOrUnsigned) {
+		return nil, nil
+	}
+	return nil, parseModelError(merr)
+}
+
+func signHelper(linkID, claLang, applyTo string, doSign func(*models.CLAInfo) *failedApiResult) *failedApiResult {
+	claInfo, fr := getCLAInfoSigned(linkID, claLang, applyTo)
+	if fr != nil {
+		return fr
+	}
+
+	if claInfo == nil {
+		orgInfo, merr := models.GetOrgOfLink(linkID)
+		if merr != nil {
+			return parseModelError(merr)
+		}
+
+		// no contributor signed for this language. lock to avoid the cla to be changed
+		// before writing to the db.
+		unlock, err := util.Lock(genOrgFileLockPath(orgInfo.Platform, orgInfo.OrgID, orgInfo.RepoID))
+		if err != nil {
+			return newFailedApiResult(500, errSystemError, err)
+		}
+		defer unlock()
+
+		claInfo, merr := models.GetCLAInfoToSign(linkID, claLang, applyTo)
+		if merr != nil {
+			return parseModelError(merr)
+		}
+		if claInfo == nil {
+			return newFailedApiResult(500, errSystemError, fmt.Errorf("no cla info, impossible"))
+		}
+	}
+
+	return doSign(claInfo)
 }

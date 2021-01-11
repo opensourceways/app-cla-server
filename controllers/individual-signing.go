@@ -5,7 +5,6 @@ import (
 
 	"github.com/opensourceways/app-cla-server/dbmodels"
 	"github.com/opensourceways/app-cla-server/models"
-	"github.com/opensourceways/app-cla-server/util"
 )
 
 type IndividualSigningController struct {
@@ -16,6 +15,8 @@ func (this *IndividualSigningController) Prepare() {
 	// sign as individual
 	if this.isPostRequest() {
 		this.apiPrepare(PermissionIndividualSigner)
+	} else {
+		this.apiPrepare("")
 	}
 }
 
@@ -25,56 +26,53 @@ func (this *IndividualSigningController) Prepare() {
 // @Param	body		body 	models.IndividualSigning	true		"body for individual signing"
 // @Success 201 {int} map
 // @Failure util.ErrHasSigned
-// @router /:org_cla_id [post]
+// @router /:link_id/:cla_lang/:cla_hash [post]
 func (this *IndividualSigningController) Post() {
 	action := "sign individual cla"
-	sendResp := this.newFuncForSendingFailedResp(action)
+	linkID := this.GetString(":link_id")
+	claLang := this.GetString(":cla_lang")
 
-	orgCLAID := this.GetString(":org_cla_id")
 	pl, fr := this.tokenPayloadBasedOnCodePlatform()
 	if fr != nil {
-		sendResp(fr)
+		this.sendFailedResultAsResp(fr, action)
 		return
 	}
 
 	var info models.IndividualSigning
 	if fr := this.fetchInputPayload(&info); fr != nil {
-		sendResp(fr)
+		this.sendFailedResultAsResp(fr, action)
 		return
 	}
+	info.CLALanguage = claLang
+
 	if err := (&info).Validate(pl.Email); err != nil {
-		sendResp(parseModelError(err))
+		this.sendModelErrorAsResp(err, action)
 		return
 	}
 
-	orgCLA := &models.OrgCLA{ID: orgCLAID}
-	if err := orgCLA.Get(); err != nil {
-		sendResp(convertDBError1(err))
-		return
-	}
-	if isNotIndividualCLA(orgCLA) {
-		this.sendFailedResponse(400, util.ErrInvalidParameter, fmt.Errorf("invalid cla"), action)
-		return
-	}
+	fr = signHelper(
+		linkID, claLang, dbmodels.ApplyToIndividual,
+		func(claInfo *models.CLAInfo) *failedApiResult {
+			if claInfo.CLAHash != this.GetString(":cla_hash") {
+				return newFailedApiResult(400, errUnmatchedCLA, fmt.Errorf("invalid cla"))
+			}
 
-	cla := &models.CLA{ID: orgCLA.CLAID}
-	if err := cla.GetFields(); err != nil {
-		sendResp(convertDBError1(err))
-		return
+			info.Info = getSingingInfo(info.Info, claInfo.Fields)
+
+			if err := (&info).Create(linkID, true); err != nil {
+				if err.IsErrorOf(models.ErrNoLinkOrResigned) {
+					return newFailedApiResult(400, errResigned, err)
+				}
+				return parseModelError(err)
+			}
+			return nil
+		},
+	)
+	if fr != nil {
+		this.sendFailedResultAsResp(fr, action)
+	} else {
+		this.sendSuccessResp("sign successfully")
 	}
-
-	info.Info = getSingingInfo(info.Info, cla.Fields)
-
-	if err := (&info).Create(orgCLAID, true); err != nil {
-		if err.IsErrorOf(models.ErrNoLinkOrResigned) {
-			this.sendFailedResponse(400, errResigned, err, action)
-		} else {
-			sendResp(parseModelError(err))
-		}
-		return
-	}
-
-	this.sendSuccessResp("sign successfully")
 }
 
 // @Title Check
@@ -86,20 +84,17 @@ func (this *IndividualSigningController) Post() {
 // @Success 200
 // @router /:platform/:org_repo [get]
 func (this *IndividualSigningController) Check() {
-	sendResp := this.newFuncForSendingFailedResp("check individual signing")
+	action := "check individual signing"
 	org, repo := parseOrgAndRepo(this.GetString(":org_repo"))
-	emailOfSigner := this.GetString("email")
 
-	linkID, fr := getLinkID(
-		this.GetString(":platform"), org, repo, dbmodels.ApplyToIndividual,
-	)
-	if fr != nil {
-		sendResp(fr)
+	linkID, err := models.GetLinkID(buildOrgRepo(this.GetString(":platform"), org, repo))
+	if err != nil {
+		this.sendModelErrorAsResp(err, action)
 		return
 	}
 
-	if v, merr := models.IsIndividualSigned(linkID, emailOfSigner); merr != nil {
-		sendResp(parseModelError(merr))
+	if v, merr := models.IsIndividualSigned(linkID, this.GetString("email")); merr != nil {
+		this.sendModelErrorAsResp(merr, action)
 	} else {
 		this.sendSuccessResp(map[string]bool{"signed": v})
 	}

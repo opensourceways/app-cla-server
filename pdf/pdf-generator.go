@@ -2,6 +2,7 @@ package pdf
 
 import (
 	"fmt"
+	"io/ioutil"
 	"os"
 	"os/exec"
 	"sort"
@@ -27,57 +28,51 @@ func (this *pdfGenerator) GetBlankSignaturePath(claLang string) string {
 	return util.GenFilePath(this.pdfOrgSigDir, strings.ToLower(claLang)+"_blank_signature.pdf")
 }
 
-func (this *pdfGenerator) GenPDFForCorporationSigning(orgSignatureFile string, orgCLA *models.OrgCLA, signing *models.CorporationSigning, cla *models.CLA) (string, error) {
-	tempPdf, err := genCorporPDFMissingSig(this.corp, orgCLA, signing, cla, this.pdfOutDir)
+func (this *pdfGenerator) GenPDFForCorporationSigning(linkID, orgSignatureFile, claFile string, orgInfo *models.OrgInfo, signing *models.CorporationSigning, claFields []models.CLAField) (string, error) {
+	tempPdf := util.GenFilePath(this.pdfOutDir, genPDFFileName(linkID, signing.AdminEmail, "_missing_sig"))
+	err := genCorporPDFMissingSig(this.corp, orgInfo, signing, claFields, claFile, tempPdf)
 	if err != nil {
 		return "", err
 	}
 	defer os.Remove(tempPdf)
 
-	unlock, err := util.Lock(
-		util.GenFilePath(
-			this.pdfOrgSigDir,
-			util.GenFileName(orgCLA.Platform, orgCLA.OrgID, orgCLA.RepoID),
-		),
-	)
-	if err != nil {
-		return "", fmt.Errorf("lock failed: %s", err.Error())
-	}
-	defer unlock()
-
-	file := util.CorporCLAPDFFile(this.pdfOutDir, orgCLA.ID, signing.AdminEmail, "")
-	if err := mergeCorporPDFSignaturePage(this.pythonBin, tempPdf, orgSignatureFile, file); err != nil {
+	outfile := util.CorporCLAPDFFile(this.pdfOutDir, linkID, signing.AdminEmail, "")
+	if err := mergeCorporPDFSignaturePage(this.pythonBin, tempPdf, orgSignatureFile, outfile); err != nil {
 		return "", err
 	}
 
-	return file, nil
+	return outfile, nil
 }
 
-func genCorporPDFMissingSig(c *corpSigningPDF, orgCLA *models.OrgCLA, signing *models.CorporationSigning, cla *models.CLA, outDir string) (string, error) {
+func genCorporPDFMissingSig(c *corpSigningPDF, orgInfo *models.OrgInfo, signing *models.CorporationSigning, claFields []models.CLAField, claFile, outFile string) error {
+	text, err := ioutil.ReadFile(claFile)
+	if err != nil {
+		return fmt.Errorf("failed to read cla file(%s): %s", claFile, err.Error())
+	}
+
 	pdf := c.begin()
 
 	// first page
-	c.firstPage(pdf, fmt.Sprintf("The Project of %s", orgCLA.OrgAlias))
-	c.welcome(pdf, orgCLA.OrgAlias, orgCLA.OrgEmail)
+	c.firstPage(pdf, orgInfo.OrgAlias)
+	c.welcome(pdf, orgInfo.OrgAlias, orgInfo.OrgEmail)
 
-	orders, titles := BuildCorpContact(cla)
+	orders, titles := BuildCorpContact(claFields)
 	c.contact(pdf, signing.Info, orders, titles)
 
 	c.declare(pdf)
-	c.cla(pdf, cla.Text)
-	c.projectURL(pdf, fmt.Sprintf("[1]. %s", util.ProjectURL(orgCLA.Platform, orgCLA.OrgID, orgCLA.RepoID)))
+	c.cla(pdf, string(text))
+	c.projectURL(pdf, fmt.Sprintf("[1]. %s", util.ProjectURL(orgInfo.Platform, orgInfo.OrgID, orgInfo.RepoID)))
 
 	// second page
 	c.secondPage(pdf, signing.Date)
 
-	path := util.CorporCLAPDFFile(outDir, orgCLA.ID, signing.AdminEmail, "_missing_sig")
-	if !util.IsFileNotExist(path) {
-		os.Remove(path)
+	if !util.IsFileNotExist(outFile) {
+		os.Remove(outFile)
 	}
-	if err := c.end(pdf, path); err != nil {
-		return "", fmt.Errorf("generate signing pdf of corp failed: %s", err.Error())
+	if err := c.end(pdf, outFile); err != nil {
+		return fmt.Errorf("generate signing pdf of corp failed: %s", err.Error())
 	}
-	return path, nil
+	return nil
 }
 
 func mergeCorporPDFSignaturePage(pythonBin, pdfFile, sigFile, outfile string) error {
@@ -94,12 +89,12 @@ func mergeCorporPDFSignaturePage(pythonBin, pdfFile, sigFile, outfile string) er
 	return nil
 }
 
-func BuildCorpContact(cla *models.CLA) ([]string, map[string]string) {
-	ids := make(sort.IntSlice, 0, len(cla.Fields))
+func BuildCorpContact(fields []models.CLAField) ([]string, map[string]string) {
+	ids := make(sort.IntSlice, 0, len(fields))
 	m := map[int]string{}
 	mk := map[string]string{}
 
-	for _, item := range cla.Fields {
+	for _, item := range fields {
 		v, err := strconv.Atoi(item.ID)
 		if err != nil {
 			continue
@@ -117,4 +112,9 @@ func BuildCorpContact(cla *models.CLA) ([]string, map[string]string) {
 		r = append(r, m[k])
 	}
 	return r, mk
+}
+
+func genPDFFileName(linkID, email, other string) string {
+	s := strings.ReplaceAll(util.EmailSuffix(email), ".", "_")
+	return fmt.Sprintf("%s_%s%s.pdf", linkID, s, other)
 }

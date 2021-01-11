@@ -33,76 +33,71 @@ func (this *EmployeeSigningController) Prepare() {
 // @Failure util.ErrHasSigned		"employee has signed"
 // @Failure util.ErrHasNotSigned	"corp has not signed"
 // @Failure util.ErrSigningUncompleted	"corp has not been enabled"
-// @router /:org_cla_id [post]
+// @router /:link_id/:cla_lang/:cla_hash [post]
 func (this *EmployeeSigningController) Post() {
 	action := "sign employeee cla"
-	sendResp := this.newFuncForSendingFailedResp(action)
-	orgCLAID := this.GetString(":org_cla_id")
+	linkID := this.GetString(":link_id")
+	claLang := this.GetString(":cla_lang")
 
 	pl, fr := this.tokenPayloadBasedOnCodePlatform()
 	if fr != nil {
-		sendResp(fr)
+		this.sendFailedResultAsResp(fr, action)
 		return
 	}
 
 	var info models.EmployeeSigning
 	if fr := this.fetchInputPayload(&info); fr != nil {
-		sendResp(fr)
+		this.sendFailedResultAsResp(fr, action)
 		return
 	}
-	if err := (&info).Validate(orgCLAID, pl.Email); err != nil {
-		sendResp(parseModelError(err))
+	info.CLALanguage = claLang
+
+	if err := (&info).Validate(linkID, pl.Email); err != nil {
+		this.sendModelErrorAsResp(err, action)
 		return
 	}
 
-	orgCLA := &models.OrgCLA{ID: orgCLAID}
-	if err := orgCLA.Get(); err != nil {
-		sendResp(convertDBError1(err))
-		return
-	}
-	if isNotIndividualCLA(orgCLA) {
-		this.sendFailedResponse(400, util.ErrInvalidParameter, fmt.Errorf("invalid cla"), action)
+	orgInfo, merr := models.GetOrgOfLink(linkID)
+	if merr != nil {
+		this.sendModelErrorAsResp(merr, action)
 		return
 	}
 
-	linkID, fr := getLinkID(
-		orgCLA.Platform, orgCLA.OrgID, orgCLA.RepoID, dbmodels.ApplyToCorporation,
+	managers, merr := models.ListCorporationManagers(linkID, info.Email, dbmodels.RoleManager)
+	if merr != nil {
+		this.sendModelErrorAsResp(merr, action)
+		return
+	}
+	if len(managers) <= 0 {
+		this.sendFailedResponse(400, errNoCorpEmployeeManager, fmt.Errorf("no managers"), action)
+		return
+	}
+
+	fr = signHelper(
+		linkID, claLang, dbmodels.ApplyToIndividual,
+		func(claInfo *models.CLAInfo) *failedApiResult {
+			if claInfo.CLAHash != this.GetString(":cla_hash") {
+				return newFailedApiResult(400, errUnmatchedCLA, fmt.Errorf("invalid cla"))
+			}
+
+			info.Info = getSingingInfo(info.Info, claInfo.Fields)
+
+			if err := (&info).Create(linkID, false); err != nil {
+				if err.IsErrorOf(models.ErrNoLinkOrResigned) {
+					return newFailedApiResult(400, errResigned, err)
+				}
+				return parseModelError(err)
+			}
+			return nil
+		},
 	)
 	if fr != nil {
-		sendResp(fr)
-		return
+		this.sendFailedResultAsResp(fr, action)
+	} else {
+		this.sendSuccessResp("sign successfully")
 	}
 
-	managers, err := models.ListCorporationManagers(linkID, info.Email, dbmodels.RoleManager)
-	if err != nil {
-		sendResp(parseModelError(err))
-		return
-	}
-	if len(managers) == 0 {
-		sendResp(newFailedApiResult(400, errNoEmployeeManager, fmt.Errorf("no managers")))
-		return
-	}
-
-	cla := &models.CLA{ID: orgCLA.CLAID}
-	if err := cla.GetFields(); err != nil {
-		sendResp(convertDBError1(err))
-		return
-	}
-
-	info.Info = getSingingInfo(info.Info, cla.Fields)
-
-	if err := (&info).Create(orgCLAID, false); err != nil {
-		if err.IsErrorOf(models.ErrNoLinkOrResigned) {
-			this.sendFailedResponse(400, errResigned, err, action)
-		} else {
-			sendResp(parseModelError(err))
-		}
-		return
-	}
-
-	this.sendSuccessResp("sign successfully")
-
-	this.notifyManagers(managers, &info, orgCLA)
+	this.notifyManagers(managers, &info, orgInfo)
 }
 
 // @Title GetAll
@@ -262,7 +257,7 @@ func (this *EmployeeSigningController) Delete() {
 	sendEmailToIndividual(employeeEmail, corpClaOrg.OrgEmail, "Remove employee", msg)
 }
 
-func (this *EmployeeSigningController) notifyManagers(managers []dbmodels.CorporationManagerListResult, info *models.EmployeeSigning, orgCLA *models.OrgCLA) {
+func (this *EmployeeSigningController) notifyManagers(managers []dbmodels.CorporationManagerListResult, info *models.EmployeeSigning, orgInfo *models.OrgInfo) {
 	ms := make([]string, 0, len(managers))
 	to := make([]string, 0, len(managers))
 	for _, item := range managers {
@@ -272,21 +267,21 @@ func (this *EmployeeSigningController) notifyManagers(managers []dbmodels.Corpor
 
 	msg := email.EmployeeSigning{
 		Name:       info.Name,
-		Org:        orgCLA.OrgAlias,
-		ProjectURL: projectURL(orgCLA),
+		Org:        orgInfo.OrgAlias,
+		ProjectURL: orgInfo.ProjectURL(),
 		Managers:   "  " + strings.Join(ms, "\n  "),
 	}
 	sendEmailToIndividual(
-		info.Email, orgCLA.OrgEmail,
+		info.Email, orgInfo.OrgEmail,
 		fmt.Sprintf("Signing CLA on project of \"%s\"", msg.Org),
 		msg,
 	)
 
 	msg1 := email.NotifyingManager{
-		Org:              orgCLA.OrgAlias,
+		Org:              orgInfo.OrgAlias,
 		EmployeeEmail:    info.Email,
-		ProjectURL:       projectURL(orgCLA),
+		ProjectURL:       orgInfo.ProjectURL(),
 		URLOfCLAPlatform: conf.AppConfig.CLAPlatformURL,
 	}
-	sendEmail(to, orgCLA.OrgEmail, "An employee has signed CLA", msg1)
+	sendEmail(to, orgInfo.OrgEmail, "An employee has signed CLA", msg1)
 }

@@ -18,7 +18,7 @@ import (
 var worker IEmailWorker
 
 type IEmailWorker interface {
-	GenCLAPDFForCorporationAndSendIt(string, *models.OrgCLA, *models.CorporationSigning, *models.CLA)
+	GenCLAPDFForCorporationAndSendIt(string, string, string, models.OrgInfo, models.CorporationSigning, []models.CLAField)
 	SendSimpleMessage(orgEmail string, msg *email.EmailMessage)
 }
 
@@ -43,27 +43,33 @@ func (this *emailWorker) Shutdown() {
 	this.wg.Wait()
 }
 
-func (this *emailWorker) GenCLAPDFForCorporationAndSendIt(orgSignatureFile string, orgCLA *models.OrgCLA, signing *models.CorporationSigning, cla *models.CLA) {
+func (this *emailWorker) GenCLAPDFForCorporationAndSendIt(linkID, orgSignatureFile, claFile string, orgInfo models.OrgInfo, signing models.CorporationSigning, claFields []models.CLAField) {
 	f := func() {
 		defer func() {
 			this.wg.Done()
 		}()
 
-		emailCfg, ec, err := getEmailClient(orgCLA.OrgEmail)
+		emailCfg, ec, err := getEmailClient(orgInfo.OrgEmail)
 		if err != nil {
 			return
 		}
 
 		data := email.CorporationSigning{
-			Org:         orgCLA.OrgAlias,
+			Org:         orgInfo.OrgAlias,
 			Date:        signing.Date,
 			AdminName:   signing.AdminName,
-			ProjectURL:  util.ProjectURL(orgCLA.Platform, orgCLA.OrgID, orgCLA.RepoID),
-			SigningInfo: buildCorpSigningInfo(signing, cla),
+			ProjectURL:  util.ProjectURL(orgInfo.Platform, orgInfo.OrgID, orgInfo.RepoID),
+			SigningInfo: buildCorpSigningInfo(&signing, claFields),
 		}
 
 		var msg *email.EmailMessage
 		file := ""
+
+		defer func() {
+			if !util.IsFileNotExist(file) {
+				os.Remove(file)
+			}
+		}()
 
 		for i := 0; i < 10; i++ {
 			if this.shutdown {
@@ -83,11 +89,11 @@ func (this *emailWorker) GenCLAPDFForCorporationAndSendIt(orgSignatureFile strin
 			}
 
 			if file == "" || util.IsFileNotExist(file) {
-				file, err = this.pdfGenerator.GenPDFForCorporationSigning(orgSignatureFile, orgCLA, signing, cla)
+				file, err = this.pdfGenerator.GenPDFForCorporationSigning(linkID, orgSignatureFile, claFile, &orgInfo, &signing, claFields)
 				if err != nil {
 					next(fmt.Errorf(
 						"Failed to generate pdf for corp signing(%s:%s:%s/%s): %s",
-						orgCLA.Platform, orgCLA.OrgID, orgCLA.RepoID, util.EmailSuffix(signing.AdminEmail),
+						orgInfo.Platform, orgInfo.OrgID, orgInfo.RepoID, util.EmailSuffix(signing.AdminEmail),
 						err.Error()))
 					continue
 				}
@@ -96,11 +102,9 @@ func (this *emailWorker) GenCLAPDFForCorporationAndSendIt(orgSignatureFile strin
 
 			if err := ec.SendEmail(emailCfg.Token, msg); err != nil {
 				next(err)
-				continue
+			} else {
+				break
 			}
-
-			os.Remove(file)
-			break
 		}
 	}
 
@@ -160,8 +164,8 @@ func getEmailClient(orgEmail string) (*models.OrgEmail, email.IEmail, error) {
 	return emailCfg, ec, nil
 }
 
-func buildCorpSigningInfo(signing *models.CorporationSigning, cla *models.CLA) string {
-	orders, titles := pdf.BuildCorpContact(cla)
+func buildCorpSigningInfo(signing *models.CorporationSigning, claFields []models.CLAField) string {
+	orders, titles := pdf.BuildCorpContact(claFields)
 
 	v := make([]string, 0, len(orders))
 	for _, i := range orders {

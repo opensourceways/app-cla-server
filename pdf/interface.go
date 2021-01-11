@@ -11,7 +11,7 @@ type IPDFGenerator interface {
 	LangSupported() map[string]bool
 	GetBlankSignaturePath(string) string
 
-	GenPDFForCorporationSigning(string, *models.OrgCLA, *models.CorporationSigning, *models.CLA) (string, error)
+	GenPDFForCorporationSigning(linkID, orgSignatureFile, claFile string, orgInfo *models.OrgInfo, signing *models.CorporationSigning, claFields []models.CLAField) (string, error)
 }
 
 var generator *pdfGenerator

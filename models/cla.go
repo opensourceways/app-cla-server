@@ -33,6 +33,8 @@ func (this *CLA) GetFields() error {
 	return this.get(true)
 }
 
+type CLAField = dbmodels.Field
+
 type CLAListOptions dbmodels.CLAListOptions
 
 func (this CLAListOptions) Get() ([]dbmodels.CLA, error) {
@@ -251,4 +253,17 @@ func GetCLAInfoSigned(linkID, claLang, applyTo string) (*dbmodels.CLAInfo, IMode
 		return info, newModelError(ErrNoLinkOrUnsigned, err)
 	}
 	return info, parseDBError(err)
+}
+
+func GetCLAInfoToSign(linkID, claLang, applyTo string) (*dbmodels.CLAInfo, IModelError) {
+	v, err := dbmodels.GetDB().GetCLAInfoToSign(linkID, claLang, applyTo)
+	if err == nil {
+		return v, nil
+	}
+
+	if err.IsErrorOf(dbmodels.ErrNoDBRecord) {
+		return v, newModelError(ErrNoLink, err)
+	}
+
+	return v, parseDBError(err)
 }

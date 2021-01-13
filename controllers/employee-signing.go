@@ -94,9 +94,8 @@ func (this *EmployeeSigningController) Post() {
 		this.sendFailedResultAsResp(fr, action)
 	} else {
 		this.sendSuccessResp("sign successfully")
+		this.notifyManagers(managers, &info, orgInfo)
 	}
-
-	this.notifyManagers(managers, &info, orgInfo)
 }
 
 // @Title GetAll

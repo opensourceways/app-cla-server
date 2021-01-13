@@ -6,7 +6,7 @@ import (
 	"github.com/astaxie/beego"
 
 	platformAuth "github.com/opensourceways/app-cla-server/code-platform-auth"
-	"github.com/opensourceways/app-cla-server/conf"
+	"github.com/opensourceways/app-cla-server/config"
 	"github.com/opensourceways/app-cla-server/dbmodels"
 	"github.com/opensourceways/app-cla-server/email"
 	"github.com/opensourceways/app-cla-server/mongodb"
@@ -22,11 +22,11 @@ func main() {
 		beego.BConfig.WebConfig.StaticDir["/swagger"] = "swagger"
 	}
 
-	if err := conf.InitAppConfig(); err != nil {
+	if err := config.InitAppConfig(); err != nil {
 		beego.Error(err)
 		os.Exit(1)
 	}
-	AppConfig := conf.AppConfig
+	AppConfig := config.AppConfig
 
 	path := util.GenFilePath(AppConfig.PDFOutDir, "tmp")
 	if util.IsNotDir(path) {

@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/opensourceways/app-cla-server/conf"
+	"github.com/opensourceways/app-cla-server/config"
 	"github.com/opensourceways/app-cla-server/dbmodels"
 	"github.com/opensourceways/app-cla-server/util"
 )
@@ -104,7 +104,7 @@ func (this *CLACreateOpt) Validate(applyTo string, langs map[string]bool) IModel
 		return newModelError(ErrNoCLAField, fmt.Errorf("no fields"))
 	}
 
-	if len(this.Fields) > conf.AppConfig.CLAFieldsNumber {
+	if len(this.Fields) > config.AppConfig.CLAFieldsNumber {
 		return newModelError(ErrManyCLAField, fmt.Errorf("exceeds the max fields number"))
 	}
 

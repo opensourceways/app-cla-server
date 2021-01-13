@@ -6,7 +6,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/opensourceways/app-cla-server/conf"
+	"github.com/opensourceways/app-cla-server/config"
 	"github.com/opensourceways/app-cla-server/dbmodels"
 	"github.com/opensourceways/app-cla-server/models"
 	"github.com/opensourceways/app-cla-server/pdf"
@@ -27,7 +27,7 @@ func (this *CorporationPDFController) Prepare() {
 }
 
 func (this *CorporationPDFController) downloadCorpPDF(linkID, corpEmail string) *failedApiResult {
-	dir := util.GenFilePath(conf.AppConfig.PDFOutDir, "tmp")
+	dir := util.GenFilePath(config.AppConfig.PDFOutDir, "tmp")
 	s := strings.ReplaceAll(util.EmailSuffix(corpEmail), ".", "_")
 	name := fmt.Sprintf("%s_%s_*.pdf", linkID, s)
 

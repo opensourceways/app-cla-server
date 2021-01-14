@@ -34,13 +34,7 @@ type corpSigningPDF struct {
 
 	signatureItems [][]string
 	signatureDate  string
-}
-
-func (this *corpSigningPDF) newPDF() *gofpdf.Fpdf {
-	pdf := gofpdf.New("P", "mm", "A4", "./conf/pdf-font") // 210mm x 297mm
-	pdf.AddUTF8Font("NotoSansSC-Regular", "", "NotoSansSC-Regular.ttf")
-	pdf.AddUTF8Font("NotoSansSC-Regular", "I", "NotoSansSC-Regular.ttf")
-	return pdf
+	newPDF         func() *gofpdf.Fpdf
 }
 
 func (this *corpSigningPDF) begin() *gofpdf.Fpdf {

@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"text/template"
 
+	"github.com/opensourceways/gofpdf"
+
 	"github.com/opensourceways/app-cla-server/models"
 	"github.com/opensourceways/app-cla-server/util"
 )
@@ -89,6 +91,12 @@ func newGeneratorForEnglish() (*corpSigningPDF, error) {
 			{"Community", "Corporation"},
 		},
 		signatureDate: "Date",
+
+		newPDF: func() *gofpdf.Fpdf {
+			pdf := gofpdf.New("P", "mm", "A4", "./conf/pdf-font") // 210mm x 297mm
+			pdf.AddUTF8Font("NotoSansSC-Regular", "", "NotoSansSC-Regular.ttf")
+			return pdf
+		},
 	}, nil
 }
 
@@ -131,6 +139,13 @@ func newGeneratorForChinese() (*corpSigningPDF, error) {
 			{"社区名称", "企业名称"},
 		},
 		signatureDate: "日期",
+
+		newPDF: func() *gofpdf.Fpdf {
+			pdf := gofpdf.New("P", "mm", "A4", "./conf/pdf-font") // 210mm x 297mm
+			pdf.AddUTF8Font("NotoSansSC-Regular", "", "NotoSansSC-Regular.ttf")
+			pdf.AddUTF8Font("NotoSansSC-Regular", "I", "NotoSansSC-Regular.ttf")
+			return pdf
+		},
 	}, nil
 }
 

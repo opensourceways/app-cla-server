@@ -26,6 +26,7 @@ func (this *client) SignIndividualCLA(linkID string, info *dbmodels.IndividualSi
 	signing := dIndividualSigning{
 		CLALanguage: info.CLALanguage,
 		CorpID:      genCorpID(info.Email),
+		ID:          info.ID,
 		Name:        info.Name,
 		Email:       info.Email,
 		Date:        info.Date,

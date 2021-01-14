@@ -13,6 +13,7 @@ const (
 	ErrUnknownDBError          ModelErrCode = "unknown_db_error"
 	ErrWrongVerificationCode   ModelErrCode = "wrong_verification_code"
 	ErrVerificationCodeExpired ModelErrCode = "expired_verification_code"
+	ErrUnmatchedUserID         ModelErrCode = "unmatched_user_id"
 	ErrUnmatchedEmail          ModelErrCode = "unmatched_email"
 	ErrNotAnEmail              ModelErrCode = "not_an_email"
 	ErrNoLink                  ModelErrCode = "no_link"

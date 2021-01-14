@@ -17,20 +17,37 @@ type pdfGenerator struct {
 	pdfOutDir    string
 	pdfOrgSigDir string
 	pythonBin    string
-	corp         *corpSigningPDF
+	corp         []*corpSigningPDF
 }
 
 func (this *pdfGenerator) LangSupported() map[string]bool {
-	return map[string]bool{this.corp.language: true}
+	v := map[string]bool{}
+	for _, item := range this.corp {
+		v[item.language] = true
+	}
+	return v
 }
 
 func (this *pdfGenerator) GetBlankSignaturePath(claLang string) string {
 	return util.GenFilePath(this.pdfOrgSigDir, strings.ToLower(claLang)+"_blank_signature.pdf")
 }
 
+func (this *pdfGenerator) generator(claLang string) *corpSigningPDF {
+	for _, item := range this.corp {
+		if item.language == strings.ToLower(claLang) {
+			return item
+		}
+	}
+	return nil
+}
 func (this *pdfGenerator) GenPDFForCorporationSigning(linkID, orgSignatureFile, claFile string, orgInfo *models.OrgInfo, signing *models.CorporationSigning, claFields []models.CLAField) (string, error) {
+	corp := this.generator(signing.CLALanguage)
+	if corp == nil {
+		return "", fmt.Errorf("unknown cla language:%s", signing.CLALanguage)
+	}
+
 	tempPdf := util.GenFilePath(this.pdfOutDir, genPDFFileName(linkID, signing.AdminEmail, "_missing_sig"))
-	err := genCorporPDFMissingSig(this.corp, orgInfo, signing, claFields, claFile, tempPdf)
+	err := genCorporPDFMissingSig(corp, orgInfo, signing, claFields, claFile, tempPdf)
 	if err != nil {
 		return "", err
 	}

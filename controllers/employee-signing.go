@@ -19,8 +19,12 @@ func (this *EmployeeSigningController) Prepare() {
 		// sign as employee
 		this.apiPrepare(PermissionIndividualSigner)
 	} else {
-		// get, update and delete employee
-		this.apiPrepare(PermissionEmployeeManager)
+		if this.routerPattern() == "/v1/employee-signing/:link_id/:email" {
+			this.apiPrepare(PermissionOwnerOfOrg)
+		} else {
+			// get, update and delete employee
+			this.apiPrepare(PermissionEmployeeManager)
+		}
 	}
 }
 
@@ -112,6 +116,34 @@ func (this *EmployeeSigningController) GetAll() {
 	}
 
 	r, merr := models.ListIndividualSigning(pl.LinkID, pl.Email, this.GetString("cla_language"))
+	if merr != nil {
+		this.sendModelErrorAsResp(merr, action)
+		return
+	}
+
+	this.sendSuccessResp(r)
+}
+
+// @Title GetAll
+// @Description get all the employees
+// @Success 200 {int} map
+// @router /:link_id/:email [get]
+func (this *EmployeeSigningController) List() {
+	action := "list employees"
+	linkID := this.GetString(":link_id")
+	corpEmail := this.GetString(":email")
+
+	pl, fr := this.tokenPayloadBasedOnCodePlatform()
+	if fr != nil {
+		this.sendFailedResultAsResp(fr, action)
+		return
+	}
+	if fr := pl.isOwnerOfLink(linkID); fr != nil {
+		this.sendFailedResultAsResp(fr, action)
+		return
+	}
+
+	r, merr := models.ListIndividualSigning(linkID, corpEmail, "")
 	if merr != nil {
 		this.sendModelErrorAsResp(merr, action)
 		return

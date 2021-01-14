@@ -7,7 +7,7 @@ import (
 
 	"github.com/astaxie/beego"
 
-	"github.com/opensourceways/app-cla-server/conf"
+	"github.com/opensourceways/app-cla-server/config"
 	"github.com/opensourceways/app-cla-server/dbmodels"
 	"github.com/opensourceways/app-cla-server/email"
 	"github.com/opensourceways/app-cla-server/models"
@@ -55,7 +55,7 @@ func notifyCorpManagerWhenAdding(orgInfo *models.OrgInfo, info []dbmodels.Corpor
 			Password:         item.Password,
 			Org:              orgInfo.OrgAlias,
 			ProjectURL:       orgInfo.ProjectURL(),
-			URLOfCLAPlatform: conf.AppConfig.CLAPlatformURL,
+			URLOfCLAPlatform: config.AppConfig.CLAPlatformURL,
 		}
 
 		sendEmailToIndividual(item.Email, orgInfo.OrgEmail, subject, d)
@@ -94,20 +94,20 @@ func buildOrgRepo(platform, orgID, repoID string) *models.OrgRepo {
 
 func genOrgFileLockPath(platform, org, repo string) string {
 	return util.GenFilePath(
-		conf.AppConfig.PDFOrgSignatureDir,
+		config.AppConfig.PDFOrgSignatureDir,
 		util.GenFileName("lock", platform, org, repo),
 	)
 }
 
 func genCLAFilePath(linkID, applyTo, language string) string {
 	return util.GenFilePath(
-		conf.AppConfig.PDFOrgSignatureDir,
+		config.AppConfig.PDFOrgSignatureDir,
 		util.GenFileName("cla", linkID, applyTo, language, ".txt"))
 }
 
 func genOrgSignatureFilePath(linkID, language string) string {
 	return util.GenFilePath(
-		conf.AppConfig.PDFOrgSignatureDir,
+		config.AppConfig.PDFOrgSignatureDir,
 		util.GenFileName("signature", linkID, language, ".pdf"))
 }
 

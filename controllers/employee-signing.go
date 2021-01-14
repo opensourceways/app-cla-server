@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/opensourceways/app-cla-server/conf"
+	"github.com/opensourceways/app-cla-server/config"
 	"github.com/opensourceways/app-cla-server/dbmodels"
 	"github.com/opensourceways/app-cla-server/email"
 	"github.com/opensourceways/app-cla-server/models"
@@ -225,7 +225,7 @@ func (this *EmployeeSigningController) notifyManagers(managers []dbmodels.Corpor
 		Org:              orgInfo.OrgAlias,
 		EmployeeEmail:    info.Email,
 		ProjectURL:       orgInfo.ProjectURL(),
-		URLOfCLAPlatform: conf.AppConfig.CLAPlatformURL,
+		URLOfCLAPlatform: config.AppConfig.CLAPlatformURL,
 	}
 	sendEmail(to, orgInfo.OrgEmail, "An employee has signed CLA", msg1)
 }

@@ -3,7 +3,7 @@ package controllers
 import (
 	"fmt"
 
-	"github.com/opensourceways/app-cla-server/conf"
+	"github.com/opensourceways/app-cla-server/config"
 	"github.com/opensourceways/app-cla-server/email"
 	"github.com/opensourceways/app-cla-server/models"
 )
@@ -35,7 +35,7 @@ func (this *VerificationCodeController) Post() {
 	}
 
 	code, err := models.CreateVerificationCode(
-		emailOfSigner, linkID, conf.AppConfig.VerificationCodeExpiry,
+		emailOfSigner, linkID, config.AppConfig.VerificationCodeExpiry,
 	)
 	if err != nil {
 		this.sendModelErrorAsResp(err, action)

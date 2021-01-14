@@ -9,7 +9,7 @@ import (
 
 	"github.com/astaxie/beego"
 
-	"github.com/opensourceways/app-cla-server/conf"
+	"github.com/opensourceways/app-cla-server/config"
 	"github.com/opensourceways/app-cla-server/models"
 	"github.com/opensourceways/app-cla-server/util"
 )
@@ -97,12 +97,12 @@ func (this *baseController) sendFailedResponse(statusCode int, errCode string, r
 
 func (this *baseController) newApiToken(permission string, pl interface{}) (string, error) {
 	ac := &accessController{
-		Expiry:     util.Expiry(conf.AppConfig.APITokenExpiry),
+		Expiry:     util.Expiry(config.AppConfig.APITokenExpiry),
 		Permission: permission,
 		Payload:    pl,
 	}
 
-	return ac.NewToken(conf.AppConfig.APITokenKey)
+	return ac.NewToken(config.AppConfig.APITokenKey)
 }
 
 func (this *baseController) refreshAccessToken() (string, *failedApiResult) {
@@ -111,7 +111,7 @@ func (this *baseController) refreshAccessToken() (string, *failedApiResult) {
 		return "", fr
 	}
 
-	token, err := ac.RefreshToken(conf.AppConfig.APITokenExpiry, conf.AppConfig.APITokenKey)
+	token, err := ac.RefreshToken(config.AppConfig.APITokenExpiry, config.AppConfig.APITokenKey)
 	if err == nil {
 		return token, nil
 	}
@@ -224,7 +224,7 @@ func (this *baseController) checkApiReqToken(ac *accessController, permission []
 		return newFailedApiResult(401, errMissingToken, fmt.Errorf("no token passed"))
 	}
 
-	if err := ac.ParseToken(token, conf.AppConfig.APITokenKey); err != nil {
+	if err := ac.ParseToken(token, config.AppConfig.APITokenKey); err != nil {
 		return newFailedApiResult(401, errUnknownToken, err)
 	}
 

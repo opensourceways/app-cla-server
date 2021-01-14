@@ -9,7 +9,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 
-	"github.com/opensourceways/app-cla-server/conf"
+	"github.com/opensourceways/app-cla-server/config"
 	"github.com/opensourceways/app-cla-server/dbmodels"
 )
 
@@ -28,7 +28,7 @@ type client struct {
 	individualSigningCollection string
 }
 
-func Initialize(cfg *conf.MongodbConfig) (*client, error) {
+func Initialize(cfg *config.MongodbConfig) (*client, error) {
 	c, err := mongo.NewClient(options.Client().ApplyURI(cfg.MongodbConn))
 	if err != nil {
 		return nil, err

@@ -3,7 +3,7 @@ package models
 import (
 	"fmt"
 
-	"github.com/opensourceways/app-cla-server/conf"
+	"github.com/opensourceways/app-cla-server/config"
 	"github.com/opensourceways/app-cla-server/dbmodels"
 	"github.com/opensourceways/app-cla-server/util"
 )
@@ -28,7 +28,7 @@ func (this *EmployeeManagerCreateOption) ValidateWhenAdding(linkID, adminEmail s
 		return err
 	}
 
-	if len(this.Managers)+len(managers) > conf.AppConfig.EmployeeManagersNumber {
+	if len(this.Managers)+len(managers) > config.AppConfig.EmployeeManagersNumber {
 		return newModelError(ErrManyEmployeeManagers, fmt.Errorf("too many employee managers"))
 	}
 

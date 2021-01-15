@@ -37,6 +37,12 @@ func Initialize(cfg *config.MongodbConfig) (*client, error) {
 		return nil, err
 	}
 
+	// verify if database connection is created successfully
+	err = c.Ping(nil, nil)
+	if err != nil {
+		return nil, err
+	}
+
 	cli := &client{
 		c:  c,
 		db: c.Database(cfg.DBName),

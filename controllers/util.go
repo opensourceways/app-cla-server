@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
@@ -164,4 +165,13 @@ func signHelper(linkID, claLang, applyTo string, doSign func(*models.CLAInfo) *f
 	}
 
 	return doSign(claInfo)
+}
+
+func fetchInputPayloadData(input *[]byte, info interface{}) *failedApiResult {
+	if err := json.Unmarshal(*input, info); err != nil {
+		return newFailedApiResult(
+			400, errParsingApiBody, fmt.Errorf("invalid input payload: %s", err.Error()),
+		)
+	}
+	return nil
 }

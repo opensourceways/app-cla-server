@@ -1,7 +1,6 @@
 package controllers
 
 import (
-	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -143,21 +142,12 @@ func (this *baseController) tokenPayloadBasedOnCorpManager() (*acForCorpManagerP
 }
 
 func (this *baseController) fetchInputPayload(info interface{}) *failedApiResult {
-	return this.fetchInputPayloadData(&this.Ctx.Input.RequestBody, info)
+	return fetchInputPayloadData(&this.Ctx.Input.RequestBody, info)
 }
 
 func (this *baseController) fetchInputPayloadFromFormData(info interface{}) *failedApiResult {
 	input := []byte(this.Ctx.Request.FormValue("data"))
-	return this.fetchInputPayloadData(&input, info)
-}
-
-func (this *baseController) fetchInputPayloadData(input *[]byte, info interface{}) *failedApiResult {
-	if err := json.Unmarshal(*input, info); err != nil {
-		return newFailedApiResult(
-			400, errParsingApiBody, fmt.Errorf("invalid input payload: %s", err.Error()),
-		)
-	}
-	return nil
+	return fetchInputPayloadData(&input, info)
 }
 
 func (this *baseController) checkPathParameter() *failedApiResult {

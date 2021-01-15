@@ -1,7 +1,6 @@
 package controllers
 
 import (
-	"encoding/json"
 	"fmt"
 
 	"github.com/opensourceways/app-cla-server/dbmodels"
@@ -40,9 +39,9 @@ func (this *LinkController) Link() {
 		return
 	}
 
-	input, err := this.fetchPayloadOfCreatingLink()
-	if err != nil {
-		this.sendFailedResponse(400, errParsingApiBody, err, action)
+	input := &models.LinkCreateOption{}
+	if fr := this.fetchInputPayloadFromFormData(input); fr != nil {
+		this.sendFailedResultAsResp(fr, action)
 		return
 	}
 
@@ -106,14 +105,6 @@ func (this *LinkController) Link() {
 	}
 
 	this.sendResponse("create org cla successfully", 0)
-}
-
-func (this *LinkController) fetchPayloadOfCreatingLink() (*models.LinkCreateOption, error) {
-	input := &models.LinkCreateOption{}
-	if err := json.Unmarshal([]byte(this.Ctx.Request.FormValue("data")), input); err != nil {
-		return nil, fmt.Errorf("invalid input payload: %s", err.Error())
-	}
-	return input, nil
 }
 
 func (this *LinkController) writeLocalFileOfLink(input *models.LinkCreateOption, linkID string) *failedApiResult {

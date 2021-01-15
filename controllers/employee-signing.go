@@ -124,8 +124,8 @@ func (this *EmployeeSigningController) GetAll() {
 	this.sendSuccessResp(r)
 }
 
-// @Title GetAll
-// @Description get all the employees
+// @Title List
+// @Description get all the employees by community manager
 // @Success 200 {int} map
 // @router /:link_id/:email [get]
 func (this *EmployeeSigningController) List() {

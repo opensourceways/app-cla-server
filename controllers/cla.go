@@ -25,37 +25,37 @@ func (this *CLAController) Prepare() {
 // @Failure 403 body is empty
 // @router /:link_id/:apply_to [post]
 func (this *CLAController) Add() {
-	doWhat := "add cla"
+	action := "add cla"
 	linkID := this.GetString(":link_id")
 	applyTo := this.GetString(":apply_to")
 
 	pl, fr := this.tokenPayloadBasedOnCodePlatform()
 	if fr != nil {
-		this.sendFailedResultAsResp(fr, doWhat)
+		this.sendFailedResultAsResp(fr, action)
 		return
 	}
 	if fr := pl.isOwnerOfLink(linkID); fr != nil {
-		this.sendFailedResultAsResp(fr, doWhat)
+		this.sendFailedResultAsResp(fr, action)
 		return
 	}
 
 	input := &models.CLACreateOpt{}
-	if fr := this.fetchInputPayload(input); fr != nil {
-		this.sendFailedResultAsResp(fr, doWhat)
+	if fr := this.fetchInputPayloadFromFormData(input); fr != nil {
+		this.sendFailedResultAsResp(fr, action)
 		return
 	}
 
 	if applyTo == dbmodels.ApplyToCorporation {
 		data, fr := this.readInputFile(fileNameOfUploadingOrgSignatue)
 		if fr != nil {
-			this.sendFailedResultAsResp(fr, doWhat)
+			this.sendFailedResultAsResp(fr, action)
 			return
 		}
 		input.SetOrgSignature(&data)
 	}
 
 	if merr := input.Validate(applyTo, pdf.GetPDFGenerator().LangSupported()); merr != nil {
-		this.sendModelErrorAsResp(merr, doWhat)
+		this.sendModelErrorAsResp(merr, action)
 		return
 	}
 
@@ -63,13 +63,13 @@ func (this *CLAController) Add() {
 	filePath := genOrgFileLockPath(orgInfo.Platform, orgInfo.OrgID, orgInfo.RepoID)
 	unlock, err := util.Lock(filePath)
 	if err != nil {
-		this.sendFailedResponse(500, errSystemError, err, doWhat)
+		this.sendFailedResponse(500, errSystemError, err, action)
 		return
 	}
 	defer unlock()
 
 	if fr := addCLA(linkID, applyTo, input); fr != nil {
-		this.sendFailedResultAsResp(fr, doWhat)
+		this.sendFailedResultAsResp(fr, action)
 		return
 	}
 
@@ -83,18 +83,18 @@ func (this *CLAController) Add() {
 // @Failure 403 uid is empty
 // @router /:link_id/:apply_to:/:language [delete]
 func (this *CLAController) Delete() {
-	doWhat := "delete cla"
+	action := "delete cla"
 	linkID := this.GetString(":link_id")
 	applyTo := this.GetString(":apply_to")
 	claLang := this.GetString(":language")
 
 	pl, fr := this.tokenPayloadBasedOnCodePlatform()
 	if fr != nil {
-		this.sendFailedResultAsResp(fr, doWhat)
+		this.sendFailedResultAsResp(fr, action)
 		return
 	}
 	if fr := pl.isOwnerOfLink(linkID); fr != nil {
-		this.sendFailedResultAsResp(fr, doWhat)
+		this.sendFailedResultAsResp(fr, action)
 		return
 	}
 
@@ -102,13 +102,13 @@ func (this *CLAController) Delete() {
 	filePath := genOrgFileLockPath(orgInfo.Platform, orgInfo.OrgID, orgInfo.RepoID)
 	unlock, err := util.Lock(filePath)
 	if err != nil {
-		this.sendFailedResponse(500, errSystemError, err, doWhat)
+		this.sendFailedResponse(500, errSystemError, err, action)
 		return
 	}
 	defer unlock()
 
 	if r := deleteCLA(linkID, applyTo, claLang); r != nil {
-		this.sendFailedResponse(r.statusCode, r.errCode, r.reason, doWhat)
+		this.sendFailedResponse(r.statusCode, r.errCode, r.reason, action)
 		return
 	}
 

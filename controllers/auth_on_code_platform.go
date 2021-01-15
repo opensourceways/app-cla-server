@@ -14,7 +14,7 @@ type AuthController struct {
 }
 
 func (this *AuthController) Prepare() {
-	if this.routerPattern() == "/v1/auth/authcodeurl/:platform/:purpose" {
+	if this.routerPattern() != "/v1/auth/:platform/:purpose" {
 		this.apiPrepare("")
 	}
 }
@@ -88,6 +88,52 @@ func (this *AuthController) Auth() {
 	}
 	this.setCookies(cookies)
 	this.redirect(authHelper.WebRedirectDir(true))
+}
+
+// @Title Auth
+// @Description authorized by gitee/github
+// @Param	:platform	path 	string				true		"gitee/github"
+// @Success 200
+// @router /:platform [post]
+func (this *AuthController) AuthByPW() {
+	action := "auth by pw"
+	platform := this.GetString(":platform")
+
+	var body struct {
+		UserName string `json:"username"`
+		Password string `json:"password"`
+	}
+	if fr := this.fetchInputPayload(&body); fr != nil {
+		this.sendFailedResultAsResp(fr, action)
+		return
+	}
+
+	cp, err := platformAuth.Auth[platformAuth.AuthApplyToLogin].GetAuthInstance(platform)
+	if err != nil {
+		this.sendFailedResponse(400, errUnsupportedCodePlatform, err, action)
+		return
+	}
+
+	token, err := cp.PasswordCredentialsToken(body.UserName, body.Password)
+	if err != nil {
+		this.sendFailedResponse(500, errSystemError, err, action)
+		return
+	}
+
+	permission := PermissionOwnerOfOrg
+	pl, ec, err := this.genACPayload(platform, permission, token)
+	if err != nil {
+		this.sendFailedResponse(500, ec, err, action)
+		return
+	}
+
+	at, err := this.newApiToken(permission, pl)
+	if err != nil {
+		this.sendFailedResponse(500, errSystemError, err, action)
+		return
+	}
+
+	this.sendSuccessResp(map[string]string{"access_token": at})
 }
 
 func (this *AuthController) genACPayload(platform, permission, platformToken string) (*acForCodePlatformPayload, string, error) {

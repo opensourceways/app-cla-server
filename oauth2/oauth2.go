@@ -9,6 +9,7 @@ import (
 
 type Oauth2Interface interface {
 	GetToken(code, scope string) (*liboauth2.Token, error)
+	PasswordCredentialsToken(username, password string) (*liboauth2.Token, error)
 	GetOauth2CodeURL(state string) string
 }
 
@@ -18,6 +19,14 @@ type client struct {
 
 func (this *client) GetToken(code, scope string) (*liboauth2.Token, error) {
 	return FetchOauth2Token(this.cfg, code)
+}
+
+func (this *client) PasswordCredentialsToken(username, password string) (*liboauth2.Token, error) {
+	token, err := this.cfg.PasswordCredentialsToken(context.Background(), username, password)
+	if err != nil {
+		return nil, fmt.Errorf("Unable to retrieve token: %v", err)
+	}
+	return token, nil
 }
 
 func (this *client) GetOauth2CodeURL(state string) string {

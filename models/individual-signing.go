@@ -14,10 +14,15 @@ func InitializeIndividualSigning(linkID string, cla *CLAInfo) IModelError {
 
 type IndividualSigning dbmodels.IndividualSigningInfo
 
-func (this *IndividualSigning) Validate(email string) IModelError {
+func (this *IndividualSigning) Validate(userID, email string) IModelError {
 	if this.Email != email {
 		return newModelError(ErrUnmatchedEmail, fmt.Errorf("unmatched email"))
 	}
+
+	if this.ID != userID {
+		return newModelError(ErrUnmatchedUserID, fmt.Errorf("unmatched user id"))
+	}
+
 	return checkEmailFormat(this.Email)
 }
 

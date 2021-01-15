@@ -44,6 +44,7 @@ func Initialize(credentialFile string) error {
 type AuthInterface interface {
 	GetAuthCodeURL(state string) string
 	GetToken(code, scope string) (string, error)
+	PasswordCredentialsToken(username, password string) (string, error)
 }
 
 type codePlatformAuth struct {
@@ -75,6 +76,15 @@ func (this *authClient) GetAuthCodeURL(state string) string {
 
 func (this *authClient) GetToken(code, scope string) (string, error) {
 	token, err := this.c.GetToken(code, scope)
+	if err != nil {
+		return "", fmt.Errorf("Get token failed: %s", err.Error())
+	}
+
+	return token.AccessToken, nil
+}
+
+func (this *authClient) PasswordCredentialsToken(username, password string) (string, error) {
+	token, err := this.c.PasswordCredentialsToken(username, password)
 	if err != nil {
 		return "", fmt.Errorf("Get token failed: %s", err.Error())
 	}

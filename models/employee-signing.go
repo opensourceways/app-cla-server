@@ -8,12 +8,12 @@ type EmployeeSigning struct {
 	VerificationCode string `json:"verification_code"`
 }
 
-func (this *EmployeeSigning) Validate(linkID, email string) IModelError {
+func (this *EmployeeSigning) Validate(linkID, userID, email string) IModelError {
 	if err := checkVerificationCode(this.Email, this.VerificationCode, linkID); err != nil {
 		return err
 	}
 
-	return (&this.IndividualSigning).Validate(email)
+	return (&this.IndividualSigning).Validate(userID, email)
 }
 
 func ListIndividualSigning(linkID, corpEmail, claLang string) ([]dbmodels.IndividualSigningBasicInfo, IModelError) {

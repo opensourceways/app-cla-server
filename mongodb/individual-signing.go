@@ -26,6 +26,7 @@ func (this *client) SignIndividualCLA(linkID string, info *dbmodels.IndividualSi
 	signing := dIndividualSigning{
 		CLALanguage: info.CLALanguage,
 		CorpID:      genCorpID(info.Email),
+		ID:          info.ID,
 		Name:        info.Name,
 		Email:       info.Email,
 		Date:        info.Date,
@@ -108,6 +109,7 @@ func (this *client) ListIndividualSigning(linkID, corpEmail, claLang string) ([]
 	}
 
 	project := bson.M{
+		memberNameOfSignings("id"):      1,
 		memberNameOfSignings("email"):   1,
 		memberNameOfSignings("name"):    1,
 		memberNameOfSignings("enabled"): 1,
@@ -133,6 +135,7 @@ func (this *client) ListIndividualSigning(linkID, corpEmail, claLang string) ([]
 	r := make([]dbmodels.IndividualSigningBasicInfo, 0, len(docs))
 	for _, item := range docs {
 		r = append(r, dbmodels.IndividualSigningBasicInfo{
+			ID:      item.ID,
 			Email:   item.Email,
 			Name:    item.Name,
 			Enabled: item.Enabled,

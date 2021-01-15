@@ -45,7 +45,7 @@ func (this *IndividualSigningController) Post() {
 	}
 	info.CLALanguage = claLang
 
-	if err := (&info).Validate(pl.Email); err != nil {
+	if err := (&info).Validate(pl.User, pl.Email); err != nil {
 		this.sendModelErrorAsResp(err, action)
 		return
 	}

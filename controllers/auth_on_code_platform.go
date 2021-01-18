@@ -23,7 +23,6 @@ func (this *AuthController) Prepare() {
 // @Description authorized by gitee/github
 // @Param	:platform	path 	string				true		"gitee/github"
 // @Param	:purpose	path 	string				true		"purpose: login, sign"
-// @Success 200
 // @router /:platform/:purpose [get]
 func (this *AuthController) Auth() {
 	purpose := this.GetString(":purpose")
@@ -93,7 +92,6 @@ func (this *AuthController) Auth() {
 // @Title Auth
 // @Description authorized by gitee/github
 // @Param	:platform	path 	string				true		"gitee/github"
-// @Success 200
 // @router /:platform [post]
 func (this *AuthController) AuthByPW() {
 	action := "auth by pw"
@@ -188,7 +186,6 @@ func (this *AuthController) genACPayload(platform, permission, platformToken str
 // @Description get auth code url
 // @Param	:platform	path 	string				true		"gitee/github"
 // @Param	:purpose	path 	string				true		"purpose: login, sign"
-// @Success 200 {object}
 // @Failure util.ErrNotSupportedPlatform
 // @router /authcodeurl/:platform/:purpose [get]
 func (this *AuthController) Get() {

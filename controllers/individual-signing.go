@@ -22,10 +22,13 @@ func (this *IndividualSigningController) Prepare() {
 
 // @Title Post
 // @Description sign as individual
-// @Param	:org_cla_id	path 	string				true		"org cla id"
-// @Param	body		body 	models.IndividualSigning	true		"body for individual signing"
-// @Success 201 {int} map
-// @Failure util.ErrHasSigned
+// @Param	:link_id	path 	string				true		"link id"
+// @Param	:cla_lang	path 	string				true		"cla language"
+// @Param	:cla_hash	path 	string				true		"the hash of cla content"
+// @Param	body		body 	dbmodels.IndividualSigningInfo	true		"body for individual signing"
+// @Success 201 {string} "sign successfully"
+// @Failure 400 error_parsing_api_body: parse input paraemter failed
+// @Failure 500 system_error: system error
 // @router /:link_id/:cla_lang/:cla_hash [post]
 func (this *IndividualSigningController) Post() {
 	action := "sign individual cla"

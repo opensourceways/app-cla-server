@@ -80,7 +80,7 @@ func (this *baseController) sendFailedResponse(statusCode int, errCode string, r
 		beego.Error(fmt.Sprintf("Failed to %s, errCode: %s, err: %s", action, errCode, reason.Error()))
 
 		errCode = errSystemError
-		reason = fmt.Errorf("System error")
+		reason = fmt.Errorf("system error")
 	}
 
 	d := struct {

@@ -80,7 +80,8 @@ func (this *EmployeeManagerCreateOption) ValidateWhenAdding(linkID, adminEmail s
 func (this *EmployeeManagerCreateOption) Create(linkID string) ([]dbmodels.CorporationManagerCreateOption, IModelError) {
 	opt := make([]dbmodels.CorporationManagerCreateOption, 0, len(this.Managers))
 
-	for _, item := range this.Managers {
+	for i := range this.Managers {
+		item := &this.Managers[i]
 		pw := util.RandStr(8, "alphanum")
 
 		opt = append(opt, dbmodels.CorporationManagerCreateOption{
@@ -138,10 +139,11 @@ func (this *EmployeeManagerCreateOption) ValidateWhenDeleting(adminEmail string)
 func (this *EmployeeManagerCreateOption) Delete(linkID string) ([]dbmodels.CorporationManagerCreateOption, IModelError) {
 	emails := make([]string, 0, len(this.Managers))
 	es := map[string]bool{}
-	for _, item := range this.Managers {
-		if !es[item.Email] {
-			es[item.Email] = true
-			emails = append(emails, item.Email)
+	for i := range this.Managers {
+		email := this.Managers[i].Email
+		if !es[email] {
+			es[email] = true
+			emails = append(emails, email)
 		}
 	}
 

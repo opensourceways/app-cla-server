@@ -10,7 +10,8 @@ import (
 
 func (this *client) AddEmployeeManager(linkID string, opt []dbmodels.CorporationManagerCreateOption) dbmodels.IDBError {
 	toAdd := make(bson.A, 0, len(opt))
-	for _, item := range opt {
+	for i := range opt {
+		item := &opt[i]
 		info := dCorpManager{
 			ID:       item.ID,
 			Name:     item.Name,

@@ -200,10 +200,9 @@ func (this *CorporationSigningController) GetAll() {
 
 	details := make([]sInfo, 0, len(r))
 	for k := range r {
-		items := r[k]
 		details = append(details, sInfo{
-			CorporationSigningSummary: &items,
-			PDFUploaded:               pdfMap[util.EmailSuffix(items.AdminEmail)]},
+			CorporationSigningSummary: &r[k],
+			PDFUploaded:               pdfMap[util.EmailSuffix(r[k].AdminEmail)]},
 		)
 	}
 	this.sendSuccessResp(details)

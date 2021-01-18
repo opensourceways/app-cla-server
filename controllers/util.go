@@ -47,7 +47,8 @@ func notifyCorpManagerWhenAdding(orgInfo *models.OrgInfo, info []dbmodels.Corpor
 	admin := (info[0].Role == dbmodels.RoleAdmin)
 	subject := fmt.Sprintf("Account on project of \"%s\"", orgInfo.OrgAlias)
 
-	for _, item := range info {
+	for i := range info {
+		item := &info[i]
 		d := email.AddingCorpManager{
 			Admin:            admin,
 			ID:               item.ID,
@@ -69,9 +70,10 @@ func getSingingInfo(info dbmodels.TypeSigningInfo, fields []dbmodels.Field) dbmo
 	}
 
 	r := dbmodels.TypeSigningInfo{}
-	for _, item := range fields {
-		if v, ok := info[item.ID]; ok {
-			r[item.ID] = v
+	for i := range fields {
+		fid := fields[i].ID
+		if v, ok := info[fid]; ok {
+			r[fid] = v
 		}
 	}
 	return r

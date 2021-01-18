@@ -108,8 +108,8 @@ func (this *CLACreateOpt) Validate(applyTo string, langs map[string]bool) IModel
 		return newModelError(ErrManyCLAField, fmt.Errorf("exceeds the max fields number"))
 	}
 
-	for _, item := range this.Fields {
-		if _, err := strconv.Atoi(item.ID); err != nil {
+	for i := range this.Fields {
+		if _, err := strconv.Atoi(this.Fields[i].ID); err != nil {
 			return newModelError(ErrCLAFieldID, fmt.Errorf("invalid field id"))
 		}
 	}

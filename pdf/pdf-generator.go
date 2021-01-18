@@ -111,7 +111,8 @@ func BuildCorpContact(fields []models.CLAField) ([]string, map[string]string) {
 	m := map[int]string{}
 	mk := map[string]string{}
 
-	for _, item := range fields {
+	for i := range fields {
+		item := &fields[i]
 		v, err := strconv.Atoi(item.ID)
 		if err != nil {
 			continue

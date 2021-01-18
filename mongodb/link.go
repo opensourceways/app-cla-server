@@ -227,7 +227,8 @@ func toDocOfCLAField(fs []dbmodels.Field) []dField {
 	}
 
 	fields := make([]dField, 0, len(fs))
-	for _, item := range fs {
+	for i := range fs {
+		item := &fs[i]
 		fields = append(fields, dField{
 			ID:          item.ID,
 			Title:       item.Title,

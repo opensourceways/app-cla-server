@@ -133,7 +133,8 @@ func (this *client) ListIndividualSigning(linkID, corpEmail, claLang string) ([]
 
 	docs := v[0].Signings
 	r := make([]dbmodels.IndividualSigningBasicInfo, 0, len(docs))
-	for _, item := range docs {
+	for i := range docs {
+		item := &docs[i]
 		r = append(r, dbmodels.IndividualSigningBasicInfo{
 			ID:      item.ID,
 			Email:   item.Email,

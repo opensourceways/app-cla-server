@@ -101,7 +101,8 @@ func (this *client) CheckCorporationManagerExist(opt dbmodels.CorporationManager
 	}
 
 	result := map[string]dbmodels.CorporationManagerCheckResult{}
-	for _, doc := range v {
+	for i := range v {
+		doc := &v[i]
 		cm := doc.Managers
 		if len(cm) == 0 {
 			continue

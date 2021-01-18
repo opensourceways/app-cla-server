@@ -189,7 +189,8 @@ func (this *client) GetCLAInfoToSign(linkID, claLang, applyTo string) (*dbmodels
 
 func toModelOfCLAFields(fields []dField) []dbmodels.Field {
 	fs := make([]dbmodels.Field, 0, len(fields))
-	for _, v := range fields {
+	for i := range fields {
+		v := &fields[i]
 		fs = append(fs, dbmodels.Field{
 			ID:          v.ID,
 			Title:       v.Title,

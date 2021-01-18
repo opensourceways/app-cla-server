@@ -30,10 +30,11 @@ func (this *CorporationManagerController) Auth() {
 	}
 	if len(v) == 0 {
 		this.sendFailedResponse(400, errWrongIDOrPassword, fmt.Errorf("wrong id or pw"), action)
+		return
 	}
 
 	type authInfo struct {
-		*models.OrgRepo
+		models.OrgRepo
 
 		Role             string `json:"role"`
 		Token            string `json:"token"`
@@ -49,7 +50,7 @@ func (this *CorporationManagerController) Auth() {
 		}
 
 		result = append(result, authInfo{
-			OrgRepo:          &item.OrgRepo,
+			OrgRepo:          item.OrgRepo,
 			Role:             item.Role,
 			Token:            token,
 			InitialPWChanged: item.InitialPWChanged,

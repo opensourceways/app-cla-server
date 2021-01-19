@@ -23,7 +23,7 @@ type accessController struct {
 	Payload    interface{} `json:"payload"`
 }
 
-func (this *accessController) NewToken(secret string) (string, error) {
+func (this *accessController) newToken(secret string) (string, error) {
 	body, err := golangsdk.BuildRequestBody(this, "")
 	if err != nil {
 		return "", fmt.Errorf("Failed to create token: build body failed: %s", err.Error())
@@ -35,12 +35,12 @@ func (this *accessController) NewToken(secret string) (string, error) {
 	return token.SignedString([]byte(secret))
 }
 
-func (this *accessController) RefreshToken(expiry int64, secret string) (string, error) {
+func (this *accessController) refreshToken(expiry int64, secret string) (string, error) {
 	this.Expiry = util.Expiry(expiry)
-	return this.NewToken(secret)
+	return this.newToken(secret)
 }
 
-func (this *accessController) ParseToken(token, secret string) error {
+func (this *accessController) parseToken(token, secret string) error {
 	t, err := jwt.Parse(token, func(t1 *jwt.Token) (interface{}, error) {
 		if _, ok := t1.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("Unexpected signing method")
@@ -65,18 +65,14 @@ func (this *accessController) ParseToken(token, secret string) error {
 		return err
 	}
 
-	if err = json.Unmarshal(d, this); err != nil {
-		return err
-	}
-
-	if this.Expiry < util.Now() {
-		return fmt.Errorf("token is expired")
-	}
-
-	return nil
+	return json.Unmarshal(d, this)
 }
 
-func (this *accessController) Verify(permission []string) error {
+func (this *accessController) isTokenExpired() bool {
+	return this.Expiry < util.Now()
+}
+
+func (this *accessController) verify(permission []string) error {
 	for _, item := range permission {
 		if this.Permission == item {
 			return nil

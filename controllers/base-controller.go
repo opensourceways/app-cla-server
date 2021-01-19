@@ -101,7 +101,7 @@ func (this *baseController) newApiToken(permission string, pl interface{}) (stri
 		Payload:    pl,
 	}
 
-	return ac.NewToken(config.AppConfig.APITokenKey)
+	return ac.newToken(config.AppConfig.APITokenKey)
 }
 
 func (this *baseController) refreshAccessToken() (string, *failedApiResult) {
@@ -110,7 +110,7 @@ func (this *baseController) refreshAccessToken() (string, *failedApiResult) {
 		return "", fr
 	}
 
-	token, err := ac.RefreshToken(config.AppConfig.APITokenExpiry, config.AppConfig.APITokenKey)
+	token, err := ac.refreshToken(config.AppConfig.APITokenExpiry, config.AppConfig.APITokenKey)
 	if err == nil {
 		return token, nil
 	}
@@ -223,12 +223,16 @@ func (this *baseController) checkApiReqToken(ac *accessController, permission []
 		return newFailedApiResult(401, errMissingToken, fmt.Errorf("no token passed"))
 	}
 
-	if err := ac.ParseToken(token, config.AppConfig.APITokenKey); err != nil {
+	if err := ac.parseToken(token, config.AppConfig.APITokenKey); err != nil {
 		return newFailedApiResult(401, errUnknownToken, err)
 	}
 
-	if err := ac.Verify(permission); err != nil {
-		return newFailedApiResult(403, errInvalidToken, err)
+	if ac.isTokenExpired() {
+		return newFailedApiResult(403, errExpiredToken, fmt.Errorf("token is expired"))
+	}
+
+	if err := ac.verify(permission); err != nil {
+		return newFailedApiResult(403, errUnauthorizedToken, err)
 	}
 
 	return nil

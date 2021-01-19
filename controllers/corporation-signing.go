@@ -23,13 +23,20 @@ func (this *CorporationSigningController) Prepare() {
 }
 
 // @Title Post
-// @Description sign as corporation
-// @Param	:org_cla_id	path 	string					true		"org cla id"
-// @Param	body		body 	models.CorporationSigningCreateOption	true		"body for corporation signing"
-// @Success 201 {int} map
-// @Failure util.ErrHasSigned
-// @Failure util.ErrWrongVerificationCode
-// @Failure util.ErrVerificationCodeExpired
+// @Description sign corporation cla
+// @Param	:link_id	path 	string					true		"link id"
+// @Param	:cla_lang	path 	string					true		"cla language"
+// @Param	:cla_hash	path 	string					true		"the hash of cla content"
+// @Param	body		body 	models.CorporationSigningCreateOption	true		"body for signing corporation cla"
+// @Success 201 {string} "sign successfully"
+// @Failure 400 error_parsing_api_body: 	parse input paraemter failed
+// @Failure 401 expired_verification_code: 	the verification code is expired
+// @Failure 402 wrong_verification_code: 	the verification code is wrong
+// @Failure 403 not_an_email: 	 		the email inputed is wrong
+// @Failure 404 no_link: 			the link id is not exists
+// @Failure 405 unmatched_cla: 			the cla hash is not equal to the one of backend server
+// @Failure 406 resigned: 			the signer has signed the cla
+// @Failure 500 system_error: 			system error
 // @router /:link_id/:cla_lang/:cla_hash [post]
 func (this *CorporationSigningController) Post() {
 	action := "sign as corporation"

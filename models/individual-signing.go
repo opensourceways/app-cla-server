@@ -23,7 +23,7 @@ func (this *IndividualSigning) Validate(userID, email string) IModelError {
 		return newModelError(ErrUnmatchedUserID, fmt.Errorf("unmatched user id"))
 	}
 
-	return checkEmailFormat(this.Email)
+	return nil
 }
 
 func (this *IndividualSigning) Create(linkID string, enabled bool) IModelError {

@@ -21,14 +21,18 @@ func (this *IndividualSigningController) Prepare() {
 }
 
 // @Title Post
-// @Description sign as individual
+// @Description sign individual cla
 // @Param	:link_id	path 	string				true		"link id"
 // @Param	:cla_lang	path 	string				true		"cla language"
 // @Param	:cla_hash	path 	string				true		"the hash of cla content"
 // @Param	body		body 	dbmodels.IndividualSigningInfo	true		"body for individual signing"
 // @Success 201 {string} "sign successfully"
 // @Failure 400 error_parsing_api_body: parse input paraemter failed
-// @Failure 500 system_error: system error
+// @Failure 401 unmatched_email: 	the email is not same as the one which signer sets on the code platform
+// @Failure 402 unmatched_user_id: 	the user id is not same as the one which was fetched from code platform
+// @Failure 403 unmatched_cla:		the cla hash is not equal to the one of backend server
+// @Failure 404 resigned: 		the signer has signed the cla
+// @Failure 500 system_error: 		system error
 // @router /:link_id/:cla_lang/:cla_hash [post]
 func (this *IndividualSigningController) Post() {
 	action := "sign individual cla"
@@ -81,10 +85,11 @@ func (this *IndividualSigningController) Post() {
 // @Title Check
 // @Description check whether contributor has signed cla
 // @Param	platform	path 	string	true		"code platform"
-// @Param	org		path 	string	true		"org"
-// @Param	repo		path 	string	true		"repo"
-// @Param	email		query 	string	true		"email"
-// @Success 200
+// @Param	org_repo	path 	string	true		"org:repo"
+// @Param	email		query 	string	true		"email of contributor"
+// @Success 200 {object} map
+// @Failure 400 no_link: 	there is not link for this org and repo
+// @Failure 500 system_error: 	system error
 // @router /:platform/:org_repo [get]
 func (this *IndividualSigningController) Check() {
 	action := "check individual signing"

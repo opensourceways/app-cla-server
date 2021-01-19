@@ -8,7 +8,7 @@ const (
 	errUnknownToken             = "unknown_token"
 	errExpiredToken             = "expired_token"
 	errUnauthorizedToken        = "unauthorized_token"
-	errMissingParameter         = "missing_parameter"
+	errMissingURLPathParameter  = "missing_url_path_parameter"
 	errReadingFile              = "error_reading_file"
 	errParsingApiBody           = "error_parsing_api_body"
 	errResigned                 = "resigned"

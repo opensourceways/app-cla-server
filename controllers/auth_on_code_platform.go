@@ -22,11 +22,11 @@ func (this *AuthController) Prepare() {
 // @Description authorized by gitee/github
 // @Param	:platform	path 	string				true		"gitee/github"
 // @Param	:purpose	path 	string				true		"purpose: login, sign"
-// @Failure 400 auth_failed: 			authenticated on code platform failed
-// @Failure 401 unsupported_code_platform:	unsupported code platform
-// @Failure 402 refuse_to_authorize_email:	the user refused to access his/her email
-// @Failure 403 no_public_email: 		no public email
-// @Failure 500 system_error: 			system error
+// @Failure 400 auth_failed:               authenticated on code platform failed
+// @Failure 401 unsupported_code_platform: unsupported code platform
+// @Failure 402 refuse_to_authorize_email: the user refused to access his/her email
+// @Failure 403 no_public_email:           no public email
+// @Failure 500 system_error:              system error
 // @router /:platform/:purpose [get]
 func (this *AuthController) Auth() {
 	purpose := this.GetString(":purpose")

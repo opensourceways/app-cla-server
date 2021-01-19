@@ -159,7 +159,9 @@ func (this *baseController) checkPathParameter() *failedApiResult {
 	items := strings.Split(rp, "/")
 	for _, item := range items {
 		if strings.HasPrefix(item, ":") && this.GetString(item) == "" {
-			return newFailedApiResult(400, errMissingParameter, fmt.Errorf("missing path parameter:%s", item))
+			return newFailedApiResult(
+				400, errMissingURLPathParameter,
+				fmt.Errorf("missing path parameter:%s", item))
 		}
 	}
 

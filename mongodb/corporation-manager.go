@@ -72,7 +72,7 @@ func (this *client) CheckCorporationManagerExist(opt dbmodels.CorporationManager
 			"id":        opt.ID,
 		}
 	}
-	elemFilter["password"] = opt.Password
+	elemFilter[fieldPassword] = opt.Password
 
 	project := bson.M{
 		fieldLinkID:                        1,
@@ -133,12 +133,12 @@ func (this *client) CheckCorporationManagerExist(opt dbmodels.CorporationManager
 
 func (this *client) ResetCorporationManagerPassword(linkID, email string, opt dbmodels.CorporationManagerResetPassword) dbmodels.IDBError {
 	updateCmd := bson.M{
-		"password": opt.NewPassword,
-		"changed":  true,
+		fieldPassword: opt.NewPassword,
+		"changed":     true,
 	}
 
 	elemFilter := elemFilterOfCorpManager(email)
-	elemFilter["password"] = opt.OldPassword
+	elemFilter[fieldPassword] = opt.OldPassword
 
 	docFilter := docFilterOfCorpManager(linkID)
 	arrayFilterByElemMatch(fieldCorpManagers, true, elemFilter, docFilter)

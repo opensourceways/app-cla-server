@@ -88,7 +88,7 @@ func (this *LinkController) Link() {
 	}
 
 	linkID := genLinkID(orgRepo)
-	if fr := this.writeLocalFileOfLink(input, linkID); fr != nil {
+	if fr := saveCorpCLAAtLocal(input.CorpCLA, linkID); fr != nil {
 		sendResp(fr)
 		return
 	}
@@ -104,31 +104,6 @@ func (this *LinkController) Link() {
 	}
 
 	this.sendResponse("create org cla successfully", 0)
-}
-
-func (this *LinkController) writeLocalFileOfLink(input *models.LinkCreateOption, linkID string) *failedApiResult {
-	cla := input.CorpCLA
-	if cla != nil {
-		path := genCLAFilePath(linkID, dbmodels.ApplyToCorporation, cla.Language)
-		if err := cla.SaveCLAAtLocal(path); err != nil {
-			return newFailedApiResult(500, errSystemError, err)
-		}
-
-		path = genOrgSignatureFilePath(linkID, cla.Language)
-		if err := cla.SaveSignatueAtLocal(path); err != nil {
-			return newFailedApiResult(500, errSystemError, err)
-		}
-	}
-
-	cla = input.IndividualCLA
-	if cla != nil {
-		path := genCLAFilePath(linkID, dbmodels.ApplyToIndividual, cla.Language)
-		if err := cla.SaveCLAAtLocal(path); err != nil {
-			return newFailedApiResult(500, errSystemError, err)
-		}
-	}
-
-	return nil
 }
 
 func (this *LinkController) initializeSigning(input *models.LinkCreateOption, linkID string, orgRepo *dbmodels.OrgRepo) *failedApiResult {

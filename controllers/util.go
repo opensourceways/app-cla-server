@@ -177,3 +177,19 @@ func fetchInputPayloadData(input *[]byte, info interface{}) *failedApiResult {
 	}
 	return nil
 }
+
+func saveCorpCLAAtLocal(cla *models.CLACreateOpt, linkID string) *failedApiResult {
+	if cla != nil {
+		path := genCLAFilePath(linkID, dbmodels.ApplyToCorporation, cla.Language)
+		if err := cla.SaveCLAAtLocal(path); err != nil {
+			return newFailedApiResult(500, errSystemError, err)
+		}
+
+		path = genOrgSignatureFilePath(linkID, cla.Language)
+		if err := cla.SaveSignatueAtLocal(path); err != nil {
+			return newFailedApiResult(500, errSystemError, err)
+		}
+	}
+
+	return nil
+}

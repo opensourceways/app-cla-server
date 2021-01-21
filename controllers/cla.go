@@ -153,18 +153,14 @@ func addCLA(linkID, applyTo string, input *models.CLACreateOpt) *failedApiResult
 		return newFailedApiResult(400, errCLAExists, fmt.Errorf("recreate cla"))
 	}
 
-	path := genCLAFilePath(linkID, applyTo, input.Language)
-	if err := input.SaveCLAAtLocal(path); err != nil {
-		return newFailedApiResult(500, errSystemError, err)
-	}
-
-	path = genOrgSignatureFilePath(linkID, input.Language)
-	if err := input.SaveSignatueAtLocal(path); err != nil {
-		return newFailedApiResult(500, errSystemError, err)
-	}
-
 	if merr := models.DeleteCLAInfo(linkID, applyTo, input.Language); merr != nil {
 		return parseModelError(merr)
+	}
+
+	if applyTo == dbmodels.ApplyToCorporation {
+		if fr := saveCorpCLAAtLocal(input, linkID); fr != nil {
+			return fr
+		}
 	}
 
 	if merr := input.AddCLAInfo(linkID, applyTo); merr != nil {
@@ -194,7 +190,12 @@ func deleteCLA(linkID, applyTo, claLang string) *failedApiResult {
 	models.DeleteCLAInfo(linkID, applyTo, claLang)
 
 	if applyTo == dbmodels.ApplyToCorporation {
-		path := genOrgSignatureFilePath(linkID, claLang)
+		path := genCLAFilePath(linkID, applyTo, claLang)
+		if !util.IsFileNotExist(path) {
+			os.Remove(path)
+		}
+
+		path = genOrgSignatureFilePath(linkID, claLang)
 		if !util.IsFileNotExist(path) {
 			os.Remove(path)
 		}

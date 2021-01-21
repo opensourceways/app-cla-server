@@ -21,7 +21,6 @@ func (this *EmailController) Prepare() {
 
 // @Title Auth
 // @Description authorized by org email
-// @Success 200
 // @router /auth/:platform [get]
 func (this *EmailController) Auth() {
 	rs := func(errCode string, reason error) {
@@ -82,7 +81,6 @@ func (this *EmailController) Auth() {
 // @Title Get
 // @Description get auth code url
 // @Param	platform		path 	string	true		"The email platform"
-// @Success 200 {object}
 // @router /authcodeurl/:platform [get]
 func (this *EmailController) Get() {
 	e, err := email.EmailAgent.GetEmailClient(this.GetString(":platform"))

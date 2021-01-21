@@ -19,7 +19,7 @@ type LinkCreateOption struct {
 	IndividualCLA *CLACreateOpt `json:"individual_cla"`
 	CorpCLA       *CLACreateOpt `json:"corp_cla"`
 
-	orgEmailInfo *dbmodels.OrgEmailCreateInfo
+	orgEmailInfo *dbmodels.OrgEmailCreateInfo `json:"-"`
 }
 
 func (this *LinkCreateOption) Validate(langs map[string]bool) IModelError {

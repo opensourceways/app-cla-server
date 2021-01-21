@@ -2,7 +2,6 @@ package controllers
 
 import (
 	"fmt"
-	"strings"
 
 	platformAuth "github.com/opensourceways/app-cla-server/code-platform-auth"
 	"github.com/opensourceways/app-cla-server/code-platform-auth/platforms"
@@ -23,7 +22,11 @@ func (this *AuthController) Prepare() {
 // @Description authorized by gitee/github
 // @Param	:platform	path 	string				true		"gitee/github"
 // @Param	:purpose	path 	string				true		"purpose: login, sign"
-// @Success 200
+// @Failure 400 auth_failed:               authenticated on code platform failed
+// @Failure 401 unsupported_code_platform: unsupported code platform
+// @Failure 402 refuse_to_authorize_email: the user refused to access his/her email
+// @Failure 403 no_public_email:           no public email
+// @Failure 500 system_error:              system error
 // @router /:platform/:purpose [get]
 func (this *AuthController) Auth() {
 	purpose := this.GetString(":purpose")
@@ -93,7 +96,6 @@ func (this *AuthController) Auth() {
 // @Title Auth
 // @Description authorized by gitee/github
 // @Param	:platform	path 	string				true		"gitee/github"
-// @Success 200
 // @router /:platform [post]
 func (this *AuthController) AuthByPW() {
 	action := "auth by pw"
@@ -162,8 +164,11 @@ func (this *AuthController) genACPayload(platform, permission, platformToken str
 	email := ""
 	if permission == PermissionIndividualSigner {
 		if email, err = pt.GetAuthorizedEmail(); err != nil {
-			if strings.Index(err.Error(), "401") >= 0 {
-				return nil, errEmailIsUnauthorized, err
+			if platforms.IsErrOfRefusedToAuthorizeEmail(err) {
+				return nil, errRefuseToAuthorizeEmail, err
+			}
+			if platforms.IsErrOfNoPulicEmail(err) {
+				return nil, errNoPublicEmail, err
 			}
 			return nil, errSystemError, err
 		}
@@ -188,7 +193,6 @@ func (this *AuthController) genACPayload(platform, permission, platformToken str
 // @Description get auth code url
 // @Param	:platform	path 	string				true		"gitee/github"
 // @Param	:purpose	path 	string				true		"purpose: login, sign"
-// @Success 200 {object}
 // @Failure util.ErrNotSupportedPlatform
 // @router /authcodeurl/:platform/:purpose [get]
 func (this *AuthController) Get() {

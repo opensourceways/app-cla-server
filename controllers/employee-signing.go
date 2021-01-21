@@ -29,13 +29,27 @@ func (this *EmployeeSigningController) Prepare() {
 }
 
 // @Title Post
-// @Description sign as employee
-// @Param	:org_cla_id	path 	string				true		"org cla id"
-// @Param	body		body 	models.IndividualSigning	true		"body for employee signing"
-// @Success 201 {int} map
-// @Failure util.ErrHasSigned		"employee has signed"
-// @Failure util.ErrHasNotSigned	"corp has not signed"
-// @Failure util.ErrSigningUncompleted	"corp has not been enabled"
+// @Description sign employee cla
+// @Param	:link_id	path 	string				true		"link id"
+// @Param	:cla_lang	path 	string				true		"cla language"
+// @Param	:cla_hash	path 	string				true		"the hash of cla content"
+// @Param	body		body 	models.EmployeeSigning		true		"body for individual signing"
+// @Success 201 {string} "sign successfully"
+// @Failure 400 missing_url_path_parameter: missing url path parameter
+// @Failure 401 missing_token:              token is missing
+// @Failure 402 unknown_token:              token is unknown
+// @Failure 403 expired_token:              token is expired
+// @Failure 404 unauthorized_token:         the permission of token is unmatched
+// @Failure 405 error_parsing_api_body:     parse payload of request failed
+// @Failure 406 unmatched_email:            the email is not same as the one which signer sets on the code platform
+// @Failure 407 unmatched_user_id:          the user id is not same as the one which was fetched from code platform
+// @Failure 408 expired_verification_code:  the verification code is expired
+// @Failure 409 wrong_verification_code:    the verification code is wrong
+// @Failure 410 no_link:                    the link id is not exists
+// @Failure 411 no_employee_manager:        there is not any employee managers for the corresponding corp
+// @Failure 412 unmatched_cla:              the cla hash is not equal to the one of backend server
+// @Failure 413 resigned:                   the signer has signed the cla
+// @Failure 500 system_error:               system error
 // @router /:link_id/:cla_lang/:cla_hash [post]
 func (this *EmployeeSigningController) Post() {
 	action := "sign employeee cla"

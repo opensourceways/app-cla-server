@@ -25,9 +25,8 @@ func (this *LinkController) Prepare() {
 
 // @Title Link
 // @Description link org and cla
-// @Param	body		body 	models.OrgCLA	true		"body for org-repo content"
-// @Success 201 {int} models.OrgCLA
-// @Failure 403 body is empty
+// @Param	body		body 	models.LinkCreateOption	true		"body for creating link"
+// @Success 201 {string} "create org cla successfully"
 // @router / [post]
 func (this *LinkController) Link() {
 	action := "create link"

@@ -43,11 +43,11 @@ func (this *client) ListCorpSignings(linkID, language string) ([]dbmodels.Corpor
 		fieldCorpManagers: {"role": dbmodels.RoleAdmin},
 	}
 	if language != "" {
-		elemFilter[fieldSignings] = bson.M{fieldCLALang: language}
+		elemFilter[fieldSignings] = bson.M{fieldLang: language}
 	}
 
 	project := projectOfCorpSigning()
-	project[memberNameOfCorpManager("email")] = 1
+	project[memberNameOfCorpManager(fieldEmail)] = 1
 
 	var v []cCorpSigning
 	f := func(ctx context.Context) error {
@@ -142,7 +142,7 @@ func (this *client) GetCorpSigningDetail(linkID, email string) ([]dbmodels.Field
 			fieldSignings: 1,
 			fieldCLAInfos: arrayElemFilter(
 				fieldCLAInfos,
-				bson.M{fieldCLALang: fmt.Sprintf("$%s.%s", fieldSignings, fieldCLALang)},
+				bson.M{fieldLang: fmt.Sprintf("$%s.%s", fieldSignings, fieldLang)},
 			),
 		}},
 	}
@@ -203,10 +203,10 @@ func toDBModelCorporationSigningDetail(cs *dCorpSigning, adminAdded bool) dbmode
 
 func projectOfCorpSigning() bson.M {
 	return bson.M{
-		memberNameOfSignings("email"):    1,
-		memberNameOfSignings("name"):     1,
-		memberNameOfSignings("corp"):     1,
-		memberNameOfSignings("date"):     1,
-		memberNameOfCorpManager("email"): 1,
+		memberNameOfSignings(fieldEmail):    1,
+		memberNameOfSignings(fieldName):     1,
+		memberNameOfSignings(fieldCorp):     1,
+		memberNameOfSignings(fieldDate):     1,
+		memberNameOfCorpManager(fieldEmail): 1,
 	}
 }

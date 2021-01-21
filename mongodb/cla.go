@@ -24,7 +24,7 @@ func docFilterOfCLA(linkID string) bson.M {
 }
 
 func elemFilterOfCLA(language string) bson.M {
-	return bson.M{fieldCLALang: language}
+	return bson.M{fieldLang: language}
 }
 
 func (this *client) HasCLA(linkID, applyTo, language string) (bool, dbmodels.IDBError) {
@@ -153,9 +153,9 @@ func (this *client) GetCLAInfoToSign(linkID, claLang, applyTo string) (*dbmodels
 			ctx, this.linkCollection, claField,
 			docFilterOfCLA(linkID), elemFilterOfCLA(claLang),
 			bson.M{
-				fn("fields"):         1,
-				fn("cla_hash"):       1,
-				fn("signature_hash"): 1,
+				fn(fieldFields):        1,
+				fn(fieldCLAHash):       1,
+				fn(fieldSignatureHash): 1,
 			}, &v,
 		)
 	}

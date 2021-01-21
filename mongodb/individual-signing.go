@@ -11,7 +11,7 @@ import (
 func elemFilterOfIndividualSigning(email string) bson.M {
 	return bson.M{
 		fieldCorpID: genCorpID(email),
-		"email":     email,
+		fieldEmail:  email,
 	}
 }
 
@@ -71,7 +71,7 @@ func (this *client) UpdateIndividualSigning(linkID, email string, enabled bool) 
 	f := func(ctx context.Context) dbmodels.IDBError {
 		return this.updateArrayElem(
 			ctx, this.individualSigningCollection, fieldSignings, docFilter,
-			elemFilter, bson.M{"enabled": enabled},
+			elemFilter, bson.M{fieldEnabled: enabled},
 		)
 	}
 
@@ -82,7 +82,7 @@ func (this *client) IsIndividualSigned(linkID, email string) (bool, dbmodels.IDB
 	docFilter := docFilterOfSigning(linkID)
 
 	elemFilter := elemFilterOfIndividualSigning(email)
-	elemFilter[memberNameOfSignings("enabled")] = true
+	elemFilter[fieldEnabled] = true
 
 	signed := false
 	f := func(ctx context.Context) dbmodels.IDBError {
@@ -105,15 +105,15 @@ func (this *client) ListIndividualSigning(linkID, corpEmail, claLang string) ([]
 
 	arrayFilter := bson.M{fieldCorpID: genCorpID(corpEmail)}
 	if claLang != "" {
-		arrayFilter[fieldCLALang] = claLang
+		arrayFilter[fieldLang] = claLang
 	}
 
 	project := bson.M{
-		memberNameOfSignings("id"):      1,
-		memberNameOfSignings("email"):   1,
-		memberNameOfSignings("name"):    1,
-		memberNameOfSignings("enabled"): 1,
-		memberNameOfSignings("date"):    1,
+		memberNameOfSignings(fieldID):      1,
+		memberNameOfSignings(fieldEmail):   1,
+		memberNameOfSignings(fieldName):    1,
+		memberNameOfSignings(fieldEnabled): 1,
+		memberNameOfSignings(fieldDate):    1,
 	}
 
 	var v []cIndividualSigning

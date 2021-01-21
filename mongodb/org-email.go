@@ -17,7 +17,7 @@ func toDocOfOrgEmail(opt *dbmodels.OrgEmailCreateInfo) (bson.M, dbmodels.IDBErro
 	if err != nil {
 		return nil, err
 	}
-	body["token"] = opt.Token
+	body[fieldToken] = opt.Token
 
 	return body, nil
 }
@@ -29,7 +29,7 @@ func (this *client) CreateOrgEmail(opt dbmodels.OrgEmailCreateInfo) dbmodels.IDB
 	}
 
 	f := func(ctx context.Context) dbmodels.IDBError {
-		_, err := this.replaceDoc(ctx, this.orgEmailCollection, bson.M{"email": opt.Email}, body)
+		_, err := this.replaceDoc(ctx, this.orgEmailCollection, bson.M{fieldEmail: opt.Email}, body)
 		return err
 	}
 
@@ -40,7 +40,7 @@ func (this *client) GetOrgEmailInfo(email string) (*dbmodels.OrgEmailCreateInfo,
 	var v cOrgEmail
 
 	f := func(ctx context.Context) dbmodels.IDBError {
-		return this.getDoc(ctx, this.orgEmailCollection, bson.M{"email": email}, bson.M{"email": 0}, &v)
+		return this.getDoc(ctx, this.orgEmailCollection, bson.M{fieldEmail: email}, bson.M{fieldEmail: 0}, &v)
 	}
 
 	if err := withContext1(f); err != nil {

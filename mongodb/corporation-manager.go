@@ -16,7 +16,7 @@ func docFilterOfCorpManager(linkID string) bson.M {
 func elemFilterOfCorpManager(email string) bson.M {
 	return bson.M{
 		fieldCorpID: genCorpID(email),
-		"email":     email,
+		fieldEmail:  email,
 	}
 }
 
@@ -43,7 +43,7 @@ func (this *client) AddCorpAdministrator(linkID string, opt *dbmodels.Corporatio
 		fieldCorpManagers, false,
 		bson.M{
 			fieldCorpID: genCorpID(opt.Email),
-			"role":      dbmodels.RoleAdmin,
+			fieldRole:   dbmodels.RoleAdmin,
 		},
 		docFilter,
 	)
@@ -69,20 +69,20 @@ func (this *client) CheckCorporationManagerExist(opt dbmodels.CorporationManager
 	} else {
 		elemFilter = bson.M{
 			fieldCorpID: opt.EmailSuffix,
-			"id":        opt.ID,
+			fieldID:     opt.ID,
 		}
 	}
 	elemFilter[fieldPassword] = opt.Password
 
 	project := bson.M{
-		fieldLinkID:                        1,
-		fieldOrgIdentity:                   1,
-		fieldOrgEmail:                      1,
-		fieldOrgAlias:                      1,
-		memberNameOfCorpManager("role"):    1,
-		memberNameOfCorpManager("name"):    1,
-		memberNameOfCorpManager("email"):   1,
-		memberNameOfCorpManager("changed"): 1,
+		fieldLinkID:                           1,
+		fieldOrgIdentity:                      1,
+		fieldOrgEmail:                         1,
+		fieldOrgAlias:                         1,
+		memberNameOfCorpManager(fieldRole):    1,
+		memberNameOfCorpManager(fieldName):    1,
+		memberNameOfCorpManager(fieldEmail):   1,
+		memberNameOfCorpManager(fieldChanged): 1,
 	}
 
 	var v []cCorpSigning
@@ -134,7 +134,7 @@ func (this *client) CheckCorporationManagerExist(opt dbmodels.CorporationManager
 func (this *client) ResetCorporationManagerPassword(linkID, email string, opt dbmodels.CorporationManagerResetPassword) dbmodels.IDBError {
 	updateCmd := bson.M{
 		fieldPassword: opt.NewPassword,
-		"changed":     true,
+		fieldChanged:  true,
 	}
 
 	elemFilter := elemFilterOfCorpManager(email)
@@ -159,10 +159,10 @@ func (this *client) ListCorporationManager(linkID, email, role string) ([]dbmode
 	}
 
 	project := bson.M{
-		memberNameOfCorpManager("id"):    1,
-		memberNameOfCorpManager("name"):  1,
-		memberNameOfCorpManager("email"): 1,
-		memberNameOfCorpManager("role"):  1,
+		memberNameOfCorpManager(fieldID):    1,
+		memberNameOfCorpManager(fieldName):  1,
+		memberNameOfCorpManager(fieldEmail): 1,
+		memberNameOfCorpManager(fieldRole):  1,
 	}
 
 	var v []cCorpSigning

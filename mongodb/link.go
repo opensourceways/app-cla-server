@@ -10,9 +10,9 @@ import (
 
 func docFilterOfLink(orgRepo *dbmodels.OrgRepo) bson.M {
 	return bson.M{
-		"platform":      orgRepo.Platform,
-		"org_id":        orgRepo.OrgID,
-		"repo_id":       orgRepo.RepoID,
+		fieldPlatform:   orgRepo.Platform,
+		fieldOrg:        orgRepo.OrgID,
+		fieldRepo:       orgRepo.RepoID,
 		fieldLinkStatus: linkStatusReady,
 	}
 }
@@ -97,8 +97,8 @@ func (this *client) GetOrgOfLink(linkID string) (*dbmodels.OrgInfo, dbmodels.IDB
 	return &dbmodels.OrgInfo{
 		OrgRepo: dbmodels.OrgRepo{
 			Platform: v.Platform,
-			OrgID:    v.OrgID,
-			RepoID:   v.RepoID,
+			OrgID:    v.Org,
+			RepoID:   v.Repo,
 		},
 		OrgAlias: v.OrgAlias,
 		OrgEmail: v.OrgEmail.Email,
@@ -107,8 +107,8 @@ func (this *client) GetOrgOfLink(linkID string) (*dbmodels.OrgInfo, dbmodels.IDB
 
 func (this *client) ListLinks(opt *dbmodels.LinkListOption) ([]dbmodels.LinkInfo, dbmodels.IDBError) {
 	filter := bson.M{
-		"platform":      opt.Platform,
-		"org":           bson.M{"$in": opt.Orgs},
+		fieldPlatform:   opt.Platform,
+		fieldOrg:        bson.M{"$in": opt.Orgs},
 		fieldLinkStatus: linkStatusReady,
 	}
 
@@ -152,8 +152,8 @@ func toDocOfLink(info *dbmodels.LinkCreateOption) (bson.M, dbmodels.IDBError) {
 	opt := cLink{
 		LinkID:     info.LinkID,
 		Platform:   info.Platform,
-		OrgID:      info.OrgID,
-		RepoID:     info.RepoID,
+		Org:        info.OrgID,
+		Repo:       info.RepoID,
 		OrgAlias:   info.OrgAlias,
 		Submitter:  info.Submitter,
 		LinkStatus: linkStatusReady,
@@ -244,8 +244,8 @@ func toModelOfOrgInfo(doc *cLink) dbmodels.OrgInfo {
 	return dbmodels.OrgInfo{
 		OrgRepo: dbmodels.OrgRepo{
 			Platform: doc.Platform,
-			OrgID:    doc.OrgID,
-			RepoID:   doc.RepoID,
+			OrgID:    doc.Org,
+			RepoID:   doc.Repo,
 		},
 		OrgAlias: doc.OrgAlias,
 		OrgEmail: doc.OrgEmail.Email,

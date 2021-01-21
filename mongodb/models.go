@@ -9,9 +9,12 @@ import (
 const (
 	fieldLinkID         = "link_id"
 	fieldLinkStatus     = "link_status"
+	fieldPlatform       = "platform"
+	fieldOrg            = "org"
+	fieldRepo           = "repo"
 	fieldCorpID         = "corp_id"
 	fieldSignings       = "signings"
-	fieldCLALang        = "lang"
+	fieldLang           = "lang"
 	fieldOrgEmail       = "org_email"
 	fieldOrgAlias       = "org_alias"
 	fieldOrgIdentity    = "org_identity"
@@ -21,6 +24,22 @@ const (
 	fieldCorpManagers   = "corp_managers"
 	fieldOrgSignature   = "org_signature"
 	fieldPassword       = "password"
+	fieldChanged        = "changed"
+	fieldFields         = "fields"
+	fieldCLAHash        = "cla_hash"
+	fieldSignatureHash  = "signature_hash"
+	fieldEmail          = "email"
+	fieldPurpose        = "purpose"
+	fieldCode           = "code"
+	fieldExpiry         = "expiry"
+	fieldToken          = "token"
+	fieldRole           = "role"
+	fieldName           = "name"
+	fieldID             = "id"
+	fieldPDF            = "pdf"
+	fieldDate           = "date"
+	fieldCorp           = "corp"
+	fieldEnabled        = "enabled"
 
 	// 'ready' means the doc is ready to record the signing data currently.
 	// 'deleted' means the signing data is invalid.
@@ -115,8 +134,8 @@ type cLink struct {
 	LinkStatus string `bson:"link_status" json:"link_status"`
 
 	Platform  string `bson:"platform" json:"platform" required:"true"`
-	OrgID     string `bson:"org" json:"org" required:"true"`
-	RepoID    string `bson:"repo" json:"repo"`
+	Org       string `bson:"org" json:"org" required:"true"`
+	Repo      string `bson:"repo" json:"repo"`
 	OrgAlias  string `bson:"org_alias" json:"org_alias"`
 	Submitter string `bson:"submitter" json:"submitter" required:"true"`
 

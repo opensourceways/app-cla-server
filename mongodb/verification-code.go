@@ -26,7 +26,7 @@ func (this *client) CreateVerificationCode(opt dbmodels.VerificationCode) dbmode
 		col := this.collection(this.vcCollection)
 
 		// delete the expired codes.
-		filter := bson.M{"expiry": bson.M{"$lt": util.Now()}}
+		filter := bson.M{fieldExpiry: bson.M{"$lt": util.Now()}}
 		col.DeleteMany(ctx, filter)
 
 		// email + purpose can't be the index, for example: a corp signs a community concurrently.
@@ -52,12 +52,12 @@ func (this *client) GetVerificationCode(opt *dbmodels.VerificationCode) dbmodels
 		sr := col.FindOneAndDelete(
 			ctx,
 			bson.M{
-				"email":   opt.Email,
-				"purpose": opt.Purpose,
-				"code":    opt.Code,
+				fieldEmail:   opt.Email,
+				fieldPurpose: opt.Purpose,
+				fieldCode:    opt.Code,
 			},
 			&options.FindOneAndDeleteOptions{
-				Projection: bson.M{"expiry": 1},
+				Projection: bson.M{fieldExpiry: 1},
 			},
 		)
 

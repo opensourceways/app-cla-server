@@ -15,13 +15,13 @@ func elemFilterOfCorpSigning(email string) bson.M {
 
 func (c *client) SignCorpCLA(linkID string, info *dbmodels.CorpSigningCreateOpt) dbmodels.IDBError {
 	signing := dCorpSigning{
-		CLALanguage:     info.CLALanguage,
-		CorpID:          genCorpID(info.AdminEmail),
-		CorporationName: info.CorporationName,
-		AdminEmail:      info.AdminEmail,
-		AdminName:       info.AdminName,
-		Date:            info.Date,
-		SigningInfo:     info.Info,
+		CLALanguage: info.CLALanguage,
+		CorpID:      genCorpID(info.AdminEmail),
+		CorpName:    info.CorporationName,
+		AdminEmail:  info.AdminEmail,
+		AdminName:   info.AdminName,
+		Date:        info.Date,
+		SigningInfo: info.Info,
 	}
 	doc, err := structToMap(signing)
 	if err != nil {
@@ -194,7 +194,7 @@ func toDBModelCorporationSigningDetail(cs *dCorpSigning, adminAdded bool) dbmode
 			CLALanguage:     cs.CLALanguage,
 			AdminEmail:      cs.AdminEmail,
 			AdminName:       cs.AdminName,
-			CorporationName: cs.CorporationName,
+			CorporationName: cs.CorpName,
 			Date:            cs.Date,
 		},
 		AdminAdded: adminAdded,
@@ -203,10 +203,10 @@ func toDBModelCorporationSigningDetail(cs *dCorpSigning, adminAdded bool) dbmode
 
 func projectOfCorpSigning() bson.M {
 	return bson.M{
-		memberNameOfSignings("admin_email"): 1,
-		memberNameOfSignings("admin_name"):  1,
-		memberNameOfSignings("corp_name"):   1,
-		memberNameOfSignings("date"):        1,
-		memberNameOfCorpManager("email"):    1,
+		memberNameOfSignings("email"):    1,
+		memberNameOfSignings("name"):     1,
+		memberNameOfSignings("corp"):     1,
+		memberNameOfSignings("date"):     1,
+		memberNameOfCorpManager("email"): 1,
 	}
 }

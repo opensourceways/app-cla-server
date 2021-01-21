@@ -153,9 +153,9 @@ func (this *client) GetCLAInfoToSign(linkID, claLang, applyTo string) (*dbmodels
 			ctx, this.linkCollection, claField,
 			docFilterOfCLA(linkID), elemFilterOfCLA(claLang),
 			bson.M{
-				fn("fields"):             1,
-				fn("cla_hash"):           1,
-				fn("org_signature_hash"): 1,
+				fn("fields"):         1,
+				fn("cla_hash"):       1,
+				fn("signature_hash"): 1,
 			}, &v,
 		)
 	}

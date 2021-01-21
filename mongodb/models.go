@@ -11,7 +11,7 @@ const (
 	fieldLinkStatus     = "link_status"
 	fieldCorpID         = "corp_id"
 	fieldSignings       = "signings"
-	fieldCLALang        = "cla_lang"
+	fieldCLALang        = "lang"
 	fieldOrgEmail       = "org_email"
 	fieldOrgAlias       = "org_alias"
 	fieldOrgIdentity    = "org_identity"
@@ -20,6 +20,7 @@ const (
 	fieldCLAInfos       = "cla_infos"
 	fieldCorpManagers   = "corp_managers"
 	fieldOrgSignature   = "org_signature"
+	fieldPassword       = "password"
 
 	// 'ready' means the doc is ready to record the signing data currently.
 	// 'deleted' means the signing data is invalid.
@@ -49,7 +50,7 @@ type cIndividualSigning struct {
 }
 
 type dIndividualSigning struct {
-	CLALanguage string `bson:"cla_lang" json:"cla_lang" required:"true"`
+	CLALanguage string `bson:"lang" json:"lang" required:"true"`
 	CorpID      string `bson:"corp_id" json:"corp_id" required:"true"`
 
 	ID      string `bson:"id" json:"id" required:"true"`
@@ -75,13 +76,13 @@ type cCorpSigning struct {
 }
 
 type dCorpSigning struct {
-	CLALanguage string `bson:"cla_lang" json:"cla_lang" required:"true"`
+	CLALanguage string `bson:"lang" json:"lang" required:"true"`
 	CorpID      string `bson:"corp_id" json:"corp_id" required:"true"`
+	CorpName    string `bson:"corp" json:"corp" required:"true"`
 
-	CorporationName string `bson:"corp_name" json:"corp_name" required:"true"`
-	AdminEmail      string `bson:"admin_email" json:"admin_email" required:"true"`
-	AdminName       string `bson:"admin_name" json:"admin_name" required:"true"`
-	Date            string `bson:"date" json:"date" required:"true"`
+	AdminEmail string `bson:"email" json:"email" required:"true"`
+	AdminName  string `bson:"name" json:"name" required:"true"`
+	Date       string `bson:"date" json:"date" required:"true"`
 
 	SigningInfo dbmodels.TypeSigningInfo `bson:"info" json:"info,omitempty"`
 }
@@ -104,9 +105,9 @@ type cOrgEmail struct {
 
 type DCLAInfo struct {
 	Fields           []dField `bson:"fields" json:"fields,omitempty"`
-	Language         string   `bson:"cla_lang" json:"cla_lang" required:"true"`
+	Language         string   `bson:"lang" json:"lang" required:"true"`
 	CLAHash          string   `bson:"cla_hash" json:"cla_hash" required:"true"`
-	OrgSignatureHash string   `bson:"org_signature_hash" json:"org_signature_hash,omitempty"`
+	OrgSignatureHash string   `bson:"signature_hash" json:"signature_hash,omitempty"`
 }
 
 type cLink struct {
@@ -137,7 +138,7 @@ type dField struct {
 	ID          string `bson:"id" json:"id" required:"true"`
 	Title       string `bson:"title" json:"title" required:"true"`
 	Type        string `bson:"type" json:"type" required:"true"`
-	Description string `bson:"description" json:"description,omitempty"`
+	Description string `bson:"desc" json:"desc,omitempty"`
 	Required    bool   `bson:"required" json:"required"`
 }
 

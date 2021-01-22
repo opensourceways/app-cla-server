@@ -62,16 +62,14 @@ func (this *EmployeeManagerCreateOption) ValidateWhenAdding(linkID, adminEmail s
 		}
 		em[item.Email] = true
 
-		if item.ID != "" {
-			if err := checkManagerID(fmt.Sprintf("%s_%s", item.ID, suffix)); err != nil {
-				return err
-			}
-
-			if _, ok := ids[item.ID]; ok {
-				return newModelError(ErrDuplicateManagerID, fmt.Errorf("duplicate manager ID:%s", item.ID))
-			}
-			ids[item.ID] = true
+		if err := checkManagerID(fmt.Sprintf("%s_%s", item.ID, suffix)); err != nil {
+			return err
 		}
+
+		if _, ok := ids[item.ID]; ok {
+			return newModelError(ErrDuplicateManagerID, fmt.Errorf("duplicate manager ID:%s", item.ID))
+		}
+		ids[item.ID] = true
 	}
 
 	return nil

@@ -2,6 +2,7 @@ package mongodb
 
 import (
 	"context"
+	"fmt"
 
 	"go.mongodb.org/mongo-driver/bson"
 
@@ -86,6 +87,7 @@ func (this *client) GetOrgOfLink(linkID string) (*dbmodels.OrgInfo, dbmodels.IDB
 			bson.M{
 				fieldIndividualCLAs: 0,
 				fieldCorpCLAs:       0,
+				fmt.Sprintf("%s.%s", fieldOrgEmail, fieldToken): 0,
 			}, &v,
 		)
 	}
@@ -94,15 +96,8 @@ func (this *client) GetOrgOfLink(linkID string) (*dbmodels.OrgInfo, dbmodels.IDB
 		return nil, err
 	}
 
-	return &dbmodels.OrgInfo{
-		OrgRepo: dbmodels.OrgRepo{
-			Platform: v.Platform,
-			OrgID:    v.Org,
-			RepoID:   v.Repo,
-		},
-		OrgAlias: v.OrgAlias,
-		OrgEmail: v.OrgEmail.Email,
-	}, nil
+	r := toModelOfOrgInfo(&v)
+	return &r, nil
 }
 
 func (this *client) ListLinks(opt *dbmodels.LinkListOption) ([]dbmodels.LinkInfo, dbmodels.IDBError) {
@@ -115,6 +110,7 @@ func (this *client) ListLinks(opt *dbmodels.LinkListOption) ([]dbmodels.LinkInfo
 	project := bson.M{
 		fieldIndividualCLAs: 0,
 		fieldCorpCLAs:       0,
+		fmt.Sprintf("%s.%s", fieldOrgEmail, fieldToken): 0,
 	}
 
 	var v []cLink

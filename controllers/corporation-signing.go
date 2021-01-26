@@ -166,6 +166,8 @@ func (this *CorporationSigningController) ResendCorpSigningEmail() {
 
 // @Title GetAll
 // @Description get all the corporations which have signed to a org
+// @Param	:link_id	path 	string				true		"gitee/github"
+// @Success 200 {object} list
 // @router /:link_id [get]
 func (this *CorporationSigningController) GetAll() {
 	action := "list corporation"

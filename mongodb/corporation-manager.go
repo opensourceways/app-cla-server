@@ -179,7 +179,7 @@ func (this *client) ListCorporationManager(linkID, email, role string) ([]dbmode
 	}
 
 	if len(v) == 0 {
-		return nil, errNoDBRecord1
+		return nil, errNoDBRecord
 	}
 
 	ms := v[0].Managers

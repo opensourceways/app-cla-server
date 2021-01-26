@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/opensourceways/app-cla-server/dbmodels"
 	"github.com/opensourceways/app-cla-server/models"
@@ -14,7 +15,7 @@ type LinkController struct {
 }
 
 func (this *LinkController) Prepare() {
-	if this.routerPattern() == "/v1/link/:platform/:org_id/:apply_to" {
+	if strings.HasSuffix(this.routerPattern(), ":apply_to") {
 		if this.apiReqHeader(headerToken) != "" {
 			this.apiPrepare(PermissionIndividualSigner)
 		}
@@ -162,9 +163,14 @@ func (this *LinkController) Unlink() {
 	this.sendSuccessResp(action + "successfully")
 }
 
-// @Title ListOrgs
-// @Description get all orgs
-// @Success 200 {object} models.OrgInfo
+// @Title ListLinks
+// @Description list all links
+// @Success 200 {object} dbmodels.LinkInfo
+// @Failure 401 missing_token:              token is missing
+// @Failure 402 unknown_token:              token is unknown
+// @Failure 403 expired_token:              token is expired
+// @Failure 404 unauthorized_token:         the permission of token is unmatched
+// @Failure 500 system_error:               system error
 // @router / [get]
 func (this *LinkController) ListLinks() {
 	action := "list links"

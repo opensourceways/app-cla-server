@@ -19,7 +19,7 @@ func (this *EmployeeSigningController) Prepare() {
 		// sign as employee
 		this.apiPrepare(PermissionIndividualSigner)
 	} else {
-		if this.routerPattern() == "/v1/employee-signing/:link_id/:email" {
+		if strings.HasSuffix(this.routerPattern(), "/:link_id/:email") {
 			this.apiPrepare(PermissionOwnerOfOrg)
 		} else {
 			// get, update and delete employee
@@ -118,7 +118,12 @@ func (this *EmployeeSigningController) Post() {
 
 // @Title GetAll
 // @Description get all the employees
-// @Success 200 {int} map
+// @Success 200 {object} dbmodels.IndividualSigningBasicInfo
+// @Failure 400 missing_token:      token is missing
+// @Failure 401 unknown_token:      token is unknown
+// @Failure 402 expired_token:      token is expired
+// @Failure 403 unauthorized_token: the permission of token is unmatched
+// @Failure 500 system_error:       system error
 // @router / [get]
 func (this *EmployeeSigningController) GetAll() {
 	action := "list employees"
@@ -140,7 +145,17 @@ func (this *EmployeeSigningController) GetAll() {
 
 // @Title List
 // @Description get all the employees by community manager
-// @Success 200 {int} map
+// @Param	:link_id	path 	string		true		"link id"
+// @Param	:email		path 	string		true		"the email of corp"
+// @Success 200 {object} dbmodels.IndividualSigningBasicInfo
+// @Failure 400 missing_url_path_parameter: missing url path parameter
+// @Failure 401 missing_token:              token is missing
+// @Failure 402 unknown_token:              token is unknown
+// @Failure 403 expired_token:              token is expired
+// @Failure 404 unauthorized_token:         the permission of token is unmatched
+// @Failure 405 unknown_link:               unkown link id
+// @Failure 406 not_yours_org:              the link doesn't belong to your community
+// @Failure 500 system_error:               system error
 // @router /:link_id/:email [get]
 func (this *EmployeeSigningController) List() {
 	action := "list employees"

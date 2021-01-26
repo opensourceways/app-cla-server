@@ -18,7 +18,7 @@ type CorporationPDFController struct {
 }
 
 func (this *CorporationPDFController) Prepare() {
-	if this.routerPattern() == "/v1/corporation-pdf/" {
+	if strings.HasSuffix(this.routerPattern(), "/") {
 		// admin reviews pdf
 		this.apiPrepare(PermissionCorpAdmin)
 	} else {

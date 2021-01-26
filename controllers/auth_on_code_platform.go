@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"fmt"
+	"strings"
 
 	platformAuth "github.com/opensourceways/app-cla-server/code-platform-auth"
 	"github.com/opensourceways/app-cla-server/code-platform-auth/platforms"
@@ -13,22 +14,24 @@ type AuthController struct {
 }
 
 func (this *AuthController) Prepare() {
-	if this.routerPattern() != "/v1/auth/:platform/:purpose" {
+	if this.isPostRequest() ||
+		strings.HasSuffix(this.routerPattern(), "/authcodeurl/:platform/:purpose") {
+
 		this.apiPrepare("")
 	}
 }
 
-// @Title Auth
-// @Description authorized by gitee/github
-// @Param	:platform	path 	string				true		"gitee/github"
-// @Param	:purpose	path 	string				true		"purpose: login, sign"
+// @Title Callback
+// @Description callback of authentication by oauth2
+// @Param	:platform	path 	string		true		"gitee/github"
+// @Param	:purpose	path 	string		true		"purpose: login, sign"
 // @Failure 400 auth_failed:               authenticated on code platform failed
 // @Failure 401 unsupported_code_platform: unsupported code platform
 // @Failure 402 refuse_to_authorize_email: the user refused to access his/her email
 // @Failure 403 no_public_email:           no public email
 // @Failure 500 system_error:              system error
 // @router /:platform/:purpose [get]
-func (this *AuthController) Auth() {
+func (this *AuthController) Callback() {
 	purpose := this.GetString(":purpose")
 	platform := this.GetString(":platform")
 	authHelper, ok := platformAuth.Auth[purpose]
@@ -93,18 +96,27 @@ func (this *AuthController) Auth() {
 	this.redirect(authHelper.WebRedirectDir(true))
 }
 
+type userAccount struct {
+	UserName string `json:"username"`
+	Password string `json:"password"`
+}
+
 // @Title Auth
-// @Description authorized by gitee/github
-// @Param	:platform	path 	string				true		"gitee/github"
+// @Description authentication by user's password of code platform
+// @Param	:platform	path 	string				true	"gitee/github"
+// @Param	body		body 	controllers.userAccount		true	"body for auth on code platform"
+// @Success 201 {object} map
+// @Failure 400 missing_url_path_parameter: missing url path parameter
+// @Failure 401 error_parsing_api_body:     parse payload of request failed
+// @Failure 402 unsupported_code_platform: unsupported code platform
+// @Failure 500 system_error:              system error
 // @router /:platform [post]
-func (this *AuthController) AuthByPW() {
+func (this *AuthController) Auth() {
 	action := "auth by pw"
 	platform := this.GetString(":platform")
 
-	var body struct {
-		UserName string `json:"username"`
-		Password string `json:"password"`
-	}
+	var body userAccount
+
 	if fr := this.fetchInputPayload(&body); fr != nil {
 		this.sendFailedResultAsResp(fr, action)
 		return
@@ -189,13 +201,16 @@ func (this *AuthController) genACPayload(platform, permission, platformToken str
 	}, "", nil
 }
 
-// @Title Get
-// @Description get auth code url
-// @Param	:platform	path 	string				true		"gitee/github"
-// @Param	:purpose	path 	string				true		"purpose: login, sign"
-// @Failure util.ErrNotSupportedPlatform
+// @Title AuthCodeURL
+// @Description get authentication code url
+// @Param	:platform	path 	string		true		"gitee/github"
+// @Param	:purpose	path 	string		true		"purpose: login, sign"
+// @Success 200 {object} map
+// @Failure 400 missing_url_path_parameter: missing url path parameter
+// @Failure 401 unsupported_code_platform:  unsupported code platform
+// @Failure 402 unkown_purpose_for_auth:    unknown purpose parameter
 // @router /authcodeurl/:platform/:purpose [get]
-func (this *AuthController) Get() {
+func (this *AuthController) AuthCodeURL() {
 	action := "fetch auth code url of gitee/github"
 
 	authHelper, ok := platformAuth.Auth[this.GetString(":purpose")]

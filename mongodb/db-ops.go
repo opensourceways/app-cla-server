@@ -13,10 +13,6 @@ import (
 	"github.com/opensourceways/app-cla-server/dbmodels"
 )
 
-var (
-	errNoDBRecord1 = dbError{code: dbmodels.ErrNoDBRecord, err: fmt.Errorf("no record")}
-)
-
 func withContext1(f func(context.Context) dbmodels.IDBError) dbmodels.IDBError {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
@@ -50,7 +46,7 @@ func (this *client) pushArrayElem(ctx context.Context, collection, array string,
 	}
 
 	if r.MatchedCount == 0 {
-		return errNoDBRecord1
+		return errNoDBRecord
 	}
 	return nil
 }
@@ -65,7 +61,7 @@ func (this *client) pushArrayElems(ctx context.Context, collection, array string
 	}
 
 	if r.MatchedCount == 0 {
-		return errNoDBRecord1
+		return errNoDBRecord
 	}
 	return nil
 }
@@ -100,7 +96,7 @@ func (this *client) pullArrayElem(ctx context.Context, collection, array string,
 	}
 
 	if r.MatchedCount == 0 {
-		return errNoDBRecord1
+		return errNoDBRecord
 	}
 	return nil
 }
@@ -134,7 +130,7 @@ func (this *client) updateArrayElem(ctx context.Context, collection, array strin
 	}
 
 	if r.MatchedCount == 0 {
-		return errNoDBRecord1
+		return errNoDBRecord
 	}
 	return nil
 }
@@ -150,7 +146,7 @@ func (this *client) pullAndReturnArrayElem(ctx context.Context, collection, arra
 
 	if err := sr.Decode(result); err != nil {
 		if isErrNoDocuments(err) {
-			return errNoDBRecord1
+			return errNoDBRecord
 		}
 		return newSystemError(err)
 	}
@@ -171,7 +167,7 @@ func (this *client) getDoc(ctx context.Context, collection string, filterOfDoc, 
 
 	if err := sr.Decode(result); err != nil {
 		if isErrNoDocuments(err) {
-			return errNoDBRecord1
+			return errNoDBRecord
 		}
 		return newSystemError(err)
 	}
@@ -206,7 +202,7 @@ func (this *client) updateDoc(ctx context.Context, collection string, filterOfDo
 	}
 
 	if r.MatchedCount == 0 {
-		return errNoDBRecord1
+		return errNoDBRecord
 	}
 	return nil
 }

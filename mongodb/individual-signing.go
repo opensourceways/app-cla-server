@@ -128,7 +128,7 @@ func (this *client) ListIndividualSigning(linkID, corpEmail, claLang string) ([]
 	}
 
 	if len(v) == 0 {
-		return nil, errNoDBRecord1
+		return nil, nil
 	}
 
 	docs := v[0].Signings

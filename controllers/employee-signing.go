@@ -145,6 +145,8 @@ func (this *EmployeeSigningController) GetAll() {
 
 // @Title List
 // @Description get all the employees by community manager
+// @Param	:link_id	path 	string		true		"link id"
+// @Param	:email		path 	string		true		"the email of corp"
 // @Success 200 {object} dbmodels.IndividualSigningBasicInfo
 // @Failure 400 missing_url_path_parameter: missing url path parameter
 // @Failure 401 missing_token:              token is missing

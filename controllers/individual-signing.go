@@ -37,7 +37,7 @@ func (this *IndividualSigningController) Prepare() {
 // @Failure 407 unmatched_user_id:          the user id is not same as the one which was fetched from code platform
 // @Failure 408 unmatched_cla:              the cla hash is not equal to the one of backend server
 // @Failure 409 resigned:                   the signer has signed the cla
-// @Failure 410 no_link:                    invalid link id
+// @Failure 410 no_link:                    the link id is not exists
 // @Failure 500 system_error:               system error
 // @router /:link_id/:cla_lang/:cla_hash [post]
 func (this *IndividualSigningController) Post() {

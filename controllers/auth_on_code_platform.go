@@ -23,8 +23,8 @@ func (this *AuthController) Prepare() {
 
 // @Title Callback
 // @Description callback of authentication by oauth2
-// @Param	:platform	path 	string				true		"gitee/github"
-// @Param	:purpose	path 	string				true		"purpose: login, sign"
+// @Param	:platform	path 	string		true		"gitee/github"
+// @Param	:purpose	path 	string		true		"purpose: login, sign"
 // @Failure 400 auth_failed:               authenticated on code platform failed
 // @Failure 401 unsupported_code_platform: unsupported code platform
 // @Failure 402 refuse_to_authorize_email: the user refused to access his/her email
@@ -103,8 +103,8 @@ type userAccount struct {
 
 // @Title Auth
 // @Description authentication by user's password of code platform
-// @Param	:platform	path 	string			true	"gitee/github"
-// @Param	body		body 	controllers.userAccount	true	"body for auth on code platform"
+// @Param	:platform	path 	string				true	"gitee/github"
+// @Param	body		body 	controllers.userAccount		true	"body for auth on code platform"
 // @Success 201 {object} map
 // @Failure 400 missing_url_path_parameter: missing url path parameter
 // @Failure 401 error_parsing_api_body:     parse payload of request failed
@@ -203,8 +203,8 @@ func (this *AuthController) genACPayload(platform, permission, platformToken str
 
 // @Title AuthCodeURL
 // @Description get authentication code url
-// @Param	:platform	path 	string				true		"gitee/github"
-// @Param	:purpose	path 	string				true		"purpose: login, sign"
+// @Param	:platform	path 	string		true		"gitee/github"
+// @Param	:purpose	path 	string		true		"purpose: login, sign"
 // @Success 200 {object} map
 // @Failure 400 missing_url_path_parameter: missing url path parameter
 // @Failure 401 unsupported_code_platform:  unsupported code platform

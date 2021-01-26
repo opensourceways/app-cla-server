@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/opensourceways/app-cla-server/email"
 	"github.com/opensourceways/app-cla-server/models"
@@ -14,7 +15,7 @@ type EmailController struct {
 }
 
 func (this *EmailController) Prepare() {
-	if this.routerPattern() == "/v1/email/authcodeurl/:platform" {
+	if strings.HasSuffix(this.routerPattern(), "authcodeurl/:platform") {
 		this.apiPrepare(PermissionOwnerOfOrg)
 	}
 }

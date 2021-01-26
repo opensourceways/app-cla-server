@@ -22,9 +22,6 @@ func ListIndividualSigning(linkID, corpEmail, claLang string) ([]dbmodels.Indivi
 		return v, nil
 	}
 
-	if err.IsErrorOf(dbmodels.ErrNoDBRecord) {
-		return nil, newModelError(ErrNoLink, err)
-	}
 	return nil, parseDBError(err)
 }
 

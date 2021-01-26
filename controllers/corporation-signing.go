@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/opensourceways/app-cla-server/dbmodels"
 	"github.com/opensourceways/app-cla-server/models"
@@ -14,7 +15,7 @@ type CorporationSigningController struct {
 }
 
 func (this *CorporationSigningController) Prepare() {
-	if this.routerPattern() == "/v1/corporation-signing/:link_id/:cla_lang/:cla_hash" {
+	if strings.HasSuffix(this.routerPattern(), ":cla_hash") {
 		this.apiPrepare("")
 	} else {
 		// not signing
@@ -164,10 +165,23 @@ func (this *CorporationSigningController) ResendCorpSigningEmail() {
 	this.sendSuccessResp("resend email successfully")
 }
 
+type corpsSigningResult struct {
+	*dbmodels.CorporationSigningSummary
+	PDFUploaded bool `json:"pdf_uploaded"`
+}
+
 // @Title GetAll
 // @Description get all the corporations which have signed to a org
-// @Param	:link_id	path 	string				true		"gitee/github"
-// @Success 200 {object} list
+// @Param	:link_id	path 	string		true		"link id"
+// @Success 200 {object} controllers.corpsSigningResult
+// @Failure 400 missing_url_path_parameter: missing url path parameter
+// @Failure 401 missing_token:              token is missing
+// @Failure 402 unknown_token:              token is unknown
+// @Failure 403 expired_token:              token is expired
+// @Failure 404 unauthorized_token:         the permission of token is unmatched
+// @Failure 405 unknown_link:               unkown link id
+// @Failure 406 not_yours_org:              the link doesn't belong to your community
+// @Failure 500 system_error:               system error
 // @router /:link_id [get]
 func (this *CorporationSigningController) GetAll() {
 	action := "list corporation"
@@ -203,14 +217,9 @@ func (this *CorporationSigningController) GetAll() {
 		pdfMap[pdfs[i]] = true
 	}
 
-	type sInfo struct {
-		*dbmodels.CorporationSigningSummary
-		PDFUploaded bool `json:"pdf_uploaded"`
-	}
-
-	details := make([]sInfo, 0, len(r))
+	details := make([]corpsSigningResult, 0, len(r))
 	for k := range r {
-		details = append(details, sInfo{
+		details = append(details, corpsSigningResult{
 			CorporationSigningSummary: &r[k],
 			PDFUploaded:               pdfMap[util.EmailSuffix(r[k].AdminEmail)]},
 		)

@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/opensourceways/app-cla-server/dbmodels"
 	"github.com/opensourceways/app-cla-server/models"
@@ -14,7 +15,7 @@ type LinkController struct {
 }
 
 func (this *LinkController) Prepare() {
-	if this.routerPattern() == "/v1/link/:platform/:org_id/:apply_to" {
+	if strings.HasSuffix(this.routerPattern(), ":apply_to") {
 		if this.apiReqHeader(headerToken) != "" {
 			this.apiPrepare(PermissionIndividualSigner)
 		}

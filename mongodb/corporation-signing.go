@@ -62,7 +62,7 @@ func (this *client) ListCorpSignings(linkID, language string) ([]dbmodels.Corpor
 	}
 
 	if len(v) == 0 {
-		return nil, errNoDBRecord1
+		return nil, errNoDBRecord
 	}
 
 	signings := v[0].Signings
@@ -118,7 +118,7 @@ func (this *client) GetCorpSigningBasicInfo(linkID, email string) (*dbmodels.Cor
 	}
 
 	if len(v) == 0 {
-		return nil, errNoDBRecord1
+		return nil, errNoDBRecord
 	}
 
 	signings := v[0].Signings
@@ -166,7 +166,7 @@ func (this *client) GetCorpSigningDetail(linkID, email string) ([]dbmodels.Field
 	}
 
 	if len(v) == 0 {
-		return nil, nil, errNoDBRecord1
+		return nil, nil, errNoDBRecord
 	}
 
 	signing := &(v[0].Signings)

@@ -44,7 +44,7 @@ func (this *client) HasCLA(linkID, applyTo, language string) (bool, dbmodels.IDB
 	}
 
 	if len(v) == 0 {
-		return false, errNoDBRecord1
+		return false, errNoDBRecord
 	}
 
 	doc := &v[0]
@@ -165,7 +165,7 @@ func (this *client) GetCLAInfoToSign(linkID, claLang, applyTo string) (*dbmodels
 	}
 
 	if len(v) == 0 {
-		return nil, errNoDBRecord1
+		return nil, errNoDBRecord
 	}
 
 	var doc []dCLA

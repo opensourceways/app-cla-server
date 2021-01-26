@@ -66,7 +66,7 @@ func (this *client) GetVerificationCode(opt *dbmodels.VerificationCode) dbmodels
 			return nil
 		}
 		if isErrNoDocuments(err) {
-			return errNoDBRecord1
+			return errNoDBRecord
 		}
 		return newSystemError(err)
 	}

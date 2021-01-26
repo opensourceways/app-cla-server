@@ -1,6 +1,14 @@
 package mongodb
 
-import "github.com/opensourceways/app-cla-server/dbmodels"
+import (
+	"fmt"
+
+	"github.com/opensourceways/app-cla-server/dbmodels"
+)
+
+var (
+	errNoDBRecord = dbError{code: dbmodels.ErrNoDBRecord, err: fmt.Errorf("no record")}
+)
 
 type dbError struct {
 	code dbmodels.DBErrCode

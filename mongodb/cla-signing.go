@@ -112,7 +112,7 @@ func (this *client) GetCLAInfoSigned(linkID, claLang, applyTo string) (*dbmodels
 	}
 
 	if len(v) == 0 {
-		return nil, errNoDBRecord1
+		return nil, errNoDBRecord
 	}
 
 	if len(v[0].CLAInfos) == 0 {

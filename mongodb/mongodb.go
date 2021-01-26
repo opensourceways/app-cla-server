@@ -32,13 +32,15 @@ func Initialize(cfg *config.MongodbConfig) (*client, error) {
 	if err != nil {
 		return nil, err
 	}
-	err = withContext(c.Connect)
-	if err != nil {
+
+	if err = withContext(c.Connect); err != nil {
 		return nil, err
 	}
 
 	// verify if database connection is created successfully
-	err = c.Ping(nil, nil)
+	err = withContext(func(ctx context.Context) error {
+		return c.Ping(ctx, nil)
+	})
 	if err != nil {
 		return nil, err
 	}

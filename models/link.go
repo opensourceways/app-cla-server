@@ -140,3 +140,8 @@ func ListLinks(platform string, orgs []string) ([]dbmodels.LinkInfo, IModelError
 	})
 	return v, parseDBError(err)
 }
+
+func GetAllLinks() ([]dbmodels.LinkInfo, IModelError) {
+	v, err := dbmodels.GetDB().GetAllLinks()
+	return v, parseDBError(err)
+}

@@ -187,6 +187,32 @@ func (this *client) GetCLAInfoToSign(linkID, claLang, applyTo string) (*dbmodels
 	}, nil
 }
 
+func (this *client) DownloadCorpCLAPDF(linkID, lang string) ([]byte, dbmodels.IDBError) {
+	var v []cLink
+
+	f := func(ctx context.Context) error {
+		return this.getArrayElem(
+			ctx, this.linkCollection, fieldCorpCLAs,
+			docFilterOfCLA(linkID), elemFilterOfCLA(lang),
+			bson.M{fmt.Sprintf("%s.%s", fieldCorpCLAs, fieldOrgSignature): 1},
+			&v,
+		)
+	}
+
+	if err := withContext(f); err != nil {
+		return nil, newSystemError(err)
+	}
+
+	if len(v) == 0 {
+		return nil, errNoDBRecord
+	}
+
+	if len(v[0].CorpCLAs) == 0 {
+		return nil, nil
+	}
+	return v[0].CorpCLAs[0].OrgSignature, nil
+}
+
 func toModelOfCLAFields(fields []dField) []dbmodels.Field {
 	fs := make([]dbmodels.Field, 0, len(fields))
 	for i := range fields {

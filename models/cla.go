@@ -25,6 +25,10 @@ type CLACreateOpt struct {
 	content      *[]byte `json:"-"`
 }
 
+func (this *CLACreateOpt) SetCLAContent(data *[]byte) {
+	this.content = data
+}
+
 func (this *CLACreateOpt) SetOrgSignature(data *[]byte) {
 	this.orgSignature = data
 }
@@ -238,5 +242,10 @@ func GetCLAInfoToSign(linkID, claLang, applyTo string) (*dbmodels.CLAInfo, IMode
 		return v, newModelError(ErrNoLink, err)
 	}
 
+	return v, parseDBError(err)
+}
+
+func DownloadCorpCLAPDF(linkID, lang string) ([]byte, IModelError) {
+	v, err := dbmodels.GetDB().DownloadCorpCLAPDF(linkID, lang)
 	return v, parseDBError(err)
 }

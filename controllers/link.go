@@ -276,7 +276,6 @@ func LoadLinks() error {
 				return fr.reason
 			}
 		}
-
 	}
 
 	return nil

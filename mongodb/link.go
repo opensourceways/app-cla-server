@@ -113,57 +113,26 @@ func (this *client) ListLinks(opt *dbmodels.LinkListOption) ([]dbmodels.LinkInfo
 		fmt.Sprintf("%s.%s", fieldOrgEmail, fieldToken): 0,
 	}
 
-	var v []cLink
-	f := func(ctx context.Context) dbmodels.IDBError {
-		err := this.getDocs(ctx, this.linkCollection, filter, project, &v)
-		if err != nil {
-			return newSystemError(err)
-		}
-		return nil
-	}
-
-	if err := withContext1(f); err != nil {
-		return nil, err
-	}
-
-	n := len(v)
-	if n == 0 {
-		return nil, nil
-	}
-
-	r := make([]dbmodels.LinkInfo, 0, n)
-	for i := range v {
-		item := &v[i]
-		r = append(r, dbmodels.LinkInfo{
-			LinkID:    item.LinkID,
-			OrgInfo:   toModelOfOrgInfo(item),
-			Submitter: item.Submitter,
-		})
-	}
-
-	return r, nil
+	return this.getAllLinks(filter, project)
 }
 
 func (this *client) GetAllLinks() ([]dbmodels.LinkInfo, dbmodels.IDBError) {
-	filter := bson.M{fieldLinkStatus: linkStatusReady}
-
 	project := bson.M{
 		fieldIndividualCLAs: 0,
 		fieldCorpCLAs:       0,
 		fieldOrgEmail:       0,
 	}
+	return this.getAllLinks(bson.M{fieldLinkStatus: linkStatusReady}, project)
+}
 
+func (this *client) getAllLinks(filter, project bson.M) ([]dbmodels.LinkInfo, dbmodels.IDBError) {
 	var v []cLink
-	f := func(ctx context.Context) dbmodels.IDBError {
-		err := this.getDocs(ctx, this.linkCollection, filter, project, &v)
-		if err != nil {
-			return newSystemError(err)
-		}
-		return nil
+	f := func(ctx context.Context) error {
+		return this.getDocs(ctx, this.linkCollection, filter, project, &v)
 	}
 
-	if err := withContext1(f); err != nil {
-		return nil, err
+	if err := withContext(f); err != nil {
+		return nil, newSystemError(err)
 	}
 
 	n := len(v)

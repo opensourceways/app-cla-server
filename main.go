@@ -7,6 +7,7 @@ import (
 
 	platformAuth "github.com/opensourceways/app-cla-server/code-platform-auth"
 	"github.com/opensourceways/app-cla-server/config"
+	"github.com/opensourceways/app-cla-server/controllers"
 	"github.com/opensourceways/app-cla-server/dbmodels"
 	"github.com/opensourceways/app-cla-server/email"
 	"github.com/opensourceways/app-cla-server/mongodb"
@@ -64,6 +65,11 @@ func main() {
 	}
 
 	worker.InitEmailWorker(pdf.GetPDFGenerator())
+
+	if err := controllers.LoadLinks(); err != nil {
+		beego.Error(err)
+		os.Exit(1)
+	}
 
 	beego.Run()
 }

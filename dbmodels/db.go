@@ -63,6 +63,7 @@ type ICLA interface {
 	GetCLAByType(orgRepo *OrgRepo, applyTo string) (string, []CLADetail, IDBError)
 	GetAllCLA(linkID string) (*CLAOfLink, IDBError)
 	HasCLA(linkID, applyTo, language string) (bool, IDBError)
+	DownloadCorpCLAPDF(linkID, lang string) ([]byte, IDBError)
 
 	AddCLA(linkID, applyTo string, cla *CLACreateOption) IDBError
 	DeleteCLA(linkID, applyTo, language string) IDBError
@@ -82,4 +83,5 @@ type ILink interface {
 	Unlink(linkID string) IDBError
 	GetOrgOfLink(linkID string) (*OrgInfo, IDBError)
 	ListLinks(opt *LinkListOption) ([]LinkInfo, IDBError)
+	GetAllLinks() ([]LinkInfo, IDBError)
 }

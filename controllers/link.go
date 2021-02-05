@@ -235,3 +235,48 @@ func (this *LinkController) GetCLAForSigning() {
 		this.sendSuccessResp(result)
 	}
 }
+
+func LoadLinks() error {
+	links, err := models.GetAllLinks()
+	if err != nil {
+		return err
+	}
+
+	for i := range links {
+		link := &links[i]
+
+		orgRepo := &link.OrgInfo
+		filePath := genOrgFileLockPath(orgRepo.Platform, orgRepo.OrgID, orgRepo.RepoID)
+		if err := util.CreateLockedFile(filePath); err != nil {
+			return err
+		}
+
+		linkID := link.LinkID
+
+		info, err := models.GetAllCLA(linkID)
+		if err != nil {
+			return err
+		}
+
+		for j := range info.CorpCLAs {
+			cla := &info.CorpCLAs[j]
+			text := []byte(cla.Text)
+
+			signature, err := models.DownloadCorpCLAPDF(linkID, cla.Language)
+			if err != nil {
+				return err
+			}
+
+			opt := &models.CLACreateOpt{}
+			opt.Language = cla.Language
+			opt.SetCLAContent(&text)
+			opt.SetOrgSignature(&signature)
+
+			if fr := saveCorpCLAAtLocal(opt, linkID); fr != nil {
+				return fr.reason
+			}
+		}
+	}
+
+	return nil
+}

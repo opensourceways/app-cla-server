@@ -14,6 +14,8 @@ import (
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
 	"google.golang.org/api/gmail/v1"
+	gooleoauth2 "google.golang.org/api/oauth2/v2"
+	option "google.golang.org/api/option"
 
 	myoauth2 "github.com/opensourceways/app-cla-server/oauth2"
 	"github.com/opensourceways/app-cla-server/util"
@@ -54,18 +56,18 @@ func (this *gmailClient) GetToken(code, scope string) (*oauth2.Token, error) {
 }
 
 func (this *gmailClient) GetAuthorizedEmail(token *oauth2.Token) (string, error) {
-	client := this.cfg.Client(context.Background(), token)
-	srv, err := gmail.New(client)
+	ctx := context.Background()
+	srv, err := gooleoauth2.NewService(
+		ctx, option.WithTokenSource(this.cfg.TokenSource(ctx, token)))
 	if err != nil {
 		return "", err
 	}
 
-	v, err := srv.Users.GetProfile("me").Do()
+	info, err := srv.Userinfo.V2.Me.Get().Do()
 	if err != nil {
 		return "", err
 	}
-
-	return v.EmailAddress, nil
+	return info.Email, nil
 }
 
 func (this *gmailClient) GetOauth2CodeURL(state string) string {
@@ -104,7 +106,7 @@ func (this *gmailClient) getOauth2Config(path string) (*oauth2.Config, error) {
 }
 
 func (this *gmailClient) getScope() []string {
-	return []string{gmail.GmailReadonlyScope, gmail.GmailSendScope}
+	return []string{gooleoauth2.UserinfoEmailScope, gmail.GmailSendScope}
 }
 
 func (this *gmailClient) createGmailMessage(msg *EmailMessage) (*gmail.Message, error) {

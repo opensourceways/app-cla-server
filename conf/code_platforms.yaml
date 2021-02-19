@@ -11,6 +11,14 @@ login:
     scope:
     - user_info
     - groups  
+  - platform: github
+    client_id: {{client id}}
+    client_secret: {{client secret}}
+    auth_url: https://github.com/login/oauth/authorize
+    token_url: https://github.com/login/oauth/access_token
+    redirect_url: {{url}}/api/v1/auth/github/login
+    scope:
+    - read:org
 
 sign:
   web_redirect_dir_on_success: /sign-cla
@@ -25,3 +33,11 @@ sign:
     scope:
     - emails
     - user_info
+  - platform: github
+    client_id: {{client id}}
+    client_secret: {{client secret}}
+    auth_url: https://github.com/login/oauth/authorize
+    token_url: https://github.com/login/oauth/access_token
+    redirect_url: {{url}}/api/v1/auth/github/sign
+    scope:
+    - user:email

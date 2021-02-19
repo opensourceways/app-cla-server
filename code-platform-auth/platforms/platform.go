@@ -20,6 +20,8 @@ func NewPlatform(accessToken, refreshToken, platform string) (Platform, error) {
 	switch platform {
 	case "gitee":
 		return newGiteeClient(accessToken, refreshToken), nil
+	case "github":
+		return newGithubClient(accessToken, refreshToken), nil
 	}
 	return nil, fmt.Errorf("unknown platform:%s", platform)
 }

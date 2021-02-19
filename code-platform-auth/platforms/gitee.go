@@ -3,7 +3,6 @@ package platforms
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	"gitee.com/openeuler/go-gitee/gitee"
 	"github.com/antihax/optional"
@@ -36,10 +35,13 @@ func (this *giteeClient) GetUser() (string, error) {
 }
 
 func (this *giteeClient) GetAuthorizedEmail() (string, error) {
-	es, _, err := this.c.EmailsApi.GetV5Emails(context.Background(), nil)
+	es, rs, err := this.c.EmailsApi.GetV5Emails(context.Background(), nil)
 	if err != nil {
-		if strings.Index(err.Error(), "401") >= 0 {
+		if rs.StatusCode == 401 {
 			return "", fmt.Errorf(errMsgRefuseToAuthorizeEmail)
+		}
+		if rs.StatusCode == 403 {
+			return "", fmt.Errorf(errMsgNoPublicEmail)
 		}
 		return "", err
 	}
@@ -90,11 +92,11 @@ func (this *giteeClient) ListOrg() ([]string, error) {
 			break
 		}
 
-		p += 1
-
 		for _, v := range ls {
 			r = append(r, v.Login)
 		}
+
+		p += 1
 	}
 
 	return r, nil

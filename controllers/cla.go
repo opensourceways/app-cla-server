@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/opensourceways/app-cla-server/config"
 	"github.com/opensourceways/app-cla-server/dbmodels"
 	"github.com/opensourceways/app-cla-server/models"
 	"github.com/opensourceways/app-cla-server/pdf"
@@ -46,7 +47,9 @@ func (this *CLAController) Add() {
 	}
 
 	if applyTo == dbmodels.ApplyToCorporation {
-		data, fr := this.readInputFile(fileNameOfUploadingOrgSignatue)
+		data, fr := this.readInputFile(
+			fileNameOfUploadingOrgSignatue, config.AppConfig.MaxSizeOfOrgSignaturePDF,
+		)
 		if fr != nil {
 			this.sendFailedResultAsResp(fr, action)
 			return
@@ -81,7 +84,7 @@ func (this *CLAController) Add() {
 // @Param	uid		path 	string	true		"cla id"
 // @Success 204 {string} delete success!
 // @Failure 403 uid is empty
-// @router /:link_id/:apply_to:/:language [delete]
+// @router /:link_id/:apply_to/:language [delete]
 func (this *CLAController) Delete() {
 	action := "delete cla"
 	linkID := this.GetString(":link_id")

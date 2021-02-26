@@ -88,13 +88,9 @@ func (this *CorporationPDFController) Upload() {
 		return
 	}
 
-	data, fr := this.readInputFile("pdf")
+	data, fr := this.readInputFile("pdf", config.AppConfig.MaxSizeOfCorpCLAPDF)
 	if fr != nil {
 		this.sendFailedResultAsResp(fr, action)
-		return
-	}
-	if len(data) > (2 << 20) {
-		this.sendFailedResponse(400, errTooBigPDF, fmt.Errorf("big pdf file"), action)
 		return
 	}
 

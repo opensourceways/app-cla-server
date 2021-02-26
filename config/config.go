@@ -12,18 +12,20 @@ import (
 var AppConfig *appConfig
 
 type appConfig struct {
-	PythonBin               string        `json:"python_bin" required:"true"`
-	CLAFieldsNumber         int           `json:"cla_fields_number" required:"true"`
-	VerificationCodeExpiry  int64         `json:"verification_code_expiry" required:"true"`
-	APITokenExpiry          int64         `json:"api_token_expiry" required:"true"`
-	APITokenKey             string        `json:"api_token_key" required:"true"`
-	PDFOrgSignatureDir      string        `json:"pdf_org_signature_dir" required:"true"`
-	PDFOutDir               string        `json:"pdf_out_dir" required:"true"`
-	CodePlatformConfigFile  string        `json:"code_platforms" required:"true"`
-	EmailPlatformConfigFile string        `json:"email_platforms" required:"true"`
-	EmployeeManagersNumber  int           `json:"employee_managers_number" required:"true"`
-	CLAPlatformURL          string        `json:"cla_platform_url" required:"true"`
-	Mongodb                 MongodbConfig `json:"mongodb" required:"true"`
+	PythonBin                string        `json:"python_bin" required:"true"`
+	CLAFieldsNumber          int           `json:"cla_fields_number" required:"true"`
+	MaxSizeOfCorpCLAPDF      int           `json:"max_size_of_corp_cla_pdf"`
+	MaxSizeOfOrgSignaturePDF int           `json:"max_size_of_org_signature_pdf"`
+	VerificationCodeExpiry   int64         `json:"verification_code_expiry" required:"true"`
+	APITokenExpiry           int64         `json:"api_token_expiry" required:"true"`
+	APITokenKey              string        `json:"api_token_key" required:"true"`
+	PDFOrgSignatureDir       string        `json:"pdf_org_signature_dir" required:"true"`
+	PDFOutDir                string        `json:"pdf_out_dir" required:"true"`
+	CodePlatformConfigFile   string        `json:"code_platforms" required:"true"`
+	EmailPlatformConfigFile  string        `json:"email_platforms" required:"true"`
+	EmployeeManagersNumber   int           `json:"employee_managers_number" required:"true"`
+	CLAPlatformURL           string        `json:"cla_platform_url" required:"true"`
+	Mongodb                  MongodbConfig `json:"mongodb" required:"true"`
 }
 
 type MongodbConfig struct {
@@ -43,6 +45,9 @@ func InitAppConfig() error {
 		return err
 	}
 
+	maxSizeOfCorpCLAPDF := beego.AppConfig.DefaultInt("max_size_of_corp_cla_pdf", (2 << 20))
+	maxSizeOfOrgSignaturePDF := beego.AppConfig.DefaultInt("max_size_of_org_signature_pdf", (1 << 20))
+
 	tokenExpiry, err := beego.AppConfig.Int64("api_token_expiry")
 	if err != nil {
 		return err
@@ -59,17 +64,19 @@ func InitAppConfig() error {
 	}
 
 	AppConfig = &appConfig{
-		PythonBin:               beego.AppConfig.String("python_bin"),
-		CLAFieldsNumber:         claFieldsNumber,
-		VerificationCodeExpiry:  codeExpiry,
-		APITokenExpiry:          tokenExpiry,
-		APITokenKey:             beego.AppConfig.String("api_token_key"),
-		PDFOrgSignatureDir:      beego.AppConfig.String("pdf_org_signature_dir"),
-		PDFOutDir:               beego.AppConfig.String("pdf_out_dir"),
-		CodePlatformConfigFile:  beego.AppConfig.String("code_platforms"),
-		EmailPlatformConfigFile: beego.AppConfig.String("email_platforms"),
-		EmployeeManagersNumber:  employeeMangers,
-		CLAPlatformURL:          beego.AppConfig.String("cla_platform_url"),
+		PythonBin:                beego.AppConfig.String("python_bin"),
+		CLAFieldsNumber:          claFieldsNumber,
+		MaxSizeOfCorpCLAPDF:      maxSizeOfCorpCLAPDF,
+		MaxSizeOfOrgSignaturePDF: maxSizeOfOrgSignaturePDF,
+		VerificationCodeExpiry:   codeExpiry,
+		APITokenExpiry:           tokenExpiry,
+		APITokenKey:              beego.AppConfig.String("api_token_key"),
+		PDFOrgSignatureDir:       beego.AppConfig.String("pdf_org_signature_dir"),
+		PDFOutDir:                beego.AppConfig.String("pdf_out_dir"),
+		CodePlatformConfigFile:   beego.AppConfig.String("code_platforms"),
+		EmailPlatformConfigFile:  beego.AppConfig.String("email_platforms"),
+		EmployeeManagersNumber:   employeeMangers,
+		CLAPlatformURL:           beego.AppConfig.String("cla_platform_url"),
 		Mongodb: MongodbConfig{
 			MongodbConn:                 beego.AppConfig.String("mongodb::mongodb_conn"),
 			DBName:                      beego.AppConfig.String("mongodb::mongodb_db"),

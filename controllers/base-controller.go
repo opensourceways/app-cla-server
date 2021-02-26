@@ -265,7 +265,7 @@ func (this *baseController) isPostRequest() bool {
 	return this.apiRequestMethod() == http.MethodPost
 }
 
-func (this *baseController) readInputFile(fileName string) ([]byte, *failedApiResult) {
+func (this *baseController) readInputFile(fileName string, maxSize int) ([]byte, *failedApiResult) {
 	f, _, err := this.GetFile(fileName)
 	if err != nil {
 		return nil, newFailedApiResult(400, errReadingFile, err)
@@ -275,6 +275,10 @@ func (this *baseController) readInputFile(fileName string) ([]byte, *failedApiRe
 	data, err := ioutil.ReadAll(f)
 	if err != nil {
 		return nil, newFailedApiResult(500, errSystemError, err)
+	}
+
+	if maxSize > 0 && len(data) > maxSize {
+		return nil, newFailedApiResult(400, errTooBigPDF, fmt.Errorf("big pdf file"))
 	}
 	return data, nil
 }

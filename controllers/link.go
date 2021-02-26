@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/opensourceways/app-cla-server/config"
 	"github.com/opensourceways/app-cla-server/dbmodels"
 	"github.com/opensourceways/app-cla-server/models"
 	"github.com/opensourceways/app-cla-server/pdf"
@@ -46,7 +47,9 @@ func (this *LinkController) Link() {
 	}
 
 	if input.CorpCLA != nil {
-		data, fr := this.readInputFile(fileNameOfUploadingOrgSignatue)
+		data, fr := this.readInputFile(
+			fileNameOfUploadingOrgSignatue, config.AppConfig.MaxSizeOfOrgSignaturePDF,
+		)
 		if fr != nil {
 			sendResp(fr)
 			return

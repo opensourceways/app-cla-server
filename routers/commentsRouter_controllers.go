@@ -55,7 +55,7 @@ func init() {
 	beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:CLAController"] = append(beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:CLAController"],
 		beego.ControllerComments{
 			Method:           "Delete",
-			Router:           "/:link_id/:apply_to:/:language",
+			Router:           "/:link_id/:apply_to/:language",
 			AllowHTTPMethods: []string{"delete"},
 			MethodParams:     param.Make(),
 			Filters:          nil,

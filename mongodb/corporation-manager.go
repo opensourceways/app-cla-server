@@ -72,17 +72,17 @@ func (this *client) CheckCorporationManagerExist(opt dbmodels.CorporationManager
 			fieldID:     opt.ID,
 		}
 	}
-	elemFilter[fieldPassword] = opt.Password
 
 	project := bson.M{
-		fieldLinkID:                           1,
-		fieldOrgIdentity:                      1,
-		fieldOrgEmail:                         1,
-		fieldOrgAlias:                         1,
-		memberNameOfCorpManager(fieldRole):    1,
-		memberNameOfCorpManager(fieldName):    1,
-		memberNameOfCorpManager(fieldEmail):   1,
-		memberNameOfCorpManager(fieldChanged): 1,
+		fieldLinkID:                            1,
+		fieldOrgIdentity:                       1,
+		fieldOrgEmail:                          1,
+		fieldOrgAlias:                          1,
+		memberNameOfCorpManager(fieldRole):     1,
+		memberNameOfCorpManager(fieldName):     1,
+		memberNameOfCorpManager(fieldEmail):    1,
+		memberNameOfCorpManager(fieldPassword): 1,
+		memberNameOfCorpManager(fieldChanged):  1,
 	}
 
 	var v []cCorpSigning
@@ -114,6 +114,7 @@ func (this *client) CheckCorporationManagerExist(opt dbmodels.CorporationManager
 			Name:             item.Name,
 			Email:            item.Email,
 			Role:             item.Role,
+			Password:         item.Password,
 			InitialPWChanged: item.InitialPWChanged,
 
 			OrgInfo: dbmodels.OrgInfo{
@@ -198,4 +199,39 @@ func (this *client) ListCorporationManager(linkID, email, role string) ([]dbmode
 		})
 	}
 	return r, nil
+}
+
+func (this *client) GetCorporationManager(linkID, email string) (*dbmodels.CorporationManagerCheckResult, dbmodels.IDBError) {
+	elemFilter := elemFilterOfCorpManager(email)
+
+	project := bson.M{
+		memberNameOfCorpManager(fieldPassword): 1,
+	}
+
+	var v []cCorpSigning
+
+	f := func(ctx context.Context) error {
+		return this.getArrayElem(
+			ctx, this.corpSigningCollection, fieldCorpManagers,
+			docFilterOfCorpManager(linkID), elemFilter, project, &v,
+		)
+	}
+
+	if err := withContext(f); err != nil {
+		return nil, newSystemError(err)
+	}
+
+	if len(v) == 0 {
+		return nil, errNoDBRecord
+	}
+
+	ms := v[0].Managers
+	if ms == nil {
+		return nil, nil
+	}
+
+	m := v[0].Managers[0]
+	return &dbmodels.CorporationManagerCheckResult{
+		Password: m.Password,
+	}, nil
 }

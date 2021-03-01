@@ -3,6 +3,8 @@ package models
 import (
 	"fmt"
 	"regexp"
+
+	"golang.org/x/crypto/bcrypt"
 )
 
 func checkEmailFormat(email string) IModelError {
@@ -19,4 +21,17 @@ func checkManagerID(mid string) IModelError {
 		return newModelError(ErrInvalidManagerID, fmt.Errorf("invalid manager id:%s", mid))
 	}
 	return nil
+}
+
+func encryptPassword(pwd string) (string, IModelError) {
+	hash, err := bcrypt.GenerateFromPassword([]byte(pwd), bcrypt.MinCost)
+	if err != nil {
+		return "", newModelError(ErrSystemError, err)
+	}
+
+	return string(hash), nil
+}
+
+func isSamePasswords(hashedPwd, plainPwd string) bool {
+	return bcrypt.CompareHashAndPassword([]byte(hashedPwd), []byte(plainPwd)) == nil
 }

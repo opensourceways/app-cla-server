@@ -11,6 +11,7 @@ require (
 	github.com/huaweicloud/golangsdk v0.0.0-20201228013212-d10065a3dc7f
 	github.com/opensourceways/gofpdf v1.16.4
 	go.mongodb.org/mongo-driver v1.4.4
+	golang.org/x/crypto v0.0.0-20200820211705-5c72a883971a
 	golang.org/x/oauth2 v0.0.0-20201208152858-08078c50e5b5
 	google.golang.org/api v0.36.0
 	sigs.k8s.io/yaml v1.2.0

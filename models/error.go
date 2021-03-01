@@ -25,6 +25,7 @@ const (
 	ErrNoLinkOrNoManager       ModelErrCode = "no_link_or_no_manager"
 	ErrNoLinkOrManagerExists   ModelErrCode = "no_link_or_manager_exists"
 	ErrCorpManagerExists       ModelErrCode = "corp_manager_exists"
+	ErrNoCorpManager           ModelErrCode = "no_corp_manager"
 	ErrInvalidManagerID        ModelErrCode = "invalid_manager_id"
 	ErrDuplicateManagerID      ModelErrCode = "duplicate_manager_id"
 	ErrEmptyPayload            ModelErrCode = "empty_payload"

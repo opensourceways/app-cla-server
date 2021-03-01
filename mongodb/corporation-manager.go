@@ -202,8 +202,6 @@ func (this *client) ListCorporationManager(linkID, email, role string) ([]dbmode
 }
 
 func (this *client) GetCorporationManager(linkID, email string) (*dbmodels.CorporationManagerCheckResult, dbmodels.IDBError) {
-	elemFilter := elemFilterOfCorpManager(email)
-
 	project := bson.M{
 		memberNameOfCorpManager(fieldPassword): 1,
 	}
@@ -213,7 +211,8 @@ func (this *client) GetCorporationManager(linkID, email string) (*dbmodels.Corpo
 	f := func(ctx context.Context) error {
 		return this.getArrayElem(
 			ctx, this.corpSigningCollection, fieldCorpManagers,
-			docFilterOfCorpManager(linkID), elemFilter, project, &v,
+			docFilterOfCorpManager(linkID), elemFilterOfCorpManager(email),
+			project, &v,
 		)
 	}
 

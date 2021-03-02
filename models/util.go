@@ -23,6 +23,14 @@ func checkManagerID(mid string) IModelError {
 	return nil
 }
 
+func checkPassword(s string) IModelError {
+	rg := regexp.MustCompile("^[\x21-\x7E]+$")
+	if !rg.MatchString(s) {
+		return newModelError(ErrInvalidPassword, fmt.Errorf("invalid manager id:%s", s))
+	}
+	return nil
+}
+
 func encryptPassword(pwd string) (string, IModelError) {
 	hash, err := bcrypt.GenerateFromPassword([]byte(pwd), bcrypt.MinCost)
 	if err != nil {

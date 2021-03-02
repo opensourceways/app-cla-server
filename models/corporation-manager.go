@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/opensourceways/app-cla-server/config"
 	"github.com/opensourceways/app-cla-server/dbmodels"
 	"github.com/opensourceways/app-cla-server/util"
 )
@@ -41,7 +42,7 @@ func (this CorporationManagerAuthentication) Authenticate() (map[string]dbmodels
 }
 
 func CreateCorporationAdministrator(linkID, name, email string) (*dbmodels.CorporationManagerCreateOption, IModelError) {
-	pw := util.RandStr(8, "alphanum")
+	pw := newPWForCorpManager()
 	encryptedPW, merr := encryptPassword(pw)
 	if merr != nil {
 		return nil, merr
@@ -74,7 +75,19 @@ func (this CorporationManagerResetPassword) Validate() IModelError {
 	if this.NewPassword == this.OldPassword {
 		return newModelError(ErrSamePassword, fmt.Errorf("the new password is same as old one"))
 	}
-	return nil
+
+	n := len(this.NewPassword)
+	cfg := config.AppConfig
+	if n < cfg.MinLengthOfPassword || n > cfg.MaxLengthOfPassword {
+		return newModelError(
+			ErrPasswordLength,
+			fmt.Errorf(
+				"the length of password should be between %d and %d",
+				cfg.MinLengthOfPassword, cfg.MaxLengthOfPassword,
+			))
+	}
+
+	return checkPassword(this.NewPassword)
 }
 
 func (this CorporationManagerResetPassword) Reset(linkID, email string) IModelError {
@@ -88,11 +101,11 @@ func (this CorporationManagerResetPassword) Reset(linkID, email string) IModelEr
 		return merr
 	}
 	if record == nil {
-		return newModelError(ErrNoCorpManager, fmt.Errorf("no corp manager"))
+		return newModelError(ErrCorpManagerDoesNotExist, fmt.Errorf("corp manager does not exist"))
 	}
 
 	if !isSamePasswords(record.Password, this.OldPassword) {
-		return newModelError(ErrWrongOldPassword, fmt.Errorf("old password is not same"))
+		return newModelError(ErrWrongOldPassword, fmt.Errorf("old password is not correct"))
 	}
 
 	err := dbmodels.GetDB().ResetCorporationManagerPassword(
@@ -105,7 +118,7 @@ func (this CorporationManagerResetPassword) Reset(linkID, email string) IModelEr
 	}
 
 	if err.IsErrorOf(dbmodels.ErrNoDBRecord) {
-		return newModelError(ErrNoLinkOrNoManager, err)
+		return newModelError(ErrNoLinkOrNoManagerOrOF, err)
 	}
 	return parseDBError(err)
 }
@@ -137,4 +150,8 @@ func ListCorporationManagers(linkID, email, role string) ([]dbmodels.Corporation
 	}
 
 	return v, parseDBError(err)
+}
+
+func newPWForCorpManager() string {
+	return util.RandStr(8, "alphanum")
 }

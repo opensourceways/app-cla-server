@@ -14,7 +14,6 @@ const (
 	errResigned                 = "resigned"
 	errUnsigned                 = string(models.ErrUnsigned)
 	errNoLink                   = string(models.ErrNoLink)
-	errNoEmployeeManager        = "no_employee_manager"
 	errWrongIDOrPassword        = "wrong_id_or_pw"
 	errCorpManagerExists        = string(models.ErrCorpManagerExists)
 	errNoRefreshToken           = "no_refresh_token"

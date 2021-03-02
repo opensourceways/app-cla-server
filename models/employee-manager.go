@@ -82,7 +82,7 @@ func (this *EmployeeManagerCreateOption) Create(linkID string) ([]dbmodels.Corpo
 	for i := range this.Managers {
 		item := &this.Managers[i]
 
-		pw := util.RandStr(8, "alphanum")
+		pw := newPWForCorpManager()
 		encryptedPW, merr := encryptPassword(pw)
 		if merr != nil {
 			return nil, merr

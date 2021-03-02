@@ -80,7 +80,7 @@ func (this CorporationManagerResetPassword) Validate() IModelError {
 	cfg := config.AppConfig
 	if n < cfg.MinLengthOfPassword || n > cfg.MaxLengthOfPassword {
 		return newModelError(
-			ErrPasswordLength,
+			ErrTooShortOrLongPassword,
 			fmt.Errorf(
 				"the length of password should be between %d and %d",
 				cfg.MinLengthOfPassword, cfg.MaxLengthOfPassword,
@@ -118,7 +118,7 @@ func (this CorporationManagerResetPassword) Reset(linkID, email string) IModelEr
 	}
 
 	if err.IsErrorOf(dbmodels.ErrNoDBRecord) {
-		return newModelError(ErrNoLinkOrNoManagerOrOF, err)
+		return newModelError(ErrNoLinkOrNoManagerOrFO, err)
 	}
 	return parseDBError(err)
 }

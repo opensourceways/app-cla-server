@@ -64,12 +64,12 @@ func (this *IndividualSigningController) Post() {
 		return
 	}
 
-	managers, merr := models.ListCorporationManagers(linkID, info.Email, dbmodels.RoleAdmin)
+	b, merr := models.IsCorpSigned(linkID, info.Email)
 	if merr != nil {
 		this.sendModelErrorAsResp(merr, action)
 		return
 	}
-	if len(managers) > 0 {
+	if b {
 		this.sendFailedResponse(400, errGoToSignEmployeeCLA, fmt.Errorf("sign employee cla instead"), action)
 		return
 	}

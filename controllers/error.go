@@ -36,6 +36,7 @@ const (
 	errTooBigPDF                = "too_big_pdf"
 	errUnmatchedCLA             = "unmatched_cla"
 	errNoCorpEmployeeManager    = "no_employee_manager"
+	errGoToSignEmployeeCLA      = "go_to_sign_employee_cla"
 	errUnsupportedCLALang       = "unsupported_cla_lang"
 	errNotSameCorp              = string(models.ErrNotSameCorp)
 )

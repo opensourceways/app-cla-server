@@ -38,6 +38,7 @@ func (this *IndividualSigningController) Prepare() {
 // @Failure 408 unmatched_cla:              the cla hash is not equal to the one of backend server
 // @Failure 409 resigned:                   the signer has signed the cla
 // @Failure 410 no_link:                    the link id is not exists
+// @Failure 411 go_to_sign_employee_cla:    should sign employee cla instead
 // @Failure 500 system_error:               system error
 // @router /:link_id/:cla_lang/:cla_hash [post]
 func (this *IndividualSigningController) Post() {
@@ -60,6 +61,16 @@ func (this *IndividualSigningController) Post() {
 
 	if err := (&info).Validate(pl.User, pl.Email); err != nil {
 		this.sendModelErrorAsResp(err, action)
+		return
+	}
+
+	b, merr := models.IsCorpSigned(linkID, info.Email)
+	if merr != nil {
+		this.sendModelErrorAsResp(merr, action)
+		return
+	}
+	if b {
+		this.sendFailedResponse(400, errGoToSignEmployeeCLA, fmt.Errorf("sign employee cla instead"), action)
 		return
 	}
 

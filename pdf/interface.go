@@ -86,7 +86,7 @@ func newGeneratorForEnglish() (*corpSigningPDF, error) {
 
 		signatureItems: [][]string{
 			{"Community Sign", "Corporation Sign"},
-			{"Signature", "Signature"},
+			{"Signature", "Signature and Seal"},
 			{"Title", "Title"},
 			{"Community", "Corporation"},
 		},
@@ -134,7 +134,7 @@ func newGeneratorForChinese() (*corpSigningPDF, error) {
 
 		signatureItems: [][]string{
 			{"社区签署", "企业签署"},
-			{"签名", "签名"},
+			{"签名", "签名(加盖公章)"},
 			{"职位", "职位"},
 			{"社区名称", "企业名称"},
 		},

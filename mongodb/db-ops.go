@@ -153,6 +153,26 @@ func (this *client) pullAndReturnArrayElem(ctx context.Context, collection, arra
 	return nil
 }
 
+func (this *client) moveArrayElem(ctx context.Context, collection, from, to string, filterOfDoc, filterOfArray, value bson.M) dbmodels.IDBError {
+	col := this.collection(collection)
+
+	r, err := col.UpdateOne(
+		ctx, filterOfDoc,
+		bson.M{
+			"$pull": bson.M{from: filterOfArray},
+			"$push": bson.M{to: value},
+		},
+	)
+	if err != nil {
+		return newSystemError(err)
+	}
+
+	if r.MatchedCount == 0 {
+		return errNoDBRecord
+	}
+	return nil
+}
+
 func (this *client) getDoc(ctx context.Context, collection string, filterOfDoc, project bson.M, result interface{}) dbmodels.IDBError {
 	col := this.collection(collection)
 

@@ -14,6 +14,7 @@ const (
 	fieldRepo           = "repo"
 	fieldCorpID         = "corp_id"
 	fieldSignings       = "signings"
+	fieldDeleted        = "deleted"
 	fieldLang           = "lang"
 	fieldOrgEmail       = "org_email"
 	fieldOrgAlias       = "org_alias"

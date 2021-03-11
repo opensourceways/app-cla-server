@@ -119,6 +119,35 @@ func (this *CorporationSigningController) checkCLAForSigning(claFile, orgSignatu
 	return nil
 }
 
+// @Title Delete
+// @Description delete corp signing
+// @Param	:link_id	path 	string		true		"link id"
+// @Param	:email		path 	string		true		"corp email"
+// @Success 204 {string} delete success!
+// @router /:link_id/:email [delete]
+func (this *CorporationSigningController) Delete() {
+	action := "delete corp signing"
+	linkID := this.GetString(":link_id")
+	corpEmail := this.GetString(":email")
+
+	pl, fr := this.tokenPayloadBasedOnCodePlatform()
+	if fr != nil {
+		this.sendFailedResultAsResp(fr, action)
+		return
+	}
+	if fr := pl.isOwnerOfLink(linkID); fr != nil {
+		this.sendFailedResultAsResp(fr, action)
+		return
+	}
+
+	if err := models.DeleteCorpSigning(linkID, corpEmail); err != nil {
+		this.sendModelErrorAsResp(err, action)
+		return
+	}
+
+	this.sendSuccessResp("delete corp signing successfully")
+}
+
 // @Title ResendCorpSigningEmail
 // @Description resend corp signing email
 // @Param	:org_id		path 	string		true		"org cla id"

@@ -78,7 +78,10 @@ func (this *client) ListCorpSignings(linkID, language string) ([]dbmodels.Corpor
 
 	r := make([]dbmodels.CorporationSigningSummary, 0, n)
 	for i := 0; i < n; i++ {
-		r = append(r, toDBModelCorporationSigningDetail(&signings[i], admins[signings[i].AdminEmail]))
+		r = append(r, dbmodels.CorporationSigningSummary{
+			CorporationSigningBasicInfo: *toDBModelCorporationSigningBasicInfo(&signings[i]),
+			AdminAdded:                  admins[signings[i].AdminEmail],
+		})
 	}
 
 	return r, nil
@@ -126,8 +129,7 @@ func (this *client) GetCorpSigningBasicInfo(linkID, email string) (*dbmodels.Cor
 		return nil, nil
 	}
 
-	detail := toDBModelCorporationSigningDetail(&(signings[0]), false)
-	return &detail.CorporationSigningBasicInfo, nil
+	return toDBModelCorporationSigningBasicInfo(&(signings[0])), nil
 }
 
 func (this *client) GetCorpSigningDetail(linkID, email string) ([]dbmodels.Field, *dbmodels.CorpSigningCreateOpt, dbmodels.IDBError) {
@@ -179,34 +181,29 @@ func (this *client) GetCorpSigningDetail(linkID, email string) ([]dbmodels.Field
 		return nil, nil, nil
 	}
 
-	detail := toDBModelCorporationSigningDetail(signing, false)
-
 	info := &dbmodels.CorpSigningCreateOpt{
-		CorporationSigningBasicInfo: detail.CorporationSigningBasicInfo,
+		CorporationSigningBasicInfo: *toDBModelCorporationSigningBasicInfo(signing),
 		Info:                        signing.SigningInfo,
 	}
 	return toModelOfCLAFields(clas[0].Fields), info, nil
 }
 
-func toDBModelCorporationSigningDetail(cs *dCorpSigning, adminAdded bool) dbmodels.CorporationSigningSummary {
-	return dbmodels.CorporationSigningSummary{
-		CorporationSigningBasicInfo: dbmodels.CorporationSigningBasicInfo{
-			CLALanguage:     cs.CLALanguage,
-			AdminEmail:      cs.AdminEmail,
-			AdminName:       cs.AdminName,
-			CorporationName: cs.CorpName,
-			Date:            cs.Date,
-		},
-		AdminAdded: adminAdded,
+func toDBModelCorporationSigningBasicInfo(cs *dCorpSigning) *dbmodels.CorporationSigningBasicInfo {
+	return &dbmodels.CorporationSigningBasicInfo{
+		CLALanguage:     cs.CLALanguage,
+		AdminEmail:      cs.AdminEmail,
+		AdminName:       cs.AdminName,
+		CorporationName: cs.CorpName,
+		Date:            cs.Date,
 	}
 }
 
 func projectOfCorpSigning() bson.M {
 	return bson.M{
-		memberNameOfSignings(fieldEmail):    1,
-		memberNameOfSignings(fieldName):     1,
-		memberNameOfSignings(fieldCorp):     1,
-		memberNameOfSignings(fieldDate):     1,
-		memberNameOfCorpManager(fieldEmail): 1,
+		memberNameOfSignings(fieldEmail): 1,
+		memberNameOfSignings(fieldName):  1,
+		memberNameOfSignings(fieldCorp):  1,
+		memberNameOfSignings(fieldDate):  1,
+		memberNameOfSignings(fieldLang):  1,
 	}
 }

@@ -26,6 +26,7 @@ type ICorporationSigning interface {
 	DeleteCorpSigning(linkID, email string) IDBError
 	IsCorpSigned(linkID, email string) (bool, IDBError)
 	ListCorpSignings(linkID, language string) ([]CorporationSigningSummary, IDBError)
+	ListDeletedCorpSignings(linkID string) ([]CorporationSigningBasicInfo, IDBError)
 	GetCorpSigningDetail(linkID, email string) ([]Field, *CorpSigningCreateOpt, IDBError)
 	GetCorpSigningBasicInfo(linkID, email string) (*CorporationSigningBasicInfo, IDBError)
 

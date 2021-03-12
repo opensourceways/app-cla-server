@@ -133,3 +133,18 @@ func DeleteCorpSigning(linkID, email string) IModelError {
 	}
 	return parseDBError(err)
 }
+
+func ListDeletedCorpSignings(linkID string) ([]dbmodels.CorporationSigningBasicInfo, IModelError) {
+	v, err := dbmodels.GetDB().ListDeletedCorpSignings(linkID)
+	if err == nil {
+		if v == nil {
+			v = []dbmodels.CorporationSigningBasicInfo{}
+		}
+		return v, nil
+	}
+
+	if err.IsErrorOf(dbmodels.ErrNoDBRecord) {
+		return v, newModelError(ErrNoLink, err)
+	}
+	return v, parseDBError(err)
+}

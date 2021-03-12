@@ -283,3 +283,39 @@ func (this *CorporationSigningController) GetAll() {
 	}
 	this.sendSuccessResp(details)
 }
+
+// @Title GetAll
+// @Description get all the corporations which have been deleted
+// @Param	:link_id	path 	string		true		"link id"
+// @Success 200 {object} dbmodels.CorporationSigningBasicInfo
+// @Failure 400 missing_url_path_parameter: missing url path parameter
+// @Failure 401 missing_token:              token is missing
+// @Failure 402 unknown_token:              token is unknown
+// @Failure 403 expired_token:              token is expired
+// @Failure 404 unauthorized_token:         the permission of token is unmatched
+// @Failure 405 unknown_link:               unkown link id
+// @Failure 406 not_yours_org:              the link doesn't belong to your community
+// @Failure 500 system_error:               system error
+// @router /deleted/:link_id [get]
+func (this *CorporationSigningController) ListDeleted() {
+	action := "list deleted corporations"
+	linkID := this.GetString(":link_id")
+
+	pl, fr := this.tokenPayloadBasedOnCodePlatform()
+	if fr != nil {
+		this.sendFailedResultAsResp(fr, action)
+		return
+	}
+	if fr := pl.isOwnerOfLink(linkID); fr != nil {
+		this.sendFailedResultAsResp(fr, action)
+		return
+	}
+
+	r, merr := models.ListDeletedCorpSignings(linkID)
+	if merr != nil {
+		this.sendModelErrorAsResp(merr, action)
+		return
+	}
+
+	this.sendSuccessResp(r)
+}

@@ -93,6 +93,7 @@ type cCorpSigning struct {
 	CLAInfos []DCLAInfo     `bson:"cla_infos" json:"cla_infos,omitempty"`
 	Signings []dCorpSigning `bson:"signings" json:"-"`
 	Managers []dCorpManager `bson:"corp_managers" json:"-"`
+	Deleted  []dCorpSigning `bson:"deleted" json:"-"`
 }
 
 type dCorpSigning struct {

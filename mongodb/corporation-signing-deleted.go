@@ -30,7 +30,7 @@ func (this *client) getCorpSigning(linkID, email string) (*dCorpSigning, dbmodel
 		return nil, nil
 	}
 
-	return &signings[1], nil
+	return &signings[0], nil
 }
 
 func (this *client) DeleteCorpSigning(linkID, email string) dbmodels.IDBError {

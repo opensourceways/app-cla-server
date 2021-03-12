@@ -124,6 +124,15 @@ func (this *CorporationSigningController) checkCLAForSigning(claFile, orgSignatu
 // @Param	:link_id	path 	string		true		"link id"
 // @Param	:email		path 	string		true		"corp email"
 // @Success 204 {string} delete success!
+// @Failure 400 missing_url_path_parameter: missing url path parameter
+// @Failure 401 missing_token:              token is missing
+// @Failure 402 unknown_token:              token is unknown
+// @Failure 403 expired_token:              token is expired
+// @Failure 404 unauthorized_token:         the permission of token is unmatched
+// @Failure 405 not_yours_org:              the link doesn't belong to your community
+// @Failure 406 unknown_link:               unkown link id
+// @Failure 407 no_link:                    the link id is not exists
+// @Failure 500 system_error:               system error
 // @router /:link_id/:email [delete]
 func (this *CorporationSigningController) Delete() {
 	action := "delete corp signing"
@@ -139,6 +148,18 @@ func (this *CorporationSigningController) Delete() {
 		this.sendFailedResultAsResp(fr, action)
 		return
 	}
+
+	orgInfo := pl.orgInfo(linkID)
+	if orgInfo == nil {
+		this.sendFailedResponse(500, errSystemError, fmt.Errorf("impossible"), action)
+		return
+	}
+	unlock, err := util.Lock(genOrgFileLockPath(orgInfo.Platform, orgInfo.OrgID, orgInfo.RepoID))
+	if err != nil {
+		this.sendFailedResponse(500, errSystemError, err, action)
+		return
+	}
+	defer unlock()
 
 	if err := models.DeleteCorpSigning(linkID, corpEmail); err != nil {
 		this.sendModelErrorAsResp(err, action)

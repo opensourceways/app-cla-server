@@ -151,9 +151,9 @@ func signHelper(linkID, claLang, applyTo string, doSign func(*models.CLAInfo) *f
 
 		// no contributor signed for this language. lock to avoid the cla to be changed
 		// before writing to the db.
-		unlock, err := util.Lock(genOrgFileLockPath(orgInfo.Platform, orgInfo.OrgID, orgInfo.RepoID))
-		if err != nil {
-			return newFailedApiResult(500, errSystemError, err)
+		unlock, fr := lockOnRepo(orgInfo)
+		if fr != nil {
+			return fr
 		}
 		defer unlock()
 
@@ -192,4 +192,12 @@ func saveCorpCLAAtLocal(cla *models.CLACreateOpt, linkID string) *failedApiResul
 	}
 
 	return nil
+}
+
+func lockOnRepo(orgInfo *dbmodels.OrgInfo) (func(), *failedApiResult) {
+	unlock, err := util.Lock(genOrgFileLockPath(orgInfo.Platform, orgInfo.OrgID, orgInfo.RepoID))
+	if err != nil {
+		return nil, newFailedApiResult(500, errSystemError, err)
+	}
+	return unlock, nil
 }

@@ -78,6 +78,14 @@ func (this *CorporationPDFController) Upload() {
 		return
 	}
 
+	// lock to avoid conflict with deleting corp signing
+	unlock, fr := lockOnRepo(pl.orgInfo(linkID))
+	if fr != nil {
+		this.sendFailedResultAsResp(fr, action)
+		return
+	}
+	defer unlock()
+
 	b, merr := models.IsCorpSigned(linkID, corpEmail)
 	if merr != nil {
 		this.sendModelErrorAsResp(merr, action)

@@ -23,6 +23,7 @@ type IDB interface {
 type ICorporationSigning interface {
 	InitializeCorpSigning(linkID string, info *OrgInfo, cla *CLAInfo) IDBError
 	SignCorpCLA(orgCLAID string, info *CorpSigningCreateOpt) IDBError
+	DeleteCorpSigning(linkID, email string) IDBError
 	IsCorpSigned(linkID, email string) (bool, IDBError)
 	ListCorpSignings(linkID, language string) ([]CorporationSigningSummary, IDBError)
 	GetCorpSigningDetail(linkID, email string) ([]Field, *CorpSigningCreateOpt, IDBError)

@@ -62,11 +62,9 @@ func (this *CLAController) Add() {
 		return
 	}
 
-	orgInfo := pl.orgInfo(linkID)
-	filePath := genOrgFileLockPath(orgInfo.Platform, orgInfo.OrgID, orgInfo.RepoID)
-	unlock, err := util.Lock(filePath)
-	if err != nil {
-		this.sendFailedResponse(500, errSystemError, err, action)
+	unlock, fr := lockOnRepo(pl.orgInfo(linkID))
+	if fr != nil {
+		this.sendFailedResultAsResp(fr, action)
 		return
 	}
 	defer unlock()
@@ -101,11 +99,9 @@ func (this *CLAController) Delete() {
 		return
 	}
 
-	orgInfo := pl.orgInfo(linkID)
-	filePath := genOrgFileLockPath(orgInfo.Platform, orgInfo.OrgID, orgInfo.RepoID)
-	unlock, err := util.Lock(filePath)
-	if err != nil {
-		this.sendFailedResponse(500, errSystemError, err, action)
+	unlock, fr := lockOnRepo(pl.orgInfo(linkID))
+	if fr != nil {
+		this.sendFailedResultAsResp(fr, action)
 		return
 	}
 	defer unlock()

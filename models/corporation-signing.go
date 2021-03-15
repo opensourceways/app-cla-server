@@ -121,3 +121,15 @@ func GetCorpSigningDetail(linkID, email string) ([]dbmodels.Field, *dbmodels.Cor
 
 	return f, s, parseDBError(err)
 }
+
+func DeleteCorpSigning(linkID, email string) IModelError {
+	err := dbmodels.GetDB().DeleteCorpSigning(linkID, email)
+	if err == nil {
+		return nil
+	}
+
+	if err.IsErrorOf(dbmodels.ErrNoDBRecord) {
+		return newModelError(ErrNoLink, err)
+	}
+	return parseDBError(err)
+}

@@ -119,6 +119,63 @@ func (this *CorporationSigningController) checkCLAForSigning(claFile, orgSignatu
 	return nil
 }
 
+// @Title Delete
+// @Description delete corp signing
+// @Param	:link_id	path 	string		true		"link id"
+// @Param	:email		path 	string		true		"corp email"
+// @Success 204 {string} delete success!
+// @Failure 400 missing_url_path_parameter: missing url path parameter
+// @Failure 401 missing_token:              token is missing
+// @Failure 402 unknown_token:              token is unknown
+// @Failure 403 expired_token:              token is expired
+// @Failure 404 unauthorized_token:         the permission of token is unmatched
+// @Failure 405 not_yours_org:              the link doesn't belong to your community
+// @Failure 406 unknown_link:               unkown link id
+// @Failure 407 no_link:                    the link id is not exists
+// @Failure 500 system_error:               system error
+// @router /:link_id/:email [delete]
+func (this *CorporationSigningController) Delete() {
+	action := "delete corp signing"
+	linkID := this.GetString(":link_id")
+	corpEmail := this.GetString(":email")
+
+	pl, fr := this.tokenPayloadBasedOnCodePlatform()
+	if fr != nil {
+		this.sendFailedResultAsResp(fr, action)
+		return
+	}
+	if fr := pl.isOwnerOfLink(linkID); fr != nil {
+		this.sendFailedResultAsResp(fr, action)
+		return
+	}
+
+	unlock, fr := lockOnRepo(pl.orgInfo(linkID))
+	if fr != nil {
+		this.sendFailedResultAsResp(fr, action)
+		return
+	}
+	defer unlock()
+
+	managers, merr := models.ListCorporationManagers(linkID, corpEmail, dbmodels.RoleAdmin)
+	if merr != nil {
+		this.sendModelErrorAsResp(merr, action)
+		return
+	}
+	if len(managers) > 0 {
+		this.sendFailedResponse(
+			400, errCorpManagerExists,
+			fmt.Errorf("can't delete corp signing info, because admin manager exists"), action)
+		return
+	}
+
+	if err := models.DeleteCorpSigning(linkID, corpEmail); err != nil {
+		this.sendModelErrorAsResp(err, action)
+		return
+	}
+
+	this.sendSuccessResp("delete corp signing successfully")
+}
+
 // @Title ResendCorpSigningEmail
 // @Description resend corp signing email
 // @Param	:org_id		path 	string		true		"org cla id"

@@ -149,17 +149,24 @@ func (this *CorporationSigningController) Delete() {
 		return
 	}
 
-	orgInfo := pl.orgInfo(linkID)
-	if orgInfo == nil {
-		this.sendFailedResponse(500, errSystemError, fmt.Errorf("impossible"), action)
-		return
-	}
-	unlock, err := util.Lock(genOrgFileLockPath(orgInfo.Platform, orgInfo.OrgID, orgInfo.RepoID))
-	if err != nil {
-		this.sendFailedResponse(500, errSystemError, err, action)
+	unlock, fr := lockOnRepo(pl.orgInfo(linkID))
+	if fr != nil {
+		this.sendFailedResultAsResp(fr, action)
 		return
 	}
 	defer unlock()
+
+	managers, merr := models.ListCorporationManagers(linkID, corpEmail, dbmodels.RoleAdmin)
+	if merr != nil {
+		this.sendModelErrorAsResp(merr, action)
+		return
+	}
+	if len(managers) > 0 {
+		this.sendFailedResponse(
+			400, errCorpManagerExists,
+			fmt.Errorf("can't delete corp signing info, because admin manager exists"), action)
+		return
+	}
 
 	if err := models.DeleteCorpSigning(linkID, corpEmail); err != nil {
 		this.sendModelErrorAsResp(err, action)

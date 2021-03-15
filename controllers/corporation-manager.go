@@ -48,12 +48,15 @@ func (this *CorporationManagerController) Put() {
 		this.sendFailedResultAsResp(fr, action)
 		return
 	}
+	orgInfo := pl.orgInfo(linkID)
 
-	orgInfo, merr := models.GetOrgOfLink(linkID)
-	if merr != nil {
-		this.sendModelErrorAsResp(merr, action)
+	// lock to avoid the conflict with the deleting corp signing
+	unlock, fr := lockOnRepo(orgInfo)
+	if fr != nil {
+		this.sendFailedResultAsResp(fr, action)
 		return
 	}
+	defer unlock()
 
 	// call models.GetCorpSigningBasicInfo before models.IsCorpSigningPDFUploaded
 	// to check wheather corp has signed

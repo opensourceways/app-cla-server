@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/opensourceways/app-cla-server/config"
 	"github.com/opensourceways/app-cla-server/dbmodels"
 	"github.com/opensourceways/app-cla-server/util"
 )
@@ -14,7 +15,7 @@ type CorporationManagerAuthentication struct {
 }
 
 func (this CorporationManagerAuthentication) Authenticate() (map[string]dbmodels.CorporationManagerCheckResult, IModelError) {
-	info := dbmodels.CorporationManagerCheckInfo{Password: this.Password}
+	info := dbmodels.CorporationManagerCheckInfo{}
 	if merr := checkEmailFormat(this.User); merr == nil {
 		info.Email = this.User
 	} else {
@@ -29,6 +30,11 @@ func (this CorporationManagerAuthentication) Authenticate() (map[string]dbmodels
 
 	v, err := dbmodels.GetDB().CheckCorporationManagerExist(info)
 	if err == nil {
+		for k := range v {
+			if !isSamePasswords(v[k].Password, this.Password) {
+				delete(v, k)
+			}
+		}
 		return v, nil
 	}
 
@@ -36,18 +42,23 @@ func (this CorporationManagerAuthentication) Authenticate() (map[string]dbmodels
 }
 
 func CreateCorporationAdministrator(linkID, name, email string) (*dbmodels.CorporationManagerCreateOption, IModelError) {
-	pw := util.RandStr(8, "alphanum")
+	pw := newPWForCorpManager()
+	encryptedPW, merr := encryptPassword(pw)
+	if merr != nil {
+		return nil, merr
+	}
 
 	opt := &dbmodels.CorporationManagerCreateOption{
 		ID:       "admin",
 		Name:     name,
 		Email:    email,
-		Password: pw,
+		Password: encryptedPW,
 		Role:     dbmodels.RoleAdmin,
 	}
 	err := dbmodels.GetDB().AddCorpAdministrator(linkID, opt)
 	if err == nil {
 		opt.ID = fmt.Sprintf("admin_%s", util.EmailSuffix(email))
+		opt.Password = pw
 		return opt, nil
 	}
 
@@ -64,21 +75,65 @@ func (this CorporationManagerResetPassword) Validate() IModelError {
 	if this.NewPassword == this.OldPassword {
 		return newModelError(ErrSamePassword, fmt.Errorf("the new password is same as old one"))
 	}
-	return nil
+
+	n := len(this.NewPassword)
+	cfg := config.AppConfig
+	if n < cfg.MinLengthOfPassword || n > cfg.MaxLengthOfPassword {
+		return newModelError(
+			ErrTooShortOrLongPassword,
+			fmt.Errorf(
+				"the length of password should be between %d and %d",
+				cfg.MinLengthOfPassword, cfg.MaxLengthOfPassword,
+			))
+	}
+
+	return checkPassword(this.NewPassword)
 }
 
 func (this CorporationManagerResetPassword) Reset(linkID, email string) IModelError {
+	pw, merr := encryptPassword(this.NewPassword)
+	if merr != nil {
+		return merr
+	}
+
+	record, merr := this.getCorporationManager(linkID, email)
+	if merr != nil {
+		return merr
+	}
+	if record == nil {
+		return newModelError(ErrCorpManagerDoesNotExist, fmt.Errorf("corp manager does not exist"))
+	}
+
+	if !isSamePasswords(record.Password, this.OldPassword) {
+		return newModelError(ErrWrongOldPassword, fmt.Errorf("old password is not correct"))
+	}
+
 	err := dbmodels.GetDB().ResetCorporationManagerPassword(
-		linkID, email, dbmodels.CorporationManagerResetPassword(this),
+		linkID, email, dbmodels.CorporationManagerResetPassword{
+			OldPassword: record.Password, NewPassword: pw,
+		},
 	)
 	if err == nil {
 		return nil
 	}
 
 	if err.IsErrorOf(dbmodels.ErrNoDBRecord) {
-		return newModelError(ErrNoLinkOrNoManager, err)
+		return newModelError(ErrNoLinkOrNoManagerOrFO, err)
 	}
 	return parseDBError(err)
+}
+
+func (this CorporationManagerResetPassword) getCorporationManager(linkID, email string) (*dbmodels.CorporationManagerCheckResult, IModelError) {
+	v, err := dbmodels.GetDB().GetCorporationManager(linkID, email)
+	if err == nil {
+		return v, nil
+	}
+
+	if err.IsErrorOf(dbmodels.ErrNoDBRecord) {
+		return v, newModelError(ErrNoLink, err)
+	}
+
+	return v, parseDBError(err)
 }
 
 func ListCorporationManagers(linkID, email, role string) ([]dbmodels.CorporationManagerListResult, IModelError) {
@@ -95,4 +150,8 @@ func ListCorporationManagers(linkID, email, role string) ([]dbmodels.Corporation
 	}
 
 	return v, parseDBError(err)
+}
+
+func newPWForCorpManager() string {
+	return util.RandStr(8, "alphanum")
 }

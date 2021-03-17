@@ -43,6 +43,7 @@ type ICorporationManager interface {
 	DeleteEmployeeManager(orgCLAID string, emails []string) ([]CorporationManagerCreateOption, IDBError)
 	ResetCorporationManagerPassword(string, string, CorporationManagerResetPassword) IDBError
 	ListCorporationManager(orgCLAID, email, role string) ([]CorporationManagerListResult, IDBError)
+	GetCorporationManager(linkID, email string) (*CorporationManagerCheckResult, IDBError)
 }
 
 type IOrgEmail interface {

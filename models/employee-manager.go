@@ -76,17 +76,24 @@ func (this *EmployeeManagerCreateOption) ValidateWhenAdding(linkID, adminEmail s
 }
 
 func (this *EmployeeManagerCreateOption) Create(linkID string) ([]dbmodels.CorporationManagerCreateOption, IModelError) {
+	pws := map[string]string{}
 	opt := make([]dbmodels.CorporationManagerCreateOption, 0, len(this.Managers))
 
 	for i := range this.Managers {
 		item := &this.Managers[i]
-		pw := util.RandStr(8, "alphanum")
 
+		pw := newPWForCorpManager()
+		encryptedPW, merr := encryptPassword(pw)
+		if merr != nil {
+			return nil, merr
+		}
+
+		pws[item.Email] = pw
 		opt = append(opt, dbmodels.CorporationManagerCreateOption{
 			ID:       item.ID,
 			Name:     item.Name,
 			Email:    item.Email,
-			Password: pw,
+			Password: encryptedPW,
 			Role:     dbmodels.RoleManager,
 		})
 	}
@@ -101,9 +108,12 @@ func (this *EmployeeManagerCreateOption) Create(linkID string) ([]dbmodels.Corpo
 
 	es := util.EmailSuffix(opt[0].Email)
 	for i := range opt {
-		if opt[i].ID != "" {
-			opt[i].ID = fmt.Sprintf("%s_%s", opt[i].ID, es)
+		item := &opt[i]
+
+		if item.ID != "" {
+			item.ID = fmt.Sprintf("%s_%s", item.ID, es)
 		}
+		item.Password = pws[item.Email]
 	}
 	return opt, nil
 }

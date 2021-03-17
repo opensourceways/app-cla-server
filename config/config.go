@@ -16,6 +16,8 @@ type appConfig struct {
 	CLAFieldsNumber          int           `json:"cla_fields_number" required:"true"`
 	MaxSizeOfCorpCLAPDF      int           `json:"max_size_of_corp_cla_pdf"`
 	MaxSizeOfOrgSignaturePDF int           `json:"max_size_of_org_signature_pdf"`
+	MinLengthOfPassword      int           `json:"min_length_of_password"`
+	MaxLengthOfPassword      int           `json:"max_length_of_password"`
 	VerificationCodeExpiry   int64         `json:"verification_code_expiry" required:"true"`
 	APITokenExpiry           int64         `json:"api_token_expiry" required:"true"`
 	APITokenKey              string        `json:"api_token_key" required:"true"`
@@ -47,6 +49,8 @@ func InitAppConfig() error {
 
 	maxSizeOfCorpCLAPDF := beego.AppConfig.DefaultInt("max_size_of_corp_cla_pdf", (2 << 20))
 	maxSizeOfOrgSignaturePDF := beego.AppConfig.DefaultInt("max_size_of_org_signature_pdf", (1 << 20))
+	minLengthOfPassword := beego.AppConfig.DefaultInt("min_length_of_password", 6)
+	maxLengthOfPassword := beego.AppConfig.DefaultInt("max_length_of_password", 16)
 
 	tokenExpiry, err := beego.AppConfig.Int64("api_token_expiry")
 	if err != nil {
@@ -68,6 +72,8 @@ func InitAppConfig() error {
 		CLAFieldsNumber:          claFieldsNumber,
 		MaxSizeOfCorpCLAPDF:      maxSizeOfCorpCLAPDF,
 		MaxSizeOfOrgSignaturePDF: maxSizeOfOrgSignaturePDF,
+		MinLengthOfPassword:      minLengthOfPassword,
+		MaxLengthOfPassword:      maxLengthOfPassword,
 		VerificationCodeExpiry:   codeExpiry,
 		APITokenExpiry:           tokenExpiry,
 		APITokenKey:              beego.AppConfig.String("api_token_key"),

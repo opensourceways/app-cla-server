@@ -21,6 +21,7 @@ type appConfig struct {
 	VerificationCodeExpiry   int64         `json:"verification_code_expiry" required:"true"`
 	APITokenExpiry           int64         `json:"api_token_expiry" required:"true"`
 	APITokenKey              string        `json:"api_token_key" required:"true"`
+	SymmetricEncryptionKey   string        `json:"symmetric_encryption_key" required:"true"`
 	PDFOrgSignatureDir       string        `json:"pdf_org_signature_dir" required:"true"`
 	PDFOutDir                string        `json:"pdf_out_dir" required:"true"`
 	CodePlatformConfigFile   string        `json:"code_platforms" required:"true"`
@@ -77,6 +78,7 @@ func InitAppConfig() error {
 		VerificationCodeExpiry:   codeExpiry,
 		APITokenExpiry:           tokenExpiry,
 		APITokenKey:              beego.AppConfig.String("api_token_key"),
+		SymmetricEncryptionKey:   beego.AppConfig.String("symmetric_encryption_key"),
 		PDFOrgSignatureDir:       beego.AppConfig.String("pdf_org_signature_dir"),
 		PDFOutDir:                beego.AppConfig.String("pdf_out_dir"),
 		CodePlatformConfigFile:   beego.AppConfig.String("code_platforms"),
@@ -125,6 +127,10 @@ func (this *appConfig) validate() error {
 
 	if len(this.APITokenKey) < 20 {
 		return fmt.Errorf("The length of api_token_key should be bigger than 20")
+	}
+
+	if err := util.IsSymmetricEncryptionKeyValid(this.SymmetricEncryptionKey); err != nil {
+		return fmt.Errorf("The symmetric encryption key is not valid, %s", err.Error())
 	}
 
 	if util.IsNotDir(this.PDFOrgSignatureDir) {

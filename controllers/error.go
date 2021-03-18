@@ -39,6 +39,7 @@ const (
 	errUnsupportedCLALang       = "unsupported_cla_lang"
 	errNotSameCorp              = string(models.ErrNotSameCorp)
 	errFrequentOperation        = "frequent_operation"
+	errCanNotFetchClientIP      = "can_not_fetch_client_ip"
 )
 
 func parseModelError(err models.IModelError) *failedApiResult {

@@ -17,6 +17,12 @@ import (
 func (this *CorporationManagerController) Auth() {
 	action := "authenticate as corp/employee manager"
 
+	ip, fr := this.getRemoteAddr()
+	if fr != nil {
+		this.sendFailedResultAsResp(fr, action)
+		return
+	}
+
 	var info models.CorporationManagerAuthentication
 	if fr := this.fetchInputPayload(&info); fr != nil {
 		this.sendFailedResultAsResp(fr, action)
@@ -44,7 +50,7 @@ func (this *CorporationManagerController) Auth() {
 	result := make([]authInfo, 0, len(v))
 
 	for linkID, item := range v {
-		token, err := this.newAccessToken(linkID, &item)
+		token, err := this.newAccessToken(linkID, ip, &item)
 		if err != nil {
 			continue
 		}
@@ -60,7 +66,7 @@ func (this *CorporationManagerController) Auth() {
 	this.sendSuccessResp(result)
 }
 
-func (this *CorporationManagerController) newAccessToken(linkID string, info *dbmodels.CorporationManagerCheckResult) (string, error) {
+func (this *CorporationManagerController) newAccessToken(linkID, ip string, info *dbmodels.CorporationManagerCheckResult) (string, error) {
 	permission := ""
 	switch info.Role {
 	case dbmodels.RoleAdmin:
@@ -70,7 +76,7 @@ func (this *CorporationManagerController) newAccessToken(linkID string, info *db
 	}
 
 	return this.newApiToken(
-		permission,
+		permission, ip,
 		&acForCorpManagerPayload{
 			Name:    info.Name,
 			Email:   info.Email,

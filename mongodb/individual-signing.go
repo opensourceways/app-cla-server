@@ -103,7 +103,10 @@ func (this *client) IsIndividualSigned(linkID, email string) (bool, dbmodels.IDB
 func (this *client) ListIndividualSigning(linkID, corpEmail, claLang string) ([]dbmodels.IndividualSigningBasicInfo, dbmodels.IDBError) {
 	docFilter := docFilterOfSigning(linkID)
 
-	arrayFilter := bson.M{fieldCorpID: genCorpID(corpEmail)}
+	arrayFilter := bson.M{}
+	if corpEmail != "" {
+		arrayFilter[fieldCorpID] = genCorpID(corpEmail)
+	}
 	if claLang != "" {
 		arrayFilter[fieldLang] = claLang
 	}

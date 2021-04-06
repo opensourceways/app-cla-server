@@ -11,6 +11,8 @@ import (
 	"github.com/opensourceways/app-cla-server/dbmodels"
 	"github.com/opensourceways/app-cla-server/email"
 	"github.com/opensourceways/app-cla-server/mongodb"
+	"github.com/opensourceways/app-cla-server/obs"
+	_ "github.com/opensourceways/app-cla-server/obs/huaweicloud"
 	"github.com/opensourceways/app-cla-server/pdf"
 	_ "github.com/opensourceways/app-cla-server/routers"
 	"github.com/opensourceways/app-cla-server/util"
@@ -38,12 +40,25 @@ func main() {
 		}
 	}
 
-	c, err := mongodb.Initialize(&AppConfig.Mongodb)
+	mongoClient, err := mongodb.Initialize(&AppConfig.Mongodb)
 	if err != nil {
 		beego.Error(err)
 		os.Exit(1)
 	}
-	dbmodels.RegisterDB(c)
+
+	obsClient, err := obs.Initialize(AppConfig.OBS)
+	if err != nil {
+		beego.Error(err)
+		os.Exit(1)
+	}
+
+	dbmodels.RegisterDB(struct {
+		dbmodels.IModel
+		dbmodels.IFile
+	}{
+		IModel: mongoClient,
+		IFile:  obs.FileStorage{OBS: obsClient},
+	})
 
 	if err = email.Initialize(AppConfig.EmailPlatformConfigFile); err != nil {
 		beego.Error(err)

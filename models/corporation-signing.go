@@ -42,25 +42,25 @@ func (this *CorporationSigningCreateOption) Create(orgCLAID string) IModelError 
 	return parseDBError(err)
 }
 
-func UploadCorporationSigningPDF(linkID string, email string, pdf *[]byte) IModelError {
+func UploadCorporationSigningPDF(linkID, email string, pdf []byte) IModelError {
 	err := dbmodels.GetDB().UploadCorporationSigningPDF(linkID, email, pdf)
 	return parseDBError(err)
 }
 
-func DownloadCorporationSigningPDF(linkID string, email string) (*[]byte, IModelError) {
-	v, err := dbmodels.GetDB().DownloadCorporationSigningPDF(linkID, email)
+func DownloadCorporationSigningPDF(linkID, email, path string) IModelError {
+	err := dbmodels.GetDB().DownloadCorporationSigningPDF(linkID, email, path)
 	if err == nil {
-		return v, nil
+		return nil
 	}
 
 	if err.IsErrorOf(dbmodels.ErrNoDBRecord) {
-		return v, newModelError(ErrNoLinkOrUnuploaed, err)
+		return newModelError(ErrNoLinkOrUnuploaed, err)
 	}
-	return v, parseDBError(err)
+	return parseDBError(err)
 }
 
 func IsCorpSigningPDFUploaded(linkID string, email string) (bool, IModelError) {
-	v, err := dbmodels.GetDB().IsCorpSigningPDFUploaded(linkID, email)
+	v, err := dbmodels.GetDB().IsCorporationSigningPDFUploaded(linkID, email)
 	return v, parseDBError(err)
 }
 

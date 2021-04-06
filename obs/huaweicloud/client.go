@@ -62,14 +62,37 @@ func (cli *client) WriteObject(path string, data []byte) error {
 	return err
 }
 
-func (cli *client) ReadObject(path, localPath string) error {
+func (cli *client) ReadObject(path, localPath string) obs.OBSError {
 	input := sdk.DownloadFileInput{DownloadFile: localPath}
 	input.Bucket = cli.bucket
 	input.Key = path
 	input.SseHeader = cli.ssecHeader
 
 	_, err := cli.c.DownloadFile(&input)
-	return err
+	if err == nil {
+		return nil
+	}
+
+	return obsError{err: err}
+}
+
+func (cli *client) HasObject(path string) (bool, error) {
+	input := sdk.GetObjectMetadataInput{
+		Bucket:    cli.bucket,
+		Key:       path,
+		SseHeader: cli.ssecHeader,
+	}
+	_, err := cli.c.GetObjectMetadata(&input)
+	if err == nil {
+		return true, nil
+	}
+
+	e := obsError{err: err}
+	if e.IsObjectNotFound() {
+		return false, nil
+	}
+
+	return false, err
 }
 
 func newSSECHeader(key string) (sdk.ISseHeader, error) {
@@ -84,4 +107,20 @@ func newSSECHeader(key string) (sdk.ISseHeader, error) {
 	h.KeyMD5 = v
 
 	return h, nil
+}
+
+type obsError struct {
+	err error
+}
+
+func (e obsError) IsObjectNotFound() bool {
+	er, ok := e.err.(sdk.ObsError)
+	return ok && er.StatusCode == 404
+}
+
+func (e obsError) Error() string {
+	if e.err != nil {
+		return e.err.Error()
+	}
+	return ""
 }

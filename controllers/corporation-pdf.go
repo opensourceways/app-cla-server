@@ -35,12 +35,14 @@ func (this *CorporationPDFController) downloadCorpPDF(linkID, corpEmail string) 
 	if err != nil {
 		return newFailedApiResult(500, errSystemError, err)
 	}
+	path := f.Name()
+	f.Close()
+
 	defer func() {
-		f.Close()
-		os.Remove(f.Name())
+		os.Remove(path)
 	}()
 
-	pdf, merr := models.DownloadCorporationSigningPDF(linkID, corpEmail)
+	merr := models.DownloadCorporationSigningPDF(linkID, corpEmail, path)
 	if merr != nil {
 		if merr.IsErrorOf(models.ErrNoLinkOrUnuploaed) {
 			return newFailedApiResult(400, errUnuploaded, merr)
@@ -48,12 +50,7 @@ func (this *CorporationPDFController) downloadCorpPDF(linkID, corpEmail string) 
 		return parseModelError(merr)
 	}
 
-	if _, err = f.Write(*pdf); err != nil {
-		return newFailedApiResult(500, errSystemError, err)
-	}
-
-	f.Close()
-	this.downloadFile(f.Name())
+	this.downloadFile(path)
 	return nil
 }
 
@@ -102,7 +99,7 @@ func (this *CorporationPDFController) Upload() {
 		return
 	}
 
-	if err := models.UploadCorporationSigningPDF(linkID, corpEmail, &data); err != nil {
+	if err := models.UploadCorporationSigningPDF(linkID, corpEmail, data); err != nil {
 		this.sendModelErrorAsResp(err, action)
 		return
 	}

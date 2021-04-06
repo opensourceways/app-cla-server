@@ -9,7 +9,8 @@ import (
 type OBS interface {
 	Initialize(string, string) error
 	WriteObject(path string, data []byte) error
-	ReadObject(path, localPath string) error
+	ReadObject(path, localPath string) OBSError
+	HasObject(string) (bool, error)
 }
 
 var instances = map[string]OBS{}
@@ -25,4 +26,9 @@ func Initialize(info appConf.OBS) (OBS, error) {
 	}
 
 	return i, i.Initialize(info.CredentialFile, info.Bucket)
+}
+
+type OBSError interface {
+	Error() string
+	IsObjectNotFound() bool
 }

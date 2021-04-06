@@ -50,7 +50,9 @@ func LoadFromYaml(path string, cfg interface{}) error {
 		return err
 	}
 
-	if err := yaml.Unmarshal(b, cfg); err != nil {
+	content := []byte(os.ExpandEnv(string(b)))
+
+	if err := yaml.Unmarshal(content, cfg); err != nil {
 		return err
 	}
 

@@ -2,7 +2,6 @@ package huaweicloud
 
 import (
 	"bytes"
-	"fmt"
 
 	sdk "github.com/huaweicloud/huaweicloud-sdk-go-obs/obs"
 
@@ -14,7 +13,6 @@ const plugin = "huaweicloud-obs"
 type client struct {
 	c *sdk.ObsClient
 
-	// region     string
 	bucket     string
 	ssecHeader sdk.ISseHeader
 }
@@ -38,15 +36,9 @@ func (cli *client) Initialize(path, bucket string) error {
 		return err
 	}
 
-	h, err := newSSECHeader(cfg.ObjectEncryptionKey)
-	if err != nil {
-		return err
-	}
-
 	cli.c = c
-	// cli.region = cfg.Region
 	cli.bucket = bucket
-	cli.ssecHeader = h
+	cli.ssecHeader = newSSECHeader(cfg.ObjectEncryptionKey)
 
 	return nil
 }
@@ -124,18 +116,17 @@ func (cli *client) ListObject(pathPrefix string) ([]string, error) {
 	return r, nil
 }
 
-func newSSECHeader(key string) (sdk.ISseHeader, error) {
+func newSSECHeader(key string) sdk.ISseHeader {
+	if key == "" {
+		return nil
+	}
+
 	h := sdk.SseCHeader{
 		Key: sdk.Base64Encode([]byte(key)),
 	}
+	h.KeyMD5 = h.GetKeyMD5()
 
-	v := h.GetKeyMD5()
-	if v == "" {
-		return nil, fmt.Errorf("build md5 of object key failed")
-	}
-	h.KeyMD5 = v
-
-	return h, nil
+	return h
 }
 
 type obsError struct {

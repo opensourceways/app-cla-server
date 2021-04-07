@@ -57,7 +57,7 @@ func main() {
 		dbmodels.IFile
 	}{
 		IModel: mongoClient,
-		IFile:  obs.FileStorage{OBS: obsClient},
+		IFile:  obs.NewFileStorage(obsClient),
 	})
 
 	if err = email.Initialize(AppConfig.EmailPlatformConfigFile); err != nil {

@@ -7,7 +7,6 @@ import (
 type config struct {
 	AccessKey           string `json:"access_key" required:"true"`
 	SecretKey           string `json:"secret_key" required:"true"`
-	Region              string `json:"region" required:"true"`
 	Endpoint            string `json:"endpoint" required:"true"`
 	ObjectEncryptionKey string `json:"object_encryption_key"`
 }

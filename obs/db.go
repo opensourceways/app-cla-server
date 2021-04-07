@@ -8,32 +8,40 @@ import (
 	"github.com/opensourceways/app-cla-server/util"
 )
 
-type FileStorage struct {
-	OBS OBS
+func NewFileStorage(c OBS) dbmodels.IFile {
+	return fileStorage{c: c}
 }
 
-func (fs FileStorage) UploadCorporationSigningPDF(linkID, adminEmail string, pdf []byte) dbmodels.IDBError {
-	err := fs.OBS.WriteObject(buildCorpSigningPDFPath(linkID, adminEmail), pdf)
+type fileStorage struct {
+	c OBS
+}
+
+func (fs fileStorage) UploadCorporationSigningPDF(linkID, adminEmail string, pdf []byte) dbmodels.IDBError {
+	err := fs.c.WriteObject(buildCorpSigningPDFPath(linkID, adminEmail), pdf)
 	return toDBError(err)
 }
 
-func (fs FileStorage) DownloadCorporationSigningPDF(linkID, email, path string) dbmodels.IDBError {
-	err := fs.OBS.ReadObject(buildCorpSigningPDFPath(linkID, email), path)
+func (fs fileStorage) DownloadCorporationSigningPDF(linkID, email, path string) dbmodels.IDBError {
+	err := fs.c.ReadObject(buildCorpSigningPDFPath(linkID, email), path)
+	if err == nil {
+		return nil
+	}
+
 	if err.IsObjectNotFound() {
 		return dbmodels.NewDBError(dbmodels.ErrNoDBRecord, err)
 	}
 	return toDBError(err)
 }
 
-func (fs FileStorage) IsCorporationSigningPDFUploaded(linkID, email string) (bool, dbmodels.IDBError) {
-	b, err := fs.OBS.HasObject(buildCorpSigningPDFPath(linkID, email))
+func (fs fileStorage) IsCorporationSigningPDFUploaded(linkID, email string) (bool, dbmodels.IDBError) {
+	b, err := fs.c.HasObject(buildCorpSigningPDFPath(linkID, email))
 	return b, toDBError(err)
 }
 
-func (fs FileStorage) ListCorporationsWithPDFUploaded(linkID string) ([]string, dbmodels.IDBError) {
+func (fs fileStorage) ListCorporationsWithPDFUploaded(linkID string) ([]string, dbmodels.IDBError) {
 	prefix := buildCorpSigningPDFPath(linkID, "")
 
-	r, err := fs.OBS.ListObject(prefix)
+	r, err := fs.c.ListObject(prefix)
 	if err != nil {
 		return nil, toDBError(err)
 	}

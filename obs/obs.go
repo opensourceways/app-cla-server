@@ -11,6 +11,7 @@ type OBS interface {
 	WriteObject(path string, data []byte) error
 	ReadObject(path, localPath string) OBSError
 	HasObject(string) (bool, error)
+	ListObject(pathPrefix string) ([]string, error)
 }
 
 var instances = map[string]OBS{}

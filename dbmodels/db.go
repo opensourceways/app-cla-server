@@ -34,14 +34,13 @@ type ICorporationSigning interface {
 	ListDeletedCorpSignings(linkID string) ([]CorporationSigningBasicInfo, IDBError)
 	GetCorpSigningDetail(linkID, email string) ([]Field, *CorpSigningCreateOpt, IDBError)
 	GetCorpSigningBasicInfo(linkID, email string) (*CorporationSigningBasicInfo, IDBError)
-
-	ListCorpsWithPDFUploaded(linkID string) ([]string, IDBError)
 }
 
 type IFile interface {
 	UploadCorporationSigningPDF(linkID, adminEmail string, pdf []byte) IDBError
 	DownloadCorporationSigningPDF(linkID, email, path string) IDBError
 	IsCorporationSigningPDFUploaded(linkID, email string) (bool, IDBError)
+	ListCorporationsWithPDFUploaded(linkID string) ([]string, IDBError)
 }
 
 type ICorporationManager interface {

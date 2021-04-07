@@ -2,6 +2,7 @@ package obs
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/opensourceways/app-cla-server/dbmodels"
 	"github.com/opensourceways/app-cla-server/util"
@@ -27,6 +28,21 @@ func (fs FileStorage) DownloadCorporationSigningPDF(linkID, email, path string) 
 func (fs FileStorage) IsCorporationSigningPDFUploaded(linkID, email string) (bool, dbmodels.IDBError) {
 	b, err := fs.OBS.HasObject(buildCorpSigningPDFPath(linkID, email))
 	return b, toDBError(err)
+}
+
+func (fs FileStorage) ListCorporationsWithPDFUploaded(linkID string) ([]string, dbmodels.IDBError) {
+	prefix := buildCorpSigningPDFPath(linkID, "")
+
+	r, err := fs.OBS.ListObject(prefix)
+	if err != nil {
+		return nil, toDBError(err)
+	}
+
+	result := make([]string, 0, len(r))
+	for _, item := range r {
+		result = append(result, strings.TrimPrefix(item, prefix))
+	}
+	return result, nil
 }
 
 func buildCorpSigningPDFPath(linkID string, email string) string {

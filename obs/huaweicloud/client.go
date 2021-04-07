@@ -95,6 +95,35 @@ func (cli *client) HasObject(path string) (bool, error) {
 	return false, err
 }
 
+func (cli *client) ListObject(pathPrefix string) ([]string, error) {
+	input := sdk.ListObjectsInput{
+		Bucket: cli.bucket,
+	}
+	if pathPrefix != "" {
+		input.Prefix = pathPrefix
+	}
+
+	r := make([]string, 0, 100)
+	for {
+		output, err := cli.c.ListObjects(&input)
+		if err != nil {
+			return nil, err
+		}
+
+		for i := range output.Contents {
+			r = append(r, output.Contents[i].Key)
+		}
+
+		if output.IsTruncated {
+			input.Marker = output.NextMarker
+		} else {
+			break
+		}
+	}
+
+	return r, nil
+}
+
 func newSSECHeader(key string) (sdk.ISseHeader, error) {
 	h := sdk.SseCHeader{
 		Key: sdk.Base64Encode([]byte(key)),

@@ -65,7 +65,7 @@ func IsCorpSigningPDFUploaded(linkID string, email string) (bool, IModelError) {
 }
 
 func ListCorpsWithPDFUploaded(linkID string) ([]string, IModelError) {
-	v, err := dbmodels.GetDB().ListCorpsWithPDFUploaded(linkID)
+	v, err := dbmodels.GetDB().ListCorporationsWithPDFUploaded(linkID)
 	return v, parseDBError(err)
 }
 

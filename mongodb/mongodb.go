@@ -13,7 +13,7 @@ import (
 	"github.com/opensourceways/app-cla-server/dbmodels"
 )
 
-var _ dbmodels.IDB = (*client)(nil)
+var _ dbmodels.IModel = (*client)(nil)
 
 type client struct {
 	c  *mongo.Client

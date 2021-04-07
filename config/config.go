@@ -3,13 +3,21 @@ package config
 import (
 	"fmt"
 
-	"github.com/astaxie/beego"
-	"github.com/huaweicloud/golangsdk"
-
 	"github.com/opensourceways/app-cla-server/util"
 )
 
-var AppConfig *appConfig
+var AppConfig = &appConfig{}
+
+func InitAppConfig(path string) error {
+	cfg := AppConfig
+	if err := util.LoadFromYaml(path, cfg); err != nil {
+		return err
+	}
+
+	cfg.setDefault()
+
+	return cfg.validate()
+}
 
 type appConfig struct {
 	PythonBin                string        `json:"python_bin" required:"true"`
@@ -29,6 +37,7 @@ type appConfig struct {
 	EmployeeManagersNumber   int           `json:"employee_managers_number" required:"true"`
 	CLAPlatformURL           string        `json:"cla_platform_url" required:"true"`
 	Mongodb                  MongodbConfig `json:"mongodb" required:"true"`
+	OBS                      OBS           `json:"obs" required:"true"`
 }
 
 type MongodbConfig struct {
@@ -42,112 +51,72 @@ type MongodbConfig struct {
 	IndividualSigningCollection string `json:"individual_signing_collection" required:"true"`
 }
 
-func InitAppConfig() error {
-	claFieldsNumber, err := beego.AppConfig.Int("cla_fields_number")
-	if err != nil {
-		return err
-	}
-
-	maxSizeOfCorpCLAPDF := beego.AppConfig.DefaultInt("max_size_of_corp_cla_pdf", (2 << 20))
-	maxSizeOfOrgSignaturePDF := beego.AppConfig.DefaultInt("max_size_of_org_signature_pdf", (1 << 20))
-	minLengthOfPassword := beego.AppConfig.DefaultInt("min_length_of_password", 6)
-	maxLengthOfPassword := beego.AppConfig.DefaultInt("max_length_of_password", 16)
-
-	tokenExpiry, err := beego.AppConfig.Int64("api_token_expiry")
-	if err != nil {
-		return err
-	}
-
-	codeExpiry, err := beego.AppConfig.Int64("verification_code_expiry")
-	if err != nil {
-		return err
-	}
-
-	employeeMangers, err := beego.AppConfig.Int("employee_managers_number")
-	if err != nil {
-		return err
-	}
-
-	AppConfig = &appConfig{
-		PythonBin:                beego.AppConfig.String("python_bin"),
-		CLAFieldsNumber:          claFieldsNumber,
-		MaxSizeOfCorpCLAPDF:      maxSizeOfCorpCLAPDF,
-		MaxSizeOfOrgSignaturePDF: maxSizeOfOrgSignaturePDF,
-		MinLengthOfPassword:      minLengthOfPassword,
-		MaxLengthOfPassword:      maxLengthOfPassword,
-		VerificationCodeExpiry:   codeExpiry,
-		APITokenExpiry:           tokenExpiry,
-		APITokenKey:              beego.AppConfig.String("api_token_key"),
-		SymmetricEncryptionKey:   beego.AppConfig.String("symmetric_encryption_key"),
-		PDFOrgSignatureDir:       beego.AppConfig.String("pdf_org_signature_dir"),
-		PDFOutDir:                beego.AppConfig.String("pdf_out_dir"),
-		CodePlatformConfigFile:   beego.AppConfig.String("code_platforms"),
-		EmailPlatformConfigFile:  beego.AppConfig.String("email_platforms"),
-		EmployeeManagersNumber:   employeeMangers,
-		CLAPlatformURL:           beego.AppConfig.String("cla_platform_url"),
-		Mongodb: MongodbConfig{
-			MongodbConn:                 beego.AppConfig.String("mongodb::mongodb_conn"),
-			DBName:                      beego.AppConfig.String("mongodb::mongodb_db"),
-			LinkCollection:              beego.AppConfig.String("mongodb::link_collection"),
-			OrgEmailCollection:          beego.AppConfig.String("mongodb::org_email_collection"),
-			CorpPDFCollection:           beego.AppConfig.String("mongodb::corp_pdf_collection"),
-			VCCollection:                beego.AppConfig.String("mongodb::verification_code_collection"),
-			CorpSigningCollection:       beego.AppConfig.String("mongodb::corp_signing_collection"),
-			IndividualSigningCollection: beego.AppConfig.String("mongodb::individual_signing_collection"),
-		},
-	}
-	return AppConfig.validate()
+type OBS struct {
+	Name           string `json:"name" required:"true"`
+	Bucket         string `json:"bucket" required:"true"`
+	CredentialFile string `json:"credential_file" required:"true"`
 }
 
-func (this *appConfig) validate() error {
-	_, err := golangsdk.BuildRequestBody(this, "")
-	if err != nil {
-		return fmt.Errorf("config file error: %s", err.Error())
+func (cfg *appConfig) setDefault() {
+	if cfg.MaxSizeOfCorpCLAPDF <= 0 {
+		cfg.MaxSizeOfCorpCLAPDF = (5 << 20)
+	}
+	if cfg.MaxSizeOfOrgSignaturePDF <= 0 {
+		cfg.MaxSizeOfOrgSignaturePDF = (1 << 20)
 	}
 
-	if util.IsFileNotExist(this.PythonBin) {
-		return fmt.Errorf("The file:%s is not exist", this.PythonBin)
+	if cfg.MinLengthOfPassword <= 0 {
+		cfg.MinLengthOfPassword = 6
 	}
 
-	if this.CLAFieldsNumber <= 0 {
-		return fmt.Errorf("The cla_fields_number:%d should be bigger than 0", this.CLAFieldsNumber)
+	if cfg.MaxLengthOfPassword <= 0 {
+		cfg.MaxLengthOfPassword = 16
+	}
+}
+
+func (cfg *appConfig) validate() error {
+	if util.IsFileNotExist(cfg.PythonBin) {
+		return fmt.Errorf("The file:%s is not exist", cfg.PythonBin)
 	}
 
-	if this.VerificationCodeExpiry <= 0 {
-		return fmt.Errorf("The verification_code_expiry:%d should be bigger than 0", this.VerificationCodeExpiry)
+	if cfg.CLAFieldsNumber <= 0 {
+		return fmt.Errorf("The cla_fields_number:%d should be bigger than 0", cfg.CLAFieldsNumber)
 	}
 
-	if this.APITokenExpiry <= 0 {
-		return fmt.Errorf("The apit_oken_expiry:%d should be bigger than 0", this.APITokenExpiry)
+	if cfg.VerificationCodeExpiry <= 0 {
+		return fmt.Errorf("The verification_code_expiry:%d should be bigger than 0", cfg.VerificationCodeExpiry)
 	}
 
-	if this.EmployeeManagersNumber <= 0 {
-		return fmt.Errorf("The employee_managers_number:%d should be bigger than 0", this.EmployeeManagersNumber)
+	if cfg.APITokenExpiry <= 0 {
+		return fmt.Errorf("The apit_oken_expiry:%d should be bigger than 0", cfg.APITokenExpiry)
 	}
 
-	if len(this.APITokenKey) < 20 {
+	if cfg.EmployeeManagersNumber <= 0 {
+		return fmt.Errorf("The employee_managers_number:%d should be bigger than 0", cfg.EmployeeManagersNumber)
+	}
+
+	if len(cfg.APITokenKey) < 20 {
 		return fmt.Errorf("The length of api_token_key should be bigger than 20")
 	}
 
-	if err := util.IsSymmetricEncryptionKeyValid(this.SymmetricEncryptionKey); err != nil {
+	if err := util.IsSymmetricEncryptionKeyValid(cfg.SymmetricEncryptionKey); err != nil {
 		return fmt.Errorf("The symmetric encryption key is not valid, %s", err.Error())
 	}
 
-	if util.IsNotDir(this.PDFOrgSignatureDir) {
-		return fmt.Errorf("The directory:%s is not exist", this.PDFOrgSignatureDir)
+	if util.IsNotDir(cfg.PDFOrgSignatureDir) {
+		return fmt.Errorf("The directory:%s is not exist", cfg.PDFOrgSignatureDir)
 	}
 
-	if util.IsNotDir(this.PDFOutDir) {
-		return fmt.Errorf("The directory:%s is not exist", this.PDFOutDir)
-
+	if util.IsNotDir(cfg.PDFOutDir) {
+		return fmt.Errorf("The directory:%s is not exist", cfg.PDFOutDir)
 	}
 
-	if util.IsFileNotExist(this.CodePlatformConfigFile) {
-		return fmt.Errorf("The file:%s is not exist", this.CodePlatformConfigFile)
+	if util.IsFileNotExist(cfg.CodePlatformConfigFile) {
+		return fmt.Errorf("The file:%s is not exist", cfg.CodePlatformConfigFile)
 	}
 
-	if util.IsFileNotExist(this.EmailPlatformConfigFile) {
-		return fmt.Errorf("The file:%s is not exist", this.EmailPlatformConfigFile)
+	if util.IsFileNotExist(cfg.EmailPlatformConfigFile) {
+		return fmt.Errorf("The file:%s is not exist", cfg.EmailPlatformConfigFile)
 	}
 
 	return nil

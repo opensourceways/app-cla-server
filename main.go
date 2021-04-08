@@ -40,7 +40,7 @@ func main() {
 		}
 	}
 
-	mongoClient, err := mongodb.Initialize(&AppConfig.Mongodb)
+	mongoClient, err := mongodb.Initialize(&AppConfig.Mongodb, AppConfig.SymmetricEncryptionKey)
 	if err != nil {
 		beego.Error(err)
 		os.Exit(1)

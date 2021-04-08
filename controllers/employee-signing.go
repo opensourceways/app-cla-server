@@ -112,7 +112,7 @@ func (this *EmployeeSigningController) Post() {
 		this.sendFailedResultAsResp(fr, action)
 	} else {
 		this.sendSuccessResp("sign successfully")
-		this.notifyManagers(managers, &info, orgInfo)
+		this.notifyManagers(linkID, managers, &info, orgInfo)
 	}
 }
 
@@ -222,10 +222,10 @@ func (this *EmployeeSigningController) Update() {
 	msg := this.newEmployeeNotification(pl, employeeEmail)
 	if info.Enabled {
 		msg.Active = true
-		sendEmailToIndividual(employeeEmail, pl.OrgEmail, "Activate CLA signing", msg)
+		sendEmailToIndividual(pl.LinkID, employeeEmail, "Activate CLA signing", msg)
 	} else {
 		msg.Inactive = true
-		sendEmailToIndividual(employeeEmail, pl.OrgEmail, "Inactivate CLA signing", msg)
+		sendEmailToIndividual(pl.LinkID, employeeEmail, "Inactivate CLA signing", msg)
 	}
 }
 
@@ -258,10 +258,10 @@ func (this *EmployeeSigningController) Delete() {
 
 	msg := this.newEmployeeNotification(pl, employeeEmail)
 	msg.Removing = true
-	sendEmailToIndividual(employeeEmail, pl.OrgEmail, "Remove employee", msg)
+	sendEmailToIndividual(pl.LinkID, employeeEmail, "Remove employee", msg)
 }
 
-func (this *EmployeeSigningController) notifyManagers(managers []dbmodels.CorporationManagerListResult, info *models.EmployeeSigning, orgInfo *models.OrgInfo) {
+func (this *EmployeeSigningController) notifyManagers(linkID string, managers []dbmodels.CorporationManagerListResult, info *models.EmployeeSigning, orgInfo *models.OrgInfo) {
 	ms := make([]string, 0, len(managers))
 	to := make([]string, 0, len(managers))
 	for _, item := range managers {
@@ -276,7 +276,7 @@ func (this *EmployeeSigningController) notifyManagers(managers []dbmodels.Corpor
 		Managers:   "  " + strings.Join(ms, "\n  "),
 	}
 	sendEmailToIndividual(
-		info.Email, orgInfo.OrgEmail,
+		linkID, info.Email,
 		fmt.Sprintf("Signing CLA on project of \"%s\"", msg.Org),
 		msg,
 	)
@@ -287,7 +287,7 @@ func (this *EmployeeSigningController) notifyManagers(managers []dbmodels.Corpor
 		ProjectURL:       orgInfo.ProjectURL(),
 		URLOfCLAPlatform: config.AppConfig.CLAPlatformURL,
 	}
-	sendEmail(to, orgInfo.OrgEmail, "An employee has signed CLA", msg1)
+	sendEmail(linkID, to, "An employee has signed CLA", msg1)
 }
 
 func (this *EmployeeSigningController) newEmployeeNotification(pl *acForCorpManagerPayload, employeeName string) *email.EmployeeNotification {

@@ -14,19 +14,29 @@ func elemFilterOfCorpSigning(email string) bson.M {
 }
 
 func (c *client) SignCorpCLA(linkID string, info *dbmodels.CorpSigningCreateOpt) dbmodels.IDBError {
+	email, err := c.encrypt.encryptStr(info.AdminEmail)
+	if err != nil {
+		return err
+	}
+
+	si, err := c.encrypt.encryptSigningInfo(&info.Info)
+	if err != nil {
+		return err
+	}
+
 	signing := dCorpSigning{
 		CLALanguage: info.CLALanguage,
 		CorpID:      genCorpID(info.AdminEmail),
 		CorpName:    info.CorporationName,
-		AdminEmail:  info.AdminEmail,
+		AdminEmail:  email,
 		AdminName:   info.AdminName,
 		Date:        info.Date,
-		SigningInfo: info.Info,
 	}
 	doc, err := structToMap(signing)
 	if err != nil {
 		return err
 	}
+	doc[fieldInfo] = si
 
 	docFilter := docFilterOfSigning(linkID)
 	arrayFilterByElemMatch(fieldSignings, false, elemFilterOfCorpSigning(info.AdminEmail), docFilter)
@@ -78,8 +88,13 @@ func (this *client) ListCorpSignings(linkID, language string) ([]dbmodels.Corpor
 
 	r := make([]dbmodels.CorporationSigningSummary, 0, n)
 	for i := 0; i < n; i++ {
+		bi, err := this.toDBModelCorporationSigningBasicInfo(&signings[i])
+		if err != nil {
+			return nil, err
+		}
+
 		r = append(r, dbmodels.CorporationSigningSummary{
-			CorporationSigningBasicInfo: *toDBModelCorporationSigningBasicInfo(&signings[i]),
+			CorporationSigningBasicInfo: *bi,
 			AdminAdded:                  admins[signings[i].AdminEmail],
 		})
 	}
@@ -129,7 +144,7 @@ func (this *client) GetCorpSigningBasicInfo(linkID, email string) (*dbmodels.Cor
 		return nil, nil
 	}
 
-	return toDBModelCorporationSigningBasicInfo(&(signings[0])), nil
+	return this.toDBModelCorporationSigningBasicInfo(&(signings[0]))
 }
 
 func (this *client) GetCorpSigningDetail(linkID, email string) ([]dbmodels.Field, *dbmodels.CorpSigningCreateOpt, dbmodels.IDBError) {
@@ -181,21 +196,36 @@ func (this *client) GetCorpSigningDetail(linkID, email string) ([]dbmodels.Field
 		return nil, nil, nil
 	}
 
+	si, err := this.encrypt.decryptSigningInfo(signing.SigningInfo)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	bi, err := this.toDBModelCorporationSigningBasicInfo(signing)
+	if err != nil {
+		return nil, nil, err
+	}
+
 	info := &dbmodels.CorpSigningCreateOpt{
-		CorporationSigningBasicInfo: *toDBModelCorporationSigningBasicInfo(signing),
-		Info:                        signing.SigningInfo,
+		CorporationSigningBasicInfo: *bi,
+		Info:                        *si,
 	}
 	return toModelOfCLAFields(clas[0].Fields), info, nil
 }
 
-func toDBModelCorporationSigningBasicInfo(cs *dCorpSigning) *dbmodels.CorporationSigningBasicInfo {
+func (c *client) toDBModelCorporationSigningBasicInfo(cs *dCorpSigning) (*dbmodels.CorporationSigningBasicInfo, dbmodels.IDBError) {
+	email, err := c.encrypt.decryptStr(cs.AdminEmail)
+	if err != nil {
+		return nil, err
+	}
+
 	return &dbmodels.CorporationSigningBasicInfo{
 		CLALanguage:     cs.CLALanguage,
-		AdminEmail:      cs.AdminEmail,
+		AdminEmail:      email,
 		AdminName:       cs.AdminName,
 		CorporationName: cs.CorpName,
 		Date:            cs.Date,
-	}
+	}, nil
 }
 
 func projectOfCorpSigning() bson.M {

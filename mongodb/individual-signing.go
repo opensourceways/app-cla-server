@@ -8,11 +8,16 @@ import (
 	"github.com/opensourceways/app-cla-server/dbmodels"
 )
 
-func elemFilterOfIndividualSigning(email string) bson.M {
+func (c *client) elemFilterOfIndividualSigning(email string) (bson.M, dbmodels.IDBError) {
+	encryptedEmail, err := c.encrypt.encryptStr(email)
+	if err != nil {
+		return nil, err
+	}
+
 	return bson.M{
 		fieldCorpID: genCorpID(email),
-		fieldEmail:  email,
-	}
+		fieldEmail:  encryptedEmail,
+	}, nil
 }
 
 func docFilterOfSigning(linkID string) bson.M {
@@ -23,25 +28,37 @@ func docFilterOfSigning(linkID string) bson.M {
 }
 
 func (this *client) SignIndividualCLA(linkID string, info *dbmodels.IndividualSigningInfo) dbmodels.IDBError {
+	email, err := this.encrypt.encryptStr(info.Email)
+	if err != nil {
+		return err
+	}
+
+	si, err := this.encrypt.encryptSigningInfo(&info.Info)
+	if err != nil {
+		return err
+	}
+
 	signing := dIndividualSigning{
 		CLALanguage: info.CLALanguage,
 		CorpID:      genCorpID(info.Email),
 		ID:          info.ID,
 		Name:        info.Name,
-		Email:       info.Email,
+		Email:       email,
 		Date:        info.Date,
 		Enabled:     info.Enabled,
-		SigningInfo: info.Info,
 	}
 	doc, err := structToMap(signing)
 	if err != nil {
 		return err
 	}
+	doc[fieldInfo] = si
 
+	elemFilter := bson.M{
+		fieldCorpID: genCorpID(info.Email),
+		fieldEmail:  email,
+	}
 	docFilter := docFilterOfSigning(linkID)
-	arrayFilterByElemMatch(
-		fieldSignings, false, elemFilterOfIndividualSigning(info.Email), docFilter,
-	)
+	arrayFilterByElemMatch(fieldSignings, false, elemFilter, docFilter)
 
 	f := func(ctx context.Context) dbmodels.IDBError {
 		return this.pushArrayElem(ctx, this.individualSigningCollection, fieldSignings, docFilter, doc)
@@ -51,11 +68,15 @@ func (this *client) SignIndividualCLA(linkID string, info *dbmodels.IndividualSi
 }
 
 func (this *client) DeleteIndividualSigning(linkID, email string) dbmodels.IDBError {
+	elemFilter, err := this.elemFilterOfIndividualSigning(email)
+	if err != nil {
+		return err
+	}
+
 	f := func(ctx context.Context) dbmodels.IDBError {
 		return this.pullArrayElem(
 			ctx, this.individualSigningCollection, fieldSignings,
-			docFilterOfSigning(linkID),
-			elemFilterOfIndividualSigning(email),
+			docFilterOfSigning(linkID), elemFilter,
 		)
 	}
 
@@ -63,7 +84,10 @@ func (this *client) DeleteIndividualSigning(linkID, email string) dbmodels.IDBEr
 }
 
 func (this *client) UpdateIndividualSigning(linkID, email string, enabled bool) dbmodels.IDBError {
-	elemFilter := elemFilterOfIndividualSigning(email)
+	elemFilter, err := this.elemFilterOfIndividualSigning(email)
+	if err != nil {
+		return err
+	}
 
 	docFilter := docFilterOfSigning(linkID)
 	arrayFilterByElemMatch(fieldSignings, true, elemFilter, docFilter)
@@ -79,10 +103,13 @@ func (this *client) UpdateIndividualSigning(linkID, email string, enabled bool) 
 }
 
 func (this *client) IsIndividualSigned(linkID, email string) (bool, dbmodels.IDBError) {
-	docFilter := docFilterOfSigning(linkID)
-
-	elemFilter := elemFilterOfIndividualSigning(email)
+	elemFilter, err := this.elemFilterOfIndividualSigning(email)
+	if err != nil {
+		return false, err
+	}
 	elemFilter[fieldEnabled] = true
+
+	docFilter := docFilterOfSigning(linkID)
 
 	signed := false
 	f := func(ctx context.Context) dbmodels.IDBError {
@@ -96,7 +123,7 @@ func (this *client) IsIndividualSigned(linkID, email string) (bool, dbmodels.IDB
 		return nil
 	}
 
-	err := withContext1(f)
+	err = withContext1(f)
 	return signed, err
 }
 
@@ -138,9 +165,15 @@ func (this *client) ListIndividualSigning(linkID, corpEmail, claLang string) ([]
 	r := make([]dbmodels.IndividualSigningBasicInfo, 0, len(docs))
 	for i := range docs {
 		item := &docs[i]
+
+		email, err := this.encrypt.decryptStr(item.Email)
+		if err != nil {
+			return nil, err
+		}
+
 		r = append(r, dbmodels.IndividualSigningBasicInfo{
 			ID:      item.ID,
-			Email:   item.Email,
+			Email:   email,
 			Name:    item.Name,
 			Enabled: item.Enabled,
 			Date:    item.Date,

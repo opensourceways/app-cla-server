@@ -13,11 +13,8 @@ func docFilterOfCorpManager(linkID string) bson.M {
 	return docFilterOfSigning(linkID)
 }
 
-func elemFilterOfCorpManager(email string) bson.M {
-	return bson.M{
-		fieldCorpID: genCorpID(email),
-		fieldEmail:  email,
-	}
+func (c *client) elemFilterOfCorpManager(email string) (bson.M, dbmodels.IDBError) {
+	return c.elemFilterOfIndividualSigning(email)
 }
 
 func memberNameOfCorpManager(field string) string {
@@ -65,7 +62,11 @@ func (this *client) CheckCorporationManagerExist(opt dbmodels.CorporationManager
 
 	var elemFilter bson.M
 	if opt.Email != "" {
-		elemFilter = elemFilterOfCorpManager(opt.Email)
+		v, err := this.elemFilterOfCorpManager(opt.Email)
+		if err != nil {
+			return nil, err
+		}
+		elemFilter = v
 	} else {
 		elemFilter = bson.M{
 			fieldCorpID: opt.EmailSuffix,
@@ -109,10 +110,16 @@ func (this *client) CheckCorporationManagerExist(opt dbmodels.CorporationManager
 		}
 
 		item := &cm[0]
+
+		email, err := this.encrypt.decryptStr(item.Email)
+		if err != nil {
+			return nil, err
+		}
+
 		orgRepo := dbmodels.ParseToOrgRepo(doc.OrgIdentity)
 		result[doc.LinkID] = dbmodels.CorporationManagerCheckResult{
 			Name:             item.Name,
-			Email:            item.Email,
+			Email:            email,
 			Role:             item.Role,
 			Password:         item.Password,
 			InitialPWChanged: item.InitialPWChanged,
@@ -138,7 +145,10 @@ func (this *client) ResetCorporationManagerPassword(linkID, email string, opt db
 		fieldChanged:  true,
 	}
 
-	elemFilter := elemFilterOfCorpManager(email)
+	elemFilter, err := this.elemFilterOfCorpManager(email)
+	if err != nil {
+		return err
+	}
 	elemFilter[fieldPassword] = opt.OldPassword
 
 	docFilter := docFilterOfCorpManager(linkID)
@@ -191,10 +201,16 @@ func (this *client) ListCorporationManager(linkID, email, role string) ([]dbmode
 	r := make([]dbmodels.CorporationManagerListResult, 0, len(ms))
 	for i := range ms {
 		item := &ms[i]
+
+		email, err := this.encrypt.decryptStr(item.Email)
+		if err != nil {
+			return nil, err
+		}
+
 		r = append(r, dbmodels.CorporationManagerListResult{
 			ID:    item.ID,
 			Name:  item.Name,
-			Email: item.Email,
+			Email: email,
 			Role:  item.Role,
 		})
 	}
@@ -202,6 +218,11 @@ func (this *client) ListCorporationManager(linkID, email, role string) ([]dbmode
 }
 
 func (this *client) GetCorporationManager(linkID, email string) (*dbmodels.CorporationManagerCheckResult, dbmodels.IDBError) {
+	elemFilter, err := this.elemFilterOfCorpManager(email)
+	if err != nil {
+		return nil, err
+	}
+
 	project := bson.M{
 		memberNameOfCorpManager(fieldPassword): 1,
 	}
@@ -211,8 +232,7 @@ func (this *client) GetCorporationManager(linkID, email string) (*dbmodels.Corpo
 	f := func(ctx context.Context) error {
 		return this.getArrayElem(
 			ctx, this.corpSigningCollection, fieldCorpManagers,
-			docFilterOfCorpManager(linkID), elemFilterOfCorpManager(email),
-			project, &v,
+			docFilterOfCorpManager(linkID), elemFilter, project, &v,
 		)
 	}
 

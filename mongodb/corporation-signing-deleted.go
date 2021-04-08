@@ -97,7 +97,12 @@ func (this *client) ListDeletedCorpSignings(linkID string) ([]dbmodels.Corporati
 
 	r := make([]dbmodels.CorporationSigningBasicInfo, 0, n)
 	for i := 0; i < n; i++ {
-		r = append(r, *toDBModelCorporationSigningBasicInfo(&deleted[i]))
+		bi, err := this.toDBModelCorporationSigningBasicInfo(&deleted[i])
+		if err != nil {
+			return nil, err
+		}
+
+		r = append(r, *bi)
 	}
 
 	return r, nil

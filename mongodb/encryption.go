@@ -8,12 +8,24 @@ import (
 	"github.com/opensourceways/app-cla-server/util"
 )
 
+func newEncryption(key, nonce string) (encryption, error) {
+	e := encryption{}
+
+	se, err := util.NewSymmetricEncryption(key, nonce)
+	if err != nil {
+		return e, err
+	}
+
+	e.se = se
+	return e, nil
+}
+
 type encryption struct {
-	key []byte
+	se util.SymmetricEncryption
 }
 
 func (e encryption) encryptBytes(data []byte) ([]byte, dbmodels.IDBError) {
-	d, err := util.Encrypt(data, e.key)
+	d, err := e.se.Encrypt(data)
 	if err != nil {
 		return nil, newSystemError(err)
 	}
@@ -21,7 +33,7 @@ func (e encryption) encryptBytes(data []byte) ([]byte, dbmodels.IDBError) {
 }
 
 func (e encryption) decryptBytes(data []byte) ([]byte, dbmodels.IDBError) {
-	s, err := util.Decrypt(data, e.key)
+	s, err := e.se.Decrypt(data)
 	if err != nil {
 		return nil, newSystemError(err)
 	}

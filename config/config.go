@@ -30,6 +30,7 @@ type appConfig struct {
 	APITokenExpiry           int64         `json:"api_token_expiry" required:"true"`
 	APITokenKey              string        `json:"api_token_key" required:"true"`
 	SymmetricEncryptionKey   string        `json:"symmetric_encryption_key" required:"true"`
+	SymmetricEncryptionNonce string        `json:"symmetric_encryption_nonce" required:"true"`
 	PDFOrgSignatureDir       string        `json:"pdf_org_signature_dir" required:"true"`
 	PDFOutDir                string        `json:"pdf_out_dir" required:"true"`
 	CodePlatformConfigFile   string        `json:"code_platforms" required:"true"`
@@ -99,8 +100,8 @@ func (cfg *appConfig) validate() error {
 		return fmt.Errorf("The length of api_token_key should be bigger than 20")
 	}
 
-	if err := util.IsSymmetricEncryptionKeyValid(cfg.SymmetricEncryptionKey); err != nil {
-		return fmt.Errorf("The symmetric encryption key is not valid, %s", err.Error())
+	if _, err := util.NewSymmetricEncryption(cfg.SymmetricEncryptionKey, cfg.SymmetricEncryptionNonce); err != nil {
+		return fmt.Errorf("The symmetric encryption key or nonce is invalid, %s", err.Error())
 	}
 
 	if util.IsNotDir(cfg.PDFOrgSignatureDir) {

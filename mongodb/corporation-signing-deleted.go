@@ -49,6 +49,7 @@ func (this *client) DeleteCorpSigning(linkID, email string) dbmodels.IDBError {
 	if err != nil {
 		return err
 	}
+	doc[fieldInfo] = data.SigningInfo
 
 	f := func(ctx context.Context) dbmodels.IDBError {
 		return this.moveArrayElem(

@@ -28,7 +28,7 @@ type client struct {
 	individualSigningCollection string
 }
 
-func Initialize(cfg *config.MongodbConfig, encryptionKey string) (*client, error) {
+func Initialize(cfg *config.MongodbConfig, encryptionKey, nonce string) (*client, error) {
 	c, err := mongo.NewClient(options.Client().ApplyURI(cfg.MongodbConn))
 	if err != nil {
 		return nil, err
@@ -46,10 +46,15 @@ func Initialize(cfg *config.MongodbConfig, encryptionKey string) (*client, error
 		return nil, err
 	}
 
+	e, err := newEncryption(encryptionKey, nonce)
+	if err != nil {
+		return nil, err
+	}
+
 	cli := &client{
 		c:       c,
 		db:      c.Database(cfg.DBName),
-		encrypt: encryption{key: []byte(encryptionKey)},
+		encrypt: e,
 
 		vcCollection:                cfg.VCCollection,
 		orgEmailCollection:          cfg.OrgEmailCollection,

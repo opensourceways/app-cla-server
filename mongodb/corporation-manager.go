@@ -22,10 +22,15 @@ func memberNameOfCorpManager(field string) string {
 }
 
 func (this *client) AddCorpAdministrator(linkID string, opt *dbmodels.CorporationManagerCreateOption) dbmodels.IDBError {
+	email, err := this.encrypt.encryptStr(opt.Email)
+	if err != nil {
+		return err
+	}
+
 	info := dCorpManager{
 		ID:       opt.ID,
 		Name:     opt.Name,
-		Email:    opt.Email,
+		Email:    email,
 		Role:     dbmodels.RoleAdmin,
 		Password: opt.Password,
 		CorpID:   genCorpID(opt.Email),

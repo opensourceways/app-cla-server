@@ -37,11 +37,7 @@ type baseController struct {
 
 func (this *baseController) sendResponse(body interface{}, statusCode int) {
 	if token, err := this.refreshAccessToken(); err == nil {
-		// this code must run before `this.Ctx.ResponseWriter.WriteHeader`
-		// otherwise the header can't be set successfully.
-		// The reason is relevant to the variable of 'Response.Started' at
-		// beego/context/context.go
-		this.Ctx.Output.Header(headerToken, token)
+		this.setCookies(map[string]string{apiAccessToken: token}, true)
 	}
 
 	if statusCode != 0 {
@@ -223,7 +219,7 @@ func (this *baseController) newAccessController(permission string) *accessContro
 }
 
 func (this *baseController) checkApiReqToken(ac *accessController, permission []string) *failedApiResult {
-	token := this.apiReqHeader(headerToken)
+	token := this.Ctx.Input.Cookie(apiAccessToken)
 	if token == "" {
 		return newFailedApiResult(401, errMissingToken, fmt.Errorf("no token passed"))
 	}
@@ -335,17 +331,14 @@ func (this *baseController) redirect(webRedirectDir string) {
 	)
 }
 
-func (this *baseController) setCookies(value map[string]string) {
+func (this *baseController) setCookies(value map[string]string, isSensitive bool) {
 	for k, v := range value {
-		this.Ctx.SetCookie(k, v, "3600", "/")
+		this.Ctx.SetCookie(k, v, 3600, "/", "", true, isSensitive)
 	}
 }
 
 func (this *baseController) getRemoteAddr() (string, *failedApiResult) {
 	ips := this.Ctx.Request.Header.Get("x-forwarded-for")
-	beego.Info(ips)
-	beego.Info(this.Ctx.Request.Header.Get("x-real-ip"))
-
 	for _, item := range strings.Split(ips, ", ") {
 		if net.ParseIP(item) != nil {
 			return item, nil

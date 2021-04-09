@@ -25,7 +25,7 @@ func (this *EmailController) Prepare() {
 // @router /auth/:platform [get]
 func (this *EmailController) Auth() {
 	rs := func(errCode string, reason error) {
-		this.setCookies(map[string]string{"error_code": errCode, "error_msg": reason.Error()})
+		this.setCookies(map[string]string{"error_code": errCode, "error_msg": reason.Error()}, false)
 		this.redirect(email.EmailAgent.WebRedirectDir(false))
 	}
 
@@ -80,7 +80,7 @@ func (this *EmailController) Auth() {
 		}
 	}
 
-	this.setCookies(map[string]string{"email": emailAddr})
+	this.setCookies(map[string]string{"email": emailAddr}, false)
 	this.redirect(email.EmailAgent.WebRedirectDir(true))
 }
 

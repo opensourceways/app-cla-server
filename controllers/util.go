@@ -17,10 +17,10 @@ import (
 )
 
 const (
-	headerToken                    = "Token"
+	apiAccessToken                 = "access_token"
 	apiAccessController            = "access_controller"
-	fileNameOfUploadingOrgSignatue = "org_signature_file"
 	contentTypeOfPDF               = "application/pdf"
+	fileNameOfUploadingOrgSignatue = "org_signature_file"
 )
 
 func sendEmailToIndividual(linkID, to, subject string, builder email.IEmailMessageBulder) {

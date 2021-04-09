@@ -40,7 +40,7 @@ func (this *AuthController) Callback() {
 	}
 
 	rs := func(errCode string, reason error) {
-		this.setCookies(map[string]string{"error_code": errCode, "error_msg": reason.Error()})
+		this.setCookies(map[string]string{"error_code": errCode, "error_msg": reason.Error()}, false)
 		this.redirect(authHelper.WebRedirectDir(false))
 	}
 
@@ -93,12 +93,13 @@ func (this *AuthController) Callback() {
 		return
 	}
 
-	cookies := map[string]string{"access_token": at, "platform_token": token}
+	this.setCookies(map[string]string{apiAccessToken: at}, true)
 	if permission == PermissionIndividualSigner {
-		cookies["sign_user"] = pl.User
-		cookies["sign_email"] = pl.Email
+		this.setCookies(map[string]string{
+			"sign_user":  pl.User,
+			"sign_email": pl.Email,
+		}, false)
 	}
-	this.setCookies(cookies)
 	this.redirect(authHelper.WebRedirectDir(true))
 }
 
@@ -297,18 +298,41 @@ func (this *acForCodePlatformPayload) isOwnerOfOrg(org string) *failedApiResult 
 		return nil
 	}
 
-	p, err := platforms.NewPlatform(this.PlatformToken, "", this.Platform)
-	if err != nil {
-		return newFailedApiResult(400, errSystemError, err)
-	}
+	this.refreshOrg()
 
-	if b, err := p.IsOrgExist(org); err != nil {
-		// TODO token expiry
-		return newFailedApiResult(500, errSystemError, err)
-	} else if !b {
+	if !this.Orgs[org] {
 		return newFailedApiResult(400, errNotYoursOrg, fmt.Errorf("not the org of owner"))
 	}
-
-	this.Orgs[org] = true
 	return nil
+}
+
+func (this *acForCodePlatformPayload) refreshOrg() {
+	pt, err := platforms.NewPlatform(this.PlatformToken, "", this.Platform)
+	if err != nil {
+		return
+	}
+
+	// TODO token expiry
+	orgs, err := pt.ListOrg()
+	if err != nil {
+		return
+	}
+
+	for _, item := range orgs {
+		this.Orgs[item] = true
+	}
+}
+
+func (this *acForCodePlatformPayload) hasRepo(org, repo string) (bool, *failedApiResult) {
+	pt, err := platforms.NewPlatform(this.PlatformToken, "", this.Platform)
+	if err != nil {
+		return false, newFailedApiResult(400, errSystemError, err)
+	}
+
+	b, err := pt.HasRepo(org, repo)
+	if err != nil {
+		return false, newFailedApiResult(400, errSystemError, err)
+	}
+
+	return b, nil
 }

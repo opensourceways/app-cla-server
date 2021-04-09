@@ -12,7 +12,7 @@ const (
 type Platform interface {
 	GetUser() (string, error)
 	GetAuthorizedEmail() (string, error)
-	IsOrgExist(org string) (bool, error)
+	HasRepo(org, repo string) (bool, error)
 	ListOrg() ([]string, error)
 }
 

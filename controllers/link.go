@@ -16,11 +16,7 @@ type LinkController struct {
 }
 
 func (this *LinkController) Prepare() {
-	if strings.HasSuffix(this.routerPattern(), ":apply_to") {
-		if this.apiReqHeader(headerToken) != "" {
-			this.apiPrepare(PermissionIndividualSigner)
-		}
-	} else {
+	if !strings.HasSuffix(this.routerPattern(), ":apply_to") {
 		this.apiPrepare(PermissionOwnerOfOrg)
 	}
 }
@@ -214,13 +210,6 @@ func (this *LinkController) ListLinks() {
 func (this *LinkController) GetCLAForSigning() {
 	action := "fetch signing page info"
 	applyTo := this.GetString(":apply_to")
-	token := this.apiReqHeader(headerToken)
-
-	if !((token == "" && applyTo == dbmodels.ApplyToCorporation) ||
-		(token != "" && applyTo == dbmodels.ApplyToIndividual)) {
-		this.sendFailedResponse(400, errUnmatchedCLAType, fmt.Errorf("unmatched cla type"), action)
-		return
-	}
 
 	org, repo := parseOrgAndRepo(this.GetString(":org_id"))
 	orgRepo := buildOrgRepo(this.GetString(":platform"), org, repo)

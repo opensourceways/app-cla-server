@@ -70,6 +70,11 @@ func init() {
 				&controllers.OrgSignatureController{},
 			),
 		),
+		beego.NSNamespace("/org-repo",
+			beego.NSInclude(
+				&controllers.OrgRepoController{},
+			),
+		),
 		beego.NSNamespace("/verification-code",
 			beego.NSInclude(
 				&controllers.VerificationCodeController{},

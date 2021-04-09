@@ -40,6 +40,7 @@ const (
 	errNotSameCorp              = string(models.ErrNotSameCorp)
 	errFrequentOperation        = "frequent_operation"
 	errCanNotFetchClientIP      = "can_not_fetch_client_ip"
+	errNotPDFFile               = "not_pdf_file"
 )
 
 func parseModelError(err models.IModelError) *failedApiResult {

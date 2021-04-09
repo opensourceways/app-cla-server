@@ -103,12 +103,13 @@ func (this *accessController) verify(permission []string, addr string) error {
 	return nil
 }
 
-func (this *accessController) symmetricEncryptionKey() []byte {
-	return []byte(config.AppConfig.SymmetricEncryptionKey)
+func (this *accessController) newEncryption() util.SymmetricEncryption {
+	e, _ := util.NewSymmetricEncryption(config.AppConfig.SymmetricEncryptionKey, "")
+	return e
 }
 
 func (this *accessController) encryptToken(token string) (string, error) {
-	t, err := util.Encrypt([]byte(token), this.symmetricEncryptionKey())
+	t, err := this.newEncryption().Encrypt([]byte(token))
 	if err != nil {
 		return "", err
 	}
@@ -121,7 +122,7 @@ func (this *accessController) decryptToken(token string) (string, error) {
 		return "", err
 	}
 
-	s, err := util.Decrypt(dst, this.symmetricEncryptionKey())
+	s, err := this.newEncryption().Decrypt(dst)
 	if err != nil {
 		return "", err
 	}

@@ -12,10 +12,16 @@ func (this *client) AddEmployeeManager(linkID string, opt []dbmodels.Corporation
 	toAdd := make(bson.A, 0, len(opt))
 	for i := range opt {
 		item := &opt[i]
+
+		email, err := this.encrypt.encryptStr(item.Email)
+		if err != nil {
+			return err
+		}
+
 		info := dCorpManager{
 			ID:       item.ID,
 			Name:     item.Name,
-			Email:    item.Email,
+			Email:    email,
 			Role:     item.Role,
 			Password: item.Password,
 			CorpID:   genCorpID(item.Email),
@@ -40,9 +46,20 @@ func (this *client) AddEmployeeManager(linkID string, opt []dbmodels.Corporation
 }
 
 func (this *client) DeleteEmployeeManager(linkID string, emails []string) ([]dbmodels.CorporationManagerCreateOption, dbmodels.IDBError) {
+	encryptedEmails := make([]string, 0, len(emails))
+	m := map[string]string{}
+	for _, item := range emails {
+		email, err := this.encrypt.encryptStr(item)
+		if err != nil {
+			return nil, err
+		}
+		encryptedEmails = append(encryptedEmails, email)
+		m[email] = item
+	}
+
 	elemFilter := bson.M{
 		fieldCorpID: genCorpID(emails[0]),
-		fieldEmail:  bson.M{"$in": emails},
+		fieldEmail:  bson.M{"$in": encryptedEmails},
 	}
 
 	var v cCorpSigning
@@ -62,7 +79,7 @@ func (this *client) DeleteEmployeeManager(linkID string, emails []string) ([]dbm
 	deleted := make([]dbmodels.CorporationManagerCreateOption, 0, len(ms))
 	for _, item := range ms {
 		deleted = append(deleted, dbmodels.CorporationManagerCreateOption{
-			Email: item.Email,
+			Email: m[item.Email],
 			Name:  item.Name,
 		})
 	}

@@ -22,11 +22,11 @@ const (
 	fileNameOfUploadingOrgSignatue = "org_signature_file"
 )
 
-func sendEmailToIndividual(to, from, subject string, builder email.IEmailMessageBulder) {
-	sendEmail([]string{to}, from, subject, builder)
+func sendEmailToIndividual(linkID, to, subject string, builder email.IEmailMessageBulder) {
+	sendEmail(linkID, []string{to}, subject, builder)
 }
 
-func sendEmail(to []string, from, subject string, builder email.IEmailMessageBulder) {
+func sendEmail(linkID string, to []string, subject string, builder email.IEmailMessageBulder) {
 	msg, err := builder.GenEmailMsg()
 	if err != nil {
 		beego.Error(err)
@@ -36,14 +36,14 @@ func sendEmail(to []string, from, subject string, builder email.IEmailMessageBul
 	msg.To = to
 	msg.Subject = subject
 
-	worker.GetEmailWorker().SendSimpleMessage(from, msg)
+	worker.GetEmailWorker().SendSimpleMessage(linkID, msg)
 }
 
-func notifyCorpAdmin(orgInfo *models.OrgInfo, info *dbmodels.CorporationManagerCreateOption) {
-	notifyCorpManagerWhenAdding(orgInfo, []dbmodels.CorporationManagerCreateOption{*info})
+func notifyCorpAdmin(linkID string, orgInfo *models.OrgInfo, info *dbmodels.CorporationManagerCreateOption) {
+	notifyCorpManagerWhenAdding(linkID, orgInfo, []dbmodels.CorporationManagerCreateOption{*info})
 }
 
-func notifyCorpManagerWhenAdding(orgInfo *models.OrgInfo, info []dbmodels.CorporationManagerCreateOption) {
+func notifyCorpManagerWhenAdding(linkID string, orgInfo *models.OrgInfo, info []dbmodels.CorporationManagerCreateOption) {
 	admin := (info[0].Role == dbmodels.RoleAdmin)
 	subject := fmt.Sprintf("Account on project of \"%s\"", orgInfo.OrgAlias)
 
@@ -60,7 +60,7 @@ func notifyCorpManagerWhenAdding(orgInfo *models.OrgInfo, info []dbmodels.Corpor
 			URLOfCLAPlatform: config.AppConfig.CLAPlatformURL,
 		}
 
-		sendEmailToIndividual(item.Email, orgInfo.OrgEmail, subject, d)
+		sendEmailToIndividual(linkID, item.Email, subject, d)
 	}
 }
 

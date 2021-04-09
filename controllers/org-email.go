@@ -59,7 +59,12 @@ func (this *EmailController) Auth() {
 	}
 
 	if token.RefreshToken == "" {
-		if _, err := models.GetOrgEmailInfo(emailAddr); err != nil {
+		v, err := models.HasOrgEmail(emailAddr)
+		if err != nil {
+			rs(errSystemError, err)
+			return
+		}
+		if !v {
 			rs(errNoRefreshToken, fmt.Errorf("no refresh token"))
 			return
 		}

@@ -19,7 +19,7 @@ var worker IEmailWorker
 
 type IEmailWorker interface {
 	GenCLAPDFForCorporationAndSendIt(string, string, string, models.OrgInfo, models.CorporationSigning, []models.CLAField)
-	SendSimpleMessage(orgEmail string, msg *email.EmailMessage)
+	SendSimpleMessage(string, *email.EmailMessage)
 }
 
 func GetEmailWorker() IEmailWorker {
@@ -49,7 +49,7 @@ func (this *emailWorker) GenCLAPDFForCorporationAndSendIt(linkID, orgSignatureFi
 			this.wg.Done()
 		}()
 
-		emailCfg, ec, err := getEmailClient(orgInfo.OrgEmail)
+		emailCfg, ec, err := getEmailClient(linkID)
 		if err != nil {
 			return
 		}
@@ -112,13 +112,13 @@ func (this *emailWorker) GenCLAPDFForCorporationAndSendIt(linkID, orgSignatureFi
 	go f()
 }
 
-func (this *emailWorker) SendSimpleMessage(orgEmail string, msg *email.EmailMessage) {
+func (this *emailWorker) SendSimpleMessage(linkID string, msg *email.EmailMessage) {
 	f := func() {
 		defer func() {
 			this.wg.Done()
 		}()
 
-		emailCfg, ec, err := getEmailClient(orgEmail)
+		emailCfg, ec, err := getEmailClient(linkID)
 		if err != nil {
 			return
 		}
@@ -148,8 +148,8 @@ func next(err error) {
 
 }
 
-func getEmailClient(orgEmail string) (*models.OrgEmail, email.IEmail, error) {
-	emailCfg, merr := models.GetOrgEmailInfo(orgEmail)
+func getEmailClient(linkID string) (*models.OrgEmail, email.IEmail, error) {
+	emailCfg, merr := models.GetOrgEmailOfLink(linkID)
 	if merr != nil {
 		beego.Info(merr.Error())
 		return nil, nil, merr

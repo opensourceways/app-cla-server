@@ -4,17 +4,19 @@ import (
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/rand"
+	"encoding/hex"
 	"errors"
+	"fmt"
 	"io"
 )
 
-func IsSymmetricEncryptionKeyValid(key string) error {
-	_, err := aes.NewCipher([]byte(key))
-	return err
+type SymmetricEncryption interface {
+	Encrypt(plaintext []byte) ([]byte, error)
+	Decrypt(ciphertext []byte) ([]byte, error)
 }
 
-func Encrypt(plaintext []byte, key []byte) ([]byte, error) {
-	c, err := aes.NewCipher(key)
+func NewSymmetricEncryption(key, nonce string) (SymmetricEncryption, error) {
+	c, err := aes.NewCipher([]byte(key))
 	if err != nil {
 		return nil, err
 	}
@@ -24,30 +26,45 @@ func Encrypt(plaintext []byte, key []byte) ([]byte, error) {
 		return nil, err
 	}
 
-	nonce := make([]byte, gcm.NonceSize())
-	if _, err = io.ReadFull(rand.Reader, nonce); err != nil {
-		return nil, err
+	se := symmetricEncryption{aead: gcm}
+
+	if nonce != "" {
+		nonce1, err := hex.DecodeString(nonce)
+		if err != nil {
+			return nil, err
+		}
+		if len(nonce1) != gcm.NonceSize() {
+			return nil, fmt.Errorf("the length of nonce for symmetric encryption is unmatched")
+		}
+		se.nonce = nonce1
 	}
 
-	return gcm.Seal(nonce, nonce, plaintext, nil), nil
+	return se, nil
 }
 
-func Decrypt(ciphertext []byte, key []byte) ([]byte, error) {
-	c, err := aes.NewCipher(key)
-	if err != nil {
-		return nil, err
+type symmetricEncryption struct {
+	aead  cipher.AEAD
+	nonce []byte
+}
+
+func (se symmetricEncryption) Encrypt(plaintext []byte) ([]byte, error) {
+	nonce := se.nonce
+	if nonce == nil {
+		nonce = make([]byte, se.aead.NonceSize())
+		if _, err := io.ReadFull(rand.Reader, nonce); err != nil {
+			return nil, err
+		}
 	}
 
-	gcm, err := cipher.NewGCM(c)
-	if err != nil {
-		return nil, err
-	}
+	return se.aead.Seal(nonce, nonce, plaintext, nil), nil
+}
 
-	nonceSize := gcm.NonceSize()
+func (se symmetricEncryption) Decrypt(ciphertext []byte) ([]byte, error) {
+	nonceSize := se.aead.NonceSize()
 	if len(ciphertext) < nonceSize {
 		return nil, errors.New("ciphertext too short")
 	}
 
 	nonce, ciphertext := ciphertext[:nonceSize], ciphertext[nonceSize:]
-	return gcm.Open(nil, nonce, ciphertext, nil)
+	return se.aead.Open(nil, nonce, ciphertext, nil)
 }

@@ -1,10 +1,6 @@
 package mongodb
 
-import (
-	"fmt"
-
-	"github.com/opensourceways/app-cla-server/dbmodels"
-)
+import "fmt"
 
 const (
 	fieldLinkID         = "link_id"
@@ -41,6 +37,7 @@ const (
 	fieldDate           = "date"
 	fieldCorp           = "corp"
 	fieldEnabled        = "enabled"
+	fieldInfo           = "info"
 
 	// 'ready' means the doc is ready to record the signing data currently.
 	// 'deleted' means the signing data is invalid.
@@ -79,7 +76,7 @@ type dIndividualSigning struct {
 	Date    string `bson:"date" json:"date" required:"true"`
 	Enabled bool   `bson:"enabled" json:"enabled"`
 
-	SigningInfo dbmodels.TypeSigningInfo `bson:"info" json:"info,omitempty"`
+	SigningInfo []byte `bson:"info" json:"-"`
 }
 
 type cCorpSigning struct {
@@ -105,7 +102,7 @@ type dCorpSigning struct {
 	AdminName  string `bson:"name" json:"name" required:"true"`
 	Date       string `bson:"date" json:"date" required:"true"`
 
-	SigningInfo dbmodels.TypeSigningInfo `bson:"info" json:"info,omitempty"`
+	SigningInfo []byte `bson:"info" json:"-"`
 }
 
 type dCorpManager struct {

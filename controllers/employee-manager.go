@@ -50,7 +50,7 @@ func (this *EmployeeManagerController) Post() {
 
 	this.sendSuccessResp(action + " successfully")
 
-	notifyCorpManagerWhenAdding(&pl.OrgInfo, added)
+	notifyCorpManagerWhenAdding(pl.LinkID, &pl.OrgInfo, added)
 }
 
 // @Title Delete
@@ -95,7 +95,7 @@ func (this *EmployeeManagerController) Delete() {
 			Org:        pl.OrgAlias,
 			ProjectURL: pl.ProjectURL(),
 		}
-		sendEmailToIndividual(item.Email, pl.OrgEmail, subject, msg)
+		sendEmailToIndividual(pl.LinkID, item.Email, subject, msg)
 	}
 }
 

@@ -16,8 +16,9 @@ import (
 var _ dbmodels.IModel = (*client)(nil)
 
 type client struct {
-	c  *mongo.Client
-	db *mongo.Database
+	c       *mongo.Client
+	db      *mongo.Database
+	encrypt encryption
 
 	vcCollection                string
 	orgEmailCollection          string
@@ -27,7 +28,7 @@ type client struct {
 	individualSigningCollection string
 }
 
-func Initialize(cfg *config.MongodbConfig) (*client, error) {
+func Initialize(cfg *config.MongodbConfig, encryptionKey, nonce string) (*client, error) {
 	c, err := mongo.NewClient(options.Client().ApplyURI(cfg.MongodbConn))
 	if err != nil {
 		return nil, err
@@ -45,9 +46,15 @@ func Initialize(cfg *config.MongodbConfig) (*client, error) {
 		return nil, err
 	}
 
+	e, err := newEncryption(encryptionKey, nonce)
+	if err != nil {
+		return nil, err
+	}
+
 	cli := &client{
-		c:  c,
-		db: c.Database(cfg.DBName),
+		c:       c,
+		db:      c.Database(cfg.DBName),
+		encrypt: e,
 
 		vcCollection:                cfg.VCCollection,
 		orgEmailCollection:          cfg.OrgEmailCollection,

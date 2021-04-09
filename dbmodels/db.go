@@ -56,6 +56,7 @@ type ICorporationManager interface {
 type IOrgEmail interface {
 	CreateOrgEmail(opt OrgEmailCreateInfo) IDBError
 	GetOrgEmailInfo(email string) (*OrgEmailCreateInfo, IDBError)
+	GetOrgEmailOfLink(linkID string) (*OrgEmailCreateInfo, IDBError)
 }
 
 type IIndividualSigning interface {

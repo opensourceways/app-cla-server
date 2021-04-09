@@ -20,6 +20,7 @@ const (
 	headerToken                    = "Token"
 	apiAccessController            = "access_controller"
 	fileNameOfUploadingOrgSignatue = "org_signature_file"
+	contentTypeOfPDF               = "application/pdf"
 )
 
 func sendEmailToIndividual(linkID, to, subject string, builder email.IEmailMessageBulder) {

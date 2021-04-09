@@ -5,6 +5,9 @@ import (
 	"io/ioutil"
 	"net"
 	"net/http"
+	"net/url"
+	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/astaxie/beego"
@@ -285,11 +288,45 @@ func (this *baseController) readInputFile(fileName string, maxSize int) ([]byte,
 	if maxSize > 0 && len(data) > maxSize {
 		return nil, newFailedApiResult(400, errTooBigPDF, fmt.Errorf("big pdf file"))
 	}
+
+	if http.DetectContentType(data) != contentTypeOfPDF {
+		return nil, newFailedApiResult(400, errNotPDFFile, fmt.Errorf("not pdf file"))
+	}
+
 	return data, nil
 }
 
-func (this *baseController) downloadFile(path string) {
-	this.Ctx.Output.Download(path)
+func (this *baseController) downloadFile(file string) {
+	output := this.Ctx.Output
+
+	// check get file error, file not found or other error.
+	if _, err := os.Stat(file); err != nil {
+		http.ServeFile(output.Context.ResponseWriter, output.Context.Request, file)
+		return
+	}
+
+	fName := filepath.Base(file)
+	//https://tools.ietf.org/html/rfc6266#section-4.3
+	fn := url.PathEscape(fName)
+	if fName == fn {
+		fn = "filename=" + fn
+	} else {
+		/**
+		  The parameters "filename" and "filename*" differ only in that
+		  "filename*" uses the encoding defined in [RFC5987], allowing the use
+		  of characters not present in the ISO-8859-1 character set
+		  ([ISO-8859-1]).
+		*/
+		fn = "filename=" + fName + "; filename*=utf-8''" + fn
+	}
+	output.ContentType(filepath.Ext(file))
+	output.Header("Content-Disposition", "attachment; "+fn)
+	output.Header("Content-Description", "File Transfer")
+	output.Header("Content-Transfer-Encoding", "binary")
+	output.Header("Expires", "0")
+	output.Header("Cache-Control", "must-revalidate")
+	output.Header("Pragma", "public")
+	http.ServeFile(output.Context.ResponseWriter, output.Context.Request, file)
 }
 
 func (this *baseController) redirect(webRedirectDir string) {

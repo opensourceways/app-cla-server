@@ -219,9 +219,13 @@ func (this *baseController) newAccessController(permission string) *accessContro
 }
 
 func (this *baseController) checkApiReqToken(ac *accessController, permission []string) *failedApiResult {
-	token := this.Ctx.Input.Cookie(apiAccessToken)
+	// Fetch token from Header firstly to avoid fetching wrong token when changing to login as corp manager
+	// from community manager. Because the token exists in the cookie always.
+	token := this.apiReqHeader(apiHeaderToken)
 	if token == "" {
-		return newFailedApiResult(401, errMissingToken, fmt.Errorf("no token passed"))
+		if token = this.Ctx.Input.Cookie(apiAccessToken); token == "" {
+			return newFailedApiResult(401, errMissingToken, fmt.Errorf("no token passed"))
+		}
 	}
 
 	if err := ac.parseToken(token, config.AppConfig.APITokenKey); err != nil {

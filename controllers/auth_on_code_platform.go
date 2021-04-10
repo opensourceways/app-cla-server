@@ -92,14 +92,15 @@ func (this *AuthController) Callback() {
 		rs(errSystemError, err)
 		return
 	}
-
 	this.setCookies(map[string]string{apiAccessToken: at}, true)
+
+	cookies := map[string]string{"action": purpose, "platform": platform}
 	if permission == PermissionIndividualSigner {
-		this.setCookies(map[string]string{
-			"sign_user":  pl.User,
-			"sign_email": pl.Email,
-		}, false)
+		cookies["sign_user"] = pl.User
+		cookies["sign_email"] = pl.Email
 	}
+	this.setCookies(cookies, false)
+
 	this.redirect(authHelper.WebRedirectDir(true))
 }
 
@@ -160,7 +161,7 @@ func (this *AuthController) Auth() {
 		return
 	}
 
-	this.sendSuccessResp(map[string]string{"access_token": at})
+	this.sendSuccessResp(map[string]string{apiAccessToken: at})
 }
 
 func (this *AuthController) genACPayload(platform, permission, platformToken string) (*acForCodePlatformPayload, string, error) {

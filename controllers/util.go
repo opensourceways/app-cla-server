@@ -17,6 +17,7 @@ import (
 )
 
 const (
+	apiHeaderToken                 = "Token"
 	apiAccessToken                 = "access_token"
 	apiAccessController            = "access_controller"
 	contentTypeOfPDF               = "application/pdf"

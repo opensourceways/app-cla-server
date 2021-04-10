@@ -30,4 +30,4 @@ mongodb:
 obs:
   name: huaweicloud-obs
   bucket: cla
-  credential_file: ./conf/huaweicloud_obs_credential.yaml
+  credential_file: ./conf/obs_credential.yaml

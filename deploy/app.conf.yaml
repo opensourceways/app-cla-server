@@ -32,6 +32,6 @@ mongodb:
   individual_signing_collection: individual_signings
 
 obs:
-  name: huaweicloud-obs
-  bucket: cla
-  credential_file: ./conf/platforms/huaweicloud_obs_credential.yaml
+  name: "${OBS_SERVICE}"
+  bucket: "${OBS_BUCKET}"
+  credential_file: ./conf/platforms/obs_credential.yaml

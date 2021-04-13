@@ -10,7 +10,7 @@ import (
 func checkEmailFormat(email string) IModelError {
 	rg := regexp.MustCompile("^[a-zA-Z0-9_.-]+@[a-zA-Z0-9-]+(\\.[a-zA-Z0-9-]+)*\\.[a-zA-Z]{2,6}$")
 	if !rg.MatchString(email) {
-		return newModelError(ErrNotAnEmail, fmt.Errorf("invalid email:%s", email))
+		return newModelError(ErrNotAnEmail, fmt.Errorf("invalid email"))
 	}
 	return nil
 }
@@ -18,7 +18,7 @@ func checkEmailFormat(email string) IModelError {
 func checkManagerID(mid string) IModelError {
 	rg := regexp.MustCompile("^[a-zA-Z0-9_.-]+_[a-zA-Z0-9-]+(\\.[a-zA-Z0-9-]+)*\\.[a-zA-Z]{2,6}$")
 	if !rg.MatchString(mid) {
-		return newModelError(ErrInvalidManagerID, fmt.Errorf("invalid manager id:%s", mid))
+		return newModelError(ErrInvalidManagerID, fmt.Errorf("invalid manager id"))
 	}
 	return nil
 }
@@ -26,7 +26,7 @@ func checkManagerID(mid string) IModelError {
 func checkPassword(s string) IModelError {
 	rg := regexp.MustCompile("^[\x21-\x7E]+$")
 	if !rg.MatchString(s) {
-		return newModelError(ErrInvalidPassword, fmt.Errorf("invalid manager id:%s", s))
+		return newModelError(ErrInvalidPassword, fmt.Errorf("invalid password"))
 	}
 	return nil
 }

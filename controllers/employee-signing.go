@@ -17,7 +17,7 @@ type EmployeeSigningController struct {
 func (this *EmployeeSigningController) Prepare() {
 	if this.isPostRequest() {
 		// sign as employee
-		this.apiPrepare(PermissionIndividualSigner)
+		this.apiPrepare("")
 	} else {
 		if strings.HasSuffix(this.routerPattern(), "/:link_id/:email") {
 			this.apiPrepare(PermissionOwnerOfOrg)
@@ -56,12 +56,6 @@ func (this *EmployeeSigningController) Post() {
 	linkID := this.GetString(":link_id")
 	claLang := this.GetString(":cla_lang")
 
-	pl, fr := this.tokenPayloadBasedOnCodePlatform()
-	if fr != nil {
-		this.sendFailedResultAsResp(fr, action)
-		return
-	}
-
 	var info models.EmployeeSigning
 	if fr := this.fetchInputPayload(&info); fr != nil {
 		this.sendFailedResultAsResp(fr, action)
@@ -69,7 +63,7 @@ func (this *EmployeeSigningController) Post() {
 	}
 	info.CLALanguage = claLang
 
-	if err := (&info).Validate(linkID, pl.User, pl.Email); err != nil {
+	if err := (&info).Validate(linkID); err != nil {
 		this.sendModelErrorAsResp(err, action)
 		return
 	}
@@ -90,7 +84,7 @@ func (this *EmployeeSigningController) Post() {
 		return
 	}
 
-	fr = signHelper(
+	fr := signHelper(
 		linkID, claLang, dbmodels.ApplyToIndividual,
 		func(claInfo *models.CLAInfo) *failedApiResult {
 			if claInfo.CLAHash != this.GetString(":cla_hash") {

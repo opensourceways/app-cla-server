@@ -1,8 +1,6 @@
 package models
 
 import (
-	"fmt"
-
 	"github.com/opensourceways/app-cla-server/dbmodels"
 	"github.com/opensourceways/app-cla-server/util"
 )
@@ -12,26 +10,23 @@ func InitializeIndividualSigning(linkID string, cla *CLAInfo) IModelError {
 	return parseDBError(err)
 }
 
-type IndividualSigning dbmodels.IndividualSigningInfo
+type IndividualSigning struct {
+	dbmodels.IndividualSigningInfo
 
-func (this *IndividualSigning) Validate(userID, email string) IModelError {
-	if this.Email != email {
-		return newModelError(ErrUnmatchedEmail, fmt.Errorf("unmatched email"))
-	}
-
-	if this.ID != userID {
-		return newModelError(ErrUnmatchedUserID, fmt.Errorf("unmatched user id"))
-	}
-
-	return nil
+	VerificationCode string `json:"verification_code"`
 }
 
-func (this *IndividualSigning) Create(linkID string, enabled bool) IModelError {
-	this.Date = util.Date()
-	this.Enabled = enabled
+func (isign *IndividualSigning) Validate(linkID string) IModelError {
+	return checkVerificationCode(isign.Email, isign.VerificationCode, linkID)
+}
+
+func (isign *IndividualSigning) Create(linkID string, enabled bool) IModelError {
+	isign.Date = util.Date()
+	isign.Enabled = enabled
+	isign.ID = isign.Name
 
 	err := dbmodels.GetDB().SignIndividualCLA(
-		linkID, (*dbmodels.IndividualSigningInfo)(this),
+		linkID, (*dbmodels.IndividualSigningInfo)(&isign.IndividualSigningInfo),
 	)
 	if err == nil {
 		return nil

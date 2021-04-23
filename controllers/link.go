@@ -16,9 +16,11 @@ type LinkController struct {
 }
 
 func (this *LinkController) Prepare() {
+	p := ""
 	if !strings.HasSuffix(this.routerPattern(), ":apply_to") {
-		this.apiPrepare(PermissionOwnerOfOrg)
+		p = PermissionOwnerOfOrg
 	}
+	this.apiPrepare(p)
 }
 
 // @Title Link

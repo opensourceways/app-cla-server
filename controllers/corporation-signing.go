@@ -71,7 +71,6 @@ func (this *CorporationSigningController) Post() {
 			}
 
 			claFile := genCLAFilePath(linkID, dbmodels.ApplyToCorporation, claLang)
-			orgSignatureFile := genOrgSignatureFilePath(linkID, claLang)
 			if fr := this.checkCLAForSigning(claFile, claInfo); fr != nil {
 				return fr
 			}
@@ -86,7 +85,7 @@ func (this *CorporationSigningController) Post() {
 			}
 
 			worker.GetEmailWorker().GenCLAPDFForCorporationAndSendIt(
-				linkID, orgSignatureFile, claFile, *orgInfo,
+				linkID, claFile, *orgInfo,
 				info.CorporationSigning, claInfo.Fields,
 			)
 
@@ -201,10 +200,9 @@ func (this *CorporationSigningController) ResendCorpSigningEmail() {
 	}
 
 	claFile := genCLAFilePath(linkID, dbmodels.ApplyToCorporation, signingInfo.CLALanguage)
-	orgSignatureFile := genOrgSignatureFilePath(linkID, signingInfo.CLALanguage)
 
 	worker.GetEmailWorker().GenCLAPDFForCorporationAndSendIt(
-		linkID, orgSignatureFile, claFile, *pl.orgInfo(linkID),
+		linkID, claFile, *pl.orgInfo(linkID),
 		models.CorporationSigning{
 			CorporationSigningBasicInfo: signingInfo.CorporationSigningBasicInfo,
 			Info:                        signingInfo.Info,

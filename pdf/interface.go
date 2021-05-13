@@ -14,7 +14,7 @@ type IPDFGenerator interface {
 	LangSupported() map[string]bool
 	GetBlankSignaturePath(string) string
 
-	GenPDFForCorporationSigning(linkID, orgSignatureFile, claFile string, orgInfo *models.OrgInfo, signing *models.CorporationSigning, claFields []models.CLAField) (string, error)
+	GenPDFForCorporationSigning(linkID, claFile string, signing *models.CorporationSigning, claFields []models.CLAField) (string, error)
 }
 
 var generator *pdfGenerator
@@ -90,6 +90,8 @@ func newGeneratorForEnglish() (*corpSigningPDF, error) {
 			{"Title", "Title"},
 			{"Community", "Corporation"},
 		},
+		seal:          "Seal",
+		signature:     "Signature of legal/authorized representative",
 		signatureDate: "Date",
 
 		newPDF: func() *gofpdf.Fpdf {
@@ -138,6 +140,8 @@ func newGeneratorForChinese() (*corpSigningPDF, error) {
 			{"职位", "职位"},
 			{"社区名称", "企业名称"},
 		},
+		seal:          "盖章",
+		signature:     "法定/授权代表签字",
 		signatureDate: "日期",
 
 		newPDF: func() *gofpdf.Fpdf {

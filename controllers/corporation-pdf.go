@@ -174,12 +174,6 @@ func (this *CorporationPDFController) Preview() {
 		return
 	}
 
-	orgInfo, merr := models.GetOrgOfLink(linkID)
-	if merr != nil {
-		this.sendModelErrorAsResp(merr, action)
-		return
-	}
-
 	claInfo, merr := models.GetCLAInfoToSign(linkID, claLang, dbmodels.ApplyToCorporation)
 	if merr != nil {
 		this.sendModelErrorAsResp(merr, action)
@@ -191,7 +185,6 @@ func (this *CorporationPDFController) Preview() {
 	}
 
 	claFile := genCLAFilePath(linkID, dbmodels.ApplyToCorporation, claLang)
-	orgSignatureFile := genOrgSignatureFilePath(linkID, claLang)
 
 	value := map[string]string{}
 	for _, item := range claInfo.Fields {
@@ -207,7 +200,7 @@ func (this *CorporationPDFController) Preview() {
 	}
 
 	outFile, err := pdf.GetPDFGenerator().GenPDFForCorporationSigning(
-		linkID, orgSignatureFile, claFile, orgInfo, &signing, claInfo.Fields)
+		linkID, claFile, &signing, claInfo.Fields)
 	if err != nil {
 		this.sendFailedResponse(400, errSystemError, err, action)
 		return

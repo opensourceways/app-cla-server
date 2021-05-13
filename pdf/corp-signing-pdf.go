@@ -33,6 +33,8 @@ type corpSigningPDF struct {
 	footerNumber func(int) string
 
 	signatureItems [][]string
+	seal           string
+	signature      string
 	signatureDate  string
 	newPDF         func() *gofpdf.Fpdf
 }
@@ -96,6 +98,20 @@ func (this *corpSigningPDF) welcome(pdf *gofpdf.Fpdf, org, email string) {
 
 	setFont(pdf, this.welcomeFont)
 	multlines(pdf, this.gh, buf.String())
+}
+
+func addItem(pdf *gofpdf.Fpdf, gh float64, title, value string, needBorder bool) {
+	pdf.CellFormat(0, gh, fmt.Sprintf("%s:", title), "", 0, "R", false, 0, "")
+
+	pdf.Cell(2, gh, " ")
+
+	b := ""
+	if needBorder {
+		b = "B"
+	}
+	pdf.MultiCell(130, gh, value, b, "L", false)
+
+	pdf.Ln(-1)
 }
 
 func (this *corpSigningPDF) contact(pdf *gofpdf.Fpdf, items map[string]string, orders []string, titles map[string]string) {
@@ -176,6 +192,30 @@ func (this *corpSigningPDF) genSignatureItems(pdf *gofpdf.Fpdf, items [][]string
 	for i := 1; i < len(items); i++ {
 		addSignatureItem(pdf, gh, items[i][0], items[i][1], "", "")
 	}
+}
+
+func (c *corpSigningPDF) addSignature(pdf *gofpdf.Fpdf, items map[string]string, orders []string, titles map[string]string) {
+	f := func(title, value string, border bool) {
+		addItem(pdf, c.gh, title, value, border)
+	}
+
+	setFont(pdf, c.contactFont)
+
+	for _, i := range orders {
+		f(titles[i], items[i], true)
+	}
+
+	blankLine := func(n int) {
+		for i := 0; i < n; i++ {
+			pdf.Ln(-1)
+		}
+	}
+
+	blankLine(2)
+	f(c.signature, "", false)
+	f(c.seal, "", false)
+	blankLine(5)
+	f(c.signatureDate, "", false)
 }
 
 func addSignatureItem(pdf *gofpdf.Fpdf, gh float64, ltitle, rtitle, lvalue, rvalue string) {

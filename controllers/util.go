@@ -184,11 +184,6 @@ func saveCorpCLAAtLocal(cla *models.CLACreateOpt, linkID string) *failedApiResul
 		if err := cla.SaveCLAAtLocal(path); err != nil {
 			return newFailedApiResult(500, errSystemError, err)
 		}
-
-		path = genOrgSignatureFilePath(linkID, cla.Language)
-		if err := cla.SaveSignatueAtLocal(path); err != nil {
-			return newFailedApiResult(500, errSystemError, err)
-		}
 	}
 
 	return nil

@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/opensourceways/app-cla-server/config"
 	"github.com/opensourceways/app-cla-server/dbmodels"
 	"github.com/opensourceways/app-cla-server/models"
 	"github.com/opensourceways/app-cla-server/pdf"
@@ -44,17 +43,6 @@ func (this *CLAController) Add() {
 	if fr := this.fetchInputPayloadFromFormData(input); fr != nil {
 		this.sendFailedResultAsResp(fr, action)
 		return
-	}
-
-	if applyTo == dbmodels.ApplyToCorporation {
-		data, fr := this.readInputFile(
-			fileNameOfUploadingOrgSignatue, config.AppConfig.MaxSizeOfOrgSignaturePDF,
-		)
-		if fr != nil {
-			this.sendFailedResultAsResp(fr, action)
-			return
-		}
-		input.SetOrgSignature(&data)
 	}
 
 	if merr := input.Validate(applyTo, pdf.GetPDFGenerator().LangSupported()); merr != nil {

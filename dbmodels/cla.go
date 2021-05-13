@@ -41,15 +41,11 @@ type CLADetail struct {
 }
 
 type CLACreateOption struct {
-	OrgSignature     *[]byte `json:"org_signature"`
-	OrgSignatureHash string
-
 	CLADetail
 }
 
 type CLAInfo struct {
-	CLALang          string
-	CLAHash          string
-	OrgSignatureHash string
-	Fields           []Field
+	CLALang string
+	CLAHash string
+	Fields  []Field
 }

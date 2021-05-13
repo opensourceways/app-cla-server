@@ -72,7 +72,7 @@ func (this *CorporationSigningController) Post() {
 
 			claFile := genCLAFilePath(linkID, dbmodels.ApplyToCorporation, claLang)
 			orgSignatureFile := genOrgSignatureFilePath(linkID, claLang)
-			if fr := this.checkCLAForSigning(claFile, orgSignatureFile, claInfo); fr != nil {
+			if fr := this.checkCLAForSigning(claFile, claInfo); fr != nil {
 				return fr
 			}
 
@@ -100,7 +100,7 @@ func (this *CorporationSigningController) Post() {
 	}
 }
 
-func (this *CorporationSigningController) checkCLAForSigning(claFile, orgSignatureFile string, claInfo *dbmodels.CLAInfo) *failedApiResult {
+func (this *CorporationSigningController) checkCLAForSigning(claFile string, claInfo *dbmodels.CLAInfo) *failedApiResult {
 	md5, err := util.Md5sumOfFile(claFile)
 	if err != nil {
 		return newFailedApiResult(500, errSystemError, err)
@@ -109,13 +109,6 @@ func (this *CorporationSigningController) checkCLAForSigning(claFile, orgSignatu
 		return newFailedApiResult(500, errSystemError, fmt.Errorf("local cla is unmatched"))
 	}
 
-	md5, err = util.Md5sumOfFile(orgSignatureFile)
-	if err != nil {
-		return newFailedApiResult(500, errSystemError, err)
-	}
-	if md5 != claInfo.OrgSignatureHash {
-		return newFailedApiResult(500, errSystemError, fmt.Errorf("local org signature is unmatched"))
-	}
 	return nil
 }
 

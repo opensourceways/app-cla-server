@@ -91,7 +91,7 @@ func newGeneratorForEnglish() (*corpSigningPDF, error) {
 			{"Community", "Corporation"},
 		},
 		seal:          "Seal",
-		signature:     "Signature of legal/authorized representative",
+		signature:     "Signature of Legal/Authorized Representative",
 		signatureDate: "Date",
 
 		newPDF: func() *gofpdf.Fpdf {

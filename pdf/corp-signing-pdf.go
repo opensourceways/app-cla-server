@@ -101,17 +101,16 @@ func (this *corpSigningPDF) welcome(pdf *gofpdf.Fpdf, org, email string) {
 }
 
 func addItem(pdf *gofpdf.Fpdf, gh float64, title, value string, needBorder bool) {
-	pdf.CellFormat(0, gh, fmt.Sprintf("%s:", title), "", 0, "R", false, 0, "")
-
-	pdf.Cell(2, gh, " ")
+	w := 180.0
+	pdf.CellFormat(w, gh, fmt.Sprintf("%s:", title), "", 0, "L", false, 0, "")
+	blankLine(pdf, 2)
 
 	b := ""
 	if needBorder {
 		b = "B"
 	}
-	pdf.MultiCell(130, gh, value, b, "L", false)
-
-	pdf.Ln(-1)
+	pdf.MultiCell(w, gh, "    "+value, b, "L", false)
+	blankLine(pdf, 2)
 }
 
 func (this *corpSigningPDF) contact(pdf *gofpdf.Fpdf, items map[string]string, orders []string, titles map[string]string) {
@@ -205,17 +204,13 @@ func (c *corpSigningPDF) addSignature(pdf *gofpdf.Fpdf, items map[string]string,
 		f(titles[i], items[i], true)
 	}
 
-	blankLine := func(n int) {
-		for i := 0; i < n; i++ {
-			pdf.Ln(-1)
-		}
-	}
+	f(c.signature, "", true)
 
-	blankLine(2)
-	f(c.signature, "", false)
-	f(c.seal, "", false)
-	blankLine(5)
-	f(c.signatureDate, "", false)
+	w := 92.5
+	gh := c.gh
+	pdf.Cell(w, gh, c.seal+":")
+	pdf.Cell(5, gh, "")
+	pdf.CellFormat(w, gh, c.signatureDate+":", "", 1, "L", false, 0, "")
 }
 
 func addSignatureItem(pdf *gofpdf.Fpdf, gh float64, ltitle, rtitle, lvalue, rvalue string) {
@@ -246,4 +241,10 @@ func multlines(pdf *gofpdf.Fpdf, gh float64, content string) {
 
 func setFont(pdf *gofpdf.Fpdf, font fontInfo) {
 	pdf.SetFont(font.font, "", font.size)
+}
+
+func blankLine(pdf *gofpdf.Fpdf, n int) {
+	for i := 0; i < n; i++ {
+		pdf.Ln(-1)
+	}
 }

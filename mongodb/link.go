@@ -208,19 +208,14 @@ func toDocOfCLA(cla *dbmodels.CLACreateOption) (bson.M, dbmodels.IDBError) {
 		URL:  cla.URL,
 		Text: cla.Text,
 		DCLAInfo: DCLAInfo{
-			Fields:           toDocOfCLAField(cla.Fields),
-			Language:         cla.Language,
-			CLAHash:          cla.CLAHash,
-			OrgSignatureHash: cla.OrgSignatureHash,
+			Fields:   toDocOfCLAField(cla.Fields),
+			Language: cla.Language,
+			CLAHash:  cla.CLAHash,
 		},
 	}
 	r, err := structToMap(info)
 	if err != nil {
 		return nil, err
-	}
-
-	if cla.OrgSignature != nil {
-		r[fieldOrgSignature] = *cla.OrgSignature
 	}
 
 	return r, nil

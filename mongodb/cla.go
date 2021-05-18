@@ -181,9 +181,8 @@ func (this *client) GetCLAInfoToSign(linkID, claLang, applyTo string) (*dbmodels
 
 	item := &(doc[0])
 	return &dbmodels.CLAInfo{
-		CLAHash:          item.CLAHash,
-		OrgSignatureHash: item.OrgSignatureHash,
-		Fields:           toModelOfCLAFields(item.Fields),
+		CLAHash: item.CLAHash,
+		Fields:  toModelOfCLAFields(item.Fields),
 	}, nil
 }
 

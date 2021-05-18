@@ -40,7 +40,19 @@ func (this *pdfGenerator) generator(claLang string) *corpSigningPDF {
 	}
 	return nil
 }
-func (this *pdfGenerator) GenPDFForCorporationSigning(linkID, orgSignatureFile, claFile string, orgInfo *models.OrgInfo, signing *models.CorporationSigning, claFields []models.CLAField) (string, error) {
+
+func (this *pdfGenerator) GenPDFForCorporationSigning(linkID, claFile string, signing *models.CorporationSigning, claFields []models.CLAField) (string, error) {
+	corp := this.generator(signing.CLALanguage)
+	if corp == nil {
+		return "", fmt.Errorf("unknown cla language:%s", signing.CLALanguage)
+	}
+
+	outFile := util.GenFilePath(this.pdfOutDir, genPDFFileName(linkID, signing.AdminEmail, ""))
+	err := genCorporPDF(corp, signing, claFields, claFile, outFile)
+	return outFile, err
+}
+
+func (this *pdfGenerator) GenPDFForCorporationSigning1(linkID, orgSignatureFile, claFile string, orgInfo *models.OrgInfo, signing *models.CorporationSigning, claFields []models.CLAField) (string, error) {
 	corp := this.generator(signing.CLALanguage)
 	if corp == nil {
 		return "", fmt.Errorf("unknown cla language:%s", signing.CLALanguage)
@@ -59,6 +71,33 @@ func (this *pdfGenerator) GenPDFForCorporationSigning(linkID, orgSignatureFile, 
 	}
 
 	return outfile, nil
+}
+
+func genCorporPDF(c *corpSigningPDF, signing *models.CorporationSigning, claFields []models.CLAField, claFile, outFile string) error {
+	text, err := ioutil.ReadFile(claFile)
+	if err != nil {
+		return fmt.Errorf("failed to read cla file(%s): %s", claFile, err.Error())
+	}
+
+	pdf := c.begin()
+
+	// first page
+	pdf.AddPage()
+
+	c.cla(pdf, string(text))
+
+	// second page
+	pdf.AddPage()
+	orders, titles := BuildCorpContact(claFields)
+	c.addSignature(pdf, signing.Info, orders, titles)
+
+	if !util.IsFileNotExist(outFile) {
+		os.Remove(outFile)
+	}
+	if err := c.end(pdf, outFile); err != nil {
+		return fmt.Errorf("generate signing pdf of corp failed: %s", err.Error())
+	}
+	return nil
 }
 
 func genCorporPDFMissingSig(c *corpSigningPDF, orgInfo *models.OrgInfo, signing *models.CorporationSigning, claFields []models.CLAField, claFile, outFile string) error {

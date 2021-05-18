@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/opensourceways/app-cla-server/config"
 	"github.com/opensourceways/app-cla-server/dbmodels"
 	"github.com/opensourceways/app-cla-server/models"
 	"github.com/opensourceways/app-cla-server/pdf"
@@ -44,17 +43,6 @@ func (this *LinkController) Link() {
 	if fr := this.fetchInputPayloadFromFormData(input); fr != nil {
 		this.sendFailedResultAsResp(fr, action)
 		return
-	}
-
-	if input.CorpCLA != nil {
-		data, fr := this.readInputFile(
-			fileNameOfUploadingOrgSignatue, config.AppConfig.MaxSizeOfOrgSignaturePDF,
-		)
-		if fr != nil {
-			sendResp(fr)
-			return
-		}
-		input.CorpCLA.SetOrgSignature(&data)
 	}
 
 	if merr := input.Validate(pdf.GetPDFGenerator().LangSupported()); merr != nil {
@@ -112,7 +100,6 @@ func (this *LinkController) Link() {
 
 func (this *LinkController) initializeSigning(input *models.LinkCreateOption, linkID string, orgRepo *dbmodels.OrgRepo) *failedApiResult {
 	var info *dbmodels.CLAInfo
-
 	if input.IndividualCLA != nil {
 		info = input.IndividualCLA.GenCLAInfo()
 	}
@@ -125,9 +112,10 @@ func (this *LinkController) initializeSigning(input *models.LinkCreateOption, li
 		OrgEmail: input.OrgEmail,
 		OrgAlias: input.OrgAlias,
 	}
-	info = nil
 	if input.CorpCLA != nil {
 		info = input.CorpCLA.GenCLAInfo()
+	} else {
+		info = nil
 	}
 	if merr := models.InitializeCorpSigning(linkID, &orgInfo, info); merr != nil {
 		return parseModelError(merr)
@@ -265,15 +253,9 @@ func LoadLinks() error {
 			cla := &info.CorpCLAs[j]
 			text := []byte(cla.Text)
 
-			signature, err := models.DownloadCorpCLAPDF(linkID, cla.Language)
-			if err != nil {
-				return err
-			}
-
 			opt := &models.CLACreateOpt{}
 			opt.Language = cla.Language
 			opt.SetCLAContent(&text)
-			opt.SetOrgSignature(&signature)
 
 			if fr := saveCorpCLAAtLocal(opt, linkID); fr != nil {
 				return fr.reason

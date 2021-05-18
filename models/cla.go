@@ -21,16 +21,11 @@ type CLAField = dbmodels.Field
 type CLACreateOpt struct {
 	dbmodels.CLAData
 
-	orgSignature *[]byte `json:"-"`
-	content      *[]byte `json:"-"`
+	content *[]byte `json:"-"`
 }
 
 func (this *CLACreateOpt) SetCLAContent(data *[]byte) {
 	this.content = data
-}
-
-func (this *CLACreateOpt) SetOrgSignature(data *[]byte) {
-	this.orgSignature = data
 }
 
 func (this *CLACreateOpt) toCLACreateOption() *dbmodels.CLACreateOption {
@@ -40,18 +35,7 @@ func (this *CLACreateOpt) toCLACreateOption() *dbmodels.CLACreateOption {
 			Text:    string(*this.content),
 			CLAHash: util.Md5sumOfBytes(this.content),
 		},
-		OrgSignature:     this.orgSignature,
-		OrgSignatureHash: util.Md5sumOfBytes(this.orgSignature),
 	}
-}
-
-func (this *CLACreateOpt) SaveSignatueAtLocal(path string) error {
-	if this.orgSignature == nil {
-		return nil
-	}
-
-	os.Remove(path)
-	return ioutil.WriteFile(path, *this.orgSignature, 0644)
 }
 
 func (this *CLACreateOpt) SaveCLAAtLocal(path string) error {
@@ -90,10 +74,9 @@ func (this *CLACreateOpt) AddCLAInfo(linkID, applyTo string) IModelError {
 
 func (this *CLACreateOpt) GenCLAInfo() *CLAInfo {
 	return &CLAInfo{
-		OrgSignatureHash: util.Md5sumOfBytes(this.orgSignature),
-		CLAHash:          util.Md5sumOfBytes(this.content),
-		CLALang:          this.Language,
-		Fields:           this.Fields,
+		CLAHash: util.Md5sumOfBytes(this.content),
+		CLALang: this.Language,
+		Fields:  this.Fields,
 	}
 }
 
@@ -123,10 +106,6 @@ func (this *CLACreateOpt) Validate(applyTo string, langs map[string]bool) IModel
 		return newModelError(ErrSystemError, err)
 	}
 	this.content = text
-
-	if applyTo == dbmodels.ApplyToCorporation && this.orgSignature == nil {
-		return newModelError(ErrNoOrgSignature, fmt.Errorf("no signatrue"))
-	}
 
 	return nil
 }

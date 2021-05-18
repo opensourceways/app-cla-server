@@ -18,7 +18,7 @@ import (
 var worker IEmailWorker
 
 type IEmailWorker interface {
-	GenCLAPDFForCorporationAndSendIt(string, string, string, models.OrgInfo, models.CorporationSigning, []models.CLAField)
+	GenCLAPDFForCorporationAndSendIt(string, string, models.OrgInfo, models.CorporationSigning, []models.CLAField)
 	SendSimpleMessage(orgEmail string, msg *email.EmailMessage)
 }
 
@@ -43,7 +43,7 @@ func (this *emailWorker) Shutdown() {
 	this.wg.Wait()
 }
 
-func (this *emailWorker) GenCLAPDFForCorporationAndSendIt(linkID, orgSignatureFile, claFile string, orgInfo models.OrgInfo, signing models.CorporationSigning, claFields []models.CLAField) {
+func (this *emailWorker) GenCLAPDFForCorporationAndSendIt(linkID, claFile string, orgInfo models.OrgInfo, signing models.CorporationSigning, claFields []models.CLAField) {
 	f := func() {
 		defer func() {
 			this.wg.Done()
@@ -89,7 +89,7 @@ func (this *emailWorker) GenCLAPDFForCorporationAndSendIt(linkID, orgSignatureFi
 			}
 
 			if file == "" || util.IsFileNotExist(file) {
-				file, err = this.pdfGenerator.GenPDFForCorporationSigning(linkID, orgSignatureFile, claFile, &orgInfo, &signing, claFields)
+				file, err = this.pdfGenerator.GenPDFForCorporationSigning(linkID, claFile, &signing, claFields)
 				if err != nil {
 					next(fmt.Errorf(
 						"Failed to generate pdf for corp signing(%s:%s:%s/%s): %s",

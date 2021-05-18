@@ -3,6 +3,7 @@ package controllers
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/opensourceways/app-cla-server/dbmodels"
 	"github.com/opensourceways/app-cla-server/models"
@@ -15,7 +16,11 @@ type CLAController struct {
 }
 
 func (this *CLAController) Prepare() {
-	this.apiPrepare(PermissionOwnerOfOrg)
+	if strings.HasSuffix(this.routerPattern(), "/:hash") {
+		this.apiPrepare("")
+	} else {
+		this.apiPrepare(PermissionOwnerOfOrg)
+	}
 }
 
 // @Title Link
@@ -102,6 +107,21 @@ func (this *CLAController) Delete() {
 	this.sendSuccessResp("delete cla successfully")
 }
 
+// @Title Download CLA PDF
+// @Description get cla pdf
+// @Success 200
+// @router /:link_id/:apply_to/:language/:hash [get]
+func (this *CLAController) DownloadPDF() {
+	path := genCLAFilePath(
+		this.GetString(":link_id"),
+		this.GetString(":apply_to"),
+		this.GetString(":language"),
+		this.GetString(":hash"),
+	)
+
+	this.downloadFile(path)
+}
+
 // @Title List
 // @Description list clas of link
 // @Param	link_id		path 	string	true		"link id"
@@ -144,10 +164,8 @@ func addCLA(linkID, applyTo string, input *models.CLACreateOpt) *failedApiResult
 		return parseModelError(merr)
 	}
 
-	if applyTo == dbmodels.ApplyToCorporation {
-		if fr := saveCorpCLAAtLocal(input, linkID); fr != nil {
-			return fr
-		}
+	if fr := createCLA(input, linkID, applyTo); fr != nil {
+		return fr
 	}
 
 	if merr := input.AddCLAInfo(linkID, applyTo); merr != nil {
@@ -177,7 +195,7 @@ func deleteCLA(linkID, applyTo, claLang string) *failedApiResult {
 	models.DeleteCLAInfo(linkID, applyTo, claLang)
 
 	if applyTo == dbmodels.ApplyToCorporation {
-		path := genCLAFilePath(linkID, applyTo, claLang)
+		path := genCLAFilePath(linkID, applyTo, claLang, claInfo.CLAHash)
 		if !util.IsFileNotExist(path) {
 			os.Remove(path)
 		}
@@ -187,5 +205,21 @@ func deleteCLA(linkID, applyTo, claLang string) *failedApiResult {
 			os.Remove(path)
 		}
 	}
+	return nil
+}
+
+func createCLA(cla *models.CLACreateOpt, linkID, applyTo string) *failedApiResult {
+	if cla == nil {
+		return nil
+	}
+
+	if fr := saveCorpCLAAtLocal(cla, linkID, applyTo); fr != nil {
+		return fr
+	}
+
+	if err := cla.UploadCLAPDF(linkID, applyTo); err != nil {
+		return newFailedApiResult(500, errSystemError, err)
+	}
+
 	return nil
 }

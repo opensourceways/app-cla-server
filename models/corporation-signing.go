@@ -109,7 +109,7 @@ func GetCorpSigningBasicInfo(linkID, email string) (*dbmodels.CorporationSigning
 	return v, parseDBError(err)
 }
 
-func GetCorpSigningDetail(linkID, email string) ([]dbmodels.Field, *dbmodels.CorpSigningCreateOpt, IModelError) {
+func GetCorpSigningDetail(linkID, email string) (*dbmodels.CLAInfo, *dbmodels.CorpSigningCreateOpt, IModelError) {
 	f, s, err := dbmodels.GetDB().GetCorpSigningDetail(linkID, email)
 	if err == nil {
 		return f, s, nil

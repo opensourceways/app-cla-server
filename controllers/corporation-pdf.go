@@ -184,7 +184,7 @@ func (this *CorporationPDFController) Preview() {
 		return
 	}
 
-	claFile := genCLAFilePath(linkID, dbmodels.ApplyToCorporation, claLang)
+	claFile := genCLAFilePath(linkID, dbmodels.ApplyToCorporation, claLang, claInfo.CLAHash)
 
 	value := map[string]string{}
 	for _, item := range claInfo.Fields {

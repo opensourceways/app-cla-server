@@ -27,7 +27,7 @@ type ICorporationSigning interface {
 	IsCorpSigned(linkID, email string) (bool, IDBError)
 	ListCorpSignings(linkID, language string) ([]CorporationSigningSummary, IDBError)
 	ListDeletedCorpSignings(linkID string) ([]CorporationSigningBasicInfo, IDBError)
-	GetCorpSigningDetail(linkID, email string) ([]Field, *CorpSigningCreateOpt, IDBError)
+	GetCorpSigningDetail(linkID, email string) (*CLAInfo, *CorpSigningCreateOpt, IDBError)
 	GetCorpSigningBasicInfo(linkID, email string) (*CorporationSigningBasicInfo, IDBError)
 
 	UploadCorporationSigningPDF(linkID string, adminEmail string, pdf *[]byte) IDBError
@@ -72,6 +72,9 @@ type ICLA interface {
 	DeleteCLAInfo(linkID, applyTo, claLang string) IDBError
 	AddCLAInfo(linkID, applyTo string, info *CLAInfo) IDBError
 	GetCLAInfoToSign(linkID, claLang, applyTo string) (*CLAInfo, IDBError)
+
+	UploadCLAPDF(key CLAPDFIndex, pdf []byte) IDBError
+	DownloadCLAPDF(key CLAPDFIndex) ([]byte, IDBError)
 }
 
 type IVerificationCode interface {

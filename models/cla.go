@@ -21,19 +21,24 @@ type CLAField = dbmodels.Field
 type CLACreateOpt struct {
 	dbmodels.CLAData
 
+	hash    string
 	content *[]byte `json:"-"`
 }
 
-func (this *CLACreateOpt) SetCLAContent(data *[]byte) {
-	this.content = data
+func (o *CLACreateOpt) SetCLAContent(data *[]byte) {
+	o.content = data
+	o.hash = util.Md5sumOfBytes(data)
 }
 
-func (this *CLACreateOpt) toCLACreateOption() *dbmodels.CLACreateOption {
+func (o *CLACreateOpt) GetCLAHash() string {
+	return o.hash
+}
+
+func (o *CLACreateOpt) toCLACreateOption() *dbmodels.CLACreateOption {
 	return &dbmodels.CLACreateOption{
 		CLADetail: dbmodels.CLADetail{
-			CLAData: this.CLAData,
-			Text:    string(*this.content),
-			CLAHash: util.Md5sumOfBytes(this.content),
+			CLAData: o.CLAData,
+			CLAHash: o.hash,
 		},
 	}
 }
@@ -60,6 +65,17 @@ func (this *CLACreateOpt) AddCLA(linkID, applyTo string) IModelError {
 	return parseDBError(err)
 }
 
+func (o *CLACreateOpt) UploadCLAPDF(linkID, applyTo string) IModelError {
+	key := dbmodels.CLAPDFIndex{
+		LinkID: linkID,
+		Apply:  applyTo,
+		Lang:   o.Language,
+		Hash:   o.hash,
+	}
+	err := dbmodels.GetDB().UploadCLAPDF(key, *o.content)
+	return parseDBError(err)
+}
+
 func (this *CLACreateOpt) AddCLAInfo(linkID, applyTo string) IModelError {
 	err := dbmodels.GetDB().AddCLAInfo(linkID, applyTo, this.GenCLAInfo())
 	if err == nil {
@@ -74,7 +90,7 @@ func (this *CLACreateOpt) AddCLAInfo(linkID, applyTo string) IModelError {
 
 func (this *CLACreateOpt) GenCLAInfo() *CLAInfo {
 	return &CLAInfo{
-		CLAHash: util.Md5sumOfBytes(this.content),
+		CLAHash: this.hash,
 		CLALang: this.Language,
 		Fields:  this.Fields,
 	}
@@ -105,7 +121,7 @@ func (this *CLACreateOpt) Validate(applyTo string, langs map[string]bool) IModel
 	if err != nil {
 		return newModelError(ErrSystemError, err)
 	}
-	this.content = text
+	this.SetCLAContent(text)
 
 	return nil
 }
@@ -132,7 +148,8 @@ func downloadCLA(url string) (*[]byte, error) {
 		return nil, err
 	}
 
-	if strings.HasPrefix(http.DetectContentType(data), "text/plain") {
+	t := strings.ToLower(http.DetectContentType(data))
+	if strings.Contains(t, "pdf") {
 		return &data, nil
 	}
 
@@ -226,5 +243,19 @@ func GetCLAInfoToSign(linkID, claLang, applyTo string) (*dbmodels.CLAInfo, IMode
 
 func DownloadCorpCLAPDF(linkID, lang string) ([]byte, IModelError) {
 	v, err := dbmodels.GetDB().DownloadCorpCLAPDF(linkID, lang)
+	return v, parseDBError(err)
+}
+
+type CLAPDFIndex = dbmodels.CLAPDFIndex
+
+func DownloadCLAPDF(key CLAPDFIndex) ([]byte, IModelError) {
+	v, err := dbmodels.GetDB().DownloadCLAPDF(key)
+	if err == nil {
+		return v, nil
+	}
+
+	if err.IsErrorOf(dbmodels.ErrNoDBRecord) {
+		return v, newModelError(ErrNoLinkOrUnuploaed, err)
+	}
 	return v, parseDBError(err)
 }

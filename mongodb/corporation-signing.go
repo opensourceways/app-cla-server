@@ -132,7 +132,7 @@ func (this *client) GetCorpSigningBasicInfo(linkID, email string) (*dbmodels.Cor
 	return toDBModelCorporationSigningBasicInfo(&(signings[0])), nil
 }
 
-func (this *client) GetCorpSigningDetail(linkID, email string) ([]dbmodels.Field, *dbmodels.CorpSigningCreateOpt, dbmodels.IDBError) {
+func (this *client) GetCorpSigningDetail(linkID, email string) (*dbmodels.CLAInfo, *dbmodels.CorpSigningCreateOpt, dbmodels.IDBError) {
 	pipeline := bson.A{
 		bson.M{"$match": docFilterOfSigning(linkID)},
 		bson.M{"$project": bson.M{
@@ -185,7 +185,11 @@ func (this *client) GetCorpSigningDetail(linkID, email string) ([]dbmodels.Field
 		CorporationSigningBasicInfo: *toDBModelCorporationSigningBasicInfo(signing),
 		Info:                        signing.SigningInfo,
 	}
-	return toModelOfCLAFields(clas[0].Fields), info, nil
+	cla := &clas[0]
+	return &dbmodels.CLAInfo{
+		CLAHash: cla.CLAHash,
+		Fields:  toModelOfCLAFields(cla.Fields),
+	}, info, nil
 }
 
 func toDBModelCorporationSigningBasicInfo(cs *dCorpSigning) *dbmodels.CorporationSigningBasicInfo {

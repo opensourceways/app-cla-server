@@ -48,6 +48,14 @@ const (
 	linkStatusDeleted = "deleted"
 )
 
+type dCLAPDF struct {
+	LinkID string `bson:"link_id" json:"link_id" required:"true"`
+	Apply  string `bson:"apply" json:"apply" required:"true"`
+	Lang   string `bson:"lang" json:"lang" required:"true"`
+	Hash   string `bson:"hash" json:"hash" required:"true"`
+	PDF    []byte `bson:"pdf" json:"-"`
+}
+
 type dCorpSigningPDF struct {
 	LinkID string `bson:"link_id" json:"link_id" required:"true"`
 	CorpID string `bson:"corp_id" json:"corp_id" required:"true"`
@@ -149,7 +157,7 @@ type cLink struct {
 
 type dCLA struct {
 	URL          string `bson:"url" json:"url" required:"true"`
-	Text         string `bson:"text" json:"text" required:"true"`
+	Text         string `bson:"text" json:"text,omitempty"`
 	OrgSignature []byte `bson:"org_signature" json:"-"`
 
 	DCLAInfo `bson:",inline"`

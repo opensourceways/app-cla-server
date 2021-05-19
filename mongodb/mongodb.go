@@ -53,7 +53,7 @@ func Initialize(cfg *config.MongodbConfig) (*client, error) {
 		vcCollection:                cfg.VCCollection,
 		orgEmailCollection:          cfg.OrgEmailCollection,
 		corpPDFCollection:           cfg.CorpPDFCollection,
-		claPDFCollection:            "cla_pdf",
+		claPDFCollection:            cfg.CLAPDFCollection,
 		linkCollection:              cfg.LinkCollection,
 		corpSigningCollection:       cfg.CorpSigningCollection,
 		individualSigningCollection: cfg.IndividualSigningCollection,

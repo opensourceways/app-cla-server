@@ -292,7 +292,6 @@ func LoadLinks() error {
 				return err
 			}
 		}
-
 	}
 
 	return nil

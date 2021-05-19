@@ -26,9 +26,7 @@ def append(pdf_file, org_signature, out_file):
     writer = PdfFileWriter()
 
     pdf = PdfFileReader(pdf_file)
-    num = pdf.getNumPages()
-    for i in range(num):
-        writer.addPage(pdf.getPage(i))
+    writer.appendPagesFromReader(pdf)
 
     pdf1 = PdfFileReader(org_signature)
     page = pdf1.getPage(0)

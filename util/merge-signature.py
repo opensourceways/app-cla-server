@@ -22,14 +22,34 @@ def merge(pdf_file, org_signature, out_file):
         writer.write(out)
 
 
+def append(pdf_file, org_signature, out_file):
+    writer = PdfFileWriter()
+
+    pdf = PdfFileReader(pdf_file)
+    num = pdf.getNumPages()
+    for i in range(num):
+        writer.addPage(pdf.getPage(i))
+
+    pdf1 = PdfFileReader(org_signature)
+    page = pdf1.getPage(0)
+    writer.addPage(page)
+
+    with Path(out_file).open("wb") as out:
+        writer.write(out)
+
+
 if __name__ == "__main__":
     argv = sys.argv
-    if len(argv) != 4:
+    if len(argv) != 5:
         print("argv is not matched")
         sys.exit(1)
 
+    f = merge
+    if argv[1] == "append":
+        f = append
+
     try:
-        merge(*argv[1:])
+        f(*argv[2:])
     except Exception as ex:
         print(ex)
         sys.exit(1)

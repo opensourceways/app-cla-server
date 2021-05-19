@@ -66,7 +66,7 @@ func (this *pdfGenerator) GenPDFForCorporationSigning(linkID, claFile string, si
 	defer os.Remove(tempPdf)
 
 	outfile := util.GenFilePath(this.pdfOutDir, genPDFFileName(linkID, signing.AdminEmail, ""))
-	if err := mergeCorporPDFSignaturePage(this.pythonBin, claFile, tempPdf, outfile); err != nil {
+	if err := appendCorpPDFSignaturePage(this.pythonBin, claFile, tempPdf, outfile); err != nil {
 		return "", err
 	}
 
@@ -147,13 +147,26 @@ func genCorporPDFMissingSig(c *corpSigningPDF, orgInfo *models.OrgInfo, signing 
 	return nil
 }
 
-func mergeCorporPDFSignaturePage(pythonBin, pdfFile, sigFile, outfile string) error {
+func appendCorpPDFSignaturePage(pythonBin, pdfFile, sigFile, outfile string) error {
 	if util.IsFileNotExist(sigFile) {
 		return fmt.Errorf("org signature file(%s) is not exist", sigFile)
 	}
 
 	// merge file
-	cmd := exec.Command(pythonBin, "./util/merge-signature.py", pdfFile, sigFile, outfile)
+	cmd := exec.Command(pythonBin, "./util/merge-signature.py", "append", pdfFile, sigFile, outfile)
+	if _, err := cmd.Output(); err != nil {
+		return fmt.Errorf("append signature page of pdf failed: %s", err.Error())
+	}
+
+	return nil
+}
+func mergeCorpPDFSignaturePage(pythonBin, pdfFile, sigFile, outfile string) error {
+	if util.IsFileNotExist(sigFile) {
+		return fmt.Errorf("org signature file(%s) is not exist", sigFile)
+	}
+
+	// merge file
+	cmd := exec.Command(pythonBin, "./util/merge-signature.py", "merge", pdfFile, sigFile, outfile)
 	if _, err := cmd.Output(); err != nil {
 		return fmt.Errorf("merge signature page of pdf failed: %s", err.Error())
 	}

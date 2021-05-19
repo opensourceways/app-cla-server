@@ -178,17 +178,6 @@ func fetchInputPayloadData(input *[]byte, info interface{}) *failedApiResult {
 	return nil
 }
 
-func saveCorpCLAAtLocal(cla *models.CLACreateOpt, linkID, applyTo string) *failedApiResult {
-	if cla != nil {
-		path := genCLAFilePath(linkID, applyTo, cla.Language, cla.GetCLAHash())
-		if err := cla.SaveCLAAtLocal(path); err != nil {
-			return newFailedApiResult(500, errSystemError, err)
-		}
-	}
-
-	return nil
-}
-
 func lockOnRepo(orgInfo *dbmodels.OrgInfo) (func(), *failedApiResult) {
 	unlock, err := util.Lock(genOrgFileLockPath(orgInfo.Platform, orgInfo.OrgID, orgInfo.RepoID))
 	if err != nil {

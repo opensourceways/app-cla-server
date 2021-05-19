@@ -58,3 +58,16 @@ func (this *client) DownloadCLAPDF(key dbmodels.CLAPDFIndex) ([]byte, dbmodels.I
 
 	return v.PDF, nil
 }
+
+func (this *client) DeleteCLAPDF(key dbmodels.CLAPDFIndex) dbmodels.IDBError {
+	docFilter, err := docFilterOfCLAPDF(key)
+	if err != nil {
+		return err
+	}
+
+	f := func(ctx context.Context) dbmodels.IDBError {
+		return this.deleteDoc(ctx, this.claPDFCollection, docFilter)
+	}
+
+	return withContext1(f)
+}

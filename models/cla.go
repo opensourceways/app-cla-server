@@ -259,3 +259,8 @@ func DownloadCLAPDF(key CLAPDFIndex) ([]byte, IModelError) {
 	}
 	return v, parseDBError(err)
 }
+
+func DeleteCLAPDF(key CLAPDFIndex) IModelError {
+	err := dbmodels.GetDB().DeleteCLAPDF(key)
+	return parseDBError(err)
+}

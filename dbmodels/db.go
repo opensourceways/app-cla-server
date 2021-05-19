@@ -75,6 +75,7 @@ type ICLA interface {
 
 	UploadCLAPDF(key CLAPDFIndex, pdf []byte) IDBError
 	DownloadCLAPDF(key CLAPDFIndex) ([]byte, IDBError)
+	DeleteCLAPDF(key CLAPDFIndex) IDBError
 }
 
 type IVerificationCode interface {

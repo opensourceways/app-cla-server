@@ -80,12 +80,12 @@ func (this *LinkController) Link() {
 	}
 
 	linkID := genLinkID(orgRepo)
-	if fr := createCLA(input.CorpCLA, linkID, dbmodels.ApplyToCorporation); fr != nil {
+	if fr := saveCLAPDF(input.CorpCLA, linkID, dbmodels.ApplyToCorporation); fr != nil {
 		sendResp(fr)
 		return
 	}
 
-	if fr := createCLA(input.IndividualCLA, linkID, dbmodels.ApplyToIndividual); fr != nil {
+	if fr := saveCLAPDF(input.IndividualCLA, linkID, dbmodels.ApplyToIndividual); fr != nil {
 		sendResp(fr)
 		return
 	}
@@ -253,16 +253,12 @@ func LoadLinks() error {
 		}
 		pdf, err := models.DownloadCLAPDF(index)
 		if err != nil {
-			return fmt.Errorf("down load clf, %v, %v", err, index)
+			return fmt.Errorf("download cla pdf failed, err: %v, index: %v", err, index)
 		}
 
 		opt := &models.CLACreateOpt{}
-		opt.Language = cla.Language
 		opt.SetCLAContent(&pdf)
-		if fr := saveCorpCLAAtLocal(opt, linkID, apply); fr != nil {
-			return fr.reason
-		}
-		return nil
+		return opt.SaveCLAAtLocal(path)
 	}
 
 	for i := range links {

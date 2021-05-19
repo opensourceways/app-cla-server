@@ -164,7 +164,7 @@ func addCLA(linkID, applyTo string, input *models.CLACreateOpt) *failedApiResult
 		return parseModelError(merr)
 	}
 
-	if fr := createCLA(input, linkID, applyTo); fr != nil {
+	if fr := saveCLAPDF(input, linkID, applyTo); fr != nil {
 		return fr
 	}
 
@@ -194,27 +194,33 @@ func deleteCLA(linkID, applyTo, claLang string) *failedApiResult {
 
 	models.DeleteCLAInfo(linkID, applyTo, claLang)
 
-	if applyTo == dbmodels.ApplyToCorporation {
-		path := genCLAFilePath(linkID, applyTo, claLang, claInfo.CLAHash)
-		if !util.IsFileNotExist(path) {
-			os.Remove(path)
-		}
-
-		path = genOrgSignatureFilePath(linkID, claLang)
-		if !util.IsFileNotExist(path) {
-			os.Remove(path)
-		}
-	}
-	return nil
+	return deleteCLAPDF(linkID, applyTo, claInfo)
 }
 
-func createCLA(cla *models.CLACreateOpt, linkID, applyTo string) *failedApiResult {
+func deleteCLAPDF(linkID, applyTo string, claInfo *dbmodels.CLAInfo) *failedApiResult {
+	path := genCLAFilePath(linkID, applyTo, claInfo.CLALang, claInfo.CLAHash)
+	if !util.IsFileNotExist(path) {
+		os.Remove(path)
+	}
+
+	key := models.CLAPDFIndex{
+		LinkID: linkID,
+		Apply:  applyTo,
+		Lang:   claInfo.CLALang,
+		Hash:   claInfo.CLAHash,
+	}
+	err := models.DeleteCLAPDF(key)
+	return parseModelError(err)
+}
+
+func saveCLAPDF(cla *models.CLACreateOpt, linkID, applyTo string) *failedApiResult {
 	if cla == nil {
 		return nil
 	}
 
-	if fr := saveCorpCLAAtLocal(cla, linkID, applyTo); fr != nil {
-		return fr
+	path := genCLAFilePath(linkID, applyTo, cla.Language, cla.GetCLAHash())
+	if err := cla.SaveCLAAtLocal(path); err != nil {
+		return newFailedApiResult(500, errSystemError, err)
 	}
 
 	if err := cla.UploadCLAPDF(linkID, applyTo); err != nil {

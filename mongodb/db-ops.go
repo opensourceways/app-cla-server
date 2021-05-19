@@ -86,6 +86,15 @@ func (this *client) replaceDoc(ctx context.Context, collection string, filterOfD
 	return v, nil
 }
 
+func (this *client) deleteDoc(ctx context.Context, collection string, filterOfDoc bson.M) dbmodels.IDBError {
+	col := this.collection(collection)
+	if _, err := col.DeleteOne(ctx, filterOfDoc); err != nil {
+		return newSystemError(err)
+	}
+
+	return nil
+}
+
 func (this *client) pullArrayElem(ctx context.Context, collection, array string, filterOfDoc, filterOfArray bson.M) dbmodels.IDBError {
 	update := bson.M{"$pull": bson.M{array: filterOfArray}}
 

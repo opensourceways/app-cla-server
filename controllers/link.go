@@ -257,7 +257,7 @@ func LoadLinks() error {
 		}
 
 		opt := &models.CLACreateOpt{}
-		opt.SetCLAContent(&pdf)
+		opt.SetCLAContent(pdf)
 		return opt.SaveCLAAtLocal(path)
 	}
 

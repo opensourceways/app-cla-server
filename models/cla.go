@@ -22,10 +22,10 @@ type CLACreateOpt struct {
 	dbmodels.CLAData
 
 	hash    string
-	content *[]byte `json:"-"`
+	content []byte `json:"-"`
 }
 
-func (o *CLACreateOpt) SetCLAContent(data *[]byte) {
+func (o *CLACreateOpt) SetCLAContent(data []byte) {
 	o.content = data
 	o.hash = util.Md5sumOfBytes(data)
 }
@@ -49,7 +49,7 @@ func (this *CLACreateOpt) SaveCLAAtLocal(path string) error {
 	}
 
 	os.Remove(path)
-	return ioutil.WriteFile(path, *this.content, 0644)
+	return ioutil.WriteFile(path, this.content, 0644)
 }
 
 func (this *CLACreateOpt) AddCLA(linkID, applyTo string) IModelError {
@@ -72,7 +72,7 @@ func (o *CLACreateOpt) UploadCLAPDF(linkID, applyTo string) IModelError {
 		Lang:   o.Language,
 		Hash:   o.hash,
 	}
-	err := dbmodels.GetDB().UploadCLAPDF(key, *o.content)
+	err := dbmodels.GetDB().UploadCLAPDF(key, o.content)
 	return parseDBError(err)
 }
 
@@ -126,7 +126,7 @@ func (this *CLACreateOpt) Validate(applyTo string, langs map[string]bool) IModel
 	return nil
 }
 
-func downloadCLA(url string) (*[]byte, error) {
+func downloadCLA(url string) ([]byte, error) {
 	var resp *http.Response
 
 	for i := 0; i < 3; i++ {
@@ -150,7 +150,7 @@ func downloadCLA(url string) (*[]byte, error) {
 
 	t := strings.ToLower(http.DetectContentType(data))
 	if strings.Contains(t, "pdf") {
-		return &data, nil
+		return data, nil
 	}
 
 	return nil, fmt.Errorf("it is not the content of cla")

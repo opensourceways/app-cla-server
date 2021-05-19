@@ -193,8 +193,8 @@ func deleteCLA(linkID, applyTo, claLang string) *failedApiResult {
 	}
 
 	models.DeleteCLAInfo(linkID, applyTo, claLang)
-
-	return deleteCLAPDF(linkID, applyTo, claInfo)
+	deleteCLAPDF(linkID, applyTo, claInfo)
+	return nil
 }
 
 func deleteCLAPDF(linkID, applyTo string, claInfo *dbmodels.CLAInfo) *failedApiResult {

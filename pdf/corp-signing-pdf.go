@@ -206,6 +206,8 @@ func (c *corpSigningPDF) addSignature(pdf *gofpdf.Fpdf, items map[string]string,
 	}
 
 	setFont(pdf, c.contactFont)
+	multlines(pdf, c.gh, "")
+	blankLine(pdf, 1)
 
 	for _, i := range orders {
 		f(titles[i], items[i], true)

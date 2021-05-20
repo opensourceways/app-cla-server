@@ -41,7 +41,7 @@ func (this *pdfGenerator) generator(claLang string) *corpSigningPDF {
 	return nil
 }
 
-func (this *pdfGenerator) GenPDFForCorporationSigning(linkID, claFile string, signing *models.CorporationSigning, claFields []models.CLAField) (string, error) {
+func (this *pdfGenerator) GenPDFForCorporationSigning1(linkID, claFile string, signing *models.CorporationSigning, claFields []models.CLAField) (string, error) {
 	corp := this.generator(signing.CLALanguage)
 	if corp == nil {
 		return "", fmt.Errorf("unknown cla language:%s", signing.CLALanguage)
@@ -52,25 +52,41 @@ func (this *pdfGenerator) GenPDFForCorporationSigning(linkID, claFile string, si
 	return outFile, err
 }
 
-func (this *pdfGenerator) GenPDFForCorporationSigning1(linkID, orgSignatureFile, claFile string, orgInfo *models.OrgInfo, signing *models.CorporationSigning, claFields []models.CLAField) (string, error) {
+func (this *pdfGenerator) GenPDFForCorporationSigning(linkID, claFile string, signing *models.CorporationSigning, claFields []models.CLAField) (string, error) {
 	corp := this.generator(signing.CLALanguage)
 	if corp == nil {
 		return "", fmt.Errorf("unknown cla language:%s", signing.CLALanguage)
 	}
 
-	tempPdf := util.GenFilePath(this.pdfOutDir, genPDFFileName(linkID, signing.AdminEmail, "_missing_sig"))
-	err := genCorporPDFMissingSig(corp, orgInfo, signing, claFields, claFile, tempPdf)
+	tempPdf := util.GenFilePath(this.pdfOutDir, genPDFFileName(linkID, signing.AdminEmail, "_sig"))
+	err := genSignaturePDF(corp, signing, claFields, tempPdf)
 	if err != nil {
 		return "", err
 	}
 	defer os.Remove(tempPdf)
 
 	outfile := util.GenFilePath(this.pdfOutDir, genPDFFileName(linkID, signing.AdminEmail, ""))
-	if err := mergeCorporPDFSignaturePage(this.pythonBin, tempPdf, orgSignatureFile, outfile); err != nil {
+	if err := appendCorpPDFSignaturePage(this.pythonBin, claFile, tempPdf, outfile); err != nil {
 		return "", err
 	}
 
 	return outfile, nil
+}
+
+func genSignaturePDF(c *corpSigningPDF, signing *models.CorporationSigning, claFields []models.CLAField, outFile string) error {
+	pdf := c.begin()
+
+	pdf.AddPage()
+	orders, titles := BuildCorpContact(claFields)
+	c.addSignature(pdf, signing.Info, orders, titles)
+
+	if !util.IsFileNotExist(outFile) {
+		os.Remove(outFile)
+	}
+	if err := c.end(pdf, outFile); err != nil {
+		return fmt.Errorf("generate signing pdf of corp failed: %s", err.Error())
+	}
+	return nil
 }
 
 func genCorporPDF(c *corpSigningPDF, signing *models.CorporationSigning, claFields []models.CLAField, claFile, outFile string) error {
@@ -131,13 +147,26 @@ func genCorporPDFMissingSig(c *corpSigningPDF, orgInfo *models.OrgInfo, signing 
 	return nil
 }
 
-func mergeCorporPDFSignaturePage(pythonBin, pdfFile, sigFile, outfile string) error {
+func appendCorpPDFSignaturePage(pythonBin, pdfFile, sigFile, outfile string) error {
 	if util.IsFileNotExist(sigFile) {
 		return fmt.Errorf("org signature file(%s) is not exist", sigFile)
 	}
 
 	// merge file
-	cmd := exec.Command(pythonBin, "./util/merge-signature.py", pdfFile, sigFile, outfile)
+	cmd := exec.Command(pythonBin, "./util/merge-signature.py", "append", pdfFile, sigFile, outfile)
+	if _, err := cmd.Output(); err != nil {
+		return fmt.Errorf("append signature page of pdf failed: %s", err.Error())
+	}
+
+	return nil
+}
+func mergeCorpPDFSignaturePage(pythonBin, pdfFile, sigFile, outfile string) error {
+	if util.IsFileNotExist(sigFile) {
+		return fmt.Errorf("org signature file(%s) is not exist", sigFile)
+	}
+
+	// merge file
+	cmd := exec.Command(pythonBin, "./util/merge-signature.py", "merge", pdfFile, sigFile, outfile)
 	if _, err := cmd.Output(); err != nil {
 		return fmt.Errorf("merge signature page of pdf failed: %s", err.Error())
 	}

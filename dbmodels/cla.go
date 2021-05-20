@@ -49,3 +49,10 @@ type CLAInfo struct {
 	CLAHash string
 	Fields  []Field
 }
+
+type CLAPDFIndex struct {
+	LinkID string
+	Apply  string
+	Lang   string
+	Hash   string
+}

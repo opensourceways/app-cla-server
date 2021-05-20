@@ -121,6 +121,7 @@ func (this *client) GetCLAInfoSigned(linkID, claLang, applyTo string) (*dbmodels
 
 	doc := &(v[0].CLAInfos[0])
 	return &dbmodels.CLAInfo{
+		CLALang: claLang,
 		CLAHash: doc.CLAHash,
 		Fields:  toModelOfCLAFields(doc.Fields),
 	}, nil

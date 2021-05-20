@@ -70,7 +70,7 @@ func (this *CorporationSigningController) Post() {
 				return newFailedApiResult(400, errUnmatchedCLA, fmt.Errorf("unmatched cla"))
 			}
 
-			claFile := genCLAFilePath(linkID, dbmodels.ApplyToCorporation, claLang)
+			claFile := genCLAFilePath(linkID, dbmodels.ApplyToCorporation, claLang, claInfo.CLAHash)
 			if fr := this.checkCLAForSigning(claFile, claInfo); fr != nil {
 				return fr
 			}
@@ -189,17 +189,17 @@ func (this *CorporationSigningController) ResendCorpSigningEmail() {
 		return
 	}
 
-	fields, signingInfo, merr := models.GetCorpSigningDetail(linkID, corpEmail)
+	claInfo, signingInfo, merr := models.GetCorpSigningDetail(linkID, corpEmail)
 	if merr != nil {
 		this.sendModelErrorAsResp(merr, action)
 		return
 	}
-	if fields == nil {
+	if claInfo == nil {
 		this.sendFailedResponse(400, errUnsigned, fmt.Errorf("no data"), action)
 		return
 	}
 
-	claFile := genCLAFilePath(linkID, dbmodels.ApplyToCorporation, signingInfo.CLALanguage)
+	claFile := genCLAFilePath(linkID, dbmodels.ApplyToCorporation, signingInfo.CLALanguage, claInfo.CLAHash)
 
 	worker.GetEmailWorker().GenCLAPDFForCorporationAndSendIt(
 		linkID, claFile, *pl.orgInfo(linkID),
@@ -207,7 +207,7 @@ func (this *CorporationSigningController) ResendCorpSigningEmail() {
 			CorporationSigningBasicInfo: signingInfo.CorporationSigningBasicInfo,
 			Info:                        signingInfo.Info,
 		},
-		fields,
+		claInfo.Fields,
 	)
 
 	this.sendSuccessResp("resend email successfully")

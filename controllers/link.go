@@ -80,7 +80,12 @@ func (this *LinkController) Link() {
 	}
 
 	linkID := genLinkID(orgRepo)
-	if fr := saveCorpCLAAtLocal(input.CorpCLA, linkID); fr != nil {
+	if fr := saveCLAPDF(input.CorpCLA, linkID, dbmodels.ApplyToCorporation); fr != nil {
+		sendResp(fr)
+		return
+	}
+
+	if fr := saveCLAPDF(input.IndividualCLA, linkID, dbmodels.ApplyToIndividual); fr != nil {
 		sendResp(fr)
 		return
 	}
@@ -233,6 +238,29 @@ func LoadLinks() error {
 		return err
 	}
 
+	f := func(linkID, apply string, cla *dbmodels.CLADetail) error {
+		path := genCLAFilePath(linkID, apply, cla.Language, cla.CLAHash)
+		s, _ := util.Md5sumOfFile(path)
+		if s == cla.CLAHash {
+			return nil
+		}
+
+		index := models.CLAPDFIndex{
+			LinkID: linkID,
+			Apply:  apply,
+			Lang:   cla.Language,
+			Hash:   cla.CLAHash,
+		}
+		pdf, err := models.DownloadCLAPDF(index)
+		if err != nil {
+			return fmt.Errorf("download cla pdf failed, err: %v, index: %v", err, index)
+		}
+
+		opt := &models.CLACreateOpt{}
+		opt.SetCLAContent(pdf)
+		return opt.SaveCLAAtLocal(path)
+	}
+
 	for i := range links {
 		link := &links[i]
 
@@ -250,15 +278,14 @@ func LoadLinks() error {
 		}
 
 		for j := range info.CorpCLAs {
-			cla := &info.CorpCLAs[j]
-			text := []byte(cla.Text)
+			if err := f(linkID, dbmodels.ApplyToCorporation, &info.CorpCLAs[j]); err != nil {
+				return err
+			}
+		}
 
-			opt := &models.CLACreateOpt{}
-			opt.Language = cla.Language
-			opt.SetCLAContent(&text)
-
-			if fr := saveCorpCLAAtLocal(opt, linkID); fr != nil {
-				return fr.reason
+		for j := range info.IndividualCLAs {
+			if err := f(linkID, dbmodels.ApplyToIndividual, &info.IndividualCLAs[j]); err != nil {
+				return err
 			}
 		}
 	}

@@ -101,15 +101,22 @@ func (this *corpSigningPDF) welcome(pdf *gofpdf.Fpdf, org, email string) {
 }
 
 func addItem(pdf *gofpdf.Fpdf, gh float64, title, value string, needBorder bool) {
-	w := 180.0
-	pdf.CellFormat(w, gh, fmt.Sprintf("%s:", title), "", 0, "L", false, 0, "")
-	blankLine(pdf, 2)
+	w1 := 32.0
+	w := 210 - 2*w1
+
+	// the default blank space is 10mm
+	w1 -= 10
+	pdf.Cell(w1, gh, "")
+	pdf.CellFormat(w, gh, fmt.Sprintf("%s:", title), "", 1, "L", false, 0, "")
+	blankLine(pdf, 1)
 
 	b := ""
 	if needBorder {
 		b = "B"
 	}
-	pdf.MultiCell(w, gh, "    "+value, b, "L", false)
+
+	pdf.Cell(w1, gh, "")
+	pdf.CellFormat(w, gh, "    "+value, b, 1, "L", false, 0, "")
 	blankLine(pdf, 2)
 }
 
@@ -199,6 +206,8 @@ func (c *corpSigningPDF) addSignature(pdf *gofpdf.Fpdf, items map[string]string,
 	}
 
 	setFont(pdf, c.contactFont)
+	multlines(pdf, c.gh, "")
+	blankLine(pdf, 1)
 
 	for _, i := range orders {
 		f(titles[i], items[i], true)
@@ -206,10 +215,14 @@ func (c *corpSigningPDF) addSignature(pdf *gofpdf.Fpdf, items map[string]string,
 
 	f(c.signature, "", true)
 
-	w := 92.5
+	w1 := 32.0
+	w := 105 - w1
+	// the default blank space is 10mm
+	w1 -= 10
 	gh := c.gh
+
+	pdf.Cell(w1, gh, "")
 	pdf.Cell(w, gh, c.seal+":")
-	pdf.Cell(5, gh, "")
 	pdf.CellFormat(w, gh, c.signatureDate+":", "", 1, "L", false, 0, "")
 }
 

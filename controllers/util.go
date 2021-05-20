@@ -102,10 +102,10 @@ func genOrgFileLockPath(platform, org, repo string) string {
 	)
 }
 
-func genCLAFilePath(linkID, applyTo, language string) string {
+func genCLAFilePath(linkID, applyTo, language, hash string) string {
 	return util.GenFilePath(
 		config.AppConfig.PDFOrgSignatureDir,
-		util.GenFileName("cla", linkID, applyTo, language, ".txt"))
+		util.GenFileName("cla", linkID, applyTo, language, hash, ".pdf"))
 }
 
 func genOrgSignatureFilePath(linkID, language string) string {
@@ -175,17 +175,6 @@ func fetchInputPayloadData(input *[]byte, info interface{}) *failedApiResult {
 			400, errParsingApiBody, fmt.Errorf("invalid input payload: %s", err.Error()),
 		)
 	}
-	return nil
-}
-
-func saveCorpCLAAtLocal(cla *models.CLACreateOpt, linkID string) *failedApiResult {
-	if cla != nil {
-		path := genCLAFilePath(linkID, dbmodels.ApplyToCorporation, cla.Language)
-		if err := cla.SaveCLAAtLocal(path); err != nil {
-			return newFailedApiResult(500, errSystemError, err)
-		}
-	}
-
 	return nil
 }
 

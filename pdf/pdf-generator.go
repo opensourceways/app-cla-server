@@ -74,7 +74,7 @@ func (this *pdfGenerator) GenPDFForCorporationSigning(linkID, claFile string, si
 }
 
 func genSignaturePDF(c *corpSigningPDF, signing *models.CorporationSigning, claFields []models.CLAField, outFile string) error {
-	pdf := c.begin()
+	pdf := c.newPDF()
 
 	pdf.AddPage()
 	orders, titles := BuildCorpContact(claFields)

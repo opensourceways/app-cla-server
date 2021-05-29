@@ -154,8 +154,8 @@ func appendCorpPDFSignaturePage(pythonBin, pdfFile, sigFile, outfile string) err
 
 	// merge file
 	cmd := exec.Command(pythonBin, "./util/merge-signature.py", "append", pdfFile, sigFile, outfile)
-	if _, err := cmd.Output(); err != nil {
-		return fmt.Errorf("append signature page of pdf failed: %s", err.Error())
+	if out, err := cmd.Output(); err != nil {
+		return fmt.Errorf("append signature page of pdf failed: %s, %s", out, err.Error())
 	}
 
 	return nil

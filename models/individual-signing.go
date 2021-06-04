@@ -23,7 +23,6 @@ func (isign *IndividualSigning) Validate(linkID string) IModelError {
 func (isign *IndividualSigning) Create(linkID string, enabled bool) IModelError {
 	isign.Date = util.Date()
 	isign.Enabled = enabled
-	isign.ID = isign.Name
 
 	err := dbmodels.GetDB().SignIndividualCLA(
 		linkID, &isign.IndividualSigningInfo,

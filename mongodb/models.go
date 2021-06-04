@@ -81,7 +81,7 @@ type dIndividualSigning struct {
 	CLALanguage string `bson:"lang" json:"lang" required:"true"`
 	CorpID      string `bson:"corp_id" json:"corp_id" required:"true"`
 
-	ID      string `bson:"id" json:"id" required:"true"`
+	ID      string `bson:"id" json:"id,omitempty"`
 	Name    string `bson:"name" json:"name" required:"true"`
 	Email   string `bson:"email" json:"email" required:"true"`
 	Date    string `bson:"date" json:"date" required:"true"`

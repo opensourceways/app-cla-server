@@ -41,6 +41,7 @@ const (
 	ErrNoLinkOrCLAExists       ModelErrCode = "no_link_or_cla_exists"
 	ErrNoLinkOrUnuploaed       ModelErrCode = "no_link_or_unuploaded"
 	ErrUnmatchedEmailDomain    ModelErrCode = "unmatched_email_domain"
+	ErrRestrictedEmailSuffix   ModelErrCode = "restricted_email_suffix"
 )
 
 type IModelError interface {

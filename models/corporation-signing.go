@@ -3,6 +3,7 @@ package models
 import (
 	"fmt"
 
+	"github.com/opensourceways/app-cla-server/config"
 	"github.com/opensourceways/app-cla-server/dbmodels"
 	"github.com/opensourceways/app-cla-server/util"
 )
@@ -21,11 +22,13 @@ type CorporationSigningCreateOption struct {
 }
 
 func (this *CorporationSigningCreateOption) Validate(orgCLAID string) IModelError {
-	err := checkVerificationCode(this.AdminEmail, this.VerificationCode, orgCLAID)
-	if err != nil {
+	if err := checkVerificationCode(this.AdminEmail, this.VerificationCode, orgCLAID); err != nil {
 		return err
 	}
-	return checkEmailFormat(this.AdminEmail)
+	if err := checkEmailFormat(this.AdminEmail); err != nil {
+		return err
+	}
+	return CheckRestrictEmailSuffix(this.AdminEmail)
 }
 
 func (this *CorporationSigningCreateOption) Create(orgCLAID string) IModelError {
@@ -147,4 +150,12 @@ func ListDeletedCorpSignings(linkID string) ([]dbmodels.CorporationSigningBasicI
 		return v, newModelError(ErrNoLink, err)
 	}
 	return v, parseDBError(err)
+}
+
+func CheckRestrictEmailSuffix(email string) IModelError {
+	suffix := util.EmailSuffix(email)
+	if config.AppConfig.IsRestrictEmailSuffix(suffix) {
+		return newModelError(ErrRestrictedEmailSuffix, fmt.Errorf("Email suffix is restricted:%s", email))
+	}
+	return nil
 }

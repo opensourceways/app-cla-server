@@ -27,24 +27,24 @@ func (this *VerificationCodeController) Prepare() {
 // @Param	:email		path 	string					true		"email of corp"
 // @Success 201 {int} map
 // @router /:link_id/:email [post]
-func (this *VerificationCodeController) Post() {
+func (vc *VerificationCodeController) Post() {
 	action := "create verification code"
-	linkID := this.GetString(":link_id")
-	emailOfSigner := this.GetString(":email")
+	linkID := vc.GetString(":link_id")
+	emailOfSigner := vc.GetString(":email")
 
 	orgInfo, merr := models.GetOrgOfLink(linkID)
 	if merr != nil {
-		this.sendFailedResponse(0, "", merr, action)
+		vc.sendFailedResponse(0, "", merr, action)
 		return
 	}
 
 	code, err := this.createCode(emailOfSigner, linkID)
 	if err != nil {
-		this.sendModelErrorAsResp(err, action)
+		vc.sendModelErrorAsResp(err, action)
 		return
 	}
 
-	this.sendSuccessResp("create verification code successfully")
+	vc.sendSuccessResp("create verification code successfully")
 
 	sendEmailToIndividual(
 		emailOfSigner, orgInfo.OrgEmail,

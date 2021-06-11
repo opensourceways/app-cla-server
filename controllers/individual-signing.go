@@ -16,7 +16,7 @@ type IndividualSigningController struct {
 func (this *IndividualSigningController) Prepare() {
 	// sign as individual
 	if this.isPostRequest() {
-		this.apiPrepare(PermissionIndividualSigner)
+		this.apiPrepare("")
 	} else {
 		if strings.HasSuffix(this.routerPattern(), "/:platform/:org_repo") {
 			this.apiPrepare("")
@@ -52,12 +52,6 @@ func (this *IndividualSigningController) Post() {
 	linkID := this.GetString(":link_id")
 	claLang := this.GetString(":cla_lang")
 
-	pl, fr := this.tokenPayloadBasedOnCodePlatform()
-	if fr != nil {
-		this.sendFailedResultAsResp(fr, action)
-		return
-	}
-
 	var info models.IndividualSigning
 	if fr := this.fetchInputPayload(&info); fr != nil {
 		this.sendFailedResultAsResp(fr, action)
@@ -65,7 +59,7 @@ func (this *IndividualSigningController) Post() {
 	}
 	info.CLALanguage = claLang
 
-	if err := (&info).Validate(pl.User, pl.Email); err != nil {
+	if err := (&info).Validate(linkID); err != nil {
 		this.sendModelErrorAsResp(err, action)
 		return
 	}
@@ -80,7 +74,7 @@ func (this *IndividualSigningController) Post() {
 		return
 	}
 
-	fr = signHelper(
+	fr := signHelper(
 		linkID, claLang, dbmodels.ApplyToIndividual,
 		func(claInfo *models.CLAInfo) *failedApiResult {
 			if claInfo.CLAHash != this.GetString(":cla_hash") {

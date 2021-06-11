@@ -2,19 +2,7 @@ package models
 
 import "github.com/opensourceways/app-cla-server/dbmodels"
 
-type EmployeeSigning struct {
-	IndividualSigning
-
-	VerificationCode string `json:"verification_code"`
-}
-
-func (this *EmployeeSigning) Validate(linkID, userID, email string) IModelError {
-	if err := checkVerificationCode(this.Email, this.VerificationCode, linkID); err != nil {
-		return err
-	}
-
-	return (&this.IndividualSigning).Validate(userID, email)
-}
+type EmployeeSigning = IndividualSigning
 
 func ListIndividualSigning(linkID, corpEmail, claLang string) ([]dbmodels.IndividualSigningBasicInfo, IModelError) {
 	v, err := dbmodels.GetDB().ListIndividualSigning(linkID, corpEmail, claLang)

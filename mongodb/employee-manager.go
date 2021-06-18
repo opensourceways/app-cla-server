@@ -41,8 +41,7 @@ func (this *client) AddEmployeeManager(linkID string, opt []dbmodels.Corporation
 
 func (this *client) DeleteEmployeeManager(linkID string, emails []string) ([]dbmodels.CorporationManagerCreateOption, dbmodels.IDBError) {
 	elemFilter := bson.M{
-		fieldCorpID: genCorpID(emails[0]),
-		fieldEmail:  bson.M{"$in": emails},
+		fieldEmail: bson.M{"$in": emails},
 	}
 
 	var v cCorpSigning

@@ -69,6 +69,10 @@ func (this *CorporationManagerController) newAccessToken(linkID string, info *db
 		permission = PermissionEmployeeManager
 	}
 
+	m := map[string]bool{}
+	for _, i := range info.Suffix {
+		m[i] = true
+	}
 	return this.newApiToken(
 		permission,
 		&acForCorpManagerPayload{
@@ -76,18 +80,21 @@ func (this *CorporationManagerController) newAccessToken(linkID string, info *db
 			Email:   info.Email,
 			LinkID:  linkID,
 			OrgInfo: info.OrgInfo,
+			Suffix:  m,
 		},
 	)
 }
 
 type acForCorpManagerPayload struct {
-	Name   string `json:"name"`
-	Email  string `json:"email"`
-	LinkID string `json:"link_id"`
+	Corp   string          `json:"corp"`
+	Name   string          `json:"name"`
+	Email  string          `json:"email"`
+	LinkID string          `json:"link_id"`
+	Suffix map[string]bool `json:"suffix"`
 
 	models.OrgInfo
 }
 
-func (this *acForCorpManagerPayload) hasEmployee(email string) bool {
-	return util.EmailSuffix(this.Email) == util.EmailSuffix(email)
+func (p *acForCorpManagerPayload) hasEmployee(email string) bool {
+	return p.Suffix[util.EmailSuffix(email)]
 }

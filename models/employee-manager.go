@@ -40,7 +40,17 @@ func (this *EmployeeManagerCreateOption) ValidateWhenAdding(linkID, adminEmail s
 		em[item.Email] = true
 	}
 
-	suffix := util.EmailSuffix(adminEmail)
+	suffix, err := ListCorpEmailDomain(linkID, adminEmail)
+	if err != nil {
+		return err
+	}
+	if len(suffix) == 0 {
+		return newModelError(ErrSystemError, fmt.Errorf("no suffix"))
+	}
+	m := map[string]bool{}
+	for _, i := range suffix {
+		m[i] = true
+	}
 
 	for i := range this.Managers {
 		item := &this.Managers[i]
@@ -49,7 +59,7 @@ func (this *EmployeeManagerCreateOption) ValidateWhenAdding(linkID, adminEmail s
 			return err
 		}
 
-		if util.EmailSuffix(item.Email) != suffix {
+		if !m[util.EmailSuffix(item.Email)] {
 			return newModelError(ErrNotSameCorp, fmt.Errorf("not same email suffix"))
 		}
 
@@ -62,7 +72,7 @@ func (this *EmployeeManagerCreateOption) ValidateWhenAdding(linkID, adminEmail s
 		}
 		em[item.Email] = true
 
-		if err := checkManagerID(fmt.Sprintf("%s_%s", item.ID, suffix)); err != nil {
+		if err := checkManagerID(fmt.Sprintf("%s_%s", item.ID, suffix[0])); err != nil {
 			return err
 		}
 

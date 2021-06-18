@@ -13,6 +13,12 @@ func elemFilterOfCorpSigning(email string) bson.M {
 	return filterOfCorpID(email)
 }
 
+func elemFilterOfEmailSuffix(email string) bson.M {
+	return bson.M{
+		"suffix": bson.M{"$elemMatch": bson.M{"$eq": genCorpID(email)}},
+	}
+}
+
 func (c *client) SignCorpCLA(linkID string, info *dbmodels.CorpSigningCreateOpt) dbmodels.IDBError {
 	signing := dCorpSigning{
 		CLALanguage: info.CLALanguage,
@@ -23,6 +29,7 @@ func (c *client) SignCorpCLA(linkID string, info *dbmodels.CorpSigningCreateOpt)
 		Date:        info.Date,
 		SigningInfo: info.Info,
 	}
+	signing.Suffix = []string{signing.CorpID}
 	doc, err := structToMap(signing)
 	if err != nil {
 		return err
@@ -92,7 +99,7 @@ func (this *client) IsCorpSigned(linkID, email string) (bool, dbmodels.IDBError)
 	f := func(ctx context.Context) dbmodels.IDBError {
 		v, err := this.isArrayElemNotExists(
 			ctx, this.corpSigningCollection, fieldSignings,
-			docFilterOfSigning(linkID), elemFilterOfCorpSigning(email),
+			docFilterOfSigning(linkID), elemFilterOfEmailSuffix(email),
 		)
 		if err != nil {
 			return newSystemError(err)
@@ -130,6 +137,104 @@ func (this *client) GetCorpSigningBasicInfo(linkID, email string) (*dbmodels.Cor
 	}
 
 	return toDBModelCorporationSigningBasicInfo(&(signings[0])), nil
+}
+
+func (this *client) GetCorpSigningEmailSuffix(linkID, email string) ([]string, dbmodels.IDBError) {
+	var v []cCorpSigning
+
+	f := func(ctx context.Context) error {
+		return this.getArrayElem1(
+			ctx, this.corpSigningCollection, fieldSignings,
+			docFilterOfSigning(linkID),
+			bson.M{
+				memberNameOfSignings(fieldSuffix): 1,
+			},
+			func() bson.M {
+				return bson.M{"$and": bson.A{
+					bson.M{"$isArray": fmt.Sprintf("$$this.%s", fieldSuffix)},
+					bson.M{"$in": bson.A{genCorpID(email), fmt.Sprintf("$$this.%s", fieldSuffix)}},
+				}}
+			},
+			&v,
+		)
+	}
+
+	if err := withContext(f); err != nil {
+		return nil, newSystemError(err)
+	}
+
+	if len(v) == 0 {
+		return nil, errNoDBRecord
+	}
+
+	signings := v[0].Signings
+	if len(signings) == 0 {
+		return nil, nil
+	}
+
+	return signings[0].Suffix, nil
+}
+
+func (this *client) GetCorpSigningEmailSuffix1(linkID, email string) ([]string, dbmodels.IDBError) {
+	pipeline := bson.A{
+		bson.M{"$match": docFilterOfSigning(linkID)},
+		bson.M{"$project": bson.M{
+			fieldSignings: bson.M{"$filter": bson.M{
+				"input": fmt.Sprintf("$%s", fieldSignings),
+				"as":    "item",
+				"cond": bson.M{"$and": bson.A{
+					bson.M{"$isArray": fmt.Sprintf("$$item.%s", fieldSuffix)},
+					bson.M{"$in": bson.A{genCorpID(email), fmt.Sprintf("$$item.%s", fieldSuffix)}},
+				}},
+			}},
+		}},
+		bson.M{"$project": bson.M{
+			memberNameOfSignings(fieldSuffix): 1,
+		}},
+	}
+
+	var v []struct {
+		Signings []dCorpSigning `bson:"signings"`
+	}
+	f := func(ctx context.Context) error {
+		col := this.collection(this.corpSigningCollection)
+		cursor, err := col.Aggregate(ctx, pipeline)
+		if err != nil {
+			return err
+		}
+
+		return cursor.All(ctx, &v)
+	}
+
+	if err := withContext(f); err != nil {
+		return nil, newSystemError(err)
+	}
+
+	if len(v) == 0 {
+		return nil, errNoDBRecord
+	}
+
+	signing := v[0].Signings
+	if len(signing) == 0 {
+		return nil, nil
+	}
+	return signing[0].Suffix, nil
+}
+
+func (this *client) AddCorpSubEmail(linkID, adminEmail, subEmail string) dbmodels.IDBError {
+	elemFilter := elemFilterOfCorpSigning(adminEmail)
+
+	docFilter := docFilterOfSigning(linkID)
+	arrayFilterByElemMatch(fieldSignings, true, elemFilter, docFilter)
+
+	f := func(ctx context.Context) dbmodels.IDBError {
+		return this.pushNestedArrayElem(
+			ctx, this.corpSigningCollection, fieldSignings, docFilter,
+			elemFilter, bson.M{fieldSuffix: genCorpID(subEmail)},
+		)
+	}
+
+	return withContext1(f)
 }
 
 func (this *client) GetCorpSigningDetail(linkID, email string) (*dbmodels.CLAInfo, *dbmodels.CorpSigningCreateOpt, dbmodels.IDBError) {

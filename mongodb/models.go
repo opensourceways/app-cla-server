@@ -13,6 +13,7 @@ const (
 	fieldOrg            = "org"
 	fieldRepo           = "repo"
 	fieldCorpID         = "corp_id"
+	fieldSuffix         = "suffix"
 	fieldSignings       = "signings"
 	fieldDeleted        = "deleted"
 	fieldLang           = "lang"
@@ -105,9 +106,10 @@ type cCorpSigning struct {
 }
 
 type dCorpSigning struct {
-	CLALanguage string `bson:"lang" json:"lang" required:"true"`
-	CorpID      string `bson:"corp_id" json:"corp_id" required:"true"`
-	CorpName    string `bson:"corp" json:"corp" required:"true"`
+	CLALanguage string   `bson:"lang" json:"lang" required:"true"`
+	CorpID      string   `bson:"corp_id" json:"corp_id" required:"true"`
+	CorpName    string   `bson:"corp" json:"corp" required:"true"`
+	Suffix      []string `bson:"suffix" json:"suffix" required:"true"`
 
 	AdminEmail string `bson:"email" json:"email" required:"true"`
 	AdminName  string `bson:"name" json:"name" required:"true"`

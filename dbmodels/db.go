@@ -18,6 +18,8 @@ type IDB interface {
 	IIndividualSigning
 	ICLA
 	IVerificationCode
+
+	Itest
 }
 
 type ICorporationSigning interface {
@@ -29,6 +31,8 @@ type ICorporationSigning interface {
 	ListDeletedCorpSignings(linkID string) ([]CorporationSigningBasicInfo, IDBError)
 	GetCorpSigningDetail(linkID, email string) (*CLAInfo, *CorpSigningCreateOpt, IDBError)
 	GetCorpSigningBasicInfo(linkID, email string) (*CorporationSigningBasicInfo, IDBError)
+	AddCorpSubEmail(linkID, adminEmail, subEmail string) IDBError
+	GetCorpSigningEmailSuffix(linkID, email string) ([]string, IDBError)
 
 	UploadCorporationSigningPDF(linkID string, adminEmail string, pdf *[]byte) IDBError
 	DownloadCorporationSigningPDF(linkID string, email string) (*[]byte, IDBError)
@@ -90,4 +94,9 @@ type ILink interface {
 	GetOrgOfLink(linkID string) (*OrgInfo, IDBError)
 	ListLinks(opt *LinkListOption) ([]LinkInfo, IDBError)
 	GetAllLinks() ([]LinkInfo, IDBError)
+}
+
+type Itest interface {
+	UpdateCLAHash(index CLAPDFIndex) IDBError
+	UpdateSigningsCLAHash(index CLAPDFIndex) IDBError
 }

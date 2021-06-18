@@ -26,10 +26,12 @@ type CorporationManagerResetPassword struct {
 }
 
 type CorporationManagerCheckResult struct {
+	Corp             string
 	Role             string
 	Name             string
 	Email            string
 	InitialPWChanged bool
+	Suffix           []string
 
 	OrgInfo
 }

@@ -26,8 +26,8 @@ func (cse *CorpEmailDomainCreateOption) Validate(adminEmail string) IModelError 
 		return err
 	}
 
-	if !isSimilarEmails(adminEmail, cse.SubEmail) {
-		return newModelError(ErrUnmatchedEmailDomain, fmt.Errorf("not email domain"))
+	if !isMatchedEmailDomain(adminEmail, cse.SubEmail) {
+		return newModelError(ErrUnmatchedEmailDomain, fmt.Errorf("unmatched email domain"))
 	}
 	return nil
 }
@@ -60,7 +60,7 @@ func ListCorpEmailDomain(linkID, email string) ([]string, IModelError) {
 	return v, parseDBError(err)
 }
 
-func isSimilarEmails(email1, email2 string) bool {
+func isMatchedEmailDomain(email1, email2 string) bool {
 	e1 := strings.Split(util.EmailSuffix(email1), ".")
 	e2 := strings.Split(util.EmailSuffix(email2), ".")
 	n1 := len(e1) - 1

@@ -40,7 +40,7 @@ const (
 	ErrMissgingCLA             ModelErrCode = "missing_cla"
 	ErrNoLinkOrCLAExists       ModelErrCode = "no_link_or_cla_exists"
 	ErrNoLinkOrUnuploaed       ModelErrCode = "no_link_or_unuploaded"
-	ErrNotSubEmail             ModelErrCode = "not_sub_email"
+	ErrUnmatchedEmailDomain    ModelErrCode = "unmatched_email_domain"
 )
 
 type IModelError interface {

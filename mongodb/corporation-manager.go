@@ -83,7 +83,7 @@ func (this *client) CheckCorporationManagerExist(opt dbmodels.CorporationManager
 		memberNameOfCorpManager(fieldName):    1,
 		memberNameOfCorpManager(fieldEmail):   1,
 		memberNameOfCorpManager(fieldChanged): 1,
-		memberNameOfSignings(fieldSuffix):     1,
+		memberNameOfSignings(fieldDomains):    1,
 		memberNameOfSignings(fieldCorp):       1,
 	}
 
@@ -97,8 +97,8 @@ func (this *client) CheckCorporationManagerExist(opt dbmodels.CorporationManager
 				},
 				fieldSignings: func() bson.M {
 					return bson.M{"$and": bson.A{
-						bson.M{"$isArray": fmt.Sprintf("$$this.%s", fieldSuffix)},
-						bson.M{"$in": bson.A{elemFilter[fieldCorpID], fmt.Sprintf("$$this.%s", fieldSuffix)}},
+						bson.M{"$isArray": fmt.Sprintf("$$this.%s", fieldDomains)},
+						bson.M{"$in": bson.A{elemFilter[fieldCorpID], fmt.Sprintf("$$this.%s", fieldDomains)}},
 					}}
 				},
 			},
@@ -132,7 +132,7 @@ func (this *client) CheckCorporationManagerExist(opt dbmodels.CorporationManager
 			Corp:             ss[0].CorpName,
 			Name:             item.Name,
 			Email:            item.Email,
-			Suffix:           ss[0].Suffix,
+			Domains:          ss[0].Domains,
 			Role:             item.Role,
 			InitialPWChanged: item.InitialPWChanged,
 
@@ -173,11 +173,11 @@ func (this *client) ResetCorporationManagerPassword(linkID, email string, opt db
 }
 
 func (this *client) ListCorporationManager(linkID, email, role string) ([]dbmodels.CorporationManagerListResult, dbmodels.IDBError) {
-	suffix, err := this.GetCorpSigningEmailSuffix(linkID, email)
+	domains, err := this.GetCorpSigningEmailDomains(linkID, email)
 	if err != nil {
 		return nil, err
 	}
-	if suffix == nil {
+	if domains == nil {
 		return nil, nil
 	}
 
@@ -195,7 +195,7 @@ func (this *client) ListCorporationManager(linkID, email, role string) ([]dbmode
 			ctx, this.corpSigningCollection, fieldCorpManagers,
 			docFilterOfCorpManager(linkID), project,
 			func() bson.M {
-				c := bson.M{"$in": bson.A{fmt.Sprintf("$$this.%s", fieldCorpID), suffix}}
+				c := bson.M{"$in": bson.A{fmt.Sprintf("$$this.%s", fieldCorpID), domains}}
 				if role == "" {
 					return c
 				}

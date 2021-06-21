@@ -45,7 +45,7 @@ func init() {
 				&controllers.CorporationSigningController{},
 			),
 		),
-		beego.NSNamespace("/corporation-sub-email",
+		beego.NSNamespace("/corporation-email-domain",
 			beego.NSInclude(
 				&controllers.CorpEmailDomainController{},
 			),

@@ -70,31 +70,32 @@ func (this *CorporationManagerController) newAccessToken(linkID string, info *db
 	}
 
 	m := map[string]bool{}
-	for _, i := range info.Suffix {
+	for _, i := range info.Domains {
 		m[i] = true
 	}
 	return this.newApiToken(
 		permission,
 		&acForCorpManagerPayload{
+			Corp:    info.Corp,
 			Name:    info.Name,
 			Email:   info.Email,
 			LinkID:  linkID,
 			OrgInfo: info.OrgInfo,
-			Suffix:  m,
+			Domains: m,
 		},
 	)
 }
 
 type acForCorpManagerPayload struct {
-	Corp   string          `json:"corp"`
-	Name   string          `json:"name"`
-	Email  string          `json:"email"`
-	LinkID string          `json:"link_id"`
-	Suffix map[string]bool `json:"suffix"`
+	Corp    string          `json:"corp"`
+	Name    string          `json:"name"`
+	Email   string          `json:"email"`
+	LinkID  string          `json:"link_id"`
+	Domains map[string]bool `json:"suffix"`
 
 	models.OrgInfo
 }
 
 func (p *acForCorpManagerPayload) hasEmployee(email string) bool {
-	return p.Suffix[util.EmailSuffix(email)]
+	return p.Domains[util.EmailSuffix(email)]
 }

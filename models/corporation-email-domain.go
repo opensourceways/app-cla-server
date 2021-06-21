@@ -14,24 +14,26 @@ type CorpEmailDomainCreateOption struct {
 }
 
 func (cse *CorpEmailDomainCreateOption) Validate(adminEmail string) IModelError {
-	/*
-		err := checkVerificationCode(cse.SubEmail, cse.VerificationCode, adminEmail)
-		if err != nil {
-			return err
-		}
-	*/
 	if err := checkEmailFormat(cse.SubEmail); err != nil {
 		return err
 	}
 
+	err := checkVerificationCode(
+		cse.SubEmail, cse.VerificationCode,
+		PurposeOfAddingEmailDomain(cse.SubEmail),
+	)
+	if err != nil {
+		return err
+	}
+
 	if !isSimilarEmails(adminEmail, cse.SubEmail) {
-		return newModelError(ErrNotSubEmail, fmt.Errorf("not sub email"))
+		return newModelError(ErrUnmatchedEmailDomain, fmt.Errorf("not email domain"))
 	}
 	return nil
 }
 
 func (cse *CorpEmailDomainCreateOption) Create(linkID, adminEmail string) IModelError {
-	err := dbmodels.GetDB().AddCorpSubEmail(linkID, adminEmail, cse.SubEmail)
+	err := dbmodels.GetDB().AddCorpEmailDomain(linkID, adminEmail, cse.SubEmail)
 	if err == nil {
 		return nil
 	}
@@ -43,7 +45,7 @@ func (cse *CorpEmailDomainCreateOption) Create(linkID, adminEmail string) IModel
 }
 
 func ListCorpEmailDomain(linkID, email string) ([]string, IModelError) {
-	v, err := dbmodels.GetDB().GetCorpSigningEmailSuffix(linkID, email)
+	v, err := dbmodels.GetDB().GetCorpSigningEmailDomains(linkID, email)
 	if err == nil {
 		if v == nil {
 			v = []string{}
@@ -74,4 +76,8 @@ func isSimilarEmails(email1, email2 string) bool {
 		j--
 	}
 	return true
+}
+
+func PurposeOfAddingEmailDomain(email string) string {
+	return fmt.Sprintf("adding email domain:%s", email)
 }

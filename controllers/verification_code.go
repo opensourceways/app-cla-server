@@ -17,7 +17,6 @@ func (this *VerificationCodeController) Prepare() {
 	if strings.HasSuffix(this.routerPattern(), "/:link_id/:email") {
 		this.apiPrepare("")
 	} else {
-		// get, update and delete employee
 		this.apiPrepare(PermissionCorpAdmin)
 	}
 }
@@ -83,7 +82,8 @@ func (this *VerificationCodeController) EmailDomain() {
 	}
 
 	code, err := models.CreateVerificationCode(
-		corpEmail, pl.Email, config.AppConfig.VerificationCodeExpiry,
+		corpEmail, models.PurposeOfAddingEmailDomain(corpEmail),
+		config.AppConfig.VerificationCodeExpiry,
 	)
 	if err != nil {
 		this.sendModelErrorAsResp(err, action)
@@ -94,7 +94,7 @@ func (this *VerificationCodeController) EmailDomain() {
 
 	sendEmailToIndividual(
 		corpEmail, pl.OrgEmail,
-		"Verification code for adding another email domain",
+		"Verification code for adding corporation's another email domain",
 		email.AddingCorpEmailDomain{
 			Corp:       pl.Corp,
 			Org:        pl.OrgAlias,

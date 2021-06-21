@@ -148,15 +148,3 @@ func ListDeletedCorpSignings(linkID string) ([]dbmodels.CorporationSigningBasicI
 	}
 	return v, parseDBError(err)
 }
-
-func AddCorpSubEmail(linkID, adminEmail, subEmail string) IModelError {
-	err := dbmodels.GetDB().AddCorpSubEmail(linkID, adminEmail, subEmail)
-	if err == nil {
-		return nil
-	}
-
-	if err.IsErrorOf(dbmodels.ErrNoDBRecord) {
-		return newModelError(ErrNoLinkOrUnsigned, err)
-	}
-	return parseDBError(err)
-}

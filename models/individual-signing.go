@@ -17,8 +17,7 @@ type IndividualSigning struct {
 }
 
 func (isign *IndividualSigning) Validate(linkID string) IModelError {
-	//return checkVerificationCode(isign.Email, isign.VerificationCode, linkID)
-	return nil
+	return checkVerificationCode(isign.Email, isign.VerificationCode, linkID)
 }
 
 func (isign *IndividualSigning) Create(linkID string, enabled bool) IModelError {

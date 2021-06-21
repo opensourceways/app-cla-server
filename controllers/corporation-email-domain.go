@@ -1,9 +1,6 @@
 package controllers
 
 import (
-	"fmt"
-	"github.com/astaxie/beego"
-
 	"github.com/opensourceways/app-cla-server/models"
 )
 
@@ -16,12 +13,17 @@ func (this *CorpEmailDomainController) Prepare() {
 }
 
 // @Title Post
-// @Description add sub-email of corporation
-// @Param	body		body 	models.CorpSubEmailCreateOption	true		"body for sub-email"
+// @Description add email domain of corporation
+// @Param	body		body 	models.CorpEmailDomainCreateOption	true		"body for email domain"
 // @Success 201 {int} map
+// @Failure 400 missing_token:      token is missing
+// @Failure 401 unknown_token:      token is unknown
+// @Failure 402 expired_token:      token is expired
+// @Failure 403 unauthorized_token: the permission of token is unauthorized
+// @Failure 500 system_error:       system error
 // @router / [post]
 func (this *CorpEmailDomainController) Post() {
-	action := "add sub-email"
+	action := "add email domain"
 	sendResp := this.newFuncForSendingFailedResp(action)
 
 	pl, fr := this.tokenPayloadBasedOnCorpManager()
@@ -36,7 +38,6 @@ func (this *CorpEmailDomainController) Post() {
 		return
 	}
 
-	beego.Info(fmt.Sprintf("%#v", info))
 	if err := info.Validate(pl.Email); err != nil {
 		this.sendModelErrorAsResp(err, action)
 		return
@@ -51,16 +52,16 @@ func (this *CorpEmailDomainController) Post() {
 }
 
 // @Title GetAll
-// @Description get all the employees
+// @Description get all the email domains
 // @Success 200 {string}
 // @Failure 400 missing_token:      token is missing
 // @Failure 401 unknown_token:      token is unknown
 // @Failure 402 expired_token:      token is expired
-// @Failure 403 unauthorized_token: the permission of token is unmatched
+// @Failure 403 unauthorized_token: the permission of token is unauthorized
 // @Failure 500 system_error:       system error
 // @router / [get]
 func (this *CorpEmailDomainController) GetAll() {
-	action := "list all suffixes"
+	action := "list all domains"
 
 	pl, fr := this.tokenPayloadBasedOnCorpManager()
 	if fr != nil {

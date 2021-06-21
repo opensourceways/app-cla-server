@@ -104,16 +104,16 @@ func (this *client) IsIndividualSigned(linkID, email string) (bool, dbmodels.IDB
 func (this *client) ListIndividualSigning(linkID, corpEmail, claLang string) ([]dbmodels.IndividualSigningBasicInfo, dbmodels.IDBError) {
 	docFilter := docFilterOfSigning(linkID)
 
-	var suffix []string
+	var domains []string
 	if corpEmail != "" {
-		v, err := this.GetCorpSigningEmailSuffix(linkID, corpEmail)
+		v, err := this.GetCorpSigningEmailDomains(linkID, corpEmail)
 		if err != nil {
 			return nil, err
 		}
 		if v == nil {
 			return nil, nil
 		}
-		suffix = v
+		domains = v
 	}
 
 	project := bson.M{
@@ -133,8 +133,8 @@ func (this *client) ListIndividualSigning(linkID, corpEmail, claLang string) ([]
 				if claLang != "" {
 					cond = append(cond, bson.M{"$eq": bson.A{"$$this." + fieldLang, claLang}})
 				}
-				if len(suffix) > 0 {
-					cond = append(cond, bson.M{"$in": bson.A{fmt.Sprintf("$$this.%s", fieldCorpID), suffix}})
+				if len(domains) > 0 {
+					cond = append(cond, bson.M{"$in": bson.A{fmt.Sprintf("$$this.%s", fieldCorpID), domains}})
 				}
 
 				n := len(cond)

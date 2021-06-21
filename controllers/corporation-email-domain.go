@@ -16,11 +16,17 @@ func (this *CorpEmailDomainController) Prepare() {
 // @Description add email domain of corporation
 // @Param	body		body 	models.CorpEmailDomainCreateOption	true		"body for email domain"
 // @Success 201 {int} map
-// @Failure 400 missing_token:      token is missing
-// @Failure 401 unknown_token:      token is unknown
-// @Failure 402 expired_token:      token is expired
-// @Failure 403 unauthorized_token: the permission of token is unauthorized
-// @Failure 500 system_error:       system error
+// @Failure 400 missing_token:              token is missing
+// @Failure 401 unknown_token:              token is unknown
+// @Failure 402 expired_token:              token is expired
+// @Failure 403 unauthorized_token:         the permission of token is unauthorized
+// @Failure 404 error_parsing_api_body:     fetch payload failed
+// @Failure 405 not_an_email:               the email field of payload is not an email
+// @Failure 406 expired_verification_code:  the verification code is expired
+// @Failure 407 wrong_verification_code:    the verification code is wrong
+// @Failure 408 unmatched_email_domain:     the email domain is unmatched
+// @Failure 409 no_link_or_unsigned:        no link or corp has not signed
+// @Failure 500 system_error:               system error
 // @router / [post]
 func (this *CorpEmailDomainController) Post() {
 	action := "add email domain"

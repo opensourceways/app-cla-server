@@ -26,7 +26,6 @@ func (this *VerificationCodeController) Prepare() {
 // @Param	:org_cla_id	path 	string					true		"org cla id"
 // @Param	:email		path 	string					true		"email of corp"
 // @Success 201 {int} map
-// @Failure util.ErrSendingEmail
 // @router /:link_id/:email [post]
 func (this *VerificationCodeController) Post() {
 	action := "create verification code"
@@ -68,7 +67,11 @@ func (this *VerificationCodeController) Post() {
 // @Description send verification code when adding email domain
 // @Param	:email		path 	string		true		"email of corp"
 // @Success 201 {int} map
-// @Failure util.ErrSendingEmail
+// @Failure 400 missing_token:      token is missing
+// @Failure 401 unknown_token:      token is unknown
+// @Failure 402 expired_token:      token is expired
+// @Failure 403 unauthorized_token: the permission of token is unauthorized
+// @Failure 500 system_error:       system error
 // @router /:email [post]
 func (this *VerificationCodeController) EmailDomain() {
 	action := "create verification code for adding email domain"

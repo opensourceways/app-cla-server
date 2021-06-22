@@ -110,8 +110,16 @@ func (this *client) pullArrayElem(ctx context.Context, collection, array string,
 	return nil
 }
 
+func (this *client) pushNestedArrayElem(ctx context.Context, collection, array string, filterOfDoc, filterOfArray, updateCmd bson.M) dbmodels.IDBError {
+	return this.updateArrayElemHelper(ctx, collection, array, filterOfDoc, filterOfArray, updateCmd, "$addToSet")
+}
+
 // r, _ := col.UpdateOne; r.ModifiedCount == 0 will happen in two case: 1. no matched array item; 2 update repeatedly with same update cmd.
 func (this *client) updateArrayElem(ctx context.Context, collection, array string, filterOfDoc, filterOfArray, updateCmd bson.M) dbmodels.IDBError {
+	return this.updateArrayElemHelper(ctx, collection, array, filterOfDoc, filterOfArray, updateCmd, "$set")
+}
+
+func (this *client) updateArrayElemHelper(ctx context.Context, collection, array string, filterOfDoc, filterOfArray, updateCmd bson.M, op string) dbmodels.IDBError {
 	cmd := bson.M{}
 	for k, v := range updateCmd {
 		cmd[fmt.Sprintf("%s.$[i].%s", array, k)] = v
@@ -125,7 +133,7 @@ func (this *client) updateArrayElem(ctx context.Context, collection, array strin
 	col := this.collection(collection)
 	r, err := col.UpdateOne(
 		ctx, filterOfDoc,
-		bson.M{"$set": cmd},
+		bson.M{op: cmd},
 		&options.UpdateOptions{
 			ArrayFilters: &options.ArrayFilters{
 				Filters: bson.A{

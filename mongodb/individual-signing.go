@@ -2,6 +2,7 @@ package mongodb
 
 import (
 	"context"
+	"fmt"
 
 	"go.mongodb.org/mongo-driver/bson"
 
@@ -103,12 +104,16 @@ func (this *client) IsIndividualSigned(linkID, email string) (bool, dbmodels.IDB
 func (this *client) ListIndividualSigning(linkID, corpEmail, claLang string) ([]dbmodels.IndividualSigningBasicInfo, dbmodels.IDBError) {
 	docFilter := docFilterOfSigning(linkID)
 
-	arrayFilter := bson.M{}
+	var domains []string
 	if corpEmail != "" {
-		arrayFilter[fieldCorpID] = genCorpID(corpEmail)
-	}
-	if claLang != "" {
-		arrayFilter[fieldLang] = claLang
+		v, err := this.GetCorpEmailDomains(linkID, corpEmail)
+		if err != nil {
+			return nil, err
+		}
+		if v == nil {
+			return nil, nil
+		}
+		domains = v
 	}
 
 	project := bson.M{
@@ -121,9 +126,30 @@ func (this *client) ListIndividualSigning(linkID, corpEmail, claLang string) ([]
 
 	var v []cIndividualSigning
 	f := func(ctx context.Context) error {
-		return this.getArrayElem(
-			ctx, this.individualSigningCollection, fieldSignings,
-			docFilter, arrayFilter, project, &v)
+		return this.getArrayElems(
+			ctx, this.individualSigningCollection, docFilter, project,
+			map[string]func() bson.M{
+				fieldSignings: func() bson.M {
+					cond := bson.A{}
+					if claLang != "" {
+						cond = append(cond, bson.M{"$eq": bson.A{"$$this." + fieldLang, claLang}})
+					}
+					if len(domains) > 0 {
+						cond = append(cond, bson.M{"$in": bson.A{fmt.Sprintf("$$this.%s", fieldCorpID), domains}})
+					}
+
+					n := len(cond)
+					if n > 1 {
+						return bson.M{"$and": cond}
+					}
+					if n > 0 {
+						return cond[0].(bson.M)
+					}
+					return bson.M{"$toBool": 1}
+				},
+			},
+			&v,
+		)
 	}
 
 	if err := withContext(f); err != nil {

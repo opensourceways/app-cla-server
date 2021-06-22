@@ -18,7 +18,7 @@ type EmployeeManager struct {
 	Name  string `json:"name"`
 }
 
-func (this *EmployeeManagerCreateOption) ValidateWhenAdding(linkID, adminEmail string) IModelError {
+func (this *EmployeeManagerCreateOption) ValidateWhenAdding(linkID, adminEmail string, emailDomains map[string]bool) IModelError {
 	if len(this.Managers) == 0 {
 		return newModelError(ErrEmptyPayload, fmt.Errorf("no employee mangers"))
 	}
@@ -40,8 +40,6 @@ func (this *EmployeeManagerCreateOption) ValidateWhenAdding(linkID, adminEmail s
 		em[item.Email] = true
 	}
 
-	suffix := util.EmailSuffix(adminEmail)
-
 	for i := range this.Managers {
 		item := &this.Managers[i]
 
@@ -49,8 +47,9 @@ func (this *EmployeeManagerCreateOption) ValidateWhenAdding(linkID, adminEmail s
 			return err
 		}
 
-		if util.EmailSuffix(item.Email) != suffix {
-			return newModelError(ErrNotSameCorp, fmt.Errorf("not same email suffix"))
+		domain := util.EmailSuffix(item.Email)
+		if !emailDomains[domain] {
+			return newModelError(ErrNotSameCorp, fmt.Errorf("not same email domain"))
 		}
 
 		if item.Email == adminEmail {
@@ -62,7 +61,7 @@ func (this *EmployeeManagerCreateOption) ValidateWhenAdding(linkID, adminEmail s
 		}
 		em[item.Email] = true
 
-		if err := checkManagerID(fmt.Sprintf("%s_%s", item.ID, suffix)); err != nil {
+		if err := checkManagerID(fmt.Sprintf("%s_%s", item.ID, domain)); err != nil {
 			return err
 		}
 
@@ -108,12 +107,10 @@ func (this *EmployeeManagerCreateOption) Create(linkID string) ([]dbmodels.Corpo
 	return opt, nil
 }
 
-func (this *EmployeeManagerCreateOption) ValidateWhenDeleting(adminEmail string) IModelError {
+func (this *EmployeeManagerCreateOption) ValidateWhenDeleting(adminEmail string, emailDomains map[string]bool) IModelError {
 	if len(this.Managers) == 0 {
 		return newModelError(ErrEmptyPayload, fmt.Errorf("no employee mangers"))
 	}
-
-	suffix := util.EmailSuffix(adminEmail)
 
 	for i := range this.Managers {
 		item := &this.Managers[i]
@@ -122,8 +119,8 @@ func (this *EmployeeManagerCreateOption) ValidateWhenDeleting(adminEmail string)
 			return err
 		}
 
-		if util.EmailSuffix(item.Email) != suffix {
-			return newModelError(ErrNotSameCorp, fmt.Errorf("not same email suffix"))
+		if !emailDomains[util.EmailSuffix(item.Email)] {
+			return newModelError(ErrNotSameCorp, fmt.Errorf("not same email domain"))
 		}
 
 		if item.Email == adminEmail {

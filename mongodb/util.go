@@ -52,15 +52,26 @@ func (this *client) getArrayElem(ctx context.Context, collection, array string, 
 }
 
 func (this *client) getMultiArrays(ctx context.Context, collection string, filterOfDoc bson.M, filterOfArrays map[string]bson.M, project bson.M, result interface{}) error {
+	m := map[string]func() bson.M{}
+	for k, v := range filterOfArrays {
+		m[k] = func() bson.M {
+			return conditionTofilterArray(v)
+		}
+	}
+
+	return this.getArrayElems(ctx, collection, filterOfDoc, project, m, result)
+}
+
+func (this *client) getArrayElems(ctx context.Context, collection string, filterOfDoc bson.M, project bson.M, filterOfArrays map[string]func() bson.M, result interface{}) error {
 	pipeline := bson.A{bson.M{"$match": filterOfDoc}}
 
 	if len(filterOfArrays) > 0 {
 		project1 := bson.M{}
 
-		for array, filterOfArray := range filterOfArrays {
+		for array, cond := range filterOfArrays {
 			project1[array] = bson.M{"$filter": bson.M{
 				"input": fmt.Sprintf("$%s", array),
-				"cond":  conditionTofilterArray(filterOfArray),
+				"cond":  cond(),
 			}}
 		}
 

@@ -8,34 +8,36 @@ import (
 )
 
 const (
-	TmplCorporationSigning  = "corporation signing"
-	TmplIndividualSigning   = "individual signing"
-	TmplEmployeeSigning     = "employee signing"
-	TmplNotifyingManager    = "notifying manager"
-	TmplVerificationCode    = "verificaition code"
-	TmplAddingCorpAdmin     = "adding corp admin"
-	TmplAddingCorpManager   = "adding corp manager"
-	TmplRemovingCorpManager = "removing corp manager"
-	TmplActivatingEmployee  = "activating employee"
-	TmplInactivaingEmployee = "inactivating employee"
-	TmplRemovingingEmployee = "removing employee"
+	TmplCorporationSigning    = "corporation signing"
+	TmplIndividualSigning     = "individual signing"
+	TmplEmployeeSigning       = "employee signing"
+	TmplNotifyingManager      = "notifying manager"
+	TmplVerificationCode      = "verificaition code"
+	TmplAddingCorpEmailDomain = "adding corp email domain"
+	TmplAddingCorpAdmin       = "adding corp admin"
+	TmplAddingCorpManager     = "adding corp manager"
+	TmplRemovingCorpManager   = "removing corp manager"
+	TmplActivatingEmployee    = "activating employee"
+	TmplInactivaingEmployee   = "inactivating employee"
+	TmplRemovingingEmployee   = "removing employee"
 )
 
 var msgTmpl = map[string]*template.Template{}
 
 func initTemplate() error {
 	items := map[string]string{
-		TmplCorporationSigning:  "./conf/email-template/corporation-signing.tmpl",
-		TmplIndividualSigning:   "./conf/email-template/individual-signing.tmpl",
-		TmplEmployeeSigning:     "./conf/email-template/employee-signing.tmpl",
-		TmplNotifyingManager:    "./conf/email-template/notifying-corp-manager.tmpl",
-		TmplVerificationCode:    "./conf/email-template/verification-code.tmpl",
-		TmplAddingCorpAdmin:     "./conf/email-template/adding-corp-admin.tmpl",
-		TmplAddingCorpManager:   "./conf/email-template/adding-corp-manager.tmpl",
-		TmplRemovingCorpManager: "./conf/email-template/removing-corp-manager.tmpl",
-		TmplActivatingEmployee:  "./conf/email-template/activating-employee.tmpl",
-		TmplInactivaingEmployee: "./conf/email-template/inactivating-employee.tmpl",
-		TmplRemovingingEmployee: "./conf/email-template/removing-employee.tmpl",
+		TmplCorporationSigning:    "./conf/email-template/corporation-signing.tmpl",
+		TmplIndividualSigning:     "./conf/email-template/individual-signing.tmpl",
+		TmplEmployeeSigning:       "./conf/email-template/employee-signing.tmpl",
+		TmplNotifyingManager:      "./conf/email-template/notifying-corp-manager.tmpl",
+		TmplVerificationCode:      "./conf/email-template/verification-code.tmpl",
+		TmplAddingCorpEmailDomain: "./conf/email-template/adding-corp-email-domain.tmpl",
+		TmplAddingCorpAdmin:       "./conf/email-template/adding-corp-admin.tmpl",
+		TmplAddingCorpManager:     "./conf/email-template/adding-corp-manager.tmpl",
+		TmplRemovingCorpManager:   "./conf/email-template/removing-corp-manager.tmpl",
+		TmplActivatingEmployee:    "./conf/email-template/activating-employee.tmpl",
+		TmplInactivaingEmployee:   "./conf/email-template/inactivating-employee.tmpl",
+		TmplRemovingingEmployee:   "./conf/email-template/removing-employee.tmpl",
 	}
 
 	for name, path := range items {
@@ -104,6 +106,17 @@ type VerificationCode struct {
 
 func (this VerificationCode) GenEmailMsg() (*EmailMessage, error) {
 	return genEmailMsg(TmplVerificationCode, this)
+}
+
+type AddingCorpEmailDomain struct {
+	Corp       string
+	Org        string
+	Code       string
+	ProjectURL string
+}
+
+func (cse AddingCorpEmailDomain) GenEmailMsg() (*EmailMessage, error) {
+	return genEmailMsg(TmplAddingCorpEmailDomain, cse)
 }
 
 type AddingCorpManager struct {

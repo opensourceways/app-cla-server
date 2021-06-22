@@ -13,6 +13,12 @@ func elemFilterOfCorpSigning(email string) bson.M {
 	return filterOfCorpID(email)
 }
 
+func elemFilterOfEmailDomains(email string) bson.M {
+	return bson.M{
+		fieldDomains: bson.M{"$elemMatch": bson.M{"$eq": genCorpID(email)}},
+	}
+}
+
 func (c *client) SignCorpCLA(linkID string, info *dbmodels.CorpSigningCreateOpt) dbmodels.IDBError {
 	signing := dCorpSigning{
 		CLALanguage: info.CLALanguage,
@@ -23,6 +29,7 @@ func (c *client) SignCorpCLA(linkID string, info *dbmodels.CorpSigningCreateOpt)
 		Date:        info.Date,
 		SigningInfo: info.Info,
 	}
+	signing.Domains = []string{signing.CorpID}
 	doc, err := structToMap(signing)
 	if err != nil {
 		return err
@@ -92,7 +99,7 @@ func (this *client) IsCorpSigned(linkID, email string) (bool, dbmodels.IDBError)
 	f := func(ctx context.Context) dbmodels.IDBError {
 		v, err := this.isArrayElemNotExists(
 			ctx, this.corpSigningCollection, fieldSignings,
-			docFilterOfSigning(linkID), elemFilterOfCorpSigning(email),
+			docFilterOfSigning(linkID), elemFilterOfEmailDomains(email),
 		)
 		if err != nil {
 			return newSystemError(err)

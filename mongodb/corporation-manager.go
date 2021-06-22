@@ -83,13 +83,26 @@ func (this *client) CheckCorporationManagerExist(opt dbmodels.CorporationManager
 		memberNameOfCorpManager(fieldName):    1,
 		memberNameOfCorpManager(fieldEmail):   1,
 		memberNameOfCorpManager(fieldChanged): 1,
+		memberNameOfSignings(fieldDomains):    1,
+		memberNameOfSignings(fieldCorp):       1,
 	}
 
 	var v []cCorpSigning
 	f := func(ctx context.Context) error {
-		return this.getArrayElem(
-			ctx, this.corpSigningCollection, fieldCorpManagers,
-			docFilter, elemFilter, project, &v,
+		return this.getArrayElems(
+			ctx, this.corpSigningCollection, docFilter, project,
+			map[string]func() bson.M{
+				fieldCorpManagers: func() bson.M {
+					return conditionTofilterArray(elemFilter)
+				},
+				fieldSignings: func() bson.M {
+					return bson.M{"$and": bson.A{
+						bson.M{"$isArray": fmt.Sprintf("$$this.%s", fieldDomains)},
+						bson.M{"$in": bson.A{elemFilter[fieldCorpID], fmt.Sprintf("$$this.%s", fieldDomains)}},
+					}}
+				},
+			},
+			&v,
 		)
 	}
 
@@ -108,11 +121,18 @@ func (this *client) CheckCorporationManagerExist(opt dbmodels.CorporationManager
 			continue
 		}
 
+		ss := doc.Signings
+		if len(ss) == 0 {
+			continue
+		}
+
 		item := &cm[0]
 		orgRepo := dbmodels.ParseToOrgRepo(doc.OrgIdentity)
 		result[doc.LinkID] = dbmodels.CorporationManagerCheckResult{
+			Corp:             ss[0].CorpName,
 			Name:             item.Name,
 			Email:            item.Email,
+			Domains:          ss[0].Domains,
 			Role:             item.Role,
 			InitialPWChanged: item.InitialPWChanged,
 
@@ -153,9 +173,12 @@ func (this *client) ResetCorporationManagerPassword(linkID, email string, opt db
 }
 
 func (this *client) ListCorporationManager(linkID, email, role string) ([]dbmodels.CorporationManagerListResult, dbmodels.IDBError) {
-	elemFilter := filterOfCorpID(email)
-	if role != "" {
-		elemFilter["role"] = role
+	domains, err := this.GetCorpEmailDomains(linkID, email)
+	if err != nil {
+		return nil, err
+	}
+	if domains == nil {
+		return nil, nil
 	}
 
 	project := bson.M{
@@ -168,9 +191,22 @@ func (this *client) ListCorporationManager(linkID, email, role string) ([]dbmode
 	var v []cCorpSigning
 
 	f := func(ctx context.Context) error {
-		return this.getArrayElem(
-			ctx, this.corpSigningCollection, fieldCorpManagers,
-			docFilterOfCorpManager(linkID), elemFilter, project, &v,
+		return this.getArrayElems(
+			ctx, this.corpSigningCollection, docFilterOfCorpManager(linkID), project,
+			map[string]func() bson.M{
+				fieldCorpManagers: func() bson.M {
+					c := bson.M{"$in": bson.A{fmt.Sprintf("$$this.%s", fieldCorpID), domains}}
+					if role == "" {
+						return c
+					}
+
+					return bson.M{"$and": bson.A{
+						bson.M{"$eq": bson.A{"$$this." + fieldRole, role}},
+						c,
+					}}
+				},
+			},
+			&v,
 		)
 	}
 

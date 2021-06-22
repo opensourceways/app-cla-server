@@ -8,19 +8,21 @@ import (
 	"github.com/opensourceways/app-cla-server/util"
 )
 
+const minNumOfEmailDomainParts = 2
+
 type CorpEmailDomainCreateOption struct {
 	SubEmail         string `json:"sub_email"`
 	VerificationCode string `json:"verification_code"`
 }
 
-func (cse *CorpEmailDomainCreateOption) Validate(adminEmail string) IModelError {
+func (cse CorpEmailDomainCreateOption) Validate(adminEmail string) IModelError {
 	if err := checkEmailFormat(cse.SubEmail); err != nil {
 		return err
 	}
 
 	err := checkVerificationCode(
 		cse.SubEmail, cse.VerificationCode,
-		PurposeOfAddingEmailDomain(cse.SubEmail),
+		PurposeOfAddingEmailDomain(adminEmail),
 	)
 	if err != nil {
 		return err
@@ -32,8 +34,8 @@ func (cse *CorpEmailDomainCreateOption) Validate(adminEmail string) IModelError 
 	return nil
 }
 
-func (cse *CorpEmailDomainCreateOption) Create(linkID, adminEmail string) IModelError {
-	err := dbmodels.GetDB().AddCorpEmailDomain(linkID, adminEmail, cse.SubEmail)
+func (cse CorpEmailDomainCreateOption) Create(linkID, adminEmail string) IModelError {
+	err := dbmodels.GetDB().AddCorpEmailDomain(linkID, adminEmail, util.EmailSuffix(cse.SubEmail))
 	if err == nil {
 		return nil
 	}
@@ -45,7 +47,7 @@ func (cse *CorpEmailDomainCreateOption) Create(linkID, adminEmail string) IModel
 }
 
 func ListCorpEmailDomain(linkID, email string) ([]string, IModelError) {
-	v, err := dbmodels.GetDB().GetCorpSigningEmailDomains(linkID, email)
+	v, err := dbmodels.GetDB().GetCorpEmailDomains(linkID, email)
 	if err == nil {
 		if v == nil {
 			v = []string{}
@@ -70,7 +72,7 @@ func isMatchedEmailDomain(email1, email2 string) bool {
 			break
 		}
 		if e1[i] != e2[j] {
-			return n1-i >= 2
+			return n1-i >= minNumOfEmailDomainParts
 		}
 
 		j--

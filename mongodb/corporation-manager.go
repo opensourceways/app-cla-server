@@ -89,7 +89,7 @@ func (this *client) CheckCorporationManagerExist(opt dbmodels.CorporationManager
 
 	var v []cCorpSigning
 	f := func(ctx context.Context) error {
-		return this.getMultiArrays1(
+		return this.getArrayElems(
 			ctx, this.corpSigningCollection, docFilter, project,
 			map[string]func() bson.M{
 				fieldCorpManagers: func() bson.M {
@@ -173,7 +173,7 @@ func (this *client) ResetCorporationManagerPassword(linkID, email string, opt db
 }
 
 func (this *client) ListCorporationManager(linkID, email, role string) ([]dbmodels.CorporationManagerListResult, dbmodels.IDBError) {
-	domains, err := this.GetCorpSigningEmailDomains(linkID, email)
+	domains, err := this.GetCorpEmailDomains(linkID, email)
 	if err != nil {
 		return nil, err
 	}
@@ -191,19 +191,20 @@ func (this *client) ListCorporationManager(linkID, email, role string) ([]dbmode
 	var v []cCorpSigning
 
 	f := func(ctx context.Context) error {
-		return this.getArrayElem1(
-			ctx, this.corpSigningCollection, fieldCorpManagers,
-			docFilterOfCorpManager(linkID), project,
-			func() bson.M {
-				c := bson.M{"$in": bson.A{fmt.Sprintf("$$this.%s", fieldCorpID), domains}}
-				if role == "" {
-					return c
-				}
+		return this.getArrayElems(
+			ctx, this.corpSigningCollection, docFilterOfCorpManager(linkID), project,
+			map[string]func() bson.M{
+				fieldCorpManagers: func() bson.M {
+					c := bson.M{"$in": bson.A{fmt.Sprintf("$$this.%s", fieldCorpID), domains}}
+					if role == "" {
+						return c
+					}
 
-				return bson.M{"$and": bson.A{
-					bson.M{"$eq": bson.A{"$$this." + fieldRole, role}},
-					c,
-				}}
+					return bson.M{"$and": bson.A{
+						bson.M{"$eq": bson.A{"$$this." + fieldRole, role}},
+						c,
+					}}
+				},
 			},
 			&v,
 		)

@@ -106,7 +106,7 @@ func (this *client) ListIndividualSigning(linkID, corpEmail, claLang string) ([]
 
 	var domains []string
 	if corpEmail != "" {
-		v, err := this.GetCorpSigningEmailDomains(linkID, corpEmail)
+		v, err := this.GetCorpEmailDomains(linkID, corpEmail)
 		if err != nil {
 			return nil, err
 		}
@@ -126,25 +126,27 @@ func (this *client) ListIndividualSigning(linkID, corpEmail, claLang string) ([]
 
 	var v []cIndividualSigning
 	f := func(ctx context.Context) error {
-		return this.getArrayElem1(
-			ctx, this.individualSigningCollection, fieldSignings, docFilter, project,
-			func() bson.M {
-				cond := bson.A{}
-				if claLang != "" {
-					cond = append(cond, bson.M{"$eq": bson.A{"$$this." + fieldLang, claLang}})
-				}
-				if len(domains) > 0 {
-					cond = append(cond, bson.M{"$in": bson.A{fmt.Sprintf("$$this.%s", fieldCorpID), domains}})
-				}
+		return this.getArrayElems(
+			ctx, this.individualSigningCollection, docFilter, project,
+			map[string]func() bson.M{
+				fieldSignings: func() bson.M {
+					cond := bson.A{}
+					if claLang != "" {
+						cond = append(cond, bson.M{"$eq": bson.A{"$$this." + fieldLang, claLang}})
+					}
+					if len(domains) > 0 {
+						cond = append(cond, bson.M{"$in": bson.A{fmt.Sprintf("$$this.%s", fieldCorpID), domains}})
+					}
 
-				n := len(cond)
-				if n > 1 {
-					return bson.M{"$and": cond}
-				}
-				if n > 0 {
-					return cond[0].(bson.M)
-				}
-				return bson.M{"$toBool": 1}
+					n := len(cond)
+					if n > 1 {
+						return bson.M{"$and": cond}
+					}
+					if n > 0 {
+						return cond[0].(bson.M)
+					}
+					return bson.M{"$toBool": 1}
+				},
 			},
 			&v,
 		)

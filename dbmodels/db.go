@@ -29,8 +29,8 @@ type ICorporationSigning interface {
 	ListDeletedCorpSignings(linkID string) ([]CorporationSigningBasicInfo, IDBError)
 	GetCorpSigningDetail(linkID, email string) (*CLAInfo, *CorpSigningCreateOpt, IDBError)
 	GetCorpSigningBasicInfo(linkID, email string) (*CorporationSigningBasicInfo, IDBError)
-	AddCorpEmailDomain(linkID, adminEmail, subEmail string) IDBError
-	GetCorpSigningEmailDomains(linkID, email string) ([]string, IDBError)
+	AddCorpEmailDomain(linkID, adminEmail, domain string) IDBError
+	GetCorpEmailDomains(linkID, email string) ([]string, IDBError)
 
 	UploadCorporationSigningPDF(linkID string, adminEmail string, pdf *[]byte) IDBError
 	DownloadCorporationSigningPDF(linkID string, email string) (*[]byte, IDBError)

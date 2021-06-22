@@ -43,18 +43,6 @@ func (this *client) isArrayElemNotExists(ctx context.Context, collection, array 
 	return len(v) <= 0, nil
 }
 
-func (this *client) getArrayElem1(ctx context.Context, collection, array string, filterOfDoc, project bson.M, filterOfArray func() bson.M, result interface{}) error {
-	return this.getMultiArrays1(
-		ctx, collection, filterOfDoc, project,
-		map[string]func() bson.M{
-			array: func() bson.M {
-				return filterOfArray()
-			},
-		},
-		result,
-	)
-}
-
 func (this *client) getArrayElem(ctx context.Context, collection, array string, filterOfDoc, filterOfArray, project bson.M, result interface{}) error {
 	ma := map[string]bson.M{}
 	if len(filterOfArray) > 0 {
@@ -71,10 +59,10 @@ func (this *client) getMultiArrays(ctx context.Context, collection string, filte
 		}
 	}
 
-	return this.getMultiArrays1(ctx, collection, filterOfDoc, project, m, result)
+	return this.getArrayElems(ctx, collection, filterOfDoc, project, m, result)
 }
 
-func (this *client) getMultiArrays1(ctx context.Context, collection string, filterOfDoc bson.M, project bson.M, filterOfArrays map[string]func() bson.M, result interface{}) error {
+func (this *client) getArrayElems(ctx context.Context, collection string, filterOfDoc bson.M, project bson.M, filterOfArrays map[string]func() bson.M, result interface{}) error {
 	pipeline := bson.A{bson.M{"$match": filterOfDoc}}
 
 	if len(filterOfArrays) > 0 {

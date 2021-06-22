@@ -38,9 +38,7 @@ func (this *VerificationCodeController) Post() {
 		return
 	}
 
-	code, err := models.CreateVerificationCode(
-		emailOfSigner, linkID, config.AppConfig.VerificationCodeExpiry,
-	)
+	code, err := this.createCode(emailOfSigner, linkID)
 	if err != nil {
 		this.sendModelErrorAsResp(err, action)
 		return
@@ -84,9 +82,8 @@ func (this *VerificationCodeController) EmailDomain() {
 		return
 	}
 
-	code, err := models.CreateVerificationCode(
-		corpEmail, models.PurposeOfAddingEmailDomain(corpEmail),
-		config.AppConfig.VerificationCodeExpiry,
+	code, err := this.createCode(
+		corpEmail, models.PurposeOfAddingEmailDomain(pl.Email),
 	)
 	if err != nil {
 		this.sendModelErrorAsResp(err, action)
@@ -104,5 +101,11 @@ func (this *VerificationCodeController) EmailDomain() {
 			Code:       code,
 			ProjectURL: pl.OrgInfo.ProjectURL(),
 		},
+	)
+}
+
+func (this *VerificationCodeController) createCode(to, purpose string) (string, models.IModelError) {
+	return models.CreateVerificationCode(
+		to, purpose, config.AppConfig.VerificationCodeExpiry,
 	)
 }

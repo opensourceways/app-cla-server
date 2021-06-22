@@ -30,8 +30,8 @@ func (this *CorporationSigningCreateOption) Validate(orgCLAID string) IModelErro
 		return err
 	}
 
-	if config.AppConfig.IsRestrictedEmailSuffix(util.EmailSuffix(email)) {
-		return newModelError(ErrRestrictedEmailSuffix, "email suffix is restricted")
+	if config.AppConfig.IsRestrictedEmailSuffix(util.EmailSuffix(this.AdminEmail)) {
+		return newModelError(ErrRestrictedEmailSuffix, fmt.Errorf("email suffix is restricted"))
 	}
 	return nil
 }

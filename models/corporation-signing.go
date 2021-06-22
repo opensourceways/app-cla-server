@@ -22,13 +22,19 @@ type CorporationSigningCreateOption struct {
 }
 
 func (this *CorporationSigningCreateOption) Validate(orgCLAID string) IModelError {
-	if err := checkVerificationCode(this.AdminEmail, this.VerificationCode, orgCLAID); err != nil {
-		return err
-	}
 	if err := checkEmailFormat(this.AdminEmail); err != nil {
 		return err
 	}
-	return CheckRestrictEmailSuffix(this.AdminEmail)
+
+	if err := checkVerificationCode(this.AdminEmail, this.VerificationCode, orgCLAID); err != nil {
+		return err
+	}
+
+	if config.AppConfig.IsRestrictedEmailSuffix(util.EmailSuffix(email)) {
+		return newModelError(ErrRestrictedEmailSuffix, "email suffix is restricted")
+	}
+	return nil
+
 }
 
 func (this *CorporationSigningCreateOption) Create(orgCLAID string) IModelError {
@@ -150,12 +156,4 @@ func ListDeletedCorpSignings(linkID string) ([]dbmodels.CorporationSigningBasicI
 		return v, newModelError(ErrNoLink, err)
 	}
 	return v, parseDBError(err)
-}
-
-func CheckRestrictEmailSuffix(email string) IModelError {
-	suffix := util.EmailSuffix(email)
-	if config.AppConfig.IsRestrictEmailSuffix(suffix) {
-		return newModelError(ErrRestrictedEmailSuffix, fmt.Errorf("Email suffix is restricted:%s", email))
-	}
-	return nil
 }

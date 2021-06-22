@@ -146,7 +146,7 @@ func (appConf *appConfig) validate() error {
 	return nil
 }
 
-func (appConf *appConfig) IsRestrictEmailSuffix(emailSuffix string) bool {
+func (appConf *appConfig) IsRestrictedEmailSuffix(emailSuffix string) bool {
 	for _, suffix := range appConf.RestrictedCorpEmailSuffix {
 		if strings.ToLower(suffix) == strings.ToLower(emailSuffix) {
 			return true

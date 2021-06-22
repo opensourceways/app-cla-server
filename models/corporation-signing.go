@@ -34,7 +34,6 @@ func (this *CorporationSigningCreateOption) Validate(orgCLAID string) IModelErro
 		return newModelError(ErrRestrictedEmailSuffix, "email suffix is restricted")
 	}
 	return nil
-
 }
 
 func (this *CorporationSigningCreateOption) Create(orgCLAID string) IModelError {

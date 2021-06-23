@@ -41,6 +41,7 @@ const (
 	errFrequentOperation        = "frequent_operation"
 	errCanNotFetchClientIP      = "can_not_fetch_client_ip"
 	errNotPDFFile               = "not_pdf_file"
+	errNotSupportAuthWay        = "not_support_auth_way"
 )
 
 func parseModelError(err models.IModelError) *failedApiResult {

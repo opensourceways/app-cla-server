@@ -49,7 +49,7 @@ func (this *emailWorker) GenCLAPDFForCorporationAndSendIt(linkID, orgSignatureFi
 			this.wg.Done()
 		}()
 
-		emailCfg, ec, err := getEmailClient(linkID)
+		emailCfg, ec, err := getEmailClient(orgInfo.OrgEmail)
 		if err != nil {
 			return
 		}
@@ -112,13 +112,13 @@ func (this *emailWorker) GenCLAPDFForCorporationAndSendIt(linkID, orgSignatureFi
 	go f()
 }
 
-func (this *emailWorker) SendSimpleMessage(linkID string, msg *email.EmailMessage) {
+func (this *emailWorker) SendSimpleMessage(orgEmail string, msg *email.EmailMessage) {
 	f := func() {
 		defer func() {
 			this.wg.Done()
 		}()
 
-		emailCfg, ec, err := getEmailClient(linkID)
+		emailCfg, ec, err := getEmailClient(orgEmail)
 		if err != nil {
 			return
 		}
@@ -148,8 +148,8 @@ func next(err error) {
 
 }
 
-func getEmailClient(linkID string) (*models.OrgEmail, email.IEmail, error) {
-	emailCfg, merr := models.GetOrgEmailOfLink(linkID)
+func getEmailClient(orgEmail string) (*models.OrgEmail, email.IEmail, error) {
+	emailCfg, merr := models.GetOrgEmailInfo(orgEmail)
 	if merr != nil {
 		beego.Info(merr.Error())
 		return nil, nil, merr

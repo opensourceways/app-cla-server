@@ -30,8 +30,8 @@ func (this *OrgEmail) Create() IModelError {
 	return parseDBError(dbErr)
 }
 
-func GetOrgEmailOfLink(linkID string) (*OrgEmail, IModelError) {
-	info, err := dbmodels.GetDB().GetOrgEmailOfLink(linkID)
+func GetOrgEmailInfo(email string) (*OrgEmail, IModelError) {
+	info, err := dbmodels.GetDB().GetOrgEmailInfo(email)
 	if err != nil {
 		if err.IsErrorOf(dbmodels.ErrNoDBRecord) {
 			return nil, newModelError(ErrOrgEmailNotExists, err)
@@ -46,20 +46,8 @@ func GetOrgEmailOfLink(linkID string) (*OrgEmail, IModelError) {
 	}
 
 	return &OrgEmail{
-		Email:    info.Email,
+		Email:    email,
 		Token:    &token,
 		Platform: info.Platform,
 	}, nil
-}
-
-func HasOrgEmail(email string) (bool, IModelError) {
-	_, err := dbmodels.GetDB().GetOrgEmailInfo(email)
-	if err == nil {
-		return true, nil
-	}
-
-	if err.IsErrorOf(dbmodels.ErrNoDBRecord) {
-		return false, nil
-	}
-	return false, parseDBError(err)
 }

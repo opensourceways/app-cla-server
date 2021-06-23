@@ -45,7 +45,7 @@ func (this *VerificationCodeController) Post() {
 	this.sendSuccessResp("create verification code successfully")
 
 	sendEmailToIndividual(
-		linkID, emailOfSigner,
+		emailOfSigner, orgInfo.OrgEmail,
 		fmt.Sprintf(
 			"Verification code for signing CLA on project of \"%s\"",
 			orgInfo.OrgAlias,

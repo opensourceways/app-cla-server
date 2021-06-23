@@ -52,11 +52,14 @@ func (this *client) GetOrgEmailInfo(email string) (*dbmodels.OrgEmailCreateInfo,
 	if err := withContext1(f); err != nil {
 		return nil, err
 	}
-
+	decToken, err := this.encrypt.decryptBytes(v.Token)
+	if err != nil {
+		return nil, err
+	}
 	return &dbmodels.OrgEmailCreateInfo{
 		Email:    email,
 		Platform: v.Platform,
-		Token:    v.Token,
+		Token:    decToken,
 	}, nil
 }
 

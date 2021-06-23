@@ -95,7 +95,7 @@ func (this *EmployeeManagerController) Delete() {
 			Org:        pl.OrgAlias,
 			ProjectURL: pl.ProjectURL(),
 		}
-		sendEmailToIndividual(pl.LinkID, item.Email, subject, msg)
+		sendEmailToIndividual(item.Email, pl.OrgEmail, subject, msg)
 	}
 }
 

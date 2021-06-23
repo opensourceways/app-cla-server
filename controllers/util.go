@@ -24,11 +24,11 @@ const (
 	fileNameOfUploadingOrgSignatue = "org_signature_file"
 )
 
-func sendEmailToIndividual(linkID, to, subject string, builder email.IEmailMessageBulder) {
-	sendEmail(linkID, []string{to}, subject, builder)
+func sendEmailToIndividual(to, from, subject string, builder email.IEmailMessageBulder) {
+	sendEmail([]string{to}, from, subject, builder)
 }
 
-func sendEmail(linkID string, to []string, subject string, builder email.IEmailMessageBulder) {
+func sendEmail(to []string, from, subject string, builder email.IEmailMessageBulder) {
 	msg, err := builder.GenEmailMsg()
 	if err != nil {
 		beego.Error(err)
@@ -38,7 +38,7 @@ func sendEmail(linkID string, to []string, subject string, builder email.IEmailM
 	msg.To = to
 	msg.Subject = subject
 
-	worker.GetEmailWorker().SendSimpleMessage(linkID, msg)
+	worker.GetEmailWorker().SendSimpleMessage(from, msg)
 }
 
 func notifyCorpAdmin(linkID string, orgInfo *models.OrgInfo, info *dbmodels.CorporationManagerCreateOption) {
@@ -62,7 +62,7 @@ func notifyCorpManagerWhenAdding(linkID string, orgInfo *models.OrgInfo, info []
 			URLOfCLAPlatform: config.AppConfig.CLAPlatformURL,
 		}
 
-		sendEmailToIndividual(linkID, item.Email, subject, d)
+		sendEmailToIndividual(item.Email, orgInfo.OrgEmail, subject, d)
 	}
 }
 

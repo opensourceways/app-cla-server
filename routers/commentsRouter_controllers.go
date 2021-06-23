@@ -172,7 +172,7 @@ func init() {
 	beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:EmailController"] = append(beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:EmailController"],
 		beego.ControllerComments{
 			Method:           "Auth",
-			Router:           "/auth/:platform",
+			Router:           "/auth/:platform/:way",
 			AllowHTTPMethods: []string{"get"},
 			MethodParams:     param.Make(),
 			Filters:          nil,
@@ -180,9 +180,9 @@ func init() {
 
 	beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:EmailController"] = append(beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:EmailController"],
 		beego.ControllerComments{
-			Method:           "Get",
-			Router:           "/authcodeurl/:platform",
-			AllowHTTPMethods: []string{"get"},
+			Method:           "Switch",
+			Router:           "/authcodeurl/:platform/:way",
+			AllowHTTPMethods: []string{"patch"},
 			MethodParams:     param.Make(),
 			Filters:          nil,
 			Params:           nil})

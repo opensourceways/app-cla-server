@@ -1,5 +1,13 @@
-web_redirect_dir_on_success: /config-email
-web_redirect_dir_on_failure: /config-email
+auth_redirect_config:
+  init_auth:
+    on_success: /config-email
+    on_failure: /config-email
+  reauth:
+    on_success: /linkedRepo
+    on_failure: /linkedRepo
 platforms:
   - platform: gmail
     credentials: {{path to gmail credentials json file}}
+    redirect_urls:
+      init_auth: {{path to init auth call back}}
+      reauth: {{path to reauth call back}}

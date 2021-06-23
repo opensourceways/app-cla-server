@@ -157,7 +157,9 @@ func (this *client) ResetCorporationManagerPassword(linkID, email string, opt db
 	}
 
 	elemFilter := elemFilterOfCorpManager(email)
-	elemFilter[fieldPassword] = opt.OldPassword
+	if opt.OldPassword != "" {
+		elemFilter[fieldPassword] = opt.OldPassword
+	}
 
 	docFilter := docFilterOfCorpManager(linkID)
 	arrayFilterByElemMatch(fieldCorpManagers, true, elemFilter, docFilter)

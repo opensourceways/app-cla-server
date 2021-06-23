@@ -126,3 +126,27 @@ func (this *CorporationManagerController) Patch() {
 
 	this.sendSuccessResp("reset password successfully")
 }
+
+//@Title Retrieve password
+//@Description retrieve password of corporation administrator
+//@Param body body models.CorporationManagerRetrievePassword true "param of retrieve pwd"
+//@Success 201 {int} map
+//@Failure 400 util.ErrInvalidAccountOrPwd
+//@router /retrieve [post]
+func (this *CorporationManagerController) RetrievePassword() {
+	action := "retrieve password"
+	sendResp := this.newFuncForSendingFailedResp(action)
+
+	var param models.CorporationManagerRetrievePassword
+	if fr := this.fetchInputPayload(&param); fr != nil {
+		sendResp(fr)
+		return
+	}
+
+	if mErr := param.Retrieve(); mErr != nil {
+		sendResp(parseModelError(mErr))
+		return
+	}
+
+	this.sendSuccessResp("retrieve password successfully")
+}

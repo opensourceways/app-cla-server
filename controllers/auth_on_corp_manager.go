@@ -5,7 +5,6 @@ import (
 
 	"github.com/opensourceways/app-cla-server/dbmodels"
 	"github.com/opensourceways/app-cla-server/models"
-	"github.com/opensourceways/app-cla-server/util"
 )
 
 // @Title authenticate corporation manager
@@ -69,10 +68,6 @@ func (this *CorporationManagerController) newAccessToken(linkID string, info *db
 		permission = PermissionEmployeeManager
 	}
 
-	m := map[string]bool{}
-	for _, i := range info.Domains {
-		m[i] = true
-	}
 	return this.newApiToken(
 		permission,
 		&acForCorpManagerPayload{
@@ -81,21 +76,15 @@ func (this *CorporationManagerController) newAccessToken(linkID string, info *db
 			Email:   info.Email,
 			LinkID:  linkID,
 			OrgInfo: info.OrgInfo,
-			Domains: m,
 		},
 	)
 }
 
 type acForCorpManagerPayload struct {
-	Corp    string          `json:"corp"`
-	Name    string          `json:"name"`
-	Email   string          `json:"email"`
-	LinkID  string          `json:"link_id"`
-	Domains map[string]bool `json:"suffix"`
+	Corp   string `json:"corp"`
+	Name   string `json:"name"`
+	Email  string `json:"email"`
+	LinkID string `json:"link_id"`
 
 	models.OrgInfo
-}
-
-func (p *acForCorpManagerPayload) hasEmployee(email string) bool {
-	return p.Domains[util.EmailSuffix(email)]
 }

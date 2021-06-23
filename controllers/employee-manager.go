@@ -37,7 +37,14 @@ func (this *EmployeeManagerController) Post() {
 		return
 	}
 
-	if err := info.ValidateWhenAdding(pl.LinkID, pl.Email, pl.Domains); err != nil {
+	domains, fr := listCorpEmailDomain(pl.LinkID, pl.Email)
+	if fr != nil {
+		fr.statusCode = 500
+		sendResp(fr)
+		return
+	}
+
+	if err := info.ValidateWhenAdding(pl.LinkID, pl.Email, domains); err != nil {
 		this.sendModelErrorAsResp(err, action)
 		return
 	}
@@ -74,7 +81,14 @@ func (this *EmployeeManagerController) Delete() {
 		return
 	}
 
-	if err := info.ValidateWhenDeleting(pl.Email, pl.Domains); err != nil {
+	domains, fr := listCorpEmailDomain(pl.LinkID, pl.Email)
+	if fr != nil {
+		fr.statusCode = 500
+		sendResp(fr)
+		return
+	}
+
+	if err := info.ValidateWhenDeleting(pl.Email, domains); err != nil {
 		this.sendModelErrorAsResp(err, action)
 		return
 	}

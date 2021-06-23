@@ -185,3 +185,19 @@ func lockOnRepo(orgInfo *dbmodels.OrgInfo) (func(), *failedApiResult) {
 	}
 	return unlock, nil
 }
+
+func listCorpEmailDomain(linkID, adminEmail string) (map[string]bool, *failedApiResult) {
+	d, err := models.ListCorpEmailDomain(linkID, adminEmail)
+	if err != nil {
+		return nil, parseModelError(err)
+	}
+	if len(d) == 0 {
+		return nil, newFailedApiResult(400, errUnsigned, fmt.Errorf("unsigned"))
+	}
+
+	m := map[string]bool{}
+	for _, i := range d {
+		m[i] = true
+	}
+	return m, nil
+}

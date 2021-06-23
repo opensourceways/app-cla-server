@@ -54,6 +54,11 @@ func (this *CorpEmailDomainController) Post() {
 		return
 	}
 
+	// Don't save the new email domain to the payload and refesh a new token.
+	// Because if it refreshes new token failed, then the later operations
+	// such as adding/deleting new manager will fail. Besides, the implementation
+	// is too coupled to those operations.
+
 	this.sendSuccessResp(action + " successfully")
 }
 

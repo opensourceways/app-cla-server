@@ -191,7 +191,14 @@ func (this *EmployeeSigningController) Update() {
 		return
 	}
 
-	if !pl.hasEmployee(employeeEmail) {
+	domains, fr := listCorpEmailDomain(pl.LinkID, pl.Email)
+	if fr != nil {
+		fr.statusCode = 500
+		sendResp(fr)
+		return
+	}
+
+	if !domains[employeeEmail] {
 		this.sendFailedResponse(400, errNotSameCorp, fmt.Errorf("not same corp"), action)
 		return
 	}
@@ -238,7 +245,14 @@ func (this *EmployeeSigningController) Delete() {
 		return
 	}
 
-	if !pl.hasEmployee(employeeEmail) {
+	domains, fr := listCorpEmailDomain(pl.LinkID, pl.Email)
+	if fr != nil {
+		fr.statusCode = 500
+		this.sendFailedResultAsResp(fr, action)
+		return
+	}
+
+	if !domains[employeeEmail] {
 		this.sendFailedResponse(400, errNotSameCorp, fmt.Errorf("not same corp"), action)
 		return
 	}

@@ -31,7 +31,6 @@ type CorporationManagerCheckResult struct {
 	Name             string
 	Email            string
 	InitialPWChanged bool
-	Domains          []string
 
 	OrgInfo
 }

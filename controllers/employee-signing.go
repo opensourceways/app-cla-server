@@ -8,6 +8,7 @@ import (
 	"github.com/opensourceways/app-cla-server/dbmodels"
 	"github.com/opensourceways/app-cla-server/email"
 	"github.com/opensourceways/app-cla-server/models"
+	"github.com/opensourceways/app-cla-server/util"
 )
 
 type EmployeeSigningController struct {
@@ -198,7 +199,7 @@ func (this *EmployeeSigningController) Update() {
 		return
 	}
 
-	if !domains[employeeEmail] {
+	if !domains[util.EmailSuffix(employeeEmail)] {
 		this.sendFailedResponse(400, errNotSameCorp, fmt.Errorf("not same corp"), action)
 		return
 	}
@@ -252,7 +253,7 @@ func (this *EmployeeSigningController) Delete() {
 		return
 	}
 
-	if !domains[employeeEmail] {
+	if !domains[util.EmailSuffix(employeeEmail)] {
 		this.sendFailedResponse(400, errNotSameCorp, fmt.Errorf("not same corp"), action)
 		return
 	}

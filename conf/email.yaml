@@ -3,8 +3,8 @@ auth_redirect_config:
     on_success: /config-email
     on_failure: /config-email
   reauth:
-    on_success: /linkedRepo
-    on_failure: /linkedRepo
+    on_success: /home
+    on_failure: /home
 platforms:
   - platform: gmail
     credentials: {{path to gmail credentials json file}}

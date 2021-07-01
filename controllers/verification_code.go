@@ -14,7 +14,8 @@ type VerificationCodeController struct {
 }
 
 func (this *VerificationCodeController) Prepare() {
-	if strings.HasSuffix(this.routerPattern(), "/:link_id/:email") {
+	if strings.HasSuffix(this.routerPattern(), "/:link_id/:email") ||
+		strings.HasSuffix(this.routerPattern(), "/:platform/:org_repo/:email") {
 		this.apiPrepare("")
 	} else {
 		this.apiPrepare(PermissionCorpAdmin)
@@ -107,5 +108,51 @@ func (this *VerificationCodeController) EmailDomain() {
 func (this *VerificationCodeController) createCode(to, purpose string) (string, models.IModelError) {
 	return models.CreateVerificationCode(
 		to, purpose, config.AppConfig.VerificationCodeExpiry,
+	)
+}
+
+//@Title CodeWithFindPwd
+//@Description send verification code when find password
+//@Param platform path  string true "code platform"
+//@Param org_repo path  string true "org:repo"
+//@Param email    path string true "email of contributor"
+//@Success 201 {int} map
+//@Failure 400 util.ErrSendingEmail
+//@router /:platform/:org_repo/:email [post]
+func (this *VerificationCodeController) CodeWithFindPwd() {
+	action := "create verification code when find password"
+	org, repo := parseOrgAndRepo(this.GetString(":org_repo"))
+	linkID, err := models.GetLinkID(buildOrgRepo(this.GetString(":platform"), org, repo))
+	if err != nil {
+		this.sendFailedResponse(400, string(models.ErrNoLinkOrNoManager), err, action)
+		return
+	}
+
+	orgInfo, err := models.GetOrgOfLink(linkID)
+	if err != nil {
+		this.sendFailedResponse(400, string(models.ErrNoLinkOrNoManager), err, action)
+		return
+	}
+
+	cmEmail := this.GetString(":email")
+	code, err := models.CreateVerificationCode(
+		cmEmail, linkID, config.AppConfig.VerificationCodeExpiry,
+	)
+	if err != nil {
+		this.sendModelErrorAsResp(err, action)
+		return
+	}
+
+	this.sendSuccessResp("create verification code successfully")
+
+	sendEmailToIndividual(
+		cmEmail, orgInfo.OrgEmail,
+		"Verification code for retrieve password ",
+		email.FindPasswordVerifyCode{
+			Email:      cmEmail,
+			Org:        orgInfo.OrgAlias,
+			Code:       code,
+			ProjectURL: orgInfo.ProjectURL(),
+		},
 	)
 }

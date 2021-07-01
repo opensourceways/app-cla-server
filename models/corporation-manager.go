@@ -96,3 +96,25 @@ func ListCorporationManagers(linkID, email, role string) ([]dbmodels.Corporation
 
 	return v, parseDBError(err)
 }
+
+type CorporationManagerRetrievePassword struct {
+	OrgRepo  OrgRepo `json:"org_repo"`
+	Email    string  `json:"email"`
+	Code     string  `json:"code"`
+	Password string  `json:"password"`
+}
+
+//Retrieve  check retrieve Retrieve data and do retrieve password
+func (rp CorporationManagerRetrievePassword) Retrieve() IModelError {
+	linkID, mErr := GetLinkID(&rp.OrgRepo)
+	if mErr != nil {
+		return mErr
+	}
+	if mErr = checkVerificationCode(rp.Email, rp.Code, linkID); mErr != nil {
+		return mErr
+	}
+	resetModel := CorporationManagerResetPassword{
+		NewPassword: rp.Password,
+	}
+	return resetModel.Reset(linkID, rp.Email)
+}

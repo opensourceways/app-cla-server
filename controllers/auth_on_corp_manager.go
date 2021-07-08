@@ -22,8 +22,8 @@ func (this *CorporationManagerController) Auth() {
 		return
 	}
 
-	if !info.IsValidate() {
-		this.sendFailedResponse(400, errParsingApiBody, fmt.Errorf("wrong platform or org"), action)
+	if merr := info.Validate(); merr != nil {
+		this.sendModelErrorAsResp(merr, action)
 		return
 	}
 

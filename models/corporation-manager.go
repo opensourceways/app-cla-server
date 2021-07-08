@@ -11,28 +11,18 @@ import (
 type CorporationManagerAuthentication struct {
 	User     string `json:"user"`
 	Password string `json:"password"`
-	Platform string `json:"platform"`
-	Org      string `json:"org"`
-	Repo     string `json:"repo"`
+	dbmodels.OrgRepo
 }
 
-func (this CorporationManagerAuthentication) IsValidate() bool {
-	if this.Platform == "" || this.Org == "" {
-		return false
+func (this CorporationManagerAuthentication) Validate() IModelError {
+	if this.Platform == "" || this.OrgID == "" {
+		return newModelError(ErrEmptyPayload, fmt.Errorf("platfrom or orgID is empty"))
 	}
-	return true
-}
-
-func (this CorporationManagerAuthentication) OrgIdentity() string {
-	po := fmt.Sprintf("%s/%s", this.Platform, this.Org)
-	if this.Repo == "" {
-		return po
-	}
-	return fmt.Sprintf("%s/%s", po, this.Repo)
+	return nil
 }
 
 func (this CorporationManagerAuthentication) Authenticate() (map[string]dbmodels.CorporationManagerCheckResult, IModelError) {
-	info := dbmodels.CorporationManagerCheckInfo{Password: this.Password, OrgIdentity: this.OrgIdentity()}
+	info := dbmodels.CorporationManagerCheckInfo{Password: this.Password, OrgRepo: this.OrgRepo}
 	if merr := checkEmailFormat(this.User); merr == nil {
 		info.Email = this.User
 	} else {

@@ -4,20 +4,22 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/huaweicloud/golangsdk"
 	"github.com/opensourceways/app-cla-server/dbmodels"
 	"github.com/opensourceways/app-cla-server/util"
 )
 
 type CorporationManagerAuthentication struct {
-	User     string `json:"user"`
-	Password string `json:"password"`
+	User     string `json:"user" required:"true"`
+	Password string `json:"password" required:"true"`
 	dbmodels.OrgRepo
 }
 
 func (this CorporationManagerAuthentication) Validate() IModelError {
-	if this.Platform == "" || this.OrgID == "" {
-		return newModelError(ErrEmptyPayload, fmt.Errorf("platfrom or orgID is empty"))
+	if _, err := golangsdk.BuildRequestBody(this, ""); err != nil {
+		return newModelError(ErrEmptyPayload, fmt.Errorf("necessary parameters error: %s", err.Error()))
 	}
+
 	return nil
 }
 

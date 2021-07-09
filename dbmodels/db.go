@@ -11,6 +11,11 @@ func GetDB() IDB {
 }
 
 type IDB interface {
+	IModel
+	IFile
+}
+
+type IModel interface {
 	ILink
 	ICorporationSigning
 	ICorporationManager
@@ -31,11 +36,6 @@ type ICorporationSigning interface {
 	GetCorpSigningBasicInfo(linkID, email string) (*CorporationSigningBasicInfo, IDBError)
 	AddCorpEmailDomain(linkID, adminEmail, domain string) IDBError
 	GetCorpEmailDomains(linkID, email string) ([]string, IDBError)
-
-	UploadCorporationSigningPDF(linkID string, adminEmail string, pdf *[]byte) IDBError
-	DownloadCorporationSigningPDF(linkID string, email string) (*[]byte, IDBError)
-	IsCorpSigningPDFUploaded(linkID string, email string) (bool, IDBError)
-	ListCorpsWithPDFUploaded(linkID string) ([]string, IDBError)
 }
 
 type ICorporationManager interface {
@@ -92,4 +92,11 @@ type ILink interface {
 	GetOrgOfLink(linkID string) (*OrgInfo, IDBError)
 	ListLinks(opt *LinkListOption) ([]LinkInfo, IDBError)
 	GetAllLinks() ([]LinkInfo, IDBError)
+}
+
+type IFile interface {
+	UploadCorporationSigningPDF(linkID, adminEmail string, pdf []byte) IDBError
+	DownloadCorporationSigningPDF(linkID, email, path string) IDBError
+	IsCorporationSigningPDFUploaded(linkID, email string) (bool, IDBError)
+	ListCorporationsWithPDFUploaded(linkID string) ([]string, IDBError)
 }

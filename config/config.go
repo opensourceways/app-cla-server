@@ -34,6 +34,7 @@ type appConfig struct {
 	CLAPlatformURL            string        `json:"cla_platform_url" required:"true"`
 	Mongodb                   MongodbConfig `json:"mongodb" required:"true"`
 	RestrictedCorpEmailSuffix []string      `json:"restricted_corp_email_suffix"`
+	OBS                       OBS           `json:"obs" required:"true"`
 }
 
 type MongodbConfig struct {
@@ -46,6 +47,12 @@ type MongodbConfig struct {
 	VCCollection                string `json:"verification_code_collection" required:"true"`
 	CorpSigningCollection       string `json:"corp_signing_collection" required:"true"`
 	IndividualSigningCollection string `json:"individual_signing_collection" required:"true"`
+}
+
+type OBS struct {
+	Name           string `json:"name" required:"true"`
+	Bucket         string `json:"bucket" required:"true"`
+	CredentialFile string `json:"credential_file" required:"true"`
 }
 
 func (cfg *appConfig) setDefault() {

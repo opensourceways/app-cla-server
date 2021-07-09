@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/opensourceways/app-cla-server/obs"
 	"os"
 
 	"github.com/astaxie/beego"
@@ -38,12 +39,25 @@ func main() {
 		}
 	}
 
-	c, err := mongodb.Initialize(&AppConfig.Mongodb)
+	mongoClient, err := mongodb.Initialize(&AppConfig.Mongodb)
 	if err != nil {
 		beego.Error(err)
 		os.Exit(1)
 	}
-	dbmodels.RegisterDB(c)
+
+	obsClient, err := obs.Initialize(AppConfig.OBS)
+	if err != nil {
+		beego.Error(err)
+		os.Exit(1)
+	}
+
+	dbmodels.RegisterDB(struct {
+		dbmodels.IModel
+		dbmodels.IFile
+	}{
+		IModel: mongoClient,
+		IFile:  obs.NewFileStorage(obsClient),
+	})
 
 	if err = email.Initialize(AppConfig.EmailPlatformConfigFile); err != nil {
 		beego.Error(err)

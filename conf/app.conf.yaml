@@ -30,3 +30,8 @@ mongodb:
   verification_code_collection: verification_codes
   corp_signing_collection: corp_signings
   individual_signing_collection: individual_signings
+
+obs:
+  name: huaweicloud-obs
+  bucket: cla
+  credential_file: ./conf/huaweicloud_obs_credential.yaml

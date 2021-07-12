@@ -23,7 +23,7 @@ func main() {
 		beego.BConfig.WebConfig.StaticDir["/swagger"] = "swagger"
 	}
 
-	if err := config.InitAppConfig(); err != nil {
+	if err := config.InitAppConfig(beego.AppConfig.String("app_conf")); err != nil {
 		beego.Error(err)
 		os.Exit(1)
 	}

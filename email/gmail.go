@@ -15,7 +15,7 @@ import (
 	"golang.org/x/oauth2/google"
 	"google.golang.org/api/gmail/v1"
 	gooleoauth2 "google.golang.org/api/oauth2/v2"
-	option "google.golang.org/api/option"
+	"google.golang.org/api/option"
 
 	myoauth2 "github.com/opensourceways/app-cla-server/oauth2"
 	"github.com/opensourceways/app-cla-server/util"
@@ -26,12 +26,13 @@ func init() {
 }
 
 type gmailClient struct {
-	cfg       *oauth2.Config
-	emailTemp *template.Template
+	cfg            *oauth2.Config
+	emailTemp      *template.Template
+	platformConfig platformConfig
 }
 
-func (this *gmailClient) initialize(path string) error {
-	cfg, err := this.getOauth2Config(path)
+func (this *gmailClient) initialize(pc platformConfig) error {
+	cfg, err := this.getOauth2Config(pc.Credentials)
 	if err != nil {
 		return fmt.Errorf("Failtd to initialize gmail client: %s", err.Error())
 	}
@@ -42,8 +43,9 @@ func (this *gmailClient) initialize(path string) error {
 		return fmt.Errorf("Failtd to initialize gmail client: %s", err.Error())
 	}
 
-	this.emailTemp = tmpl
 	this.cfg = cfg
+	this.emailTemp = tmpl
+	this.platformConfig = pc
 	return nil
 }
 
@@ -70,7 +72,16 @@ func (this *gmailClient) GetAuthorizedEmail(token *oauth2.Token) (string, error)
 	return info.Email, nil
 }
 
-func (this *gmailClient) GetOauth2CodeURL(state string) string {
+func (this *gmailClient) resetAuthRedirectURL(way string) {
+	this.cfg.RedirectURL = this.platformConfig.redirectURL(way)
+}
+
+func (this *gmailClient) SwitchAuthType(state string, way string) string {
+	this.resetAuthRedirectURL(way)
+
+	if way == reauthorizeType {
+		return myoauth2.GetOauth2CodeURLWithForce(this.cfg, state)
+	}
 	return myoauth2.GetOauth2CodeURL(this.cfg, state)
 }
 

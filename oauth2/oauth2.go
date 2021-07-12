@@ -65,6 +65,10 @@ func GetOauth2CodeURL(cfg *liboauth2.Config, state string) string {
 	return cfg.AuthCodeURL(state, liboauth2.AccessTypeOffline)
 }
 
+func GetOauth2CodeURLWithForce(cfg *liboauth2.Config, state string) string {
+	return cfg.AuthCodeURL(state, liboauth2.AccessTypeOffline, liboauth2.ApprovalForce)
+}
+
 func FetchOauth2Token(cfg *liboauth2.Config, code string) (*liboauth2.Token, error) {
 	token, err := cfg.Exchange(context.Background(), code)
 	if err != nil {

@@ -5,6 +5,7 @@ cla_fields_number: 10
 verification_code_expiry: 300
 api_token_expiry: 1800
 api_token_key: "${API_TOKEN_KEY}"
+symmetric_encryption_key: "${SYMMETRIC_ENCRYPTION_KEY}"
 
 pdf_org_signature_dir: ./conf/pdfs/org_signature_pdf
 pdf_out_dir: ./conf/pdfs/output

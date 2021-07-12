@@ -39,6 +39,7 @@ const (
 	errGoToSignEmployeeCLA      = "go_to_sign_employee_cla"
 	errUnsupportedCLALang       = "unsupported_cla_lang"
 	errNotSameCorp              = string(models.ErrNotSameCorp)
+	errNotSupportAuthWay        = "not_support_auth_way"
 )
 
 func parseModelError(err models.IModelError) *failedApiResult {

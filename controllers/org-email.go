@@ -22,11 +22,12 @@ func (this *EmailController) Prepare() {
 
 // @Title Auth
 // @Description authorized by org email
-// @router /auth/:platform [get]
+// @router /auth/:platform/:way [get]
 func (this *EmailController) Auth() {
+	way := this.GetString(":way")
 	rs := func(errCode string, reason error) {
 		this.setCookies(map[string]string{"error_code": errCode, "error_msg": reason.Error()})
-		this.redirect(email.EmailAgent.WebRedirectDir(false))
+		this.redirect(email.EmailAgent.WebRedirectDir(false,way))
 	}
 
 	if err := this.GetString("error"); err != "" {
@@ -59,10 +60,20 @@ func (this *EmailController) Auth() {
 	}
 
 	if token.RefreshToken == "" {
-		if _, err := models.GetOrgEmailInfo(emailAddr); err != nil {
+		if email.IsReauthType(way) {
 			rs(errNoRefreshToken, fmt.Errorf("no refresh token"))
 			return
 		}
+		v, err := models.GetOrgEmailInfo(emailAddr)
+		if err != nil {
+			rs(errSystemError, err)
+			return
+		}
+		if v == nil {
+			rs(errNoRefreshToken, fmt.Errorf("no refresh token"))
+			return
+		}
+
 	} else {
 		opt := models.OrgEmail{
 			Token:    token,
@@ -76,21 +87,29 @@ func (this *EmailController) Auth() {
 	}
 
 	this.setCookies(map[string]string{"email": emailAddr})
-	this.redirect(email.EmailAgent.WebRedirectDir(true))
+	this.redirect(email.EmailAgent.WebRedirectDir(true,way))
 }
 
 // @Title Get
 // @Description get auth code url
-// @Param	platform		path 	string	true		"The email platform"
-// @router /authcodeurl/:platform [get]
-func (this *EmailController) Get() {
+// @Param   platform      path		string	true	"The email platform"
+// @Param   way           path		string	false	"the value is init_auth or reauth"
+// @router /authcodeurl/:platform/:way [patch]
+func (this *EmailController) Switch() {
+	action := "get auth code url of email"
 	e, err := email.EmailAgent.GetEmailClient(this.GetString(":platform"))
 	if err != nil {
-		this.sendFailedResponse(400, errUnknownEmailPlatform, err, "get auth code url of email")
+		this.sendFailedResponse(400, errUnknownEmailPlatform, err, action)
+		return
+	}
+
+	way := this.GetString(":way")
+	if !email.IsValidAuthType(way) {
+		this.sendFailedResponse(400, errNotSupportAuthWay, err, action)
 		return
 	}
 
 	this.sendSuccessResp(map[string]string{
-		"url": e.GetOauth2CodeURL(authURLState),
+		"url": e.SwitchAuthType(authURLState, way),
 	})
 }

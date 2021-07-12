@@ -1,12 +1,14 @@
 package controllers
 
 import (
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 
 	"github.com/dgrijalva/jwt-go"
 	"github.com/huaweicloud/golangsdk"
 
+	"github.com/opensourceways/app-cla-server/config"
 	"github.com/opensourceways/app-cla-server/util"
 )
 
@@ -26,13 +28,18 @@ type accessController struct {
 func (this *accessController) newToken(secret string) (string, error) {
 	body, err := golangsdk.BuildRequestBody(this, "")
 	if err != nil {
-		return "", fmt.Errorf("Failed to create token: build body failed: %s", err.Error())
+		return "", fmt.Errorf("failed to create token: build body failed: %s", err.Error())
 	}
 
 	token := jwt.New(jwt.SigningMethodHS256)
 	token.Claims = jwt.MapClaims(body)
 
-	return token.SignedString([]byte(secret))
+	s, err := token.SignedString([]byte(secret))
+	if err != nil {
+		return "", err
+	}
+
+	return this.encryptToken(s)
 }
 
 func (this *accessController) refreshToken(expiry int64, secret string) (string, error) {
@@ -41,9 +48,14 @@ func (this *accessController) refreshToken(expiry int64, secret string) (string,
 }
 
 func (this *accessController) parseToken(token, secret string) error {
-	t, err := jwt.Parse(token, func(t1 *jwt.Token) (interface{}, error) {
+	token1, err := this.decryptToken(token)
+	if err != nil {
+		return err
+	}
+
+	t, err := jwt.Parse(token1, func(t1 *jwt.Token) (interface{}, error) {
 		if _, ok := t1.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, fmt.Errorf("Unexpected signing method")
+			return nil, fmt.Errorf("unexpected signing method")
 		}
 
 		return []byte(secret), nil
@@ -52,12 +64,12 @@ func (this *accessController) parseToken(token, secret string) error {
 		return err
 	}
 	if !t.Valid {
-		return fmt.Errorf("Not a valid token")
+		return fmt.Errorf("not a valid token")
 	}
 
 	claims, ok := t.Claims.(jwt.MapClaims)
 	if !ok {
-		return fmt.Errorf("Not valid claims")
+		return fmt.Errorf("not valid claims")
 	}
 
 	d, err := json.Marshal(claims)
@@ -79,5 +91,32 @@ func (this *accessController) verify(permission []string) error {
 		}
 	}
 
-	return fmt.Errorf("Not allowed permission")
+	return fmt.Errorf("not allowed permission")
+}
+
+func (this *accessController) newEncryption() util.SymmetricEncryption {
+	e, _ := util.NewSymmetricEncryption(config.AppConfig.SymmetricEncryptionKey, "")
+	return e
+}
+
+func (this *accessController) encryptToken(token string) (string, error) {
+	t, err := this.newEncryption().Encrypt([]byte(token))
+	if err != nil {
+		return "", err
+	}
+	return hex.EncodeToString(t), nil
+}
+
+func (this *accessController) decryptToken(token string) (string, error) {
+	dst, err := hex.DecodeString(token)
+	if err != nil {
+		return "", err
+	}
+
+	s, err := this.newEncryption().Decrypt(dst)
+	if err != nil {
+		return "", err
+	}
+
+	return string(s), nil
 }

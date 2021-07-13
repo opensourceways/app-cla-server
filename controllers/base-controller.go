@@ -5,6 +5,9 @@ import (
 	"io/ioutil"
 	"net"
 	"net/http"
+	"net/url"
+	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/astaxie/beego"
@@ -36,11 +39,7 @@ type baseController struct {
 
 func (this *baseController) sendResponse(body interface{}, statusCode int) {
 	if token, err := this.refreshAccessToken(); err == nil {
-		// this code must run before `this.Ctx.ResponseWriter.WriteHeader`
-		// otherwise the header can't be set successfully.
-		// The reason is relevant to the variable of 'Response.Started' at
-		// beego/context/context.go
-		this.Ctx.Output.Header(headerToken, token)
+		this.setCookies(map[string]string{apiAccessToken: token}, true)
 	}
 
 	if statusCode != 0 {
@@ -226,9 +225,13 @@ func (this *baseController) newAccessController(permission string) *accessContro
 }
 
 func (this *baseController) checkApiReqToken(ac *accessController, permission []string) *failedApiResult {
-	token := this.apiReqHeader(headerToken)
+	// Fetch token from Header firstly to avoid fetching wrong token when changing to login as corp manager
+	// from community manager. Because the token exists in the cookie always.
+	token := this.apiReqHeader(apiHeaderToken)
 	if token == "" {
-		return newFailedApiResult(401, errMissingToken, fmt.Errorf("no token passed"))
+		if token = this.Ctx.Input.Cookie(apiAccessToken); token == "" {
+			return newFailedApiResult(401, errMissingToken, fmt.Errorf("no token passed"))
+		}
 	}
 
 	if err := ac.parseToken(token, config.AppConfig.APITokenKey); err != nil {
@@ -291,11 +294,45 @@ func (this *baseController) readInputFile(fileName string, maxSize int) ([]byte,
 	if maxSize > 0 && len(data) > maxSize {
 		return nil, newFailedApiResult(400, errTooBigPDF, fmt.Errorf("big pdf file"))
 	}
+
+	if http.DetectContentType(data) != contentTypeOfPDF {
+		return nil, newFailedApiResult(400, errNotPDFFile, fmt.Errorf("not pdf file"))
+	}
+
 	return data, nil
 }
 
-func (this *baseController) downloadFile(path string) {
-	this.Ctx.Output.Download(path)
+func (this *baseController) downloadFile(file string) {
+	output := this.Ctx.Output
+
+	// check get file error, file not found or other error.
+	if _, err := os.Stat(file); err != nil {
+		http.ServeFile(output.Context.ResponseWriter, output.Context.Request, file)
+		return
+	}
+
+	fName := filepath.Base(file)
+	//https://tools.ietf.org/html/rfc6266#section-4.3
+	fn := url.PathEscape(fName)
+	if fName == fn {
+		fn = "filename=" + fn
+	} else {
+		/**
+		  The parameters "filename" and "filename*" differ only in that
+		  "filename*" uses the encoding defined in [RFC5987], allowing the use
+		  of characters not present in the ISO-8859-1 character set
+		  ([ISO-8859-1]).
+		*/
+		fn = "filename=" + fName + "; filename*=utf-8''" + fn
+	}
+	output.ContentType(filepath.Ext(file))
+	output.Header("Content-Disposition", "attachment; "+fn)
+	output.Header("Content-Description", "File Transfer")
+	output.Header("Content-Transfer-Encoding", "binary")
+	output.Header("Expires", "0")
+	output.Header("Cache-Control", "must-revalidate")
+	output.Header("Pragma", "public")
+	http.ServeFile(output.Context.ResponseWriter, output.Context.Request, file)
 }
 
 func (this *baseController) redirect(webRedirectDir string) {
@@ -304,9 +341,9 @@ func (this *baseController) redirect(webRedirectDir string) {
 	)
 }
 
-func (this *baseController) setCookies(value map[string]string) {
+func (this *baseController) setCookies(value map[string]string, isSensitive bool) {
 	for k, v := range value {
-		this.Ctx.SetCookie(k, v, "3600", "/")
+		this.Ctx.SetCookie(k, v, "3600", "/", "", true, isSensitive)
 	}
 }
 

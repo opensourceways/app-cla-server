@@ -40,6 +40,7 @@ const (
 	errUnsupportedCLALang       = "unsupported_cla_lang"
 	errNotSameCorp              = string(models.ErrNotSameCorp)
 	errCanNotFetchClientIP      = "can_not_fetch_client_ip"
+	errNotPDFFile               = "not_pdf_file"
 )
 
 func parseModelError(err models.IModelError) *failedApiResult {

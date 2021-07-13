@@ -15,11 +15,7 @@ type LinkController struct {
 }
 
 func (this *LinkController) Prepare() {
-	if strings.HasSuffix(this.routerPattern(), ":apply_to") {
-		if this.apiReqHeader(headerToken) != "" {
-			this.apiPrepare(PermissionIndividualSigner)
-		}
-	} else {
+	if !strings.HasSuffix(this.routerPattern(), ":apply_to") {
 		this.apiPrepare(PermissionOwnerOfOrg)
 	}
 }

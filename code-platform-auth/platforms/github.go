@@ -51,21 +51,6 @@ func (this *githubClient) GetAuthorizedEmail() (string, error) {
 	return "", fmt.Errorf(errMsgNoPublicEmail)
 }
 
-func (this *githubClient) IsOrgExist(org string) (bool, error) {
-	orgs, err := this.ListOrg()
-	if err != nil {
-		//TODO :is token expiry
-		return false, err
-	}
-
-	for _, item := range orgs {
-		if item == org {
-			return true, nil
-		}
-	}
-	return false, nil
-}
-
 func (this *githubClient) ListOrg() ([]string, error) {
 	var r []string
 
@@ -89,4 +74,17 @@ func (this *githubClient) ListOrg() ([]string, error) {
 	}
 
 	return r, nil
+}
+
+func (gc *githubClient) HasRepo(org, repo string) (bool, error) {
+	_, r, err := gc.c.Repositories.Get(context.Background(), org, repo)
+	if err != nil {
+		return false, err
+	}
+
+	if r.StatusCode == 404 {
+		return false, nil
+	}
+
+	return true, nil
 }

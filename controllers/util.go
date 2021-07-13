@@ -17,8 +17,10 @@ import (
 )
 
 const (
-	headerToken                    = "Token"
+	apiHeaderToken                 = "Token"
+	apiAccessToken                 = "access_token"
 	apiAccessController            = "access_controller"
+	contentTypeOfPDF               = "application/pdf"
 	fileNameOfUploadingOrgSignatue = "org_signature_file"
 )
 

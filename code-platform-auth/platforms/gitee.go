@@ -61,21 +61,6 @@ func (this *giteeClient) GetAuthorizedEmail() (string, error) {
 	return "", fmt.Errorf(errMsgNoPublicEmail)
 }
 
-func (this *giteeClient) IsOrgExist(org string) (bool, error) {
-	orgs, err := this.ListOrg()
-	if err != nil {
-		//TODO :is token expiry
-		return false, err
-	}
-
-	for _, item := range orgs {
-		if item == org {
-			return true, nil
-		}
-	}
-	return false, nil
-}
-
 func (this *giteeClient) ListOrg() ([]string, error) {
 	var r []string
 
@@ -100,4 +85,17 @@ func (this *giteeClient) ListOrg() ([]string, error) {
 	}
 
 	return r, nil
+}
+
+func (this *giteeClient) HasRepo(org, repo string) (bool, error) {
+	_, r, err := this.c.RepositoriesApi.GetV5ReposOwnerRepo(context.Background(), org, repo, nil)
+	if err != nil {
+		return false, err
+	}
+
+	if r.StatusCode == 404 {
+		return false, nil
+	}
+
+	return true, nil
 }

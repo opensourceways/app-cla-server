@@ -39,7 +39,7 @@ type baseController struct {
 
 func (this *baseController) sendResponse(body interface{}, statusCode int) {
 	if token, err := this.refreshAccessToken(); err == nil {
-		this.setCookies(map[string]string{apiAccessToken: token}, true)
+		this.setRespToken(token)
 	}
 
 	if statusCode != 0 {
@@ -225,13 +225,9 @@ func (this *baseController) newAccessController(permission string) *accessContro
 }
 
 func (this *baseController) checkApiReqToken(ac *accessController, permission []string) *failedApiResult {
-	// Fetch token from Header firstly to avoid fetching wrong token when changing to login as corp manager
-	// from community manager. Because the token exists in the cookie always.
-	token := this.apiReqHeader(apiHeaderToken)
+	token := this.apiToken()
 	if token == "" {
-		if token = this.Ctx.Input.Cookie(apiAccessToken); token == "" {
-			return newFailedApiResult(401, errMissingToken, fmt.Errorf("no token passed"))
-		}
+		return newFailedApiResult(401, errMissingToken, fmt.Errorf("no token passed"))
 	}
 
 	if err := ac.parseToken(token, config.AppConfig.APITokenKey); err != nil {
@@ -269,6 +265,23 @@ func (this *baseController) getAccessController() (*accessController, *failedApi
 
 func (this *baseController) apiReqHeader(h string) string {
 	return this.Ctx.Input.Header(h)
+}
+
+func (this *baseController) apiToken() string {
+	// Fetch token from Header firstly to avoid fetching wrong token when changing to login as corp manager
+	// from community manager. Because the token exists in the cookie always.
+	if token := this.apiReqHeader(apiHeaderToken); token != "" {
+		return token
+	}
+	return this.Ctx.Input.Cookie(apiAccessToken)
+}
+
+func (this *baseController) setRespToken(token string) {
+	if v := this.apiReqHeader(apiHeaderToken); v != "" {
+		this.Ctx.Output.Header(apiHeaderToken, token)
+	} else {
+		this.setCookies(map[string]string{apiAccessToken: token}, true)
+	}
 }
 
 func (this *baseController) apiRequestMethod() string {

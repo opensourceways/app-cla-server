@@ -28,7 +28,9 @@ func (this *CorporationManagerController) Auth() {
 	}
 
 	v, merr := (&info).Authenticate()
-	if merr != nil {
+	if merr != nil && merr.IsErrorOf(models.ErrSystemError) {
+		// Other error will be regarded as wrong id or pw, such as models.ErrInvalidManagerID
+		// in order to avoid providing information for gaussing user id and pw
 		this.sendModelErrorAsResp(merr, action)
 		return
 	}

@@ -17,7 +17,6 @@ type CorporationManagerCheckInfo struct {
 	ID          string
 	Email       string
 	EmailSuffix string
-	Password    string
 }
 
 type CorporationManagerResetPassword struct {
@@ -30,6 +29,7 @@ type CorporationManagerCheckResult struct {
 	Role             string
 	Name             string
 	Email            string
+	Password         string
 	InitialPWChanged bool
 
 	OrgInfo

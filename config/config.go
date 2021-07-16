@@ -22,8 +22,6 @@ type appConfig struct {
 	CLAFieldsNumber           int           `json:"cla_fields_number" required:"true"`
 	MaxSizeOfCorpCLAPDF       int           `json:"max_size_of_corp_cla_pdf"`
 	MaxSizeOfOrgSignaturePDF  int           `json:"max_size_of_org_signature_pdf"`
-	MinLengthOfPassword       int           `json:"min_length_of_password"`
-	MaxLengthOfPassword       int           `json:"max_length_of_password"`
 	VerificationCodeExpiry    int64         `json:"verification_code_expiry" required:"true"`
 	APITokenExpiry            int64         `json:"api_token_expiry" required:"true"`
 	APITokenKey               string        `json:"api_token_key" required:"true"`
@@ -55,14 +53,6 @@ func (cfg *appConfig) setDefault() {
 	}
 	if cfg.MaxSizeOfOrgSignaturePDF <= 0 {
 		cfg.MaxSizeOfOrgSignaturePDF = 1 << 20
-	}
-
-	if cfg.MinLengthOfPassword <= 0 {
-		cfg.MinLengthOfPassword = 6
-	}
-
-	if cfg.MaxLengthOfPassword <= 0 {
-		cfg.MaxLengthOfPassword = 16
 	}
 }
 

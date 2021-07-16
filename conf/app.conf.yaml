@@ -6,7 +6,6 @@ cla_platform_url: https://clasign.osinfra.cn
 verification_code_expiry: 300
 api_token_expiry: 3600
 api_token_key: fsfsfsafsfsasaf242342424sdfs;.]{77&&&
-symmetric_encryption_key: key-can-be--16-24-32-bytes-long!
 
 pdf_org_signature_dir: ./conf/org_signature_pdf
 pdf_out_dir: ./conf/pdf

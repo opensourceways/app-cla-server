@@ -94,9 +94,21 @@ func (this *CorporationManagerController) Put() {
 }
 
 // @Title Patch
-// @Description reset password of corporation administrator
-// @Success 204 {int} map
-// @Failure util.ErrInvalidAccountOrPw
+// @Description reset password of corporation manager
+// @Param	body		body 	dbmodels.CorporationManagerResetPassword	true		"body for resetting password"
+// @Success 204 {string} "reset password successfully"
+// @Failure 401 missing_token:               token is missing
+// @Failure 402 unknown_token:               token is unknown
+// @Failure 403 expired_token:               token is expired
+// @Failure 404 unauthorized_token:          the permission of token is unmatched
+// @Failure 405 error_parsing_api_body:      parse payload of request failed
+// @Failure 406 same_password:               the old and new passwords are same
+// @Failure 407 too_short_or_long_password:  the length of new password is too short or long
+// @Failure 408 invalid_password:            the format of new password is invalid
+// @Failure 409 corp_manager_does_not_exist: manager may be removed
+// @Failure 410 wrong_old_password:          the old password is not correct
+// @Failure 411 frequent_operation:          don't operate frequently
+// @Failure 500 system_error:                system error
 // @router / [patch]
 func (this *CorporationManagerController) Patch() {
 	action := "reset password of corp's manager"
@@ -120,7 +132,11 @@ func (this *CorporationManagerController) Patch() {
 	}
 
 	if err := (&info).Reset(pl.LinkID, pl.Email); err != nil {
-		this.sendModelErrorAsResp(err, action)
+		if err.IsErrorOf(models.ErrNoLinkOrNoManagerOrFO) {
+			this.sendFailedResponse(400, errFrequentOperation, err, action)
+		} else {
+			this.sendModelErrorAsResp(err, action)
+		}
 		return
 	}
 

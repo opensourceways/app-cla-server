@@ -24,6 +24,7 @@ const (
 	ErrNoLinkOrNoManager       ModelErrCode = "no_link_or_no_manager"
 	ErrNoLinkOrManagerExists   ModelErrCode = "no_link_or_manager_exists"
 	ErrCorpManagerExists       ModelErrCode = "corp_manager_exists"
+	ErrCorpManagerDoesNotExist ModelErrCode = "corp_manager_does_not_exist"
 	ErrInvalidManagerID        ModelErrCode = "invalid_manager_id"
 	ErrDuplicateManagerID      ModelErrCode = "duplicate_manager_id"
 	ErrEmptyPayload            ModelErrCode = "empty_payload"
@@ -42,6 +43,10 @@ const (
 	ErrNoLinkOrUnuploaed       ModelErrCode = "no_link_or_unuploaded"
 	ErrUnmatchedEmailDomain    ModelErrCode = "unmatched_email_domain"
 	ErrRestrictedEmailSuffix   ModelErrCode = "restricted_email_suffix"
+	ErrWrongOldPassword        ModelErrCode = "wrong_old_password"
+	ErrTooShortOrLongPassword  ModelErrCode = "too_short_or_long_password"
+	ErrInvalidPassword         ModelErrCode = "invalid_password"
+	ErrNoLinkOrNoManagerOrFO   ModelErrCode = "no_link_or_no_manager_or_frequent_operation"
 )
 
 type IModelError interface {

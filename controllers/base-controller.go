@@ -38,7 +38,7 @@ type baseController struct {
 
 func (this *baseController) sendResponse(body interface{}, statusCode int) {
 	if token, err := this.refreshAccessToken(); err == nil {
-		this.setCookies(map[string]string{apiAccessToken: token}, true)
+		this.setRespToken(token)
 	}
 
 	if statusCode != 0 {
@@ -260,6 +260,14 @@ func (this *baseController) apiReqHeader(h string) string {
 	return this.Ctx.Input.Header(h)
 }
 
+func (this *baseController) setRespToken(token string) {
+	if v := this.apiReqHeader(apiHeaderToken); v != "" {
+		this.Ctx.Output.Header(apiHeaderToken, token)
+	} else {
+		this.setCookies(map[string]string{apiAccessToken: token}, true)
+	}
+}
+
 func (this *baseController) apiRequestMethod() string {
 	return this.Ctx.Request.Method
 }
@@ -332,6 +340,6 @@ func (this *baseController) redirect(webRedirectDir string) {
 
 func (this *baseController) setCookies(value map[string]string, isSensitive bool) {
 	for k, v := range value {
-		this.Ctx.SetCookie(k, v, "3600", "/", "", true, isSensitive)
+		this.Ctx.SetCookie(k, v, 3600, "/", "", true, isSensitive)
 	}
 }

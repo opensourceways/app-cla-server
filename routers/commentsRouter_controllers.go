@@ -349,6 +349,24 @@ func init() {
 			Filters:          nil,
 			Params:           nil})
 
+	beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:OrgRepoController"] = append(beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:OrgRepoController"],
+		beego.ControllerComments{
+			Method:           "List",
+			Router:           "/",
+			AllowHTTPMethods: []string{"get"},
+			MethodParams:     param.Make(),
+			Filters:          nil,
+			Params:           nil})
+
+	beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:OrgRepoController"] = append(beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:OrgRepoController"],
+		beego.ControllerComments{
+			Method:           "Check",
+			Router:           "/:org/:repo",
+			AllowHTTPMethods: []string{"get"},
+			MethodParams:     param.Make(),
+			Filters:          nil,
+			Params:           nil})
+
 	beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:OrgSignatureController"] = append(beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:OrgSignatureController"],
 		beego.ControllerComments{
 			Method:           "Get",

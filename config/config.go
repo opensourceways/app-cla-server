@@ -4,13 +4,18 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/astaxie/beego"
-	"github.com/huaweicloud/golangsdk"
-
 	"github.com/opensourceways/app-cla-server/util"
 )
 
-var AppConfig *appConfig
+var AppConfig = new(appConfig)
+
+func InitAppConfig(path string) error {
+	if err := util.LoadFromYaml(path, AppConfig); err != nil {
+		return err
+	}
+	AppConfig.setDefault()
+	return AppConfig.validate()
+}
 
 type appConfig struct {
 	PythonBin                 string        `json:"python_bin" required:"true"`
@@ -42,112 +47,61 @@ type MongodbConfig struct {
 	IndividualSigningCollection string `json:"individual_signing_collection" required:"true"`
 }
 
-func InitAppConfig() error {
-	claFieldsNumber, err := beego.AppConfig.Int("cla_fields_number")
-	if err != nil {
-		return err
+func (cfg *appConfig) setDefault() {
+	if cfg.MaxSizeOfCorpCLAPDF <= 0 {
+		cfg.MaxSizeOfCorpCLAPDF = 5 << 20
 	}
-
-	maxSizeOfCorpCLAPDF := beego.AppConfig.DefaultInt("max_size_of_corp_cla_pdf", (2 << 20))
-	maxSizeOfOrgSignaturePDF := beego.AppConfig.DefaultInt("max_size_of_org_signature_pdf", (1 << 20))
-
-	tokenExpiry, err := beego.AppConfig.Int64("api_token_expiry")
-	if err != nil {
-		return err
+	if cfg.MaxSizeOfOrgSignaturePDF <= 0 {
+		cfg.MaxSizeOfOrgSignaturePDF = 1 << 20
 	}
-
-	codeExpiry, err := beego.AppConfig.Int64("verification_code_expiry")
-	if err != nil {
-		return err
-	}
-
-	employeeMangers, err := beego.AppConfig.Int("employee_managers_number")
-	if err != nil {
-		return err
-	}
-
-	AppConfig = &appConfig{
-		PythonBin:                beego.AppConfig.String("python_bin"),
-		CLAFieldsNumber:          claFieldsNumber,
-		MaxSizeOfCorpCLAPDF:      maxSizeOfCorpCLAPDF,
-		MaxSizeOfOrgSignaturePDF: maxSizeOfOrgSignaturePDF,
-		VerificationCodeExpiry:   codeExpiry,
-		APITokenExpiry:           tokenExpiry,
-		APITokenKey:              beego.AppConfig.String("api_token_key"),
-		PDFOrgSignatureDir:       beego.AppConfig.String("pdf_org_signature_dir"),
-		PDFOutDir:                beego.AppConfig.String("pdf_out_dir"),
-		CodePlatformConfigFile:   beego.AppConfig.String("code_platforms"),
-		EmailPlatformConfigFile:  beego.AppConfig.String("email_platforms"),
-		EmployeeManagersNumber:   employeeMangers,
-		CLAPlatformURL:           beego.AppConfig.String("cla_platform_url"),
-		Mongodb: MongodbConfig{
-			MongodbConn:                 beego.AppConfig.String("mongodb::mongodb_conn"),
-			DBName:                      beego.AppConfig.String("mongodb::mongodb_db"),
-			LinkCollection:              beego.AppConfig.String("mongodb::link_collection"),
-			OrgEmailCollection:          beego.AppConfig.String("mongodb::org_email_collection"),
-			CLAPDFCollection:            beego.AppConfig.String("mongodb::cla_pdf_collection"),
-			CorpPDFCollection:           beego.AppConfig.String("mongodb::corp_pdf_collection"),
-			VCCollection:                beego.AppConfig.String("mongodb::verification_code_collection"),
-			CorpSigningCollection:       beego.AppConfig.String("mongodb::corp_signing_collection"),
-			IndividualSigningCollection: beego.AppConfig.String("mongodb::individual_signing_collection"),
-		},
-		RestrictedCorpEmailSuffix: beego.AppConfig.DefaultStrings("restricted_corp_email_suffix", []string{}),
-	}
-	return AppConfig.validate()
 }
 
-func (appConf *appConfig) validate() error {
-	_, err := golangsdk.BuildRequestBody(appConf, "")
-	if err != nil {
-		return fmt.Errorf("config file error: %s", err.Error())
+func (cfg *appConfig) validate() error {
+	if util.IsFileNotExist(cfg.PythonBin) {
+		return fmt.Errorf("the file:%s is not exist", cfg.PythonBin)
 	}
 
-	if util.IsFileNotExist(appConf.PythonBin) {
-		return fmt.Errorf("The file:%s is not exist", appConf.PythonBin)
+	if cfg.CLAFieldsNumber <= 0 {
+		return fmt.Errorf("the cla_fields_number:%d should be bigger than 0", cfg.CLAFieldsNumber)
 	}
 
-	if appConf.CLAFieldsNumber <= 0 {
-		return fmt.Errorf("The cla_fields_number:%d should be bigger than 0", appConf.CLAFieldsNumber)
+	if cfg.VerificationCodeExpiry <= 0 {
+		return fmt.Errorf("the verification_code_expiry:%d should be bigger than 0", cfg.VerificationCodeExpiry)
 	}
 
-	if appConf.VerificationCodeExpiry <= 0 {
-		return fmt.Errorf("The verification_code_expiry:%d should be bigger than 0", appConf.VerificationCodeExpiry)
+	if cfg.APITokenExpiry <= 0 {
+		return fmt.Errorf("the apit_oken_expiry:%d should be bigger than 0", cfg.APITokenExpiry)
 	}
 
-	if appConf.APITokenExpiry <= 0 {
-		return fmt.Errorf("The apit_oken_expiry:%d should be bigger than 0", appConf.APITokenExpiry)
+	if cfg.EmployeeManagersNumber <= 0 {
+		return fmt.Errorf("the employee_managers_number:%d should be bigger than 0", cfg.EmployeeManagersNumber)
 	}
 
-	if appConf.EmployeeManagersNumber <= 0 {
-		return fmt.Errorf("The employee_managers_number:%d should be bigger than 0", appConf.EmployeeManagersNumber)
+	if len(cfg.APITokenKey) < 20 {
+		return fmt.Errorf("the length of api_token_key should be bigger than 20")
 	}
 
-	if len(appConf.APITokenKey) < 20 {
-		return fmt.Errorf("The length of api_token_key should be bigger than 20")
+	if util.IsNotDir(cfg.PDFOrgSignatureDir) {
+		return fmt.Errorf("the directory:%s is not exist", cfg.PDFOrgSignatureDir)
 	}
 
-	if util.IsNotDir(appConf.PDFOrgSignatureDir) {
-		return fmt.Errorf("The directory:%s is not exist", appConf.PDFOrgSignatureDir)
+	if util.IsNotDir(cfg.PDFOutDir) {
+		return fmt.Errorf("the directory:%s is not exist", cfg.PDFOutDir)
 	}
 
-	if util.IsNotDir(appConf.PDFOutDir) {
-		return fmt.Errorf("The directory:%s is not exist", appConf.PDFOutDir)
-
+	if util.IsFileNotExist(cfg.CodePlatformConfigFile) {
+		return fmt.Errorf("the file:%s is not exist", cfg.CodePlatformConfigFile)
 	}
 
-	if util.IsFileNotExist(appConf.CodePlatformConfigFile) {
-		return fmt.Errorf("The file:%s is not exist", appConf.CodePlatformConfigFile)
-	}
-
-	if util.IsFileNotExist(appConf.EmailPlatformConfigFile) {
-		return fmt.Errorf("The file:%s is not exist", appConf.EmailPlatformConfigFile)
+	if util.IsFileNotExist(cfg.EmailPlatformConfigFile) {
+		return fmt.Errorf("the file:%s is not exist", cfg.EmailPlatformConfigFile)
 	}
 
 	return nil
 }
 
-func (appConf *appConfig) IsRestrictedEmailSuffix(emailSuffix string) bool {
-	for _, suffix := range appConf.RestrictedCorpEmailSuffix {
+func (cfg *appConfig) IsRestrictedEmailSuffix(emailSuffix string) bool {
+	for _, suffix := range cfg.RestrictedCorpEmailSuffix {
 		if strings.ToLower(suffix) == strings.ToLower(emailSuffix) {
 			return true
 		}

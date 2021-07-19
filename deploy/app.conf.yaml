@@ -1,0 +1,30 @@
+python_bin: /usr/bin/python3
+
+cla_fields_number: 10
+
+verification_code_expiry: 300
+api_token_expiry: 1800
+api_token_key: "${API_TOKEN_KEY}"
+
+pdf_org_signature_dir: ./conf/pdfs/org_signature_pdf
+pdf_out_dir: ./conf/pdfs/output
+
+code_platforms: ./conf/platforms/code_platforms.yaml
+email_platforms: ./conf/platforms/email.yaml
+
+employee_managers_number: 5
+
+max_size_of_corp_cla_pdf: 5242880
+max_size_of_org_signature_pdfa: 204800
+
+cla_platform_url: "${CLA_PLATFORM_URL}"
+
+mongodb:
+  mongodb_conn: "${MONGODB_CONNECTION}"
+  mongodb_db: "${MONGODB_NAME}"
+  link_collection: links
+  corp_pdf_collection: corp_pdfs
+  org_email_collection: org_emails
+  verification_code_collection: verification_codes
+  corp_signing_collection: corp_signings
+  individual_signing_collection: individual_signings

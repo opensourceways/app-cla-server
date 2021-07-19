@@ -57,8 +57,7 @@ func (org *OrgRepoController) Check() {
 		return
 	}
 
-	repo := org.GetString(":repo")
-	b, err := pl.hasRepo(org.GetString(":org"), repo)
+	b, err := pl.hasRepo(org.GetString(":org"), org.GetString(":repo"))
 	if err != nil {
 		org.sendFailedResultAsResp(err, action)
 		return

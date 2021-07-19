@@ -93,9 +93,5 @@ func (this *giteeClient) HasRepo(org, repo string) (bool, error) {
 		return false, err
 	}
 
-	if r.StatusCode == 404 {
-		return false, nil
-	}
-
-	return true, nil
+	return r.StatusCode != 404, nil
 }

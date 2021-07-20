@@ -19,10 +19,14 @@ max_size_of_org_signature_pdfa: 204800
 
 cla_platform_url: "${CLA_PLATFORM_URL}"
 
+restricted_corp_email_suffix: ${RESTRICTED_CORP_EMAIL_SUFFIX}
+
 mongodb:
   mongodb_conn: "${MONGODB_CONNECTION}"
   mongodb_db: "${MONGODB_NAME}"
+  
   link_collection: links
+  cla_pdf_collection: cla_pdfs
   corp_pdf_collection: corp_pdfs
   org_email_collection: org_emails
   verification_code_collection: verification_codes

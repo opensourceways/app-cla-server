@@ -50,7 +50,9 @@ func LoadFromYaml(path string, cfg interface{}) error {
 		return err
 	}
 
-	if err := yaml.Unmarshal(b, cfg); err != nil {
+	content := []byte(os.ExpandEnv(string(b)))
+
+	if err := yaml.Unmarshal(content, cfg); err != nil {
 		return err
 	}
 
@@ -61,12 +63,12 @@ func LoadFromYaml(path string, cfg interface{}) error {
 func NewTemplate(name, path string) (*template.Template, error) {
 	txtStr, err := ioutil.ReadFile(path)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to new template: read template file failed: %s", err.Error())
+		return nil, fmt.Errorf("failed to new template: read template file failed: %s", err.Error())
 	}
 
 	tmpl, err := template.New(name).Parse(string(txtStr))
 	if err != nil {
-		return nil, fmt.Errorf("Failed to new template: build template failed: %s", err.Error())
+		return nil, fmt.Errorf("failed to new template: build template failed: %s", err.Error())
 	}
 
 	return tmpl, nil
@@ -75,7 +77,7 @@ func NewTemplate(name, path string) (*template.Template, error) {
 func RenderTemplate(tmpl *template.Template, data interface{}) (string, error) {
 	buf := new(bytes.Buffer)
 	if err := tmpl.Execute(buf, data); err != nil {
-		return "", fmt.Errorf("Failed to execute template(%s): %s", tmpl.Name(), err.Error())
+		return "", fmt.Errorf("failed to execute template(%s): %s", tmpl.Name(), err.Error())
 	}
 
 	return buf.String(), nil

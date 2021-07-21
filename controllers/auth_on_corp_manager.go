@@ -22,6 +22,11 @@ func (this *CorporationManagerController) Auth() {
 		return
 	}
 
+	if merr := info.Validate(); merr != nil {
+		this.sendModelErrorAsResp(merr, action)
+		return
+	}
+
 	v, merr := (&info).Authenticate()
 	if merr != nil {
 		this.sendModelErrorAsResp(merr, action)

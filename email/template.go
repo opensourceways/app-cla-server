@@ -64,7 +64,7 @@ func findTmpl(name string) *template.Template {
 func genEmailMsg(tmplName string, data interface{}) (*EmailMessage, error) {
 	tmpl := findTmpl(tmplName)
 	if tmpl == nil {
-		return nil, fmt.Errorf("Failed to generate email msg: didn't find msg template: %s", tmplName)
+		return nil, fmt.Errorf("failed to generate email msg: didn't find msg template: %s", tmplName)
 	}
 
 	str, err := util.RenderTemplate(tmpl, data)

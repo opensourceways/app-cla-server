@@ -9,13 +9,17 @@ import (
 	"github.com/opensourceways/app-cla-server/models"
 )
 
+const (
+	codeOfSigning = "signing"
+	codeOfFindPw  = "find_pw"
+)
+
 type VerificationCodeController struct {
 	baseController
 }
 
 func (this *VerificationCodeController) Prepare() {
-	if strings.HasSuffix(this.routerPattern(), "/:link_id/:email") ||
-		strings.HasSuffix(this.routerPattern(), "/:platform/:org_repo/:email") {
+	if strings.HasSuffix(this.routerPattern(), "/:link_id/:email/:type") {
 		this.apiPrepare("")
 	} else {
 		this.apiPrepare(PermissionCorpAdmin)
@@ -26,12 +30,14 @@ func (this *VerificationCodeController) Prepare() {
 // @Description send verification code when signing
 // @Param	:link_id	path 	string					true		"link id"
 // @Param	:email		path 	string					true		"email of corp"
+// @param	:type		path	string					true		"type value of get code: signing or find_pw"
 // @Success 201 {int} map
-// @router /:link_id/:email [post]
+// @router /:link_id/:email/:type [post]
 func (this *VerificationCodeController) Post() {
 	action := "create verification code"
 	linkID := this.GetString(":link_id")
-	emailOfSigner := this.GetString(":email")
+	emailAddr := this.GetString(":email")
+	typeVC := this.GetString(":type")
 
 	orgInfo, merr := models.GetOrgOfLink(linkID)
 	if merr != nil {
@@ -39,27 +45,17 @@ func (this *VerificationCodeController) Post() {
 		return
 	}
 
-	code, err := this.createCode(emailOfSigner, linkID)
-	if err != nil {
-		this.sendModelErrorAsResp(err, action)
+	code, merr := this.createCode(emailAddr, linkID)
+	if merr != nil {
+		this.sendModelErrorAsResp(merr, action)
 		return
 	}
 
-	this.sendSuccessResp("create verification code successfully")
+	if err := sendEmailByType(typeVC, code, emailAddr, orgInfo); err != nil {
+		this.sendFailedResponse(400, errUnmatchedVerificationCodeType, err, action)
+	}
 
-	sendEmailToIndividual(
-		emailOfSigner, orgInfo.OrgEmail,
-		fmt.Sprintf(
-			"Verification code for signing CLA on project of \"%s\"",
-			orgInfo.OrgAlias,
-		),
-		email.VerificationCode{
-			Email:      emailOfSigner,
-			Org:        orgInfo.OrgAlias,
-			Code:       code,
-			ProjectURL: orgInfo.ProjectURL(),
-		},
-	)
+	this.sendSuccessResp("create verification code successfully")
 }
 
 // @Title Post
@@ -111,48 +107,36 @@ func (this *VerificationCodeController) createCode(to, purpose string) (string, 
 	)
 }
 
-//@Title CodeWithFindPwd
-//@Description send verification code when find password
-//@Param platform path  string true "code platform"
-//@Param org_repo path  string true "org:repo"
-//@Param email    path string true "email of contributor"
-//@Success 201 {int} map
-//@Failure 400 util.ErrSendingEmail
-//@router /:platform/:org_repo/:email [post]
-func (this *VerificationCodeController) CodeWithFindPwd() {
-	action := "create verification code when find password"
-	org, repo := parseOrgAndRepo(this.GetString(":org_repo"))
-	linkID, err := models.GetLinkID(buildOrgRepo(this.GetString(":platform"), org, repo))
-	if err != nil {
-		this.sendFailedResponse(400, string(models.ErrNoLinkOrNoManager), err, action)
-		return
+func sendEmailByType(typeVC, code, emailAddr string, orgInfo *models.OrgInfo) error {
+	var err error
+	switch typeVC {
+	case codeOfSigning:
+		sendEmailToIndividual(
+			emailAddr, orgInfo.OrgEmail,
+			fmt.Sprintf(
+				"Verification code for signing CLA on project of \"%s\"",
+				orgInfo.OrgAlias,
+			),
+			email.VerificationCode{
+				Email:      emailAddr,
+				Org:        orgInfo.OrgAlias,
+				Code:       code,
+				ProjectURL: orgInfo.ProjectURL(),
+			},
+		)
+	case codeOfFindPw:
+		sendEmailToIndividual(
+			emailAddr, orgInfo.OrgEmail,
+			"Verification code for retrieve password ",
+			email.FindPasswordVerifyCode{
+				Email:      emailAddr,
+				Org:        orgInfo.OrgAlias,
+				Code:       code,
+				ProjectURL: orgInfo.ProjectURL(),
+			},
+		)
+	default:
+		err = fmt.Errorf(errUnmatchedVerificationCodeType)
 	}
-
-	orgInfo, err := models.GetOrgOfLink(linkID)
-	if err != nil {
-		this.sendFailedResponse(400, string(models.ErrNoLinkOrNoManager), err, action)
-		return
-	}
-
-	cmEmail := this.GetString(":email")
-	code, err := models.CreateVerificationCode(
-		cmEmail, linkID, config.AppConfig.VerificationCodeExpiry,
-	)
-	if err != nil {
-		this.sendModelErrorAsResp(err, action)
-		return
-	}
-
-	this.sendSuccessResp("create verification code successfully")
-
-	sendEmailToIndividual(
-		cmEmail, orgInfo.OrgEmail,
-		"Verification code for retrieve password ",
-		email.FindPasswordVerifyCode{
-			Email:      cmEmail,
-			Org:        orgInfo.OrgAlias,
-			Code:       code,
-			ProjectURL: orgInfo.ProjectURL(),
-		},
-	)
+	return err
 }

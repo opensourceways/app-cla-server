@@ -18,7 +18,7 @@ type CorporationManagerCheckInfo struct {
 	Email       string
 	EmailSuffix string
 	Password    string
-	OrgRepo
+	LinkID      string
 }
 
 type CorporationManagerResetPassword struct {

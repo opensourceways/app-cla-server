@@ -85,7 +85,7 @@ func (this *client) DeleteCLA(linkID, applyTo, language string) dbmodels.IDBErro
 	return withContext1(f)
 }
 
-func (this *client) GetCLAByType(orgRepo *dbmodels.OrgRepo, applyTo string) (string, []dbmodels.CLADetail, dbmodels.IDBError) {
+func (this *client) GetCLAByType(linkID, applyTo string) ([]dbmodels.CLADetail, dbmodels.IDBError) {
 	var project bson.M
 	if applyTo == dbmodels.ApplyToIndividual {
 		project = bson.M{
@@ -103,18 +103,18 @@ func (this *client) GetCLAByType(orgRepo *dbmodels.OrgRepo, applyTo string) (str
 	var v cLink
 	f := func(ctx context.Context) dbmodels.IDBError {
 		return this.getDoc(
-			ctx, this.linkCollection, docFilterOfLink(orgRepo), project, &v,
+			ctx, this.linkCollection, docFilterOfCLA(linkID), project, &v,
 		)
 	}
 
 	if err := withContext1(f); err != nil {
-		return "", nil, err
+		return nil, err
 	}
 
 	if applyTo == dbmodels.ApplyToIndividual {
-		return v.LinkID, toModelOfCLAs(v.IndividualCLAs), nil
+		return toModelOfCLAs(v.IndividualCLAs), nil
 	}
-	return v.LinkID, toModelOfCLAs(v.CorpCLAs), nil
+	return toModelOfCLAs(v.CorpCLAs), nil
 }
 
 func (this *client) GetAllCLA(linkID string) (*dbmodels.CLAOfLink, dbmodels.IDBError) {

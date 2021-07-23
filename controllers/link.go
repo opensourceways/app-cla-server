@@ -197,13 +197,12 @@ func (this *LinkController) ListLinks() {
 
 // @Title GetCLAForSigning
 // @Description get signing page info
-// @Param	:platform	path 	string				true		"code platform"
-// @Param	:org_id		path 	string				true		"org"
+// @Param	:link_id	path 	string				true		"org"
 // @Param	:apply_to	path 	string				true		"apply to"
 // @Success 201 {int} map
 // @Failure util.ErrNoCLABindingDoc	"this org/repo has not been bound any clas"
 // @Failure util.ErrNotReadyToSign	"the corp signing is not ready"
-// @router /:platform/:org_id/:apply_to [get]
+// @router /:link_id/:apply_to [get]
 func (this *LinkController) GetCLAForSigning() {
 	action := "fetch signing page info"
 	applyTo := this.GetString(":apply_to")
@@ -213,19 +212,10 @@ func (this *LinkController) GetCLAForSigning() {
 		return
 	}
 
-	org, repo := parseOrgAndRepo(this.GetString(":org_id"))
-	orgRepo := buildOrgRepo(this.GetString(":platform"), org, repo)
-
-	if linkID, r, err := models.GetCLAByType(orgRepo, applyTo); err != nil {
+	linkID := this.GetString(":link_id")
+	if result, err := models.GetCLAByType(linkID, applyTo); err != nil {
 		this.sendModelErrorAsResp(err, action)
 	} else {
-		result := struct {
-			LinkID string               `json:"link_id"`
-			CLAs   []dbmodels.CLADetail `json:"clas"`
-		}{
-			LinkID: linkID,
-			CLAs:   r,
-		}
 		this.sendSuccessResp(result)
 	}
 }

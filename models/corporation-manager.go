@@ -11,11 +11,11 @@ import (
 type CorporationManagerAuthentication struct {
 	User     string `json:"user"`
 	Password string `json:"password"`
-	dbmodels.OrgRepo
+	LinkID   string `json:"link_id"`
 }
 
 func (this CorporationManagerAuthentication) Validate() IModelError {
-	if this.Platform == "" || this.OrgID == "" || this.Password == "" || this.User == "" {
+	if this.LinkID == "" || this.Password == "" || this.User == "" {
 		return newModelError(ErrEmptyPayload, fmt.Errorf("necessary parameters is empty"))
 	}
 
@@ -23,7 +23,7 @@ func (this CorporationManagerAuthentication) Validate() IModelError {
 }
 
 func (this CorporationManagerAuthentication) Authenticate() (map[string]dbmodels.CorporationManagerCheckResult, IModelError) {
-	info := dbmodels.CorporationManagerCheckInfo{Password: this.Password, OrgRepo: this.OrgRepo}
+	info := dbmodels.CorporationManagerCheckInfo{Password: this.Password, LinkID: this.LinkID}
 	if merr := checkEmailFormat(this.User); merr == nil {
 		info.Email = this.User
 	} else {

@@ -3,6 +3,7 @@ package controllers
 import (
 	"fmt"
 	"io/ioutil"
+	"net"
 	"net/http"
 	"strings"
 
@@ -94,11 +95,12 @@ func (this *baseController) sendFailedResponse(statusCode int, errCode string, r
 	this.sendResponse(d, statusCode)
 }
 
-func (this *baseController) newApiToken(permission string, pl interface{}) (string, error) {
+func (this *baseController) newApiToken(permission string, addr string, pl interface{}) (string, error) {
 	ac := &accessController{
 		Expiry:     util.Expiry(config.AppConfig.APITokenExpiry),
 		Permission: permission,
 		Payload:    pl,
+		RemoteAddr: addr,
 	}
 
 	return ac.newToken(config.AppConfig.APITokenKey)
@@ -233,7 +235,12 @@ func (this *baseController) checkApiReqToken(ac *accessController, permission []
 		return newFailedApiResult(403, errExpiredToken, fmt.Errorf("token is expired"))
 	}
 
-	if err := ac.verify(permission); err != nil {
+	addr, fr := this.getRemoteAddr()
+	if fr != nil {
+		return fr
+	}
+
+	if err := ac.verify(permission, addr); err != nil {
 		return newFailedApiResult(403, errUnauthorizedToken, err)
 	}
 
@@ -297,4 +304,15 @@ func (this *baseController) setCookies(value map[string]string) {
 	for k, v := range value {
 		this.Ctx.SetCookie(k, v, "3600", "/")
 	}
+}
+
+func (this *baseController) getRemoteAddr() (string, *failedApiResult) {
+	ips := this.Ctx.Request.Header.Get("x-forwarded-for")
+	for _, item := range strings.Split(ips, ", ") {
+		if net.ParseIP(item) != nil {
+			return item, nil
+		}
+	}
+
+	return "", newFailedApiResult(400, errCanNotFetchClientIP, fmt.Errorf("can not fetch client ip"))
 }

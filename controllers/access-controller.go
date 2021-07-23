@@ -20,6 +20,7 @@ const (
 )
 
 type accessController struct {
+	RemoteAddr string      `json:"remote_addr"`
 	Expiry     int64       `json:"expiry"`
 	Permission string      `json:"permission"`
 	Payload    interface{} `json:"payload"`
@@ -84,14 +85,24 @@ func (this *accessController) isTokenExpired() bool {
 	return this.Expiry < util.Now()
 }
 
-func (this *accessController) verify(permission []string) error {
+func (this *accessController) verify(permission []string, addr string) error {
+	bingo := false
 	for _, item := range permission {
 		if this.Permission == item {
-			return nil
+			bingo = true
+			break
 		}
 	}
 
-	return fmt.Errorf("not allowed permission")
+	if !bingo {
+		return fmt.Errorf("not allowed permission")
+	}
+
+	if this.RemoteAddr != addr {
+		return fmt.Errorf("unmatched remote address")
+	}
+
+	return nil
 }
 
 func (this *accessController) newEncryption() util.SymmetricEncryption {

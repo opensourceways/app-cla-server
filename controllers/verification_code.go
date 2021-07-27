@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"fmt"
+	"net/url"
 	"path"
 	"strings"
 
@@ -113,9 +114,8 @@ func (this *VerificationCodeController) createCode(to, purpose string) (string, 
 
 //@Title CodeWithFindPwd
 //@Description send verification code when find password
-//@Param platform path  string true "code platform"
-//@Param org_repo path  string true "org:repo"
-//@Param email    path string true "email of contributor"
+//@Param link_id	path 	string	true	"link id"
+//@Param email		path	string	true	"email of contributor"
 //@Success 201 {int} map
 //@Failure 400 util.ErrSendingEmail
 //@router /password_retrieve/:link_id/:email [post]
@@ -143,13 +143,25 @@ func (this *VerificationCodeController) PasswordRetrieve() {
 	if mErr != nil {
 		this.sendModelErrorAsResp(mErr, action)
 	}
-	url := path.Join(config.AppConfig.CLAPlatformURL, "password_retrieve", ens)
-
+	URL, err1 := genPasswordRetrieveURL(linkID, ens)
+	if err1 != nil {
+		this.sendFailedResponse(400, errSystemError, err1, action)
+	}
 	this.sendSuccessResp("send the retrieve password email success")
 
 	sendEmailToIndividual(
 		cmEmail, orgInfo.OrgEmail,
 		"[CLA] Please reset your password",
-		email.FindPasswordVerifyCode{URL: url},
+		email.FindPasswordVerifyCode{URL: URL},
 	)
+}
+
+func genPasswordRetrieveURL(linkID, encryptParam string) (string, error) {
+	URL, err := url.Parse(config.AppConfig.CLAPlatformURL)
+	if err != nil {
+		return "", nil
+	}
+
+	URL.Path = path.Join("password-retrieve", linkID, encryptParam)
+	return URL.String(), nil
 }

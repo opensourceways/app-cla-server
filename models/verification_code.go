@@ -46,8 +46,10 @@ func (r *RetrievePW) Decrypt(ciphertext string) IModelError {
 }
 
 func (r *RetrievePW) Validate() IModelError {
-	_, err := golangsdk.BuildRequestBody(r, "")
-	return newModelError(ErrValidateRetrievePW, err)
+	if _, err := golangsdk.BuildRequestBody(r, ""); err != nil {
+		return newModelError(ErrValidateRetrievePW, err)
+	}
+	return nil
 }
 
 func (r *RetrievePW) newEncryption() util.SymmetricEncryption {

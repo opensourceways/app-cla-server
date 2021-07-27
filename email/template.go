@@ -203,5 +203,11 @@ type FindPasswordVerifyCode struct {
 }
 
 func (fpvCode FindPasswordVerifyCode) GenEmailMsg() (*EmailMessage, error) {
-	return genEmailMsg(TmplVerificationCodeOfFindPwd, fpvCode)
+	msg, err := genEmailMsg(TmplVerificationCodeOfFindPwd, fpvCode)
+	if err != nil {
+		return nil, err
+	}
+	//adapter send html tmpl content
+	msg.MIME = "MIME-version: 1.0;\nContent-Type: text/html; charset=\"UTF-8\";\n\n"
+	return msg, nil
 }

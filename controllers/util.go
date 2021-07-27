@@ -44,7 +44,7 @@ func notifyCorpAdmin(orgInfo *models.OrgInfo, info *dbmodels.CorporationManagerC
 }
 
 func notifyCorpManagerWhenAdding(orgInfo *models.OrgInfo, info []dbmodels.CorporationManagerCreateOption) {
-	admin := (info[0].Role == dbmodels.RoleAdmin)
+	admin := info[0].Role == dbmodels.RoleAdmin
 	subject := fmt.Sprintf("Account on project of \"%s\"", orgInfo.OrgAlias)
 
 	for i := range info {

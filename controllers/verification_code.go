@@ -123,18 +123,18 @@ func (this *VerificationCodeController) PasswordRetrieve() {
 	action := "send email with find password"
 	linkID := this.GetString(":link_id")
 
-	orgInfo, err := models.GetOrgOfLink(linkID)
-	if err != nil {
-		this.sendFailedResponse(400, string(models.ErrNoLinkOrNoManager), err, action)
+	orgInfo, mErr := models.GetOrgOfLink(linkID)
+	if mErr != nil {
+		this.sendFailedResponse(400, string(models.ErrNoLinkOrNoManager), mErr, action)
 		return
 	}
 
 	cmEmail := this.GetString(":email")
-	code, err := models.CreateVerificationCode(
+	code, mErr := models.CreateVerificationCode(
 		cmEmail, linkID, config.AppConfig.VerificationCodeExpiry,
 	)
-	if err != nil {
-		this.sendModelErrorAsResp(err, action)
+	if mErr != nil {
+		this.sendModelErrorAsResp(mErr, action)
 		return
 	}
 
@@ -143,9 +143,9 @@ func (this *VerificationCodeController) PasswordRetrieve() {
 	if mErr != nil {
 		this.sendModelErrorAsResp(mErr, action)
 	}
-	URL, err1 := genPasswordRetrieveURL(linkID, ens)
-	if err1 != nil {
-		this.sendFailedResponse(400, errSystemError, err1, action)
+	URL, err := genPasswordRetrieveURL(linkID, ens)
+	if err != nil {
+		this.sendFailedResponse(400, errSystemError, err, action)
 	}
 	this.sendSuccessResp("send the retrieve password email success")
 

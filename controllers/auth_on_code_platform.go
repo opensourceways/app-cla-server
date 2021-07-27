@@ -54,12 +54,6 @@ func (this *AuthController) Callback() {
 		return
 	}
 
-	ip, fr := this.getRemoteAddr()
-	if fr != nil {
-		rs(fr.errCode, fr.reason)
-		return
-	}
-
 	cp, err := authHelper.GetAuthInstance(platform)
 	if err != nil {
 		rs(errUnsupportedCodePlatform, err)
@@ -87,7 +81,7 @@ func (this *AuthController) Callback() {
 		return
 	}
 
-	at, err := this.newApiToken(permission, ip, pl)
+	at, err := this.newApiToken(permission, pl)
 	if err != nil {
 		rs(errSystemError, err)
 		return
@@ -128,12 +122,6 @@ func (this *AuthController) Auth() {
 		return
 	}
 
-	ip, fr := this.getRemoteAddr()
-	if fr != nil {
-		this.sendFailedResultAsResp(fr, action)
-		return
-	}
-
 	cp, err := platformAuth.Auth[platformAuth.AuthApplyToLogin].GetAuthInstance(platform)
 	if err != nil {
 		this.sendFailedResponse(400, errUnsupportedCodePlatform, err, action)
@@ -153,7 +141,7 @@ func (this *AuthController) Auth() {
 		return
 	}
 
-	at, err := this.newApiToken(permission, ip, pl)
+	at, err := this.newApiToken(permission, pl)
 	if err != nil {
 		this.sendFailedResponse(500, errSystemError, err, action)
 		return

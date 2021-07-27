@@ -198,7 +198,9 @@ func (this EmployeeNotification) GenEmailMsg() (*EmailMessage, error) {
 	return nil, fmt.Errorf("do nothing")
 }
 
-type FindPasswordVerifyCode VerificationCode
+type FindPasswordVerifyCode struct {
+	URL string
+}
 
 func (fpvCode FindPasswordVerifyCode) GenEmailMsg() (*EmailMessage, error) {
 	return genEmailMsg(TmplVerificationCodeOfFindPwd, fpvCode)

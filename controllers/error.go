@@ -40,7 +40,6 @@ const (
 	errUnsupportedCLALang            = "unsupported_cla_lang"
 	errNotSameCorp                   = string(models.ErrNotSameCorp)
 	errCanNotFetchClientIP           = "can_not_fetch_client_ip"
-	errUnmatchedVerificationCodeType = "unmatched_verification_code_type"
 )
 
 func parseModelError(err models.IModelError) *failedApiResult {

@@ -129,10 +129,10 @@ func (this *CorporationManagerController) Patch() {
 
 //@Title Retrieve password
 //@Description retrieve password of corporation manager
-//@Param body body models.CorporationManagerRetrievePassword true "param of retrieving password"
+//@Param param body models.CorporationManagerRetrievePassword true "param of retrieving password"
 //@Success 201 {int} map
 //@Failure 400 util.ErrInvalidAccountOrPw
-//@router /retrieve_pw [post]
+//@router /password_retrieve [post]
 func (this *CorporationManagerController) RetrievePassword() {
 	action := "retrieve password"
 	sendResp := this.newFuncForSendingFailedResp(action)

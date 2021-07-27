@@ -42,6 +42,9 @@ const (
 	ErrNoLinkOrUnuploaed       ModelErrCode = "no_link_or_unuploaded"
 	ErrUnmatchedEmailDomain    ModelErrCode = "unmatched_email_domain"
 	ErrRestrictedEmailSuffix   ModelErrCode = "restricted_email_suffix"
+	ErrEncryptWithRetrievePW   ModelErrCode = "retrieve_pw_encrypt_failure"
+	ErrDecryptWithRetrievePW   ModelErrCode = "retrieve_pw_decrypt_failure"
+	ErrValidateRetrievePW      ModelErrCode = "retrieve_pw_validate_failure"
 )
 
 type IModelError interface {

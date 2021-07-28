@@ -96,9 +96,9 @@ func (this *baseController) sendFailedResponse(statusCode int, errCode string, r
 }
 
 func (this *baseController) newApiToken(permission string, pl interface{}) (string, error) {
-	addr, result := this.getRemoteAddr()
-	if result != nil {
-		return "", result.reason
+	addr, fr := this.getRemoteAddr()
+	if fr != nil {
+		return "", fr.reason
 	}
 	ac := &accessController{
 		Expiry:     util.Expiry(config.AppConfig.APITokenExpiry),

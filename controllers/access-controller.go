@@ -7,6 +7,7 @@ import (
 
 	"github.com/dgrijalva/jwt-go"
 	"github.com/huaweicloud/golangsdk"
+	"k8s.io/apimachinery/pkg/util/sets"
 
 	"github.com/opensourceways/app-cla-server/config"
 	"github.com/opensourceways/app-cla-server/util"
@@ -86,15 +87,8 @@ func (this *accessController) isTokenExpired() bool {
 }
 
 func (this *accessController) verify(permission []string, addr string) error {
-	bingo := false
-	for _, item := range permission {
-		if this.Permission == item {
-			bingo = true
-			break
-		}
-	}
-
-	if !bingo {
+	pSet := sets.NewString(permission...)
+	if !pSet.Has(this.Permission) {
 		return fmt.Errorf("not allowed permission")
 	}
 

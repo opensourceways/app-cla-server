@@ -87,8 +87,7 @@ func (this *accessController) isTokenExpired() bool {
 }
 
 func (this *accessController) verify(permission []string, addr string) error {
-	pSet := sets.NewString(permission...)
-	if !pSet.Has(this.Permission) {
+	if !sets.NewString(permission...).Has(this.Permission) {
 		return fmt.Errorf("not allowed permission")
 	}
 

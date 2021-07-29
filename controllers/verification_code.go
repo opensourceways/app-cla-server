@@ -23,7 +23,7 @@ func (this *VerificationCodeController) Prepare() {
 
 // @Title Post
 // @Description send verification code when signing
-// @Param	:org_cla_id	path 	string					true		"org cla id"
+// @Param	:link_id	path 	string					true		"link id"
 // @Param	:email		path 	string					true		"email of corp"
 // @Success 201 {int} map
 // @router /:link_id/:email [post]

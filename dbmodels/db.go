@@ -64,7 +64,7 @@ type IIndividualSigning interface {
 }
 
 type ICLA interface {
-	GetCLAByType(orgRepo *OrgRepo, applyTo string) (string, []CLADetail, IDBError)
+	GetCLAByType(linkID, applyTo string) ([]CLADetail, IDBError)
 	GetAllCLA(linkID string) (*CLAOfLink, IDBError)
 	HasCLA(linkID, applyTo, language string) (bool, IDBError)
 	DownloadCorpCLAPDF(linkID, lang string) ([]byte, IDBError)

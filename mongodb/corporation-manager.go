@@ -61,7 +61,7 @@ func (this *client) CheckCorporationManagerExist(opt dbmodels.CorporationManager
 	docFilter := bson.M{
 		fieldLinkStatus:   linkStatusReady,
 		fieldCorpManagers: bson.M{"$type": "array"},
-		fieldOrgIdentity:  opt.OrgRepoID(),
+		fieldLinkID:       opt.LinkID,
 	}
 
 	var elemFilter bson.M

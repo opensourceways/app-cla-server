@@ -156,16 +156,16 @@ func downloadCLA(url string) ([]byte, error) {
 	return nil, fmt.Errorf("it is not the content of cla")
 }
 
-func GetCLAByType(orgRepo *dbmodels.OrgRepo, applyTo string) (string, []dbmodels.CLADetail, IModelError) {
-	linkID, v, err := dbmodels.GetDB().GetCLAByType(orgRepo, applyTo)
+func GetCLAByType(linkID, applyTo string) ([]dbmodels.CLADetail, IModelError) {
+	v, err := dbmodels.GetDB().GetCLAByType(linkID, applyTo)
 	if err == nil {
-		return linkID, v, nil
+		return v, nil
 	}
 
 	if err.IsErrorOf(dbmodels.ErrNoDBRecord) {
-		return linkID, v, newModelError(ErrNoLink, err)
+		return v, newModelError(ErrNoLink, err)
 	}
-	return linkID, v, parseDBError(err)
+	return v, parseDBError(err)
 }
 
 func GetAllCLA(linkID string) (*dbmodels.CLAOfLink, IModelError) {

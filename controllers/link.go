@@ -197,7 +197,7 @@ func (this *LinkController) ListLinks() {
 
 // @Title GetCLAForSigning
 // @Description get signing page info
-// @Param	:link_id	path 	string				true		"org"
+// @Param	:link_id	path 	string				true		"link id"
 // @Param	:apply_to	path 	string				true		"apply to"
 // @Success 201 {int} map
 // @Failure util.ErrNoCLABindingDoc	"this org/repo has not been bound any clas"

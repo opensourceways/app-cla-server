@@ -13,5 +13,6 @@ require (
 	go.mongodb.org/mongo-driver v1.4.4
 	golang.org/x/oauth2 v0.0.0-20201208152858-08078c50e5b5
 	google.golang.org/api v0.36.0
+	k8s.io/apimachinery v0.21.3
 	sigs.k8s.io/yaml v1.2.0
 )

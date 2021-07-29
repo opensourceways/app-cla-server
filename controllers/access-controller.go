@@ -7,6 +7,7 @@ import (
 
 	"github.com/dgrijalva/jwt-go"
 	"github.com/huaweicloud/golangsdk"
+	"k8s.io/apimachinery/pkg/util/sets"
 
 	"github.com/opensourceways/app-cla-server/config"
 	"github.com/opensourceways/app-cla-server/util"
@@ -20,6 +21,7 @@ const (
 )
 
 type accessController struct {
+	RemoteAddr string      `json:"remote_addr"`
 	Expiry     int64       `json:"expiry"`
 	Permission string      `json:"permission"`
 	Payload    interface{} `json:"payload"`
@@ -84,14 +86,16 @@ func (this *accessController) isTokenExpired() bool {
 	return this.Expiry < util.Now()
 }
 
-func (this *accessController) verify(permission []string) error {
-	for _, item := range permission {
-		if this.Permission == item {
-			return nil
-		}
+func (this *accessController) verify(permission []string, addr string) error {
+	if !sets.NewString(permission...).Has(this.Permission) {
+		return fmt.Errorf("not allowed permission")
 	}
 
-	return fmt.Errorf("not allowed permission")
+	if this.RemoteAddr != addr {
+		return fmt.Errorf("unmatched remote address")
+	}
+
+	return nil
 }
 
 func (this *accessController) newEncryption() util.SymmetricEncryption {

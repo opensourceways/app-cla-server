@@ -5,10 +5,10 @@ import (
 )
 
 type LoginMiss struct {
-	LinkID   string `json:"link_id"`
-	Account  string `json:"account"`
-	MissNum  int    `json:"miss_num"`
-	LockTime int64  `json:"lock_time"`
+	LinkID   string `bson:"link_id" json:"link_id" `
+	Account  string `bson:"account" json:"account"`
+	MissNum  int    `bson:"miss_num" json:"miss_num"`
+	LockTime int64  `bson:"lock_time" json:"lock_time"`
 }
 
 func (lg *LoginMiss) IsLocked() bool {

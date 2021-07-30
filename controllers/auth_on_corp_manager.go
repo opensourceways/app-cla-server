@@ -26,14 +26,26 @@ func (this *CorporationManagerController) Auth() {
 		this.sendModelErrorAsResp(merr, action)
 		return
 	}
+	option, mErr := models.InitializeLoginMissOption(info.LinkID, info.User)
+	if mErr != nil {
+		this.sendModelErrorAsResp(mErr, action)
+	}
 
-	v, merr := (&info).Authenticate()
-	if merr != nil {
-		this.sendModelErrorAsResp(merr, action)
+	if option.IsLocked() {
+		this.sendFailedResponse(400, errAccountLocked, fmt.Errorf("account locked with more error login"), action)
+		return
+	}
+	option.ResetLockExpiredLoginNum()
+
+	v, mErr := (&info).Authenticate()
+	if mErr != nil {
+		this.sendModelErrorAsResp(mErr, action)
+		option.DoLoginMiss()
 		return
 	}
 	if len(v) == 0 {
 		this.sendFailedResponse(400, errWrongIDOrPassword, fmt.Errorf("wrong id or pw"), action)
+		option.DoLoginMiss()
 		return
 	}
 
@@ -62,6 +74,7 @@ func (this *CorporationManagerController) Auth() {
 	}
 
 	this.sendSuccessResp(result)
+	option.DoLoginSuccess()
 }
 
 func (this *CorporationManagerController) newAccessToken(linkID string, info *dbmodels.CorporationManagerCheckResult) (string, error) {

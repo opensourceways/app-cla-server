@@ -1,29 +1,36 @@
 package models
 
 import (
+	"github.com/astaxie/beego"
+
 	"github.com/opensourceways/app-cla-server/config"
 	"github.com/opensourceways/app-cla-server/dbmodels"
 	"github.com/opensourceways/app-cla-server/util"
 )
 
 type LoginMissOption struct {
-	LoginMiss *dbmodels.LoginMiss
+	*dbmodels.LoginMiss
 }
 
-func (lmo *LoginMissOption) DoLoginMiss() IModelError {
-	lmo.LoginMiss.MissNum = lmo.LoginMiss.MissNum + 1
-	if lmo.LoginMiss.MissNum >= config.AppConfig.AllowLoginMissNum {
-		lmo.LoginMiss.LockTime = util.Expiry(config.AppConfig.LockLoginExpiry)
+func (lmo *LoginMissOption) DoLoginMiss() {
+	lmo.MissNum = lmo.MissNum + 1
+	if lmo.MissNum >= config.AppConfig.AllowLoginMissNum {
+		lmo.LockTime = util.Expiry(config.AppConfig.LockLoginExpiry)
 	} else {
-		lmo.LoginMiss.LockTime = util.Now()
+		lmo.LockTime = util.Now()
 	}
-	return parseDBError(dbmodels.GetDB().UpdateLoginMiss(*lmo.LoginMiss))
+	if err := dbmodels.GetDB().UpdateLoginMiss(*lmo.LoginMiss); err != nil {
+		beego.Error(err)
+	}
+
 }
 
-func (lmo *LoginMissOption) DoLoginSuccess() IModelError {
-	lmo.LoginMiss.MissNum = 0
-	lmo.LoginMiss.LockTime = util.Now()
-	return parseDBError(dbmodels.GetDB().UpdateLoginMiss(*lmo.LoginMiss))
+func (lmo *LoginMissOption) DoLoginSuccess() {
+	lmo.MissNum = 0
+	lmo.LockTime = util.Now()
+	if err := dbmodels.GetDB().UpdateLoginMiss(*lmo.LoginMiss); err != nil {
+		beego.Error(err)
+	}
 }
 
 func (lmo *LoginMissOption) IsLocked() bool {
@@ -34,7 +41,9 @@ func (lmo *LoginMissOption) IsLocked() bool {
 }
 
 func (lmo *LoginMissOption) ResetLockExpiredLoginNum() {
-	if lmo.LoginMiss.MissNum >= config.AppConfig.AllowLoginMissNum {
+	loginInterval := util.Now() - lmo.LockTime
+	if lmo.LoginMiss.MissNum >= config.AppConfig.AllowLoginMissNum ||
+		loginInterval > config.AppConfig.LockLoginExpiry {
 		lmo.LoginMiss.MissNum = 0
 	}
 }

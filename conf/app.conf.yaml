@@ -20,6 +20,9 @@ restricted_corp_email_suffix:
   - gmail.com
   - 163.com
 
+lock_login_expiry: 3600
+allow_login_miss_num: 5
+
 mongodb:
   mongodb_conn: mongodb://root:123@localhost:32768
   mongodb_db: cla
@@ -30,3 +33,4 @@ mongodb:
   verification_code_collection: verification_codes
   corp_signing_collection: corp_signings
   individual_signing_collection: individual_signings
+  login_miss: login_miss

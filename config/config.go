@@ -34,6 +34,8 @@ type appConfig struct {
 	CLAPlatformURL            string        `json:"cla_platform_url" required:"true"`
 	Mongodb                   MongodbConfig `json:"mongodb" required:"true"`
 	RestrictedCorpEmailSuffix []string      `json:"restricted_corp_email_suffix"`
+	LockLoginExpiry           int64           `json:"lock_login_expiry"`
+	AllowLoginMissNum         int           `json:"allow_login_miss_num"`
 }
 
 type MongodbConfig struct {
@@ -46,6 +48,7 @@ type MongodbConfig struct {
 	VCCollection                string `json:"verification_code_collection" required:"true"`
 	CorpSigningCollection       string `json:"corp_signing_collection" required:"true"`
 	IndividualSigningCollection string `json:"individual_signing_collection" required:"true"`
+	LoginMiss                   string `json:"login_miss" required:"true"`
 }
 
 func (cfg *appConfig) setDefault() {
@@ -54,6 +57,12 @@ func (cfg *appConfig) setDefault() {
 	}
 	if cfg.MaxSizeOfOrgSignaturePDF <= 0 {
 		cfg.MaxSizeOfOrgSignaturePDF = 1 << 20
+	}
+	if cfg.LockLoginExpiry <= 0 {
+		cfg.LockLoginExpiry = 5
+	}
+	if cfg.AllowLoginMissNum <= 0 {
+		cfg.AllowLoginMissNum = 5
 	}
 }
 

@@ -18,6 +18,7 @@ type IDB interface {
 	IIndividualSigning
 	ICLA
 	IVerificationCode
+	ILoginMiss
 }
 
 type ICorporationSigning interface {
@@ -92,4 +93,10 @@ type ILink interface {
 	GetOrgOfLink(linkID string) (*OrgInfo, IDBError)
 	ListLinks(opt *LinkListOption) ([]LinkInfo, IDBError)
 	GetAllLinks() ([]LinkInfo, IDBError)
+}
+
+type ILoginMiss interface {
+	GetLoginMiss(linkID, account string) (*LoginMiss, IDBError)
+	CreateLoginMiss(lm LoginMiss) IDBError
+	UpdateLoginMiss(lm LoginMiss) IDBError
 }

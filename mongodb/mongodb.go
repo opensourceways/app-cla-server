@@ -26,6 +26,7 @@ type client struct {
 	linkCollection              string
 	corpSigningCollection       string
 	individualSigningCollection string
+	loginMiss                   string
 }
 
 func Initialize(cfg *config.MongodbConfig) (*client, error) {
@@ -57,6 +58,7 @@ func Initialize(cfg *config.MongodbConfig) (*client, error) {
 		linkCollection:              cfg.LinkCollection,
 		corpSigningCollection:       cfg.CorpSigningCollection,
 		individualSigningCollection: cfg.IndividualSigningCollection,
+		loginMiss:                   cfg.LoginMiss,
 	}
 	return cli, nil
 }

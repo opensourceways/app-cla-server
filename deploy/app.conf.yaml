@@ -22,10 +22,13 @@ cla_platform_url: "${CLA_PLATFORM_URL}"
 
 restricted_corp_email_suffix: ${RESTRICTED_CORP_EMAIL_SUFFIX}
 
+lock_login_expiry: 300
+allow_login_miss_num: 5
+
 mongodb:
   mongodb_conn: "${MONGODB_CONNECTION}"
   mongodb_db: "${MONGODB_NAME}"
-  
+
   link_collection: links
   cla_pdf_collection: cla_pdfs
   corp_pdf_collection: corp_pdfs
@@ -33,3 +36,4 @@ mongodb:
   verification_code_collection: verification_codes
   corp_signing_collection: corp_signings
   individual_signing_collection: individual_signings
+  login_miss: login_miss

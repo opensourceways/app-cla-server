@@ -97,6 +97,5 @@ type ILink interface {
 
 type ILoginMiss interface {
 	GetLoginMiss(linkID, account string) (*LoginMiss, IDBError)
-	CreateLoginMiss(lm LoginMiss) IDBError
 	UpdateLoginMiss(lm LoginMiss) IDBError
 }

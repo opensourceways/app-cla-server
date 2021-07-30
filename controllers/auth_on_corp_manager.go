@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"fmt"
+	"github.com/opensourceways/app-cla-server/config"
 
 	"github.com/opensourceways/app-cla-server/dbmodels"
 	"github.com/opensourceways/app-cla-server/models"
@@ -22,8 +23,8 @@ func (this *CorporationManagerController) Auth() {
 		return
 	}
 
-	if merr := info.Validate(); merr != nil {
-		this.sendModelErrorAsResp(merr, action)
+	if mErr := info.Validate(); mErr != nil {
+		this.sendModelErrorAsResp(mErr, action)
 		return
 	}
 	option, mErr := models.InitializeLoginMissOption(info.LinkID, info.User)
@@ -32,7 +33,7 @@ func (this *CorporationManagerController) Auth() {
 	}
 
 	if option.IsLocked() {
-		this.sendFailedResponse(400, errAccountLocked, fmt.Errorf("account locked with more error login"), action)
+		this.sendFailedResponse(400, errAccountLocked, fmt.Errorf("%d", config.AppConfig.LockLoginExpiry), action)
 		return
 	}
 	option.ResetLockExpiredLoginNum()

@@ -34,7 +34,7 @@ type appConfig struct {
 	CLAPlatformURL            string        `json:"cla_platform_url" required:"true"`
 	Mongodb                   MongodbConfig `json:"mongodb" required:"true"`
 	RestrictedCorpEmailSuffix []string      `json:"restricted_corp_email_suffix"`
-	LockLoginExpiry           int64           `json:"lock_login_expiry"`
+	LockLoginExpiry           int64         `json:"lock_login_expiry"`
 	AllowLoginMissNum         int           `json:"allow_login_miss_num"`
 }
 
@@ -59,7 +59,7 @@ func (cfg *appConfig) setDefault() {
 		cfg.MaxSizeOfOrgSignaturePDF = 1 << 20
 	}
 	if cfg.LockLoginExpiry <= 0 {
-		cfg.LockLoginExpiry = 5
+		cfg.LockLoginExpiry = 60
 	}
 	if cfg.AllowLoginMissNum <= 0 {
 		cfg.AllowLoginMissNum = 5

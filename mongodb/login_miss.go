@@ -3,7 +3,9 @@ package mongodb
 import (
 	"context"
 	"fmt"
+
 	"github.com/astaxie/beego"
+
 	"github.com/opensourceways/app-cla-server/dbmodels"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -28,22 +30,6 @@ func (this *client) GetLoginMiss(linkID, account string) (*dbmodels.LoginMiss, d
 		return nil, err
 	}
 	return result, nil
-}
-
-func (this *client) CreateLoginMiss(lm dbmodels.LoginMiss) dbmodels.IDBError {
-	bm, err := structToMap(lm)
-	if err != nil {
-		return err
-	}
-
-	f := func(ctx context.Context) dbmodels.IDBError {
-		if _, err := this.collection(this.loginMiss).InsertOne(ctx, bm); err != nil {
-			return newSystemError(err)
-		}
-		return nil
-	}
-
-	return withContext1(f)
 }
 
 func (this *client) UpdateLoginMiss(lm dbmodels.LoginMiss) dbmodels.IDBError {

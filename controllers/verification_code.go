@@ -2,8 +2,6 @@ package controllers
 
 import (
 	"fmt"
-	"net/url"
-	"path"
 	"strings"
 
 	"github.com/opensourceways/app-cla-server/config"
@@ -110,58 +108,4 @@ func (this *VerificationCodeController) createCode(to, purpose string) (string, 
 	return models.CreateVerificationCode(
 		to, purpose, config.AppConfig.VerificationCodeExpiry,
 	)
-}
-
-//@Title CodeWithFindPwd
-//@Description send verification code when find password
-//@Param link_id	path 	string	true	"link id"
-//@Param email		path	string	true	"email of contributor"
-//@Success 201 {int} map
-//@Failure 400 util.ErrSendingEmail
-//@router /password_retrieve/:link_id/:email [post]
-func (this *VerificationCodeController) PasswordRetrieve() {
-	action := "send email with find password"
-	linkID := this.GetString(":link_id")
-
-	orgInfo, mErr := models.GetOrgOfLink(linkID)
-	if mErr != nil {
-		this.sendFailedResponse(400, string(models.ErrNoLinkOrNoManager), mErr, action)
-		return
-	}
-
-	cmEmail := this.GetString(":email")
-	code, mErr := models.CreateVerificationCode(
-		cmEmail, linkID, config.AppConfig.VerificationCodeExpiry,
-	)
-	if mErr != nil {
-		this.sendModelErrorAsResp(mErr, action)
-		return
-	}
-
-	rpw := models.RetrievePW{LinkID: linkID, Email: cmEmail, Code: code}
-	ens, mErr := rpw.Encrypt()
-	if mErr != nil {
-		this.sendModelErrorAsResp(mErr, action)
-	}
-	URL, err := genPasswordRetrieveURL(linkID, ens)
-	if err != nil {
-		this.sendFailedResponse(400, errSystemError, err, action)
-	}
-	this.sendSuccessResp("send the retrieve password email success")
-
-	sendEmailToIndividual(
-		cmEmail, orgInfo.OrgEmail,
-		"[CLA] Please reset your password",
-		email.FindPasswordVerifyCode{URL: URL},
-	)
-}
-
-func genPasswordRetrieveURL(linkID, encryptParam string) (string, error) {
-	URL, err := url.Parse(config.AppConfig.CLAPlatformURL)
-	if err != nil {
-		return "", nil
-	}
-
-	URL.Path = path.Join("password-retrieve", linkID, encryptParam)
-	return URL.String(), nil
 }

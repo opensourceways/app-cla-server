@@ -115,15 +115,6 @@ func init() {
 			Filters:          nil,
 			Params:           nil})
 
-	beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:CorporationManagerController"] = append(beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:CorporationManagerController"],
-		beego.ControllerComments{
-			Method:           "RetrievePassword",
-			Router:           "/password_retrieve",
-			AllowHTTPMethods: []string{"post"},
-			MethodParams:     param.Make(),
-			Filters:          nil,
-			Params:           nil})
-
 	beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:CorporationPDFController"] = append(beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:CorporationPDFController"],
 		beego.ControllerComments{
 			Method:           "Review",
@@ -376,6 +367,24 @@ func init() {
 			Filters:          nil,
 			Params:           nil})
 
+	beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:PasswordRetrievalController"] = append(beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:PasswordRetrievalController"],
+		beego.ControllerComments{
+			Method:           "Post",
+			Router:           "/:link_id",
+			AllowHTTPMethods: []string{"post"},
+			MethodParams:     param.Make(),
+			Filters:          nil,
+			Params:           nil})
+
+	beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:PasswordRetrievalController"] = append(beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:PasswordRetrievalController"],
+		beego.ControllerComments{
+			Method:           "Reset",
+			Router:           "/:link_id",
+			AllowHTTPMethods: []string{"patch"},
+			MethodParams:     param.Make(),
+			Filters:          nil,
+			Params:           nil})
+
 	beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:VerificationCodeController"] = append(beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:VerificationCodeController"],
 		beego.ControllerComments{
 			Method:           "EmailDomain",
@@ -389,15 +398,6 @@ func init() {
 		beego.ControllerComments{
 			Method:           "Post",
 			Router:           "/:link_id/:email",
-			AllowHTTPMethods: []string{"post"},
-			MethodParams:     param.Make(),
-			Filters:          nil,
-			Params:           nil})
-
-	beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:VerificationCodeController"] = append(beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:VerificationCodeController"],
-		beego.ControllerComments{
-			Method:           "PasswordRetrieve",
-			Router:           "/password_retrieve/:link_id/:email",
 			AllowHTTPMethods: []string{"post"},
 			MethodParams:     param.Make(),
 			Filters:          nil,

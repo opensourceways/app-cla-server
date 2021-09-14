@@ -105,28 +105,3 @@ func ListCorporationManagers(linkID, email, role string) ([]dbmodels.Corporation
 
 	return v, parseDBError(err)
 }
-
-type CorporationManagerRetrievePassword struct {
-	Params   string `json:"params"`
-	Password string `json:"password"`
-}
-
-//Retrieve  check retrieve Retrieve data and do retrieve password
-func (rp CorporationManagerRetrievePassword) Retrieve() IModelError {
-	rpw := &RetrievePW{}
-	if mErr := rpw.Decrypt(rp.Params); mErr != nil {
-		return mErr
-	}
-	if mErr := rpw.Validate(); mErr != nil {
-		return mErr
-	}
-
-	if mErr := checkVerificationCode(rpw.Email, rpw.Code, rpw.LinkID); mErr != nil {
-		return mErr
-	}
-
-	resetModel := CorporationManagerResetPassword{
-		NewPassword: rp.Password,
-	}
-	return resetModel.Reset(rpw.LinkID, rpw.Email)
-}

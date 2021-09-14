@@ -18,6 +18,7 @@ import (
 
 const (
 	headerToken                    = "Token"
+	headerPasswordRetrievalKey     = "Password-Retrieval-Key"
 	apiAccessController            = "access_controller"
 	fileNameOfUploadingOrgSignatue = "org_signature_file"
 )

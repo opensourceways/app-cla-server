@@ -1,61 +1,11 @@
 package models
 
 import (
-	"encoding/hex"
-	"encoding/json"
 	"fmt"
 
-	"github.com/huaweicloud/golangsdk"
-
-	"github.com/opensourceways/app-cla-server/config"
 	"github.com/opensourceways/app-cla-server/dbmodels"
 	"github.com/opensourceways/app-cla-server/util"
 )
-
-type RetrievePW struct {
-	LinkID string `json:"link_id" required:"true"`
-	Email  string `json:"email" required:"true"`
-	Code   string `json:"code" required:"true"`
-}
-
-func (r *RetrievePW) Encrypt() (string, IModelError) {
-	js, err := json.Marshal(r)
-	if err != nil {
-		return "", newModelError(ErrEncryptWithRetrievePW, err)
-	}
-	t, err := r.newEncryption().Encrypt(js)
-	if err != nil {
-		return "", newModelError(ErrEncryptWithRetrievePW, err)
-	}
-	return hex.EncodeToString(t), nil
-}
-
-func (r *RetrievePW) Decrypt(ciphertext string) IModelError {
-	dst, err := hex.DecodeString(ciphertext)
-	if err != nil {
-		return newModelError(ErrDecryptWithRetrievePW, err)
-	}
-	s, err := r.newEncryption().Decrypt(dst)
-	if err != nil {
-		return newModelError(ErrDecryptWithRetrievePW, err)
-	}
-	if err = json.Unmarshal(s, r); err != nil {
-		return newModelError(ErrDecryptWithRetrievePW, err)
-	}
-	return nil
-}
-
-func (r *RetrievePW) Validate() IModelError {
-	if _, err := golangsdk.BuildRequestBody(r, ""); err != nil {
-		return newModelError(ErrValidateRetrievePW, err)
-	}
-	return nil
-}
-
-func (r *RetrievePW) newEncryption() util.SymmetricEncryption {
-	e, _ := util.NewSymmetricEncryption(config.AppConfig.SymmetricEncryptionKey, "")
-	return e
-}
 
 func CreateVerificationCode(email, purpose string, expiry int64) (string, IModelError) {
 	code := util.RandStr(6, "number")

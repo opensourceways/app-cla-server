@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"net/url"
 	"strings"
 
 	"github.com/opensourceways/app-cla-server/util"
@@ -32,6 +33,7 @@ type appConfig struct {
 	EmailPlatformConfigFile   string        `json:"email_platforms" required:"true"`
 	EmployeeManagersNumber    int           `json:"employee_managers_number" required:"true"`
 	CLAPlatformURL            string        `json:"cla_platform_url" required:"true"`
+	PasswordRetrievalURL      string        `json:"password_retrieval_url" required:"true"`
 	Mongodb                   MongodbConfig `json:"mongodb" required:"true"`
 	RestrictedCorpEmailSuffix []string      `json:"restricted_corp_email_suffix"`
 }
@@ -101,6 +103,16 @@ func (cfg *appConfig) validate() error {
 	if util.IsFileNotExist(cfg.EmailPlatformConfigFile) {
 		return fmt.Errorf("the file:%s is not exist", cfg.EmailPlatformConfigFile)
 	}
+
+	if _, err := url.Parse(cfg.CLAPlatformURL); err != nil {
+		return err
+	}
+
+	s := cfg.PasswordRetrievalURL
+	if _, err := url.Parse(s); err != nil {
+		return err
+	}
+	cfg.PasswordRetrievalURL = strings.TrimSuffix(s, "/")
 
 	return nil
 }

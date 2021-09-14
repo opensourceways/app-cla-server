@@ -19,6 +19,7 @@ max_size_of_corp_cla_pdf: 5242880
 max_size_of_org_signature_pdfa: 204800
 
 cla_platform_url: "${CLA_PLATFORM_URL}"
+password_retrieval_url: "${PASSWORD_RETRIEVAL_URL}"
 
 restricted_corp_email_suffix: ${RESTRICTED_CORP_EMAIL_SUFFIX}
 

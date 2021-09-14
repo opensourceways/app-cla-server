@@ -2,6 +2,7 @@ python_bin: /usr/bin/python3
 
 cla_fields_number: 10
 cla_platform_url: https://clasign.osinfra.cn
+password_reset_url: https://clasign.osinfra.cn/password-reset
 password_retrieval_url: https://clasign.osinfra.cn/password-retrieval
 
 verification_code_expiry: 300

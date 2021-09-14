@@ -82,6 +82,7 @@ func (this *PasswordRetrievalController) Post() {
 // @Failure 404 expired_verification_code:  the verification code is expired
 // @Failure 405 wrong_verification_code:    the verification code is wrong
 // @Failure 406 no_link_or_no_manager:      invalid password retrieval key
+// @Failure 406 invalid_password:           invalid new password
 // @Failure 500 system_error:               system error
 // @router /:link_id [patch]
 func (this *PasswordRetrievalController) Reset() {
@@ -112,6 +113,11 @@ func (this *PasswordRetrievalController) Reset() {
 		return
 	}
 
+	if mErr := param.Validate(); mErr != nil {
+		this.sendModelErrorAsResp(mErr, action)
+		return
+	}
+
 	if mErr := param.Create(this.GetString(":link_id"), b); mErr != nil {
 		sendResp(parseModelError(mErr))
 		return
@@ -124,8 +130,8 @@ func genURLToRetrievePassword(linkID, key string) string {
 	v, _ := url.Parse(config.AppConfig.PasswordRetrievalURL)
 
 	q := v.Query()
-	q.Add("key", "key123")
-	q.Add("id", "id1")
+	q.Add("key", key)
+	q.Add("link_id", linkID)
 	v.RawQuery = q.Encode()
 
 	return v.String()

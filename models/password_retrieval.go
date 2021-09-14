@@ -11,6 +11,10 @@ type PasswordRetrieval struct {
 	Password string `json:"password"`
 }
 
+func (p PasswordRetrieval) Validate() IModelError {
+	return checkPassword(p.Password)
+}
+
 func (p PasswordRetrieval) Create(linkID string, key []byte) IModelError {
 	k := new(passwordRetrievalKey)
 	if err := k.init(key); err != nil {

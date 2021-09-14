@@ -36,6 +36,8 @@ type appConfig struct {
 	PasswordRetrievalURL      string        `json:"password_retrieval_url" required:"true"`
 	Mongodb                   MongodbConfig `json:"mongodb" required:"true"`
 	RestrictedCorpEmailSuffix []string      `json:"restricted_corp_email_suffix"`
+	MinLengthOfPassword       int           `json:"min_length_of_password"`
+	MaxLengthOfPassword       int           `json:"max_length_of_password"`
 }
 
 type MongodbConfig struct {
@@ -56,6 +58,12 @@ func (cfg *appConfig) setDefault() {
 	}
 	if cfg.MaxSizeOfOrgSignaturePDF <= 0 {
 		cfg.MaxSizeOfOrgSignaturePDF = 1 << 20
+	}
+	if cfg.MinLengthOfPassword == 0 {
+		cfg.MinLengthOfPassword = 8
+	}
+	if cfg.MaxLengthOfPassword == 0 {
+		cfg.MaxLengthOfPassword = 16
 	}
 }
 

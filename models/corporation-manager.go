@@ -73,7 +73,8 @@ func (this CorporationManagerResetPassword) Validate() IModelError {
 	if this.NewPassword == this.OldPassword {
 		return newModelError(ErrSamePassword, fmt.Errorf("the new password is same as old one"))
 	}
-	return nil
+
+	return checkPassword(this.NewPassword)
 }
 
 func (this CorporationManagerResetPassword) Reset(linkID, email string) IModelError {

@@ -44,6 +44,7 @@ const (
 	ErrUnmatchedEmailDomain    ModelErrCode = "unmatched_email_domain"
 	ErrRestrictedEmailSuffix   ModelErrCode = "restricted_email_suffix"
 	ErrInvalidPWRetrievalKey   ModelErrCode = "invalid_pw_retrieval_key"
+	ErrInvalidPassword         ModelErrCode = "invalid_password"
 )
 
 type IModelError interface {

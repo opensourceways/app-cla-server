@@ -2,6 +2,8 @@ python_bin: /usr/bin/python3
 
 cla_fields_number: 10
 cla_platform_url: https://clasign.osinfra.cn
+password_reset_url: https://clasign.osinfra.cn/password-reset
+password_retrieval_url: https://clasign.osinfra.cn/password-retrieval
 
 verification_code_expiry: 300
 api_token_expiry: 3600
@@ -21,7 +23,7 @@ restricted_corp_email_suffix:
   - 163.com
 
 mongodb:
-  mongodb_conn: mongodb://root:123@localhost:32768
+  mongodb_conn: mongodb://root:123@localhost:49153
   mongodb_db: cla
   link_collection: links
   cla_pdf_collection: cla_pdfs

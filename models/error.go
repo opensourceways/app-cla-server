@@ -38,10 +38,13 @@ const (
 	ErrCLAFieldID              ModelErrCode = "invalid_cla_field_id"
 	ErrNoOrgSignature          ModelErrCode = "missing_org_signature"
 	ErrMissgingCLA             ModelErrCode = "missing_cla"
+	ErrMissgingEmail           ModelErrCode = "missing_email"
 	ErrNoLinkOrCLAExists       ModelErrCode = "no_link_or_cla_exists"
 	ErrNoLinkOrUnuploaed       ModelErrCode = "no_link_or_unuploaded"
 	ErrUnmatchedEmailDomain    ModelErrCode = "unmatched_email_domain"
 	ErrRestrictedEmailSuffix   ModelErrCode = "restricted_email_suffix"
+	ErrInvalidPWRetrievalKey   ModelErrCode = "invalid_pw_retrieval_key"
+	ErrInvalidPassword         ModelErrCode = "invalid_password"
 )
 
 type IModelError interface {

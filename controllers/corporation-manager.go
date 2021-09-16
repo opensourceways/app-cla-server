@@ -94,7 +94,7 @@ func (this *CorporationManagerController) Put() {
 }
 
 // @Title Patch
-// @Description reset password of corporation administrator
+// @Description reset password of corporation manager
 // @Success 204 {int} map
 // @Failure util.ErrInvalidAccountOrPw
 // @router / [patch]

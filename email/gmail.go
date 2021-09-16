@@ -151,7 +151,7 @@ func (this *gmailClient) createGmailMessage(msg *EmailMessage) (*gmail.Message, 
 
 func simpleGmailMessage(msg *EmailMessage) *gmail.Message {
 	to := strings.Join(msg.To, "; ")
-	raw := fmt.Sprintf("To: %s\r\nSubject: %s\r\n\r\n%s", to, msg.Subject, msg.Content)
+	raw := fmt.Sprintf("To: %s\r\nSubject: %s\r\n%s\r\n%s", to, msg.Subject, msg.MIME, msg.Content)
 
 	return &gmail.Message{
 		Raw: base64.URLEncoding.EncodeToString([]byte(raw)),

@@ -20,6 +20,7 @@ const (
 	TmplActivatingEmployee    = "activating employee"
 	TmplInactivaingEmployee   = "inactivating employee"
 	TmplRemovingingEmployee   = "removing employee"
+	TmplPasswordRetrieval     = "password retrieval"
 )
 
 var msgTmpl = map[string]*template.Template{}
@@ -38,6 +39,7 @@ func initTemplate() error {
 		TmplActivatingEmployee:    "./conf/email-template/activating-employee.tmpl",
 		TmplInactivaingEmployee:   "./conf/email-template/inactivating-employee.tmpl",
 		TmplRemovingingEmployee:   "./conf/email-template/removing-employee.tmpl",
+		TmplPasswordRetrieval:     "./conf/email-template/password-retrieval.tmpl",
 	}
 
 	for name, path := range items {
@@ -62,7 +64,7 @@ func findTmpl(name string) *template.Template {
 func genEmailMsg(tmplName string, data interface{}) (*EmailMessage, error) {
 	tmpl := findTmpl(tmplName)
 	if tmpl == nil {
-		return nil, fmt.Errorf("Failed to generate email msg: didn't find msg template: %s", tmplName)
+		return nil, fmt.Errorf("failed to generate email msg: didn't find msg template: %s", tmplName)
 	}
 
 	str, err := util.RenderTemplate(tmpl, data)
@@ -194,4 +196,22 @@ func (this EmployeeNotification) GenEmailMsg() (*EmailMessage, error) {
 	}
 
 	return nil, fmt.Errorf("do nothing")
+}
+
+type PasswordRetrieval struct {
+	Timeout      int64
+	Org          string
+	ResetURL     string
+	RetrievalURL string
+}
+
+func (p PasswordRetrieval) GenEmailMsg() (*EmailMessage, error) {
+	msg, err := genEmailMsg(TmplPasswordRetrieval, p)
+	if err != nil {
+		return nil, err
+	}
+
+	//adapter send html tmpl content
+	msg.MIME = "MIME-version: 1.0;\nContent-Type: text/html; charset=\"UTF-8\";\n\n"
+	return msg, nil
 }

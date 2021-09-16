@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"net/url"
 	"strings"
 
 	"github.com/opensourceways/app-cla-server/util"
@@ -32,8 +33,13 @@ type appConfig struct {
 	EmailPlatformConfigFile   string        `json:"email_platforms" required:"true"`
 	EmployeeManagersNumber    int           `json:"employee_managers_number" required:"true"`
 	CLAPlatformURL            string        `json:"cla_platform_url" required:"true"`
+	PasswordResetURL          string        `json:"password_reset_url" required:"true"`
+	PasswordRetrievalURL      string        `json:"password_retrieval_url" required:"true"`
+	PasswordRetrievalExpiry   int64         `json:"password_retrieval_expiry"`
 	Mongodb                   MongodbConfig `json:"mongodb" required:"true"`
 	RestrictedCorpEmailSuffix []string      `json:"restricted_corp_email_suffix"`
+	MinLengthOfPassword       int           `json:"min_length_of_password"`
+	MaxLengthOfPassword       int           `json:"max_length_of_password"`
 }
 
 type MongodbConfig struct {
@@ -54,6 +60,15 @@ func (cfg *appConfig) setDefault() {
 	}
 	if cfg.MaxSizeOfOrgSignaturePDF <= 0 {
 		cfg.MaxSizeOfOrgSignaturePDF = 1 << 20
+	}
+	if cfg.MinLengthOfPassword <= 0 {
+		cfg.MinLengthOfPassword = 8
+	}
+	if cfg.MaxLengthOfPassword <= 0 {
+		cfg.MaxLengthOfPassword = 16
+	}
+	if cfg.PasswordRetrievalExpiry < 3600 {
+		cfg.PasswordRetrievalExpiry = 3600
 	}
 }
 
@@ -101,6 +116,20 @@ func (cfg *appConfig) validate() error {
 	if util.IsFileNotExist(cfg.EmailPlatformConfigFile) {
 		return fmt.Errorf("the file:%s is not exist", cfg.EmailPlatformConfigFile)
 	}
+
+	if _, err := url.Parse(cfg.CLAPlatformURL); err != nil {
+		return err
+	}
+
+	if _, err := url.Parse(cfg.PasswordRetrievalURL); err != nil {
+		return err
+	}
+
+	s := cfg.PasswordResetURL
+	if _, err := url.Parse(s); err != nil {
+		return err
+	}
+	cfg.PasswordResetURL = strings.TrimSuffix(s, "/")
 
 	return nil
 }

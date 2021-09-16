@@ -367,6 +367,24 @@ func init() {
 			Filters:          nil,
 			Params:           nil})
 
+	beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:PasswordRetrievalController"] = append(beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:PasswordRetrievalController"],
+		beego.ControllerComments{
+			Method:           "Post",
+			Router:           "/:link_id",
+			AllowHTTPMethods: []string{"post"},
+			MethodParams:     param.Make(),
+			Filters:          nil,
+			Params:           nil})
+
+	beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:PasswordRetrievalController"] = append(beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:PasswordRetrievalController"],
+		beego.ControllerComments{
+			Method:           "Reset",
+			Router:           "/:link_id",
+			AllowHTTPMethods: []string{"patch"},
+			MethodParams:     param.Make(),
+			Filters:          nil,
+			Params:           nil})
+
 	beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:VerificationCodeController"] = append(beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:VerificationCodeController"],
 		beego.ControllerComments{
 			Method:           "EmailDomain",

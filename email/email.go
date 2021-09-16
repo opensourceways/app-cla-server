@@ -48,6 +48,7 @@ type EmailMessage struct {
 	Subject    string   `json:"subject"`
 	Content    string   `json:"content"`
 	Attachment string   `json:"attachment"`
+	MIME       string   `json:"mime"`
 }
 
 type emailAgent struct {

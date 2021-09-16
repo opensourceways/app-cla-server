@@ -1,7 +1,6 @@
 package controllers
 
 import (
-	"encoding/hex"
 	"encoding/json"
 	"fmt"
 
@@ -9,7 +8,6 @@ import (
 	"github.com/huaweicloud/golangsdk"
 	"k8s.io/apimachinery/pkg/util/sets"
 
-	"github.com/opensourceways/app-cla-server/config"
 	"github.com/opensourceways/app-cla-server/util"
 )
 
@@ -98,29 +96,15 @@ func (this *accessController) verify(permission []string, addr string) error {
 	return nil
 }
 
-func (this *accessController) newEncryption() util.SymmetricEncryption {
-	e, _ := util.NewSymmetricEncryption(config.AppConfig.SymmetricEncryptionKey, "")
-	return e
-}
-
 func (this *accessController) encryptToken(token string) (string, error) {
-	t, err := this.newEncryption().Encrypt([]byte(token))
-	if err != nil {
-		return "", err
-	}
-	return hex.EncodeToString(t), nil
+	return encryptData([]byte(token))
 }
 
 func (this *accessController) decryptToken(token string) (string, error) {
-	dst, err := hex.DecodeString(token)
+	b, err := decryptData(token)
 	if err != nil {
 		return "", err
 	}
 
-	s, err := this.newEncryption().Decrypt(dst)
-	if err != nil {
-		return "", err
-	}
-
-	return string(s), nil
+	return string(b), nil
 }

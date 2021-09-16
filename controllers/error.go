@@ -40,6 +40,8 @@ const (
 	errUnsupportedCLALang       = "unsupported_cla_lang"
 	errNotSameCorp              = string(models.ErrNotSameCorp)
 	errCanNotFetchClientIP      = "can_not_fetch_client_ip"
+	errMissingPWRetrievalKey    = "missing_pw_retrieval_key"
+	errInvalidPWRetrievalKey    = string(models.ErrInvalidPWRetrievalKey)
 )
 
 func parseModelError(err models.IModelError) *failedApiResult {

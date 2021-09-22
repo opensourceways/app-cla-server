@@ -118,7 +118,45 @@ func (this *IndividualSigningController) Check() {
 		return
 	}
 
-	if v, merr := models.IsIndividualSigned(linkID, this.GetString("email")); merr != nil {
+	info := models.IndividualSigningKey{
+		Email: this.GetString("email"),
+	}
+
+	if merr := (&info).Validate(); merr != nil {
+		this.sendModelErrorAsResp(merr, action)
+		return
+	}
+
+	if v, merr := info.IsSigned(linkID); merr != nil {
+		this.sendModelErrorAsResp(merr, action)
+	} else {
+		this.sendSuccessResp(map[string]bool{"signed": v})
+	}
+}
+
+// @Title NewCheck
+// @Description check whether contributor has signed cla. The old Check method above will be removed on 2021.10.22.
+// @Param	link_id		path 	string				true		"link id"
+// @Param	body		body 	models.IndividualSigningKey	true		"body of individual signing key"
+// @Success 200 {object} map
+// @Failure 400 no_link:      there is not link for this org and repo
+// @Failure 500 system_error: system error
+// @router /:link_id [post]
+func (this *IndividualSigningController) NewCheck() {
+	action := "check individual signing"
+
+	var info models.IndividualSigningKey
+	if fr := this.fetchInputPayload(&info); fr != nil {
+		this.sendFailedResultAsResp(fr, action)
+		return
+	}
+
+	if err := (&info).Validate(); err != nil {
+		this.sendModelErrorAsResp(err, action)
+		return
+	}
+
+	if v, merr := info.IsSigned(this.GetString(":link_id")); merr != nil {
 		this.sendModelErrorAsResp(merr, action)
 	} else {
 		this.sendSuccessResp(map[string]bool{"signed": v})

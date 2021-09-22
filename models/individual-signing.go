@@ -1,6 +1,8 @@
 package models
 
 import (
+	"fmt"
+
 	"github.com/opensourceways/app-cla-server/dbmodels"
 	"github.com/opensourceways/app-cla-server/util"
 )
@@ -37,8 +39,19 @@ func (isign *IndividualSigning) Create(linkID string, enabled bool) IModelError 
 	return parseDBError(err)
 }
 
-func IsIndividualSigned(linkID, email string) (bool, IModelError) {
-	b, err := dbmodels.GetDB().IsIndividualSigned(linkID, email)
+type IndividualSigningKey struct {
+	Email string `json:"email" required:"true"`
+}
+
+func (i IndividualSigningKey) Validate() IModelError {
+	if i.Email == "" {
+		return newModelError(ErrMissgingEmail, fmt.Errorf("missing email"))
+	}
+	return nil
+}
+
+func (i IndividualSigningKey) IsSigned(linkID string) (bool, IModelError) {
+	b, err := dbmodels.GetDB().IsIndividualSigned(linkID, i.Email)
 	if err == nil {
 		return b, nil
 	}

@@ -12,6 +12,10 @@ type CorporationManagerController struct {
 }
 
 func (this *CorporationManagerController) Prepare() {
+	if isSigningServiceNotStarted() {
+		this.StopRun()
+	}
+
 	switch this.apiRequestMethod() {
 	case http.MethodPut:
 		// add administrator

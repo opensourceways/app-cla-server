@@ -14,6 +14,10 @@ type VerificationCodeController struct {
 }
 
 func (this *VerificationCodeController) Prepare() {
+	if isSigningServiceNotStarted() {
+		this.StopRun()
+	}
+
 	if strings.HasSuffix(this.routerPattern(), "/:link_id/:email") {
 		this.apiPrepare("")
 	} else {

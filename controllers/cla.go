@@ -16,6 +16,10 @@ type CLAController struct {
 }
 
 func (this *CLAController) Prepare() {
+	if isSigningServiceNotStarted() {
+		this.StopRun()
+	}
+
 	if strings.HasSuffix(this.routerPattern(), "/:hash") {
 		this.apiPrepare("")
 	} else {

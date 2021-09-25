@@ -13,7 +13,9 @@ type RobotGithubController struct {
 }
 
 func (this *RobotGithubController) Prepare() {
-	this.apiPrepare("")
+	if !isSigningServiceNotStarted() {
+		this.StopRun()
+	}
 }
 
 // @Title Post

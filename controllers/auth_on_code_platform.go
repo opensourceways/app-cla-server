@@ -14,9 +14,12 @@ type AuthController struct {
 }
 
 func (this *AuthController) Prepare() {
-	if this.isPostRequest() ||
-		strings.HasSuffix(this.routerPattern(), "/authcodeurl/:platform/:purpose") {
+	if isSigningServiceNotStarted() {
+		this.StopRun()
+	}
 
+	b := strings.HasSuffix(this.routerPattern(), "/authcodeurl/:platform/:purpose")
+	if b || this.isPostRequest() {
 		this.apiPrepare("")
 	}
 }

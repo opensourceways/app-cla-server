@@ -118,7 +118,7 @@ func (cl client) GetUnsignedCommits(pr cla.PRInfo, commiterAsAuthor bool, isSign
 		if b {
 			signed++
 		} else {
-			unsigned[c.GetCommit().GetSHA()] = c.GetCommit().GetMessage()
+			unsigned[c.GetSHA()] = c.GetCommit().GetMessage()
 		}
 	}
 

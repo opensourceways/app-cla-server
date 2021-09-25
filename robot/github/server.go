@@ -94,8 +94,10 @@ func (r *server) dispatch(eventType string, payload []byte) error {
 			return err
 		}
 
-		r.wg.Add(1)
-		go r.handleIssueCommentEvent(&ic)
+		if ic.GetAction() == "created" && cla.CheckCLARe.MatchString(ic.GetComment().GetBody()) {
+			r.wg.Add(1)
+			go r.handleIssueCommentEvent(&ic)
+		}
 
 	case "pull_request":
 		var pr sdk.PullRequestEvent

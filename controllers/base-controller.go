@@ -320,3 +320,7 @@ func (this *baseController) getRemoteAddr() (string, *failedApiResult) {
 
 	return "", newFailedApiResult(400, errCanNotFetchClientIP, fmt.Errorf("can not fetch client ip"))
 }
+
+func isSigningServiceNotStarted() bool {
+	return config.AppConfig == nil
+}

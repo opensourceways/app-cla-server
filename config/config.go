@@ -8,14 +8,22 @@ import (
 	"github.com/opensourceways/app-cla-server/util"
 )
 
-var AppConfig = new(appConfig)
+var AppConfig *appConfig
 
 func InitAppConfig(path string) error {
-	if err := util.LoadFromYaml(path, AppConfig); err != nil {
+	v := new(appConfig)
+	if err := util.LoadFromYaml(path, v); err != nil {
 		return err
 	}
-	AppConfig.setDefault()
-	return AppConfig.validate()
+
+	v.setDefault()
+
+	if err := v.validate(); err != nil {
+		return err
+	}
+
+	AppConfig = v
+	return nil
 }
 
 type appConfig struct {

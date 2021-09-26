@@ -12,9 +12,15 @@ import (
 	"github.com/opensourceways/app-cla-server/email"
 	"github.com/opensourceways/app-cla-server/mongodb"
 	"github.com/opensourceways/app-cla-server/pdf"
+	"github.com/opensourceways/app-cla-server/robot/github"
 	_ "github.com/opensourceways/app-cla-server/routers"
 	"github.com/opensourceways/app-cla-server/util"
 	"github.com/opensourceways/app-cla-server/worker"
+)
+
+const (
+	serviceSign  = "sign"
+	serviceRobot = "robot"
 )
 
 func main() {
@@ -23,7 +29,26 @@ func main() {
 		beego.BConfig.WebConfig.StaticDir["/swagger"] = "swagger"
 	}
 
-	if err := config.InitAppConfig(beego.AppConfig.String("app_conf")); err != nil {
+	enabledService := beego.AppConfig.String("EnableService")
+
+	if enabledService != serviceSign && enabledService != serviceRobot {
+		beego.Error("invaliid EnableService")
+		os.Exit(1)
+	}
+
+	configFile := beego.AppConfig.String("app_conf")
+
+	if enabledService == serviceSign {
+		startSignSerivce(configFile)
+	} else {
+		startRobotSerivce(configFile)
+	}
+
+	beego.Run()
+}
+
+func startSignSerivce(configPath string) {
+	if err := config.InitAppConfig(configPath); err != nil {
 		beego.Error(err)
 		os.Exit(1)
 	}
@@ -38,14 +63,9 @@ func main() {
 		}
 	}
 
-	c, err := mongodb.Initialize(&AppConfig.Mongodb)
-	if err != nil {
-		beego.Error(err)
-		os.Exit(1)
-	}
-	dbmodels.RegisterDB(c)
+	startMongoService(&AppConfig.Mongodb)
 
-	if err = email.Initialize(AppConfig.EmailPlatformConfigFile); err != nil {
+	if err := email.Initialize(AppConfig.EmailPlatformConfigFile); err != nil {
 		beego.Error(err)
 		os.Exit(1)
 	}
@@ -70,6 +90,28 @@ func main() {
 		beego.Error(err)
 		os.Exit(1)
 	}
+}
 
-	beego.Run()
+func startMongoService(cfg *config.MongodbConfig) {
+	c, err := mongodb.Initialize(cfg)
+	if err != nil {
+		beego.Error(err)
+		os.Exit(1)
+	}
+	dbmodels.RegisterDB(c)
+}
+
+func startRobotSerivce(configPath string) {
+	cfg, err := config.LoadRobotServiceeConfig(configPath)
+	if err != nil {
+		beego.Error(err)
+		os.Exit(1)
+	}
+
+	if err := github.InitGithubRobot(cfg.CLAPlatformURL, cfg.PlatformRobotConfigs); err != nil {
+		beego.Error(err)
+		os.Exit(1)
+	}
+
+	startMongoService(&cfg.Mongodb)
 }

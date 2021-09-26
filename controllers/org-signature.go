@@ -12,6 +12,10 @@ type OrgSignatureController struct {
 }
 
 func (this *OrgSignatureController) Prepare() {
+	if isSigningServiceNotStarted() {
+		this.StopRun()
+	}
+
 	this.apiPrepare(PermissionOwnerOfOrg)
 }
 

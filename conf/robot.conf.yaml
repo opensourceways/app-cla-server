@@ -1,0 +1,23 @@
+cla_platform_url: https://clasign.osinfra.cn
+
+mongodb:
+  mongodb_conn: mongodb://root:123@localhost:49153
+  mongodb_db: cla
+  link_collection: links
+  cla_pdf_collection: cla_pdfs
+  corp_pdf_collection: corp_pdfs
+  org_email_collection: org_emails
+  verification_code_collection: verification_codes
+  corp_signing_collection: corp_signings
+  individual_signing_collection: individual_signings
+
+robot_configs:
+- code_platform: github
+  robot_token_file: ./conf/robot-github/robot_token
+  hmac_secret_file: ./conf/robot-github/hmac
+  lite_pr_committer:
+    email: noreply@github.com
+    name: GitHub
+  faq_of_checking_by_author: https://clasign.osinfra.cn
+  faq_of_checking_by_committer: https://clasign.osinfra.cn
+  cla_repo_config_file: ./conf/robot-github/cla_repo.yaml

@@ -385,6 +385,15 @@ func init() {
 			Filters:          nil,
 			Params:           nil})
 
+	beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:RobotGithubController"] = append(beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:RobotGithubController"],
+		beego.ControllerComments{
+			Method:           "Post",
+			Router:           "/",
+			AllowHTTPMethods: []string{"post"},
+			MethodParams:     param.Make(),
+			Filters:          nil,
+			Params:           nil})
+
 	beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:VerificationCodeController"] = append(beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:VerificationCodeController"],
 		beego.ControllerComments{
 			Method:           "EmailDomain",

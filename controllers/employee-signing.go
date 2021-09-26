@@ -16,6 +16,10 @@ type EmployeeSigningController struct {
 }
 
 func (this *EmployeeSigningController) Prepare() {
+	if isSigningServiceNotStarted() {
+		this.StopRun()
+	}
+
 	if this.isPostRequest() {
 		// sign as employee
 		this.apiPrepare("")

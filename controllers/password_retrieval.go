@@ -15,6 +15,10 @@ type PasswordRetrievalController struct {
 }
 
 func (this *PasswordRetrievalController) Prepare() {
+	if isSigningServiceNotStarted() {
+		this.StopRun()
+	}
+
 	this.apiPrepare("")
 }
 

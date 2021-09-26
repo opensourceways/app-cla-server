@@ -15,6 +15,10 @@ type EmailController struct {
 }
 
 func (this *EmailController) Prepare() {
+	if isSigningServiceNotStarted() {
+		this.StopRun()
+	}
+
 	if strings.HasSuffix(this.routerPattern(), "authcodeurl/:platform") {
 		this.apiPrepare(PermissionOwnerOfOrg)
 	}

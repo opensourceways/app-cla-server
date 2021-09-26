@@ -15,6 +15,10 @@ type LinkController struct {
 }
 
 func (this *LinkController) Prepare() {
+	if isSigningServiceNotStarted() {
+		this.StopRun()
+	}
+
 	if strings.HasSuffix(this.routerPattern(), ":apply_to") {
 		if this.apiReqHeader(headerToken) != "" {
 			this.apiPrepare(PermissionIndividualSigner)

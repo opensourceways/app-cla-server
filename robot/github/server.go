@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/astaxie/beego"
+
 	sdk "github.com/google/go-github/v36/github"
 	"github.com/opensourceways/robot-gitee-plugin-lib/config"
 	"github.com/opensourceways/robot-gitee-plugin-lib/secret"
@@ -131,6 +133,12 @@ func (s *server) handleIssueCommentEvent(e *sdk.IssueCommentEvent) {
 	signed, err := s.handler.Handle(pr, labels)
 	if err != nil {
 		// TODO: how to deal with error
+		beego.Error(
+			fmt.Sprintf(
+				"error to handle issue comment for %s, err:%s",
+				pr.String(), err.Error(),
+			),
+		)
 	}
 
 	s.handStatus(signed)
@@ -153,11 +161,17 @@ func (s *server) handlePullRequestEvent(e *sdk.PullRequestEvent) {
 	signed, err := s.handler.Handle(pr, labels)
 	if err != nil {
 		// TODO: how to deal with error
+		beego.Error(
+			fmt.Sprintf(
+				"error to handle pr event for %s, err:%s",
+				pr.String(), err.Error(),
+			),
+		)
 	}
 
 	s.handStatus(signed)
 }
 
 func (s *server) handStatus(signed bool) {
-
+	// TODO: Create Or Update status. Maybe need sign url to be shown in the status.
 }

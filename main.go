@@ -18,42 +18,36 @@ import (
 	"github.com/opensourceways/app-cla-server/worker"
 )
 
+const (
+	serviceSign  = "sign"
+	serviceRobot = "robot"
+)
+
 func main() {
 	if beego.BConfig.RunMode == "dev" {
 		beego.BConfig.WebConfig.DirectoryIndex = true
 		beego.BConfig.WebConfig.StaticDir["/swagger"] = "swagger"
 	}
 
+	enabledService := beego.AppConfig.String("EnableService")
+
+	if enabledService != serviceSign && enabledService != serviceRobot {
+		beego.Error("invaliid EnableService")
+		os.Exit(1)
+	}
+
 	configFile := beego.AppConfig.String("app_conf")
-	enableSigning, err := beego.AppConfig.Bool("EnableSigning")
-	if err != nil {
-		beego.Error(err)
-		os.Exit(1)
-	}
 
-	enableRobot, err := beego.AppConfig.Bool("EnableRobot")
-	if err != nil {
-		beego.Error(err)
-		os.Exit(1)
-	}
-
-	if enableSigning && enableRobot {
-		beego.Error("can't start signing and robot serive at same time")
-		os.Exit(1)
-	}
-
-	if enableSigning {
-		startSigningSerivce(configFile)
-	}
-
-	if enableRobot {
+	if enabledService == serviceSign {
+		startSignSerivce(configFile)
+	} else {
 		startRobotSerivce(configFile)
 	}
 
 	beego.Run()
 }
 
-func startSigningSerivce(configPath string) {
+func startSignSerivce(configPath string) {
 	if err := config.InitAppConfig(configPath); err != nil {
 		beego.Error(err)
 		os.Exit(1)

@@ -2,6 +2,7 @@ package cla
 
 import (
 	"fmt"
+	"net/url"
 	"path"
 	"regexp"
 	"strings"
@@ -29,16 +30,16 @@ type Handler interface {
 type cla struct {
 	getConfig                func() *Configuration
 	c                        Client
-	signURL                  string
+	signURL                  url.URL
 	faqOfCheckingByAuthor    string
 	faqOfCheckingByCommitter string
 }
 
-func NewCLA(f func() *Configuration, c Client, signURL, faqOfCheckingByAuthor, faqOfCheckingByCommitter string) Handler {
+func NewCLA(f func() *Configuration, c Client, signURL *url.URL, faqOfCheckingByAuthor, faqOfCheckingByCommitter string) Handler {
 	return cla{
 		getConfig:                f,
 		c:                        c,
-		signURL:                  signURL,
+		signURL:                  *signURL,
 		faqOfCheckingByAuthor:    faqOfCheckingByAuthor,
 		faqOfCheckingByCommitter: faqOfCheckingByCommitter,
 	}
@@ -101,7 +102,7 @@ func (cl cla) handle(pr PRInfo, labels sets.String, cfg *CLARepoConfig, unsigned
 		}
 	}
 
-	s := signGuide(path.Join(cl.signURL, cfg.CLAID), generateUnSignComment(unsigned), faqURL)
+	s := signGuide(genSignURL(cl.signURL, cfg.CLAID), generateUnSignComment(unsigned), faqURL)
 	if err := cl.c.CreatePRComment(pr, s); err != nil {
 		log("Could not add unsigning comment", err)
 	}
@@ -149,4 +150,9 @@ Please check the [**FAQs**](%s) first.
 You can click [**here**](%s) to sign the CLA. After signing the CLA, you must comment "/check-cla" to check the CLA status again.`
 
 	return fmt.Sprintf(s, signGuideTitle, cInfo, faq, signURL)
+}
+
+func genSignURL(endpoint url.URL, linkID string) string {
+	endpoint.Path = path.Join(endpoint.Path, linkID)
+	return endpoint.String()
 }

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/url"
 	"sync"
 
 	"github.com/astaxie/beego"
@@ -62,13 +63,18 @@ func InitGithubRobot(endpoint string, cfgs []robotConfig.PlatformRobotConfig) er
 		isLitePR: cfg.LitePRCommitter.IsLitePR,
 	}
 
+	signURL, err := url.Parse(endpoint)
+	if err != nil {
+		return err
+	}
+
 	robot = &server{
 		handler: cla.NewCLA(
 			func() *cla.Configuration {
 				_, v := agent.GetConfig()
 				return v.(*cla.Configuration)
 			},
-			cl, endpoint, cfg.FAQOfCheckingByAuthor, cfg.FAQOfCheckingByCommitter,
+			cl, signURL, cfg.FAQOfCheckingByAuthor, cfg.FAQOfCheckingByCommitter,
 		),
 		secretAgent:   secretAgent,
 		claRepoConfig: &agent,

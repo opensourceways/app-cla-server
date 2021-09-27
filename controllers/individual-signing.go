@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/astaxie/beego"
-
 	"github.com/opensourceways/app-cla-server/dbmodels"
 	"github.com/opensourceways/app-cla-server/models"
 	"github.com/opensourceways/app-cla-server/util"
@@ -16,10 +14,7 @@ type IndividualSigningController struct {
 }
 
 func (this *IndividualSigningController) Prepare() {
-	if isSigningServiceNotStarted() {
-		beego.Info("no service started")
-		this.StopRun()
-	}
+	this.stopRunIfSignSerivceIsUnabled()
 
 	// sign as individual
 	if this.isPostRequest() {

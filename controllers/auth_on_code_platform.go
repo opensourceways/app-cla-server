@@ -14,9 +14,7 @@ type AuthController struct {
 }
 
 func (this *AuthController) Prepare() {
-	if isSigningServiceNotStarted() {
-		this.StopRun()
-	}
+	this.stopRunIfSignSerivceIsUnabled()
 
 	b := strings.HasSuffix(this.routerPattern(), "/authcodeurl/:platform/:purpose")
 	if b || this.isPostRequest() {

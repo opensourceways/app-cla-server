@@ -12,9 +12,7 @@ type CorporationManagerController struct {
 }
 
 func (this *CorporationManagerController) Prepare() {
-	if isSigningServiceNotStarted() {
-		this.StopRun()
-	}
+	this.stopRunIfSignSerivceIsUnabled()
 
 	switch this.apiRequestMethod() {
 	case http.MethodPut:

@@ -15,9 +15,7 @@ type LinkController struct {
 }
 
 func (this *LinkController) Prepare() {
-	if isSigningServiceNotStarted() {
-		this.StopRun()
-	}
+	this.stopRunIfSignSerivceIsUnabled()
 
 	if strings.HasSuffix(this.routerPattern(), ":apply_to") {
 		if this.apiReqHeader(headerToken) != "" {

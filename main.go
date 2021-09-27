@@ -29,14 +29,14 @@ func main() {
 		beego.BConfig.WebConfig.StaticDir["/swagger"] = "swagger"
 	}
 
-	enabledService := beego.AppConfig.String("EnableService")
+	enabledService := beego.AppConfig.String("enableservice")
 
 	if enabledService != serviceSign && enabledService != serviceRobot {
-		beego.Error("invaliid EnableService")
+		beego.Error("invaliid enableservice")
 		os.Exit(1)
 	}
 
-	configFile := beego.AppConfig.String("app_conf")
+	configFile := beego.AppConfig.String("appconf")
 
 	if enabledService == serviceSign {
 		startSignSerivce(configFile)
@@ -52,9 +52,9 @@ func startSignSerivce(configPath string) {
 		beego.Error(err)
 		os.Exit(1)
 	}
-	AppConfig := config.AppConfig
+	cfg := config.AppConfig
 
-	path := util.GenFilePath(AppConfig.PDFOutDir, "tmp")
+	path := util.GenFilePath(cfg.PDFOutDir, "tmp")
 	if util.IsNotDir(path) {
 		err := os.Mkdir(path, 0732)
 		if err != nil {
@@ -63,22 +63,22 @@ func startSignSerivce(configPath string) {
 		}
 	}
 
-	startMongoService(&AppConfig.Mongodb)
+	startMongoService(&cfg.Mongodb)
 
-	if err := email.Initialize(AppConfig.EmailPlatformConfigFile); err != nil {
+	if err := email.Initialize(cfg.EmailPlatformConfigFile); err != nil {
 		beego.Error(err)
 		os.Exit(1)
 	}
 
-	if err := platformAuth.Initialize(AppConfig.CodePlatformConfigFile); err != nil {
+	if err := platformAuth.Initialize(cfg.CodePlatformConfigFile); err != nil {
 		beego.Error(err)
 		os.Exit(1)
 	}
 
 	if err := pdf.InitPDFGenerator(
-		AppConfig.PythonBin,
-		AppConfig.PDFOutDir,
-		AppConfig.PDFOrgSignatureDir,
+		cfg.PythonBin,
+		cfg.PDFOutDir,
+		cfg.PDFOrgSignatureDir,
 	); err != nil {
 		beego.Error(err)
 		os.Exit(1)

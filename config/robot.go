@@ -30,10 +30,10 @@ type PlatformRobotConfig struct {
 	LitePRCommitter LitePRCommiter `json:"lite_pr_committer" required:"true"`
 
 	// FAQOfCheckingByAuthor is the url of faq which describes the details of checking CLA by author of commit.
-	FAQOfCheckingByAuthor string `json:"faq_of_checking_by_author"`
+	FAQOfCheckingByAuthor string `json:"faq_of_checking_by_author" required:"true"`
 
 	// FAQOfCheckingByAuthor is the url of faq which describes the details of checking CLA by committer of commit.
-	FAQOfCheckingByCommitter string `json:"faq_of_checking_by_committer"`
+	FAQOfCheckingByCommitter string `json:"faq_of_checking_by_committer" required:"true"`
 
 	// CLARepoConfigFile is the file path which describes the info of CLA for each repos.
 	CLARepoConfigFile string `json:"cla_repo_config_file" required:"true"`

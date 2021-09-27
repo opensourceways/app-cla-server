@@ -321,6 +321,14 @@ func (this *baseController) getRemoteAddr() (string, *failedApiResult) {
 	return "", newFailedApiResult(400, errCanNotFetchClientIP, fmt.Errorf("can not fetch client ip"))
 }
 
-func isSigningServiceNotStarted() bool {
-	return config.AppConfig == nil
+func (this *baseController) stopRunIfSignSerivceIsUnabled() {
+	if config.AppConfig == nil {
+		this.StopRun()
+	}
+}
+
+func (this *baseController) stopRunIfRobotSerivceIsUnabled() {
+	if config.AppConfig != nil {
+		this.StopRun()
+	}
 }

@@ -13,9 +13,7 @@ type RobotGithubController struct {
 }
 
 func (this *RobotGithubController) Prepare() {
-	if !isSigningServiceNotStarted() {
-		this.StopRun()
-	}
+	this.stopRunIfRobotSerivceIsUnabled()
 }
 
 // @Title Post

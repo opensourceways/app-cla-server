@@ -16,9 +16,7 @@ type EmployeeSigningController struct {
 }
 
 func (this *EmployeeSigningController) Prepare() {
-	if isSigningServiceNotStarted() {
-		this.StopRun()
-	}
+	this.stopRunIfSignSerivceIsUnabled()
 
 	if this.isPostRequest() {
 		// sign as employee

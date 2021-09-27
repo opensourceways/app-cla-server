@@ -18,9 +18,7 @@ type CorporationPDFController struct {
 }
 
 func (this *CorporationPDFController) Prepare() {
-	if isSigningServiceNotStarted() {
-		this.StopRun()
-	}
+	this.stopRunIfSignSerivceIsUnabled()
 
 	if strings.HasSuffix(this.routerPattern(), "/") {
 		// admin reviews pdf

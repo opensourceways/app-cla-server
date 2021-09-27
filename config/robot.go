@@ -1,12 +1,19 @@
 package config
 
 import (
+	"net/url"
+
 	"github.com/opensourceways/app-cla-server/util"
 )
 
 func LoadRobotServiceeConfig(path string) (RobotServiceConfig, error) {
 	cfg := RobotServiceConfig{}
-	err := util.LoadFromYaml(path, &cfg)
+
+	if err := util.LoadFromYaml(path, &cfg); err != nil {
+		return cfg, err
+	}
+
+	_, err := url.Parse(cfg.CLAPlatformURL)
 	return cfg, err
 }
 

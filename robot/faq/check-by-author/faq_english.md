@@ -25,7 +25,7 @@ The email address of a commit's author is shown in the picture below.
 ![commit-author-email](commit_author_email.png)
 
 
-### What to Do If a Commit Fails the CLA Check?
+### What to do if a commit fails the CLA check?
 
 First, make sure you have completed the CLA signing. If you are signing an employee CLA, make sure your CLA manager approves your signing.
 

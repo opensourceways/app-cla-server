@@ -12,7 +12,7 @@ description: |
 将通过两个步骤来检查单个commit是否签署了CLA。第一步，获取commit作者的邮箱。第二步，在CLA系统中验证该email地址，如果验证通过，则证明该commit签署了CLA，否则未签署。
 
 
-### 查看PR各个commit作者的邮箱
+### 查看PR的commit信息
 
 请访问此[API](https://docs.github.com/en/rest/reference/pulls#list-commits-on-a-pull-request)查看一个PR的所有commit，以及每个commit作者的邮箱。
 
@@ -23,19 +23,19 @@ commit作者的邮箱见下图。
 
 ### 当某个commit未通过CLA检查时，怎么处理
 
-首先，请确保您完成了CLA签署。如果您签署的是员工CLA，请确保您的CLA Manager通过了您的CLA签署
+首先，请确保您完成了CLA签署。如果您签署的是员工CLA，请确保您的CLA Manager批准了您的CLA签署
 
 其次，请确保每个commit中作者的邮箱是正确的，且该邮箱跟您签署时填写的邮箱是一致的
 
 最后，如果您是如下的几种场景之一，请参考对应的方法处理。
 
-1. commit中配置的邮件地址是不正确的
+#### 1. commit中配置的邮件地址是不正确的
 
-不正确的邮件地址包括，邮件地址非法，邮件地址中少写了一些字符等。如果您是通过git push命令提交的commit，可以参考如下方法进行修改。
+不正确的邮件地址包括，邮件地址非法，邮件地址中少了一些字符等。如果您是通过`git push`命令提交的commit，可以参考如下方法进行修改。
 
 假设一个PR的commit信息如下。
 
-```sh
+``` sh
 # git log
 commit ca82a6dff817ec66f44342007202690a93763949
 Author: Scott Chacon <schacon@gee-mail.com>
@@ -63,12 +63,12 @@ git rebase --continue
 修改完后，请不要忘记使用`git push`命令提交commit。
 
 
-2. commit中配置的邮箱未签署CLA
+#### 2. commit中配置的邮箱未签署CLA
 
 请签署cla，签署时请填写此邮箱
 
 
-3. 通过Github网页提交的commit，其作者的邮箱是匿名邮箱
+#### 3. 通过Github网页提交的commit，其作者的邮箱是匿名邮箱
 
 这是因为commit作者未公开其github 邮箱。请登陆您的Github账号，依次访问 setting -> Emails，配置"Primary email address"，不要勾选"Keep my email addresses private"。
 
@@ -77,11 +77,11 @@ git rebase --continue
 拉取PR到本地的方法是：
 
 ``` sh
-git clone ${repo url}
-git fetch origin pull/${PULL_NUMBER}/head:${PULL_BASE_REF}-${PULL_NUMBER}
+git clone ${REPOSITORY_URL}
+git fetch origin pull/${PULL_NUMBER}/head:${PULL_BASE_BRANCH}-${PULL_NUMBER}
 ```
 
-PULL_BASE_REF: PR目标分支的名称(base branch name, not head)
+PULL_BASE_BRANCH: PR目标分支的名称
 
 
 ### 怎么设置本地开发环境
@@ -94,4 +94,4 @@ git config user.name [GITHUB ID]
 git config user.email [EMAIL]
 ```
 
-如果要了解如何配置本地环境，这里是一个很好的[例子](https://github.com/kubernetes/community/blob/master/contributors/guide/github-workflow.md)
+如果要了解详细的配置本地开发环境的方法，这里是一个很好的[例子](https://github.com/kubernetes/community/blob/master/contributors/guide/github-workflow.md)

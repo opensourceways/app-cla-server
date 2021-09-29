@@ -3,7 +3,7 @@ package controllers
 import (
 	"fmt"
 
-	"github.com/astaxie/beego"
+	"github.com/astaxie/beego/logs"
 
 	"github.com/opensourceways/app-cla-server/robot/github"
 )
@@ -39,5 +39,5 @@ func (this *RobotGithubController) Post() {
 	}
 
 	err = github.Handle(eventType, payload)
-	beego.Info(fmt.Sprintf("event type:%s, event id:%s, err:%v", eventType, eventGUID, err))
+	logs.Info(fmt.Sprintf("event type:%s, event id:%s, err:%v", eventType, eventGUID, err))
 }

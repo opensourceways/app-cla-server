@@ -7,7 +7,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/astaxie/beego"
+	"github.com/astaxie/beego/logs"
 	"k8s.io/apimachinery/pkg/util/sets"
 
 	"github.com/opensourceways/app-cla-server/models"
@@ -24,7 +24,7 @@ var (
 )
 
 type Handler interface {
-	Handle(pr PRInfo, labels sets.String) (bool, error)
+	Handle(pr PRInfo, labels sets.String, event interface{}) (bool, error)
 }
 
 type cla struct {
@@ -45,7 +45,7 @@ func NewCLA(f func() *Configuration, c Client, signURL *url.URL, faqOfCheckingBy
 	}
 }
 
-func (cl cla) Handle(pr PRInfo, labels sets.String) (bool, error) {
+func (cl cla) Handle(pr PRInfo, labels sets.String, event interface{}) (bool, error) {
 	cfg := cl.getConfig().CLAFor(pr.Org, pr.Repo)
 	if cfg == nil {
 		return false, fmt.Errorf("no cla config for this repo:%s/%s", pr.Org, pr.Repo)
@@ -60,16 +60,24 @@ func (cl cla) Handle(pr PRInfo, labels sets.String) (bool, error) {
 	if cfg.CheckByCommitter {
 		faqURL = cl.faqOfCheckingByCommitter
 	}
-	cl.handle(pr, labels, cfg, unsigned, faqURL)
+
+	log := func(msg string, err error) {
+		logs.Warning(fmt.Sprintf("%s for %s on event(%v), err:%s", msg, pr.String(), event, err.Error()))
+	}
+
+	cl.handle(pr, labels, cfg, unsigned, faqURL, log)
 
 	return len(unsigned) == 0, nil
 }
 
-func (cl cla) handle(pr PRInfo, labels sets.String, cfg *CLARepoConfig, unsigned map[string]string, faqURL string) {
-	log := func(msg string, err error) {
-		beego.Warning(fmt.Sprintf("%s for %s, err:%s", msg, pr.String(), err.Error()))
-	}
-
+func (cl cla) handle(
+	pr PRInfo,
+	labels sets.String,
+	cfg *CLARepoConfig,
+	unsigned map[string]string,
+	faqURL string,
+	log func(msg string, err error),
+) {
 	hasCLAYes := labels.Has(cfg.CLALabelYes)
 	hasCLANo := labels.Has(cfg.CLALabelNo)
 

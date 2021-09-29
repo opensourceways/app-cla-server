@@ -7,7 +7,7 @@ import (
 	"net/url"
 	"sync"
 
-	"github.com/astaxie/beego"
+	"github.com/astaxie/beego/logs"
 
 	sdk "github.com/google/go-github/v36/github"
 	"github.com/opensourceways/robot-gitee-plugin-lib/config"
@@ -150,15 +150,16 @@ func (s *server) handleIssueCommentEvent(e *sdk.IssueCommentEvent) {
 		labels.Insert(item.GetName())
 	}
 
-	signed, err := s.handler.Handle(pr, labels)
+	commentID := e.GetComment().GetID()
+	signed, err := s.handler.Handle(pr, labels, commentID)
 	if err != nil {
-		// TODO: how to deal with error
-		beego.Error(
+		logs.Error(
 			fmt.Sprintf(
-				"error to handle issue comment for %s, err:%s",
-				pr.String(), err.Error(),
+				"error to handle issue comment(%d) for %s, err:%s",
+				commentID, pr.String(), err.Error(),
 			),
 		)
+		return
 	}
 
 	s.handStatus(signed)
@@ -178,15 +179,15 @@ func (s *server) handlePullRequestEvent(e *sdk.PullRequestEvent) {
 		labels.Insert(item.GetName())
 	}
 
-	signed, err := s.handler.Handle(pr, labels)
+	signed, err := s.handler.Handle(pr, labels, e.GetAction())
 	if err != nil {
-		// TODO: how to deal with error
-		beego.Error(
+		logs.Error(
 			fmt.Sprintf(
-				"error to handle pr event for %s, err:%s",
-				pr.String(), err.Error(),
+				"error to handle pr event(%s) for %s, err:%s",
+				e.GetAction(), pr.String(), err.Error(),
 			),
 		)
+		return
 	}
 
 	s.handStatus(signed)

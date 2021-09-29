@@ -1,9 +1,12 @@
 package main
 
 import (
+	"context"
 	"os"
+	"time"
 
 	"github.com/astaxie/beego"
+	"github.com/astaxie/beego/logs"
 
 	platformAuth "github.com/opensourceways/app-cla-server/code-platform-auth"
 	"github.com/opensourceways/app-cla-server/config"
@@ -16,6 +19,7 @@ import (
 	_ "github.com/opensourceways/app-cla-server/routers"
 	"github.com/opensourceways/app-cla-server/util"
 	"github.com/opensourceways/app-cla-server/worker"
+	"github.com/opensourceways/robot-gitee-plugin-lib/interrupts"
 )
 
 const (
@@ -32,7 +36,7 @@ func main() {
 	enabledService := beego.AppConfig.String("enableservice")
 
 	if enabledService != serviceSign && enabledService != serviceRobot {
-		beego.Error("invaliid enableservice")
+		logs.Error("invaliid enableservice")
 		os.Exit(1)
 	}
 
@@ -43,22 +47,19 @@ func main() {
 	} else {
 		startRobotSerivce(configFile)
 	}
-
-	beego.Run()
 }
 
 func startSignSerivce(configPath string) {
 	if err := config.InitAppConfig(configPath); err != nil {
-		beego.Error(err)
+		logs.Error(err)
 		os.Exit(1)
 	}
 	cfg := config.AppConfig
 
 	path := util.GenFilePath(cfg.PDFOutDir, "tmp")
 	if util.IsNotDir(path) {
-		err := os.Mkdir(path, 0732)
-		if err != nil {
-			beego.Error(err)
+		if err := os.Mkdir(path, 0732); err != nil {
+			logs.Error(err)
 			os.Exit(1)
 		}
 	}
@@ -66,36 +67,35 @@ func startSignSerivce(configPath string) {
 	startMongoService(&cfg.Mongodb)
 
 	if err := email.Initialize(cfg.EmailPlatformConfigFile); err != nil {
-		beego.Error(err)
+		logs.Error(err)
 		os.Exit(1)
 	}
 
 	if err := platformAuth.Initialize(cfg.CodePlatformConfigFile); err != nil {
-		beego.Error(err)
+		logs.Error(err)
 		os.Exit(1)
 	}
 
-	if err := pdf.InitPDFGenerator(
-		cfg.PythonBin,
-		cfg.PDFOutDir,
-		cfg.PDFOrgSignatureDir,
-	); err != nil {
-		beego.Error(err)
+	err := pdf.InitPDFGenerator(cfg.PythonBin, cfg.PDFOutDir, cfg.PDFOrgSignatureDir)
+	if err != nil {
+		logs.Error(err)
+		os.Exit(1)
+	}
+
+	if err := controllers.LoadLinks(); err != nil {
+		logs.Error(err)
 		os.Exit(1)
 	}
 
 	worker.InitEmailWorker(pdf.GetPDFGenerator())
 
-	if err := controllers.LoadLinks(); err != nil {
-		beego.Error(err)
-		os.Exit(1)
-	}
+	run(worker.GetEmailWorker().Shutdown)
 }
 
 func startMongoService(cfg *config.MongodbConfig) {
 	c, err := mongodb.Initialize(cfg)
 	if err != nil {
-		beego.Error(err)
+		logs.Error(err)
 		os.Exit(1)
 	}
 	dbmodels.RegisterDB(c)
@@ -104,14 +104,39 @@ func startMongoService(cfg *config.MongodbConfig) {
 func startRobotSerivce(configPath string) {
 	cfg, err := config.LoadRobotServiceeConfig(configPath)
 	if err != nil {
-		beego.Error(err)
-		os.Exit(1)
-	}
-
-	if err := github.InitGithubRobot(cfg.CLAPlatformURL, cfg.PlatformRobotConfigs); err != nil {
-		beego.Error(err)
+		logs.Error(err)
 		os.Exit(1)
 	}
 
 	startMongoService(&cfg.Mongodb)
+
+	if err := github.InitGithubRobot(cfg.CLAPlatformURL, cfg.PlatformRobotConfigs); err != nil {
+		logs.Error(err)
+		os.Exit(1)
+	}
+
+	run(github.Stop)
+}
+
+func run(clear func()) {
+	defer interrupts.WaitForGracefulShutdown()
+
+	interrupts.OnInterrupt(func() {
+		shutdown()
+		if clear != nil {
+			clear()
+		}
+	})
+
+	beego.Run()
+}
+
+func shutdown() {
+	logs.Info("server shutting down...")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	if err := beego.BeeApp.Server.Shutdown(ctx); err != nil {
+		logs.Error("error to shut down server, err:", err.Error())
+	}
+	cancel()
 }

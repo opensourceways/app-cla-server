@@ -36,7 +36,7 @@ func main() {
 	enabledService := beego.AppConfig.String("enableservice")
 
 	if enabledService != serviceSign && enabledService != serviceRobot {
-		beego.Error("invaliid enableservice")
+		logs.Error("invaliid enableservice")
 		os.Exit(1)
 	}
 
@@ -51,7 +51,7 @@ func main() {
 
 func startSignSerivce(configPath string) {
 	if err := config.InitAppConfig(configPath); err != nil {
-		beego.Error(err)
+		logs.Error(err)
 		os.Exit(1)
 	}
 	cfg := config.AppConfig
@@ -59,7 +59,7 @@ func startSignSerivce(configPath string) {
 	path := util.GenFilePath(cfg.PDFOutDir, "tmp")
 	if util.IsNotDir(path) {
 		if err := os.Mkdir(path, 0732); err != nil {
-			beego.Error(err)
+			logs.Error(err)
 			os.Exit(1)
 		}
 	}
@@ -67,23 +67,23 @@ func startSignSerivce(configPath string) {
 	startMongoService(&cfg.Mongodb)
 
 	if err := email.Initialize(cfg.EmailPlatformConfigFile); err != nil {
-		beego.Error(err)
+		logs.Error(err)
 		os.Exit(1)
 	}
 
 	if err := platformAuth.Initialize(cfg.CodePlatformConfigFile); err != nil {
-		beego.Error(err)
+		logs.Error(err)
 		os.Exit(1)
 	}
 
 	err := pdf.InitPDFGenerator(cfg.PythonBin, cfg.PDFOutDir, cfg.PDFOrgSignatureDir)
 	if err != nil {
-		beego.Error(err)
+		logs.Error(err)
 		os.Exit(1)
 	}
 
 	if err := controllers.LoadLinks(); err != nil {
-		beego.Error(err)
+		logs.Error(err)
 		os.Exit(1)
 	}
 
@@ -95,7 +95,7 @@ func startSignSerivce(configPath string) {
 func startMongoService(cfg *config.MongodbConfig) {
 	c, err := mongodb.Initialize(cfg)
 	if err != nil {
-		beego.Error(err)
+		logs.Error(err)
 		os.Exit(1)
 	}
 	dbmodels.RegisterDB(c)
@@ -104,14 +104,14 @@ func startMongoService(cfg *config.MongodbConfig) {
 func startRobotSerivce(configPath string) {
 	cfg, err := config.LoadRobotServiceeConfig(configPath)
 	if err != nil {
-		beego.Error(err)
+		logs.Error(err)
 		os.Exit(1)
 	}
 
 	startMongoService(&cfg.Mongodb)
 
 	if err := github.InitGithubRobot(cfg.CLAPlatformURL, cfg.PlatformRobotConfigs); err != nil {
-		beego.Error(err)
+		logs.Error(err)
 		os.Exit(1)
 	}
 
@@ -132,11 +132,11 @@ func run(clear func()) {
 }
 
 func shutdown() {
-	logs.Info("Server shutting down...")
+	logs.Info("server shutting down...")
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	if err := beego.BeeApp.Server.Shutdown(ctx); err != nil {
-		logs.Error("Error shutting down server, err:%s", err.Error())
+		logs.Error("error to shut down server, err:", err.Error())
 	}
 	cancel()
 }

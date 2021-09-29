@@ -67,12 +67,6 @@ func (this *emailWorker) GenCLAPDFForCorporationAndSendIt(linkID, claFile string
 			SigningInfo: buildCorpSigningInfo(&signing, claFields),
 		}
 
-		index := fmt.Sprintf(
-			"sending email to %s/%s/%s:%s",
-			orgInfo.Platform, orgInfo.OrgID, orgInfo.RepoID,
-			util.EmailSuffix(signing.AdminEmail),
-		)
-
 		file := ""
 		fileExist := func() bool {
 			return file != "" && !util.IsFileNotExist(file)
@@ -129,6 +123,12 @@ func (this *emailWorker) GenCLAPDFForCorporationAndSendIt(linkID, claFile string
 			}
 			return nil
 		}
+
+		index := fmt.Sprintf(
+			"sending email to %s/%s/%s:%s. ",
+			orgInfo.Platform, orgInfo.OrgID, orgInfo.RepoID,
+			util.EmailSuffix(signing.AdminEmail),
+		)
 
 		for i := 0; i < 10; i++ {
 			stoped, err := this.do(action)

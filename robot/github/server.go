@@ -34,6 +34,10 @@ func Handle(eventType string, payload []byte) error {
 	return robot.dispatch(eventType, payload)
 }
 
+func Stop() {
+	robot.stop()
+}
+
 func InitGithubRobot(endpoint string, cfgs []robotConfig.PlatformRobotConfig) error {
 	i, ok := robotConfig.FindPlatformRobotConfig("github", cfgs)
 	if !ok {
@@ -92,6 +96,16 @@ type server struct {
 	wg      sync.WaitGroup
 	handler cla.Handler
 	access  access
+}
+
+func (s *server) stop() {
+	if s == nil {
+		return
+	}
+
+	s.claRepoConfig.Stop()
+	s.secretAgent.Stop()
+	s.wg.Wait()
 }
 
 func (r *server) dispatch(eventType string, payload []byte) error {

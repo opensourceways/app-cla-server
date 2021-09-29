@@ -135,10 +135,8 @@ func (w *emailWorker) GenCLAPDFForCorporationAndSendIt(linkID, claFile string, o
 			if stoped || err == nil {
 				break
 			}
-			if err != nil {
-				logs.Error(index, err)
-			}
 
+			logs.Error(index, err)
 			time.Sleep(1 * time.Minute)
 		}
 	}
@@ -168,10 +166,8 @@ func (w *emailWorker) SendSimpleMessage(orgEmail string, msg *email.EmailMessage
 			if stoped || err == nil {
 				break
 			}
-			if err != nil {
-				logs.Error("error to send email, err:", err)
-			}
 
+			logs.Error("error to send email, err:", err)
 			time.Sleep(1 * time.Minute)
 		}
 	}

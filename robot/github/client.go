@@ -77,19 +77,16 @@ func (cl client) listPRComment(pr cla.PRInfo) []*sdk.IssueComment {
 
 		pagePath, err := url.Parse(link)
 		if err != nil {
-			// return fmt.Errorf("failed to parse 'next' link: %v", err)
 			break
 		}
 
 		p := pagePath.Query().Get("page")
 		if p == "" {
-			// return fmt.Errorf("failed to get 'page' on link: %s", p)
 			break
 		}
 
 		page, err := strconv.Atoi(p)
 		if err != nil {
-			// return err
 			break
 		}
 		opt.Page = page

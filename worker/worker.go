@@ -47,10 +47,10 @@ func (w *emailWorker) Shutdown() {
 	w.wg.Wait()
 }
 
-func (this *emailWorker) GenCLAPDFForCorporationAndSendIt(linkID, claFile string, orgInfo models.OrgInfo, signing models.CorporationSigning, claFields []models.CLAField) {
+func (w *emailWorker) GenCLAPDFForCorporationAndSendIt(linkID, claFile string, orgInfo models.OrgInfo, signing models.CorporationSigning, claFields []models.CLAField) {
 	f := func() {
 		defer func() {
-			this.wg.Done()
+			w.wg.Done()
 		}()
 
 		emailCfg, ec, err := getEmailClient(orgInfo.OrgEmail)
@@ -83,7 +83,7 @@ func (this *emailWorker) GenCLAPDFForCorporationAndSendIt(linkID, claFile string
 				return nil
 			}
 
-			file, err = this.pdfGenerator.GenPDFForCorporationSigning(linkID, claFile, &signing, claFields)
+			file, err = w.pdfGenerator.GenPDFForCorporationSigning(linkID, claFile, &signing, claFields)
 			if err != nil {
 				return fmt.Errorf("error to generate pdf, err: %s", err.Error())
 			}
@@ -131,7 +131,7 @@ func (this *emailWorker) GenCLAPDFForCorporationAndSendIt(linkID, claFile string
 		)
 
 		for i := 0; i < 10; i++ {
-			stoped, err := this.do(action)
+			stoped, err := w.do(action)
 			if stoped || err == nil {
 				break
 			}
@@ -143,14 +143,14 @@ func (this *emailWorker) GenCLAPDFForCorporationAndSendIt(linkID, claFile string
 		}
 	}
 
-	this.wg.Add(1)
+	w.wg.Add(1)
 	go f()
 }
 
-func (this *emailWorker) SendSimpleMessage(orgEmail string, msg *email.EmailMessage) {
+func (w *emailWorker) SendSimpleMessage(orgEmail string, msg *email.EmailMessage) {
 	f := func() {
 		defer func() {
-			this.wg.Done()
+			w.wg.Done()
 		}()
 
 		emailCfg, ec, err := getEmailClient(orgEmail)
@@ -164,7 +164,7 @@ func (this *emailWorker) SendSimpleMessage(orgEmail string, msg *email.EmailMess
 		}
 
 		for i := 0; i < 10; i++ {
-			stoped, err := this.do(action)
+			stoped, err := w.do(action)
 			if stoped || err == nil {
 				break
 			}
@@ -176,7 +176,7 @@ func (this *emailWorker) SendSimpleMessage(orgEmail string, msg *email.EmailMess
 		}
 	}
 
-	this.wg.Add(1)
+	w.wg.Add(1)
 	go f()
 }
 

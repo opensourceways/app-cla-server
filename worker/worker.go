@@ -125,20 +125,17 @@ func (w *emailWorker) GenCLAPDFForCorporationAndSendIt(linkID, claFile string, o
 		}
 
 		index := fmt.Sprintf(
-			"sending email to %s/%s/%s:%s. ",
+			"sending email to %s/%s/%s:%s.",
 			orgInfo.Platform, orgInfo.OrgID, orgInfo.RepoID,
 			util.EmailSuffix(signing.AdminEmail),
 		)
 
-		for i := 0; i < 10; i++ {
-			stoped, err := w.do(action)
-			if stoped || err == nil {
-				break
+		w.tryToSendEmail(func() error {
+			if err := action(); err != nil {
+				return fmt.Errorf("%s %s", index, err.Error())
 			}
-
-			logs.Error(index, err)
-			time.Sleep(1 * time.Minute)
-		}
+			return nil
+		})
 	}
 
 	w.wg.Add(1)
@@ -157,31 +154,44 @@ func (w *emailWorker) SendSimpleMessage(orgEmail string, msg *email.EmailMessage
 		}
 
 		action := func() error {
-			return ec.SendEmail(emailCfg.Token, msg)
-
-		}
-
-		for i := 0; i < 10; i++ {
-			stoped, err := w.do(action)
-			if stoped || err == nil {
-				break
+			if err := ec.SendEmail(emailCfg.Token, msg); err != nil {
+				return fmt.Errorf("error to send email, err:%s", err.Error())
 			}
-
-			logs.Error("error to send email, err:", err)
-			time.Sleep(1 * time.Minute)
+			return nil
 		}
+
+		w.tryToSendEmail(action)
 	}
 
 	w.wg.Add(1)
 	go f()
 }
 
-func (w *emailWorker) do(action func() error) (bool, error) {
-	select {
-	case <-w.stop:
-		return true, nil
-	default:
-		return false, action()
+func (w *emailWorker) tryToSendEmail(action func() error) {
+	t := time.NewTimer(1 * time.Minute)
+	defer t.Stop()
+
+	reset := func(expired bool) {
+		if !expired && !t.Stop() {
+			<-t.C
+		}
+		t.Reset(1 * time.Minute)
+	}
+
+	for i := 0; i < 10; i++ {
+		err := action()
+		if err == nil {
+			break
+		}
+		logs.Error(err)
+
+		reset(i > 0) // timer must be expired when i > 0
+
+		select {
+		case <-w.stop:
+			return
+		case <-t.C:
+		}
 	}
 }
 

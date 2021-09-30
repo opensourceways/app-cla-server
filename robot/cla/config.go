@@ -51,6 +51,9 @@ type CLARepoConfig struct {
 	// CLAID is the id which specifies an instance of CLA.
 	CLAID string `json:"cla_id" required:"true"`
 
+	// SignURL is the signing url for this Repo.
+	SignURL string `json:"sign_url" required:"true"`
+
 	// CheckByCommitter is one of ways to check CLA. There are two ways to check cla.
 	// One is checking CLA by the email of committer, and Second is by the email of author.
 	// Default is by email of author.

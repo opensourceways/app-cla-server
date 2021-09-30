@@ -110,7 +110,7 @@ func (cl cla) handle(
 		}
 	}
 
-	s := signGuide(genSignURL(cl.signURL, cfg.CLAID), generateUnSignComment(unsigned), faqURL)
+	s := signGuide(cfg.SignURL, generateUnSignComment(unsigned), faqURL)
 	if err := cl.c.CreatePRComment(pr, s); err != nil {
 		log("Could not add unsigning comment", err)
 	}

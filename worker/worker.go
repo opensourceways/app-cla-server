@@ -43,6 +43,8 @@ type emailWorker struct {
 func (w *emailWorker) Shutdown() {
 	close(w.stop)
 
+	logs.Info("worker exit")
+
 	// Handle remaining requests
 	w.wg.Wait()
 }

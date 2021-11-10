@@ -7,6 +7,7 @@ import (
 
 	"github.com/astaxie/beego"
 	"github.com/astaxie/beego/logs"
+	"github.com/opensourceways/community-robot-lib/interrupts"
 
 	platformAuth "github.com/opensourceways/app-cla-server/code-platform-auth"
 	"github.com/opensourceways/app-cla-server/config"
@@ -19,7 +20,6 @@ import (
 	_ "github.com/opensourceways/app-cla-server/routers"
 	"github.com/opensourceways/app-cla-server/util"
 	"github.com/opensourceways/app-cla-server/worker"
-	"github.com/opensourceways/robot-gitee-plugin-lib/interrupts"
 )
 
 const (
@@ -65,6 +65,7 @@ func startSignSerivce(configPath string) {
 	}
 
 	startMongoService(&cfg.Mongodb)
+	defer exitMongoService()
 
 	if err := email.Initialize(cfg.EmailPlatformConfigFile); err != nil {
 		logs.Error(err)
@@ -88,8 +89,9 @@ func startSignSerivce(configPath string) {
 	}
 
 	worker.InitEmailWorker(pdf.GetPDFGenerator())
+	defer worker.GetEmailWorker().Shutdown()
 
-	run(worker.GetEmailWorker().Shutdown)
+	run()
 }
 
 func startMongoService(cfg *config.MongodbConfig) {
@@ -101,6 +103,11 @@ func startMongoService(cfg *config.MongodbConfig) {
 	dbmodels.RegisterDB(c)
 }
 
+func exitMongoService() {
+	err := dbmodels.GetDB().Close()
+	logs.Info("mongo exit, err:%v", err)
+}
+
 func startRobotSerivce(configPath string) {
 	cfg, err := config.LoadRobotServiceeConfig(configPath)
 	if err != nil {
@@ -109,23 +116,22 @@ func startRobotSerivce(configPath string) {
 	}
 
 	startMongoService(&cfg.Mongodb)
+	defer exitMongoService()
 
 	if err := github.InitGithubRobot(cfg.CLAPlatformURL, cfg.PlatformRobotConfigs); err != nil {
 		logs.Error(err)
 		os.Exit(1)
 	}
+	defer github.Stop()
 
-	run(github.Stop)
+	run()
 }
 
-func run(clear func()) {
+func run() {
 	defer interrupts.WaitForGracefulShutdown()
 
 	interrupts.OnInterrupt(func() {
 		shutdown()
-		if clear != nil {
-			clear()
-		}
 	})
 
 	beego.Run()

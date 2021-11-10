@@ -2,7 +2,7 @@ package cla
 
 import (
 	"github.com/huaweicloud/golangsdk"
-	"github.com/opensourceways/robot-gitee-plugin-lib/config"
+	"github.com/opensourceways/community-robot-lib/config"
 )
 
 type Configuration struct {

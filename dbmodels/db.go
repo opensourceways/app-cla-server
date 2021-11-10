@@ -18,6 +18,7 @@ type IDB interface {
 	IIndividualSigning
 	ICLA
 	IVerificationCode
+	Close() error
 }
 
 type ICorporationSigning interface {

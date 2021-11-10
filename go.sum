@@ -283,10 +283,10 @@ github.com/onsi/ginkgo v1.14.0/go.mod h1:iSB4RoI2tjJc9BBv4NKIKWKya62Rps+oPG/Lv9k
 github.com/onsi/gomega v0.0.0-20170829124025-dcabb60a477c/go.mod h1:C1qb7wdrVGGVU+Z6iS04AVkA3Q65CEZX59MT0QO5uiA=
 github.com/onsi/gomega v1.7.1/go.mod h1:XdKZgCCFLUoM/7CFJVPcG8C1xQ1AJ0vpAezJrB7JYyY=
 github.com/onsi/gomega v1.10.1/go.mod h1:iN09h71vgCQne3DLsj+A5owkum+a2tYe+TOCB1ybHNo=
+github.com/opensourceways/community-robot-lib v0.0.0-20211110061130-6d603704302b h1:Esp58I+9cH9X1rmu7IEEPMakSqKAkKTyECyHtpSxWzs=
+github.com/opensourceways/community-robot-lib v0.0.0-20211110061130-6d603704302b/go.mod h1:wVOxCg37uLrVNcOy/aTh/ip/sSVizPxjhONqqfGERK0=
 github.com/opensourceways/gofpdf v1.16.4 h1:Ht9ody/cy0tyfcBI/7tS71Mdkd/z+Ekz4auceXAJ39g=
 github.com/opensourceways/gofpdf v1.16.4/go.mod h1:HAAZ5FWwM+PfwpU5C9mUaB1nxUMyoaeToDAYNLBD1ZU=
-github.com/opensourceways/robot-gitee-plugin-lib v0.0.0-20210911062539-882a7b92e588 h1:Br4PriKfVodmuiTu1AwQB6TxvQj3FOIbcnRk5erjJWc=
-github.com/opensourceways/robot-gitee-plugin-lib v0.0.0-20210911062539-882a7b92e588/go.mod h1:2ht3IyZ8HdkqEzsmIdMn27JrpzQxWy8ClS3ZFCkG+vU=
 github.com/pelletier/go-toml v1.0.1/go.mod h1:5z9KED0ma1S8pY6P1sdut58dfprrGBbd/94hg7ilaic=
 github.com/pelletier/go-toml v1.2.0/go.mod h1:5z9KED0ma1S8pY6P1sdut58dfprrGBbd/94hg7ilaic=
 github.com/pelletier/go-toml v1.7.0/go.mod h1:vwGMzjaWMwyfHwgIBhI2YUM4fB6nL6lVAvS1LBMMhTE=

@@ -10,8 +10,8 @@ import (
 	"github.com/astaxie/beego/logs"
 
 	sdk "github.com/google/go-github/v36/github"
-	"github.com/opensourceways/robot-gitee-plugin-lib/config"
-	"github.com/opensourceways/robot-gitee-plugin-lib/secret"
+	"github.com/opensourceways/community-robot-lib/config"
+	"github.com/opensourceways/community-robot-lib/secret"
 	"k8s.io/apimachinery/pkg/util/sets"
 
 	robotConfig "github.com/opensourceways/app-cla-server/config"
@@ -35,6 +35,8 @@ func Handle(eventType string, payload []byte) error {
 }
 
 func Stop() {
+	logs.Info("github robot exit")
+
 	robot.stop()
 }
 

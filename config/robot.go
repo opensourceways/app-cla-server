@@ -33,6 +33,13 @@ type PlatformRobotConfig struct {
 	// HMacSecretFile is the file path which describes the hmac info.
 	HMacSecretFile string `json:"hmac_secret_file" required:"true"`
 
+	// CLARepoConfigFile is the file path which describes the info of CLA for each repos.
+	CLARepoConfigFile string `json:"cla_repo_config_file" required:"true"`
+
+	CLAConfig
+}
+
+type CLAConfig struct {
 	// LitePRCommitter is the config for lite pr committer.
 	LitePRCommitter LitePRCommiter `json:"lite_pr_committer" required:"true"`
 
@@ -41,9 +48,6 @@ type PlatformRobotConfig struct {
 
 	// FAQOfCheckingByAuthor is the url of faq which describes the details of checking CLA by committer of commit.
 	FAQOfCheckingByCommitter string `json:"faq_of_checking_by_committer" required:"true"`
-
-	// CLARepoConfigFile is the file path which describes the info of CLA for each repos.
-	CLARepoConfigFile string `json:"cla_repo_config_file" required:"true"`
 }
 
 type LitePRCommiter struct {

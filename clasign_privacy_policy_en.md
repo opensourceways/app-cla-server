@@ -1,4 +1,4 @@
-## <center>CLA Sign隐私政策声明</center>
+## <center>CLA Sign Privacy Statement</center>
 
 We understand the importance of your privacy and fully respect it. If you have any questions about how we process your personal data, please feel free to contact us. Unless otherwise specified, "we" in this statement refers to the provider of the CLA Sign service.
 

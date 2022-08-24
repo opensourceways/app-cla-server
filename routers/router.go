@@ -8,12 +8,20 @@
 package routers
 
 import (
+	"net/http"
+	"strings"
+
 	"github.com/astaxie/beego"
+	"github.com/astaxie/beego/context"
+	"github.com/astaxie/beego/logs"
+	"github.com/ulule/limiter/v3"
 
 	"github.com/opensourceways/app-cla-server/controllers"
+	"github.com/ulule/limiter/v3/drivers/store/memory"
 )
 
 func init() {
+	runRate()
 	ns := beego.NewNamespace("/v1",
 		beego.NSNamespace("/cla",
 			beego.NSInclude(
@@ -82,4 +90,45 @@ func init() {
 		),
 	)
 	beego.AddNamespace(ns)
+}
+
+type rateLimiter struct {
+	limiter *limiter.Limiter
+}
+
+func runRate() {
+	// 限制api的请求次数
+	theRateLimit := &rateLimiter{}
+	requestMaxRate := beego.AppConfig.String("requestLimit")
+	requestRate, _ := limiter.NewRateFromFormatted(requestMaxRate)
+	theRateLimit.limiter = limiter.New(memory.NewStore(), requestRate)
+	beego.InsertFilter("/*", beego.BeforeRouter, func(ctx *context.Context) {
+		rateLimit(theRateLimit, ctx)
+	}, true)
+}
+
+func rateLimit(rateLimit *rateLimiter, ctx *context.Context) {
+	var (
+		limiterCtx limiter.Context
+		err        error
+		req        = ctx.Request
+	)
+	opt := limiter.Options{
+		IPv4Mask:           limiter.DefaultIPv4Mask,
+		IPv6Mask:           limiter.DefaultIPv6Mask,
+		TrustForwardHeader: false,
+	}
+	ip := limiter.GetIP(req, opt)
+	if strings.HasPrefix(ctx.Input.URL(), "/v1/verification-code") {
+		limiterCtx, err = rateLimit.limiter.Get(req.Context(), ip.String())
+	}
+	if err != nil {
+		ctx.Abort(http.StatusInternalServerError, err.Error())
+		return
+	}
+	if limiterCtx.Reached {
+		logs.Debug("Too Many Requests from %s on %s", ip, ctx.Input.URL())
+		ctx.Abort(http.StatusTooManyRequests, "Too Many Requests")
+		return
+	}
 }

@@ -14,7 +14,7 @@ type IEmail interface {
 	GetOauth2CodeURL(state string) string
 	GetToken(code, scope string) (*oauth2.Token, error)
 	GetAuthorizedEmail(token *oauth2.Token) (string, error)
-	SendEmail(token *oauth2.Token, msg *EmailMessage) error
+	SendEmail(token *oauth2.Token, Authorize string, msg *EmailMessage) error
 	initialize(string) error
 }
 

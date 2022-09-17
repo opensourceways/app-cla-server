@@ -2,7 +2,6 @@ package mongodb
 
 import (
 	"context"
-
 	"go.mongodb.org/mongo-driver/bson"
 
 	"github.com/opensourceways/app-cla-server/dbmodels"
@@ -10,8 +9,9 @@ import (
 
 func toDocOfOrgEmail(opt *dbmodels.OrgEmailCreateInfo) (bson.M, dbmodels.IDBError) {
 	info := cOrgEmail{
-		Email:    opt.Email,
-		Platform: opt.Platform,
+		Email:     opt.Email,
+		Platform:  opt.Platform,
+		Authorize: opt.Authorize,
 	}
 	body, err := structToMap(info)
 	if err != nil {
@@ -38,7 +38,6 @@ func (this *client) CreateOrgEmail(opt dbmodels.OrgEmailCreateInfo) dbmodels.IDB
 
 func (this *client) GetOrgEmailInfo(email string) (*dbmodels.OrgEmailCreateInfo, dbmodels.IDBError) {
 	var v cOrgEmail
-
 	f := func(ctx context.Context) dbmodels.IDBError {
 		return this.getDoc(ctx, this.orgEmailCollection, bson.M{fieldEmail: email}, bson.M{fieldEmail: 0}, &v)
 	}
@@ -48,8 +47,9 @@ func (this *client) GetOrgEmailInfo(email string) (*dbmodels.OrgEmailCreateInfo,
 	}
 
 	return &dbmodels.OrgEmailCreateInfo{
-		Email:    email,
-		Platform: v.Platform,
-		Token:    v.Token,
+		Email:     email,
+		Platform:  v.Platform,
+		Token:     v.Token,
+		Authorize: v.Authorize,
 	}, nil
 }

@@ -7,9 +7,9 @@ import (
 
 	"github.com/astaxie/beego"
 	"github.com/astaxie/beego/logs"
+	platformAuth "github.com/opensourceways/app-cla-server/code-platform-auth"
 	"github.com/opensourceways/community-robot-lib/interrupts"
 
-	platformAuth "github.com/opensourceways/app-cla-server/code-platform-auth"
 	"github.com/opensourceways/app-cla-server/config"
 	"github.com/opensourceways/app-cla-server/controllers"
 	"github.com/opensourceways/app-cla-server/dbmodels"

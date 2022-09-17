@@ -57,6 +57,24 @@ func (this *client) CreateLink(info *dbmodels.LinkCreateOption) (string, dbmodel
 	return docID, nil
 }
 
+func (this *client) UpdateLinkEmail(info *dbmodels.LinkCreateOption) dbmodels.IDBError {
+	orgEmail, err := toDocOfOrgEmail(&info.OrgEmail)
+	if err != nil {
+		return err
+	}
+	fmt.Println("toddd")
+	status := bson.M{fieldOrgEmail: orgEmail}
+	docFilter := bson.M{fieldLinkID: info.LinkID}
+	f := func(ctx context.Context) dbmodels.IDBError {
+		err := this.updateDoc(ctx, this.linkCollection, docFilter, status)
+		if err != nil {
+			return err
+		}
+		return nil
+	}
+	return withContext1(f)
+}
+
 func (this *client) Unlink(linkID string) dbmodels.IDBError {
 	status := bson.M{fieldLinkStatus: linkStatusDeleted}
 	docFilter := bson.M{fieldLinkID: linkID}

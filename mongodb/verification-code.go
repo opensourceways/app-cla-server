@@ -24,11 +24,13 @@ func (this *client) CreateVerificationCode(opt dbmodels.VerificationCode) dbmode
 
 	f := func(ctx context.Context) dbmodels.IDBError {
 		col := this.collection(this.vcCollection)
-
+		col.DeleteOne(ctx, bson.M{
+			fieldEmail:   info.Email,
+			fieldPurpose: info.Purpose,
+		})
 		// delete the expired codes.
 		filter := bson.M{fieldExpiry: bson.M{"$lt": util.Now()}}
 		col.DeleteMany(ctx, filter)
-
 		// email + purpose can't be the index, for example: a corp signs a community concurrently.
 		// so, it should use insertDoc to record each verification codes.
 		_, err := this.insertDoc(ctx, this.vcCollection, body)

@@ -12,7 +12,8 @@ const (
 	TmplIndividualSigning     = "individual signing"
 	TmplEmployeeSigning       = "employee signing"
 	TmplNotifyingManager      = "notifying manager"
-	TmplVerificationCode      = "verificaition code"
+	TmplVerificationCode      = "verification code"
+	TmplEmailVerification     = "email verification"
 	TmplAddingCorpEmailDomain = "adding corp email domain"
 	TmplAddingCorpAdmin       = "adding corp admin"
 	TmplAddingCorpManager     = "adding corp manager"
@@ -32,6 +33,7 @@ func initTemplate() error {
 		TmplEmployeeSigning:       "./conf/email-template/employee-signing.tmpl",
 		TmplNotifyingManager:      "./conf/email-template/notifying-corp-manager.tmpl",
 		TmplVerificationCode:      "./conf/email-template/verification-code.tmpl",
+		TmplEmailVerification:     "./conf/email-template/email_verification.tmpl",
 		TmplAddingCorpEmailDomain: "./conf/email-template/adding-corp-email-domain.tmpl",
 		TmplAddingCorpAdmin:       "./conf/email-template/adding-corp-admin.tmpl",
 		TmplAddingCorpManager:     "./conf/email-template/adding-corp-manager.tmpl",
@@ -108,6 +110,14 @@ type VerificationCode struct {
 
 func (this VerificationCode) GenEmailMsg() (*EmailMessage, error) {
 	return genEmailMsg(TmplVerificationCode, this)
+}
+
+type EmailVerification struct {
+	Code string
+}
+
+func (this EmailVerification) GenEmailMsg() (*EmailMessage, error) {
+	return genEmailMsg(TmplEmailVerification, this)
 }
 
 type AddingCorpEmailDomain struct {

@@ -68,3 +68,17 @@ func GetOrgEmailInfo(email string) (*OrgEmail, IModelError) {
 	}
 
 }
+
+type EmailAuthorization struct {
+	Email     string `json:"email"`
+	Code      string `json:"code"`
+	Purpose   string `json:"purpose"`
+	Authorize string `json:"authorize"`
+}
+
+func (this *EmailAuthorization) Validate() IModelError {
+	return checkVerificationCode(this.Email, this.Code, this.Purpose)
+}
+func PurposeOfEmailAuthorization(email string) string {
+	return fmt.Sprintf("email authorization: %s", email)
+}

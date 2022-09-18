@@ -1,7 +1,7 @@
 web_redirect_dir_on_success: /config-email
 web_redirect_dir_on_failure: /config-email
 platforms:
-  - platform: gmail
-    credentials: {{path to gmail credentials json file}}
+#  - platform: gmail
+#    credentials: {{path to gmail credentials json file}}
   - platform: txmail
-    credentials: no file
+    credentials: dd

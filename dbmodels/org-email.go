@@ -1,7 +1,8 @@
 package dbmodels
 
 type OrgEmailCreateInfo struct {
-	Email    string
-	Platform string
-	Token    []byte
+	Email     string
+	Platform  string
+	Token     []byte
+	Authorize string
 }

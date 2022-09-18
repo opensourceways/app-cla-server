@@ -19,7 +19,7 @@ var worker IEmailWorker
 
 type IEmailWorker interface {
 	GenCLAPDFForCorporationAndSendIt(string, string, models.OrgInfo, models.CorporationSigning, []models.CLAField)
-	SendSimpleMessage(orgEmail string, msg *email.EmailMessage)
+	SendSimpleMessage(orgEmail, platform, authorize string, msg *email.EmailMessage)
 	Shutdown()
 }
 
@@ -120,7 +120,7 @@ func (w *emailWorker) GenCLAPDFForCorporationAndSendIt(linkID, claFile string, o
 
 			msg.Attachment = file
 
-			if err := ec.SendEmail(emailCfg.Token, msg); err != nil {
+			if err := ec.SendEmail(emailCfg.Token, emailCfg.Authorize, msg); err != nil {
 				return fmt.Errorf("error to send email, err:%s", err.Error())
 			}
 			return nil
@@ -144,7 +144,7 @@ func (w *emailWorker) GenCLAPDFForCorporationAndSendIt(linkID, claFile string, o
 	go f()
 }
 
-func (w *emailWorker) SendSimpleMessage(orgEmail string, msg *email.EmailMessage) {
+func (w *emailWorker) SendSimpleMessage(orgEmail, platform, authorize string, msg *email.EmailMessage) {
 	f := func() {
 		defer func() {
 			w.wg.Done()
@@ -156,7 +156,26 @@ func (w *emailWorker) SendSimpleMessage(orgEmail string, msg *email.EmailMessage
 		}
 
 		action := func() error {
-			if err := ec.SendEmail(emailCfg.Token, msg); err != nil {
+			if err := ec.SendEmail(emailCfg.Token, emailCfg.Authorize, msg); err != nil {
+				return fmt.Errorf("error to send email, err:%s", err.Error())
+			}
+			return nil
+		}
+
+		w.tryToSendEmail(action)
+	}
+
+	d := func() {
+		defer func() {
+			w.wg.Done()
+		}()
+		ec, err := email.EmailAgent.GetEmailClient(platform)
+		if err != nil {
+			return
+		}
+
+		action := func() error {
+			if err := ec.SendEmail(nil, authorize, msg); err != nil {
 				return fmt.Errorf("error to send email, err:%s", err.Error())
 			}
 			return nil
@@ -166,7 +185,12 @@ func (w *emailWorker) SendSimpleMessage(orgEmail string, msg *email.EmailMessage
 	}
 
 	w.wg.Add(1)
-	go f()
+	if authorize != "" {
+		go d()
+	} else {
+		go f()
+	}
+
 }
 
 func (w *emailWorker) tryToSendEmail(action func() error) {

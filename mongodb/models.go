@@ -129,9 +129,10 @@ type dCorpManager struct {
 }
 
 type cOrgEmail struct {
-	Email    string `bson:"email" json:"email" required:"true"`
-	Platform string `bson:"platform" json:"platform" required:"true"`
-	Token    []byte `bson:"token" json:"-"`
+	Email     string `bson:"email" json:"email" required:"true"`
+	Platform  string `bson:"platform" json:"platform" required:"true"`
+	Token     []byte `bson:"token" json:"-"`
+	Authorize string `bson:"authorize" json:"authorize"`
 }
 
 type DCLAInfo struct {

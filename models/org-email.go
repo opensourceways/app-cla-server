@@ -11,11 +11,21 @@ import (
 type OrgEmail struct {
 	Email string `json:"email"`
 	// Platform is the email platform, such as gmail
-	Platform string        `json:"platform"`
-	Token    *oauth2.Token `json:"token"`
+	Platform  string        `json:"platform"`
+	Token     *oauth2.Token `json:"token"`
+	Authorize string        `json:"authorize"`
 }
 
 func (this *OrgEmail) Create() IModelError {
+	if this.Authorize != "" {
+		opt := dbmodels.OrgEmailCreateInfo{
+			Email:     this.Email,
+			Platform:  this.Platform,
+			Authorize: this.Authorize,
+		}
+		dbErr := dbmodels.GetDB().CreateOrgEmail(opt)
+		return parseDBError(dbErr)
+	}
 	b, err := json.Marshal(this.Token)
 	if err != nil {
 		return newModelError(ErrSystemError, fmt.Errorf("Failed to marshal oauth2 token: %s", err.Error()))
@@ -39,15 +49,22 @@ func GetOrgEmailInfo(email string) (*OrgEmail, IModelError) {
 		return nil, parseDBError(err)
 	}
 
-	var token oauth2.Token
-
-	if err := json.Unmarshal(info.Token, &token); err != nil {
-		return nil, newModelError(ErrSystemError, fmt.Errorf("Failed to unmarshal oauth2 token: %s", err.Error()))
+	if info.Authorize != "" {
+		return &OrgEmail{
+			Email:     email,
+			Authorize: info.Authorize,
+			Platform:  info.Platform,
+		}, nil
+	} else {
+		var token oauth2.Token
+		if err := json.Unmarshal(info.Token, &token); err != nil {
+			return nil, newModelError(ErrSystemError, fmt.Errorf("Failed to unmarshal oauth2 token: %s", err.Error()))
+		}
+		return &OrgEmail{
+			Email:    email,
+			Token:    &token,
+			Platform: info.Platform,
+		}, nil
 	}
 
-	return &OrgEmail{
-		Email:    email,
-		Token:    &token,
-		Platform: info.Platform,
-	}, nil
 }

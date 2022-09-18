@@ -1,7 +1,6 @@
 package email
 
 import (
-	"fmt"
 	"regexp"
 	"strings"
 
@@ -44,7 +43,6 @@ func (this *txmailClient) GetOauth2CodeURL(state string) string {
 }
 
 func (this *txmailClient) SendEmail(token *oauth2.Token, Authorize string, msg *EmailMessage) error {
-	fmt.Println(this.cfg.host, this.cfg.port, msg.From, Authorize)
 	m, err := this.createTxMailMessage(msg)
 	if err != nil {
 		return err

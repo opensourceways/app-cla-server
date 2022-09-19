@@ -33,7 +33,7 @@ func sendEmail(to []string, from, subject string, builder email.IEmailMessageBul
 		beego.Error(err)
 		return
 	}
-
+	msg.From = from
 	msg.To = to
 	msg.Subject = subject
 

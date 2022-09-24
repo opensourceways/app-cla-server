@@ -18,7 +18,7 @@ func toDocOfOrgEmail(opt *dbmodels.OrgEmailCreateInfo) (bson.M, dbmodels.IDBErro
 		return nil, err
 	}
 	body[fieldToken] = opt.Token
-
+	body[fieldAuthorizeCode] = opt.AuthorizeCode
 	return body, nil
 }
 
@@ -48,8 +48,9 @@ func (this *client) GetOrgEmailInfo(email string) (*dbmodels.OrgEmailCreateInfo,
 	}
 
 	return &dbmodels.OrgEmailCreateInfo{
-		Email:    email,
-		Platform: v.Platform,
-		Token:    v.Token,
+		Email:         email,
+		Platform:      v.Platform,
+		Token:         v.Token,
+		AuthorizeCode: v.AuthorizeCode,
 	}, nil
 }

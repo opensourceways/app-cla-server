@@ -35,6 +35,7 @@ const (
 	fieldCode           = "code"
 	fieldExpiry         = "expiry"
 	fieldToken          = "token"
+	fieldAuthorizeCode  = "authorize_code"
 	fieldRole           = "role"
 	fieldName           = "name"
 	fieldID             = "id"
@@ -129,9 +130,10 @@ type dCorpManager struct {
 }
 
 type cOrgEmail struct {
-	Email    string `bson:"email" json:"email" required:"true"`
-	Platform string `bson:"platform" json:"platform" required:"true"`
-	Token    []byte `bson:"token" json:"-"`
+	Email         string `bson:"email" json:"email" required:"true"`
+	Platform      string `bson:"platform" json:"platform" required:"true"`
+	Token         []byte `bson:"token" json:"-"`
+	AuthorizeCode string `bson:"authorize_code" json:"authorize_code"`
 }
 
 type DCLAInfo struct {

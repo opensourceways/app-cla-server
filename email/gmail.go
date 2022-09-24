@@ -74,7 +74,7 @@ func (this *gmailClient) GetOauth2CodeURL(state string) string {
 	return myoauth2.GetOauth2CodeURL(this.cfg, state)
 }
 
-func (this *gmailClient) SendEmail(token *oauth2.Token, msg *EmailMessage) error {
+func (this *gmailClient) SendEmail(token *oauth2.Token, authorizeCode string, msg *EmailMessage) error {
 	client := this.cfg.Client(context.Background(), token)
 	srv, err := gmail.New(client)
 	if err != nil {

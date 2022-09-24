@@ -15,6 +15,8 @@ require (
 	go.mongodb.org/mongo-driver v1.4.4
 	golang.org/x/oauth2 v0.0.0-20210819190943-2bc19b11175f
 	google.golang.org/api v0.36.0
+	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
+	gopkg.in/gomail.v2 v2.0.0-20160411212932-81ebce5c23df // indirect
 	k8s.io/apimachinery v0.22.1
 	sigs.k8s.io/yaml v1.2.0
 )

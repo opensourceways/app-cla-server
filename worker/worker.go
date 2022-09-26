@@ -120,7 +120,9 @@ func (w *emailWorker) GenCLAPDFForCorporationAndSendIt(linkID, claFile string, o
 
 			msg.Attachment = file
 
-			if err := ec.SendEmail(emailCfg.Token, msg); err != nil {
+			msg.SendInfo = emailCfg
+
+			if err := ec.SendEmail(msg); err != nil {
 				return fmt.Errorf("error to send email, err:%s", err.Error())
 			}
 			return nil
@@ -155,8 +157,10 @@ func (w *emailWorker) SendSimpleMessage(orgEmail string, msg *email.EmailMessage
 			return
 		}
 
+		msg.SendInfo = emailCfg
+
 		action := func() error {
-			if err := ec.SendEmail(emailCfg.Token, msg); err != nil {
+			if err := ec.SendEmail(msg); err != nil {
 				return fmt.Errorf("error to send email, err:%s", err.Error())
 			}
 			return nil
@@ -197,8 +201,8 @@ func (w *emailWorker) tryToSendEmail(action func() error) {
 	}
 }
 
-func getEmailClient(orgEmail string) (*models.OrgEmail, email.IEmail, error) {
-	emailCfg, merr := models.GetOrgEmailInfo(orgEmail)
+func getEmailClient(orgEmail string) (*email.SendInfo, email.IEmail, error) {
+	emailCfg, merr := models.GetOrgEmailInfoToSendMail(orgEmail)
 	if merr != nil {
 		logs.Info(merr.Error())
 		return nil, nil, merr

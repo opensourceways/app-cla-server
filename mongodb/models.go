@@ -42,7 +42,7 @@ const (
 	fieldDate           = "date"
 	fieldCorp           = "corp"
 	fieldEnabled        = "enabled"
-
+	fieldAuthorizeCode  = "authorize_code"
 	// 'ready' means the doc is ready to record the signing data currently.
 	// 'deleted' means the signing data is invalid.
 	linkStatusReady   = "ready"
@@ -129,9 +129,10 @@ type dCorpManager struct {
 }
 
 type cOrgEmail struct {
-	Email    string `bson:"email" json:"email" required:"true"`
-	Platform string `bson:"platform" json:"platform" required:"true"`
-	Token    []byte `bson:"token" json:"-"`
+	Email         string `bson:"email" json:"email" required:"true"`
+	Platform      string `bson:"platform" json:"platform" required:"true"`
+	Token         []byte `bson:"token" json:"-"`
+	AuthorizeCode string `bson:"authorize_code" json:"authorize_code"`
 }
 
 type DCLAInfo struct {

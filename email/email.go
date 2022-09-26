@@ -3,18 +3,14 @@ package email
 import (
 	"fmt"
 
-	"golang.org/x/oauth2"
-
 	"github.com/opensourceways/app-cla-server/util"
+	"golang.org/x/oauth2"
 )
 
 var EmailAgent = &emailAgent{emailClients: map[string]IEmail{}}
 
 type IEmail interface {
-	GetOauth2CodeURL(state string) string
-	GetToken(code, scope string) (*oauth2.Token, error)
-	GetAuthorizedEmail(token *oauth2.Token) (string, error)
-	SendEmail(token *oauth2.Token, msg *EmailMessage) error
+	SendEmail(msg *EmailMessage) error
 	initialize(string) error
 }
 
@@ -43,12 +39,20 @@ func Initialize(configFile string) error {
 }
 
 type EmailMessage struct {
-	From       string   `json:"from"`
-	To         []string `json:"to"`
-	Subject    string   `json:"subject"`
-	Content    string   `json:"content"`
-	Attachment string   `json:"attachment"`
-	MIME       string   `json:"mime"`
+	From       string    `json:"from"`
+	To         []string  `json:"to"`
+	Subject    string    `json:"subject"`
+	Content    string    `json:"content"`
+	Attachment string    `json:"attachment"`
+	MIME       string    `json:"mime"`
+	SendInfo   *SendInfo `json:"send_info"`
+}
+
+type SendInfo struct {
+	Email         string        `json:"email"`
+	Platform      string        `json:"platform"`
+	Token         *oauth2.Token `json:"token"`
+	AuthorizeCode string        `json:"authorize_code"`
 }
 
 type emailAgent struct {

@@ -37,7 +37,7 @@ func (this *EmailController) Auth() {
 	}
 
 	platform := this.GetString(":platform")
-	emailClient, err := email.EmailAgent.GetEmailClient(platform)
+	_, err := email.EmailAgent.GetEmailClient(platform)
 	if err != nil {
 		rs(errUnsupportedEmailPlatform, err)
 		return
@@ -48,13 +48,13 @@ func (this *EmailController) Auth() {
 		return
 	}
 
-	token, err := emailClient.GetToken(this.GetString("code"), this.GetString("scope"))
+	token, err := email.GetGmailToken(this.GetString("code"), this.GetString("scope"))
 	if err != nil {
 		rs(errSystemError, err)
 		return
 	}
 
-	emailAddr, err := emailClient.GetAuthorizedEmail(token)
+	emailAddr, err := email.GetGmailAuthorizedEmail(token)
 	if err != nil {
 		rs(errSystemError, err)
 		return
@@ -86,13 +86,13 @@ func (this *EmailController) Auth() {
 // @Param	platform		path 	string	true		"The email platform"
 // @router /authcodeurl/:platform [get]
 func (this *EmailController) Get() {
-	e, err := email.EmailAgent.GetEmailClient(this.GetString(":platform"))
+	_, err := email.EmailAgent.GetEmailClient(this.GetString(":platform"))
 	if err != nil {
 		this.sendFailedResponse(400, errUnknownEmailPlatform, err, "get auth code url of email")
 		return
 	}
 
 	this.sendSuccessResp(map[string]string{
-		"url": e.GetOauth2CodeURL(authURLState),
+		"url": email.GetGmailOauth2CodeURL(authURLState),
 	})
 }

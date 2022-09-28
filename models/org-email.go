@@ -13,6 +13,7 @@ type OrgEmail struct {
 	// Platform is the email platform, such as gmail
 	Platform string        `json:"platform"`
 	Token    *oauth2.Token `json:"token"`
+	AuthCode string        `json:"auth_code"`
 }
 
 func (this *OrgEmail) Create() IModelError {

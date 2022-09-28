@@ -37,7 +37,7 @@ func (this *EmailController) Auth() {
 	}
 
 	platform := this.GetString(":platform")
-	emailClient, err := email.EmailAgent.GetEmailClient(platform)
+	emailClient, err := email.EmailAgent.GetEmailOauthedClient(platform)
 	if err != nil {
 		rs(errUnsupportedEmailPlatform, err)
 		return
@@ -86,7 +86,7 @@ func (this *EmailController) Auth() {
 // @Param	platform		path 	string	true		"The email platform"
 // @router /authcodeurl/:platform [get]
 func (this *EmailController) Get() {
-	e, err := email.EmailAgent.GetEmailClient(this.GetString(":platform"))
+	e, err := email.EmailAgent.GetEmailOauthedClient(this.GetString(":platform"))
 	if err != nil {
 		this.sendFailedResponse(400, errUnknownEmailPlatform, err, "get auth code url of email")
 		return

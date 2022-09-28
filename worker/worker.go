@@ -55,7 +55,7 @@ func (w *emailWorker) GenCLAPDFForCorporationAndSendIt(linkID, claFile string, o
 			w.wg.Done()
 		}()
 
-		emailCfg, ec, err := getEmailClient(orgInfo.OrgEmail)
+		ec, err := getEmailClient(orgInfo.OrgEmail)
 		if err != nil {
 			logs.Error("get email client failed, err:", err)
 			return
@@ -120,7 +120,7 @@ func (w *emailWorker) GenCLAPDFForCorporationAndSendIt(linkID, claFile string, o
 
 			msg.Attachment = file
 
-			if err := ec.SendEmail(emailCfg.Token, msg); err != nil {
+			if err := ec.SendEmail(msg); err != nil {
 				return fmt.Errorf("error to send email, err:%s", err.Error())
 			}
 			return nil
@@ -150,13 +150,13 @@ func (w *emailWorker) SendSimpleMessage(orgEmail string, msg *email.EmailMessage
 			w.wg.Done()
 		}()
 
-		emailCfg, ec, err := getEmailClient(orgEmail)
+		ec, err := getEmailClient(orgEmail)
 		if err != nil {
 			return
 		}
 
 		action := func() error {
-			if err := ec.SendEmail(emailCfg.Token, msg); err != nil {
+			if err := ec.SendEmail(msg); err != nil {
 				return fmt.Errorf("error to send email, err:%s", err.Error())
 			}
 			return nil
@@ -197,20 +197,21 @@ func (w *emailWorker) tryToSendEmail(action func() error) {
 	}
 }
 
-func getEmailClient(orgEmail string) (*models.OrgEmail, email.IEmail, error) {
+func getEmailClient(orgEmail string) (email.IEmail, error) {
 	emailCfg, merr := models.GetOrgEmailInfo(orgEmail)
 	if merr != nil {
 		logs.Info(merr.Error())
-		return nil, nil, merr
+		return nil, merr
 	}
 
-	ec, err := email.EmailAgent.GetEmailClient(emailCfg.Platform)
+	ec, err := email.EmailAgent.GetEmailClient(emailCfg)
 	if err != nil {
 		logs.Info(err.Error())
-		return nil, nil, err
+
+		return nil, err
 	}
 
-	return emailCfg, ec, nil
+	return ec, nil
 }
 
 func buildCorpSigningInfo(signing *models.CorporationSigning, claFields []models.CLAField) string {

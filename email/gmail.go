@@ -22,7 +22,7 @@ import (
 )
 
 func init() {
-	EmailAgent.emailClients["gmail"] = &gmailClient{}
+	EmailAgent.emailsOauthed["gmail"] = &gmailClient{}
 }
 
 type gmailClient struct {

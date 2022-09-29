@@ -145,3 +145,19 @@ func GetAllLinks() ([]dbmodels.LinkInfo, IModelError) {
 	v, err := dbmodels.GetDB().GetAllLinks()
 	return v, parseDBError(err)
 }
+
+func UpdateLinkEmail(linkId, email string) error {
+	orgEmail, err := dbmodels.GetDB().GetOrgEmailInfo(email)
+	if err != nil {
+		if err.IsErrorOf(dbmodels.ErrNoDBRecord) {
+			return newModelError(ErrOrgEmailNotExists, err)
+		}
+		return parseDBError(err)
+	}
+
+	info := &dbmodels.LinkCreateOption{
+		LinkID:   linkId,
+		OrgEmail: *orgEmail,
+	}
+	return dbmodels.GetDB().UpdateLinkEmail(info)
+}

@@ -33,11 +33,11 @@ func sendEmail(to []string, from, subject string, builder email.IEmailMessageBul
 		beego.Error(err)
 		return
 	}
-
+	msg.From = from
 	msg.To = to
 	msg.Subject = subject
 
-	worker.GetEmailWorker().SendSimpleMessage(from, msg)
+	worker.GetEmailWorker().SendSimpleMessage(msg)
 }
 
 func notifyCorpAdmin(orgInfo *models.OrgInfo, info *dbmodels.CorporationManagerCreateOption) {

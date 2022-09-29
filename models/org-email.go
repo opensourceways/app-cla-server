@@ -32,7 +32,6 @@ func (this *OrgEmail) Create() IModelError {
 }
 
 func (this *OrgEmail) CreateUseAuthCode() IModelError {
-
 	opt := dbmodels.OrgEmailCreateInfo{
 		Email:    this.Email,
 		Platform: this.Platform,
@@ -74,8 +73,8 @@ type EmailAuthorization struct {
 	Authorize string `json:"authorize"`
 }
 
-func (this *EmailAuthorization) Validate() IModelError {
-	return checkVerificationCode(this.Email, this.Code, this.Purpose)
+func (e *EmailAuthorization) Validate() IModelError {
+	return checkVerificationCode(e.Email, e.Code, e.Purpose)
 }
 func PurposeOfEmailAuthorization(email string) string {
 	return fmt.Sprintf("email authorization: %s", email)

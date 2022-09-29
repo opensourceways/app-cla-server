@@ -113,11 +113,13 @@ func (this *EmailController) Code() {
 		this.sendFailedResultAsResp(fr, action)
 		return
 	}
+
 	code, ierr := models.CreateVerificationCode(info.Email, models.PurposeOfEmailAuthorization(info.Email), config.AppConfig.VerificationCodeExpiry)
 	if ierr != nil {
 		this.sendModelErrorAsResp(ierr, action)
 		return
 	}
+
 	e := email.EmailVerification{
 		Code: code,
 	}
@@ -126,6 +128,7 @@ func (this *EmailController) Code() {
 		beego.Error(err)
 		return
 	}
+
 	msg.From = info.Email
 	msg.To = []string{info.Email}
 	msg.Subject = "CLA Email authorization verification code"
@@ -139,7 +142,6 @@ func (this *EmailController) Code() {
 // @router /authorize/:platform [post]
 func (this *EmailController) Authorize() {
 	action := "Email authorization verification"
-
 	platform := this.GetString(":platform")
 
 	var info models.EmailAuthorization
@@ -154,10 +156,12 @@ func (this *EmailController) Authorize() {
 		this.sendModelErrorAsResp(verr, action)
 		return
 	}
+
 	if _, gerr := email.EmailAgent.GetEmailAuthClient(platform); gerr != nil {
 		this.sendFailedResponse(500, errUnknownEmailPlatform, gerr, action)
 		return
 	}
+
 	opt := models.OrgEmail{
 		Email:    info.Email,
 		Platform: platform,
@@ -168,6 +172,7 @@ func (this *EmailController) Authorize() {
 		this.sendModelErrorAsResp(cerr, action)
 		return
 	}
+
 	this.setCookies(map[string]string{"email": info.Email})
 	this.sendSuccessResp("Email Authorization Success")
 	return

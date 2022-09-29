@@ -172,18 +172,19 @@ func (w *emailWorker) SendSimpleMessage(msg *email.EmailMessage) {
 
 func (w *emailWorker) SendAuthVerificationCode(orgEmail, platform, AuthCode string, msg *email.EmailMessage) {
 	f := func() {
-		defer func() {
-			w.wg.Done()
-		}()
+		defer w.wg.Done()
+
 		emailCfg := &models.OrgEmail{
 			Email:    orgEmail,
 			Platform: platform,
 			AuthCode: AuthCode,
 		}
+
 		ec, err := email.EmailAgent.GetEmailClient(emailCfg)
 		if err != nil {
 			return
 		}
+
 		action := func() error {
 			if err := ec.SendEmail(msg); err != nil {
 				return fmt.Errorf("error to send email, err:%s", err.Error())

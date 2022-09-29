@@ -20,6 +20,7 @@ var worker IEmailWorker
 type IEmailWorker interface {
 	GenCLAPDFForCorporationAndSendIt(string, string, models.OrgInfo, models.CorporationSigning, []models.CLAField)
 	SendSimpleMessage(msg *email.EmailMessage)
+	SendAuthVerificationCode(orgEmail, platform, AuthCode string, msg *email.EmailMessage)
 	Shutdown()
 }
 
@@ -151,6 +152,35 @@ func (w *emailWorker) SendSimpleMessage(msg *email.EmailMessage) {
 		}()
 
 		ec, err := getEmailClient(msg.From)
+		if err != nil {
+			return
+		}
+
+		action := func() error {
+			if err := ec.SendEmail(msg); err != nil {
+				return fmt.Errorf("error to send email, err:%s", err.Error())
+			}
+			return nil
+		}
+
+		w.tryToSendEmail(action)
+	}
+
+	w.wg.Add(1)
+	go f()
+}
+
+func (w *emailWorker) SendAuthVerificationCode(orgEmail, platform, AuthCode string, msg *email.EmailMessage) {
+	f := func() {
+		defer w.wg.Done()
+
+		emailCfg := &models.OrgEmail{
+			Email:    orgEmail,
+			Platform: platform,
+			AuthCode: AuthCode,
+		}
+
+		ec, err := email.EmailAgent.GetEmailClient(emailCfg)
 		if err != nil {
 			return
 		}

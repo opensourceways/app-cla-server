@@ -31,6 +31,16 @@ func (this *OrgEmail) Create() IModelError {
 	return parseDBError(dbErr)
 }
 
+func (this *OrgEmail) CreateUseAuthCode() IModelError {
+	opt := dbmodels.OrgEmailCreateInfo{
+		Email:    this.Email,
+		Platform: this.Platform,
+		AuthCode: this.AuthCode,
+	}
+	dbErr := dbmodels.GetDB().CreateOrgEmail(opt)
+	return parseDBError(dbErr)
+}
+
 func GetOrgEmailInfo(email string) (*OrgEmail, IModelError) {
 	info, err := dbmodels.GetDB().GetOrgEmailInfo(email)
 	if err != nil {
@@ -54,4 +64,18 @@ func GetOrgEmailInfo(email string) (*OrgEmail, IModelError) {
 		Platform: info.Platform,
 		AuthCode: info.AuthCode,
 	}, nil
+}
+
+type EmailAuthorization struct {
+	Email     string `json:"email"`
+	Code      string `json:"code"`
+	Purpose   string `json:"purpose"`
+	Authorize string `json:"authorize"`
+}
+
+func (e *EmailAuthorization) Validate() IModelError {
+	return checkVerificationCode(e.Email, e.Code, e.Purpose)
+}
+func PurposeOfEmailAuthorization(email string) string {
+	return fmt.Sprintf("email authorization: %s", email)
 }

@@ -119,7 +119,7 @@ func (w *emailWorker) GenCLAPDFForCorporationAndSendIt(linkID, claFile string, o
 			}
 
 			msg.Attachment = file
-
+			msg.From = orgInfo.OrgEmail
 			if err := ec.SendEmail(msg); err != nil {
 				return fmt.Errorf("error to send email, err:%s", err.Error())
 			}
@@ -156,6 +156,7 @@ func (w *emailWorker) SendSimpleMessage(orgEmail string, msg *email.EmailMessage
 		}
 
 		action := func() error {
+			msg.From = orgEmail
 			if err := ec.SendEmail(msg); err != nil {
 				return fmt.Errorf("error to send email, err:%s", err.Error())
 			}

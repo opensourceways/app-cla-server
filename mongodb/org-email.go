@@ -18,7 +18,7 @@ func toDocOfOrgEmail(opt *dbmodels.OrgEmailCreateInfo) (bson.M, dbmodels.IDBErro
 		return nil, err
 	}
 	body[fieldToken] = opt.Token
-
+	body[fieldAuthCode] = opt.AuthCode
 	return body, nil
 }
 

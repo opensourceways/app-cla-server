@@ -118,6 +118,15 @@ func (ea *emailAgent) GetEmailOauthedClient(platform string) (iEmailOauthed, err
 	return e, nil
 }
 
+func (ea *emailAgent) GetEmailAuthClient(platform string) (iEmailAuthedByCode, error) {
+	e, ok := ea.emailsAuthedByCode[platform]
+	if !ok {
+		return nil, errorUnsupportedEmail
+	}
+
+	return e, nil
+}
+
 type emailOauthedAdapter struct {
 	e     iEmailOauthed
 	token *oauth2.Token

@@ -3,7 +3,11 @@ package controllers
 import (
 	"fmt"
 	"strings"
+	"time"
 
+	"github.com/astaxie/beego"
+	"github.com/astaxie/beego/logs"
+	"github.com/opensourceways/app-cla-server/config"
 	"github.com/opensourceways/app-cla-server/email"
 	"github.com/opensourceways/app-cla-server/models"
 )
@@ -95,4 +99,105 @@ func (this *EmailController) Get() {
 	this.sendSuccessResp(map[string]string{
 		"url": e.GetOauth2CodeURL(authURLState),
 	})
+}
+
+// @Title Code
+// @Description send Email authorization verification code
+// @Param
+// @router /code/:platform [post]
+func (this *EmailController) Code() {
+	action := "send Email authorization verification code"
+	platform := this.GetString(":platform")
+
+	var info models.EmailAuthorization
+	if fr := this.fetchInputPayloadFromFormData(&info); fr != nil {
+		this.sendFailedResultAsResp(fr, action)
+		return
+	}
+	code, ierr := models.CreateVerificationCode(info.Email, models.PurposeOfEmailAuthorization(info.Email), config.AppConfig.VerificationCodeExpiry)
+	if ierr != nil {
+		this.sendModelErrorAsResp(ierr, action)
+		return
+	}
+	e := email.EmailVerification{
+		Code: code,
+	}
+	msg, err := e.GenEmailMsg()
+	if err != nil {
+		beego.Error(err)
+		return
+	}
+	msg.From = info.Email
+	msg.To = []string{info.Email}
+	msg.Subject = "CLA Email authorization verification code"
+
+	sendCode(info.Email, platform, info.Authorize, msg)
+}
+
+func sendCode(orgEmail, platform, AuthCode string, msg *email.EmailMessage) {
+	emailCfg := &models.OrgEmail{
+		Email:    orgEmail,
+		Platform: platform,
+		AuthCode: AuthCode,
+	}
+	ec, gerr := email.EmailAgent.GetEmailClient(emailCfg)
+	if gerr != nil {
+		logs.Error(gerr.Error())
+		return
+	}
+	action := func() error {
+		if err := ec.SendEmail(msg); err != nil {
+			return fmt.Errorf("error to send email, err:%s", err.Error())
+		}
+		return nil
+	}
+
+	for i := 0; i < 10; i++ {
+		err := action()
+		if err == nil {
+			break
+		}
+		logs.Error(err)
+		time.Sleep(time.Minute * time.Duration(1))
+	}
+}
+
+// @Title Authorize
+// @Description Email authorization verification
+// @Param
+// @router /authorize/:platform [post]
+func (this *EmailController) Authorize() {
+	action := "Email authorization verification"
+
+	platform := this.GetString(":platform")
+
+	var info models.EmailAuthorization
+	if fr := this.fetchInputPayloadFromFormData(&info); fr != nil {
+		this.sendFailedResultAsResp(fr, action)
+		return
+	}
+
+	info.Purpose = models.PurposeOfEmailAuthorization(info.Email)
+
+	if verr := (&info).Validate(); verr != nil {
+		this.sendModelErrorAsResp(verr, action)
+		return
+	}
+	if _, gerr := email.EmailAgent.GetEmailAuthClient(platform); gerr != nil {
+		this.sendFailedResponse(500, errUnknownEmailPlatform, gerr, action)
+		return
+	}
+	opt := models.OrgEmail{
+		Email:    info.Email,
+		Platform: platform,
+		AuthCode: info.Authorize,
+	}
+
+	if cerr := opt.CreateUseAuthCode(); cerr != nil {
+		this.sendModelErrorAsResp(cerr, action)
+		return
+	}
+	this.setCookies(map[string]string{"email": info.Email})
+	this.sendSuccessResp("Email Authorization Success")
+	return
 }

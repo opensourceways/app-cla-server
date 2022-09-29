@@ -175,5 +175,6 @@ func (this *EmailController) Authorize() {
 
 	this.setCookies(map[string]string{"email": info.Email})
 	this.sendSuccessResp("Email Authorization Success")
+
 	return
 }

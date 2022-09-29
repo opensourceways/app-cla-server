@@ -19,7 +19,7 @@ var worker IEmailWorker
 
 type IEmailWorker interface {
 	GenCLAPDFForCorporationAndSendIt(string, string, models.OrgInfo, models.CorporationSigning, []models.CLAField)
-	SendSimpleMessage(orgEmail string, msg *email.EmailMessage)
+	SendSimpleMessage(msg *email.EmailMessage)
 	Shutdown()
 }
 
@@ -119,7 +119,7 @@ func (w *emailWorker) GenCLAPDFForCorporationAndSendIt(linkID, claFile string, o
 			}
 
 			msg.Attachment = file
-
+			msg.From = orgInfo.OrgEmail
 			if err := ec.SendEmail(msg); err != nil {
 				return fmt.Errorf("error to send email, err:%s", err.Error())
 			}
@@ -144,13 +144,13 @@ func (w *emailWorker) GenCLAPDFForCorporationAndSendIt(linkID, claFile string, o
 	go f()
 }
 
-func (w *emailWorker) SendSimpleMessage(orgEmail string, msg *email.EmailMessage) {
+func (w *emailWorker) SendSimpleMessage(msg *email.EmailMessage) {
 	f := func() {
 		defer func() {
 			w.wg.Done()
 		}()
 
-		ec, err := getEmailClient(orgEmail)
+		ec, err := getEmailClient(msg.From)
 		if err != nil {
 			return
 		}

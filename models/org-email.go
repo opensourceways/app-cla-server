@@ -42,13 +42,16 @@ func GetOrgEmailInfo(email string) (*OrgEmail, IModelError) {
 
 	var token oauth2.Token
 
-	if err := json.Unmarshal(info.Token, &token); err != nil {
-		return nil, newModelError(ErrSystemError, fmt.Errorf("Failed to unmarshal oauth2 token: %s", err.Error()))
+	if len(info.Token) > 0 {
+		if err := json.Unmarshal(info.Token, &token); err != nil {
+			return nil, newModelError(ErrSystemError, fmt.Errorf("Failed to unmarshal oauth2 token: %s", err.Error()))
+		}
 	}
 
 	return &OrgEmail{
 		Email:    email,
 		Token:    &token,
 		Platform: info.Platform,
+		AuthCode: info.AuthCode,
 	}, nil
 }

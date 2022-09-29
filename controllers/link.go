@@ -282,3 +282,28 @@ func LoadLinks() error {
 
 	return nil
 }
+
+// @Title UpdateLinkEmail
+// @Description update link email
+// @Param	:link_id	email
+// @router /update/:link_id [post]
+func (this *LinkController) UpdateLinkEmail() {
+	action := "update link email"
+	linkID := this.GetString(":link_id")
+	email := this.GetString("email")
+
+	_, mErr := models.GetOrgOfLink(linkID)
+	if mErr != nil {
+		this.sendModelErrorAsResp(mErr, action)
+		return
+	}
+
+	err := models.UpdateLinkEmail(linkID, email)
+	if err != nil {
+		this.sendFailedResponse(500, errSystemError, err, action)
+		return
+	}
+
+	this.sendSuccessResp("success")
+	return
+}

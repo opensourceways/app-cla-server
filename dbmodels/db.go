@@ -89,6 +89,7 @@ type IVerificationCode interface {
 type ILink interface {
 	GetLinkID(orgRepo *OrgRepo) (string, IDBError)
 	CreateLink(info *LinkCreateOption) (string, IDBError)
+	UpdateLinkEmail(info *LinkCreateOption) IDBError
 	Unlink(linkID string) IDBError
 	GetOrgOfLink(linkID string) (*OrgInfo, IDBError)
 	ListLinks(opt *LinkListOption) ([]LinkInfo, IDBError)

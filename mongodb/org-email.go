@@ -51,5 +51,6 @@ func (this *client) GetOrgEmailInfo(email string) (*dbmodels.OrgEmailCreateInfo,
 		Email:    email,
 		Platform: v.Platform,
 		Token:    v.Token,
+		AuthCode: v.AuthCode,
 	}, nil
 }

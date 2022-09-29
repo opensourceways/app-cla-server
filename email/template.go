@@ -12,7 +12,7 @@ const (
 	TmplIndividualSigning     = "individual signing"
 	TmplEmployeeSigning       = "employee signing"
 	TmplNotifyingManager      = "notifying manager"
-	TmplVerificationCode      = "verificaition code"
+	TmplVerificationCode      = "verification code"
 	TmplAddingCorpEmailDomain = "adding corp email domain"
 	TmplAddingCorpAdmin       = "adding corp admin"
 	TmplAddingCorpManager     = "adding corp manager"
@@ -21,6 +21,7 @@ const (
 	TmplInactivaingEmployee   = "inactivating employee"
 	TmplRemovingingEmployee   = "removing employee"
 	TmplPasswordRetrieval     = "password retrieval"
+	TmplEmailVerification     = "email verification"
 )
 
 var msgTmpl = map[string]*template.Template{}
@@ -40,6 +41,7 @@ func initTemplate() error {
 		TmplInactivaingEmployee:   "./conf/email-template/inactivating-employee.tmpl",
 		TmplRemovingingEmployee:   "./conf/email-template/removing-employee.tmpl",
 		TmplPasswordRetrieval:     "./conf/email-template/password-retrieval.tmpl",
+		TmplEmailVerification:     "./conf/email-template/email_verification.tmpl",
 	}
 
 	for name, path := range items {
@@ -214,4 +216,12 @@ func (p PasswordRetrieval) GenEmailMsg() (*EmailMessage, error) {
 	//adapter send html tmpl content
 	msg.MIME = "MIME-version: 1.0;\nContent-Type: text/html; charset=\"UTF-8\";\n\n"
 	return msg, nil
+}
+
+type EmailVerification struct {
+	Code string
+}
+
+func (this EmailVerification) GenEmailMsg() (*EmailMessage, error) {
+	return genEmailMsg(TmplEmailVerification, this)
 }

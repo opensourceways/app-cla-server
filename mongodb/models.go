@@ -35,6 +35,7 @@ const (
 	fieldCode           = "code"
 	fieldExpiry         = "expiry"
 	fieldToken          = "token"
+	fieldAuthCode       = "auth_Code"
 	fieldRole           = "role"
 	fieldName           = "name"
 	fieldID             = "id"
@@ -132,6 +133,7 @@ type cOrgEmail struct {
 	Email    string `bson:"email" json:"email" required:"true"`
 	Platform string `bson:"platform" json:"platform" required:"true"`
 	Token    []byte `bson:"token" json:"-"`
+	AuthCode string `bson:"auth_code" json:"auth_code"`
 }
 
 type DCLAInfo struct {

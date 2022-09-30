@@ -55,7 +55,7 @@ func (this *txmailClient) createTxMailMessage(msg *EmailMessage) (*gomail.Messag
 	m.SetHeader("Subject", msg.Subject)
 	m.SetBody("text/plain", msg.Content)
 	m.Attach(msg.Attachment)
-	return nil, nil
+	return m, nil
 }
 
 func simpleTxmailMessage(msg *EmailMessage) *gomail.Message {

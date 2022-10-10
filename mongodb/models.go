@@ -35,7 +35,6 @@ const (
 	fieldCode           = "code"
 	fieldExpiry         = "expiry"
 	fieldToken          = "token"
-	fieldAuthCode       = "auth_Code"
 	fieldRole           = "role"
 	fieldName           = "name"
 	fieldID             = "id"

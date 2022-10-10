@@ -12,13 +12,13 @@ func toDocOfOrgEmail(opt *dbmodels.OrgEmailCreateInfo) (bson.M, dbmodels.IDBErro
 	info := cOrgEmail{
 		Email:    opt.Email,
 		Platform: opt.Platform,
+		AuthCode: opt.AuthCode,
 	}
 	body, err := structToMap(info)
 	if err != nil {
 		return nil, err
 	}
 	body[fieldToken] = opt.Token
-	body[fieldAuthCode] = opt.AuthCode
 	return body, nil
 }
 

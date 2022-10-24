@@ -63,21 +63,14 @@ func (this *EmailController) Auth() {
 		return
 	}
 
-	if token.RefreshToken == "" {
-		if _, err := models.GetOrgEmailInfo(emailAddr); err != nil {
-			rs(errNoRefreshToken, fmt.Errorf("no refresh token"))
-			return
-		}
-	} else {
-		opt := models.OrgEmail{
-			Token:    token,
-			Email:    emailAddr,
-			Platform: platform,
-		}
-		if err := opt.Create(); err != nil {
-			rs(parseModelError(err).errCode, err)
-			return
-		}
+	opt := models.OrgEmail{
+		Token:    token,
+		Email:    emailAddr,
+		Platform: platform,
+	}
+	if err := opt.Create(); err != nil {
+		rs(parseModelError(err).errCode, err)
+		return
 	}
 
 	this.setCookies(map[string]string{"email": emailAddr})

@@ -8,6 +8,7 @@
 package routers
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/astaxie/beego"
@@ -20,7 +21,7 @@ import (
 )
 
 func init() {
-	runRate()
+	setRate()
 
 	ns := beego.NewNamespace("/v1",
 		beego.NSNamespace("/cla",
@@ -111,7 +112,7 @@ type errResp struct {
 	ErrMsg  string `json:"error_message"`
 }
 
-func runRate() {
+func setRate() {
 	requestMaxRate := beego.AppConfig.String("requestLimit")
 	requestRate, _ := limiter.NewRateFromFormatted(requestMaxRate)
 	l := limiter.New(memory.NewStore(), requestRate)
@@ -121,7 +122,48 @@ func runRate() {
 	}, true)
 }
 
-func rateLimit(l *limiter.Limiter, ctx *context.Context) {
+func rateLimit(limit *limiter.Limiter, ctx *context.Context) {
+	if !needCheck(ctx) {
+		return
+	}
+
+	reached, ip, err := check(limit, ctx)
+	if err != nil {
+		logs.Error(err)
+
+		return
+	}
+
+	if reached {
+		logs.Info("too many requests from %s on %s", ip, ctx.Input.URL())
+
+		data := resp{
+			Data: errResp{
+				ErrCode: "system_error",
+				ErrMsg:  "Too Many Requests",
+			},
+		}
+
+		ctx.Output.JSON(data, false, false)
+	}
+}
+
+func needCheck(ctx *context.Context) bool {
+	url := ctx.Input.URL()
+	prefix := []string{
+		"/v1/verification-code",
+		"/v1/password-retrieval",
+	}
+	for _, item := range prefix {
+		if strings.HasPrefix(url, item) {
+			return true
+		}
+	}
+
+	return false
+}
+
+func check(limit *limiter.Limiter, ctx *context.Context) (bool, string, error) {
 	opt := limiter.Options{
 		IPv4Mask:           limiter.DefaultIPv4Mask,
 		IPv6Mask:           limiter.DefaultIPv6Mask,
@@ -129,27 +171,11 @@ func rateLimit(l *limiter.Limiter, ctx *context.Context) {
 	}
 
 	ip := limiter.GetIP(ctx.Request, opt)
-	if strings.HasPrefix(ctx.Input.URL(), "/v1/verification-code") {
-		limiterCtx, err := l.Get(ctx.Request.Context(), ip.String())
-		if err != nil {
-			logs.Error("limiter ctx failed: %s", err.Error())
-			return
-		}
 
-		if limiterCtx.Reached {
-			logs.Info("Too Many Requests from %s on %s", ip, ctx.Input.URL())
-
-			data := resp{
-				Data: errResp{
-					ErrCode: "system_error",
-					ErrMsg:  "Too Many Requests",
-				},
-			}
-
-			ctx.Output.JSON(data, false, false)
-
-			return
-		}
+	limiterCtx, err := limit.Get(ctx.Request.Context(), ip.String())
+	if err != nil {
+		return false, "", fmt.Errorf("fetch limiter ctx failed: %s", err.Error())
 	}
 
+	return limiterCtx.Reached, ip.String(), nil
 }

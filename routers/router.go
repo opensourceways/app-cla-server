@@ -110,54 +110,46 @@ type errResp struct {
 	ErrCode string `json:"error_code"`
 	ErrMsg  string `json:"error_message"`
 }
-type rateLimiter struct {
-	limiter *limiter.Limiter
-}
 
 func runRate() {
-	theRateLimit := &rateLimiter{}
 	requestMaxRate := beego.AppConfig.String("requestLimit")
 	requestRate, _ := limiter.NewRateFromFormatted(requestMaxRate)
-	theRateLimit.limiter = limiter.New(memory.NewStore(), requestRate)
+	l := limiter.New(memory.NewStore(), requestRate)
+
 	beego.InsertFilter("/*", beego.BeforeRouter, func(ctx *context.Context) {
-		rateLimit(theRateLimit, ctx)
+		rateLimit(l, ctx)
 	}, true)
 }
 
-func rateLimit(rateLimit *rateLimiter, ctx *context.Context) {
-	var (
-		limiterCtx limiter.Context
-		err        error
-		req        = ctx.Request
-	)
-
+func rateLimit(l *limiter.Limiter, ctx *context.Context) {
 	opt := limiter.Options{
 		IPv4Mask:           limiter.DefaultIPv4Mask,
 		IPv6Mask:           limiter.DefaultIPv6Mask,
 		TrustForwardHeader: false,
 	}
 
-	ip := limiter.GetIP(req, opt)
+	ip := limiter.GetIP(ctx.Request, opt)
 	if strings.HasPrefix(ctx.Input.URL(), "/v1/verification-code") {
-		limiterCtx, err = rateLimit.limiter.Get(req.Context(), ip.String())
-	}
-
-	if err != nil {
-		logs.Error("limiter ctx failed: %s", err.Error())
-		return
-	}
-
-	if limiterCtx.Reached {
-		logs.Info("Too Many Requests from %s on %s", ip, ctx.Input.URL())
-		data := resp{
-			Data: errResp{
-				ErrCode: "system_error",
-				ErrMsg:  "Too Many Requests",
-			},
+		limiterCtx, err := l.Get(ctx.Request.Context(), ip.String())
+		if err != nil {
+			logs.Error("limiter ctx failed: %s", err.Error())
+			return
 		}
 
-		ctx.Output.JSON(data, false, false)
+		if limiterCtx.Reached {
+			logs.Info("Too Many Requests from %s on %s", ip, ctx.Input.URL())
 
-		return
+			data := resp{
+				Data: errResp{
+					ErrCode: "system_error",
+					ErrMsg:  "Too Many Requests",
+				},
+			}
+
+			ctx.Output.JSON(data, false, false)
+
+			return
+		}
 	}
+
 }

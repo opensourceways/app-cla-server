@@ -1,36 +1,36 @@
 import sys
 
-from PyPDF2 import PdfFileReader
-from PyPDF2 import PdfFileWriter
+from PyPDF2 import PdfReader
+from PyPDF2 import PdfWriter
 from pathlib import Path
 
 
 def merge(pdf_file, org_signature, out_file):
-    writer = PdfFileWriter()
+    writer = PdfWriter()
 
-    pdf = PdfFileReader(pdf_file)
+    pdf = PdfReader(pdf_file)
     num = pdf.getNumPages()
     for i in range(num - 1):
-        writer.addPage(pdf.getPage(i))
+        writer.add_page(pdf.pages[i])
 
-    pdf1 = PdfFileReader(org_signature)
-    page = pdf1.getPage(0)
-    page.mergePage(pdf.getPage(num - 1))
-    writer.addPage(page)
-    
+    pdf1 = PdfReader(org_signature)
+    page = pdf1.pages[0]
+    page.mergePage(pdf.pages[num - 1])
+    writer.add_page(page)
+
     with Path(out_file).open("wb") as out:
         writer.write(out)
 
 
 def append(pdf_file, org_signature, out_file):
-    writer = PdfFileWriter()
+    writer = PdfWriter()
 
-    pdf = PdfFileReader(pdf_file)
-    writer.appendPagesFromReader(pdf)
+    pdf = PdfReader(pdf_file)
+    writer.append_pages_from_reader(pdf)
 
-    pdf1 = PdfFileReader(org_signature)
-    page = pdf1.getPage(0)
-    writer.addPage(page)
+    pdf1 = PdfReader(org_signature)
+    page = pdf1.pages[0]
+    writer.add_page(page)
 
     with Path(out_file).open("wb") as out:
         writer.write(out)

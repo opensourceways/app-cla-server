@@ -36,7 +36,13 @@ func (c *client) SignCorpCLA(linkID string, info *dbmodels.CorpSigningCreateOpt)
 	}
 
 	docFilter := docFilterOfSigning(linkID)
-	arrayFilterByElemMatch(fieldSignings, false, elemFilterOfCorpSigning(info.AdminEmail), docFilter)
+	docFilter["$nor"] = bson.A{
+		bson.M{fieldSignings + "." + fieldEmail: info.AdminEmail},
+		bson.M{fieldSignings: bson.M{"$elemMatch": bson.M{
+			fieldCorpID: genCorpID(info.AdminEmail),
+			fieldCorp:   info.CorporationName,
+		}}},
+	}
 
 	f := func(ctx context.Context) dbmodels.IDBError {
 		return c.pushArrayElem(ctx, c.corpSigningCollection, fieldSignings, docFilter, doc)

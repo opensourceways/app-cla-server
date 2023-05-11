@@ -175,11 +175,10 @@ func (this *CorporationSigningController) Delete() {
 // @Param	:org_id		path 	string		true		"org cla id"
 // @Param	:email		path 	string		true		"corp email"
 // @Success 201 {int} map
-// @router /:link_id/:email [post]
+// @router /:link_id/:signing_id [post]
 func (this *CorporationSigningController) ResendCorpSigningEmail() {
 	action := "resend corp signing email"
 	linkID := this.GetString(":link_id")
-	corpEmail := this.GetString(":email")
 
 	pl, fr := this.tokenPayloadBasedOnCodePlatform()
 	if fr != nil {
@@ -191,7 +190,9 @@ func (this *CorporationSigningController) ResendCorpSigningEmail() {
 		return
 	}
 
-	claInfo, signingInfo, merr := models.GetCorpSigningDetail(linkID, corpEmail)
+	claInfo, signingInfo, merr := models.GetCorpSigningDetail(
+		genSigningIndex(&this.Controller),
+	)
 	if merr != nil {
 		this.sendModelErrorAsResp(merr, action)
 		return

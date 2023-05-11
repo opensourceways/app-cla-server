@@ -202,3 +202,10 @@ func listCorpEmailDomain(linkID, adminEmail string) (map[string]bool, *failedApi
 	}
 	return m, nil
 }
+
+func genSigningIndex(ctl *beego.Controller) models.SigningIndex {
+	return models.SigningIndex{
+		LinkId:    ctl.GetString(":link_id"),
+		SigningId: ctl.GetString(":signing_id"),
+	}
+}

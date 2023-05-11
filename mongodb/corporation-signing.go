@@ -21,6 +21,7 @@ func elemFilterOfEmailDomains(email string) bson.M {
 
 func (c *client) SignCorpCLA(linkID string, info *dbmodels.CorpSigningCreateOpt) dbmodels.IDBError {
 	signing := dCorpSigning{
+		ID:          newObjectId(),
 		CLALanguage: info.CLALanguage,
 		CorpID:      genCorpID(info.AdminEmail),
 		CorpName:    info.CorporationName,
@@ -145,12 +146,14 @@ func (this *client) GetCorpSigningBasicInfo(linkID, email string) (*dbmodels.Cor
 	return toDBModelCorporationSigningBasicInfo(&(signings[0])), nil
 }
 
-func (this *client) GetCorpSigningDetail(linkID, email string) (*dbmodels.CLAInfo, *dbmodels.CorpSigningCreateOpt, dbmodels.IDBError) {
+func (this *client) GetCorpSigningDetail(si *dbmodels.SigningIndex) (*dbmodels.CLAInfo, *dbmodels.CorpSigningCreateOpt, dbmodels.IDBError) {
+	index := newSigningIndex(si)
+
 	pipeline := bson.A{
-		bson.M{"$match": docFilterOfSigning(linkID)},
+		bson.M{"$match": index.docFilterOfSigning()},
 		bson.M{"$project": bson.M{
 			fieldCLAInfos: 1,
-			fieldSignings: arrayElemFilter(fieldSignings, filterOfCorpID(email)),
+			fieldSignings: arrayElemFilter(fieldSignings, index.signingItemFilter()),
 		}},
 		bson.M{"$unwind": "$" + fieldSignings},
 		bson.M{"$project": bson.M{
@@ -207,6 +210,7 @@ func (this *client) GetCorpSigningDetail(linkID, email string) (*dbmodels.CLAInf
 
 func toDBModelCorporationSigningBasicInfo(cs *dCorpSigning) *dbmodels.CorporationSigningBasicInfo {
 	return &dbmodels.CorporationSigningBasicInfo{
+		ID:              cs.ID,
 		CLALanguage:     cs.CLALanguage,
 		AdminEmail:      cs.AdminEmail,
 		AdminName:       cs.AdminName,

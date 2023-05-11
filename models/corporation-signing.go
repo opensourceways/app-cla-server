@@ -8,6 +8,8 @@ import (
 	"github.com/opensourceways/app-cla-server/util"
 )
 
+type SigningIndex = dbmodels.SigningIndex
+
 func InitializeCorpSigning(linkID string, info *OrgInfo, cla *CLAInfo) IModelError {
 	err := dbmodels.GetDB().InitializeCorpSigning(linkID, info, cla)
 	return parseDBError(err)
@@ -117,8 +119,8 @@ func GetCorpSigningBasicInfo(linkID, email string) (*dbmodels.CorporationSigning
 	return v, parseDBError(err)
 }
 
-func GetCorpSigningDetail(linkID, email string) (*dbmodels.CLAInfo, *dbmodels.CorpSigningCreateOpt, IModelError) {
-	f, s, err := dbmodels.GetDB().GetCorpSigningDetail(linkID, email)
+func GetCorpSigningDetail(index SigningIndex) (*dbmodels.CLAInfo, *dbmodels.CorpSigningCreateOpt, IModelError) {
+	f, s, err := dbmodels.GetDB().GetCorpSigningDetail(&index)
 	if err == nil {
 		return f, s, nil
 	}

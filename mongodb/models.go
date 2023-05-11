@@ -42,6 +42,7 @@ const (
 	fieldDate           = "date"
 	fieldCorp           = "corp"
 	fieldEnabled        = "enabled"
+	fieldSigningId      = "signing_id"
 
 	// 'ready' means the doc is ready to record the signing data currently.
 	// 'deleted' means the signing data is invalid.
@@ -106,26 +107,28 @@ type cCorpSigning struct {
 }
 
 type dCorpSigning struct {
-	CLALanguage string   `bson:"lang" json:"lang" required:"true"`
-	CorpID      string   `bson:"corp_id" json:"corp_id" required:"true"`
-	CorpName    string   `bson:"corp" json:"corp" required:"true"`
-	Domains     []string `bson:"domains" json:"domains" required:"true"`
+	ID          string   `bson:"id"       json:"id"       required:"true"`
+	CLALanguage string   `bson:"lang"     json:"lang"     required:"true"`
+	CorpID      string   `bson:"corp_id"  json:"corp_id"  required:"true"`
+	CorpName    string   `bson:"corp"     json:"corp"     required:"true"`
+	Domains     []string `bson:"domains"  json:"domains"  required:"true"`
 
-	AdminEmail string `bson:"email" json:"email" required:"true"`
-	AdminName  string `bson:"name" json:"name" required:"true"`
-	Date       string `bson:"date" json:"date" required:"true"`
+	AdminEmail string `bson:"email"       json:"email"    required:"true"`
+	AdminName  string `bson:"name"        json:"name"     required:"true"`
+	Date       string `bson:"date"        json:"date"     required:"true"`
 
 	SigningInfo dbmodels.TypeSigningInfo `bson:"info" json:"info,omitempty"`
 }
 
 type dCorpManager struct {
-	ID               string `bson:"id" json:"id" required:"true"`
-	Name             string `bson:"name" json:"name" required:"true"`
-	Role             string `bson:"role" json:"role" required:"true"`
-	Email            string `bson:"email"  json:"email" required:"true"`
-	CorpID           string `bson:"corp_id" json:"corp_id" required:"true"`
-	Password         string `bson:"password" json:"password" required:"true"`
-	InitialPWChanged bool   `bson:"changed" json:"changed"`
+	ID               string `bson:"id"         json:"id"         required:"true"`
+	Name             string `bson:"name"       json:"name"       required:"true"`
+	Role             string `bson:"role"       json:"role"       required:"true"`
+	Email            string `bson:"email"      json:"email"      required:"true"`
+	CorpID           string `bson:"corp_id"    json:"corp_id"    required:"true"`
+	Password         string `bson:"password"   json:"password"   required:"true"`
+	SigningId        string `bson:"signing_id" json:"signing_id" required:"true"`
+	InitialPWChanged bool   `bson:"changed"    json:"changed"`
 }
 
 type cOrgEmail struct {

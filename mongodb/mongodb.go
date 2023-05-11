@@ -99,6 +99,10 @@ func toUID(oid interface{}) (string, error) {
 	return v.Hex(), nil
 }
 
+func newObjectId() string {
+	return primitive.NewObjectID().Hex()
+}
+
 func withContext(f func(context.Context) error) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()

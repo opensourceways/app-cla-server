@@ -76,11 +76,12 @@ func (this *CorporationManagerController) newAccessToken(linkID string, info *db
 	return this.newApiToken(
 		permission,
 		&acForCorpManagerPayload{
-			Corp:    info.Corp,
-			Name:    info.Name,
-			Email:   info.Email,
-			LinkID:  linkID,
-			OrgInfo: info.OrgInfo,
+			Corp:      info.Corp,
+			Name:      info.Name,
+			Email:     info.Email,
+			LinkID:    linkID,
+			OrgInfo:   info.OrgInfo,
+			SigningID: info.SigningId,
 		},
 	)
 }

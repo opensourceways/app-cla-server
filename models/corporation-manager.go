@@ -26,14 +26,16 @@ func (this CorporationManagerAuthentication) Authenticate() (map[string]dbmodels
 	info := dbmodels.CorporationManagerCheckInfo{Password: this.Password, LinkID: this.LinkID}
 	if merr := checkEmailFormat(this.User); merr == nil {
 		info.Email = this.User
+		info.EmailSuffix = util.EmailSuffix(this.User)
 	} else {
 		if merr := checkManagerID(this.User); merr != nil {
 			return nil, merr
 		}
 
+		info.ID = this.User
+
 		i := strings.LastIndex(this.User, "_")
 		info.EmailSuffix = this.User[(i + 1):]
-		info.ID = this.User[:i]
 	}
 
 	v, err := dbmodels.GetDB().CheckCorporationManagerExist(info)

@@ -31,6 +31,7 @@ type CorporationManagerCheckResult struct {
 	Role             string
 	Name             string
 	Email            string
+	SigningId        string
 	InitialPWChanged bool
 
 	OrgInfo

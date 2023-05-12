@@ -62,21 +62,20 @@ func (this *client) AddCorpAdministrator(
 	return withContext1(f)
 }
 
-func (this *client) CheckCorporationManagerExist(opt dbmodels.CorporationManagerCheckInfo) (map[string]dbmodels.CorporationManagerCheckResult, dbmodels.IDBError) {
+func (this *client) CheckCorporationManagerExist(opt dbmodels.CorporationManagerCheckInfo) (
+	map[string]dbmodels.CorporationManagerCheckResult, dbmodels.IDBError,
+) {
 	docFilter := bson.M{
 		fieldLinkStatus:   linkStatusReady,
 		fieldCorpManagers: bson.M{"$type": "array"},
 		fieldLinkID:       opt.LinkID,
 	}
 
-	var elemFilter bson.M
+	elemFilter := make(bson.M)
 	if opt.Email != "" {
-		elemFilter = elemFilterOfCorpManager(opt.Email)
+		elemFilter[fieldEmail] = opt.Email
 	} else {
-		elemFilter = bson.M{
-			fieldCorpID: opt.EmailSuffix,
-			fieldID:     opt.ID,
-		}
+		elemFilter[fieldID] = opt.ID
 	}
 	elemFilter[fieldPassword] = opt.Password
 
@@ -103,7 +102,10 @@ func (this *client) CheckCorporationManagerExist(opt dbmodels.CorporationManager
 				fieldSignings: func() bson.M {
 					return bson.M{"$and": bson.A{
 						bson.M{"$isArray": fmt.Sprintf("$$this.%s", fieldDomains)},
-						bson.M{"$in": bson.A{elemFilter[fieldCorpID], fmt.Sprintf("$$this.%s", fieldDomains)}},
+						bson.M{"$in": bson.A{
+							opt.EmailSuffix,
+							fmt.Sprintf("$$this.%s", fieldDomains),
+						}},
 					}}
 				},
 			},
@@ -121,23 +123,30 @@ func (this *client) CheckCorporationManagerExist(opt dbmodels.CorporationManager
 	result := map[string]dbmodels.CorporationManagerCheckResult{}
 	for i := range v {
 		doc := &v[i]
+
 		cm := doc.Managers
 		if len(cm) == 0 {
 			continue
 		}
+		item := &cm[0]
 
-		ss := doc.Signings
-		if len(ss) == 0 {
+		corpName := ""
+		for _, s := range doc.Signings {
+			if s.ID == item.SigningID {
+				corpName = s.CorpName
+			}
+		}
+		if corpName == "" {
 			continue
 		}
 
-		item := &cm[0]
 		orgRepo := dbmodels.ParseToOrgRepo(doc.OrgIdentity)
 		result[doc.LinkID] = dbmodels.CorporationManagerCheckResult{
-			Corp:             ss[0].CorpName,
+			Corp:             corpName,
 			Name:             item.Name,
 			Email:            item.Email,
 			Role:             item.Role,
+			SigningId:        item.SigningID,
 			InitialPWChanged: item.InitialPWChanged,
 
 			OrgInfo: dbmodels.OrgInfo{
@@ -152,6 +161,7 @@ func (this *client) CheckCorporationManagerExist(opt dbmodels.CorporationManager
 		}
 
 	}
+
 	return result, nil
 }
 

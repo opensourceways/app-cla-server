@@ -24,29 +24,31 @@ func memberNameOfCorpManager(field string) string {
 	return fmt.Sprintf("%s.%s", fieldCorpManagers, field)
 }
 
-func (this *client) AddCorpAdministrator(linkID string, opt *dbmodels.CorporationManagerCreateOption) dbmodels.IDBError {
+func (this *client) AddCorpAdministrator(si *dbmodels.SigningIndex, opt *dbmodels.CorporationManagerCreateOption) dbmodels.IDBError {
+	index := newSigningIndex(si)
+
 	info := dCorpManager{
-		ID:       opt.ID,
-		Name:     opt.Name,
-		Email:    opt.Email,
-		Role:     dbmodels.RoleAdmin,
-		Password: opt.Password,
-		CorpID:   genCorpID(opt.Email),
+		ID:        opt.ID,
+		Name:      opt.Name,
+		Email:     opt.Email,
+		Role:      dbmodels.RoleAdmin,
+		Password:  opt.Password,
+		CorpID:    genCorpID(opt.Email),
+		SigningID: si.SigningId,
 	}
 	body, err := structToMap(info)
 	if err != nil {
 		return err
 	}
 
-	docFilter := docFilterOfCorpManager(linkID)
-	arrayFilterByElemMatch(
-		fieldCorpManagers, false,
-		bson.M{
-			fieldCorpID: genCorpID(opt.Email),
-			fieldRole:   dbmodels.RoleAdmin,
-		},
-		docFilter,
-	)
+	docFilter := index.docFilterOfSigning()
+	docFilter["$nor"] = bson.A{
+		bson.M{fieldCorpManagers: bson.M{"$elemMatch": bson.M{
+			fieldSigningId: si.SigningId,
+			fieldRole:      dbmodels.RoleAdmin,
+		}}},
+		bson.M{fieldCorpManagers + "." + fieldID: opt.ID},
+	}
 
 	f := func(ctx context.Context) dbmodels.IDBError {
 		return this.pushArrayElem(

@@ -44,6 +44,13 @@ func (index *signingIndex) signingIdFilter() bson.M {
 	return bson.M{fieldSigningId: index.SigningId}
 }
 
+func (index *signingIndex) docFilter() bson.M {
+	return bson.M{
+		fieldLinkID:    index.LinkId,
+		fieldSigningId: index.SigningId,
+	}
+}
+
 func (this *client) SignIndividualCLA(linkID string, info *dbmodels.IndividualSigningInfo) dbmodels.IDBError {
 	signing := dIndividualSigning{
 		CLALanguage: info.CLALanguage,

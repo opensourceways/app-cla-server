@@ -44,19 +44,22 @@ func (this CorporationManagerAuthentication) Authenticate() (map[string]dbmodels
 	return nil, parseDBError(err)
 }
 
-func CreateCorporationAdministrator(linkID, name, email string) (*dbmodels.CorporationManagerCreateOption, IModelError) {
+func CreateCorporationAdministrator(index SigningIndex, info *dbmodels.CorporationSigningBasicInfo) (
+	*dbmodels.CorporationManagerCreateOption, IModelError,
+) {
 	pw := util.RandStr(8, "alphanum")
 
+	// TODO
 	opt := &dbmodels.CorporationManagerCreateOption{
-		ID:       "admin",
-		Name:     name,
-		Email:    email,
+		ID:       fmt.Sprintf("admin_%s", util.EmailSuffix(info.AdminEmail)),
+		Name:     info.AdminName,
+		Email:    info.AdminEmail,
 		Password: pw,
 		Role:     dbmodels.RoleAdmin,
 	}
-	err := dbmodels.GetDB().AddCorpAdministrator(linkID, opt)
+
+	err := dbmodels.GetDB().AddCorpAdministrator(&index, opt)
 	if err == nil {
-		opt.ID = fmt.Sprintf("admin_%s", util.EmailSuffix(email))
 		return opt, nil
 	}
 

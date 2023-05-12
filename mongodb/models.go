@@ -59,9 +59,9 @@ type dCLAPDF struct {
 }
 
 type dCorpSigningPDF struct {
-	LinkID string `bson:"link_id" json:"link_id" required:"true"`
-	CorpID string `bson:"corp_id" json:"corp_id" required:"true"`
-	PDF    []byte `bson:"pdf" json:"pdf,omitempty"`
+	LinkID    string `bson:"link_id"     json:"link_id"     required:"true"`
+	SigningID string `bson:"signing_id"  json:"signing_id"  required:"true"`
+	PDF       []byte `bson:"pdf"         json:"pdf,omitempty"`
 }
 
 type cVerificationCode struct {
@@ -127,7 +127,7 @@ type dCorpManager struct {
 	Email            string `bson:"email"      json:"email"      required:"true"`
 	CorpID           string `bson:"corp_id"    json:"corp_id"    required:"true"`
 	Password         string `bson:"password"   json:"password"   required:"true"`
-	SigningId        string `bson:"signing_id" json:"signing_id" required:"true"`
+	SigningID        string `bson:"signing_id" json:"signing_id" required:"true"`
 	InitialPWChanged bool   `bson:"changed"    json:"changed"`
 }
 

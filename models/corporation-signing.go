@@ -52,13 +52,13 @@ func (this *CorporationSigningCreateOption) Create(orgCLAID string) IModelError 
 	return parseDBError(err)
 }
 
-func UploadCorporationSigningPDF(linkID string, email string, pdf *[]byte) IModelError {
-	err := dbmodels.GetDB().UploadCorporationSigningPDF(linkID, email, pdf)
+func UploadCorporationSigningPDF(index SigningIndex, pdf *[]byte) IModelError {
+	err := dbmodels.GetDB().UploadCorporationSigningPDF(&index, pdf)
 	return parseDBError(err)
 }
 
-func DownloadCorporationSigningPDF(linkID string, email string) (*[]byte, IModelError) {
-	v, err := dbmodels.GetDB().DownloadCorporationSigningPDF(linkID, email)
+func DownloadCorporationSigningPDF(index *SigningIndex) (*[]byte, IModelError) {
+	v, err := dbmodels.GetDB().DownloadCorporationSigningPDF(index)
 	if err == nil {
 		return v, nil
 	}
@@ -69,8 +69,8 @@ func DownloadCorporationSigningPDF(linkID string, email string) (*[]byte, IModel
 	return v, parseDBError(err)
 }
 
-func IsCorpSigningPDFUploaded(linkID string, email string) (bool, IModelError) {
-	v, err := dbmodels.GetDB().IsCorpSigningPDFUploaded(linkID, email)
+func IsCorpSigningPDFUploaded(index SigningIndex) (bool, IModelError) {
+	v, err := dbmodels.GetDB().IsCorpSigningPDFUploaded(&index)
 	return v, parseDBError(err)
 }
 
@@ -103,8 +103,8 @@ func IsCorpSigned(linkID, email string) (bool, IModelError) {
 	return v, parseDBError(err)
 }
 
-func GetCorpSigningBasicInfo(linkID, email string) (*dbmodels.CorporationSigningBasicInfo, IModelError) {
-	v, err := dbmodels.GetDB().GetCorpSigningBasicInfo(linkID, email)
+func GetCorpSigningBasicInfo(index *SigningIndex) (*dbmodels.CorporationSigningBasicInfo, IModelError) {
+	v, err := dbmodels.GetDB().GetCorpSigningBasicInfo(index)
 	if err == nil {
 		if v == nil {
 			return nil, newModelError(ErrUnsigned, fmt.Errorf("unsigned"))

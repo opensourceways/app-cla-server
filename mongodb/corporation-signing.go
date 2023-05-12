@@ -119,13 +119,15 @@ func (this *client) IsCorpSigned(linkID, email string) (bool, dbmodels.IDBError)
 	return signed, err
 }
 
-func (this *client) GetCorpSigningBasicInfo(linkID, email string) (*dbmodels.CorporationSigningBasicInfo, dbmodels.IDBError) {
+func (this *client) GetCorpSigningBasicInfo(si *dbmodels.SigningIndex) (*dbmodels.CorporationSigningBasicInfo, dbmodels.IDBError) {
+	index := newSigningIndex(si)
+
 	var v []cCorpSigning
 
 	f := func(ctx context.Context) error {
 		return this.getArrayElem(
 			ctx, this.corpSigningCollection, fieldSignings,
-			docFilterOfSigning(linkID), elemFilterOfCorpSigning(email),
+			index.docFilterOfSigning(), index.signingItemFilter(),
 			projectOfCorpSigning(), &v,
 		)
 	}

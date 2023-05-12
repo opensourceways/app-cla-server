@@ -25,23 +25,23 @@ type ICorporationSigning interface {
 	InitializeCorpSigning(linkID string, info *OrgInfo, cla *CLAInfo) IDBError
 	SignCorpCLA(orgCLAID string, info *CorpSigningCreateOpt) IDBError
 	DeleteCorpSigning(linkID, email string) IDBError
-	IsCorpSigned(linkID, email string) (bool, IDBError)
+	IsCorpSigned(string, string) (bool, IDBError)
 	ListCorpSignings(linkID, language string) ([]CorporationSigningSummary, IDBError)
 	ListDeletedCorpSignings(linkID string) ([]CorporationSigningBasicInfo, IDBError)
 	GetCorpSigningDetail(*SigningIndex) (*CLAInfo, *CorpSigningCreateOpt, IDBError)
-	GetCorpSigningBasicInfo(linkID, email string) (*CorporationSigningBasicInfo, IDBError)
+	GetCorpSigningBasicInfo(*SigningIndex) (*CorporationSigningBasicInfo, IDBError)
 	AddCorpEmailDomain(linkID, adminEmail, domain string) IDBError
 	GetCorpEmailDomains(linkID, email string) ([]string, IDBError)
 
-	UploadCorporationSigningPDF(linkID string, adminEmail string, pdf *[]byte) IDBError
-	DownloadCorporationSigningPDF(linkID string, email string) (*[]byte, IDBError)
-	IsCorpSigningPDFUploaded(linkID string, email string) (bool, IDBError)
+	UploadCorporationSigningPDF(*SigningIndex, *[]byte) IDBError
+	DownloadCorporationSigningPDF(*SigningIndex) (*[]byte, IDBError)
+	IsCorpSigningPDFUploaded(*SigningIndex) (bool, IDBError)
 	ListCorpsWithPDFUploaded(linkID string) ([]string, IDBError)
 }
 
 type ICorporationManager interface {
 	CheckCorporationManagerExist(CorporationManagerCheckInfo) (map[string]CorporationManagerCheckResult, IDBError)
-	AddCorpAdministrator(linkID string, opt *CorporationManagerCreateOption) IDBError
+	AddCorpAdministrator(*SigningIndex, *CorporationManagerCreateOption) IDBError
 	AddEmployeeManager(linkID string, opt []CorporationManagerCreateOption) IDBError
 	DeleteEmployeeManager(orgCLAID string, emails []string) ([]CorporationManagerCreateOption, IDBError)
 	ResetCorporationManagerPassword(string, string, CorporationManagerResetPassword) IDBError

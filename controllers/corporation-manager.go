@@ -35,22 +35,21 @@ func (this *CorporationManagerController) Prepare() {
 // @Success 202 {int} map
 // @Failure util.ErrPDFHasNotUploaded
 // @Failure util.ErrNumOfCorpManagersExceeded
-// @router /:link_id/:email [put]
+// @router /:link_id/:signing_id [put]
 func (this *CorporationManagerController) Put() {
 	action := "add corp administrator"
-	linkID := this.GetString(":link_id")
-	corpEmail := this.GetString(":email")
+	index := genSigningIndex(&this.Controller)
 
 	pl, fr := this.tokenPayloadBasedOnCodePlatform()
 	if fr != nil {
 		this.sendFailedResultAsResp(fr, action)
 		return
 	}
-	if fr := pl.isOwnerOfLink(linkID); fr != nil {
+	if fr := pl.isOwnerOfLink(index.LinkId); fr != nil {
 		this.sendFailedResultAsResp(fr, action)
 		return
 	}
-	orgInfo := pl.orgInfo(linkID)
+	orgInfo := pl.orgInfo(index.LinkId)
 
 	// lock to avoid the conflict with the deleting corp signing
 	unlock, fr := lockOnRepo(orgInfo)
@@ -62,13 +61,13 @@ func (this *CorporationManagerController) Put() {
 
 	// call models.GetCorpSigningBasicInfo before models.IsCorpSigningPDFUploaded
 	// to check wheather corp has signed
-	corpSigning, merr := models.GetCorpSigningBasicInfo(linkID, corpEmail)
+	corpSigning, merr := models.GetCorpSigningBasicInfo(&index)
 	if merr != nil {
 		this.sendModelErrorAsResp(merr, action)
 		return
 	}
 
-	uploaded, err := models.IsCorpSigningPDFUploaded(linkID, corpEmail)
+	uploaded, err := models.IsCorpSigningPDFUploaded(index)
 	if err != nil {
 		this.sendModelErrorAsResp(err, action)
 		return
@@ -80,7 +79,7 @@ func (this *CorporationManagerController) Put() {
 		return
 	}
 
-	added, merr := models.CreateCorporationAdministrator(linkID, corpSigning.AdminName, corpEmail)
+	added, merr := models.CreateCorporationAdministrator(index, corpSigning)
 	if merr != nil {
 		if merr.IsErrorOf(models.ErrNoLinkOrManagerExists) {
 			this.sendFailedResponse(400, errCorpManagerExists, merr, action)

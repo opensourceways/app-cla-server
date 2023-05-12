@@ -28,10 +28,9 @@ func (this *CorporationPDFController) Prepare() {
 	}
 }
 
-func (this *CorporationPDFController) downloadCorpPDF(linkID, corpEmail string) *failedApiResult {
+func (this *CorporationPDFController) downloadCorpPDF(index *models.SigningIndex) *failedApiResult {
 	dir := util.GenFilePath(config.AppConfig.PDFOutDir, "tmp")
-	s := strings.ReplaceAll(util.EmailSuffix(corpEmail), ".", "_")
-	name := fmt.Sprintf("%s_%s_*.pdf", linkID, s)
+	name := fmt.Sprintf("%s_%s_*.pdf", index.LinkId, index.SigningId)
 
 	f, err := ioutil.TempFile(dir, name)
 	if err != nil {
@@ -42,7 +41,7 @@ func (this *CorporationPDFController) downloadCorpPDF(linkID, corpEmail string) 
 		os.Remove(f.Name())
 	}()
 
-	pdf, merr := models.DownloadCorporationSigningPDF(linkID, corpEmail)
+	pdf, merr := models.DownloadCorporationSigningPDF(index)
 	if merr != nil {
 		if merr.IsErrorOf(models.ErrNoLinkOrUnuploaed) {
 			return newFailedApiResult(400, errUnuploaded, merr)
@@ -61,40 +60,34 @@ func (this *CorporationPDFController) downloadCorpPDF(linkID, corpEmail string) 
 
 // @Title Upload
 // @Description upload pdf of corporation signing
-// @Param	:org_cla_id	path 	string					true		"org cla id"
-// @Param	:email		path 	string					true		"email of corp"
+// @Param	:link_id	path 	string		true		"link id"
+// @Param	:signing_id	path 	string		true		"signing id"
 // @Success 204 {int} map
-// @router /:link_id/:email [patch]
+// @router /:link_id/:signing_id [patch]
 func (this *CorporationPDFController) Upload() {
 	action := "upload corp's signing pdf"
-	linkID := this.GetString(":link_id")
-	corpEmail := this.GetString(":email")
+	index := genSigningIndex(&this.Controller)
 
 	pl, fr := this.tokenPayloadBasedOnCodePlatform()
 	if fr != nil {
 		this.sendFailedResultAsResp(fr, action)
 		return
 	}
-	if fr := pl.isOwnerOfLink(linkID); fr != nil {
+	if fr := pl.isOwnerOfLink(index.LinkId); fr != nil {
 		this.sendFailedResultAsResp(fr, action)
 		return
 	}
 
 	// lock to avoid conflict with deleting corp signing
-	unlock, fr := lockOnRepo(pl.orgInfo(linkID))
+	unlock, fr := lockOnRepo(pl.orgInfo(index.LinkId))
 	if fr != nil {
 		this.sendFailedResultAsResp(fr, action)
 		return
 	}
 	defer unlock()
 
-	b, merr := models.IsCorpSigned(linkID, corpEmail)
-	if merr != nil {
+	if _, merr := models.GetCorpSigningBasicInfo(&index); merr != nil {
 		this.sendModelErrorAsResp(merr, action)
-		return
-	}
-	if !b {
-		this.sendFailedResponse(400, errUnsigned, fmt.Errorf("not signed"), action)
 		return
 	}
 
@@ -104,7 +97,7 @@ func (this *CorporationPDFController) Upload() {
 		return
 	}
 
-	if err := models.UploadCorporationSigningPDF(linkID, corpEmail, &data); err != nil {
+	if err := models.UploadCorporationSigningPDF(index, &data); err != nil {
 		this.sendModelErrorAsResp(err, action)
 		return
 	}
@@ -114,26 +107,25 @@ func (this *CorporationPDFController) Upload() {
 
 // @Title Download
 // @Description download pdf of corporation signing
-// @Param	:org_cla_id	path 	string					true		"org cla id"
-// @Param	:email		path 	string					true		"email of corp"
+// @Param	:link_id	path 	string		true		"link id"
+// @Param	:signing_id	path 	string		true		"signing id"
 // @Success 200 {int} map
-// @router /:link_id/:email [get]
+// @router /:link_id/:signing_id [get]
 func (this *CorporationPDFController) Download() {
 	action := "download corp's signing pdf"
-	linkID := this.GetString(":link_id")
-	corpEmail := this.GetString(":email")
+	index := genSigningIndex(&this.Controller)
 
 	pl, fr := this.tokenPayloadBasedOnCodePlatform()
 	if fr != nil {
 		this.sendFailedResultAsResp(fr, action)
 		return
 	}
-	if fr := pl.isOwnerOfLink(linkID); fr != nil {
+	if fr := pl.isOwnerOfLink(index.LinkId); fr != nil {
 		this.sendFailedResultAsResp(fr, action)
 		return
 	}
 
-	if fr := this.downloadCorpPDF(linkID, corpEmail); fr != nil {
+	if fr := this.downloadCorpPDF(&index); fr != nil {
 		this.sendFailedResultAsResp(fr, action)
 	}
 }
@@ -151,7 +143,11 @@ func (this *CorporationPDFController) Review() {
 		return
 	}
 
-	if fr := this.downloadCorpPDF(pl.LinkID, pl.Email); fr != nil {
+	index := models.SigningIndex{
+		LinkId:    pl.LinkID,
+		SigningId: pl.SigningID,
+	}
+	if fr := this.downloadCorpPDF(&index); fr != nil {
 		this.sendFailedResultAsResp(fr, action)
 	}
 }

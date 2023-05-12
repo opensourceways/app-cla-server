@@ -24,7 +24,10 @@ func memberNameOfCorpManager(field string) string {
 	return fmt.Sprintf("%s.%s", fieldCorpManagers, field)
 }
 
-func (this *client) AddCorpAdministrator(si *dbmodels.SigningIndex, opt *dbmodels.CorporationManagerCreateOption) dbmodels.IDBError {
+func (this *client) AddCorpAdministrator(
+	si *dbmodels.SigningIndex,
+	opt *dbmodels.CorporationManagerCreateOption,
+) dbmodels.IDBError {
 	index := newSigningIndex(si)
 
 	info := dCorpManager{

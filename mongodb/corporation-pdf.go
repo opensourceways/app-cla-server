@@ -42,14 +42,12 @@ func (this *client) DownloadCorporationSigningPDF(si *dbmodels.SigningIndex) (*[
 }
 
 func (this *client) IsCorpSigningPDFUploaded(si *dbmodels.SigningIndex) (bool, dbmodels.IDBError) {
-	index := newSigningIndex(si)
-
 	var v dCorpSigningPDF
 
 	f := func(ctx context.Context) dbmodels.IDBError {
 		return this.getDoc(
 			ctx, this.corpPDFCollection,
-			index.docFilter(), bson.M{"_id": 1}, &v,
+			newSigningIndex(si).docFilter(), bson.M{"_id": 1}, &v,
 		)
 	}
 

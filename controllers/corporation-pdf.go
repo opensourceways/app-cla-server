@@ -143,10 +143,7 @@ func (this *CorporationPDFController) Review() {
 		return
 	}
 
-	index := models.SigningIndex{
-		LinkId:    pl.LinkID,
-		SigningId: pl.SigningID,
-	}
+	index := pl.signingIndex()
 	if fr := this.downloadCorpPDF(&index); fr != nil {
 		this.sendFailedResultAsResp(fr, action)
 	}

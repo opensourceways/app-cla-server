@@ -172,8 +172,8 @@ func (this *CorporationSigningController) Delete() {
 
 // @Title ResendCorpSigningEmail
 // @Description resend corp signing email
-// @Param	:org_id		path 	string		true		"org cla id"
-// @Param	:email		path 	string		true		"corp email"
+// @Param	:link_id	path 	string		true		"link id"
+// @Param	:signing_id	path 	string		true		"signing id"
 // @Success 201 {int} map
 // @router /:link_id/:signing_id [post]
 func (this *CorporationSigningController) ResendCorpSigningEmail() {

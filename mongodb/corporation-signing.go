@@ -119,7 +119,9 @@ func (this *client) IsCorpSigned(linkID, email string) (bool, dbmodels.IDBError)
 	return signed, err
 }
 
-func (this *client) GetCorpSigningBasicInfo(si *dbmodels.SigningIndex) (*dbmodels.CorporationSigningBasicInfo, dbmodels.IDBError) {
+func (this *client) GetCorpSigningBasicInfo(si *dbmodels.SigningIndex) (
+	*dbmodels.CorporationSigningBasicInfo, dbmodels.IDBError,
+) {
 	index := newSigningIndex(si)
 
 	var v []cCorpSigning
@@ -127,7 +129,7 @@ func (this *client) GetCorpSigningBasicInfo(si *dbmodels.SigningIndex) (*dbmodel
 	f := func(ctx context.Context) error {
 		return this.getArrayElem(
 			ctx, this.corpSigningCollection, fieldSignings,
-			index.docFilterOfSigning(), index.signingItemFilter(),
+			index.docFilterOfSigning(), index.idFilter(),
 			projectOfCorpSigning(), &v,
 		)
 	}
@@ -155,7 +157,7 @@ func (this *client) GetCorpSigningDetail(si *dbmodels.SigningIndex) (*dbmodels.C
 		bson.M{"$match": index.docFilterOfSigning()},
 		bson.M{"$project": bson.M{
 			fieldCLAInfos: 1,
-			fieldSignings: arrayElemFilter(fieldSignings, index.signingItemFilter()),
+			fieldSignings: arrayElemFilter(fieldSignings, index.idFilter()),
 		}},
 		bson.M{"$unwind": "$" + fieldSignings},
 		bson.M{"$project": bson.M{

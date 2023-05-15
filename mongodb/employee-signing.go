@@ -83,3 +83,33 @@ func (this *client) ListEmployeeSigning(si *dbmodels.SigningIndex, claLang strin
 
 	return r, nil
 }
+
+func (this *client) UpdateEmployeeSigning(si *dbmodels.SigningIndex, enabled bool) (
+	info dbmodels.IndividualSigningBasicInfo, err dbmodels.IDBError,
+) {
+	index := newSigningIndex(si)
+
+	elemFilter := index.idFilter()
+
+	docFilter := index.docFilterOfSigning()
+	arrayFilterByElemMatch(fieldSignings, true, elemFilter, docFilter)
+
+	var v cIndividualSigning
+
+	f := func(ctx context.Context) dbmodels.IDBError {
+		return this.updateAndReturnArrayElem(
+			ctx, this.individualSigningCollection, fieldSignings, docFilter,
+			elemFilter, bson.M{fieldEnabled: enabled}, &v,
+		)
+	}
+
+	if err = withContext1(f); err != nil {
+		return
+	}
+
+	if len(v.Signings) > 0 {
+		info = toIndividualSigningBasicInfo(&v.Signings[0])
+	}
+
+	return
+}

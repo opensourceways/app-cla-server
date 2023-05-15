@@ -47,26 +47,26 @@ type EmployeeSigningUdateInfo struct {
 	Enabled bool `json:"enabled"`
 }
 
-func (this *EmployeeSigningUdateInfo) Update(linkID, email string) IModelError {
-	err := dbmodels.GetDB().UpdateIndividualSigning(linkID, email, this.Enabled)
+func (this *EmployeeSigningUdateInfo) Update(index SigningIndex) (string, IModelError) {
+	v, err := dbmodels.GetDB().UpdateEmployeeSigning(&index, this.Enabled)
 	if err == nil {
-		return nil
+		return v.Email, nil
 	}
 
 	if err.IsErrorOf(dbmodels.ErrNoDBRecord) {
-		return newModelError(ErrNoLinkOrUnsigned, err)
+		return "", newModelError(ErrNoLinkOrUnsigned, err)
 	}
-	return parseDBError(err)
+	return "", parseDBError(err)
 }
 
-func DeleteEmployeeSigning(linkID, email string) IModelError {
-	err := dbmodels.GetDB().DeleteIndividualSigning(linkID, email)
+func DeleteEmployeeSigning(index SigningIndex) (string, IModelError) {
+	v, err := dbmodels.GetDB().DeleteIndividualSigning(&index)
 	if err == nil {
-		return nil
+		return v.Email, nil
 	}
 
 	if err.IsErrorOf(dbmodels.ErrNoDBRecord) {
-		return newModelError(ErrNoLink, err)
+		return "", newModelError(ErrNoLink, err)
 	}
-	return parseDBError(err)
+	return "", parseDBError(err)
 }

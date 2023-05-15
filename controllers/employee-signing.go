@@ -8,7 +8,6 @@ import (
 	"github.com/opensourceways/app-cla-server/dbmodels"
 	"github.com/opensourceways/app-cla-server/email"
 	"github.com/opensourceways/app-cla-server/models"
-	"github.com/opensourceways/app-cla-server/util"
 )
 
 type EmployeeSigningController struct {
@@ -188,29 +187,16 @@ func (this *EmployeeSigningController) List() {
 
 // @Title Update
 // @Description enable/unable employee signing
-// @Param	:email		path 	string	true		"email"
+// @Param	:signing_id	path 	string		true		"signing id"
 // @Success 202 {int} map
-// @router /:email [put]
+// @router /:signing_id [put]
 func (this *EmployeeSigningController) Update() {
 	action := "enable/unable employee signing"
 	sendResp := this.newFuncForSendingFailedResp(action)
-	employeeEmail := this.GetString(":email")
 
 	pl, fr := this.tokenPayloadBasedOnCorpManager()
 	if fr != nil {
 		sendResp(fr)
-		return
-	}
-
-	detail, fr := getCorporationDetail(pl.signingIndex())
-	if fr != nil {
-		fr.statusCode = 500
-		sendResp(fr)
-		return
-	}
-
-	if !detail.HasDomain(util.EmailSuffix(employeeEmail)) {
-		this.sendFailedResponse(400, errNotSameCorp, fmt.Errorf("not same corp"), action)
 		return
 	}
 
@@ -220,7 +206,11 @@ func (this *EmployeeSigningController) Update() {
 		return
 	}
 
-	if err := (&info).Update(pl.LinkID, employeeEmail); err != nil {
+	employeeEmail, err := (&info).Update(models.SigningIndex{
+		LinkId:    pl.LinkID,
+		SigningId: this.GetString(":signing_id"),
+	})
+	if err != nil {
 		if err.IsErrorOf(models.ErrNoLinkOrUnsigned) {
 			this.sendFailedResponse(400, errUnsigned, err, action)
 		} else {
@@ -243,12 +233,11 @@ func (this *EmployeeSigningController) Update() {
 
 // @Title Delete
 // @Description delete employee signing
-// @Param	:email		path 	string	true		"email"
+// @Param	:signing_id	path 	string		true		"signing id"
 // @Success 204 {string} delete success!
-// @router /:email [delete]
+// @router /:signing_id [delete]
 func (this *EmployeeSigningController) Delete() {
 	action := "delete employee signing"
-	employeeEmail := this.GetString(":email")
 
 	pl, fr := this.tokenPayloadBasedOnCorpManager()
 	if fr != nil {
@@ -256,19 +245,13 @@ func (this *EmployeeSigningController) Delete() {
 		return
 	}
 
-	detail, fr := getCorporationDetail(pl.signingIndex())
-	if fr != nil {
-		fr.statusCode = 500
-		this.sendFailedResultAsResp(fr, action)
-		return
-	}
-
-	if !detail.HasDomain(util.EmailSuffix(employeeEmail)) {
-		this.sendFailedResponse(400, errNotSameCorp, fmt.Errorf("not same corp"), action)
-		return
-	}
-
-	if err := models.DeleteEmployeeSigning(pl.LinkID, employeeEmail); err != nil {
+	employeeEmail, err := models.DeleteEmployeeSigning(
+		models.SigningIndex{
+			LinkId:    pl.LinkID,
+			SigningId: this.GetString(":signing_id"),
+		},
+	)
+	if err != nil {
 		this.sendModelErrorAsResp(err, action)
 		return
 	}

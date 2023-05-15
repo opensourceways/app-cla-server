@@ -48,32 +48,30 @@ func (this *client) SignIndividualCLA(linkID string, info *dbmodels.IndividualSi
 	return withContext1(f)
 }
 
-func (this *client) DeleteIndividualSigning(linkID, email string) dbmodels.IDBError {
+func (this *client) DeleteIndividualSigning(si *dbmodels.SigningIndex) (
+	info dbmodels.IndividualSigningBasicInfo, err dbmodels.IDBError,
+) {
+	index := newSigningIndex(si)
+
+	var v cIndividualSigning
+
 	f := func(ctx context.Context) dbmodels.IDBError {
-		return this.pullArrayElem(
+		return this.pullAndReturnArrayElem(
 			ctx, this.individualSigningCollection, fieldSignings,
-			docFilterOfSigning(linkID),
-			elemFilterOfIndividualSigning(email),
+			index.docFilterOfSigning(),
+			index.idFilter(), &v,
 		)
 	}
 
-	return withContext1(f)
-}
-
-func (this *client) UpdateIndividualSigning(linkID, email string, enabled bool) dbmodels.IDBError {
-	elemFilter := elemFilterOfIndividualSigning(email)
-
-	docFilter := docFilterOfSigning(linkID)
-	arrayFilterByElemMatch(fieldSignings, true, elemFilter, docFilter)
-
-	f := func(ctx context.Context) dbmodels.IDBError {
-		return this.updateArrayElem(
-			ctx, this.individualSigningCollection, fieldSignings, docFilter,
-			elemFilter, bson.M{fieldEnabled: enabled},
-		)
+	if err = withContext1(f); err != nil {
+		return
 	}
 
-	return withContext1(f)
+	if len(v.Signings) > 0 {
+		info = toIndividualSigningBasicInfo(&v.Signings[0])
+	}
+
+	return
 }
 
 func (this *client) IsIndividualSigned(linkID, email string) (bool, dbmodels.IDBError) {

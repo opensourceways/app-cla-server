@@ -152,6 +152,45 @@ func (this *client) updateArrayElemHelper(ctx context.Context, collection, array
 	return nil
 }
 
+func (this *client) updateAndReturnArrayElem(
+	ctx context.Context, collection, array string,
+	filterOfDoc, filterOfArray, updateCmd bson.M,
+	result interface{},
+) dbmodels.IDBError {
+	cmd := bson.M{}
+	for k, v := range updateCmd {
+		cmd[fmt.Sprintf("%s.$[i].%s", array, k)] = v
+	}
+
+	arrayFilter := bson.M{}
+	for k, v := range filterOfArray {
+		arrayFilter["i."+k] = v
+	}
+
+	col := this.collection(collection)
+	sr := col.FindOneAndUpdate(
+		ctx, filterOfDoc,
+		bson.M{"$set": cmd},
+		&options.FindOneAndUpdateOptions{
+			ArrayFilters: &options.ArrayFilters{
+				Filters: bson.A{
+					arrayFilter,
+				},
+			},
+			Projection: bson.M{array: bson.M{"$elemMatch": filterOfArray}},
+		},
+	)
+
+	if err := sr.Decode(result); err != nil {
+		if isErrNoDocuments(err) {
+			return errNoDBRecord
+		}
+		return newSystemError(err)
+	}
+
+	return nil
+}
+
 func (this *client) pullAndReturnArrayElem(ctx context.Context, collection, array string, filterOfDoc, filterOfArray bson.M, result interface{}) dbmodels.IDBError {
 	col := this.collection(collection)
 	sr := col.FindOneAndUpdate(

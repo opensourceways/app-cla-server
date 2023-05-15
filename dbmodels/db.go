@@ -56,13 +56,13 @@ type IOrgEmail interface {
 type IIndividualSigning interface {
 	InitializeIndividualSigning(linkID string, info *CLAInfo) IDBError
 	SignIndividualCLA(linkID string, info *IndividualSigningInfo) IDBError
-	DeleteIndividualSigning(linkID, email string) IDBError
-	UpdateIndividualSigning(linkID, email string, enabled bool) IDBError
+	DeleteIndividualSigning(index *SigningIndex) (IndividualSigningBasicInfo, IDBError)
 	IsIndividualSigned(linkID, email string) (bool, IDBError)
 	ListIndividualSigning(linkID, claLang string) ([]IndividualSigningBasicInfo, IDBError)
 
 	SignEmployeeCLA(*SigningIndex, *IndividualSigningInfo) IDBError
 	ListEmployeeSigning(index *SigningIndex, claLang string) ([]IndividualSigningBasicInfo, IDBError)
+	UpdateEmployeeSigning(index *SigningIndex, enabled bool) (IndividualSigningBasicInfo, IDBError)
 
 	GetCLAInfoSigned(linkID, claLang, applyTo string) (*CLAInfo, IDBError)
 }

@@ -271,7 +271,7 @@ func (this *CorporationSigningController) GetAll() {
 	for k := range r {
 		details = append(details, corpsSigningResult{
 			CorporationSigningSummary: &r[k],
-			PDFUploaded:               pdfMap[util.EmailSuffix(r[k].AdminEmail)]},
+			PDFUploaded:               pdfMap[r[k].ID]},
 		)
 	}
 	this.sendSuccessResp(details)

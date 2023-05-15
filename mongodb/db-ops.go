@@ -149,6 +149,7 @@ func (this *client) updateArrayElemHelper(ctx context.Context, collection, array
 	if r.MatchedCount == 0 {
 		return errNoDBRecord
 	}
+
 	return nil
 }
 

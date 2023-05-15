@@ -15,8 +15,7 @@ func docFilterOfCorpManager(linkID string) bson.M {
 
 func elemFilterOfCorpManager(email string) bson.M {
 	return bson.M{
-		fieldCorpID: genCorpID(email),
-		fieldEmail:  email,
+		fieldEmail: email,
 	}
 }
 

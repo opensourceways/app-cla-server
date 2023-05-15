@@ -63,14 +63,14 @@ func (this *client) IsCorpSigningPDFUploaded(si *dbmodels.SigningIndex) (bool, d
 
 func (this *client) ListCorpsWithPDFUploaded(linkID string) ([]string, dbmodels.IDBError) {
 	var v []struct {
-		CorpID string `bson:"corp_id"`
+		CorpSID string `bson:"corp_sid"`
 	}
 
 	f := func(ctx context.Context) error {
 		return this.getDocs(
 			ctx, this.corpPDFCollection,
 			bson.M{fieldLinkID: linkID},
-			bson.M{fieldCorpID: 1}, &v,
+			bson.M{fieldCorpSId: 1}, &v,
 		)
 	}
 
@@ -80,7 +80,7 @@ func (this *client) ListCorpsWithPDFUploaded(linkID string) ([]string, dbmodels.
 
 	result := make([]string, 0, len(v))
 	for i := range v {
-		result = append(result, v[i].CorpID)
+		result = append(result, v[i].CorpSID)
 	}
 	return result, nil
 }

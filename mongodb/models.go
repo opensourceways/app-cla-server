@@ -59,9 +59,9 @@ type dCLAPDF struct {
 }
 
 type dCorpSigningPDF struct {
-	LinkID    string `bson:"link_id"   json:"link_id"   required:"true"`
-	SigningID string `bson:"corp_sid"  json:"corp_sid"  required:"true"`
-	PDF       []byte `bson:"pdf"       json:"pdf,omitempty"`
+	LinkID  string `bson:"link_id"   json:"link_id"   required:"true"`
+	CorpSID string `bson:"corp_sid"  json:"corp_sid"  required:"true"`
+	PDF     []byte `bson:"pdf"       json:"pdf,omitempty"`
 }
 
 type cVerificationCode struct {

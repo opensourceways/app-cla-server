@@ -176,7 +176,6 @@ func (this *client) ResetCorporationManagerPassword(linkID, email string, opt db
 	}
 
 	docFilter := docFilterOfCorpManager(linkID)
-	arrayFilterByElemMatch(fieldCorpManagers, true, elemFilter, docFilter)
 
 	f := func(ctx context.Context) dbmodels.IDBError {
 		return this.updateArrayElem(

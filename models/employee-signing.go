@@ -53,9 +53,10 @@ func (this *EmployeeSigningUdateInfo) Update(index SigningIndex) (string, IModel
 		return v.Email, nil
 	}
 
-	if err.IsErrorOf(dbmodels.ErrNoDBRecord) {
+	if err.IsErrorOf(dbmodels.ErrNoDBRecord) || err.IsErrorOf(dbmodels.ErrNotFound) {
 		return "", newModelError(ErrNoLinkOrUnsigned, err)
 	}
+
 	return "", parseDBError(err)
 }
 

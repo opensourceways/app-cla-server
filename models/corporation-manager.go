@@ -90,7 +90,7 @@ func (this CorporationManagerResetPassword) Reset(linkID, email string) IModelEr
 		return nil
 	}
 
-	if err.IsErrorOf(dbmodels.ErrNoDBRecord) {
+	if err.IsErrorOf(dbmodels.ErrNoDBRecord) || err.IsErrorOf(dbmodels.ErrNotFound) {
 		return newModelError(ErrNoLinkOrNoManager, err)
 	}
 	return parseDBError(err)

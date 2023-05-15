@@ -30,7 +30,7 @@ type ICorporationSigning interface {
 	ListDeletedCorpSignings(linkID string) ([]CorporationSigningBasicInfo, IDBError)
 	GetCorpSigningDetail(*SigningIndex) (*CLAInfo, *CorpSigningCreateOpt, IDBError)
 	GetCorpSigningBasicInfo(*SigningIndex) (*CorporationSigningBasicInfo, IDBError)
-	AddCorpEmailDomain(linkID, adminEmail, domain string) IDBError
+	AddCorpEmailDomain(index *SigningIndex, domain string) IDBError
 	GetCorpEmailDomains(*SigningIndex) ([]string, IDBError)
 
 	UploadCorporationSigningPDF(*SigningIndex, *[]byte) IDBError

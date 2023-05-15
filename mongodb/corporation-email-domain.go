@@ -8,16 +8,14 @@ import (
 	"github.com/opensourceways/app-cla-server/dbmodels"
 )
 
-func (this *client) AddCorpEmailDomain(linkID, adminEmail, domain string) dbmodels.IDBError {
-	elemFilter := elemFilterOfCorpSigning(adminEmail)
-
-	docFilter := docFilterOfSigning(linkID)
-	arrayFilterByElemMatch(fieldSignings, true, elemFilter, docFilter)
+func (this *client) AddCorpEmailDomain(si *dbmodels.SigningIndex, domain string) dbmodels.IDBError {
+	index := newSigningIndex(si)
 
 	f := func(ctx context.Context) dbmodels.IDBError {
 		return this.pushNestedArrayElem(
-			ctx, this.corpSigningCollection, fieldSignings, docFilter,
-			elemFilter, bson.M{fieldDomains: domain},
+			ctx, this.corpSigningCollection, fieldSignings,
+			index.docFilterOfSigning(),
+			index.idFilter(), bson.M{fieldDomains: domain},
 		)
 	}
 

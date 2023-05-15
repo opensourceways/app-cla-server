@@ -150,6 +150,10 @@ func (this *client) updateArrayElemHelper(ctx context.Context, collection, array
 		return errNoDBRecord
 	}
 
+	if r.ModifiedCount == 0 {
+		return errNotFound
+	}
+
 	return nil
 }
 

@@ -51,7 +51,7 @@ func (this *CorpEmailDomainController) Post() {
 		return
 	}
 
-	if merr := info.Create(pl.LinkID, pl.Email); merr != nil {
+	if merr := info.Create(pl.signingIndex()); merr != nil {
 		this.sendModelErrorAsResp(merr, action)
 		return
 	}

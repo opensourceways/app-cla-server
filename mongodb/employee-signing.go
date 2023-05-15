@@ -89,17 +89,13 @@ func (this *client) UpdateEmployeeSigning(si *dbmodels.SigningIndex, enabled boo
 ) {
 	index := newSigningIndex(si)
 
-	elemFilter := index.idFilter()
-
-	docFilter := index.docFilterOfSigning()
-	arrayFilterByElemMatch(fieldSignings, true, elemFilter, docFilter)
-
 	var v cIndividualSigning
 
 	f := func(ctx context.Context) dbmodels.IDBError {
 		return this.updateAndReturnArrayElem(
-			ctx, this.individualSigningCollection, fieldSignings, docFilter,
-			elemFilter, bson.M{fieldEnabled: enabled}, &v,
+			ctx, this.individualSigningCollection, fieldSignings,
+			index.docFilterOfSigning(), index.idFilter(),
+			bson.M{fieldEnabled: enabled}, &v,
 		)
 	}
 
@@ -107,7 +103,9 @@ func (this *client) UpdateEmployeeSigning(si *dbmodels.SigningIndex, enabled boo
 		return
 	}
 
-	if len(v.Signings) > 0 {
+	if len(v.Signings) == 0 {
+		err = errNotFound
+	} else {
 		info = toIndividualSigningBasicInfo(&v.Signings[0])
 	}
 

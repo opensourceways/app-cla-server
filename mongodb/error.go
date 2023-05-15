@@ -7,6 +7,7 @@ import (
 )
 
 var (
+	errNotFound   = dbError{code: dbmodels.ErrNotFound, err: fmt.Errorf("not found")}
 	errNoDBRecord = dbError{code: dbmodels.ErrNoDBRecord, err: fmt.Errorf("no record")}
 )
 

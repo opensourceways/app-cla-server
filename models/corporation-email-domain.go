@@ -34,13 +34,13 @@ func (cse CorpEmailDomainCreateOption) Validate(adminEmail string) IModelError {
 	return nil
 }
 
-func (cse CorpEmailDomainCreateOption) Create(linkID, adminEmail string) IModelError {
-	err := dbmodels.GetDB().AddCorpEmailDomain(linkID, adminEmail, util.EmailSuffix(cse.SubEmail))
+func (cse CorpEmailDomainCreateOption) Create(index SigningIndex) IModelError {
+	err := dbmodels.GetDB().AddCorpEmailDomain(&index, util.EmailSuffix(cse.SubEmail))
 	if err == nil {
 		return nil
 	}
 
-	if err.IsErrorOf(dbmodels.ErrNoDBRecord) {
+	if err.IsErrorOf(dbmodels.ErrNoDBRecord) || err.IsErrorOf(dbmodels.ErrNotFound) {
 		return newModelError(ErrNoLinkOrUnsigned, err)
 	}
 	return parseDBError(err)

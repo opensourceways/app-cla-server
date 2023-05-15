@@ -15,13 +15,13 @@ func (this *client) AddEmployeeManager(
 	index := newSigningIndex(si)
 
 	doc, err := structToMap(dCorpManager{
-		ID:        opt.ID,
-		Name:      opt.Name,
-		Role:      opt.Role,
-		Email:     opt.Email,
-		CorpID:    genCorpID(opt.Email),
-		Password:  opt.Password,
-		SigningID: si.SigningId,
+		ID:       opt.ID,
+		Name:     opt.Name,
+		Role:     opt.Role,
+		Email:    opt.Email,
+		CorpID:   genCorpID(opt.Email),
+		CorpSID:  si.SigningId,
+		Password: opt.Password,
 	})
 	if err != nil {
 		return err

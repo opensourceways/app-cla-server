@@ -61,6 +61,7 @@ type IIndividualSigning interface {
 	IsIndividualSigned(linkID, email string) (bool, IDBError)
 	ListIndividualSigning(linkID, claLang string) ([]IndividualSigningBasicInfo, IDBError)
 
+	SignEmployeeCLA(*SigningIndex, *IndividualSigningInfo) IDBError
 	ListEmployeeSigning(index *SigningIndex, claLang string) ([]IndividualSigningBasicInfo, IDBError)
 
 	GetCLAInfoSigned(linkID, claLang, applyTo string) (*CLAInfo, IDBError)

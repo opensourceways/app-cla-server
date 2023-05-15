@@ -42,7 +42,7 @@ const (
 	fieldDate           = "date"
 	fieldCorp           = "corp"
 	fieldEnabled        = "enabled"
-	fieldSigningId      = "signing_id"
+	fieldCorpSId        = "corp_sid"
 
 	// 'ready' means the doc is ready to record the signing data currently.
 	// 'deleted' means the signing data is invalid.
@@ -59,9 +59,9 @@ type dCLAPDF struct {
 }
 
 type dCorpSigningPDF struct {
-	LinkID    string `bson:"link_id"     json:"link_id"     required:"true"`
-	SigningID string `bson:"signing_id"  json:"signing_id"  required:"true"`
-	PDF       []byte `bson:"pdf"         json:"pdf,omitempty"`
+	LinkID    string `bson:"link_id"   json:"link_id"   required:"true"`
+	SigningID string `bson:"corp_sid"  json:"corp_sid"  required:"true"`
+	PDF       []byte `bson:"pdf"       json:"pdf,omitempty"`
 }
 
 type cVerificationCode struct {
@@ -80,14 +80,13 @@ type cIndividualSigning struct {
 }
 
 type dIndividualSigning struct {
-	CLALanguage string `bson:"lang" json:"lang" required:"true"`
-	CorpID      string `bson:"corp_id" json:"corp_id" required:"true"`
-
-	ID      string `bson:"id" json:"id,omitempty"`
-	Name    string `bson:"name" json:"name" required:"true"`
-	Email   string `bson:"email" json:"email" required:"true"`
-	Date    string `bson:"date" json:"date" required:"true"`
-	Enabled bool   `bson:"enabled" json:"enabled"`
+	ID          string `bson:"id"        json:"id"       required:"true"`
+	Name        string `bson:"name"      json:"name"     required:"true"`
+	Email       string `bson:"email"     json:"email"    required:"true"`
+	Date        string `bson:"date"      json:"date"     required:"true"`
+	Enabled     bool   `bson:"enabled"   json:"enabled"`
+	CLALanguage string `bson:"lang"      json:"lang"     required:"true"`
+	CorpSID     string `bson:"corp_sid"  json:"corp_sid,omitempty"`
 
 	SigningInfo dbmodels.TypeSigningInfo `bson:"info" json:"info,omitempty"`
 }
@@ -127,7 +126,7 @@ type dCorpManager struct {
 	Email            string `bson:"email"      json:"email"      required:"true"`
 	CorpID           string `bson:"corp_id"    json:"corp_id"    required:"true"`
 	Password         string `bson:"password"   json:"password"   required:"true"`
-	SigningID        string `bson:"signing_id" json:"signing_id" required:"true"`
+	CorpSID          string `bson:"corp_sid"   json:"corp_sid"   required:"true"`
 	InitialPWChanged bool   `bson:"changed"    json:"changed"`
 }
 

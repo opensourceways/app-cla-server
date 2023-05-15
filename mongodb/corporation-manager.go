@@ -31,13 +31,13 @@ func (this *client) AddCorpAdministrator(
 	index := newSigningIndex(si)
 
 	info := dCorpManager{
-		ID:        opt.ID,
-		Name:      opt.Name,
-		Role:      dbmodels.RoleAdmin,
-		Email:     opt.Email,
-		CorpID:    genCorpID(opt.Email),
-		Password:  opt.Password,
-		SigningID: si.SigningId,
+		ID:       opt.ID,
+		Name:     opt.Name,
+		Role:     dbmodels.RoleAdmin,
+		Email:    opt.Email,
+		CorpID:   genCorpID(opt.Email),
+		Password: opt.Password,
+		CorpSID:  si.SigningId,
 	}
 	body, err := structToMap(info)
 	if err != nil {
@@ -47,8 +47,8 @@ func (this *client) AddCorpAdministrator(
 	docFilter := index.docFilterOfSigning()
 	docFilter["$nor"] = bson.A{
 		bson.M{fieldCorpManagers: bson.M{"$elemMatch": bson.M{
-			fieldSigningId: si.SigningId,
-			fieldRole:      dbmodels.RoleAdmin,
+			fieldCorpSId: si.SigningId,
+			fieldRole:    dbmodels.RoleAdmin,
 		}}},
 		bson.M{fieldCorpManagers + "." + fieldID: opt.ID},
 	}
@@ -132,7 +132,7 @@ func (this *client) CheckCorporationManagerExist(opt dbmodels.CorporationManager
 
 		corpName := ""
 		for _, s := range doc.Signings {
-			if s.ID == item.SigningID {
+			if s.ID == item.CorpSID {
 				corpName = s.CorpName
 			}
 		}
@@ -146,7 +146,7 @@ func (this *client) CheckCorporationManagerExist(opt dbmodels.CorporationManager
 			Name:             item.Name,
 			Email:            item.Email,
 			Role:             item.Role,
-			SigningId:        item.SigningID,
+			SigningId:        item.CorpSID,
 			InitialPWChanged: item.InitialPWChanged,
 
 			OrgInfo: dbmodels.OrgInfo{

@@ -1,10 +1,35 @@
 package models
 
-import "github.com/opensourceways/app-cla-server/dbmodels"
+import (
+	"github.com/opensourceways/app-cla-server/dbmodels"
+	"github.com/opensourceways/app-cla-server/util"
+)
 
 type EmployeeSigning struct {
 	IndividualSigning
+
 	CorpSigningId string `json:"corp_signing_id"`
+}
+
+func (e *EmployeeSigning) Create(linkID string) IModelError {
+	e.Date = util.Date()
+
+	err := dbmodels.GetDB().SignEmployeeCLA(
+		&SigningIndex{
+			LinkId:    linkID,
+			SigningId: e.CorpSigningId,
+		},
+		&e.IndividualSigningInfo,
+	)
+	if err == nil {
+		return nil
+	}
+
+	if err.IsErrorOf(dbmodels.ErrNoDBRecord) {
+		return newModelError(ErrNoLinkOrResigned, err)
+	}
+
+	return parseDBError(err)
 }
 
 func ListEmployeeSigning(index SigningIndex, claLang string) (

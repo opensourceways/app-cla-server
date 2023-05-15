@@ -24,12 +24,12 @@ func (index *signingIndex) idFilter() bson.M {
 }
 
 func (index *signingIndex) signingIdFilter() bson.M {
-	return bson.M{fieldSigningId: index.SigningId}
+	return bson.M{fieldCorpSId: index.SigningId}
 }
 
 func (index *signingIndex) docFilter() bson.M {
 	return bson.M{
-		fieldLinkID:    index.LinkId,
-		fieldSigningId: index.SigningId,
+		fieldLinkID:  index.LinkId,
+		fieldCorpSId: index.SigningId,
 	}
 }

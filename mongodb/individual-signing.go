@@ -10,8 +10,7 @@ import (
 
 func elemFilterOfIndividualSigning(email string) bson.M {
 	return bson.M{
-		fieldCorpID: genCorpID(email),
-		fieldEmail:  email,
+		fieldEmail: email,
 	}
 }
 
@@ -24,13 +23,12 @@ func docFilterOfSigning(linkID string) bson.M {
 
 func (this *client) SignIndividualCLA(linkID string, info *dbmodels.IndividualSigningInfo) dbmodels.IDBError {
 	signing := dIndividualSigning{
-		CLALanguage: info.CLALanguage,
-		CorpID:      genCorpID(info.Email),
-		ID:          info.ID,
+		ID:          newObjectId(),
 		Name:        info.Name,
 		Email:       info.Email,
 		Date:        info.Date,
 		Enabled:     info.Enabled,
+		CLALanguage: info.CLALanguage,
 		SigningInfo: info.Info,
 	}
 	doc, err := structToMap(signing)
@@ -122,54 +120,6 @@ func (this *client) ListIndividualSigning(linkID, claLang string) (
 					}
 
 					return bson.M{"$toBool": 1}
-				},
-			},
-			&v,
-		)
-	}
-
-	if err := withContext(f); err != nil {
-		return nil, newSystemError(err)
-	}
-
-	if len(v) == 0 {
-		return nil, nil
-	}
-
-	docs := v[0].Signings
-	r := make([]dbmodels.IndividualSigningBasicInfo, len(docs))
-	for i := range docs {
-		r[i] = toIndividualSigningBasicInfo(&docs[i])
-	}
-
-	return r, nil
-}
-
-func (this *client) ListEmployeeSigning(si *dbmodels.SigningIndex, claLang string) (
-	[]dbmodels.IndividualSigningBasicInfo, dbmodels.IDBError,
-) {
-	index := newSigningIndex(si)
-
-	var v []cIndividualSigning
-	f := func(ctx context.Context) error {
-		return this.getArrayElems(
-			ctx, this.individualSigningCollection,
-			index.docFilterOfSigning(),
-			bson.M{
-				memberNameOfSignings(fieldID):      1,
-				memberNameOfSignings(fieldEmail):   1,
-				memberNameOfSignings(fieldName):    1,
-				memberNameOfSignings(fieldEnabled): 1,
-				memberNameOfSignings(fieldDate):    1,
-			},
-			map[string]func() bson.M{
-				fieldSignings: func() bson.M {
-					m := index.signingIdFilter()
-					if claLang != "" {
-						m[fieldLang] = claLang
-					}
-
-					return conditionTofilterArray(m)
 				},
 			},
 			&v,

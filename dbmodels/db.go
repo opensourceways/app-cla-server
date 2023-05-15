@@ -24,14 +24,14 @@ type IDB interface {
 type ICorporationSigning interface {
 	InitializeCorpSigning(linkID string, info *OrgInfo, cla *CLAInfo) IDBError
 	SignCorpCLA(orgCLAID string, info *CorpSigningCreateOpt) IDBError
-	DeleteCorpSigning(linkID, email string) IDBError
+	DeleteCorpSigning(*SigningIndex) IDBError
 	IsCorpSigned(string, string) (bool, IDBError)
 	ListCorpSignings(linkID, language string) ([]CorporationSigningSummary, IDBError)
 	ListDeletedCorpSignings(linkID string) ([]CorporationSigningBasicInfo, IDBError)
 	GetCorpSigningDetail(*SigningIndex) (*CLAInfo, *CorpSigningCreateOpt, IDBError)
 	GetCorpSigningBasicInfo(*SigningIndex) (*CorporationSigningBasicInfo, IDBError)
 	AddCorpEmailDomain(linkID, adminEmail, domain string) IDBError
-	GetCorpEmailDomains(linkID, email string) ([]string, IDBError)
+	GetCorpEmailDomains(*SigningIndex) ([]string, IDBError)
 
 	UploadCorporationSigningPDF(*SigningIndex, *[]byte) IDBError
 	DownloadCorporationSigningPDF(*SigningIndex) (*[]byte, IDBError)
@@ -42,10 +42,10 @@ type ICorporationSigning interface {
 type ICorporationManager interface {
 	CheckCorporationManagerExist(CorporationManagerCheckInfo) (map[string]CorporationManagerCheckResult, IDBError)
 	AddCorpAdministrator(*SigningIndex, *CorporationManagerCreateOption) IDBError
-	AddEmployeeManager(linkID string, opt []CorporationManagerCreateOption) IDBError
+	AddEmployeeManager(*SigningIndex, *CorporationManagerCreateOption) IDBError
 	DeleteEmployeeManager(orgCLAID string, emails []string) ([]CorporationManagerCreateOption, IDBError)
 	ResetCorporationManagerPassword(string, string, CorporationManagerResetPassword) IDBError
-	ListCorporationManager(orgCLAID, email, role string) ([]CorporationManagerListResult, IDBError)
+	GetCorporationDetail(index *SigningIndex) (CorporationDetail, IDBError)
 }
 
 type IOrgEmail interface {
@@ -59,7 +59,9 @@ type IIndividualSigning interface {
 	DeleteIndividualSigning(linkID, email string) IDBError
 	UpdateIndividualSigning(linkID, email string, enabled bool) IDBError
 	IsIndividualSigned(linkID, email string) (bool, IDBError)
-	ListIndividualSigning(linkID, corpEmail, claLang string) ([]IndividualSigningBasicInfo, IDBError)
+	ListIndividualSigning(linkID, claLang string) ([]IndividualSigningBasicInfo, IDBError)
+
+	ListEmployeeSigning(index *SigningIndex, claLang string) ([]IndividualSigningBasicInfo, IDBError)
 
 	GetCLAInfoSigned(linkID, claLang, applyTo string) (*CLAInfo, IDBError)
 }

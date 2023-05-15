@@ -3,8 +3,10 @@ package models
 import (
 	"fmt"
 	"regexp"
+	//"strings"
 
 	"github.com/opensourceways/app-cla-server/config"
+	"github.com/opensourceways/app-cla-server/util"
 )
 
 func checkEmailFormat(email string) IModelError {
@@ -56,3 +58,15 @@ func checkPassword(s string) IModelError {
 	}
 	return nil
 }
+
+func managerAccount(identity, email string) string {
+	return fmt.Sprintf("%s_%s", identity, util.EmailSuffix(email))
+}
+
+/*
+func parseManagerAccount(account string) (string, string) {
+	i := strings.LastIndex(account, "_")
+	return info.EmailSuffix = this.User[(i + 1):]
+
+}
+*/

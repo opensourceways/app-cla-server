@@ -33,10 +33,10 @@ func (this *client) AddCorpAdministrator(
 	info := dCorpManager{
 		ID:        opt.ID,
 		Name:      opt.Name,
-		Email:     opt.Email,
 		Role:      dbmodels.RoleAdmin,
-		Password:  opt.Password,
+		Email:     opt.Email,
 		CorpID:    genCorpID(opt.Email),
+		Password:  opt.Password,
 		SigningID: si.SigningId,
 	}
 	body, err := structToMap(info)
@@ -188,66 +188,76 @@ func (this *client) ResetCorporationManagerPassword(linkID, email string, opt db
 	return withContext1(f)
 }
 
-func (this *client) ListCorporationManager(linkID, email, role string) ([]dbmodels.CorporationManagerListResult, dbmodels.IDBError) {
-	domains, err := this.GetCorpEmailDomains(linkID, email)
-	if err != nil {
-		return nil, err
-	}
-	if domains == nil {
-		return nil, nil
-	}
-
+func (this *client) GetCorporationDetail(si *dbmodels.SigningIndex) (
+	detail dbmodels.CorporationDetail, err dbmodels.IDBError,
+) {
 	project := bson.M{
+		memberNameOfSignings(fieldDomains):  1,
 		memberNameOfCorpManager(fieldID):    1,
 		memberNameOfCorpManager(fieldName):  1,
 		memberNameOfCorpManager(fieldEmail): 1,
 		memberNameOfCorpManager(fieldRole):  1,
 	}
 
+	index := newSigningIndex(si)
+
 	var v []cCorpSigning
 
 	f := func(ctx context.Context) error {
 		return this.getArrayElems(
-			ctx, this.corpSigningCollection, docFilterOfCorpManager(linkID), project,
+			ctx, this.corpSigningCollection, index.docFilterOfSigning(), project,
 			map[string]func() bson.M{
-				fieldCorpManagers: func() bson.M {
-					c := bson.M{"$in": bson.A{fmt.Sprintf("$$this.%s", fieldCorpID), domains}}
-					if role == "" {
-						return c
-					}
+				fieldSignings: func() bson.M {
+					return conditionTofilterArray(index.idFilter())
+				},
 
-					return bson.M{"$and": bson.A{
-						bson.M{"$eq": bson.A{"$$this." + fieldRole, role}},
-						c,
-					}}
+				fieldCorpManagers: func() bson.M {
+					return conditionTofilterArray(index.signingIdFilter())
 				},
 			},
 			&v,
 		)
 	}
 
-	if err := withContext(f); err != nil {
-		return nil, newSystemError(err)
+	if err1 := withContext(f); err != nil {
+		err = newSystemError(err1)
+
+		return
 	}
 
 	if len(v) == 0 {
-		return nil, errNoDBRecord
+		err = errNoDBRecord
+
+		return
+	}
+
+	if s := v[0].Signings; len(s) != 0 {
+		detail.EmailDomains = s[0].Domains
 	}
 
 	ms := v[0].Managers
-	if ms == nil {
-		return nil, nil
+	if len(ms) == 0 {
+		return
 	}
 
 	r := make([]dbmodels.CorporationManagerListResult, 0, len(ms))
 	for i := range ms {
 		item := &ms[i]
-		r = append(r, dbmodels.CorporationManagerListResult{
+		m := dbmodels.CorporationManagerListResult{
 			ID:    item.ID,
 			Name:  item.Name,
 			Email: item.Email,
 			Role:  item.Role,
-		})
+		}
+
+		if item.Role == dbmodels.RoleManager {
+			r = append(r, m)
+		} else {
+			detail.Admin = m
+		}
 	}
-	return r, nil
+
+	detail.Managers = r
+
+	return
 }

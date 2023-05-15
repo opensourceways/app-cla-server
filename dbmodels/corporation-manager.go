@@ -43,3 +43,31 @@ type CorporationManagerListResult struct {
 	Email string `json:"email"`
 	Role  string `json:"role"`
 }
+
+type CorporationDetail struct {
+	EmailDomains []string
+	Admin        CorporationManagerListResult
+	Managers     []CorporationManagerListResult
+}
+
+func (d *CorporationDetail) HasDomain(v string) bool {
+	for _, item := range d.EmailDomains {
+		if item == v {
+			return true
+		}
+	}
+
+	return false
+}
+
+func (d *CorporationDetail) IsNotFound() bool {
+	return len(d.EmailDomains) == 0
+}
+
+func (d *CorporationDetail) AdminEmail() string {
+	return d.Admin.Email
+}
+
+func (d *CorporationDetail) HasAdmin() bool {
+	return d.Admin.Email != ""
+}

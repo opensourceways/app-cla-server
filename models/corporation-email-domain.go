@@ -46,8 +46,8 @@ func (cse CorpEmailDomainCreateOption) Create(linkID, adminEmail string) IModelE
 	return parseDBError(err)
 }
 
-func ListCorpEmailDomain(linkID, email string) ([]string, IModelError) {
-	v, err := dbmodels.GetDB().GetCorpEmailDomains(linkID, email)
+func ListCorpEmailDomain(index SigningIndex) ([]string, IModelError) {
+	v, err := dbmodels.GetDB().GetCorpEmailDomains(&index)
 	if err == nil {
 		if v == nil {
 			v = []string{}

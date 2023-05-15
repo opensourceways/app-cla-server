@@ -132,8 +132,8 @@ func GetCorpSigningDetail(index SigningIndex) (*dbmodels.CLAInfo, *dbmodels.Corp
 	return f, s, parseDBError(err)
 }
 
-func DeleteCorpSigning(linkID, email string) IModelError {
-	err := dbmodels.GetDB().DeleteCorpSigning(linkID, email)
+func DeleteCorpSigning(index SigningIndex) IModelError {
+	err := dbmodels.GetDB().DeleteCorpSigning(&index)
 	if err == nil {
 		return nil
 	}

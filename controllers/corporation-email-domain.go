@@ -82,7 +82,7 @@ func (this *CorpEmailDomainController) GetAll() {
 		return
 	}
 
-	r, merr := models.ListCorpEmailDomain(pl.LinkID, pl.Email)
+	r, merr := models.ListCorpEmailDomain(pl.signingIndex())
 	if merr != nil {
 		this.sendModelErrorAsResp(merr, action)
 		return

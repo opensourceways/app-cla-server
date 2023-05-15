@@ -96,12 +96,9 @@ func (this CorporationManagerResetPassword) Reset(linkID, email string) IModelEr
 	return parseDBError(err)
 }
 
-func ListCorporationManagers(linkID, email, role string) ([]dbmodels.CorporationManagerListResult, IModelError) {
-	v, err := dbmodels.GetDB().ListCorporationManager(linkID, email, role)
+func GetCorporationDetail(index SigningIndex) (dbmodels.CorporationDetail, IModelError) {
+	v, err := dbmodels.GetDB().GetCorporationDetail(&index)
 	if err == nil {
-		if v == nil {
-			v = []dbmodels.CorporationManagerListResult{}
-		}
 		return v, nil
 	}
 

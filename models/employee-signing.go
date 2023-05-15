@@ -2,10 +2,15 @@ package models
 
 import "github.com/opensourceways/app-cla-server/dbmodels"
 
-type EmployeeSigning = IndividualSigning
+type EmployeeSigning struct {
+	IndividualSigning
+	CorpSigningId string `json:"corp_signing_id"`
+}
 
-func ListIndividualSigning(linkID, corpEmail, claLang string) ([]dbmodels.IndividualSigningBasicInfo, IModelError) {
-	v, err := dbmodels.GetDB().ListIndividualSigning(linkID, corpEmail, claLang)
+func ListEmployeeSigning(index SigningIndex, claLang string) (
+	[]dbmodels.IndividualSigningBasicInfo, IModelError,
+) {
+	v, err := dbmodels.GetDB().ListEmployeeSigning(&index, claLang)
 	if err == nil {
 		return v, nil
 	}

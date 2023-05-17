@@ -247,7 +247,9 @@ func (this *CorporationSigningController) GetAll() {
 		return
 	}
 
-	r, merr := models.ListCorpSignings(linkID, this.GetString("cla_language"))
+	r, merr := models.ListCorpSignings(linkID, dbmodels.CorpSigningListOpt{
+		Lang: this.GetString("cla_language"),
+	})
 	if merr != nil {
 		this.sendModelErrorAsResp(merr, action)
 		return

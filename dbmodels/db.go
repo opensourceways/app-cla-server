@@ -25,8 +25,7 @@ type ICorporationSigning interface {
 	InitializeCorpSigning(linkID string, info *OrgInfo, cla *CLAInfo) IDBError
 	SignCorpCLA(orgCLAID string, info *CorpSigningCreateOpt) IDBError
 	DeleteCorpSigning(*SigningIndex) IDBError
-	IsCorpSigned(string, string) (bool, IDBError)
-	ListCorpSignings(linkID, language string) ([]CorporationSigningSummary, IDBError)
+	ListCorpSignings(linkID string, opt *CorpSigningListOpt) ([]CorporationSigningSummary, IDBError)
 	ListDeletedCorpSignings(linkID string) ([]CorporationSigningBasicInfo, IDBError)
 	GetCorpSigningDetail(*SigningIndex) (*CLAInfo, *CorpSigningCreateOpt, IDBError)
 	GetCorpSigningBasicInfo(*SigningIndex) (*CorporationSigningBasicInfo, IDBError)

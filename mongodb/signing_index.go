@@ -23,7 +23,7 @@ func (index *signingIndex) idFilter() bson.M {
 	return bson.M{fieldID: index.SigningId}
 }
 
-func (index *signingIndex) signingIdFilter() bson.M {
+func (index *signingIndex) corpSigningIdFilter() bson.M {
 	return bson.M{fieldCorpSId: index.SigningId}
 }
 

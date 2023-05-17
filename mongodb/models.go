@@ -86,7 +86,8 @@ type dIndividualSigning struct {
 	Date        string `bson:"date"      json:"date"     required:"true"`
 	Enabled     bool   `bson:"enabled"   json:"enabled"`
 	CLALanguage string `bson:"lang"      json:"lang"     required:"true"`
-	CorpSID     string `bson:"corp_sid"  json:"corp_sid,omitempty"`
+	// can't set json omitempty, because it will be used to filter individuals
+	CorpSID string `bson:"corp_sid"  json:"corp_sid"`
 
 	SigningInfo dbmodels.TypeSigningInfo `bson:"info" json:"info,omitempty"`
 }

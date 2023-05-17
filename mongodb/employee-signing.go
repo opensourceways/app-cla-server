@@ -55,7 +55,7 @@ func (this *client) ListEmployeeSigning(si *dbmodels.SigningIndex, claLang strin
 			},
 			map[string]func() bson.M{
 				fieldSignings: func() bson.M {
-					m := index.signingIdFilter()
+					m := index.corpSigningIdFilter()
 					if claLang != "" {
 						m[fieldLang] = claLang
 					}

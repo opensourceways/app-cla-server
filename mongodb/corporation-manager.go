@@ -210,7 +210,7 @@ func (this *client) GetCorporationDetail(si *dbmodels.SigningIndex) (
 				},
 
 				fieldCorpManagers: func() bson.M {
-					return conditionTofilterArray(index.signingIdFilter())
+					return conditionTofilterArray(index.corpSigningIdFilter())
 				},
 			},
 			&v,

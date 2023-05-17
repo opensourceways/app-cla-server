@@ -113,11 +113,12 @@ func (this *client) ListIndividualSigning(linkID, claLang string) (
 			},
 			map[string]func() bson.M{
 				fieldSignings: func() bson.M {
+					m := bson.M{fieldCorpSId: ""}
 					if claLang != "" {
-						return conditionTofilterArray(bson.M{fieldLang: claLang})
+						m[fieldLang] = claLang
 					}
 
-					return bson.M{"$toBool": 1}
+					return conditionTofilterArray(m)
 				},
 			},
 			&v,

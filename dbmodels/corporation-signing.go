@@ -27,3 +27,9 @@ type CorpSigningCreateOpt struct {
 
 	Info TypeSigningInfo `json:"info"`
 }
+
+type CorpSigningListOpt struct {
+	Lang         string
+	Email        string
+	IncludeAdmin bool
+}

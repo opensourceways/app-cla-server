@@ -79,8 +79,10 @@ func ListCorpsWithPDFUploaded(linkID string) ([]string, IModelError) {
 	return v, parseDBError(err)
 }
 
-func ListCorpSignings(linkID, language string) ([]dbmodels.CorporationSigningSummary, IModelError) {
-	v, err := dbmodels.GetDB().ListCorpSignings(linkID, language)
+func ListCorpSignings(linkID string, opt dbmodels.CorpSigningListOpt) (
+	[]dbmodels.CorporationSigningSummary, IModelError,
+) {
+	v, err := dbmodels.GetDB().ListCorpSignings(linkID, &opt)
 	if err == nil {
 		if v == nil {
 			v = []dbmodels.CorporationSigningSummary{}
@@ -95,12 +97,14 @@ func ListCorpSignings(linkID, language string) ([]dbmodels.CorporationSigningSum
 }
 
 func IsCorpSigned(linkID, email string) (bool, IModelError) {
-	v, err := dbmodels.GetDB().IsCorpSigned(linkID, email)
+	v, err := dbmodels.GetDB().ListCorpSignings(linkID, &dbmodels.CorpSigningListOpt{
+		Email: email,
+	})
 	if err == nil {
-		return v, nil
+		return len(v) > 0, nil
 	}
 
-	return v, parseDBError(err)
+	return false, parseDBError(err)
 }
 
 func GetCorpSigningBasicInfo(index *SigningIndex) (*dbmodels.CorporationSigningBasicInfo, IModelError) {

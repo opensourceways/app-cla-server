@@ -6,7 +6,6 @@ import (
 
 	"github.com/opensourceways/app-cla-server/dbmodels"
 	"github.com/opensourceways/app-cla-server/models"
-	"github.com/opensourceways/app-cla-server/util"
 )
 
 type IndividualSigningController struct {
@@ -160,24 +159,5 @@ func (this *IndividualSigningController) List() {
 		return
 	}
 
-	corps, merr := models.ListCorpSignings(linkID, "")
-	if merr != nil {
-		this.sendModelErrorAsResp(merr, action)
-		return
-	}
-
-	m := make(map[string]bool, len(corps))
-	for i := range corps {
-		if corps[i].AdminAdded {
-			m[util.EmailSuffix(corps[i].AdminEmail)] = true
-		}
-	}
-
-	result := make([]*dbmodels.IndividualSigningBasicInfo, 0, len(r))
-	for i := range r {
-		if !m[util.EmailSuffix(r[i].Email)] {
-			result = append(result, &r[i])
-		}
-	}
-	this.sendSuccessResp(result)
+	this.sendSuccessResp(r)
 }

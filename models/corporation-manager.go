@@ -2,6 +2,7 @@ package models
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/opensourceways/app-cla-server/dbmodels"
@@ -49,11 +50,22 @@ func (this CorporationManagerAuthentication) Authenticate() (map[string]dbmodels
 func CreateCorporationAdministrator(index SigningIndex, info *dbmodels.CorporationSigningBasicInfo) (
 	*dbmodels.CorporationManagerCreateOption, IModelError,
 ) {
+	v, merr := ListCorpSignings(index.LinkId, dbmodels.CorpSigningListOpt{
+		Email: info.AdminEmail,
+	})
+	if merr != nil {
+		return nil, merr
+	}
+
+	account := "admin"
+	if len(v) > 1 {
+		account += strconv.Itoa(len(v) - 1)
+	}
+
 	pw := util.RandStr(8, "alphanum")
 
-	// TODO
 	opt := &dbmodels.CorporationManagerCreateOption{
-		ID:       fmt.Sprintf("admin_%s", util.EmailSuffix(info.AdminEmail)),
+		ID:       managerAccount(account, info.AdminEmail),
 		Name:     info.AdminName,
 		Email:    info.AdminEmail,
 		Password: pw,

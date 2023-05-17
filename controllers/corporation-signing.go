@@ -314,3 +314,46 @@ func (this *CorporationSigningController) ListDeleted() {
 
 	this.sendSuccessResp(r)
 }
+
+// @Title GetCorpInfo
+// @Description get all the corporations by email
+// @Param	:link_id	path 	string		true		"link id"
+// @Param	:email		path 	string		true		"email"
+// @Success 200 {object} controllers.corpsSigningInfo
+// @Failure 400 missing_url_path_parameter: missing url path parameter
+// @Failure 401 unknown_link:               unkown link id
+// @Failure 500 system_error:               system error
+// @router /:link_id/corps/:email [get]
+func (this *CorporationSigningController) GetCorpInfo() {
+	action := "list corporation info"
+	linkID := this.GetString(":link_id")
+
+	r, merr := models.ListCorpSignings(linkID, dbmodels.CorpSigningListOpt{
+		Lang: this.GetString(":email"),
+	})
+	if merr != nil {
+		this.sendModelErrorAsResp(merr, action)
+		return
+	}
+	if len(r) == 0 {
+		this.sendSuccessResp(nil)
+		return
+	}
+
+	details := make([]corpsSigningInfo, len(r))
+	for i := range r {
+		item := &r[i]
+
+		details[i] = corpsSigningInfo{
+			ID:              item.ID,
+			CorporationName: item.CorporationName,
+		}
+	}
+
+	this.sendSuccessResp(details)
+}
+
+type corpsSigningInfo struct {
+	ID              string `json:"id"`
+	CorporationName string `json:"corporation_name"`
+}

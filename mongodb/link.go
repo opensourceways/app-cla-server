@@ -70,6 +70,10 @@ func (this *client) UpdateLinkEmail(info *dbmodels.LinkCreateOption) dbmodels.ID
 		if err != nil {
 			return err
 		}
+		err = this.updateDoc(ctx, this.corpSigningCollection, docFilter, status)
+		if err != nil {
+			return err
+		}
 		return nil
 	}
 

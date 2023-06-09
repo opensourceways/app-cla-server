@@ -8,10 +8,10 @@ import (
 	"github.com/opensourceways/app-cla-server/dbmodels"
 )
 
-func (this *client) UploadCorporationSigningPDF(si *dbmodels.SigningIndex, pdf *[]byte) dbmodels.IDBError {
+func (this *client) UploadCorporationSigningPDF(si *dbmodels.SigningIndex, pdf []byte) dbmodels.IDBError {
 	docFilter := newSigningIndex(si).docFilter()
 
-	doc := bson.M{fieldPDF: *pdf}
+	doc := bson.M{fieldPDF: pdf}
 	for k, v := range docFilter {
 		doc[k] = v
 	}
@@ -24,7 +24,7 @@ func (this *client) UploadCorporationSigningPDF(si *dbmodels.SigningIndex, pdf *
 	return withContext1(f)
 }
 
-func (this *client) DownloadCorporationSigningPDF(si *dbmodels.SigningIndex) (*[]byte, dbmodels.IDBError) {
+func (this *client) DownloadCorporationSigningPDF(si *dbmodels.SigningIndex) ([]byte, dbmodels.IDBError) {
 	var v dCorpSigningPDF
 
 	f := func(ctx context.Context) dbmodels.IDBError {
@@ -38,7 +38,7 @@ func (this *client) DownloadCorporationSigningPDF(si *dbmodels.SigningIndex) (*[
 		return nil, err
 	}
 
-	return &v.PDF, nil
+	return v.PDF, nil
 }
 
 func (this *client) IsCorpSigningPDFUploaded(si *dbmodels.SigningIndex) (bool, dbmodels.IDBError) {

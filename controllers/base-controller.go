@@ -198,7 +198,7 @@ func (this *baseController) apiPrepareWithAC(ac *accessController, permission []
 		this.StopRun()
 	}
 
-	if ac != nil && permission != nil {
+	if ac != nil && len(permission) != 0 {
 		if fr := this.checkApiReqToken(ac, permission); fr != nil {
 			this.sendFailedResultAsResp(fr, "")
 			this.StopRun()

@@ -2,8 +2,6 @@ package controllers
 
 import (
 	"fmt"
-	"net/url"
-	"path"
 
 	"github.com/opensourceways/app-cla-server/config"
 	"github.com/opensourceways/app-cla-server/email"
@@ -73,8 +71,8 @@ func (this *PasswordRetrievalController) Post() {
 		email.PasswordRetrieval{
 			Org:          orgInfo.OrgAlias,
 			Timeout:      config.AppConfig.PasswordRetrievalExpiry / 60,
-			ResetURL:     genURLToResetPassword(linkID, key),
-			RetrievalURL: genURLToRetrievalPassword(linkID),
+			ResetURL:     config.AppConfig.GenURLToResetPassword(linkID, key),
+			RetrievalURL: config.AppConfig.GenURLToRetrievalPassword(linkID),
 		},
 	)
 }
@@ -132,21 +130,4 @@ func (this *PasswordRetrievalController) Reset() {
 	}
 
 	this.sendSuccessResp(action + "successfully")
-}
-
-func genURLToResetPassword(linkID, key string) string {
-	v, _ := url.Parse(config.AppConfig.PasswordResetURL)
-
-	q := v.Query()
-	q.Add("key", key)
-	q.Add("link_id", linkID)
-	v.RawQuery = q.Encode()
-
-	return v.String()
-}
-
-func genURLToRetrievalPassword(linkID string) string {
-	v, _ := url.Parse(config.AppConfig.PasswordRetrievalURL)
-	v.Path = path.Join(v.Path, linkID)
-	return v.String()
 }

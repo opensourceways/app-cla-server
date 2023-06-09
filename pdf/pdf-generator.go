@@ -3,7 +3,6 @@ package pdf
 import (
 	"fmt"
 	"io/ioutil"
-	"os"
 	"os/exec"
 	"sort"
 	"strconv"
@@ -63,7 +62,7 @@ func (this *pdfGenerator) GenPDFForCorporationSigning(linkID, claFile string, si
 	if err != nil {
 		return "", err
 	}
-	defer os.Remove(tempPdf)
+	defer util.TryDeleteFileIfExists(tempPdf)
 
 	outfile := util.GenFilePath(this.pdfOutDir, genPDFFileName(linkID, signing.AdminEmail, ""))
 	if err := appendCorpPDFSignaturePage(this.pythonBin, claFile, tempPdf, outfile); err != nil {
@@ -80,9 +79,8 @@ func genSignaturePDF(c *corpSigningPDF, signing *models.CorporationSigning, claF
 	orders, titles := BuildCorpContact(claFields)
 	c.addSignature(pdf, signing.Info, orders, titles)
 
-	if !util.IsFileNotExist(outFile) {
-		os.Remove(outFile)
-	}
+	util.TryDeleteFileIfExists(outFile)
+
 	if err := c.end(pdf, outFile); err != nil {
 		return fmt.Errorf("generate signing pdf of corp failed: %s", err.Error())
 	}
@@ -107,9 +105,8 @@ func genCorporPDF(c *corpSigningPDF, signing *models.CorporationSigning, claFiel
 	orders, titles := BuildCorpContact(claFields)
 	c.addSignature(pdf, signing.Info, orders, titles)
 
-	if !util.IsFileNotExist(outFile) {
-		os.Remove(outFile)
-	}
+	util.TryDeleteFileIfExists(outFile)
+
 	if err := c.end(pdf, outFile); err != nil {
 		return fmt.Errorf("generate signing pdf of corp failed: %s", err.Error())
 	}
@@ -138,9 +135,8 @@ func genCorporPDFMissingSig(c *corpSigningPDF, orgInfo *models.OrgInfo, signing 
 	// second page
 	c.secondPage(pdf, signing.Date)
 
-	if !util.IsFileNotExist(outFile) {
-		os.Remove(outFile)
-	}
+	util.TryDeleteFileIfExists(outFile)
+
 	if err := c.end(pdf, outFile); err != nil {
 		return fmt.Errorf("generate signing pdf of corp failed: %s", err.Error())
 	}

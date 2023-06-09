@@ -2,7 +2,6 @@ package worker
 
 import (
 	"fmt"
-	"os"
 	"strings"
 	"sync"
 	"time"
@@ -71,18 +70,15 @@ func (w *emailWorker) GenCLAPDFForCorporationAndSendIt(linkID, claFile string, o
 		}
 
 		file := ""
-		fileExist := func() bool {
-			return file != "" && !util.IsFileNotExist(file)
-		}
 
 		defer func() {
-			if fileExist() {
-				os.Remove(file)
+			if file != "" {
+				util.TryDeleteFileIfExists(file)
 			}
 		}()
 
 		genFile := func() error {
-			if fileExist() {
+			if file != "" && !util.IsFileNotExist(file) {
 				return nil
 			}
 

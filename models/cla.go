@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -44,11 +43,10 @@ func (o *CLACreateOpt) toCLACreateOption() *dbmodels.CLACreateOption {
 }
 
 func (this *CLACreateOpt) SaveCLAAtLocal(path string) error {
-	if this.content == nil {
+	if len(this.content) == 0 {
 		return nil
 	}
 
-	os.Remove(path)
 	return ioutil.WriteFile(path, this.content, 0644)
 }
 

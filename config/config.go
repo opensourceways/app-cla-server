@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"net/url"
+	"path"
 	"strings"
 
 	"github.com/opensourceways/app-cla-server/util"
@@ -48,6 +49,9 @@ type appConfig struct {
 	RestrictedCorpEmailSuffix []string      `json:"restricted_corp_email_suffix"`
 	MinLengthOfPassword       int           `json:"min_length_of_password"`
 	MaxLengthOfPassword       int           `json:"max_length_of_password"`
+
+	passwordResetURL     url.URL
+	passwordRetrievalURL url.URL
 }
 
 type MongodbConfig struct {
@@ -129,15 +133,17 @@ func (cfg *appConfig) validate() error {
 		return err
 	}
 
-	if _, err := url.Parse(cfg.PasswordRetrievalURL); err != nil {
+	v, err := url.Parse(cfg.PasswordRetrievalURL)
+	if err != nil {
 		return err
 	}
+	cfg.passwordRetrievalURL = *v
 
-	s := cfg.PasswordResetURL
-	if _, err := url.Parse(s); err != nil {
+	v, err = url.Parse(strings.TrimSuffix(cfg.PasswordResetURL, "/"))
+	if err != nil {
 		return err
 	}
-	cfg.PasswordResetURL = strings.TrimSuffix(s, "/")
+	cfg.passwordResetURL = *v
 
 	return nil
 }
@@ -149,4 +155,21 @@ func (cfg *appConfig) IsRestrictedEmailSuffix(emailSuffix string) bool {
 		}
 	}
 	return false
+}
+
+func (cfg *appConfig) GenURLToResetPassword(linkID, key string) string {
+	v := cfg.passwordResetURL
+
+	q := v.Query()
+	q.Add("key", key)
+	q.Add("link_id", linkID)
+	v.RawQuery = q.Encode()
+
+	return v.String()
+}
+
+func (cfg *appConfig) GenURLToRetrievalPassword(linkID string) string {
+	v := cfg.passwordRetrievalURL
+	v.Path = path.Join(v.Path, linkID)
+	return v.String()
 }

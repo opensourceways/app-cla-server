@@ -3,7 +3,6 @@ package controllers
 import (
 	"fmt"
 
-	"github.com/opensourceways/app-cla-server/dbmodels"
 	"github.com/opensourceways/app-cla-server/email"
 	"github.com/opensourceways/app-cla-server/models"
 )
@@ -39,19 +38,20 @@ func (this *EmployeeManagerController) Post() {
 		return
 	}
 
-	domains, fr := listCorpEmailDomain(pl.LinkID, pl.Email)
+	index := pl.signingIndex()
+	detail, fr := getCorporationDetail(index)
 	if fr != nil {
 		fr.statusCode = 500
 		sendResp(fr)
 		return
 	}
 
-	if err := info.ValidateWhenAdding(pl.LinkID, pl.Email, domains); err != nil {
+	if err := info.ValidateWhenAdding(index, &detail); err != nil {
 		this.sendModelErrorAsResp(err, action)
 		return
 	}
 
-	added, merr := info.Create(pl.LinkID)
+	added, merr := info.Create(index)
 	if merr != nil {
 		this.sendModelErrorAsResp(merr, action)
 		return
@@ -83,14 +83,14 @@ func (this *EmployeeManagerController) Delete() {
 		return
 	}
 
-	domains, fr := listCorpEmailDomain(pl.LinkID, pl.Email)
+	detail, fr := getCorporationDetail(pl.signingIndex())
 	if fr != nil {
 		fr.statusCode = 500
 		sendResp(fr)
 		return
 	}
 
-	if err := info.ValidateWhenDeleting(pl.Email, domains); err != nil {
+	if err := info.ValidateWhenDeleting(&detail); err != nil {
 		this.sendModelErrorAsResp(err, action)
 		return
 	}
@@ -128,10 +128,10 @@ func (this *EmployeeManagerController) GetAll() {
 		return
 	}
 
-	r, err := models.ListCorporationManagers(pl.LinkID, pl.Email, dbmodels.RoleManager)
+	detail, err := getCorporationDetail(pl.signingIndex())
 	if err == nil {
-		this.sendSuccessResp(r)
+		this.sendSuccessResp(detail.Managers)
 	} else {
-		sendResp(parseModelError(err))
+		sendResp(err)
 	}
 }

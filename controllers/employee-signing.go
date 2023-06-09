@@ -8,7 +8,6 @@ import (
 	"github.com/opensourceways/app-cla-server/dbmodels"
 	"github.com/opensourceways/app-cla-server/email"
 	"github.com/opensourceways/app-cla-server/models"
-	"github.com/opensourceways/app-cla-server/util"
 )
 
 type EmployeeSigningController struct {
@@ -77,17 +76,23 @@ func (this *EmployeeSigningController) Post() {
 		return
 	}
 
-	managers, merr := models.ListCorporationManagers(linkID, info.Email, dbmodels.RoleManager)
-	if merr != nil {
-		this.sendModelErrorAsResp(merr, action)
+	detail, fr := getCorporationDetail(
+		models.SigningIndex{
+			LinkId:    linkID,
+			SigningId: info.CorpSigningId,
+		},
+	)
+	if fr != nil {
+		this.sendFailedResultAsResp(fr, action)
 		return
 	}
-	if len(managers) <= 0 {
+
+	if len(detail.Managers) <= 0 {
 		this.sendFailedResponse(400, errNoCorpEmployeeManager, fmt.Errorf("no managers"), action)
 		return
 	}
 
-	fr := signHelper(
+	fr = signHelper(
 		linkID, claLang, dbmodels.ApplyToIndividual,
 		func(claInfo *models.CLAInfo) *failedApiResult {
 			if claInfo.CLAHash != this.GetString(":cla_hash") {
@@ -96,7 +101,7 @@ func (this *EmployeeSigningController) Post() {
 
 			info.Info = getSingingInfo(info.Info, claInfo.Fields)
 
-			if err := (&info).Create(linkID, false); err != nil {
+			if err := (&info).Create(linkID); err != nil {
 				if err.IsErrorOf(models.ErrNoLinkOrResigned) {
 					return newFailedApiResult(400, errResigned, err)
 				}
@@ -109,7 +114,7 @@ func (this *EmployeeSigningController) Post() {
 		this.sendFailedResultAsResp(fr, action)
 	} else {
 		this.sendSuccessResp("sign successfully")
-		this.notifyManagers(managers, &info, orgInfo)
+		this.notifyManagers(detail.Managers, &info, orgInfo)
 	}
 }
 
@@ -131,7 +136,9 @@ func (this *EmployeeSigningController) GetAll() {
 		return
 	}
 
-	r, merr := models.ListIndividualSigning(pl.LinkID, pl.Email, this.GetString("cla_language"))
+	r, merr := models.ListEmployeeSigning(
+		pl.signingIndex(), this.GetString("cla_language"),
+	)
 	if merr != nil {
 		this.sendModelErrorAsResp(merr, action)
 		return
@@ -143,7 +150,7 @@ func (this *EmployeeSigningController) GetAll() {
 // @Title List
 // @Description get all the employees by community manager
 // @Param	:link_id	path 	string		true		"link id"
-// @Param	:email		path 	string		true		"the email of corp"
+// @Param	:signing_id	path 	string		true		"signing id"
 // @Success 200 {object} dbmodels.IndividualSigningBasicInfo
 // @Failure 400 missing_url_path_parameter: missing url path parameter
 // @Failure 401 missing_token:              token is missing
@@ -153,23 +160,23 @@ func (this *EmployeeSigningController) GetAll() {
 // @Failure 405 unknown_link:               unkown link id
 // @Failure 406 not_yours_org:              the link doesn't belong to your community
 // @Failure 500 system_error:               system error
-// @router /:link_id/:email [get]
+// @router /:link_id/:signing_id [get]
 func (this *EmployeeSigningController) List() {
 	action := "list employees"
-	linkID := this.GetString(":link_id")
-	corpEmail := this.GetString(":email")
+	index := genSigningIndex(&this.Controller)
 
 	pl, fr := this.tokenPayloadBasedOnCodePlatform()
 	if fr != nil {
 		this.sendFailedResultAsResp(fr, action)
 		return
 	}
-	if fr := pl.isOwnerOfLink(linkID); fr != nil {
+
+	if fr := pl.isOwnerOfLink(index.LinkId); fr != nil {
 		this.sendFailedResultAsResp(fr, action)
 		return
 	}
 
-	r, merr := models.ListIndividualSigning(linkID, corpEmail, "")
+	r, merr := models.ListEmployeeSigning(index, "")
 	if merr != nil {
 		this.sendModelErrorAsResp(merr, action)
 		return
@@ -180,29 +187,16 @@ func (this *EmployeeSigningController) List() {
 
 // @Title Update
 // @Description enable/unable employee signing
-// @Param	:email		path 	string	true		"email"
+// @Param	:signing_id	path 	string		true		"signing id"
 // @Success 202 {int} map
-// @router /:email [put]
+// @router /:signing_id [put]
 func (this *EmployeeSigningController) Update() {
 	action := "enable/unable employee signing"
 	sendResp := this.newFuncForSendingFailedResp(action)
-	employeeEmail := this.GetString(":email")
 
 	pl, fr := this.tokenPayloadBasedOnCorpManager()
 	if fr != nil {
 		sendResp(fr)
-		return
-	}
-
-	domains, fr := listCorpEmailDomain(pl.LinkID, pl.Email)
-	if fr != nil {
-		fr.statusCode = 500
-		sendResp(fr)
-		return
-	}
-
-	if !domains[util.EmailSuffix(employeeEmail)] {
-		this.sendFailedResponse(400, errNotSameCorp, fmt.Errorf("not same corp"), action)
 		return
 	}
 
@@ -212,7 +206,11 @@ func (this *EmployeeSigningController) Update() {
 		return
 	}
 
-	if err := (&info).Update(pl.LinkID, employeeEmail); err != nil {
+	employeeEmail, err := (&info).Update(models.SigningIndex{
+		LinkId:    pl.LinkID,
+		SigningId: this.GetString(":signing_id"),
+	})
+	if err != nil {
 		if err.IsErrorOf(models.ErrNoLinkOrUnsigned) {
 			this.sendFailedResponse(400, errUnsigned, err, action)
 		} else {
@@ -235,12 +233,11 @@ func (this *EmployeeSigningController) Update() {
 
 // @Title Delete
 // @Description delete employee signing
-// @Param	:email		path 	string	true		"email"
+// @Param	:signing_id	path 	string		true		"signing id"
 // @Success 204 {string} delete success!
-// @router /:email [delete]
+// @router /:signing_id [delete]
 func (this *EmployeeSigningController) Delete() {
 	action := "delete employee signing"
-	employeeEmail := this.GetString(":email")
 
 	pl, fr := this.tokenPayloadBasedOnCorpManager()
 	if fr != nil {
@@ -248,19 +245,13 @@ func (this *EmployeeSigningController) Delete() {
 		return
 	}
 
-	domains, fr := listCorpEmailDomain(pl.LinkID, pl.Email)
-	if fr != nil {
-		fr.statusCode = 500
-		this.sendFailedResultAsResp(fr, action)
-		return
-	}
-
-	if !domains[util.EmailSuffix(employeeEmail)] {
-		this.sendFailedResponse(400, errNotSameCorp, fmt.Errorf("not same corp"), action)
-		return
-	}
-
-	if err := models.DeleteEmployeeSigning(pl.LinkID, employeeEmail); err != nil {
+	employeeEmail, err := models.DeleteEmployeeSigning(
+		models.SigningIndex{
+			LinkId:    pl.LinkID,
+			SigningId: this.GetString(":signing_id"),
+		},
+	)
+	if err != nil {
 		this.sendModelErrorAsResp(err, action)
 		return
 	}
@@ -272,7 +263,11 @@ func (this *EmployeeSigningController) Delete() {
 	sendEmailToIndividual(employeeEmail, pl.OrgEmail, "Remove employee", msg)
 }
 
-func (this *EmployeeSigningController) notifyManagers(managers []dbmodels.CorporationManagerListResult, info *models.EmployeeSigning, orgInfo *models.OrgInfo) {
+func (this *EmployeeSigningController) notifyManagers(
+	managers []dbmodels.CorporationManagerListResult,
+	info *models.EmployeeSigning,
+	orgInfo *models.OrgInfo,
+) {
 	ms := make([]string, 0, len(managers))
 	to := make([]string, 0, len(managers))
 	for _, item := range managers {
@@ -301,7 +296,9 @@ func (this *EmployeeSigningController) notifyManagers(managers []dbmodels.Corpor
 	sendEmail(to, orgInfo.OrgEmail, "An employee has signed CLA", msg1)
 }
 
-func (this *EmployeeSigningController) newEmployeeNotification(pl *acForCorpManagerPayload, employeeName string) *email.EmployeeNotification {
+func (this *EmployeeSigningController) newEmployeeNotification(
+	pl *acForCorpManagerPayload, employeeName string,
+) *email.EmployeeNotification {
 	return &email.EmployeeNotification{
 		Name:       employeeName,
 		Manager:    pl.Email,

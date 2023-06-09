@@ -8,31 +8,34 @@ import (
 	"github.com/opensourceways/app-cla-server/dbmodels"
 )
 
-func (this *client) AddEmployeeManager(linkID string, opt []dbmodels.CorporationManagerCreateOption) dbmodels.IDBError {
-	toAdd := make(bson.A, 0, len(opt))
-	for i := range opt {
-		item := &opt[i]
-		info := dCorpManager{
-			ID:       item.ID,
-			Name:     item.Name,
-			Email:    item.Email,
-			Role:     item.Role,
-			Password: item.Password,
-			CorpID:   genCorpID(item.Email),
-		}
+func (this *client) AddEmployeeManager(
+	si *dbmodels.SigningIndex,
+	opt *dbmodels.CorporationManagerCreateOption,
+) dbmodels.IDBError {
+	index := newSigningIndex(si)
 
-		body, err := structToMap(info)
-		if err != nil {
-			return err
-		}
+	doc, err := structToMap(dCorpManager{
+		ID:       opt.ID,
+		Name:     opt.Name,
+		Role:     opt.Role,
+		Email:    opt.Email,
+		CorpID:   genCorpID(opt.Email),
+		CorpSID:  si.SigningId,
+		Password: opt.Password,
+	})
+	if err != nil {
+		return err
+	}
 
-		toAdd = append(toAdd, body)
+	docFilter := index.docFilterOfSigning()
+	docFilter["$nor"] = bson.A{
+		bson.M{fieldCorpManagers + "." + fieldEmail: opt.Email},
+		bson.M{fieldCorpManagers + "." + fieldID: opt.ID},
 	}
 
 	f := func(ctx context.Context) dbmodels.IDBError {
-		return this.pushArrayElems(
-			ctx, this.corpSigningCollection, fieldCorpManagers,
-			docFilterOfCorpManager(linkID), toAdd,
+		return this.pushArrayElem(
+			ctx, this.corpSigningCollection, fieldCorpManagers, docFilter, doc,
 		)
 	}
 

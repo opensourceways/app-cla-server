@@ -18,24 +18,21 @@ type EmployeeManager struct {
 	Name  string `json:"name"`
 }
 
-func (this *EmployeeManagerCreateOption) ValidateWhenAdding(linkID, adminEmail string, emailDomains map[string]bool) IModelError {
+func (this *EmployeeManagerCreateOption) ValidateWhenAdding(
+	index SigningIndex, detail *dbmodels.CorporationDetail,
+) IModelError {
 	if len(this.Managers) == 0 {
 		return newModelError(ErrEmptyPayload, fmt.Errorf("no employee mangers"))
 	}
 
-	managers, err := ListCorporationManagers(linkID, adminEmail, dbmodels.RoleManager)
-	if err != nil {
-		return err
-	}
-
-	if len(this.Managers)+len(managers) > config.AppConfig.EmployeeManagersNumber {
+	if len(this.Managers)+len(detail.Managers) > config.AppConfig.EmployeeManagersNumber {
 		return newModelError(ErrManyEmployeeManagers, fmt.Errorf("too many employee managers"))
 	}
 
 	ids := map[string]bool{}
 	em := map[string]bool{}
-	for i := range managers {
-		item := &managers[i]
+	for i := range detail.Managers {
+		item := &detail.Managers[i]
 		ids[item.ID] = true
 		em[item.Email] = true
 	}
@@ -48,11 +45,11 @@ func (this *EmployeeManagerCreateOption) ValidateWhenAdding(linkID, adminEmail s
 		}
 
 		domain := util.EmailSuffix(item.Email)
-		if !emailDomains[domain] {
+		if !detail.HasDomain(domain) {
 			return newModelError(ErrNotSameCorp, fmt.Errorf("not same email domain"))
 		}
 
-		if item.Email == adminEmail {
+		if item.Email == detail.AdminEmail() {
 			return newModelError(ErrAdminAsManager, fmt.Errorf("can't add administrator"))
 		}
 
@@ -61,53 +58,52 @@ func (this *EmployeeManagerCreateOption) ValidateWhenAdding(linkID, adminEmail s
 		}
 		em[item.Email] = true
 
-		if err := checkManagerID(fmt.Sprintf("%s_%s", item.ID, domain)); err != nil {
+		item.ID = managerAccount(item.ID, item.Email)
+
+		if err := checkManagerID(item.ID); err != nil {
 			return err
 		}
 
 		if _, ok := ids[item.ID]; ok {
 			return newModelError(ErrDuplicateManagerID, fmt.Errorf("duplicate manager ID:%s", item.ID))
 		}
+
 		ids[item.ID] = true
 	}
 
 	return nil
 }
 
-func (this *EmployeeManagerCreateOption) Create(linkID string) ([]dbmodels.CorporationManagerCreateOption, IModelError) {
+func (this *EmployeeManagerCreateOption) Create(index SigningIndex) (
+	[]dbmodels.CorporationManagerCreateOption, IModelError,
+) {
 	opt := make([]dbmodels.CorporationManagerCreateOption, 0, len(this.Managers))
 
 	for i := range this.Managers {
 		item := &this.Managers[i]
-		pw := util.RandStr(8, "alphanum")
 
-		opt = append(opt, dbmodels.CorporationManagerCreateOption{
-			ID:       item.ID,
+		v := dbmodels.CorporationManagerCreateOption{
+			ID:       managerAccount(item.ID, item.Email),
 			Name:     item.Name,
 			Email:    item.Email,
-			Password: pw,
 			Role:     dbmodels.RoleManager,
-		})
+			Password: util.RandStr(8, "alphanum"),
+		}
+
+		if err := dbmodels.GetDB().AddEmployeeManager(&index, &v); err != nil {
+			if err.IsErrorOf(dbmodels.ErrNoDBRecord) {
+				return nil, newModelError(ErrNoLink, err)
+			}
+			return nil, parseDBError(err)
+		}
+
+		opt = append(opt, v)
 	}
 
-	err := dbmodels.GetDB().AddEmployeeManager(linkID, opt)
-	if err != nil {
-		if err.IsErrorOf(dbmodels.ErrNoDBRecord) {
-			return nil, newModelError(ErrNoLink, err)
-		}
-		return nil, parseDBError(err)
-	}
-
-	es := util.EmailSuffix(opt[0].Email)
-	for i := range opt {
-		if opt[i].ID != "" {
-			opt[i].ID = fmt.Sprintf("%s_%s", opt[i].ID, es)
-		}
-	}
 	return opt, nil
 }
 
-func (this *EmployeeManagerCreateOption) ValidateWhenDeleting(adminEmail string, emailDomains map[string]bool) IModelError {
+func (this *EmployeeManagerCreateOption) ValidateWhenDeleting(detail *dbmodels.CorporationDetail) IModelError {
 	if len(this.Managers) == 0 {
 		return newModelError(ErrEmptyPayload, fmt.Errorf("no employee mangers"))
 	}
@@ -119,11 +115,11 @@ func (this *EmployeeManagerCreateOption) ValidateWhenDeleting(adminEmail string,
 			return err
 		}
 
-		if !emailDomains[util.EmailSuffix(item.Email)] {
+		if !detail.HasDomain(util.EmailSuffix(item.Email)) {
 			return newModelError(ErrNotSameCorp, fmt.Errorf("not same email domain"))
 		}
 
-		if item.Email == adminEmail {
+		if item.Email == detail.AdminEmail() {
 			return newModelError(ErrAdminAsManager, fmt.Errorf("can't delete administrator"))
 		}
 	}

@@ -8,6 +8,8 @@ import (
 	"github.com/opensourceways/app-cla-server/util"
 )
 
+type SigningIndex = dbmodels.SigningIndex
+
 func InitializeCorpSigning(linkID string, info *OrgInfo, cla *CLAInfo) IModelError {
 	err := dbmodels.GetDB().InitializeCorpSigning(linkID, info, cla)
 	return parseDBError(err)
@@ -50,13 +52,13 @@ func (this *CorporationSigningCreateOption) Create(orgCLAID string) IModelError 
 	return parseDBError(err)
 }
 
-func UploadCorporationSigningPDF(linkID string, email string, pdf *[]byte) IModelError {
-	err := dbmodels.GetDB().UploadCorporationSigningPDF(linkID, email, pdf)
+func UploadCorporationSigningPDF(index SigningIndex, pdf *[]byte) IModelError {
+	err := dbmodels.GetDB().UploadCorporationSigningPDF(&index, pdf)
 	return parseDBError(err)
 }
 
-func DownloadCorporationSigningPDF(linkID string, email string) (*[]byte, IModelError) {
-	v, err := dbmodels.GetDB().DownloadCorporationSigningPDF(linkID, email)
+func DownloadCorporationSigningPDF(index *SigningIndex) (*[]byte, IModelError) {
+	v, err := dbmodels.GetDB().DownloadCorporationSigningPDF(index)
 	if err == nil {
 		return v, nil
 	}
@@ -67,8 +69,8 @@ func DownloadCorporationSigningPDF(linkID string, email string) (*[]byte, IModel
 	return v, parseDBError(err)
 }
 
-func IsCorpSigningPDFUploaded(linkID string, email string) (bool, IModelError) {
-	v, err := dbmodels.GetDB().IsCorpSigningPDFUploaded(linkID, email)
+func IsCorpSigningPDFUploaded(index SigningIndex) (bool, IModelError) {
+	v, err := dbmodels.GetDB().IsCorpSigningPDFUploaded(&index)
 	return v, parseDBError(err)
 }
 
@@ -77,8 +79,10 @@ func ListCorpsWithPDFUploaded(linkID string) ([]string, IModelError) {
 	return v, parseDBError(err)
 }
 
-func ListCorpSignings(linkID, language string) ([]dbmodels.CorporationSigningSummary, IModelError) {
-	v, err := dbmodels.GetDB().ListCorpSignings(linkID, language)
+func ListCorpSignings(linkID string, opt dbmodels.CorpSigningListOpt) (
+	[]dbmodels.CorporationSigningSummary, IModelError,
+) {
+	v, err := dbmodels.GetDB().ListCorpSignings(linkID, &opt)
 	if err == nil {
 		if v == nil {
 			v = []dbmodels.CorporationSigningSummary{}
@@ -93,16 +97,18 @@ func ListCorpSignings(linkID, language string) ([]dbmodels.CorporationSigningSum
 }
 
 func IsCorpSigned(linkID, email string) (bool, IModelError) {
-	v, err := dbmodels.GetDB().IsCorpSigned(linkID, email)
+	v, err := dbmodels.GetDB().ListCorpSignings(linkID, &dbmodels.CorpSigningListOpt{
+		Email: email,
+	})
 	if err == nil {
-		return v, nil
+		return len(v) > 0, nil
 	}
 
-	return v, parseDBError(err)
+	return false, parseDBError(err)
 }
 
-func GetCorpSigningBasicInfo(linkID, email string) (*dbmodels.CorporationSigningBasicInfo, IModelError) {
-	v, err := dbmodels.GetDB().GetCorpSigningBasicInfo(linkID, email)
+func GetCorpSigningBasicInfo(index *SigningIndex) (*dbmodels.CorporationSigningBasicInfo, IModelError) {
+	v, err := dbmodels.GetDB().GetCorpSigningBasicInfo(index)
 	if err == nil {
 		if v == nil {
 			return nil, newModelError(ErrUnsigned, fmt.Errorf("unsigned"))
@@ -117,8 +123,8 @@ func GetCorpSigningBasicInfo(linkID, email string) (*dbmodels.CorporationSigning
 	return v, parseDBError(err)
 }
 
-func GetCorpSigningDetail(linkID, email string) (*dbmodels.CLAInfo, *dbmodels.CorpSigningCreateOpt, IModelError) {
-	f, s, err := dbmodels.GetDB().GetCorpSigningDetail(linkID, email)
+func GetCorpSigningDetail(index SigningIndex) (*dbmodels.CLAInfo, *dbmodels.CorpSigningCreateOpt, IModelError) {
+	f, s, err := dbmodels.GetDB().GetCorpSigningDetail(&index)
 	if err == nil {
 		return f, s, nil
 	}
@@ -130,8 +136,8 @@ func GetCorpSigningDetail(linkID, email string) (*dbmodels.CLAInfo, *dbmodels.Co
 	return f, s, parseDBError(err)
 }
 
-func DeleteCorpSigning(linkID, email string) IModelError {
-	err := dbmodels.GetDB().DeleteCorpSigning(linkID, email)
+func DeleteCorpSigning(index SigningIndex) IModelError {
+	err := dbmodels.GetDB().DeleteCorpSigning(&index)
 	if err == nil {
 		return nil
 	}

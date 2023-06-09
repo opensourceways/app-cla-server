@@ -2,7 +2,13 @@ package dbmodels
 
 type TypeSigningInfo map[string]string
 
+type SigningIndex struct {
+	LinkId    string
+	SigningId string
+}
+
 type CorporationSigningBasicInfo struct {
+	ID              string `json:"id"`
 	CLALanguage     string `json:"cla_language"`
 	AdminEmail      string `json:"admin_email"`
 	AdminName       string `json:"admin_name"`
@@ -20,4 +26,10 @@ type CorpSigningCreateOpt struct {
 	CorporationSigningBasicInfo
 
 	Info TypeSigningInfo `json:"info"`
+}
+
+type CorpSigningListOpt struct {
+	Lang         string
+	Email        string
+	IncludeAdmin bool
 }

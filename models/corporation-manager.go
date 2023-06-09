@@ -2,6 +2,7 @@ package models
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/opensourceways/app-cla-server/dbmodels"
@@ -26,14 +27,16 @@ func (this CorporationManagerAuthentication) Authenticate() (map[string]dbmodels
 	info := dbmodels.CorporationManagerCheckInfo{Password: this.Password, LinkID: this.LinkID}
 	if merr := checkEmailFormat(this.User); merr == nil {
 		info.Email = this.User
+		info.EmailSuffix = util.EmailSuffix(this.User)
 	} else {
 		if merr := checkManagerID(this.User); merr != nil {
 			return nil, merr
 		}
 
+		info.ID = this.User
+
 		i := strings.LastIndex(this.User, "_")
 		info.EmailSuffix = this.User[(i + 1):]
-		info.ID = this.User[:i]
 	}
 
 	v, err := dbmodels.GetDB().CheckCorporationManagerExist(info)
@@ -44,19 +47,33 @@ func (this CorporationManagerAuthentication) Authenticate() (map[string]dbmodels
 	return nil, parseDBError(err)
 }
 
-func CreateCorporationAdministrator(linkID, name, email string) (*dbmodels.CorporationManagerCreateOption, IModelError) {
+func CreateCorporationAdministrator(index SigningIndex, info *dbmodels.CorporationSigningBasicInfo) (
+	*dbmodels.CorporationManagerCreateOption, IModelError,
+) {
+	v, merr := ListCorpSignings(index.LinkId, dbmodels.CorpSigningListOpt{
+		Email: info.AdminEmail,
+	})
+	if merr != nil {
+		return nil, merr
+	}
+
+	account := "admin"
+	if len(v) > 1 {
+		account += strconv.Itoa(len(v) - 1)
+	}
+
 	pw := util.RandStr(8, "alphanum")
 
 	opt := &dbmodels.CorporationManagerCreateOption{
-		ID:       "admin",
-		Name:     name,
-		Email:    email,
+		ID:       managerAccount(account, info.AdminEmail),
+		Name:     info.AdminName,
+		Email:    info.AdminEmail,
 		Password: pw,
 		Role:     dbmodels.RoleAdmin,
 	}
-	err := dbmodels.GetDB().AddCorpAdministrator(linkID, opt)
+
+	err := dbmodels.GetDB().AddCorpAdministrator(&index, opt)
 	if err == nil {
-		opt.ID = fmt.Sprintf("admin_%s", util.EmailSuffix(email))
 		return opt, nil
 	}
 
@@ -85,18 +102,15 @@ func (this CorporationManagerResetPassword) Reset(linkID, email string) IModelEr
 		return nil
 	}
 
-	if err.IsErrorOf(dbmodels.ErrNoDBRecord) {
+	if err.IsErrorOf(dbmodels.ErrNoDBRecord) || err.IsErrorOf(dbmodels.ErrNotFound) {
 		return newModelError(ErrNoLinkOrNoManager, err)
 	}
 	return parseDBError(err)
 }
 
-func ListCorporationManagers(linkID, email, role string) ([]dbmodels.CorporationManagerListResult, IModelError) {
-	v, err := dbmodels.GetDB().ListCorporationManager(linkID, email, role)
+func GetCorporationDetail(index SigningIndex) (dbmodels.CorporationDetail, IModelError) {
+	v, err := dbmodels.GetDB().GetCorporationDetail(&index)
 	if err == nil {
-		if v == nil {
-			v = []dbmodels.CorporationManagerListResult{}
-		}
 		return v, nil
 	}
 

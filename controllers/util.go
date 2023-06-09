@@ -187,18 +187,22 @@ func lockOnRepo(orgInfo *dbmodels.OrgInfo) (func(), *failedApiResult) {
 	return unlock, nil
 }
 
-func listCorpEmailDomain(linkID, adminEmail string) (map[string]bool, *failedApiResult) {
-	d, err := models.ListCorpEmailDomain(linkID, adminEmail)
+func getCorporationDetail(index models.SigningIndex) (dbmodels.CorporationDetail, *failedApiResult) {
+	d, err := models.GetCorporationDetail(index)
 	if err != nil {
-		return nil, parseModelError(err)
-	}
-	if len(d) == 0 {
-		return nil, newFailedApiResult(400, errUnsigned, fmt.Errorf("unsigned"))
+		return d, parseModelError(err)
 	}
 
-	m := map[string]bool{}
-	for _, i := range d {
-		m[i] = true
+	if d.IsNotFound() {
+		return d, newFailedApiResult(400, errUnsigned, fmt.Errorf("unsigned"))
 	}
-	return m, nil
+
+	return d, nil
+}
+
+func genSigningIndex(ctl *beego.Controller) models.SigningIndex {
+	return models.SigningIndex{
+		LinkId:    ctl.GetString(":link_id"),
+		SigningId: ctl.GetString(":signing_id"),
+	}
 }

@@ -13,14 +13,9 @@ func elemFilterOfCorpSigning(email string) bson.M {
 	return filterOfCorpID(email)
 }
 
-func elemFilterOfEmailDomains(email string) bson.M {
-	return bson.M{
-		fieldDomains: bson.M{"$elemMatch": bson.M{"$eq": genCorpID(email)}},
-	}
-}
-
 func (c *client) SignCorpCLA(linkID string, info *dbmodels.CorpSigningCreateOpt) dbmodels.IDBError {
 	signing := dCorpSigning{
+		ID:          newObjectId(),
 		CLALanguage: info.CLALanguage,
 		CorpID:      genCorpID(info.AdminEmail),
 		CorpName:    info.CorporationName,
@@ -36,7 +31,13 @@ func (c *client) SignCorpCLA(linkID string, info *dbmodels.CorpSigningCreateOpt)
 	}
 
 	docFilter := docFilterOfSigning(linkID)
-	arrayFilterByElemMatch(fieldSignings, false, elemFilterOfCorpSigning(info.AdminEmail), docFilter)
+	docFilter["$nor"] = bson.A{
+		bson.M{fieldSignings + "." + fieldEmail: info.AdminEmail},
+		bson.M{fieldSignings: bson.M{"$elemMatch": bson.M{
+			fieldCorpID: genCorpID(info.AdminEmail),
+			fieldCorp:   info.CorporationName,
+		}}},
+	}
 
 	f := func(ctx context.Context) dbmodels.IDBError {
 		return c.pushArrayElem(ctx, c.corpSigningCollection, fieldSignings, docFilter, doc)
@@ -45,22 +46,59 @@ func (c *client) SignCorpCLA(linkID string, info *dbmodels.CorpSigningCreateOpt)
 	return withContext1(f)
 }
 
-func (this *client) ListCorpSignings(linkID, language string) ([]dbmodels.CorporationSigningSummary, dbmodels.IDBError) {
-	elemFilter := map[string]bson.M{
-		fieldCorpManagers: {"role": dbmodels.RoleAdmin},
-	}
-	if language != "" {
-		elemFilter[fieldSignings] = bson.M{fieldLang: language}
+func toCorpSigningListFilter(opt *dbmodels.CorpSigningListOpt) bson.M {
+	c := bson.A{}
+
+	if opt.Lang != "" {
+		c = append(c, conditionTofilterArray(bson.M{fieldLang: opt.Lang}))
 	}
 
+	if opt.Email != "" {
+		c = append(
+			c,
+			bson.M{"$isArray": fmt.Sprintf("$$this.%s", fieldDomains)},
+			bson.M{"$in": bson.A{
+				genCorpID(opt.Email),
+				fmt.Sprintf("$$this.%s", fieldDomains),
+			}},
+		)
+	}
+
+	n := len(c)
+	if n == 0 {
+		return nil
+	}
+
+	if n > 1 {
+		return bson.M{"$and": c}
+	}
+
+	return c[0].(bson.M)
+}
+
+func (this *client) ListCorpSignings(linkID string, opt *dbmodels.CorpSigningListOpt) (
+	[]dbmodels.CorporationSigningSummary, dbmodels.IDBError,
+) {
 	project := projectOfCorpSigning()
-	project[memberNameOfCorpManager(fieldEmail)] = 1
+	filter := make(map[string]func() bson.M)
+
+	if sf := toCorpSigningListFilter(opt); sf != nil {
+		filter[fieldSignings] = func() bson.M { return sf }
+	}
+
+	if opt.IncludeAdmin {
+		filter[fieldCorpManagers] = func() bson.M {
+			return conditionTofilterArray(bson.M{fieldRole: dbmodels.RoleAdmin})
+		}
+
+		project[memberNameOfCorpManager(fieldEmail)] = 1
+	}
 
 	var v []cCorpSigning
 	f := func(ctx context.Context) error {
-		return this.getMultiArrays(
+		return this.getArrayElems(
 			ctx, this.corpSigningCollection, docFilterOfSigning(linkID),
-			elemFilter, project, &v,
+			project, filter, &v,
 		)
 	}
 
@@ -94,31 +132,17 @@ func (this *client) ListCorpSignings(linkID, language string) ([]dbmodels.Corpor
 	return r, nil
 }
 
-func (this *client) IsCorpSigned(linkID, email string) (bool, dbmodels.IDBError) {
-	signed := false
-	f := func(ctx context.Context) dbmodels.IDBError {
-		v, err := this.isArrayElemNotExists(
-			ctx, this.corpSigningCollection, fieldSignings,
-			docFilterOfSigning(linkID), elemFilterOfEmailDomains(email),
-		)
-		if err != nil {
-			return newSystemError(err)
-		}
-		signed = !v
-		return nil
-	}
+func (this *client) GetCorpSigningBasicInfo(si *dbmodels.SigningIndex) (
+	*dbmodels.CorporationSigningBasicInfo, dbmodels.IDBError,
+) {
+	index := newSigningIndex(si)
 
-	err := withContext1(f)
-	return signed, err
-}
-
-func (this *client) GetCorpSigningBasicInfo(linkID, email string) (*dbmodels.CorporationSigningBasicInfo, dbmodels.IDBError) {
 	var v []cCorpSigning
 
 	f := func(ctx context.Context) error {
 		return this.getArrayElem(
 			ctx, this.corpSigningCollection, fieldSignings,
-			docFilterOfSigning(linkID), elemFilterOfCorpSigning(email),
+			index.docFilterOfSigning(), index.idFilter(),
 			projectOfCorpSigning(), &v,
 		)
 	}
@@ -139,12 +163,14 @@ func (this *client) GetCorpSigningBasicInfo(linkID, email string) (*dbmodels.Cor
 	return toDBModelCorporationSigningBasicInfo(&(signings[0])), nil
 }
 
-func (this *client) GetCorpSigningDetail(linkID, email string) (*dbmodels.CLAInfo, *dbmodels.CorpSigningCreateOpt, dbmodels.IDBError) {
+func (this *client) GetCorpSigningDetail(si *dbmodels.SigningIndex) (*dbmodels.CLAInfo, *dbmodels.CorpSigningCreateOpt, dbmodels.IDBError) {
+	index := newSigningIndex(si)
+
 	pipeline := bson.A{
-		bson.M{"$match": docFilterOfSigning(linkID)},
+		bson.M{"$match": index.docFilterOfSigning()},
 		bson.M{"$project": bson.M{
 			fieldCLAInfos: 1,
-			fieldSignings: arrayElemFilter(fieldSignings, filterOfCorpID(email)),
+			fieldSignings: arrayElemFilter(fieldSignings, index.idFilter()),
 		}},
 		bson.M{"$unwind": "$" + fieldSignings},
 		bson.M{"$project": bson.M{
@@ -201,6 +227,7 @@ func (this *client) GetCorpSigningDetail(linkID, email string) (*dbmodels.CLAInf
 
 func toDBModelCorporationSigningBasicInfo(cs *dCorpSigning) *dbmodels.CorporationSigningBasicInfo {
 	return &dbmodels.CorporationSigningBasicInfo{
+		ID:              cs.ID,
 		CLALanguage:     cs.CLALanguage,
 		AdminEmail:      cs.AdminEmail,
 		AdminName:       cs.AdminName,

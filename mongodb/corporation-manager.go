@@ -15,8 +15,7 @@ func docFilterOfCorpManager(linkID string) bson.M {
 
 func elemFilterOfCorpManager(email string) bson.M {
 	return bson.M{
-		fieldCorpID: genCorpID(email),
-		fieldEmail:  email,
+		fieldEmail: email,
 	}
 }
 
@@ -24,29 +23,34 @@ func memberNameOfCorpManager(field string) string {
 	return fmt.Sprintf("%s.%s", fieldCorpManagers, field)
 }
 
-func (this *client) AddCorpAdministrator(linkID string, opt *dbmodels.CorporationManagerCreateOption) dbmodels.IDBError {
+func (this *client) AddCorpAdministrator(
+	si *dbmodels.SigningIndex,
+	opt *dbmodels.CorporationManagerCreateOption,
+) dbmodels.IDBError {
+	index := newSigningIndex(si)
+
 	info := dCorpManager{
 		ID:       opt.ID,
 		Name:     opt.Name,
-		Email:    opt.Email,
 		Role:     dbmodels.RoleAdmin,
-		Password: opt.Password,
+		Email:    opt.Email,
 		CorpID:   genCorpID(opt.Email),
+		Password: opt.Password,
+		CorpSID:  si.SigningId,
 	}
 	body, err := structToMap(info)
 	if err != nil {
 		return err
 	}
 
-	docFilter := docFilterOfCorpManager(linkID)
-	arrayFilterByElemMatch(
-		fieldCorpManagers, false,
-		bson.M{
-			fieldCorpID: genCorpID(opt.Email),
-			fieldRole:   dbmodels.RoleAdmin,
-		},
-		docFilter,
-	)
+	docFilter := index.docFilterOfSigning()
+	docFilter["$nor"] = bson.A{
+		bson.M{fieldCorpManagers: bson.M{"$elemMatch": bson.M{
+			fieldCorpSId: si.SigningId,
+			fieldRole:    dbmodels.RoleAdmin,
+		}}},
+		bson.M{fieldCorpManagers + "." + fieldID: opt.ID},
+	}
 
 	f := func(ctx context.Context) dbmodels.IDBError {
 		return this.pushArrayElem(
@@ -57,21 +61,20 @@ func (this *client) AddCorpAdministrator(linkID string, opt *dbmodels.Corporatio
 	return withContext1(f)
 }
 
-func (this *client) CheckCorporationManagerExist(opt dbmodels.CorporationManagerCheckInfo) (map[string]dbmodels.CorporationManagerCheckResult, dbmodels.IDBError) {
+func (this *client) CheckCorporationManagerExist(opt dbmodels.CorporationManagerCheckInfo) (
+	map[string]dbmodels.CorporationManagerCheckResult, dbmodels.IDBError,
+) {
 	docFilter := bson.M{
 		fieldLinkStatus:   linkStatusReady,
 		fieldCorpManagers: bson.M{"$type": "array"},
 		fieldLinkID:       opt.LinkID,
 	}
 
-	var elemFilter bson.M
+	elemFilter := make(bson.M)
 	if opt.Email != "" {
-		elemFilter = elemFilterOfCorpManager(opt.Email)
+		elemFilter[fieldEmail] = opt.Email
 	} else {
-		elemFilter = bson.M{
-			fieldCorpID: opt.EmailSuffix,
-			fieldID:     opt.ID,
-		}
+		elemFilter[fieldID] = opt.ID
 	}
 	elemFilter[fieldPassword] = opt.Password
 
@@ -98,7 +101,10 @@ func (this *client) CheckCorporationManagerExist(opt dbmodels.CorporationManager
 				fieldSignings: func() bson.M {
 					return bson.M{"$and": bson.A{
 						bson.M{"$isArray": fmt.Sprintf("$$this.%s", fieldDomains)},
-						bson.M{"$in": bson.A{elemFilter[fieldCorpID], fmt.Sprintf("$$this.%s", fieldDomains)}},
+						bson.M{"$in": bson.A{
+							opt.EmailSuffix,
+							fmt.Sprintf("$$this.%s", fieldDomains),
+						}},
 					}}
 				},
 			},
@@ -116,23 +122,30 @@ func (this *client) CheckCorporationManagerExist(opt dbmodels.CorporationManager
 	result := map[string]dbmodels.CorporationManagerCheckResult{}
 	for i := range v {
 		doc := &v[i]
+
 		cm := doc.Managers
 		if len(cm) == 0 {
 			continue
 		}
+		item := &cm[0]
 
-		ss := doc.Signings
-		if len(ss) == 0 {
+		corpName := ""
+		for _, s := range doc.Signings {
+			if s.ID == item.CorpSID {
+				corpName = s.CorpName
+			}
+		}
+		if corpName == "" {
 			continue
 		}
 
-		item := &cm[0]
 		orgRepo := dbmodels.ParseToOrgRepo(doc.OrgIdentity)
 		result[doc.LinkID] = dbmodels.CorporationManagerCheckResult{
-			Corp:             ss[0].CorpName,
+			Corp:             corpName,
 			Name:             item.Name,
 			Email:            item.Email,
 			Role:             item.Role,
+			SigningId:        item.CorpSID,
 			InitialPWChanged: item.InitialPWChanged,
 
 			OrgInfo: dbmodels.OrgInfo{
@@ -147,6 +160,7 @@ func (this *client) CheckCorporationManagerExist(opt dbmodels.CorporationManager
 		}
 
 	}
+
 	return result, nil
 }
 
@@ -162,7 +176,6 @@ func (this *client) ResetCorporationManagerPassword(linkID, email string, opt db
 	}
 
 	docFilter := docFilterOfCorpManager(linkID)
-	arrayFilterByElemMatch(fieldCorpManagers, true, elemFilter, docFilter)
 
 	f := func(ctx context.Context) dbmodels.IDBError {
 		return this.updateArrayElem(
@@ -173,66 +186,76 @@ func (this *client) ResetCorporationManagerPassword(linkID, email string, opt db
 	return withContext1(f)
 }
 
-func (this *client) ListCorporationManager(linkID, email, role string) ([]dbmodels.CorporationManagerListResult, dbmodels.IDBError) {
-	domains, err := this.GetCorpEmailDomains(linkID, email)
-	if err != nil {
-		return nil, err
-	}
-	if domains == nil {
-		return nil, nil
-	}
-
+func (this *client) GetCorporationDetail(si *dbmodels.SigningIndex) (
+	detail dbmodels.CorporationDetail, err dbmodels.IDBError,
+) {
 	project := bson.M{
+		memberNameOfSignings(fieldDomains):  1,
 		memberNameOfCorpManager(fieldID):    1,
 		memberNameOfCorpManager(fieldName):  1,
 		memberNameOfCorpManager(fieldEmail): 1,
 		memberNameOfCorpManager(fieldRole):  1,
 	}
 
+	index := newSigningIndex(si)
+
 	var v []cCorpSigning
 
 	f := func(ctx context.Context) error {
 		return this.getArrayElems(
-			ctx, this.corpSigningCollection, docFilterOfCorpManager(linkID), project,
+			ctx, this.corpSigningCollection, index.docFilterOfSigning(), project,
 			map[string]func() bson.M{
-				fieldCorpManagers: func() bson.M {
-					c := bson.M{"$in": bson.A{fmt.Sprintf("$$this.%s", fieldCorpID), domains}}
-					if role == "" {
-						return c
-					}
+				fieldSignings: func() bson.M {
+					return conditionTofilterArray(index.idFilter())
+				},
 
-					return bson.M{"$and": bson.A{
-						bson.M{"$eq": bson.A{"$$this." + fieldRole, role}},
-						c,
-					}}
+				fieldCorpManagers: func() bson.M {
+					return conditionTofilterArray(index.corpSigningIdFilter())
 				},
 			},
 			&v,
 		)
 	}
 
-	if err := withContext(f); err != nil {
-		return nil, newSystemError(err)
+	if err1 := withContext(f); err != nil {
+		err = newSystemError(err1)
+
+		return
 	}
 
 	if len(v) == 0 {
-		return nil, errNoDBRecord
+		err = errNoDBRecord
+
+		return
+	}
+
+	if s := v[0].Signings; len(s) != 0 {
+		detail.EmailDomains = s[0].Domains
 	}
 
 	ms := v[0].Managers
-	if ms == nil {
-		return nil, nil
+	if len(ms) == 0 {
+		return
 	}
 
 	r := make([]dbmodels.CorporationManagerListResult, 0, len(ms))
 	for i := range ms {
 		item := &ms[i]
-		r = append(r, dbmodels.CorporationManagerListResult{
+		m := dbmodels.CorporationManagerListResult{
 			ID:    item.ID,
 			Name:  item.Name,
 			Email: item.Email,
 			Role:  item.Role,
-		})
+		}
+
+		if item.Role == dbmodels.RoleManager {
+			r = append(r, m)
+		} else {
+			detail.Admin = m
+		}
 	}
-	return r, nil
+
+	detail.Managers = r
+
+	return
 }

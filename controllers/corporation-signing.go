@@ -116,7 +116,7 @@ func (this *CorporationSigningController) checkCLAForSigning(claFile string, cla
 // @Title Delete
 // @Description delete corp signing
 // @Param	:link_id	path 	string		true		"link id"
-// @Param	:email		path 	string		true		"corp email"
+// @Param	:signing_id	path 	string		true		"signing id"
 // @Success 204 {string} delete success!
 // @Failure 400 missing_url_path_parameter: missing url path parameter
 // @Failure 401 missing_token:              token is missing
@@ -127,42 +127,41 @@ func (this *CorporationSigningController) checkCLAForSigning(claFile string, cla
 // @Failure 406 unknown_link:               unkown link id
 // @Failure 407 no_link:                    the link id is not exists
 // @Failure 500 system_error:               system error
-// @router /:link_id/:email [delete]
+// @router /:link_id/:signing_id [delete]
 func (this *CorporationSigningController) Delete() {
 	action := "delete corp signing"
-	linkID := this.GetString(":link_id")
-	corpEmail := this.GetString(":email")
+	index := genSigningIndex(&this.Controller)
 
 	pl, fr := this.tokenPayloadBasedOnCodePlatform()
 	if fr != nil {
 		this.sendFailedResultAsResp(fr, action)
 		return
 	}
-	if fr := pl.isOwnerOfLink(linkID); fr != nil {
+	if fr := pl.isOwnerOfLink(index.LinkId); fr != nil {
 		this.sendFailedResultAsResp(fr, action)
 		return
 	}
 
-	unlock, fr := lockOnRepo(pl.orgInfo(linkID))
+	unlock, fr := lockOnRepo(pl.orgInfo(index.LinkId))
 	if fr != nil {
 		this.sendFailedResultAsResp(fr, action)
 		return
 	}
 	defer unlock()
 
-	managers, merr := models.ListCorporationManagers(linkID, corpEmail, dbmodels.RoleAdmin)
-	if merr != nil {
-		this.sendModelErrorAsResp(merr, action)
+	detail, fr := getCorporationDetail(index)
+	if fr != nil {
+		this.sendFailedResultAsResp(fr, action)
 		return
 	}
-	if len(managers) > 0 {
+	if detail.HasAdmin() {
 		this.sendFailedResponse(
 			400, errCorpManagerExists,
 			fmt.Errorf("can't delete corp signing info, because admin manager exists"), action)
 		return
 	}
 
-	if err := models.DeleteCorpSigning(linkID, corpEmail); err != nil {
+	if err := models.DeleteCorpSigning(index); err != nil {
 		this.sendModelErrorAsResp(err, action)
 		return
 	}
@@ -172,14 +171,13 @@ func (this *CorporationSigningController) Delete() {
 
 // @Title ResendCorpSigningEmail
 // @Description resend corp signing email
-// @Param	:org_id		path 	string		true		"org cla id"
-// @Param	:email		path 	string		true		"corp email"
+// @Param	:link_id	path 	string		true		"link id"
+// @Param	:signing_id	path 	string		true		"signing id"
 // @Success 201 {int} map
-// @router /:link_id/:email [post]
+// @router /:link_id/:signing_id [post]
 func (this *CorporationSigningController) ResendCorpSigningEmail() {
 	action := "resend corp signing email"
 	linkID := this.GetString(":link_id")
-	corpEmail := this.GetString(":email")
 
 	pl, fr := this.tokenPayloadBasedOnCodePlatform()
 	if fr != nil {
@@ -191,7 +189,9 @@ func (this *CorporationSigningController) ResendCorpSigningEmail() {
 		return
 	}
 
-	claInfo, signingInfo, merr := models.GetCorpSigningDetail(linkID, corpEmail)
+	claInfo, signingInfo, merr := models.GetCorpSigningDetail(
+		genSigningIndex(&this.Controller),
+	)
 	if merr != nil {
 		this.sendModelErrorAsResp(merr, action)
 		return
@@ -247,7 +247,9 @@ func (this *CorporationSigningController) GetAll() {
 		return
 	}
 
-	r, merr := models.ListCorpSignings(linkID, this.GetString("cla_language"))
+	r, merr := models.ListCorpSignings(linkID, dbmodels.CorpSigningListOpt{
+		Lang: this.GetString("cla_language"),
+	})
 	if merr != nil {
 		this.sendModelErrorAsResp(merr, action)
 		return
@@ -271,7 +273,7 @@ func (this *CorporationSigningController) GetAll() {
 	for k := range r {
 		details = append(details, corpsSigningResult{
 			CorporationSigningSummary: &r[k],
-			PDFUploaded:               pdfMap[util.EmailSuffix(r[k].AdminEmail)]},
+			PDFUploaded:               pdfMap[r[k].ID]},
 		)
 	}
 	this.sendSuccessResp(details)
@@ -311,4 +313,47 @@ func (this *CorporationSigningController) ListDeleted() {
 	}
 
 	this.sendSuccessResp(r)
+}
+
+// @Title GetCorpInfo
+// @Description get all the corporations by email
+// @Param	:link_id	path 	string		true		"link id"
+// @Param	:email		path 	string		true		"email"
+// @Success 200 {object} controllers.corpsSigningInfo
+// @Failure 400 missing_url_path_parameter: missing url path parameter
+// @Failure 401 unknown_link:               unkown link id
+// @Failure 500 system_error:               system error
+// @router /:link_id/corps/:email [get]
+func (this *CorporationSigningController) GetCorpInfo() {
+	action := "list corporation info"
+	linkID := this.GetString(":link_id")
+
+	r, merr := models.ListCorpSignings(linkID, dbmodels.CorpSigningListOpt{
+		Lang: this.GetString(":email"),
+	})
+	if merr != nil {
+		this.sendModelErrorAsResp(merr, action)
+		return
+	}
+	if len(r) == 0 {
+		this.sendSuccessResp(nil)
+		return
+	}
+
+	details := make([]corpsSigningInfo, len(r))
+	for i := range r {
+		item := &r[i]
+
+		details[i] = corpsSigningInfo{
+			ID:              item.ID,
+			CorporationName: item.CorporationName,
+		}
+	}
+
+	this.sendSuccessResp(details)
+}
+
+type corpsSigningInfo struct {
+	ID              string `json:"id"`
+	CorporationName string `json:"corporation_name"`
 }

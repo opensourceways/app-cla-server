@@ -9,13 +9,13 @@ import (
 	"github.com/opensourceways/app-cla-server/dbmodels"
 )
 
-func (this *client) getCorpSigning(linkID, email string) (*dCorpSigning, dbmodels.IDBError) {
+func (this *client) getCorpSigning(index *signingIndex) (*dCorpSigning, dbmodels.IDBError) {
 	var v []cCorpSigning
 
 	f := func(ctx context.Context) error {
 		return this.getArrayElem(
 			ctx, this.corpSigningCollection, fieldSignings,
-			docFilterOfSigning(linkID), elemFilterOfCorpSigning(email),
+			index.docFilterOfSigning(), index.idFilter(),
 			nil, &v,
 		)
 	}
@@ -36,8 +36,10 @@ func (this *client) getCorpSigning(linkID, email string) (*dCorpSigning, dbmodel
 	return &signings[0], nil
 }
 
-func (this *client) DeleteCorpSigning(linkID, email string) dbmodels.IDBError {
-	data, err := this.getCorpSigning(linkID, email)
+func (this *client) DeleteCorpSigning(si *dbmodels.SigningIndex) dbmodels.IDBError {
+	index := newSigningIndex(si)
+
+	data, err := this.getCorpSigning(index)
 	if err != nil {
 		return err
 	}
@@ -53,7 +55,7 @@ func (this *client) DeleteCorpSigning(linkID, email string) dbmodels.IDBError {
 	f := func(ctx context.Context) dbmodels.IDBError {
 		return this.moveArrayElem(
 			ctx, this.corpSigningCollection, fieldSignings, fieldDeleted,
-			docFilterOfSigning(linkID), elemFilterOfCorpSigning(email), doc,
+			index.docFilterOfSigning(), index.idFilter(), doc,
 		)
 	}
 

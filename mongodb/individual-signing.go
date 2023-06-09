@@ -2,7 +2,6 @@ package mongodb
 
 import (
 	"context"
-	"fmt"
 
 	"go.mongodb.org/mongo-driver/bson"
 
@@ -11,8 +10,7 @@ import (
 
 func elemFilterOfIndividualSigning(email string) bson.M {
 	return bson.M{
-		fieldCorpID: genCorpID(email),
-		fieldEmail:  email,
+		fieldEmail: email,
 	}
 }
 
@@ -25,13 +23,12 @@ func docFilterOfSigning(linkID string) bson.M {
 
 func (this *client) SignIndividualCLA(linkID string, info *dbmodels.IndividualSigningInfo) dbmodels.IDBError {
 	signing := dIndividualSigning{
-		CLALanguage: info.CLALanguage,
-		CorpID:      genCorpID(info.Email),
-		ID:          info.ID,
+		ID:          newObjectId(),
 		Name:        info.Name,
 		Email:       info.Email,
 		Date:        info.Date,
 		Enabled:     info.Enabled,
+		CLALanguage: info.CLALanguage,
 		SigningInfo: info.Info,
 	}
 	doc, err := structToMap(signing)
@@ -51,32 +48,30 @@ func (this *client) SignIndividualCLA(linkID string, info *dbmodels.IndividualSi
 	return withContext1(f)
 }
 
-func (this *client) DeleteIndividualSigning(linkID, email string) dbmodels.IDBError {
+func (this *client) DeleteIndividualSigning(si *dbmodels.SigningIndex) (
+	info dbmodels.IndividualSigningBasicInfo, err dbmodels.IDBError,
+) {
+	index := newSigningIndex(si)
+
+	var v cIndividualSigning
+
 	f := func(ctx context.Context) dbmodels.IDBError {
-		return this.pullArrayElem(
+		return this.pullAndReturnArrayElem(
 			ctx, this.individualSigningCollection, fieldSignings,
-			docFilterOfSigning(linkID),
-			elemFilterOfIndividualSigning(email),
+			index.docFilterOfSigning(),
+			index.idFilter(), &v,
 		)
 	}
 
-	return withContext1(f)
-}
-
-func (this *client) UpdateIndividualSigning(linkID, email string, enabled bool) dbmodels.IDBError {
-	elemFilter := elemFilterOfIndividualSigning(email)
-
-	docFilter := docFilterOfSigning(linkID)
-	arrayFilterByElemMatch(fieldSignings, true, elemFilter, docFilter)
-
-	f := func(ctx context.Context) dbmodels.IDBError {
-		return this.updateArrayElem(
-			ctx, this.individualSigningCollection, fieldSignings, docFilter,
-			elemFilter, bson.M{fieldEnabled: enabled},
-		)
+	if err = withContext1(f); err != nil {
+		return
 	}
 
-	return withContext1(f)
+	if len(v.Signings) > 0 {
+		info = toIndividualSigningBasicInfo(&v.Signings[0])
+	}
+
+	return
 }
 
 func (this *client) IsIndividualSigned(linkID, email string) (bool, dbmodels.IDBError) {
@@ -101,51 +96,29 @@ func (this *client) IsIndividualSigned(linkID, email string) (bool, dbmodels.IDB
 	return signed, err
 }
 
-func (this *client) ListIndividualSigning(linkID, corpEmail, claLang string) ([]dbmodels.IndividualSigningBasicInfo, dbmodels.IDBError) {
-	docFilter := docFilterOfSigning(linkID)
-
-	var domains []string
-	if corpEmail != "" {
-		v, err := this.GetCorpEmailDomains(linkID, corpEmail)
-		if err != nil {
-			return nil, err
-		}
-		if v == nil {
-			return nil, nil
-		}
-		domains = v
-	}
-
-	project := bson.M{
-		memberNameOfSignings(fieldID):      1,
-		memberNameOfSignings(fieldEmail):   1,
-		memberNameOfSignings(fieldName):    1,
-		memberNameOfSignings(fieldEnabled): 1,
-		memberNameOfSignings(fieldDate):    1,
-	}
-
+func (this *client) ListIndividualSigning(linkID, claLang string) (
+	[]dbmodels.IndividualSigningBasicInfo, dbmodels.IDBError,
+) {
 	var v []cIndividualSigning
 	f := func(ctx context.Context) error {
 		return this.getArrayElems(
-			ctx, this.individualSigningCollection, docFilter, project,
+			ctx, this.individualSigningCollection,
+			docFilterOfSigning(linkID),
+			bson.M{
+				memberNameOfSignings(fieldID):      1,
+				memberNameOfSignings(fieldEmail):   1,
+				memberNameOfSignings(fieldName):    1,
+				memberNameOfSignings(fieldEnabled): 1,
+				memberNameOfSignings(fieldDate):    1,
+			},
 			map[string]func() bson.M{
 				fieldSignings: func() bson.M {
-					cond := bson.A{}
+					m := bson.M{fieldCorpSId: ""}
 					if claLang != "" {
-						cond = append(cond, bson.M{"$eq": bson.A{"$$this." + fieldLang, claLang}})
-					}
-					if len(domains) > 0 {
-						cond = append(cond, bson.M{"$in": bson.A{fmt.Sprintf("$$this.%s", fieldCorpID), domains}})
+						m[fieldLang] = claLang
 					}
 
-					n := len(cond)
-					if n > 1 {
-						return bson.M{"$and": cond}
-					}
-					if n > 0 {
-						return cond[0].(bson.M)
-					}
-					return bson.M{"$toBool": 1}
+					return conditionTofilterArray(m)
 				},
 			},
 			&v,
@@ -161,17 +134,20 @@ func (this *client) ListIndividualSigning(linkID, corpEmail, claLang string) ([]
 	}
 
 	docs := v[0].Signings
-	r := make([]dbmodels.IndividualSigningBasicInfo, 0, len(docs))
+	r := make([]dbmodels.IndividualSigningBasicInfo, len(docs))
 	for i := range docs {
-		item := &docs[i]
-		r = append(r, dbmodels.IndividualSigningBasicInfo{
-			ID:      item.ID,
-			Email:   item.Email,
-			Name:    item.Name,
-			Enabled: item.Enabled,
-			Date:    item.Date,
-		})
+		r[i] = toIndividualSigningBasicInfo(&docs[i])
 	}
 
 	return r, nil
+}
+
+func toIndividualSigningBasicInfo(doc *dIndividualSigning) dbmodels.IndividualSigningBasicInfo {
+	return dbmodels.IndividualSigningBasicInfo{
+		ID:      doc.ID,
+		Email:   doc.Email,
+		Name:    doc.Name,
+		Enabled: doc.Enabled,
+		Date:    doc.Date,
+	}
 }

@@ -76,20 +76,29 @@ func (this *CorporationManagerController) newAccessToken(linkID string, info *db
 	return this.newApiToken(
 		permission,
 		&acForCorpManagerPayload{
-			Corp:    info.Corp,
-			Name:    info.Name,
-			Email:   info.Email,
-			LinkID:  linkID,
-			OrgInfo: info.OrgInfo,
+			Corp:      info.Corp,
+			Name:      info.Name,
+			Email:     info.Email,
+			LinkID:    linkID,
+			OrgInfo:   info.OrgInfo,
+			SigningID: info.SigningId,
 		},
 	)
 }
 
 type acForCorpManagerPayload struct {
-	Corp   string `json:"corp"`
-	Name   string `json:"name"`
-	Email  string `json:"email"`
-	LinkID string `json:"link_id"`
+	Corp      string `json:"corp"`
+	Name      string `json:"name"`
+	Email     string `json:"email"`
+	LinkID    string `json:"link_id"`
+	SigningID string `json:"signing_id"`
 
 	models.OrgInfo
+}
+
+func (pl *acForCorpManagerPayload) signingIndex() models.SigningIndex {
+	return models.SigningIndex{
+		LinkId:    pl.LinkID,
+		SigningId: pl.SigningID,
+	}
 }

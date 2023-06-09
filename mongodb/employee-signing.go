@@ -9,10 +9,11 @@ import (
 )
 
 func (this *client) SignEmployeeCLA(si *dbmodels.SigningIndex, info *dbmodels.IndividualSigningInfo) dbmodels.IDBError {
-	signing := dIndividualSigning{
+	signing := DIndividualSigning{
 		ID:          newObjectId(),
 		Name:        info.Name,
 		Email:       info.Email,
+		CorpID:      genCorpID(info.Email),
 		Date:        info.Date,
 		Enabled:     info.Enabled,
 		CLALanguage: info.CLALanguage,

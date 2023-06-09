@@ -22,10 +22,11 @@ func docFilterOfSigning(linkID string) bson.M {
 }
 
 func (this *client) SignIndividualCLA(linkID string, info *dbmodels.IndividualSigningInfo) dbmodels.IDBError {
-	signing := dIndividualSigning{
+	signing := DIndividualSigning{
 		ID:          newObjectId(),
 		Name:        info.Name,
 		Email:       info.Email,
+		CorpID:      genCorpID(info.Email),
 		Date:        info.Date,
 		Enabled:     info.Enabled,
 		CLALanguage: info.CLALanguage,
@@ -96,7 +97,7 @@ func (this *client) IsIndividualSigned(linkID, email string) (bool, dbmodels.IDB
 	return signed, err
 }
 
-func (this *client) ListIndividualSigning(linkID, claLang string) (
+func (this *client) ListIndividualSigning(linkID string, opt *dbmodels.IndividualSigningListOpt) (
 	[]dbmodels.IndividualSigningBasicInfo, dbmodels.IDBError,
 ) {
 	var v []cIndividualSigning
@@ -114,8 +115,13 @@ func (this *client) ListIndividualSigning(linkID, claLang string) (
 			map[string]func() bson.M{
 				fieldSignings: func() bson.M {
 					m := bson.M{fieldCorpSId: ""}
-					if claLang != "" {
-						m[fieldLang] = claLang
+
+					if opt.Lang != "" {
+						m[fieldLang] = opt.Lang
+					}
+
+					if opt.Email != "" {
+						m[fieldCorpID] = genCorpID(opt.Email)
 					}
 
 					return conditionTofilterArray(m)
@@ -142,7 +148,7 @@ func (this *client) ListIndividualSigning(linkID, claLang string) (
 	return r, nil
 }
 
-func toIndividualSigningBasicInfo(doc *dIndividualSigning) dbmodels.IndividualSigningBasicInfo {
+func toIndividualSigningBasicInfo(doc *DIndividualSigning) dbmodels.IndividualSigningBasicInfo {
 	return dbmodels.IndividualSigningBasicInfo{
 		ID:      doc.ID,
 		Email:   doc.Email,

@@ -153,7 +153,7 @@ func (this *IndividualSigningController) List() {
 		return
 	}
 
-	r, merr := models.ListIndividualSigning(linkID, "")
+	r, merr := models.ListIndividualSigning(linkID, dbmodels.IndividualSigningListOpt{})
 	if merr != nil {
 		this.sendModelErrorAsResp(merr, action)
 		return

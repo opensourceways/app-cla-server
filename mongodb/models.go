@@ -76,13 +76,14 @@ type cIndividualSigning struct {
 	LinkStatus string `bson:"link_status" json:"link_status" required:"true"`
 
 	CLAInfos []DCLAInfo           `bson:"cla_infos" json:"cla_infos,omitempty"`
-	Signings []dIndividualSigning `bson:"signings" json:"-"`
+	Signings []DIndividualSigning `bson:"signings" json:"-"`
 }
 
-type dIndividualSigning struct {
+type DIndividualSigning struct {
 	ID          string `bson:"id"        json:"id"       required:"true"`
 	Name        string `bson:"name"      json:"name"     required:"true"`
 	Email       string `bson:"email"     json:"email"    required:"true"`
+	CorpID      string `bson:"corp_id"   json:"corp_id"  required:"true"`
 	Date        string `bson:"date"      json:"date"     required:"true"`
 	Enabled     bool   `bson:"enabled"   json:"enabled"`
 	CLALanguage string `bson:"lang"      json:"lang"     required:"true"`
@@ -90,6 +91,18 @@ type dIndividualSigning struct {
 	CorpSID string `bson:"corp_sid"  json:"corp_sid"`
 
 	SigningInfo dbmodels.TypeSigningInfo `bson:"info" json:"info,omitempty"`
+}
+
+type cDeletedIndividualSigning struct {
+	LinkID string `bson:"link_id" json:"link_id" required:"true"`
+
+	Signings []dDeletedIndividualSigning `bson:"signings" json:"-"`
+}
+
+type dDeletedIndividualSigning struct {
+	DIndividualSigning `bson:",inline"`
+
+	DeletedAt string `bson:"deleted_at" json:"deleted_at" required:"true"`
 }
 
 type cCorpSigning struct {

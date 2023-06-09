@@ -57,7 +57,7 @@ type IIndividualSigning interface {
 	SignIndividualCLA(linkID string, info *IndividualSigningInfo) IDBError
 	DeleteIndividualSigning(index *SigningIndex) (IndividualSigningBasicInfo, IDBError)
 	IsIndividualSigned(linkID, email string) (bool, IDBError)
-	ListIndividualSigning(linkID, claLang string) ([]IndividualSigningBasicInfo, IDBError)
+	ListIndividualSigning(linkID string, opt *IndividualSigningListOpt) ([]IndividualSigningBasicInfo, IDBError)
 
 	SignEmployeeCLA(*SigningIndex, *IndividualSigningInfo) IDBError
 	ListEmployeeSigning(index *SigningIndex, claLang string) ([]IndividualSigningBasicInfo, IDBError)

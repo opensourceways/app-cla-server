@@ -45,8 +45,10 @@ func IsIndividualSigned(linkID, email string) (bool, IModelError) {
 	return b, parseDBError(err)
 }
 
-func ListIndividualSigning(linkID, claLang string) ([]dbmodels.IndividualSigningBasicInfo, IModelError) {
-	v, err := dbmodels.GetDB().ListIndividualSigning(linkID, claLang)
+func ListIndividualSigning(linkID string, opt dbmodels.IndividualSigningListOpt) (
+	[]dbmodels.IndividualSigningBasicInfo, IModelError,
+) {
+	v, err := dbmodels.GetDB().ListIndividualSigning(linkID, &opt)
 	if err == nil {
 		return v, nil
 	}

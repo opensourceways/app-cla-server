@@ -14,3 +14,8 @@ type IndividualSigningInfo struct {
 	CLALanguage string          `json:"cla_language"`
 	Info        TypeSigningInfo `json:"info"`
 }
+
+type IndividualSigningListOpt struct {
+	Lang  string
+	Email string
+}

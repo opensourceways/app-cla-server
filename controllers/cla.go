@@ -2,7 +2,6 @@ package controllers
 
 import (
 	"fmt"
-	"os"
 	"strings"
 
 	"github.com/opensourceways/app-cla-server/dbmodels"
@@ -201,9 +200,7 @@ func deleteCLA(linkID, applyTo, claLang string) *failedApiResult {
 
 func deleteCLAPDF(linkID, applyTo string, claInfo *dbmodels.CLAInfo) *failedApiResult {
 	path := genCLAFilePath(linkID, applyTo, claInfo.CLALang, claInfo.CLAHash)
-	if !util.IsFileNotExist(path) {
-		_ = os.Remove(path)
-	}
+	util.TryDeleteFileIfExists(path)
 
 	key := models.CLAPDFIndex{
 		LinkID: linkID,
@@ -212,6 +209,7 @@ func deleteCLAPDF(linkID, applyTo string, claInfo *dbmodels.CLAInfo) *failedApiR
 		Hash:   claInfo.CLAHash,
 	}
 	err := models.DeleteCLAPDF(key)
+
 	return parseModelError(err)
 }
 

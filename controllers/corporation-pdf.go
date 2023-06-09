@@ -207,5 +207,6 @@ func (this *CorporationPDFController) Preview() {
 	}
 
 	this.downloadFile(outFile)
-	_ = os.Remove(outFile)
+
+	util.TryDeleteFileIfExists(outFile)
 }

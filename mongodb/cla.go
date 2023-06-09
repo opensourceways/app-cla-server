@@ -228,7 +228,7 @@ func toModelOfCLAFields(fields []dField) []dbmodels.Field {
 }
 
 func toModelOfCLAs(data []dCLA) []dbmodels.CLADetail {
-	if data == nil {
+	if len(data) == 0 {
 		return nil
 	}
 

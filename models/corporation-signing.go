@@ -52,12 +52,12 @@ func (this *CorporationSigningCreateOption) Create(orgCLAID string) IModelError 
 	return parseDBError(err)
 }
 
-func UploadCorporationSigningPDF(index SigningIndex, pdf *[]byte) IModelError {
+func UploadCorporationSigningPDF(index SigningIndex, pdf []byte) IModelError {
 	err := dbmodels.GetDB().UploadCorporationSigningPDF(&index, pdf)
 	return parseDBError(err)
 }
 
-func DownloadCorporationSigningPDF(index *SigningIndex) (*[]byte, IModelError) {
+func DownloadCorporationSigningPDF(index *SigningIndex) ([]byte, IModelError) {
 	v, err := dbmodels.GetDB().DownloadCorporationSigningPDF(index)
 	if err == nil {
 		return v, nil

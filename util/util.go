@@ -44,6 +44,12 @@ func IsNotDir(dir string) bool {
 	return true
 }
 
+func TryDeleteFileIfExists(f string) {
+	if !IsFileNotExist(f) {
+		_ = os.Remove(f)
+	}
+}
+
 func LoadFromYaml(path string, cfg interface{}) error {
 	b, err := ioutil.ReadFile(path)
 	if err != nil {
@@ -108,7 +114,7 @@ func RandStr(strSize int, randType string) string {
 	}
 
 	var bytes = make([]byte, strSize)
-	rand.Read(bytes)
+	_, _ = rand.Read(bytes)
 
 	n := byte(len(dictionary))
 	for k, v := range bytes {
@@ -127,7 +133,7 @@ func Md5sumOfFile(path string) (string, error) {
 }
 
 func Md5sumOfBytes(data []byte) string {
-	if data == nil {
+	if len(data) == 0 {
 		return ""
 	}
 

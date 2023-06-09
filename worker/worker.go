@@ -77,7 +77,7 @@ func (w *emailWorker) GenCLAPDFForCorporationAndSendIt(linkID, claFile string, o
 
 		defer func() {
 			if fileExist() {
-				os.Remove(file)
+				_ = os.Remove(file)
 			}
 		}()
 

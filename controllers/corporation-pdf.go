@@ -36,11 +36,18 @@ func (this *CorporationPDFController) downloadCorpPDF(index *models.SigningIndex
 	if err != nil {
 		return newFailedApiResult(500, errSystemError, err)
 	}
-	defer func() {
-		f.Close()
-		os.Remove(f.Name())
-	}()
 
+	fr := this.writeCorpPDF(index, f)
+	_ = f.Close()
+	if fr == nil {
+		this.downloadFile(f.Name())
+	}
+	_ = os.Remove(f.Name())
+
+	return fr
+}
+
+func (this *CorporationPDFController) writeCorpPDF(index *models.SigningIndex, f *os.File) *failedApiResult {
 	pdf, merr := models.DownloadCorporationSigningPDF(index)
 	if merr != nil {
 		if merr.IsErrorOf(models.ErrNoLinkOrUnuploaed) {
@@ -49,12 +56,10 @@ func (this *CorporationPDFController) downloadCorpPDF(index *models.SigningIndex
 		return parseModelError(merr)
 	}
 
-	if _, err = f.Write(*pdf); err != nil {
+	if _, err := f.Write(pdf); err != nil {
 		return newFailedApiResult(500, errSystemError, err)
 	}
 
-	f.Close()
-	this.downloadFile(f.Name())
 	return nil
 }
 
@@ -97,7 +102,7 @@ func (this *CorporationPDFController) Upload() {
 		return
 	}
 
-	if err := models.UploadCorporationSigningPDF(index, &data); err != nil {
+	if err := models.UploadCorporationSigningPDF(index, data); err != nil {
 		this.sendModelErrorAsResp(err, action)
 		return
 	}
@@ -201,6 +206,6 @@ func (this *CorporationPDFController) Preview() {
 		return
 	}
 
-	defer func() { os.Remove(outFile) }()
 	this.downloadFile(outFile)
+	_ = os.Remove(outFile)
 }

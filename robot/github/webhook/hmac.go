@@ -63,7 +63,10 @@ func ValidatePayload(payload []byte, sig string, tokenGenerator func() []byte) e
 	// If we have a match with any valid hmac, we can validate successfully.
 	for _, key := range hmacs {
 		mac := hmac.New(sha1.New, key)
-		mac.Write(payload)
+		if _, err := mac.Write(payload); err != nil {
+			return err
+		}
+
 		expected := mac.Sum(nil)
 		if hmac.Equal(sb, expected) {
 			return nil
@@ -76,7 +79,7 @@ func ValidatePayload(payload []byte, sig string, tokenGenerator func() []byte) e
 // PayloadSignature returns the signature that matches the payload.
 func PayloadSignature(payload []byte, key []byte) string {
 	mac := hmac.New(sha1.New, key)
-	mac.Write(payload)
+	_, _ = mac.Write(payload)
 	sum := mac.Sum(nil)
 	return "sha1=" + hex.EncodeToString(sum)
 }

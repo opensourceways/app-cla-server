@@ -32,8 +32,8 @@ type ICorporationSigning interface {
 	AddCorpEmailDomain(index *SigningIndex, domain string) IDBError
 	GetCorpEmailDomains(*SigningIndex) ([]string, IDBError)
 
-	UploadCorporationSigningPDF(*SigningIndex, *[]byte) IDBError
-	DownloadCorporationSigningPDF(*SigningIndex) (*[]byte, IDBError)
+	UploadCorporationSigningPDF(*SigningIndex, []byte) IDBError
+	DownloadCorporationSigningPDF(*SigningIndex) ([]byte, IDBError)
 	IsCorpSigningPDFUploaded(*SigningIndex) (bool, IDBError)
 	ListCorpsWithPDFUploaded(linkID string) ([]string, IDBError)
 }

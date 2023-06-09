@@ -202,7 +202,7 @@ func deleteCLA(linkID, applyTo, claLang string) *failedApiResult {
 func deleteCLAPDF(linkID, applyTo string, claInfo *dbmodels.CLAInfo) *failedApiResult {
 	path := genCLAFilePath(linkID, applyTo, claInfo.CLALang, claInfo.CLAHash)
 	if !util.IsFileNotExist(path) {
-		os.Remove(path)
+		_ = os.Remove(path)
 	}
 
 	key := models.CLAPDFIndex{

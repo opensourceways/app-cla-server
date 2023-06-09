@@ -38,8 +38,7 @@ func CreateLockedFile(path string) error {
 		return err
 	}
 
-	f.Close()
-	return nil
+	return f.Close()
 }
 
 func Lock(path string) (func(), error) {
@@ -51,13 +50,14 @@ func Lock(path string) (func(), error) {
 	lock := &fileLock{fd: f.Fd()}
 
 	if err := lock.tryLock(); err != nil {
-		f.Close()
+		_ = f.Close()
+
 		return nil, err
 	}
 
 	return func() {
 		lock.unlock()
-		f.Close()
+		_ = f.Close()
 	}, nil
 }
 

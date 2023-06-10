@@ -102,24 +102,18 @@ func (this *IndividualSigningController) Post() {
 
 // @Title Check
 // @Description check whether contributor has signed cla
-// @Param	platform	path 	string	true		"code platform"
-// @Param	org_repo	path 	string	true		"org:repo"
+// @Param	:link_id	path 	string	true		"link id"
 // @Param	email		query 	string	true		"email of contributor"
 // @Success 200 {object} map
-// @Failure 400 no_link:      there is not link for this org and repo
 // @Failure 500 system_error: system error
-// @router /:platform/:org_repo [get]
+// @router /:link_id [get]
 func (this *IndividualSigningController) Check() {
 	action := "check individual signing"
-	org, repo := parseOrgAndRepo(this.GetString(":org_repo"))
 
-	linkID, err := models.GetLinkID(buildOrgRepo(this.GetString(":platform"), org, repo))
-	if err != nil {
-		this.sendModelErrorAsResp(err, action)
-		return
-	}
-
-	if v, merr := models.IsIndividualSigned(linkID, this.GetString("email")); merr != nil {
+	v, merr := models.IsIndividualSigned(
+		this.GetString(":link_id"), this.GetString("email"),
+	)
+	if merr != nil {
 		this.sendModelErrorAsResp(merr, action)
 	} else {
 		this.sendSuccessResp(map[string]bool{"signed": v})

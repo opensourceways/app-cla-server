@@ -3,7 +3,6 @@ package controllers
 import (
 	"encoding/json"
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/astaxie/beego"
@@ -78,14 +77,6 @@ func getSingingInfo(info dbmodels.TypeSigningInfo, fields []dbmodels.Field) dbmo
 		}
 	}
 	return r
-}
-
-func parseOrgAndRepo(s string) (string, string) {
-	v := strings.Split(s, ":")
-	if len(v) == 2 {
-		return v[0], v[1]
-	}
-	return s, ""
 }
 
 func buildOrgRepo(platform, orgID, repoID string) *models.OrgRepo {

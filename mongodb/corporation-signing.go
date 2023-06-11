@@ -53,12 +53,12 @@ func toCorpSigningListFilter(opt *dbmodels.CorpSigningListOpt) bson.M {
 		c = append(c, conditionTofilterArray(bson.M{fieldLang: opt.Lang}))
 	}
 
-	if opt.Email != "" {
+	if opt.EmailDomain != "" {
 		c = append(
 			c,
 			bson.M{"$isArray": fmt.Sprintf("$$this.%s", fieldDomains)},
 			bson.M{"$in": bson.A{
-				genCorpID(opt.Email),
+				opt.EmailDomain,
 				fmt.Sprintf("$$this.%s", fieldDomains),
 			}},
 		)

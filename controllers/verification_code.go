@@ -26,8 +26,8 @@ func (this *VerificationCodeController) Prepare() {
 
 // @Title Post
 // @Description send verification code when signing
-// @Param	:link_id	path 	string				true	"link id"
-// @Param	body		body 	verificationCodeRequest		true	"body for verification code"
+// @Param	:link_id	path 	string					true	"link id"
+// @Param	body		body 	controllers.verificationCodeRequest	true	"body for verification code"
 // @Success 201 {int} map
 // @router /:link_id [post]
 func (this *VerificationCodeController) Post() {
@@ -79,7 +79,7 @@ func (this *VerificationCodeController) Post() {
 
 // @Title Post
 // @Description send verification code when adding email domain
-// @Param	body	body 	verificationCodeRequest		true	"body for verification code"
+// @Param	body	body 	controllers.verificationCodeRequest	true	"body for verification code"
 // @Success 201 {int} map
 // @Failure 400 missing_token:      token is missing
 // @Failure 401 unknown_token:      token is unknown

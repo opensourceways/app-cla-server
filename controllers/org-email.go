@@ -114,7 +114,13 @@ func (this *EmailController) Code() {
 		return
 	}
 
-	code, ierr := models.CreateVerificationCode(info.Email, models.PurposeOfEmailAuthorization(info.Email), config.AppConfig.VerificationCodeExpiry)
+	code, ierr := models.CreateVerificationCode(
+		models.CmdToCreateVerificationCode{
+			Email:   info.Email,
+			Purpose: models.PurposeOfEmailAuthorization(info.Email),
+			Expiry:  config.AppConfig.VerificationCodeExpiry,
+		},
+	)
 	if ierr != nil {
 		this.sendModelErrorAsResp(ierr, action)
 		return

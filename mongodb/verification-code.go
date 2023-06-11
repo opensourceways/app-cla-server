@@ -10,7 +10,7 @@ import (
 	"github.com/opensourceways/app-cla-server/util"
 )
 
-func (this *client) CreateVerificationCode(opt dbmodels.VerificationCode) dbmodels.IDBError {
+func (this *client) CreateVerificationCode(opt *dbmodels.VerificationCode) dbmodels.IDBError {
 	info := cVerificationCode{
 		Email:   opt.Email,
 		Code:    opt.Code,

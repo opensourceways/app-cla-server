@@ -30,8 +30,8 @@ func (this *CorporationManagerController) Prepare() {
 
 // @Title Put
 // @Description add corporation administrator
-// @Param	:org_cla_id	path 	string					true		"org cla id"
-// @Param	:email		path 	string					true		"email of corp"
+// @Param	:link_id	path 	string		true		"link id"
+// @Param	:signing_id	path 	string		true		"signing id"
 // @Success 202 {int} map
 // @Failure util.ErrPDFHasNotUploaded
 // @Failure util.ErrNumOfCorpManagersExceeded

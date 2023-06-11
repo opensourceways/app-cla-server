@@ -84,7 +84,7 @@ type ICLA interface {
 }
 
 type IVerificationCode interface {
-	CreateVerificationCode(opt VerificationCode) IDBError
+	CreateVerificationCode(opt *VerificationCode) IDBError
 	GetVerificationCode(opt *VerificationCode) IDBError
 }
 

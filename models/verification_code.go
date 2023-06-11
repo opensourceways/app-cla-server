@@ -7,21 +7,28 @@ import (
 	"github.com/opensourceways/app-cla-server/util"
 )
 
-func CreateVerificationCode(email, purpose string, expiry int64) (string, IModelError) {
-	code := util.RandStr(6, "number")
+type CmdToCreateVerificationCode struct {
+	Email   string
+	Purpose string
+	Expiry  int64
+}
 
-	vc := dbmodels.VerificationCode{
-		Email:   email,
-		Code:    code,
-		Purpose: purpose,
-		Expiry:  util.Now() + expiry,
+func (cmd *CmdToCreateVerificationCode) toCode() dbmodels.VerificationCode {
+	return dbmodels.VerificationCode{
+		Email:   cmd.Email,
+		Code:    util.RandStr(6, "number"),
+		Purpose: cmd.Purpose,
+		Expiry:  util.Now() + cmd.Expiry,
 	}
+}
 
-	err := dbmodels.GetDB().CreateVerificationCode(vc)
+func CreateVerificationCode(cmd CmdToCreateVerificationCode) (string, IModelError) {
+	code := cmd.toCode()
+	err := dbmodels.GetDB().CreateVerificationCode(&code)
 	if err == nil {
-		return code, nil
+		return code.Code, nil
 	}
-	return code, parseDBError(err)
+	return code.Code, parseDBError(err)
 }
 
 func checkVerificationCode(email, code, purpose string) IModelError {

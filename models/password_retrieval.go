@@ -36,7 +36,11 @@ type PasswordRetrievalKey struct {
 }
 
 func (p PasswordRetrievalKey) Create(linkID string, expiry int64) ([]byte, IModelError) {
-	code, mErr := CreateVerificationCode(p.Email, genDescOfPasswordRetrieval(linkID), expiry)
+	code, mErr := CreateVerificationCode(CmdToCreateVerificationCode{
+		Email:   p.Email,
+		Purpose: genDescOfPasswordRetrieval(linkID),
+		Expiry:  expiry,
+	})
 	if mErr != nil {
 		return nil, mErr
 	}

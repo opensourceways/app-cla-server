@@ -51,7 +51,7 @@ func CreateCorporationAdministrator(index SigningIndex, info *dbmodels.Corporati
 	*dbmodels.CorporationManagerCreateOption, IModelError,
 ) {
 	v, merr := ListCorpSignings(index.LinkId, dbmodels.CorpSigningListOpt{
-		Email: info.AdminEmail,
+		EmailDomain: util.EmailSuffix(info.AdminEmail),
 	})
 	if merr != nil {
 		return nil, merr

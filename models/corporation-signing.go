@@ -98,7 +98,7 @@ func ListCorpSignings(linkID string, opt dbmodels.CorpSigningListOpt) (
 
 func IsCorpSigned(linkID, email string) (bool, IModelError) {
 	v, err := dbmodels.GetDB().ListCorpSignings(linkID, &dbmodels.CorpSigningListOpt{
-		Email: email,
+		EmailDomain: util.EmailSuffix(email),
 	})
 	if err == nil {
 		return len(v) > 0, nil

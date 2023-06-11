@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 
@@ -16,7 +17,7 @@ type VerificationCodeController struct {
 func (this *VerificationCodeController) Prepare() {
 	this.stopRunIfSignSerivceIsUnabled()
 
-	if strings.HasSuffix(this.routerPattern(), "/:link_id/:email") {
+	if strings.HasSuffix(this.routerPattern(), "/:link_id") {
 		this.apiPrepare("")
 	} else {
 		this.apiPrepare(PermissionCorpAdmin)
@@ -25,14 +26,27 @@ func (this *VerificationCodeController) Prepare() {
 
 // @Title Post
 // @Description send verification code when signing
-// @Param	:link_id	path 	string					true		"link id"
-// @Param	:email		path 	string					true		"email of corp"
+// @Param	:link_id	path 	string					true	"link id"
+// @Param	body		body 	controllers.verificationCodeRequest	true	"body for verification code"
 // @Success 201 {int} map
-// @router /:link_id/:email [post]
+// @router /:link_id [post]
 func (this *VerificationCodeController) Post() {
 	action := "create verification code"
 	linkID := this.GetString(":link_id")
-	emailOfSigner := this.GetString(":email")
+
+	var req verificationCodeRequest
+	if fr := this.fetchInputPayload(&req); fr != nil {
+		this.sendFailedResultAsResp(fr, action)
+		return
+	}
+
+	if err := req.validate(); err != nil {
+		this.sendFailedResultAsResp(
+			newFailedApiResult(400, errParsingApiBody, err),
+			action,
+		)
+		return
+	}
 
 	orgInfo, merr := models.GetOrgOfLink(linkID)
 	if merr != nil {
@@ -40,7 +54,7 @@ func (this *VerificationCodeController) Post() {
 		return
 	}
 
-	code, err := this.createCode(emailOfSigner, linkID)
+	code, err := models.CreateVerificationCode(req.toCmd(linkID))
 	if err != nil {
 		this.sendModelErrorAsResp(err, action)
 		return
@@ -49,13 +63,13 @@ func (this *VerificationCodeController) Post() {
 	this.sendSuccessResp("create verification code successfully")
 
 	sendEmailToIndividual(
-		emailOfSigner, orgInfo.OrgEmail,
+		req.Email, orgInfo.OrgEmail,
 		fmt.Sprintf(
 			"Verification code for signing CLA on project of \"%s\"",
 			orgInfo.OrgAlias,
 		),
 		email.VerificationCode{
-			Email:      emailOfSigner,
+			Email:      req.Email,
 			Org:        orgInfo.OrgAlias,
 			Code:       code,
 			ProjectURL: orgInfo.ProjectURL(),
@@ -65,18 +79,31 @@ func (this *VerificationCodeController) Post() {
 
 // @Title Post
 // @Description send verification code when adding email domain
-// @Param	:email		path 	string		true		"email of corp"
+// @Param	body	body 	controllers.verificationCodeRequest	true	"body for verification code"
 // @Success 201 {int} map
 // @Failure 400 missing_token:      token is missing
 // @Failure 401 unknown_token:      token is unknown
 // @Failure 402 expired_token:      token is expired
 // @Failure 403 unauthorized_token: the permission of token is unauthorized
 // @Failure 500 system_error:       system error
-// @router /:email [post]
+// @router / [post]
 func (this *VerificationCodeController) EmailDomain() {
 	action := "create verification code for adding email domain"
 	sendResp := this.newFuncForSendingFailedResp(action)
-	corpEmail := this.GetString(":email")
+
+	var req verificationCodeRequest
+	if fr := this.fetchInputPayload(&req); fr != nil {
+		this.sendFailedResultAsResp(fr, action)
+		return
+	}
+
+	if err := req.validate(); err != nil {
+		this.sendFailedResultAsResp(
+			newFailedApiResult(400, errParsingApiBody, err),
+			action,
+		)
+		return
+	}
 
 	pl, fr := this.tokenPayloadBasedOnCorpManager()
 	if fr != nil {
@@ -84,8 +111,8 @@ func (this *VerificationCodeController) EmailDomain() {
 		return
 	}
 
-	code, err := this.createCode(
-		corpEmail, models.PurposeOfAddingEmailDomain(pl.Email),
+	code, err := models.CreateVerificationCode(
+		req.toCmd(models.PurposeOfAddingEmailDomain(pl.Email)),
 	)
 	if err != nil {
 		this.sendModelErrorAsResp(err, action)
@@ -95,7 +122,7 @@ func (this *VerificationCodeController) EmailDomain() {
 	this.sendSuccessResp("create verification code successfully")
 
 	sendEmailToIndividual(
-		corpEmail, pl.OrgEmail,
+		req.Email, pl.OrgEmail,
 		"Verification code for adding corporation's another email domain",
 		email.AddingCorpEmailDomain{
 			Corp:       pl.Corp,
@@ -106,8 +133,22 @@ func (this *VerificationCodeController) EmailDomain() {
 	)
 }
 
-func (this *VerificationCodeController) createCode(to, purpose string) (string, models.IModelError) {
-	return models.CreateVerificationCode(
-		to, purpose, config.AppConfig.VerificationCodeExpiry,
-	)
+type verificationCodeRequest struct {
+	Email string `json:"email" required:"true"`
+}
+
+func (req *verificationCodeRequest) toCmd(purpose string) models.CmdToCreateVerificationCode {
+	return models.CmdToCreateVerificationCode{
+		Email:   req.Email,
+		Purpose: purpose,
+		Expiry:  config.AppConfig.VerificationCodeExpiry,
+	}
+}
+
+func (req *verificationCodeRequest) validate() error {
+	if req.Email == "" {
+		return errors.New("missing email")
+	}
+
+	return nil
 }

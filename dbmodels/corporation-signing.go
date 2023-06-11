@@ -30,6 +30,6 @@ type CorpSigningCreateOpt struct {
 
 type CorpSigningListOpt struct {
 	Lang         string
-	Email        string
+	EmailDomain  string
 	IncludeAdmin bool
 }

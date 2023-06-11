@@ -21,7 +21,7 @@ func (this *EmployeeSigningController) Prepare() {
 		// sign as employee
 		this.apiPrepare("")
 	} else {
-		if strings.HasSuffix(this.routerPattern(), "/:link_id/:email") {
+		if strings.HasSuffix(this.routerPattern(), "/:link_id/:signing_id") {
 			this.apiPrepare(PermissionOwnerOfOrg)
 		} else {
 			// get, update and delete employee

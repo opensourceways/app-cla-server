@@ -285,7 +285,7 @@ func LoadLinks() error {
 
 // @Title UpdateLinkEmail
 // @Description update link email
-// @Param	:link_id	email
+// @Param  :link_id  path  string  true	 "link id"
 // @router /update/:link_id [post]
 func (this *LinkController) UpdateLinkEmail() {
 	action := "update link email"

@@ -94,11 +94,6 @@ func init() {
 				&controllers.PasswordRetrievalController{},
 			),
 		),
-		beego.NSNamespace("/github",
-			beego.NSInclude(
-				&controllers.RobotGithubController{},
-			),
-		),
 	)
 	beego.AddNamespace(ns)
 }

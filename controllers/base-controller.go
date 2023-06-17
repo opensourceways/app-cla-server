@@ -326,9 +326,3 @@ func (this *baseController) stopRunIfSignSerivceIsUnabled() {
 		this.StopRun()
 	}
 }
-
-func (this *baseController) stopRunIfRobotSerivceIsUnabled() {
-	if config.AppConfig != nil {
-		this.StopRun()
-	}
-}

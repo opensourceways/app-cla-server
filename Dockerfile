@@ -14,7 +14,6 @@ COPY ./util/merge-signature.py /opt/app/util/merge-signature.py
 # overwrite config yaml
 COPY ./deploy/app.conf /opt/app/conf
 COPY ./deploy/app.conf.yaml /opt/app/conf
-COPY ./deploy/robot.conf.yaml /opt/app/conf
 COPY  --from=BUILDER /go/src/github.com/opensourceways/app-cla-server/cla-server /opt/app
 
 WORKDIR /opt/app/

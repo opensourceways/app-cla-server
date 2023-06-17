@@ -102,7 +102,7 @@ func (this *EmailController) Get() {
 
 // @Title Code
 // @Description send Email authorization verification code
-// @Param :platform email authorize
+// @Param  :platform  path  string  true  "email authorize"
 // @router /code/:platform [post]
 func (this *EmailController) Code() {
 	action := "send Email authorization verification code"
@@ -138,7 +138,7 @@ func (this *EmailController) Code() {
 
 // @Title Authorize
 // @Description Email authorization verification
-// @Param :platform code authorize
+// @Param  :platform  path  string  true  "email authorize"
 // @router /authorize/:platform [post]
 func (this *EmailController) Authorize() {
 	action := "Email authorization verification"

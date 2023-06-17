@@ -7,7 +7,7 @@ import (
 
 	"github.com/astaxie/beego"
 	"github.com/astaxie/beego/logs"
-	"github.com/opensourceways/community-robot-lib/interrupts"
+	"github.com/opensourceways/server-common-lib/interrupts"
 
 	platformAuth "github.com/opensourceways/app-cla-server/code-platform-auth"
 	"github.com/opensourceways/app-cla-server/config"
@@ -16,15 +16,9 @@ import (
 	"github.com/opensourceways/app-cla-server/email"
 	"github.com/opensourceways/app-cla-server/mongodb"
 	"github.com/opensourceways/app-cla-server/pdf"
-	"github.com/opensourceways/app-cla-server/robot/github"
 	_ "github.com/opensourceways/app-cla-server/routers"
 	"github.com/opensourceways/app-cla-server/util"
 	"github.com/opensourceways/app-cla-server/worker"
-)
-
-const (
-	serviceSign  = "sign"
-	serviceRobot = "robot"
 )
 
 func main() {
@@ -33,20 +27,9 @@ func main() {
 		beego.BConfig.WebConfig.StaticDir["/swagger"] = "swagger"
 	}
 
-	enabledService := beego.AppConfig.String("enableservice")
-
-	if enabledService != serviceSign && enabledService != serviceRobot {
-		logs.Error("invaliid enableservice")
-		os.Exit(1)
-	}
-
 	configFile := beego.AppConfig.String("appconf")
 
-	if enabledService == serviceSign {
-		startSignSerivce(configFile)
-	} else {
-		startRobotSerivce(configFile)
-	}
+	startSignSerivce(configFile)
 }
 
 func startSignSerivce(configPath string) {
@@ -106,25 +89,6 @@ func startMongoService(cfg *config.MongodbConfig) {
 func exitMongoService() {
 	err := dbmodels.GetDB().Close()
 	logs.Info("mongo exit, err:%v", err)
-}
-
-func startRobotSerivce(configPath string) {
-	cfg, err := config.LoadRobotServiceeConfig(configPath)
-	if err != nil {
-		logs.Error(err)
-		os.Exit(1)
-	}
-
-	startMongoService(&cfg.Mongodb)
-	defer exitMongoService()
-
-	if err := github.InitGithubRobot(cfg.CLAPlatformURL, cfg.PlatformRobotConfigs); err != nil {
-		logs.Error(err)
-		os.Exit(1)
-	}
-	defer github.Stop()
-
-	run()
 }
 
 func run() {

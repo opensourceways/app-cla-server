@@ -79,11 +79,6 @@ func init() {
 				&controllers.AuthController{},
 			),
 		),
-		beego.NSNamespace("/org-signature",
-			beego.NSInclude(
-				&controllers.OrgSignatureController{},
-			),
-		),
 		beego.NSNamespace("/verification-code",
 			beego.NSInclude(
 				&controllers.VerificationCodeController{},

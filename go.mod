@@ -8,7 +8,6 @@ require (
 	github.com/beego/beego/v2 v2.0.3
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/google/go-github/v33 v33.0.0
-	github.com/huaweicloud/golangsdk v0.0.0-20210831081626-d823fe11ceba
 	github.com/opensourceways/gofpdf v1.16.4
 	github.com/opensourceways/server-common-lib v0.0.0-20230208064916-61fc43dfb8db
 	github.com/ulule/limiter/v3 v3.11.2

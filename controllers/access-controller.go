@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/dgrijalva/jwt-go"
-	"github.com/huaweicloud/golangsdk"
 	"k8s.io/apimachinery/pkg/util/sets"
 
 	"github.com/opensourceways/app-cla-server/util"
@@ -26,7 +25,7 @@ type accessController struct {
 }
 
 func (this *accessController) newToken(secret string) (string, error) {
-	body, err := golangsdk.BuildRequestBody(this, "")
+	body, err := util.BuildRequestBody(this, "")
 	if err != nil {
 		return "", fmt.Errorf("failed to create token: build body failed: %s", err.Error())
 	}

@@ -7,9 +7,7 @@ import (
 	"strings"
 
 	"github.com/opensourceways/app-cla-server/config"
-	"github.com/opensourceways/app-cla-server/dbmodels"
 	"github.com/opensourceways/app-cla-server/models"
-	"github.com/opensourceways/app-cla-server/pdf"
 	"github.com/opensourceways/app-cla-server/util"
 )
 
@@ -154,60 +152,4 @@ func (this *CorporationPDFController) Review() {
 	if fr := this.downloadCorpPDF(pl.LinkID, pl.Email); fr != nil {
 		this.sendFailedResultAsResp(fr, action)
 	}
-}
-
-// @Title Preview
-// @Description preview the unsinged pdf of corp
-// @Param	:org_cla_id	path 	string					true		"org cla id"
-// @Success 200 {int} map
-// @router /preview/:linkID/:language [get]
-func (this *CorporationPDFController) Preview() {
-	action := "preview blank pdf"
-	linkID := this.GetString(":link_id")
-	claLang := this.GetString(":language")
-
-	pl, fr := this.tokenPayloadBasedOnCodePlatform()
-	if fr != nil {
-		this.sendFailedResultAsResp(fr, action)
-		return
-	}
-	if fr := pl.isOwnerOfLink(linkID); fr != nil {
-		this.sendFailedResultAsResp(fr, action)
-		return
-	}
-
-	claInfo, merr := models.GetCLAInfoToSign(linkID, claLang, dbmodels.ApplyToCorporation)
-	if merr != nil {
-		this.sendModelErrorAsResp(merr, action)
-		return
-	}
-	if claInfo == nil {
-		this.sendFailedResponse(400, errUnsupportedCLALang, fmt.Errorf("unsupport language"), action)
-		return
-	}
-
-	claFile := genCLAFilePath(linkID, dbmodels.ApplyToCorporation, claLang, claInfo.CLAHash)
-
-	value := map[string]string{}
-	for _, item := range claInfo.Fields {
-		value[item.ID] = ""
-	}
-
-	signing := models.CorporationSigning{
-		CorporationSigningBasicInfo: dbmodels.CorporationSigningBasicInfo{
-			AdminEmail: "test@preview_blank_pdf.com",
-			Date:       util.Date(),
-		},
-		Info: dbmodels.TypeSigningInfo(value),
-	}
-
-	outFile, err := pdf.GetPDFGenerator().GenPDFForCorporationSigning(
-		linkID, claFile, &signing, claInfo.Fields)
-	if err != nil {
-		this.sendFailedResponse(400, errSystemError, err, action)
-		return
-	}
-
-	defer func() { os.Remove(outFile) }()
-	this.downloadFile(outFile)
 }

@@ -109,12 +109,6 @@ func genCLAFilePath(linkID, applyTo, language, hash string) string {
 		util.GenFileName("cla", linkID, applyTo, language, hash, ".pdf"))
 }
 
-func genOrgSignatureFilePath(linkID, language string) string {
-	return util.GenFilePath(
-		config.AppConfig.PDFOrgSignatureDir,
-		util.GenFileName("signature", linkID, language, ".pdf"))
-}
-
 func genLinkID(v *dbmodels.OrgRepo) string {
 	repo := ""
 	if v.RepoID != "" {

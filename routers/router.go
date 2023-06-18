@@ -11,9 +11,10 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/astaxie/beego"
-	"github.com/astaxie/beego/context"
-	"github.com/astaxie/beego/logs"
+	"github.com/beego/beego/v2/adapter"
+	"github.com/beego/beego/v2/adapter/context"
+	"github.com/beego/beego/v2/core/logs"
+	beego "github.com/beego/beego/v2/server/web"
 	"github.com/ulule/limiter/v3"
 	"github.com/ulule/limiter/v3/drivers/store/memory"
 
@@ -103,11 +104,11 @@ type errResp struct {
 }
 
 func setRate() {
-	requestMaxRate := beego.AppConfig.String("requestLimit")
+	requestMaxRate := adapter.AppConfig.String("requestLimit")
 	requestRate, _ := limiter.NewRateFromFormatted(requestMaxRate)
 	l := limiter.New(memory.NewStore(), requestRate)
 
-	beego.InsertFilter("/*", beego.BeforeRouter, func(ctx *context.Context) {
+	adapter.InsertFilter("/*", beego.BeforeRouter, func(ctx *context.Context) {
 		rateLimit(l, ctx)
 	}, true)
 }

@@ -8,7 +8,7 @@ type emailConfigs struct {
 
 type platformConfig struct {
 	Platform    string `json:"platform" required:"true"`
-	Credentials string `json:"credentials" required:"true"`
+	Credentials string `json:"credentials"`
 }
 
 type webRedirectDirConfig struct {

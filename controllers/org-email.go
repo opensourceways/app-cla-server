@@ -4,7 +4,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/astaxie/beego"
+	"github.com/beego/beego/v2/core/logs"
+
 	"github.com/opensourceways/app-cla-server/config"
 	"github.com/opensourceways/app-cla-server/email"
 	"github.com/opensourceways/app-cla-server/models"
@@ -125,7 +126,7 @@ func (this *EmailController) Code() {
 	}
 	msg, err := e.GenEmailMsg()
 	if err != nil {
-		beego.Error(err)
+		logs.Error(err)
 		return
 	}
 

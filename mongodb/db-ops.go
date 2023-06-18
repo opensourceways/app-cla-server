@@ -5,12 +5,12 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/huaweicloud/golangsdk"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 
 	"github.com/opensourceways/app-cla-server/dbmodels"
+	"github.com/opensourceways/app-cla-server/util"
 )
 
 func withContext1(f func(context.Context) dbmodels.IDBError) dbmodels.IDBError {
@@ -20,7 +20,7 @@ func withContext1(f func(context.Context) dbmodels.IDBError) dbmodels.IDBError {
 }
 
 func structToMap(info interface{}) (bson.M, dbmodels.IDBError) {
-	body, err := golangsdk.BuildRequestBody(info, "")
+	body, err := util.BuildRequestBody(info, "")
 	if err != nil {
 		return nil, newDBError(dbmodels.ErrMarshalDataFaield, err)
 	}

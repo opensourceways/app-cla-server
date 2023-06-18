@@ -5,8 +5,8 @@ import (
 	"os"
 	"time"
 
-	beego "github.com/beego/beego/v2/adapter"
-	"github.com/beego/beego/v2/adapter/logs"
+	"github.com/beego/beego/v2/core/logs"
+	beego "github.com/beego/beego/v2/server/web"
 	"github.com/opensourceways/server-common-lib/interrupts"
 
 	platformAuth "github.com/opensourceways/app-cla-server/code-platform-auth"
@@ -27,7 +27,11 @@ func main() {
 		beego.BConfig.WebConfig.StaticDir["/swagger"] = "swagger"
 	}
 
-	configFile := beego.AppConfig.String("appconf")
+	configFile, err := beego.AppConfig.String("appconf")
+	if err != nil {
+		logs.Error(err)
+		os.Exit(1)
+	}
 
 	startSignSerivce(configFile)
 }

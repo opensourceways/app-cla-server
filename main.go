@@ -5,8 +5,8 @@ import (
 	"os"
 	"time"
 
-	"github.com/astaxie/beego"
-	"github.com/astaxie/beego/logs"
+	beego "github.com/beego/beego/v2/adapter"
+	"github.com/beego/beego/v2/adapter/logs"
 	"github.com/opensourceways/server-common-lib/interrupts"
 
 	platformAuth "github.com/opensourceways/app-cla-server/code-platform-auth"

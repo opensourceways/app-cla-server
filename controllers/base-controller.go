@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/astaxie/beego"
+	beego "github.com/beego/beego/v2/adapter"
 
 	"github.com/opensourceways/app-cla-server/config"
 	"github.com/opensourceways/app-cla-server/models"

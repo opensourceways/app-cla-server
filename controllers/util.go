@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	beego "github.com/beego/beego/v2/adapter"
+	"github.com/beego/beego/v2/core/logs"
 
 	"github.com/opensourceways/app-cla-server/config"
 	"github.com/opensourceways/app-cla-server/dbmodels"
@@ -30,7 +30,7 @@ func sendEmailToIndividual(to, from, subject string, builder email.IEmailMessage
 func sendEmail(to []string, from, subject string, builder email.IEmailMessageBulder) {
 	msg, err := builder.GenEmailMsg()
 	if err != nil {
-		beego.Error(err)
+		logs.Error(err)
 		return
 	}
 	msg.From = from

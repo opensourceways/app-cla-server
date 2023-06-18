@@ -7,7 +7,8 @@ import (
 	"net/http"
 	"strings"
 
-	beego "github.com/beego/beego/v2/adapter"
+	"github.com/beego/beego/v2/core/logs"
+	beego "github.com/beego/beego/v2/server/web"
 
 	"github.com/opensourceways/app-cla-server/config"
 	"github.com/opensourceways/app-cla-server/models"
@@ -78,7 +79,7 @@ func (this *baseController) sendFailedResultAsResp(fr *failedApiResult, action s
 
 func (this *baseController) sendFailedResponse(statusCode int, errCode string, reason error, action string) {
 	if statusCode >= 500 {
-		beego.Error(fmt.Sprintf("Failed to %s, errCode: %s, err: %s", action, errCode, reason.Error()))
+		logs.Error(fmt.Sprintf("Failed to %s, errCode: %s, err: %s", action, errCode, reason.Error()))
 
 		errCode = errSystemError
 		reason = fmt.Errorf("system error")

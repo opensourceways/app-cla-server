@@ -13,7 +13,7 @@ import (
 
 	beego "github.com/beego/beego/v2/adapter"
 	"github.com/beego/beego/v2/adapter/context"
-	"github.com/beego/beego/v2/adapter/logs"
+	"github.com/beego/beego/v2/core/logs"
 	"github.com/ulule/limiter/v3"
 	"github.com/ulule/limiter/v3/drivers/store/memory"
 

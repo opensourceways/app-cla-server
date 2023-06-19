@@ -3,6 +3,7 @@ package controllers
 import (
 	"sync"
 
+	"github.com/opensourceways/app-cla-server/config"
 	"github.com/opensourceways/app-cla-server/util"
 )
 
@@ -11,12 +12,14 @@ var emailLimiter *emailLimiterImpl
 func initEmailLimiter() {
 	emailLimiter = &emailLimiterImpl{
 		cache: make(map[string]int64),
+		wait:  int64(config.AppConfig.APIConfig.WaitingTimeForVC),
 	}
 }
 
 type emailLimiterImpl struct {
 	cache map[string]int64
 	lock  sync.RWMutex
+	wait  int64
 }
 
 func (impl *emailLimiterImpl) check(linkId, email string) (pass bool) {
@@ -33,7 +36,7 @@ func (impl *emailLimiterImpl) check(linkId, email string) (pass bool) {
 
 	impl.lock.Lock()
 	if impl.isAllowed(k, now) {
-		impl.cache[k] = now + 60
+		impl.cache[k] = now + impl.wait
 
 		impl.clean(now)
 

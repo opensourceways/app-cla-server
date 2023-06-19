@@ -66,6 +66,7 @@ type MongodbConfig struct {
 type apiConfig struct {
 	MaxRequestPerMinute int      `json:"max_request_per_minute"`
 	LimitedAPIs         []string `json:"limited_apis"`
+	WaitingTimeForVC    int      `json:"waiting_time_for_vc"`
 }
 
 func (cfg *apiConfig) setDefault() {
@@ -78,6 +79,10 @@ func (cfg *apiConfig) setDefault() {
 			"/v1/verification-code",
 			"/v1/password-retrieval",
 		}
+	}
+
+	if cfg.WaitingTimeForVC <= 0 {
+		cfg.WaitingTimeForVC = 60
 	}
 }
 

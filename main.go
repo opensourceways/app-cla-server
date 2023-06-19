@@ -51,9 +51,6 @@ func startSignSerivce(configPath string) {
 		}
 	}
 
-	startMongoService(&cfg.Mongodb)
-	defer exitMongoService()
-
 	if err := email.Initialize(cfg.EmailPlatformConfigFile); err != nil {
 		logs.Error(err)
 		os.Exit(1)
@@ -75,24 +72,35 @@ func startSignSerivce(configPath string) {
 		os.Exit(1)
 	}
 
-	worker.InitEmailWorker(pdf.GetPDFGenerator())
-	defer worker.GetEmailWorker().Shutdown()
+	if err := controllers.Init(); err != nil {
+		logs.Error(err)
+		os.Exit(1)
+	}
+
+	if err := startMongoService(&cfg.Mongodb); err != nil {
+		logs.Error(err)
+		os.Exit(1)
+	}
+	defer exitMongoService()
+
+	worker.Init(pdf.GetPDFGenerator())
+	defer worker.Exit()
 
 	run()
 }
 
-func startMongoService(cfg *config.MongodbConfig) {
+func startMongoService(cfg *config.MongodbConfig) error {
 	c, err := mongodb.Initialize(cfg)
-	if err != nil {
-		logs.Error(err)
-		os.Exit(1)
+	if err == nil {
+		dbmodels.RegisterDB(c)
 	}
-	dbmodels.RegisterDB(c)
+
+	return err
 }
 
 func exitMongoService() {
 	err := dbmodels.GetDB().Close()
-	logs.Info("mongo exit, err:%v", err)
+	logs.Error("mongo exit, err:%v", err)
 }
 
 func run() {

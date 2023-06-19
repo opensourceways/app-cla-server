@@ -8,22 +8,12 @@
 package routers
 
 import (
-	"fmt"
-	"strings"
-
-	"github.com/beego/beego/v2/adapter"
-	"github.com/beego/beego/v2/adapter/context"
-	"github.com/beego/beego/v2/core/logs"
 	beego "github.com/beego/beego/v2/server/web"
-	"github.com/ulule/limiter/v3"
-	"github.com/ulule/limiter/v3/drivers/store/memory"
 
 	"github.com/opensourceways/app-cla-server/controllers"
 )
 
 func init() {
-	setRate()
-
 	ns := beego.NewNamespace("/v1",
 		beego.NSNamespace("/cla",
 			beego.NSInclude(
@@ -92,81 +82,4 @@ func init() {
 		),
 	)
 	beego.AddNamespace(ns)
-}
-
-type resp struct {
-	Data errResp `json:"data"`
-}
-
-type errResp struct {
-	ErrCode string `json:"error_code"`
-	ErrMsg  string `json:"error_message"`
-}
-
-func setRate() {
-	requestMaxRate := adapter.AppConfig.String("requestLimit")
-	requestRate, _ := limiter.NewRateFromFormatted(requestMaxRate)
-	l := limiter.New(memory.NewStore(), requestRate)
-
-	adapter.InsertFilter("/*", beego.BeforeRouter, func(ctx *context.Context) {
-		rateLimit(l, ctx)
-	}, true)
-}
-
-func rateLimit(limit *limiter.Limiter, ctx *context.Context) {
-	if !needCheck(ctx) {
-		return
-	}
-
-	reached, ip, err := check(limit, ctx)
-	if err != nil {
-		logs.Error(err)
-
-		return
-	}
-
-	if reached {
-		logs.Info("too many requests from %s on %s", ip, ctx.Input.URL())
-
-		data := resp{
-			Data: errResp{
-				ErrCode: "system_error",
-				ErrMsg:  "Too Many Requests",
-			},
-		}
-
-		ctx.Output.JSON(data, false, false)
-	}
-}
-
-func needCheck(ctx *context.Context) bool {
-	url := ctx.Input.URL()
-	prefix := []string{
-		"/v1/verification-code",
-		"/v1/password-retrieval",
-	}
-	for _, item := range prefix {
-		if strings.HasPrefix(url, item) {
-			return true
-		}
-	}
-
-	return false
-}
-
-func check(limit *limiter.Limiter, ctx *context.Context) (bool, string, error) {
-	opt := limiter.Options{
-		IPv4Mask:           limiter.DefaultIPv4Mask,
-		IPv6Mask:           limiter.DefaultIPv6Mask,
-		TrustForwardHeader: false,
-	}
-
-	ip := limiter.GetIP(ctx.Request, opt)
-
-	limiterCtx, err := limit.Get(ctx.Request.Context(), ip.String())
-	if err != nil {
-		return false, "", fmt.Errorf("fetch limiter ctx failed: %s", err.Error())
-	}
-
-	return limiterCtx.Reached, ip.String(), nil
 }

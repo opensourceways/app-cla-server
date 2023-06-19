@@ -50,9 +50,7 @@ func (this *baseController) sendResponse(body interface{}, statusCode int) {
 		this.Ctx.ResponseWriter.WriteHeader(statusCode)
 	}
 
-	this.Data["json"] = struct {
-		Data interface{} `json:"data"`
-	}{
+	this.Data["json"] = respData{
 		Data: body,
 	}
 
@@ -85,10 +83,7 @@ func (this *baseController) sendFailedResponse(statusCode int, errCode string, r
 		reason = fmt.Errorf("system error")
 	}
 
-	d := struct {
-		ErrCode string `json:"error_code"`
-		ErrMsg  string `json:"error_message"`
-	}{
+	d := errMsg{
 		ErrCode: fmt.Sprintf("cla.%s", errCode),
 		ErrMsg:  reason.Error(),
 	}

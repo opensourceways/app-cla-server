@@ -48,6 +48,7 @@ type appConfig struct {
 	RestrictedCorpEmailSuffix []string      `json:"restricted_corp_email_suffix"`
 	MinLengthOfPassword       int           `json:"min_length_of_password"`
 	MaxLengthOfPassword       int           `json:"max_length_of_password"`
+	APIConfig                 APIConfig     `json:"api_config"`
 }
 
 type MongodbConfig struct {
@@ -62,7 +63,27 @@ type MongodbConfig struct {
 	IndividualSigningCollection string `json:"individual_signing_collection" required:"true"`
 }
 
+type APIConfig struct {
+	MaxRequestPerMinute int      `json:"max_request_per_minite"`
+	LimitedAPIs         []string `json:"limited_apis"`
+}
+
+func (cfg *APIConfig) setDefault() {
+	if cfg.MaxRequestPerMinute <= 0 {
+		cfg.MaxRequestPerMinute = 1
+	}
+
+	if len(cfg.LimitedAPIs) == 0 {
+		cfg.LimitedAPIs = []string{
+			"/v1/verification-code",
+			"/v1/password-retrieval",
+		}
+	}
+}
+
 func (cfg *appConfig) setDefault() {
+	cfg.APIConfig.setDefault()
+
 	if cfg.MaxSizeOfCorpCLAPDF <= 0 {
 		cfg.MaxSizeOfCorpCLAPDF = 5 << 20
 	}

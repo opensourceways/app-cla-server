@@ -48,7 +48,7 @@ type appConfig struct {
 	RestrictedCorpEmailSuffix []string      `json:"restricted_corp_email_suffix"`
 	MinLengthOfPassword       int           `json:"min_length_of_password"`
 	MaxLengthOfPassword       int           `json:"max_length_of_password"`
-	APIConfig                 APIConfig     `json:"api_config"`
+	APIConfig                 apiConfig     `json:"api_config"`
 }
 
 type MongodbConfig struct {
@@ -63,12 +63,12 @@ type MongodbConfig struct {
 	IndividualSigningCollection string `json:"individual_signing_collection" required:"true"`
 }
 
-type APIConfig struct {
-	MaxRequestPerMinute int      `json:"max_request_per_minite"`
+type apiConfig struct {
+	MaxRequestPerMinute int      `json:"max_request_per_minute"`
 	LimitedAPIs         []string `json:"limited_apis"`
 }
 
-func (cfg *APIConfig) setDefault() {
+func (cfg *apiConfig) setDefault() {
 	if cfg.MaxRequestPerMinute <= 0 {
 		cfg.MaxRequestPerMinute = 1
 	}

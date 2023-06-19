@@ -17,6 +17,12 @@ import (
 var requestLimiter *requestLimiterImpl
 
 func Init() error {
+	initEmailLimiter()
+
+	return initRequestLimiter()
+}
+
+func initRequestLimiter() error {
 	cfg := &config.AppConfig.APIConfig
 
 	requestRate, err := limiter.NewRateFromFormatted(

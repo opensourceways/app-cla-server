@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"fmt"
+	"net/http"
 	"strings"
 
 	"github.com/opensourceways/app-cla-server/config"
@@ -33,6 +34,15 @@ func (this *VerificationCodeController) Post() {
 	action := "create verification code"
 	linkID := this.GetString(":link_id")
 	emailOfSigner := this.GetString(":email")
+
+	if !emailLimiter.check(linkID, emailOfSigner) {
+		this.sendFailedResponse(
+			http.StatusBadRequest, errTooManyRequest,
+			fmt.Errorf("too many request"), action,
+		)
+
+		return
+	}
 
 	orgInfo, merr := models.GetOrgOfLink(linkID)
 	if merr != nil {

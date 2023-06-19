@@ -11,8 +11,6 @@ import (
 	"strings"
 	"text/template"
 	"time"
-
-	"sigs.k8s.io/yaml"
 )
 
 func EmailSuffix(email string) string {
@@ -44,14 +42,14 @@ func IsNotDir(dir string) bool {
 }
 
 func LoadFromYaml(path string, cfg interface{}) error {
-	b, err := ioutil.ReadFile(path)
+	b, err := os.ReadFile(path)
 	if err != nil {
 		return err
 	}
 
 	content := []byte(os.ExpandEnv(string(b)))
 
-	if err := yaml.Unmarshal(content, cfg); err != nil {
+	if err := Unmarshal(content, cfg); err != nil {
 		return err
 	}
 
@@ -60,7 +58,7 @@ func LoadFromYaml(path string, cfg interface{}) error {
 }
 
 func NewTemplate(name, path string) (*template.Template, error) {
-	txtStr, err := ioutil.ReadFile(path)
+	txtStr, err := os.ReadFile(path)
 	if err != nil {
 		return nil, fmt.Errorf("failed to new template: read template file failed: %s", err.Error())
 	}

@@ -28,10 +28,16 @@ func GetEmailWorker() IEmailWorker {
 	return worker
 }
 
-func InitEmailWorker(g pdf.IPDFGenerator) {
+func Init(g pdf.IPDFGenerator) {
 	worker = &emailWorker{
 		pdfGenerator: g,
 		stop:         make(chan struct{}),
+	}
+}
+
+func Exit() {
+	if worker != nil {
+		worker.Shutdown()
 	}
 }
 

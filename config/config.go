@@ -64,9 +64,9 @@ type MongodbConfig struct {
 }
 
 type apiConfig struct {
-	MaxRequestPerMinute int      `json:"max_request_per_minute"`
 	LimitedAPIs         []string `json:"limited_apis"`
 	WaitingTimeForVC    int      `json:"waiting_time_for_vc"`
+	MaxRequestPerMinute int      `json:"max_request_per_minute"`
 }
 
 func (cfg *apiConfig) setDefault() {

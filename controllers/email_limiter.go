@@ -37,10 +37,9 @@ func (impl *emailLimiterImpl) check(linkId, email string) (pass bool) {
 	impl.lock.Lock()
 	if impl.isAllowed(k, now) {
 		impl.cache[k] = now + impl.wait
+		pass = true
 
 		impl.clean(now)
-
-		pass = true
 	}
 	impl.lock.Unlock()
 

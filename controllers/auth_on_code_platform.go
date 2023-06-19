@@ -97,60 +97,6 @@ func (this *AuthController) Callback() {
 	this.redirect(authHelper.WebRedirectDir(true))
 }
 
-type userAccount struct {
-	UserName string `json:"username"`
-	Password string `json:"password"`
-}
-
-// @Title Auth
-// @Description authentication by user's password of code platform
-// @Param	:platform	path 	string				true	"gitee/github"
-// @Param	body		body 	controllers.userAccount		true	"body for auth on code platform"
-// @Success 201 {object} map
-// @Failure 400 missing_url_path_parameter: missing url path parameter
-// @Failure 401 error_parsing_api_body:     parse payload of request failed
-// @Failure 402 unsupported_code_platform: unsupported code platform
-// @Failure 500 system_error:              system error
-// @router /:platform [post]
-func (this *AuthController) Auth() {
-	action := "auth by pw"
-	platform := this.GetString(":platform")
-
-	var body userAccount
-
-	if fr := this.fetchInputPayload(&body); fr != nil {
-		this.sendFailedResultAsResp(fr, action)
-		return
-	}
-
-	cp, err := platformAuth.Auth[platformAuth.AuthApplyToLogin].GetAuthInstance(platform)
-	if err != nil {
-		this.sendFailedResponse(400, errUnsupportedCodePlatform, err, action)
-		return
-	}
-
-	token, err := cp.PasswordCredentialsToken(body.UserName, body.Password)
-	if err != nil {
-		this.sendFailedResponse(500, errSystemError, err, action)
-		return
-	}
-
-	permission := PermissionOwnerOfOrg
-	pl, ec, err := this.genACPayload(platform, permission, token)
-	if err != nil {
-		this.sendFailedResponse(500, ec, err, action)
-		return
-	}
-
-	at, err := this.newApiToken(permission, pl)
-	if err != nil {
-		this.sendFailedResponse(500, errSystemError, err, action)
-		return
-	}
-
-	this.sendSuccessResp(map[string]string{"access_token": at})
-}
-
 func (this *AuthController) genACPayload(platform, permission, platformToken string) (*acForCodePlatformPayload, string, error) {
 	pt, err := platforms.NewPlatform(platformToken, "", platform)
 	if err != nil {

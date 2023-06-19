@@ -22,12 +22,8 @@ func (this *EmployeeSigningController) Prepare() {
 		// sign as employee
 		this.apiPrepare("")
 	} else {
-		if strings.HasSuffix(this.routerPattern(), "/:link_id/:email") {
-			this.apiPrepare(PermissionOwnerOfOrg)
-		} else {
-			// get, update and delete employee
-			this.apiPrepare(PermissionEmployeeManager)
-		}
+		// get, update and delete employee
+		this.apiPrepare(PermissionEmployeeManager)
 	}
 }
 
@@ -132,44 +128,6 @@ func (this *EmployeeSigningController) GetAll() {
 	}
 
 	r, merr := models.ListIndividualSigning(pl.LinkID, pl.Email, this.GetString("cla_language"))
-	if merr != nil {
-		this.sendModelErrorAsResp(merr, action)
-		return
-	}
-
-	this.sendSuccessResp(r)
-}
-
-// @Title List
-// @Description get all the employees by community manager
-// @Param	:link_id	path 	string		true		"link id"
-// @Param	:email		path 	string		true		"the email of corp"
-// @Success 200 {object} dbmodels.IndividualSigningBasicInfo
-// @Failure 400 missing_url_path_parameter: missing url path parameter
-// @Failure 401 missing_token:              token is missing
-// @Failure 402 unknown_token:              token is unknown
-// @Failure 403 expired_token:              token is expired
-// @Failure 404 unauthorized_token:         the permission of token is unmatched
-// @Failure 405 unknown_link:               unkown link id
-// @Failure 406 not_yours_org:              the link doesn't belong to your community
-// @Failure 500 system_error:               system error
-// @router /:link_id/:email [get]
-func (this *EmployeeSigningController) List() {
-	action := "list employees"
-	linkID := this.GetString(":link_id")
-	corpEmail := this.GetString(":email")
-
-	pl, fr := this.tokenPayloadBasedOnCodePlatform()
-	if fr != nil {
-		this.sendFailedResultAsResp(fr, action)
-		return
-	}
-	if fr := pl.isOwnerOfLink(linkID); fr != nil {
-		this.sendFailedResultAsResp(fr, action)
-		return
-	}
-
-	r, merr := models.ListIndividualSigning(linkID, corpEmail, "")
 	if merr != nil {
 		this.sendModelErrorAsResp(merr, action)
 		return

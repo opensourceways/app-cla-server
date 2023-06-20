@@ -52,7 +52,7 @@ func (this *CorporationPDFController) downloadCorpPDF(linkID, corpEmail string) 
 	this.downloadFile(fn)
 
 	if err := os.Remove(fn); err != nil {
-		logs.Error("remove tmp file failed, err: %s", err.Error())
+		logs.Error("remove temp file failed, err: %s", err.Error())
 	}
 
 	return nil

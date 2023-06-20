@@ -5,10 +5,6 @@ import (
 	"strings"
 )
 
-func NewMultiErrors() MultiError {
-	return MultiError{}
-}
-
 func MultiErrors(errs ...error) error {
 	m := MultiError{}
 
@@ -17,6 +13,10 @@ func MultiErrors(errs ...error) error {
 	}
 
 	return m.Err()
+}
+
+func NewMultiError() MultiError {
+	return MultiError{}
 }
 
 type MultiError struct {

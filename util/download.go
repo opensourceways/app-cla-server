@@ -65,10 +65,10 @@ func DownloadFile(url, fileType string, maxSize int) ([]byte, error) {
 			return err
 		}
 
-		if c := resp.StatusCode; c >= 200 && c < 300 {
+		if c := resp.StatusCode; !(c >= 200 && c < 300) {
 			err := resp.Body.Close()
 
-			return MultiErrors(errors.New("can't detect"), err)
+			return MultiErrors(errors.New("can't dowload"), err)
 		}
 
 		content, err = ioutil.ReadAll(resp.Body)

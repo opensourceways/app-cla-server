@@ -1,7 +1,6 @@
 package util
 
 import (
-	"fmt"
 	"io/ioutil"
 	"os"
 )
@@ -18,26 +17,16 @@ func WriteToTempFile(dir, name string, data []byte) (string, error) {
 		return fn, nil
 	}
 
-	if err1 := os.Remove(fn); err1 != nil {
-		err = fmt.Errorf("%s, %s", err.Error(), err1.Error())
-	}
+	err1 := os.Remove(fn)
 
-	return "", err
+	return "", MultiErrors(err, err1)
 }
 
 func writeAllAndClose(f *os.File, data []byte) error {
 	err := writeAll(f, data)
 	err1 := f.Close()
 
-	if err == nil && err1 == nil {
-		return nil
-	}
-
-	if err != nil {
-		return err
-	}
-
-	return err1
+	return MultiErrors(err, err1)
 }
 
 func writeAll(f *os.File, data []byte) error {

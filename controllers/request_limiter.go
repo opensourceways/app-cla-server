@@ -78,7 +78,7 @@ func (rl *requestLimiterImpl) rateLimit(ctx *context.Context) {
 	if reached {
 		data := respData{
 			Data: errMsg{
-				ErrCode: errSystemError,
+				ErrCode: errTooManyRequest,
 				ErrMsg:  "Too Many Requests",
 			},
 		}

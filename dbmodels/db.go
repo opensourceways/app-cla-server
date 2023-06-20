@@ -33,8 +33,8 @@ type ICorporationSigning interface {
 	AddCorpEmailDomain(linkID, adminEmail, domain string) IDBError
 	GetCorpEmailDomains(linkID, email string) ([]string, IDBError)
 
-	UploadCorporationSigningPDF(linkID string, adminEmail string, pdf *[]byte) IDBError
-	DownloadCorporationSigningPDF(linkID string, email string) (*[]byte, IDBError)
+	UploadCorporationSigningPDF(linkID string, adminEmail string, pdf []byte) IDBError
+	DownloadCorporationSigningPDF(linkID string, email string) ([]byte, IDBError)
 	IsCorpSigningPDFUploaded(linkID string, email string) (bool, IDBError)
 	ListCorpsWithPDFUploaded(linkID string) ([]string, IDBError)
 }

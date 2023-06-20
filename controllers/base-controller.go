@@ -273,6 +273,10 @@ func (this *baseController) isPostRequest() bool {
 }
 
 func (this *baseController) readInputFile(fileName string, maxSize int) ([]byte, *failedApiResult) {
+	if v := this.Ctx.Request.ContentLength; v <= 0 || v > int64(maxSize) {
+		return nil, newFailedApiResult(400, errTooBigPDF, fmt.Errorf("big pdf file"))
+	}
+
 	f, _, err := this.GetFile(fileName)
 	if err != nil {
 		return nil, newFailedApiResult(400, errReadingFile, err)
@@ -284,9 +288,10 @@ func (this *baseController) readInputFile(fileName string, maxSize int) ([]byte,
 		return nil, newFailedApiResult(500, errSystemError, err)
 	}
 
-	if maxSize > 0 && len(data) > maxSize {
+	if len(data) > maxSize {
 		return nil, newFailedApiResult(400, errTooBigPDF, fmt.Errorf("big pdf file"))
 	}
+
 	return data, nil
 }
 

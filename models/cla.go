@@ -3,11 +3,9 @@ package models
 import (
 	"fmt"
 	"io/ioutil"
-	"net/http"
 	"os"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/opensourceways/app-cla-server/config"
 	"github.com/opensourceways/app-cla-server/dbmodels"
@@ -127,33 +125,7 @@ func (this *CLACreateOpt) Validate(applyTo string, langs map[string]bool) IModel
 }
 
 func downloadCLA(url string) ([]byte, error) {
-	var resp *http.Response
-
-	for i := 0; i < 3; i++ {
-		v, err := http.Get(url)
-		if err == nil {
-			resp = v
-			break
-		}
-		time.Sleep(time.Second * time.Duration(1))
-	}
-	if resp == nil {
-		return nil, fmt.Errorf("can't download %s", url)
-	}
-
-	defer resp.Body.Close()
-
-	data, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return nil, err
-	}
-
-	t := strings.ToLower(http.DetectContentType(data))
-	if strings.Contains(t, "pdf") {
-		return data, nil
-	}
-
-	return nil, fmt.Errorf("it is not the content of cla")
+	return util.DownloadFile(url, "pdf", config.AppConfig.MaxSizeOfCLAContent)
 }
 
 func GetCLAByType(linkID, applyTo string) ([]dbmodels.CLADetail, IModelError) {

@@ -42,6 +42,7 @@ const (
 	errCanNotFetchClientIP      = "can_not_fetch_client_ip"
 	errMissingPWRetrievalKey    = "missing_pw_retrieval_key"
 	errInvalidPWRetrievalKey    = string(models.ErrInvalidPWRetrievalKey)
+	errTooManyRequest           = "too_many_request"
 )
 
 func parseModelError(err models.IModelError) *failedApiResult {

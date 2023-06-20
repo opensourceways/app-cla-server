@@ -30,7 +30,7 @@ type appConfig struct {
 	PythonBin                 string        `json:"python_bin" required:"true"`
 	CLAFieldsNumber           int           `json:"cla_fields_number" required:"true"`
 	MaxSizeOfCorpCLAPDF       int           `json:"max_size_of_corp_cla_pdf"`
-	MaxSizeOfOrgSignaturePDF  int           `json:"max_size_of_org_signature_pdf"`
+	MaxSizeOfCLAContent       int           `json:"max_size_of_cla_content"`
 	VerificationCodeExpiry    int64         `json:"verification_code_expiry" required:"true"`
 	APITokenExpiry            int64         `json:"api_token_expiry" required:"true"`
 	APITokenKey               string        `json:"api_token_key" required:"true"`
@@ -92,15 +92,19 @@ func (cfg *appConfig) setDefault() {
 	if cfg.MaxSizeOfCorpCLAPDF <= 0 {
 		cfg.MaxSizeOfCorpCLAPDF = 5 << 20
 	}
-	if cfg.MaxSizeOfOrgSignaturePDF <= 0 {
-		cfg.MaxSizeOfOrgSignaturePDF = 1 << 20
+
+	if cfg.MaxSizeOfCLAContent <= 0 {
+		cfg.MaxSizeOfCLAContent = 2 << 20
 	}
+
 	if cfg.MinLengthOfPassword <= 0 {
 		cfg.MinLengthOfPassword = 8
 	}
+
 	if cfg.MaxLengthOfPassword <= 0 {
 		cfg.MaxLengthOfPassword = 16
 	}
+
 	if cfg.PasswordRetrievalExpiry < 3600 {
 		cfg.PasswordRetrievalExpiry = 3600
 	}

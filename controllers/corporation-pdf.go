@@ -2,9 +2,10 @@ package controllers
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"strings"
+
+	"github.com/beego/beego/v2/core/logs"
 
 	"github.com/opensourceways/app-cla-server/config"
 	"github.com/opensourceways/app-cla-server/models"
@@ -27,33 +28,33 @@ func (this *CorporationPDFController) Prepare() {
 }
 
 func (this *CorporationPDFController) downloadCorpPDF(linkID, corpEmail string) *failedApiResult {
-	dir := util.GenFilePath(config.AppConfig.PDFOutDir, "tmp")
-	s := strings.ReplaceAll(util.EmailSuffix(corpEmail), ".", "_")
-	name := fmt.Sprintf("%s_%s_*.pdf", linkID, s)
-
-	f, err := ioutil.TempFile(dir, name)
-	if err != nil {
-		return newFailedApiResult(500, errSystemError, err)
-	}
-	defer func() {
-		f.Close()
-		os.Remove(f.Name())
-	}()
-
 	pdf, merr := models.DownloadCorporationSigningPDF(linkID, corpEmail)
 	if merr != nil {
 		if merr.IsErrorOf(models.ErrNoLinkOrUnuploaed) {
 			return newFailedApiResult(400, errUnuploaded, merr)
 		}
+
 		return parseModelError(merr)
 	}
 
-	if _, err = f.Write(*pdf); err != nil {
+	fn, err := util.WriteToTempFile(
+		util.GenFilePath(config.AppConfig.PDFOutDir, "tmp"),
+		fmt.Sprintf(
+			"%s_%s_*.pdf", linkID,
+			strings.ReplaceAll(util.EmailSuffix(corpEmail), ".", "_"),
+		),
+		pdf,
+	)
+	if err != nil {
 		return newFailedApiResult(500, errSystemError, err)
 	}
 
-	f.Close()
-	this.downloadFile(f.Name())
+	this.downloadFile(fn)
+
+	if err := os.Remove(fn); err != nil {
+		logs.Error("remove tmp file failed, err: %s", err.Error())
+	}
+
 	return nil
 }
 
@@ -102,7 +103,7 @@ func (this *CorporationPDFController) Upload() {
 		return
 	}
 
-	if err := models.UploadCorporationSigningPDF(linkID, corpEmail, &data); err != nil {
+	if err := models.UploadCorporationSigningPDF(linkID, corpEmail, data); err != nil {
 		this.sendModelErrorAsResp(err, action)
 		return
 	}

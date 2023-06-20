@@ -50,12 +50,12 @@ func (this *CorporationSigningCreateOption) Create(orgCLAID string) IModelError 
 	return parseDBError(err)
 }
 
-func UploadCorporationSigningPDF(linkID string, email string, pdf *[]byte) IModelError {
+func UploadCorporationSigningPDF(linkID string, email string, pdf []byte) IModelError {
 	err := dbmodels.GetDB().UploadCorporationSigningPDF(linkID, email, pdf)
 	return parseDBError(err)
 }
 
-func DownloadCorporationSigningPDF(linkID string, email string) (*[]byte, IModelError) {
+func DownloadCorporationSigningPDF(linkID string, email string) ([]byte, IModelError) {
 	v, err := dbmodels.GetDB().DownloadCorporationSigningPDF(linkID, email)
 	if err == nil {
 		return v, nil

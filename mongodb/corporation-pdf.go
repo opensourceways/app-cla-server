@@ -15,10 +15,10 @@ func docFilterOfCorpSigningPDF(linkID string, email string) bson.M {
 	}
 }
 
-func (this *client) UploadCorporationSigningPDF(linkID string, adminEmail string, pdf *[]byte) dbmodels.IDBError {
+func (this *client) UploadCorporationSigningPDF(linkID string, adminEmail string, pdf []byte) dbmodels.IDBError {
 	docFilter := docFilterOfCorpSigningPDF(linkID, adminEmail)
 
-	doc := bson.M{fieldPDF: *pdf}
+	doc := bson.M{fieldPDF: pdf}
 	for k, v := range docFilter {
 		doc[k] = v
 	}
@@ -31,7 +31,7 @@ func (this *client) UploadCorporationSigningPDF(linkID string, adminEmail string
 	return withContext1(f)
 }
 
-func (this *client) DownloadCorporationSigningPDF(linkID string, email string) (*[]byte, dbmodels.IDBError) {
+func (this *client) DownloadCorporationSigningPDF(linkID string, email string) ([]byte, dbmodels.IDBError) {
 	var v dCorpSigningPDF
 
 	f := func(ctx context.Context) dbmodels.IDBError {
@@ -45,7 +45,7 @@ func (this *client) DownloadCorporationSigningPDF(linkID string, email string) (
 		return nil, err
 	}
 
-	return &v.PDF, nil
+	return v.PDF, nil
 }
 
 func (this *client) IsCorpSigningPDFUploaded(linkID string, email string) (bool, dbmodels.IDBError) {

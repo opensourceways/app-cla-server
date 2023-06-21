@@ -99,7 +99,7 @@ func (this *CLACreateOpt) Validate(applyTo string, langs map[string]bool) IModel
 
 	switch applyTo {
 	case dbmodels.ApplyToCorporation:
-		if !langs[this.Language] {
+		if langs != nil && !langs[this.Language] {
 			return newModelError(ErrUnsupportedCLALang, fmt.Errorf("unsupported_cla_lang"))
 		}
 

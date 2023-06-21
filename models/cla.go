@@ -97,21 +97,45 @@ func (this *CLACreateOpt) GenCLAInfo() *CLAInfo {
 func (this *CLACreateOpt) Validate(applyTo string, langs map[string]bool) IModelError {
 	this.Language = strings.ToLower(this.Language)
 
-	if applyTo == dbmodels.ApplyToCorporation && !langs[this.Language] {
-		return newModelError(ErrUnsupportedCLALang, fmt.Errorf("unsupported_cla_lang"))
-	}
+	switch applyTo {
+	case dbmodels.ApplyToCorporation:
+		if langs != nil && !langs[this.Language] {
+			return newModelError(ErrUnsupportedCLALang, fmt.Errorf("unsupported_cla_lang"))
+		}
 
+		return this.validate(config.AppConfig.CLAConfig.AllowedCorpCLAFields)
+
+	case dbmodels.ApplyToIndividual:
+		return this.validate(config.AppConfig.CLAConfig.AllowedIndividualCLAFields)
+
+	default:
+		return newModelError(ErrSystemError, fmt.Errorf("unknown cla type"))
+	}
+}
+
+type claFileds interface {
+	Number() int
+	Has(t string) bool
+}
+
+func (this *CLACreateOpt) validate(fields claFileds) IModelError {
 	if len(this.Fields) <= 0 {
 		return newModelError(ErrNoCLAField, fmt.Errorf("no fields"))
 	}
 
-	if len(this.Fields) > config.AppConfig.CLAFieldsNumber {
+	if len(this.Fields) > fields.Number() {
 		return newModelError(ErrManyCLAField, fmt.Errorf("exceeds the max fields number"))
 	}
 
 	for i := range this.Fields {
-		if _, err := strconv.Atoi(this.Fields[i].ID); err != nil {
+		item := &this.Fields[i]
+
+		if _, err := strconv.Atoi(item.ID); err != nil {
 			return newModelError(ErrCLAFieldID, fmt.Errorf("invalid field id"))
+		}
+
+		if !fields.Has(item.Type) {
+			return newModelError(ErrCLAFieldID, fmt.Errorf("unknown field"))
 		}
 	}
 

@@ -1,7 +1,5 @@
 python_bin: /usr/bin/python3
 
-cla_fields_number: 10
-
 verification_code_expiry: 300
 api_token_expiry: 1800
 api_token_key: "${API_TOKEN_KEY}"

@@ -28,7 +28,6 @@ func InitAppConfig(path string) error {
 
 type appConfig struct {
 	PythonBin                 string        `json:"python_bin" required:"true"`
-	CLAFieldsNumber           int           `json:"cla_fields_number" required:"true"`
 	MaxSizeOfCorpCLAPDF       int           `json:"max_size_of_corp_cla_pdf"`
 	MaxSizeOfCLAContent       int           `json:"max_size_of_cla_content"`
 	VerificationCodeExpiry    int64         `json:"verification_code_expiry" required:"true"`
@@ -49,6 +48,7 @@ type appConfig struct {
 	MinLengthOfPassword       int           `json:"min_length_of_password"`
 	MaxLengthOfPassword       int           `json:"max_length_of_password"`
 	APIConfig                 apiConfig     `json:"api_config"`
+	CLAConfig                 claConfig     `json:"-"`
 }
 
 type MongodbConfig struct {
@@ -86,8 +86,49 @@ func (cfg *apiConfig) setDefault() {
 	}
 }
 
+type claFileds map[string]bool
+
+func (cfg claFileds) Number() int {
+	return len(cfg)
+}
+
+func (cfg claFileds) Has(t string) bool {
+	return cfg != nil && cfg[t]
+}
+
+func newCLAFields(items []string) claFileds {
+	m := make(map[string]bool)
+	for _, v := range items {
+		m[v] = true
+	}
+
+	return claFileds(m)
+}
+
+type claConfig struct {
+	AllowedCorpCLAFields       claFileds
+	AllowedIndividualCLAFields claFileds
+}
+
+func (cfg *claConfig) setDefault() {
+	cfg.AllowedCorpCLAFields = newCLAFields([]string{
+		"fax",
+		"title",
+		"email",
+		"address",
+		"telephone",
+		"authorized",
+		"corporationName",
+	})
+
+	cfg.AllowedIndividualCLAFields = newCLAFields([]string{
+		"name", "email",
+	})
+}
+
 func (cfg *appConfig) setDefault() {
 	cfg.APIConfig.setDefault()
+	cfg.CLAConfig.setDefault()
 
 	if cfg.MaxSizeOfCorpCLAPDF <= 0 {
 		cfg.MaxSizeOfCorpCLAPDF = 5 << 20
@@ -113,10 +154,6 @@ func (cfg *appConfig) setDefault() {
 func (cfg *appConfig) validate() error {
 	if util.IsFileNotExist(cfg.PythonBin) {
 		return fmt.Errorf("the file:%s is not exist", cfg.PythonBin)
-	}
-
-	if cfg.CLAFieldsNumber <= 0 {
-		return fmt.Errorf("the cla_fields_number:%d should be bigger than 0", cfg.CLAFieldsNumber)
 	}
 
 	if cfg.VerificationCodeExpiry <= 0 {

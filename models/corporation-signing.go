@@ -37,6 +37,10 @@ func (this *CorporationSigningCreateOption) Validate(orgCLAID string) IModelErro
 }
 
 func (this *CorporationSigningCreateOption) Create(orgCLAID string) IModelError {
+	if corpSigningAdapterInstance != nil {
+		return corpSigningAdapterInstance.Sign(this, orgCLAID)
+	}
+
 	this.Date = util.Date()
 
 	err := dbmodels.GetDB().SignCorpCLA(orgCLAID, &this.CorporationSigning)

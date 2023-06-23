@@ -47,8 +47,9 @@ type appConfig struct {
 	RestrictedCorpEmailSuffix []string      `json:"restricted_corp_email_suffix"`
 	MinLengthOfPassword       int           `json:"min_length_of_password"`
 	MaxLengthOfPassword       int           `json:"max_length_of_password"`
-	APIConfig                 apiConfig     `json:"api_config"`
+	APIConfig                 apiConfig     `json:"api"     required:"true"`
 	CLAConfig                 claConfig     `json:"-"`
+	SigningConfig             signingConfig `json:"signing" required:"true"`
 }
 
 type MongodbConfig struct {
@@ -129,6 +130,7 @@ func (cfg *claConfig) setDefault() {
 func (cfg *appConfig) setDefault() {
 	cfg.APIConfig.setDefault()
 	cfg.CLAConfig.setDefault()
+	cfg.SigningConfig.setDefault()
 
 	if cfg.MaxSizeOfCorpCLAPDF <= 0 {
 		cfg.MaxSizeOfCorpCLAPDF = 5 << 20
@@ -152,6 +154,10 @@ func (cfg *appConfig) setDefault() {
 }
 
 func (cfg *appConfig) validate() error {
+	if err := cfg.SigningConfig.validate(); err != nil {
+		return err
+	}
+
 	if util.IsFileNotExist(cfg.PythonBin) {
 		return fmt.Errorf("the file:%s is not exist", cfg.PythonBin)
 	}

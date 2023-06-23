@@ -11,9 +11,14 @@ import (
 	"strings"
 	"text/template"
 	"time"
+	"unicode/utf8"
 
 	"sigs.k8s.io/yaml"
 )
+
+func StrLen(s string) int {
+	return utf8.RuneCountInString(s)
+}
 
 func EmailSuffix(email string) string {
 	v := strings.Split(email, "@")

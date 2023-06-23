@@ -6,7 +6,9 @@ import (
 	"github.com/opensourceways/app-cla-server/dbmodels"
 )
 
-type ModelErrCode string
+type ModelErrCode = string
+
+var NewModelError = newModelError
 
 const (
 	ErrSystemError             ModelErrCode = "system_error"
@@ -45,6 +47,7 @@ const (
 	ErrRestrictedEmailSuffix   ModelErrCode = "restricted_email_suffix"
 	ErrInvalidPWRetrievalKey   ModelErrCode = "invalid_pw_retrieval_key"
 	ErrInvalidPassword         ModelErrCode = "invalid_password"
+	ErrBadRequestParameter     ModelErrCode = "bad_request_parameter"
 )
 
 type IModelError interface {

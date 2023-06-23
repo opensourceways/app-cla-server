@@ -10,6 +10,7 @@ import (
 	"github.com/opensourceways/server-common-lib/interrupts"
 
 	platformAuth "github.com/opensourceways/app-cla-server/code-platform-auth"
+	commondb "github.com/opensourceways/app-cla-server/common/infrastructure/mongodb"
 	"github.com/opensourceways/app-cla-server/config"
 	"github.com/opensourceways/app-cla-server/controllers"
 	"github.com/opensourceways/app-cla-server/dbmodels"
@@ -77,11 +78,15 @@ func startSignSerivce(configPath string) {
 		os.Exit(1)
 	}
 
-	if err := startMongoService(&cfg.Mongodb); err != nil {
+	if err := startMongoService(); err != nil {
 		logs.Error(err)
 		os.Exit(1)
 	}
+
 	defer exitMongoService()
+
+	// must run after init mongodb
+	initSigning()
 
 	worker.Init(pdf.GetPDFGenerator())
 	defer worker.Exit()
@@ -89,18 +94,23 @@ func startSignSerivce(configPath string) {
 	run()
 }
 
-func startMongoService(cfg *config.MongodbConfig) error {
-	c, err := mongodb.Initialize(cfg)
-	if err == nil {
-		dbmodels.RegisterDB(c)
+func startMongoService() error {
+	cfg := &config.AppConfig.SigningConfig
+
+	if err := commondb.Init(&cfg.Mongodb.DB); err != nil {
+		return err
 	}
 
-	return err
+	c := mongodb.Initialize(commondb.Collection(), &config.AppConfig.Mongodb)
+	dbmodels.RegisterDB(c)
+
+	return nil
 }
 
 func exitMongoService() {
-	err := dbmodels.GetDB().Close()
-	logs.Error("mongo exit, err:%v", err)
+	if err := commondb.Close(); err != nil {
+		logs.Error(err)
+	}
 }
 
 func run() {

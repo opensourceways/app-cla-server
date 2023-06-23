@@ -7,7 +7,6 @@ import (
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
 
 	"github.com/opensourceways/app-cla-server/config"
 	"github.com/opensourceways/app-cla-server/dbmodels"
@@ -15,9 +14,12 @@ import (
 
 var _ dbmodels.IDB = (*client)(nil)
 
+type collection interface {
+	Collection(name string) *mongo.Collection
+}
+
 type client struct {
-	c  *mongo.Client
-	db *mongo.Database
+	col collection
 
 	vcCollection                string
 	orgEmailCollection          string
@@ -28,27 +30,9 @@ type client struct {
 	individualSigningCollection string
 }
 
-func Initialize(cfg *config.MongodbConfig) (*client, error) {
-	c, err := mongo.NewClient(options.Client().ApplyURI(cfg.MongodbConn))
-	if err != nil {
-		return nil, err
-	}
-
-	if err = withContext(c.Connect); err != nil {
-		return nil, err
-	}
-
-	// verify if database connection is created successfully
-	err = withContext(func(ctx context.Context) error {
-		return c.Ping(ctx, nil)
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	cli := &client{
-		c:  c,
-		db: c.Database(cfg.DBName),
+func Initialize(col collection, cfg *config.MongodbConfig) *client {
+	return &client{
+		col: col,
 
 		vcCollection:                cfg.VCCollection,
 		orgEmailCollection:          cfg.OrgEmailCollection,
@@ -58,33 +42,14 @@ func Initialize(cfg *config.MongodbConfig) (*client, error) {
 		corpSigningCollection:       cfg.CorpSigningCollection,
 		individualSigningCollection: cfg.IndividualSigningCollection,
 	}
-	return cli, nil
-}
-
-func (this *client) Close() error {
-	return withContext(this.c.Disconnect)
 }
 
 func (c *client) collection(name string) *mongo.Collection {
-	return c.db.Collection(name)
+	return c.col.Collection(name)
 }
 
-func (this *client) doTransaction(f func(mongo.SessionContext) error) error {
-
-	callback := func(sc mongo.SessionContext) (interface{}, error) {
-		return nil, f(sc)
-	}
-
-	s, err := this.c.StartSession()
-	if err != nil {
-		return fmt.Errorf("failed to start mongodb session: %s", err.Error())
-	}
-
-	ctx := context.Background()
-	defer s.EndSession(ctx)
-
-	_, err = s.WithTransaction(ctx, callback)
-	return err
+func (c *client) Close() error {
+	return nil
 }
 
 func objectIDToUID(oid primitive.ObjectID) string {

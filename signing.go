@@ -1,8 +1,6 @@
 package main
 
 import (
-	"github.com/beego/beego/v2/core/logs"
-
 	"github.com/opensourceways/app-cla-server/common/infrastructure/mongodb"
 	"github.com/opensourceways/app-cla-server/config"
 	"github.com/opensourceways/app-cla-server/models"
@@ -12,17 +10,8 @@ import (
 	"github.com/opensourceways/app-cla-server/signing/infrastructure/repositoryimpl"
 )
 
-func initSigning() error {
+func initSigning() {
 	cfg := &config.AppConfig.SigningConfig
-
-	if err := mongodb.Init(&cfg.Mongodb.DB); err != nil {
-		return err
-	}
-	defer func() {
-		if err := mongodb.Close(); err != nil {
-			logs.Error(err)
-		}
-	}()
 
 	dp.Init(&cfg.Domain.DomainPrimitive)
 
@@ -33,12 +22,4 @@ func initSigning() error {
 	))
 
 	models.Init(cs)
-
-	return nil
-}
-
-func existSigning() {
-	if err := mongodb.Close(); err != nil {
-		logs.Error(err)
-	}
 }

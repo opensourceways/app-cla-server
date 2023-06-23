@@ -78,14 +78,15 @@ func startSignSerivce(configPath string) {
 		os.Exit(1)
 	}
 
-	if err := initSigning(); err != nil {
+	if err := startMongoService(); err != nil {
 		logs.Error(err)
 		os.Exit(1)
 	}
 
-	defer existSigning()
+	defer exitMongoService()
 
-	startMongoService(&cfg.Mongodb)
+	// must run after init mongodb
+	initSigning()
 
 	worker.Init(pdf.GetPDFGenerator())
 	defer worker.Exit()
@@ -93,9 +94,23 @@ func startSignSerivce(configPath string) {
 	run()
 }
 
-func startMongoService(cfg *config.MongodbConfig) {
-	c := mongodb.Initialize(commondb.Collection(), cfg)
+func startMongoService() error {
+	cfg := &config.AppConfig.SigningConfig
+
+	if err := commondb.Init(&cfg.Mongodb.DB); err != nil {
+		return err
+	}
+
+	c := mongodb.Initialize(commondb.Collection(), &config.AppConfig.Mongodb)
 	dbmodels.RegisterDB(c)
+
+	return nil
+}
+
+func exitMongoService() {
+	if err := commondb.Close(); err != nil {
+		logs.Error(err)
+	}
 }
 
 func run() {

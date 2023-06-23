@@ -11,7 +11,7 @@ func NewTitle(v string) (Title, error) {
 		return nil, errors.New("invalid title")
 	}
 
-	if max := config.MaxLengthOfTitle; util.StrLen(v) > max {
+	if util.StrLen(v) > config.MaxLengthOfTitle {
 		return nil, errors.New("invalid title")
 	}
 

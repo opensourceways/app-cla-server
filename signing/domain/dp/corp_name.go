@@ -6,21 +6,21 @@ import (
 	"github.com/opensourceways/app-cla-server/util"
 )
 
-// CorpName
-type CorpName interface {
-	CorpName() string
-}
-
 func NewCorpName(v string) (CorpName, error) {
 	if v == "" {
 		return nil, errors.New("invalid corp name")
 	}
 
-	if max := config.MaxLengthOfCorpName; util.StrLen(v) > max {
+	if util.StrLen(v) > config.MaxLengthOfCorpName {
 		return nil, errors.New("invalid corp name")
 	}
 
 	return corpName(v), nil
+}
+
+// CorpName
+type CorpName interface {
+	CorpName() string
 }
 
 type corpName string

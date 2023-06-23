@@ -1,9 +1,5 @@
 package dp
 
-import (
-	"strings"
-)
-
 var config Config
 
 func Init(cfg *Config) {
@@ -28,7 +24,7 @@ func (cfg *Config) SetDefault() {
 }
 
 func (cfg *Config) isValidLanguage(v string) bool {
-	return cfg.has(strings.ToLower(v), cfg.SupportedLanguages)
+	return cfg.has(v, cfg.SupportedLanguages)
 }
 
 func (cfg *Config) has(v string, items []string) bool {

@@ -31,7 +31,8 @@ func (adapter *corpSigningAdatper) cmdToSignCorpCLA(opt *models.CorporationSigni
 	cmd app.CmdToSignCorpCLA, err error,
 ) {
 	cmd.Link.Id = linkId
-	// missing cla id
+	// TODO missing cla id
+	cmd.Link.CLAId = opt.CLALanguage
 	if cmd.Link.Language, err = dp.NewLanguage(opt.CLALanguage); err != nil {
 		return
 	}

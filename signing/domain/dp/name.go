@@ -11,7 +11,7 @@ func NewName(v string) (Name, error) {
 		return nil, errors.New("invalid name")
 	}
 
-	if max := config.MaxLengthOfName; util.StrLen(v) > max {
+	if util.StrLen(v) > config.MaxLengthOfName {
 		return nil, errors.New("invalid name")
 	}
 

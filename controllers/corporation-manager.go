@@ -62,7 +62,7 @@ func (this *CorporationManagerController) Put() {
 
 	// call models.GetCorpSigningBasicInfo before models.IsCorpSigningPDFUploaded
 	// to check wheather corp has signed
-	corpSigning, merr := models.GetCorpSigningBasicInfo(linkID, corpEmail)
+	_, merr := models.GetCorpSigningBasicInfo(linkID, corpEmail)
 	if merr != nil {
 		this.sendModelErrorAsResp(merr, action)
 		return
@@ -80,7 +80,8 @@ func (this *CorporationManagerController) Put() {
 		return
 	}
 
-	added, merr := models.CreateCorporationAdministrator(linkID, corpSigning.AdminName, corpEmail)
+	// TODO csid
+	added, merr := models.CreateCorporationAdministratorByAdapter("")
 	if merr != nil {
 		if merr.IsErrorOf(models.ErrNoLinkOrManagerExists) {
 			this.sendFailedResponse(400, errCorpManagerExists, merr, action)
@@ -92,7 +93,7 @@ func (this *CorporationManagerController) Put() {
 
 	this.sendSuccessResp(action + " successfully")
 
-	notifyCorpAdmin(orgInfo, added)
+	notifyCorpAdmin(orgInfo, &added)
 }
 
 // @Title Patch

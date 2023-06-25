@@ -17,7 +17,7 @@ func NewCorpAdminService(
 }
 
 type CorpAdminService interface {
-	Add(string) (err error)
+	Add(string) (ManagerDTO, error)
 }
 
 type corpAdminService struct {
@@ -25,32 +25,45 @@ type corpAdminService struct {
 	userService userservice.UserService
 }
 
-func (s *corpAdminService) Add(csId string) error {
+func (s *corpAdminService) Add(csId string) (dto ManagerDTO, err error) {
 	cs, err := s.repo.Find(csId)
 	if err != nil {
-		return err
+		return
 	}
 
 	if cs.HasAdmin() {
-		return domain.NewDomainError(domain.ErrorCodeCorpAdminExists)
+		err = domain.NewDomainError(domain.ErrorCodeCorpAdminExists)
+
+		return
 	}
 
-	n, err := s.repo.Count(cs.PrimaryEmailDomain())
+	n, err := s.repo.Count(cs.Link.Id, cs.PrimaryEmailDomain())
 	if err != nil {
-		return err
+		return
 	}
 
-	if err := cs.SetAdmin(n); err != nil {
-		return err
+	if err = cs.SetAdmin(n); err != nil {
+		return
 	}
 
-	if err = s.userService.Add(csId, []domain.Manager{cs.Admin}); err != nil {
-		return err
+	pws, err := s.userService.Add(csId, []domain.Manager{cs.Admin})
+	if err != nil {
+		return
 	}
 
 	if err = s.repo.AddAdmin(&cs); err != nil {
 		s.userService.Remove([]domain.Manager{cs.Admin})
+
+		return
 	}
 
-	return nil
+	admin := &cs.Admin
+	dto = ManagerDTO{
+		Id:        admin.Id,
+		Name:      admin.Name.Name(),
+		Password:  pws[admin.Id],
+		EmailAddr: admin.EmailAddr.EmailAddr(),
+	}
+
+	return
 }

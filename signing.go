@@ -7,6 +7,9 @@ import (
 	"github.com/opensourceways/app-cla-server/signing/adapter"
 	"github.com/opensourceways/app-cla-server/signing/app"
 	"github.com/opensourceways/app-cla-server/signing/domain/dp"
+	"github.com/opensourceways/app-cla-server/signing/domain/userservice"
+	"github.com/opensourceways/app-cla-server/signing/infrastructure/encryptionimpl"
+	"github.com/opensourceways/app-cla-server/signing/infrastructure/passwordimpl"
 	"github.com/opensourceways/app-cla-server/signing/infrastructure/repositoryimpl"
 )
 
@@ -19,9 +22,19 @@ func initSigning() {
 		mongodb.DAO(cfg.Mongodb.Collections.CorpSigning),
 	)
 
+	userService := userservice.NewUserService(
+		repositoryimpl.NewUser(
+			mongodb.DAO(cfg.Mongodb.Collections.CorpSigning),
+		),
+		encryptionimpl.NewEncryptionImpl(),
+		passwordimpl.NewPasswordImpl(),
+	)
+
+	ca := adapter.NewCorpAdminAdapter(app.NewCorpAdminService(repo, userService))
+
 	cs := adapter.NewCorpSigningAdapter(app.NewCorpSigningService(repo))
 
 	es := adapter.NewEmployeeSigningAdapter(app.NewEmployeeSigningService(repo))
 
-	models.Init(cs, es)
+	models.Init(ca, cs, es)
 }

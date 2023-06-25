@@ -24,7 +24,7 @@ func NewUserService(
 }
 
 type UserService interface {
-	Add(csId string, managers []domain.Manager) (err error)
+	Add(csId string, managers []domain.Manager) (map[string]string, error)
 	Remove([]domain.Manager)
 	FindByAccount(dp.Account, dp.Password) (domain.User, error)
 	FindByEmail(dp.EmailAddr, dp.Password) (domain.User, error)
@@ -38,12 +38,14 @@ type userService struct {
 	password userpassword.UserPassword
 }
 
-func (s *userService) Add(csId string, managers []domain.Manager) (err error) {
+func (s *userService) Add(csId string, managers []domain.Manager) (pws map[string]string, err error) {
 	j := 0
+	pw := ""
+
 	for i := range managers {
 		item := &managers[i]
 
-		if err = s.add(csId, item); err != nil {
+		if pw, err = s.add(csId, item); err != nil {
 			if commonRepo.IsErrorDuplicateCreating(err) {
 				err = domain.NewDomainError(domain.ErrorCodeUserExists)
 			}
@@ -51,6 +53,8 @@ func (s *userService) Add(csId string, managers []domain.Manager) (err error) {
 			j = i
 			break
 		}
+
+		pws[item.Id] = pw
 	}
 
 	if err != nil && j > 0 {
@@ -114,31 +118,33 @@ func (s *userService) ChangePassword(u *domain.User, p dp.Password) error {
 	return s.repo.Save(u)
 }
 
-func (s *userService) add(csId string, manager *domain.Manager) error {
-	p, err := s.password.New()
+func (s *userService) add(csId string, manager *domain.Manager) (p string, err error) {
+	p, err = s.password.New()
 	if err != nil {
-		return err
+		return
 	}
 
 	v, err := s.encrypt.Ecrypt(p)
 	if err != nil {
-		return err
+		return
 	}
 
 	pw, err := dp.NewPassword(v)
 	if err != nil {
-		return err
+		return
 	}
 
 	a, err := manager.Account()
 	if err != nil {
-		return err
+		return
 	}
 
-	return s.repo.Add(&domain.User{
+	err = s.repo.Add(&domain.User{
 		EmailAddr:     manager.EmailAddr,
 		Account:       a,
 		Password:      pw,
 		CorpSigningId: csId,
 	})
+
+	return
 }

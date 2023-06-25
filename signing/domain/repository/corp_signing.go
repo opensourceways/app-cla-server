@@ -8,6 +8,6 @@ type CorpSigning interface {
 	AddAdmin(*domain.CorpSigning) error
 
 	// count the corp by the email domain
-	Count(domain string) (int, error)
+	Count(linkId, domain string) (int, error)
 	Find(string) (domain.CorpSigning, error)
 }

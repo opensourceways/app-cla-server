@@ -9,7 +9,7 @@ import (
 type CmdToSignCorpCLA struct {
 	Link           domain.Link
 	CorpName       dp.CorpName
-	Representative domain.Representative
+	Rep            domain.Representative
 	AllSingingInfo domain.AllSingingInfo
 }
 
@@ -17,8 +17,8 @@ func (cmd *CmdToSignCorpCLA) toCorpSigning() domain.CorpSigning {
 	return domain.CorpSigning{
 		Date:    util.Date(),
 		Link:    cmd.Link,
-		Rep:     cmd.Representative,
-		Corp:    domain.NewCorporation(cmd.CorpName, cmd.Representative.EmailAddr),
+		Rep:     cmd.Rep,
+		Corp:    domain.NewCorporation(cmd.CorpName, cmd.Rep.EmailAddr),
 		AllInfo: cmd.AllSingingInfo,
 	}
 }

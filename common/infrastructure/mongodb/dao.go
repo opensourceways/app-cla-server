@@ -6,8 +6,25 @@ import (
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+)
+
+const (
+	fieldVersion = "version"
+
+	mongoCmdAll         = "$all"
+	mongoCmdSet         = "$set"
+	mongoCmdInc         = "$inc"
+	mongoCmdPush        = "$push"
+	mongoCmdPull        = "$pull"
+	mongoCmdMatch       = "$match"
+	mongoCmdFilter      = "$filter"
+	mongoCmdProject     = "$project"
+	mongoCmdAddToSet    = "$addToSet"
+	mongoCmdElemMatch   = "$elemMatch"
+	mongoCmdSetOnInsert = "$setOnInsert"
 )
 
 var (
@@ -60,4 +77,63 @@ func (impl *daoImpl) InsertDocIfNotExists(filter, doc bson.M) (string, error) {
 	})
 
 	return docId, err
+}
+
+func (impl *daoImpl) PushArrayDoc(filter, doc bson.M, version int) error {
+	return impl.withContext(func(ctx context.Context) error {
+		filter[fieldVersion] = version
+
+		r, err := impl.col.UpdateOne(
+			ctx, filter,
+			bson.M{
+				mongoCmdPush: doc,
+				mongoCmdInc:  bson.M{fieldVersion: 1},
+			},
+		)
+
+		if err != nil {
+			return err
+		}
+
+		if r.MatchedCount == 0 {
+			return errDocNotExists
+		}
+
+		return nil
+	})
+}
+
+func (impl *daoImpl) GetDoc(filter, project bson.M, result interface{}) error {
+	return impl.withContext(func(ctx context.Context) error {
+		var sr *mongo.SingleResult
+		if len(project) > 0 {
+			sr = impl.col.FindOne(ctx, filter, &options.FindOneOptions{
+				Projection: project,
+			})
+		} else {
+			sr = impl.col.FindOne(ctx, filter)
+		}
+
+		err := sr.Decode(result)
+		if err != nil && isErrOfNoDocuments(err) {
+			return errDocNotExists
+		}
+
+		return err
+	})
+}
+
+func (impl *daoImpl) NewDocId() string {
+	return primitive.NewObjectID().Hex()
+}
+
+func (impl *daoImpl) DocIdFilter(s string) (bson.M, error) {
+	v, err := primitive.ObjectIDFromHex(s)
+	if err != nil {
+		return nil, err
+	}
+
+	return bson.M{
+		"_id": v,
+	}, nil
 }

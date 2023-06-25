@@ -21,8 +21,9 @@ func toModelError(err error) models.IModelError {
 
 func codeMap(code string) models.ModelErrCode {
 	switch code {
-	case domain.ErrorCodeCorpSigningReSigning:
+	case domain.ErrorCodeCorpSigningReSigning, domain.ErrorCodeEmployeeSigningReSigning:
 		return models.ErrNoLinkOrResigned
+
 	default:
 		return models.ErrBadRequestParameter
 	}

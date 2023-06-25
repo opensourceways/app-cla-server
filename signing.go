@@ -15,11 +15,13 @@ func initSigning() {
 
 	dp.Init(&cfg.Domain.DomainPrimitive)
 
-	cs := adapter.NewCorpSigningAdapter(app.NewCorpSigningService(
-		repositoryimpl.NewCorpSigning(
-			mongodb.DAO(cfg.Mongodb.Collections.CorpSigning),
-		),
-	))
+	repo := repositoryimpl.NewCorpSigning(
+		mongodb.DAO(cfg.Mongodb.Collections.CorpSigning),
+	)
 
-	models.Init(cs)
+	cs := adapter.NewCorpSigningAdapter(app.NewCorpSigningService(repo))
+
+	es := adapter.NewEmployeeSigningAdapter(app.NewEmployeeSigningService(repo))
+
+	models.Init(cs, es)
 }

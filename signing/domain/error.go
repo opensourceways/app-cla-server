@@ -3,7 +3,12 @@ package domain
 import "strings"
 
 const (
-	ErrorCodeCorpSigningReSigning = "corp_signing_resigning"
+	ErrorCodeCorpSigningNotFound         = "corp_signing_not_found"
+	ErrorCodeCorpSigningReSigning        = "corp_signing_resigning"
+	ErrorCodeEmployeeSigningReSigning    = "employee_signing_resigning"
+	ErrorCodeEmployeeSigningEnableAgain  = "employee_signing_enable_again"
+	ErrorCodeEmployeeSigningDisableAgain = "employee_signing_disable_again"
+	ErrorCodeEmployeeSigningCanNotDelete = "employee_signing_can_not_delete"
 )
 
 // domainError

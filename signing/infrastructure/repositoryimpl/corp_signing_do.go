@@ -7,39 +7,42 @@ import (
 )
 
 const (
-	fieldRep     = "rep"
-	fieldCorp    = "corp"
-	fieldName    = "name"
-	fieldEmail   = "email"
-	fieldDomain  = "domain"
-	fieldLinkId  = "link_id"
-	fieldVersion = "version"
+	fieldRep       = "rep"
+	fieldCorp      = "corp"
+	fieldName      = "name"
+	fieldEmail     = "email"
+	fieldDomain    = "domain"
+	fieldLinkId    = "link_id"
+	fieldVersion   = "version"
+	fieldEmployees = "employees"
 )
 
 func toCorpSigningDO(v *domain.CorpSigning) corpSigningDO {
 	link := &v.Link
 
 	return corpSigningDO{
-		Date:        v.Date,
-		CLAId:       link.CLAId,
-		LinkId:      link.Id,
-		CLALanguage: link.Language.Language(),
-		Rep:         toRepDO(&v.Rep),
-		Corp:        toCorpDO(&v.Corp),
-		AllInfo:     v.AllInfo,
+		Date:     v.Date,
+		CLAId:    link.CLAId,
+		LinkId:   link.Id,
+		Language: link.Language.Language(),
+		Rep:      toRepDO(&v.Rep),
+		Corp:     toCorpDO(&v.Corp),
+		AllInfo:  v.AllInfo,
 	}
 }
 
 // corpSigningDO
 type corpSigningDO struct {
-	Date        string `bson:"date"     json:"date"     required:"true"`
-	CLAId       string `bson:"cla_id"   json:"cla_id"   required:"true"`
-	LinkId      string `bson:"link_id"  json:"link_id"  required:"true"`
-	CLALanguage string `bson:"lang"     json:"lang"     required:"true"`
-	Rep         repDO  `bson:"rep"      json:"rep"      required:"true"`
-	Corp        corpDO `bson:"corp"     json:"corp"     required:"true"`
-	AllInfo     anyDoc `bson:"info"     json:"info,omitempty"`
-	Version     int    `bson:"version"  json:"-"`
+	Date     string `bson:"date"     json:"date"     required:"true"`
+	CLAId    string `bson:"cla_id"   json:"cla_id"   required:"true"`
+	LinkId   string `bson:"link_id"  json:"link_id"  required:"true"`
+	Language string `bson:"lang"     json:"lang"     required:"true"`
+	Rep      repDO  `bson:"rep"      json:"rep"      required:"true"`
+	Corp     corpDO `bson:"corp"     json:"corp"     required:"true"`
+	AllInfo  anyDoc `bson:"info"     json:"info,omitempty"`
+
+	Employees []employeeSigningDO `bson:"employees"     json:"employees"`
+	Version   int                 `bson:"version"       json:"-"`
 }
 
 func (do *corpSigningDO) toDoc() (bson.M, error) {

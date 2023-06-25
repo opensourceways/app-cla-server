@@ -13,6 +13,9 @@ type dao interface {
 	IsDocNotExists(error) bool
 	IsDocExists(error) bool
 
+	NewDocId() string
+	DocIdFilter(s string) (bson.M, error)
+	PushDoc(filter, doc bson.M, version int) error
 	InsertDocIfNotExists(filter, doc bson.M) (string, error)
 }
 

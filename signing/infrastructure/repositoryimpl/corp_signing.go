@@ -17,6 +17,10 @@ type corpSigning struct {
 	dao dao
 }
 
+func (impl *corpSigning) toCorpSigningIndex(cs *domain.CorpSigning) (bson.M, error) {
+	return impl.dao.DocIdFilter(cs.Id)
+}
+
 func (impl *corpSigning) Add(v *domain.CorpSigning) error {
 	do := toCorpSigningDO(v)
 	doc, err := do.toDoc()
@@ -40,4 +44,8 @@ func (impl *corpSigning) Add(v *domain.CorpSigning) error {
 	}
 
 	return err
+}
+
+func (impl *corpSigning) Find(string) (domain.CorpSigning, error) {
+	return domain.CorpSigning{}, nil
 }

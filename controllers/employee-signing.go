@@ -62,7 +62,7 @@ func (this *EmployeeSigningController) Post() {
 	}
 	info.CLALanguage = claLang
 
-	if err := (&info).Validate(linkID); err != nil {
+	if err := info.Validate(linkID); err != nil {
 		this.sendModelErrorAsResp(err, action)
 		return
 	}
@@ -92,7 +92,7 @@ func (this *EmployeeSigningController) Post() {
 
 			info.Info = getSingingInfo(info.Info, claInfo.Fields)
 
-			if err := (&info).Create(linkID, false); err != nil {
+			if err := info.Create(linkID); err != nil {
 				if err.IsErrorOf(models.ErrNoLinkOrResigned) {
 					return newFailedApiResult(400, errResigned, err)
 				}

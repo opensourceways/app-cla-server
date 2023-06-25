@@ -1,13 +1,22 @@
 package models
 
 var (
-	corpSigningAdapterInstance corpSigningAdapter
+	corpSigningAdapterInstance     corpSigningAdapter
+	employeeSigningAdapterInstance employeeSigningAdapter
 )
 
 type corpSigningAdapter interface {
 	Sign(opt *CorporationSigningCreateOption, linkId string) IModelError
 }
 
-func Init(cs corpSigningAdapter) {
+type employeeSigningAdapter interface {
+	Sign(opt *EmployeeSigning) IModelError
+}
+
+func Init(
+	cs corpSigningAdapter,
+	es employeeSigningAdapter,
+) {
 	corpSigningAdapterInstance = cs
+	employeeSigningAdapterInstance = es
 }

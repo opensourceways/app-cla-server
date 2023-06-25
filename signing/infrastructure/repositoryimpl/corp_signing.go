@@ -17,8 +17,8 @@ type corpSigning struct {
 	dao dao
 }
 
-func (impl *corpSigning) toCorpSigningIndex(cs *domain.CorpSigning) (bson.M, error) {
-	return impl.dao.DocIdFilter(cs.Id)
+func (impl *corpSigning) toCorpSigningIndex(corpSigningId string) (bson.M, error) {
+	return impl.dao.DocIdFilter(corpSigningId)
 }
 
 func (impl *corpSigning) Add(v *domain.CorpSigning) error {
@@ -46,6 +46,21 @@ func (impl *corpSigning) Add(v *domain.CorpSigning) error {
 	return err
 }
 
-func (impl *corpSigning) Find(string) (domain.CorpSigning, error) {
-	return domain.CorpSigning{}, nil
+func (impl *corpSigning) Find(index string) (cs domain.CorpSigning, err error) {
+	filter, err := impl.toCorpSigningIndex(index)
+	if err != nil {
+		return
+	}
+
+	var do corpSigningDO
+
+	if err = impl.dao.GetDoc(filter, nil, &do); err != nil {
+		if impl.dao.IsDocNotExists(err) {
+			err = commonRepo.NewErrorResourceNotFound(err)
+		}
+	} else {
+		err = do.toCorpSigning(&cs)
+	}
+
+	return
 }

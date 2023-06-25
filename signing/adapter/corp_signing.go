@@ -41,11 +41,11 @@ func (adapter *corpSigningAdatper) cmdToSignCorpCLA(opt *models.CorporationSigni
 		return
 	}
 
-	if cmd.Representative.Name, err = dp.NewName(opt.AdminName); err != nil {
+	if cmd.Rep.Name, err = dp.NewName(opt.AdminName); err != nil {
 		return
 	}
 
-	if cmd.Representative.EmailAddr, err = dp.NewEmailAddr(opt.AdminEmail); err != nil {
+	if cmd.Rep.EmailAddr, err = dp.NewEmailAddr(opt.AdminEmail); err != nil {
 		return
 	}
 

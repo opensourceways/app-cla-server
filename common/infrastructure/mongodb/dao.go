@@ -79,7 +79,7 @@ func (impl *daoImpl) InsertDocIfNotExists(filter, doc bson.M) (string, error) {
 	return docId, err
 }
 
-func (impl *daoImpl) PushDoc(filter, doc bson.M, version int) error {
+func (impl *daoImpl) PushArrayDoc(filter, doc bson.M, version int) error {
 	return impl.withContext(func(ctx context.Context) error {
 		filter[fieldVersion] = version
 
@@ -100,6 +100,26 @@ func (impl *daoImpl) PushDoc(filter, doc bson.M, version int) error {
 		}
 
 		return nil
+	})
+}
+
+func (impl *daoImpl) GetDoc(filter, project bson.M, result interface{}) error {
+	return impl.withContext(func(ctx context.Context) error {
+		var sr *mongo.SingleResult
+		if len(project) > 0 {
+			sr = impl.col.FindOne(ctx, filter, &options.FindOneOptions{
+				Projection: project,
+			})
+		} else {
+			sr = impl.col.FindOne(ctx, filter)
+		}
+
+		err := sr.Decode(result)
+		if err != nil && isErrOfNoDocuments(err) {
+			return errDocNotExists
+		}
+
+		return err
 	})
 }
 

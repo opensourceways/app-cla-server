@@ -6,7 +6,7 @@ import (
 )
 
 func (impl *corpSigning) AddEmployee(cs *domain.CorpSigning) error {
-	index, err := impl.toCorpSigningIndex(cs)
+	index, err := impl.toCorpSigningIndex(cs.Id)
 	if err != nil {
 		return err
 	}
@@ -20,7 +20,7 @@ func (impl *corpSigning) AddEmployee(cs *domain.CorpSigning) error {
 		return err
 	}
 
-	err = impl.dao.PushDoc(index, doc, cs.Version)
+	err = impl.dao.PushArrayDoc(index, doc, cs.Version)
 	if err != nil && impl.dao.IsDocNotExists(err) {
 		err = commonRepo.NewErrorConcurrentUpdating(err)
 	}

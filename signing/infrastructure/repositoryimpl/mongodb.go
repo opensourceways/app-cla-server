@@ -15,9 +15,11 @@ type dao interface {
 
 	NewDocId() string
 	DocIdFilter(s string) (bson.M, error)
-	PushArrayDoc(filter, doc bson.M, version int) error
+	PushArrayDoc(filter bson.M, field string, doc bson.M, version int) error
+	UpdateDoc(filter bson.M, field string, doc bson.M, version int) error
 	InsertDocIfNotExists(filter, doc bson.M) (string, error)
 	GetDoc(filter, project bson.M, result interface{}) error
+	GetDocs(filter, project bson.M, result interface{}) error
 }
 
 func genDoc(doc interface{}) (m bson.M, err error) {

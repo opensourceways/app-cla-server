@@ -3,8 +3,13 @@ package domain
 import "strings"
 
 const (
-	ErrorCodeCorpSigningNotFound         = "corp_signing_not_found"
-	ErrorCodeCorpSigningReSigning        = "corp_signing_resigning"
+	ErrorCodeUserExists = "user_exists"
+
+	ErrorCodeCorpAdminExists = "corp_admin_exists"
+
+	ErrorCodeCorpSigningNotFound  = "corp_signing_not_found"
+	ErrorCodeCorpSigningReSigning = "corp_signing_resigning"
+
 	ErrorCodeEmployeeSigningReSigning    = "employee_signing_resigning"
 	ErrorCodeEmployeeSigningEnableAgain  = "employee_signing_enable_again"
 	ErrorCodeEmployeeSigningDisableAgain = "employee_signing_disable_again"

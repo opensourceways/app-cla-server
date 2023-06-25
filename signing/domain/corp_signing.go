@@ -1,6 +1,15 @@
 package domain
 
-import "github.com/opensourceways/app-cla-server/signing/domain/dp"
+import (
+	"strconv"
+
+	"github.com/opensourceways/app-cla-server/signing/domain/dp"
+)
+
+const (
+	RoleAdmin   = "admin"
+	RoleManager = "manager"
+)
 
 type AllSingingInfo = map[string]string
 
@@ -27,9 +36,34 @@ type CorpSigning struct {
 	Link      Link
 	Rep       Representative
 	Corp      Corporation
+	Admin     Manager
 	AllInfo   AllSingingInfo
 	Employees []EmployeeSigning
 	Version   int
+}
+
+func (cs *CorpSigning) PrimaryEmailDomain() string {
+	return cs.Corp.PrimaryEmailDomain
+}
+
+func (cs *CorpSigning) HasAdmin() bool {
+	return !cs.Admin.isEmpty()
+}
+
+func (cs *CorpSigning) SetAdmin(n int) error {
+	if cs.HasAdmin() {
+		return NewDomainError(ErrorCodeCorpAdminExists)
+	}
+
+	v := RoleAdmin
+	if n > 0 {
+		v += strconv.Itoa(n)
+	}
+
+	cs.Admin.Id = v
+	cs.Admin.Representative = cs.Rep
+
+	return nil
 }
 
 func (cs *CorpSigning) AllEmailDomains() []string {

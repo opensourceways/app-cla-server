@@ -79,15 +79,23 @@ func (impl *daoImpl) InsertDocIfNotExists(filter, doc bson.M) (string, error) {
 	return docId, err
 }
 
-func (impl *daoImpl) PushArrayDoc(filter, doc bson.M, version int) error {
+func (impl *daoImpl) PushArrayDoc(filter bson.M, array string, v bson.M, version int) error {
+	return impl.updateDoc(filter, bson.M{array: v}, version, mongoCmdPush)
+}
+
+func (impl *daoImpl) UpdateDoc(filter bson.M, field string, v bson.M, version int) error {
+	return impl.updateDoc(filter, bson.M{field: v}, version, mongoCmdSet)
+}
+
+func (impl *daoImpl) updateDoc(filter, doc bson.M, version int, cmd string) error {
 	return impl.withContext(func(ctx context.Context) error {
 		filter[fieldVersion] = version
 
 		r, err := impl.col.UpdateOne(
 			ctx, filter,
 			bson.M{
-				mongoCmdPush: doc,
-				mongoCmdInc:  bson.M{fieldVersion: 1},
+				cmd:         doc,
+				mongoCmdInc: bson.M{fieldVersion: 1},
 			},
 		)
 
@@ -120,6 +128,27 @@ func (impl *daoImpl) GetDoc(filter, project bson.M, result interface{}) error {
 		}
 
 		return err
+	})
+}
+
+func (impl *daoImpl) GetDocs(filter, project bson.M, result interface{}) error {
+	return impl.withContext(func(ctx context.Context) error {
+		var cursor *mongo.Cursor
+		var err error
+
+		if len(project) > 0 {
+			cursor, err = impl.col.Find(ctx, filter, &options.FindOptions{
+				Projection: project,
+			})
+		} else {
+			cursor, err = impl.col.Find(ctx, filter)
+		}
+
+		if err != nil {
+			return err
+		}
+
+		return cursor.All(ctx, result)
 	})
 }
 

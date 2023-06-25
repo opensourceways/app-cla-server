@@ -64,3 +64,16 @@ func (impl *corpSigning) Find(index string) (cs domain.CorpSigning, err error) {
 
 	return
 }
+
+func (impl *corpSigning) Count(linkId, domain string) (int, error) {
+	filter := linkIdFilter(linkId)
+	filter[childField(fieldCorp, fieldDomain)] = domain
+
+	var dos []struct {
+		LinkId string `bson:"link_id"`
+	}
+
+	err := impl.dao.GetDocs(filter, bson.M{fieldLinkId: 1}, &dos)
+
+	return len(dos), err
+}

@@ -12,6 +12,7 @@ const (
 	fieldRep       = "rep"
 	fieldCorp      = "corp"
 	fieldName      = "name"
+	fieldAdmin     = "admin"
 	fieldEmail     = "email"
 	fieldDomain    = "domain"
 	fieldLinkId    = "link_id"
@@ -35,7 +36,7 @@ func toCorpSigningDO(v *domain.CorpSigning) corpSigningDO {
 
 // corpSigningDO
 type corpSigningDO struct {
-	Id       primitive.ObjectID `bson:"_id"       json:"-"`
+	Id       primitive.ObjectID `bson:"_id"      json:"-"`
 	Date     string             `bson:"date"     json:"date"     required:"true"`
 	CLAId    string             `bson:"cla_id"   json:"cla_id"   required:"true"`
 	LinkId   string             `bson:"link_id"  json:"link_id"  required:"true"`
@@ -44,6 +45,7 @@ type corpSigningDO struct {
 	Corp     corpDO             `bson:"corp"     json:"corp"     required:"true"`
 	AllInfo  anyDoc             `bson:"info"     json:"info,omitempty"`
 
+	Admin     managerDO           `bson:"admin"         json:"admin"`
 	Employees []employeeSigningDO `bson:"employees"     json:"employees"`
 	Version   int                 `bson:"version"       json:"-"`
 }
@@ -68,12 +70,18 @@ func (do *corpSigningDO) toCorpSigning(cs *domain.CorpSigning) (err error) {
 		return
 	}
 
+	admin, err := do.Admin.toManager()
+	if err != nil {
+		return
+	}
+
 	*cs = domain.CorpSigning{
 		Id:        do.Id.Hex(),
 		Date:      do.Date,
 		Rep:       rep,
 		Corp:      corp,
 		AllInfo:   do.AllInfo,
+		Admin:     admin,
 		Employees: es,
 		Version:   do.Version,
 	}

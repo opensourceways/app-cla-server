@@ -24,6 +24,15 @@ func codeMap(code string) models.ModelErrCode {
 	case domain.ErrorCodeCorpSigningReSigning, domain.ErrorCodeEmployeeSigningReSigning:
 		return models.ErrNoLinkOrResigned
 
+	case domain.ErrorCodeCorpAdminExists:
+		return models.ErrNoLinkOrManagerExists
+
+	case domain.ErrorCodeCorpSigningNotFound:
+		return models.ErrUnsigned
+
+	case domain.ErrorCodeCorpPDFNotFound:
+		return models.ErrUnuploaed
+
 	default:
 		return models.ErrBadRequestParameter
 	}

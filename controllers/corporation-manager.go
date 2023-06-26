@@ -1,7 +1,6 @@
 package controllers
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/opensourceways/app-cla-server/models"
@@ -30,16 +29,16 @@ func (this *CorporationManagerController) Prepare() {
 
 // @Title Put
 // @Description add corporation administrator
-// @Param	:org_cla_id	path 	string					true		"org cla id"
-// @Param	:email		path 	string					true		"email of corp"
+// @Param  link_id     path  string  true  "link id"
+// @Param  signing_id  path  string  true  "signing id"
 // @Success 202 {int} map
 // @Failure util.ErrPDFHasNotUploaded
 // @Failure util.ErrNumOfCorpManagersExceeded
-// @router /:link_id/:email [put]
+// @router /:link_id/:signing_id [put]
 func (this *CorporationManagerController) Put() {
 	action := "add corp administrator"
 	linkID := this.GetString(":link_id")
-	corpEmail := this.GetString(":email")
+	csId := this.GetString(":signing_id")
 
 	pl, fr := this.tokenPayloadBasedOnCodePlatform()
 	if fr != nil {
@@ -60,27 +59,7 @@ func (this *CorporationManagerController) Put() {
 	}
 	defer unlock()
 
-	// call models.GetCorpSigningBasicInfo before models.IsCorpSigningPDFUploaded
-	// to check wheather corp has signed
-	corpSigning, merr := models.GetCorpSigningBasicInfo(linkID, corpEmail)
-	if merr != nil {
-		this.sendModelErrorAsResp(merr, action)
-		return
-	}
-
-	uploaded, err := models.IsCorpSigningPDFUploaded(linkID, corpEmail)
-	if err != nil {
-		this.sendModelErrorAsResp(err, action)
-		return
-	}
-	if !uploaded {
-		this.sendFailedResponse(
-			400, errUnuploaded,
-			fmt.Errorf("pdf corporation signed has not been uploaded"), action)
-		return
-	}
-
-	added, merr := models.CreateCorporationAdministrator(linkID, corpSigning.AdminName, corpEmail)
+	added, merr := models.CreateCorporationAdministratorByAdapter(csId)
 	if merr != nil {
 		if merr.IsErrorOf(models.ErrNoLinkOrManagerExists) {
 			this.sendFailedResponse(400, errCorpManagerExists, merr, action)
@@ -92,7 +71,7 @@ func (this *CorporationManagerController) Put() {
 
 	this.sendSuccessResp(action + " successfully")
 
-	notifyCorpAdmin(orgInfo, added)
+	notifyCorpAdmin(orgInfo, &added)
 }
 
 // @Title Patch

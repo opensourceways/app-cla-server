@@ -7,6 +7,10 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 )
 
+const (
+	mongodbCmdOr = "$or"
+)
+
 type anyDoc = map[string]string
 
 type dao interface {
@@ -15,9 +19,12 @@ type dao interface {
 
 	NewDocId() string
 	DocIdFilter(s string) (bson.M, error)
-	PushArrayDoc(filter, doc bson.M, version int) error
+	PushArrayDoc(filter bson.M, field string, doc bson.M, version int) error
+	UpdateDoc(filter bson.M, field string, doc bson.M, version int) error
 	InsertDocIfNotExists(filter, doc bson.M) (string, error)
+	DeleteDoc(filter bson.M) error
 	GetDoc(filter, project bson.M, result interface{}) error
+	GetDocs(filter, project bson.M, result interface{}) error
 }
 
 func genDoc(doc interface{}) (m bson.M, err error) {

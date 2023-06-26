@@ -30,7 +30,7 @@ func (impl *corpSigning) Add(v *domain.CorpSigning) error {
 	doc[fieldVersion] = 0
 
 	docFilter := linkIdFilter(v.Link.Id)
-	docFilter["$nor"] = bson.A{
+	docFilter[mongodbCmdOr] = bson.A{
 		bson.M{childField(fieldRep, fieldEmail): v.Rep.EmailAddr.EmailAddr()},
 		bson.M{
 			childField(fieldCorp, fieldName):   v.Corp.Name.CorpName(),
@@ -63,4 +63,17 @@ func (impl *corpSigning) Find(index string) (cs domain.CorpSigning, err error) {
 	}
 
 	return
+}
+
+func (impl *corpSigning) Count(linkId, domain string) (int, error) {
+	filter := linkIdFilter(linkId)
+	filter[childField(fieldCorp, fieldDomain)] = domain
+
+	var dos []struct {
+		LinkId string `bson:"link_id"`
+	}
+
+	err := impl.dao.GetDocs(filter, bson.M{fieldLinkId: 1}, &dos)
+
+	return len(dos), err
 }

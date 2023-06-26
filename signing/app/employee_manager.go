@@ -44,23 +44,28 @@ func (s *employeeManagerService) Add(cmd *CmdToAddEmployeeManager) ([]ManagerDTO
 		s.userService.Remove(ids)
 	}
 
-	return s.toManageDTOs(pws, cmd.Managers), nil
+	return s.toManageDTOs(pws, cmd.Managers)
 }
 
-func (s *employeeManagerService) toManageDTOs(pws map[string]string, ms []domain.Manager) []ManagerDTO {
+func (s *employeeManagerService) toManageDTOs(pws map[string]string, ms []domain.Manager) ([]ManagerDTO, error) {
 	dtos := make([]ManagerDTO, len(ms))
 
 	for i := range ms {
 		item := &ms[i]
 
+		account, err := item.Account()
+		if err != nil {
+			return nil, err
+		}
+
 		dtos[i] = ManagerDTO{
-			Id:        item.Id,
 			Role:      domain.RoleManager,
 			Name:      item.Name.Name(),
+			Account:   account.Account(),
 			Password:  pws[item.Id],
 			EmailAddr: item.EmailAddr.EmailAddr(),
 		}
 	}
 
-	return dtos
+	return dtos, nil
 }

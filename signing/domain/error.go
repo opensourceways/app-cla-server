@@ -5,6 +5,7 @@ import "strings"
 const (
 	ErrorCodeUserExists            = "user_exists"
 	ErrorCodeUserSamePassword      = "user_same_password"
+	ErrorCodeUserInvalidAccount    = "user_invalid_account"
 	ErrorCodeUserInvalidPassword   = "user_invalid_password"
 	ErrorCodeUserUnmatchedPassword = "user_unmatched_password"
 

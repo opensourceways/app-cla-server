@@ -55,9 +55,14 @@ func (s *corpAdminService) Add(csId string) (dto ManagerDTO, err error) {
 		return
 	}
 
+	account, err := cs.Admin.Account()
+	if err != nil {
+		return
+	}
+
 	admin := &cs.Admin
 	dto = ManagerDTO{
-		Id:        admin.Id,
+		Account:   account.Account(),
 		Role:      domain.RoleAdmin,
 		Name:      admin.Name.Name(),
 		Password:  pws[admin.Id],

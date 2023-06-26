@@ -42,6 +42,21 @@ func codeMap(code string) models.ModelErrCode {
 	case domain.ErrorCodeUserUnmatchedPassword:
 		return models.ErrNoLinkOrNoManager
 
+	case domain.ErrorCodeUserInvalidAccount:
+		return models.ErrInvalidManagerID
+
+	case domain.ErrorCodeEmployeeManagerExists:
+		return models.ErrCorpManagerExists
+
+	case domain.ErrorCodeEmployeeManagerTooMany:
+		return models.ErrManyEmployeeManagers
+
+	case domain.ErrorCodeEmployeeManagerNotSameCorp:
+		return models.ErrNotSameCorp
+
+	case domain.ErrorCodeEmployeeManagerAdminAsManager:
+		return models.ErrAdminAsManager
+
 	default:
 		return models.ErrBadRequestParameter
 	}

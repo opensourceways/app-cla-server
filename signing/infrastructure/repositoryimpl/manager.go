@@ -27,7 +27,7 @@ func (impl *corpSigning) AddAdmin(cs *domain.CorpSigning) error {
 	return err
 }
 
-func (impl *corpSigning) AddManagers(cs *domain.CorpSigning, ms []domain.Manager) error {
+func (impl *corpSigning) AddEmployeeManagers(cs *domain.CorpSigning, ms []domain.Manager) error {
 	index, err := impl.toCorpSigningIndex(cs.Id)
 	if err != nil {
 		return err

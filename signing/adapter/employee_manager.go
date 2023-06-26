@@ -20,8 +20,9 @@ type employeeManagerAdatper struct {
 
 func (adapter *employeeManagerAdatper) Add(
 	csId string, opt *models.EmployeeManagerCreateOption,
-) ([]dbmodels.CorporationManagerCreateOption, models.IModelError) {
-
+) (
+	[]dbmodels.CorporationManagerCreateOption, models.IModelError,
+) {
 	cmd, me := adapter.cmdToAddEmployeeManager(csId, opt)
 	if me != nil {
 		return nil, me
@@ -42,7 +43,17 @@ func (adapter *employeeManagerAdatper) Add(
 
 func (adapter *employeeManagerAdatper) cmdToAddEmployeeManager(
 	csId string, opt *models.EmployeeManagerCreateOption,
-) (cmd app.CmdToAddEmployeeManager, me models.IModelError) {
+) (
+	cmd app.CmdToAddEmployeeManager, me models.IModelError,
+) {
+	if len(opt.Managers) == 0 {
+		me = models.NewModelError(
+			models.ErrEmptyPayload, errors.New("no employee mangers"),
+		)
+
+		return
+	}
+
 	ids := map[string]bool{}
 	emails := map[string]bool{}
 
@@ -99,7 +110,7 @@ func (adapter *employeeManagerAdatper) toManager(opt *models.EmployeeManager) (m
 
 func toCorporationManagerCreateOption(dto *app.ManagerDTO) dbmodels.CorporationManagerCreateOption {
 	return dbmodels.CorporationManagerCreateOption{
-		ID:       dto.Id,
+		ID:       dto.Account,
 		Role:     dto.Role,
 		Name:     dto.Name,
 		Email:    dto.EmailAddr,

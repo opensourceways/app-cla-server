@@ -30,7 +30,7 @@ func (impl *corpSigning) Add(v *domain.CorpSigning) error {
 	doc[fieldVersion] = 0
 
 	docFilter := linkIdFilter(v.Link.Id)
-	docFilter["$nor"] = bson.A{
+	docFilter["$or"] = bson.A{
 		bson.M{childField(fieldRep, fieldEmail): v.Rep.EmailAddr.EmailAddr()},
 		bson.M{
 			childField(fieldCorp, fieldName):   v.Corp.Name.CorpName(),

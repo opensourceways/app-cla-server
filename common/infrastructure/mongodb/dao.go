@@ -152,6 +152,14 @@ func (impl *daoImpl) GetDocs(filter, project bson.M, result interface{}) error {
 	})
 }
 
+func (impl *daoImpl) DeleteDoc(filter bson.M) error {
+	return impl.withContext(func(ctx context.Context) error {
+		_, err := impl.col.DeleteOne(ctx, filter)
+
+		return err
+	})
+}
+
 func (impl *daoImpl) NewDocId() string {
 	return primitive.NewObjectID().Hex()
 }

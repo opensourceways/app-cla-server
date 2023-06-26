@@ -18,6 +18,7 @@ type dao interface {
 	PushArrayDoc(filter bson.M, field string, doc bson.M, version int) error
 	UpdateDoc(filter bson.M, field string, doc bson.M, version int) error
 	InsertDocIfNotExists(filter, doc bson.M) (string, error)
+	DeleteDoc(filter bson.M) error
 	GetDoc(filter, project bson.M, result interface{}) error
 	GetDocs(filter, project bson.M, result interface{}) error
 }

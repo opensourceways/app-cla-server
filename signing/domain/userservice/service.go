@@ -24,8 +24,8 @@ func NewUserService(
 }
 
 type UserService interface {
-	Add(csId string, managers []domain.Manager) (map[string]string, error)
-	Remove([]domain.Manager)
+	Add(linkId, csId string, managers []domain.Manager) (map[string]string, error)
+	Remove(string, []domain.Manager)
 	FindByAccount(dp.Account, dp.Password) (domain.User, error)
 	FindByEmail(dp.EmailAddr, dp.Password) (domain.User, error)
 	IsValidPassword(p dp.Password) bool
@@ -38,14 +38,14 @@ type userService struct {
 	password userpassword.UserPassword
 }
 
-func (s *userService) Add(csId string, managers []domain.Manager) (pws map[string]string, err error) {
+func (s *userService) Add(linkId, csId string, managers []domain.Manager) (pws map[string]string, err error) {
 	j := 0
 	pw := ""
 
 	for i := range managers {
 		item := &managers[i]
 
-		if pw, err = s.add(csId, item); err != nil {
+		if pw, err = s.add(linkId, csId, item); err != nil {
 			if commonRepo.IsErrorDuplicateCreating(err) {
 				err = domain.NewDomainError(domain.ErrorCodeUserExists)
 			}
@@ -58,20 +58,20 @@ func (s *userService) Add(csId string, managers []domain.Manager) (pws map[strin
 	}
 
 	if err != nil && j > 0 {
-		s.Remove(managers[:j])
+		s.Remove(linkId, managers[:j])
 	}
 
 	return
 }
 
-func (s *userService) Remove(managers []domain.Manager) {
+func (s *userService) Remove(linkId string, managers []domain.Manager) {
 	for i := range managers {
 		a, err := managers[i].Account()
 		if err != nil {
 			continue
 		}
 
-		if err := s.repo.Remove(a); err != nil {
+		if err := s.repo.Remove(linkId, a); err != nil {
 			logrus.Errorf(
 				"remove user failed, user: %s, err: %s",
 				a.Account(), err.Error(),
@@ -118,7 +118,7 @@ func (s *userService) ChangePassword(u *domain.User, p dp.Password) error {
 	return s.repo.Save(u)
 }
 
-func (s *userService) add(csId string, manager *domain.Manager) (p string, err error) {
+func (s *userService) add(linkId, csId string, manager *domain.Manager) (p string, err error) {
 	p, err = s.password.New()
 	if err != nil {
 		return
@@ -140,9 +140,10 @@ func (s *userService) add(csId string, manager *domain.Manager) (p string, err e
 	}
 
 	err = s.repo.Add(&domain.User{
-		EmailAddr:     manager.EmailAddr,
+		LinkId:        linkId,
 		Account:       a,
 		Password:      pw,
+		EmailAddr:     manager.EmailAddr,
 		CorpSigningId: csId,
 	})
 

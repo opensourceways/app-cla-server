@@ -6,6 +6,7 @@ type User struct {
 	Account        dp.Account
 	Password       dp.Password
 	EmailAddr      dp.EmailAddr
+	LinkId         string
 	CorpSigningId  string
 	PasswordChaged bool
 }

@@ -27,7 +27,7 @@ func (impl *user) Add(v *domain.User) error {
 	doc[fieldVersion] = 0
 
 	docFilter := linkIdFilter(v.LinkId)
-	docFilter["$or"] = bson.A{
+	docFilter[mongodbCmdOr] = bson.A{
 		bson.M{fieldEmail: v.EmailAddr.EmailAddr()},
 		bson.M{fieldAccount: v.Account.Account()},
 	}

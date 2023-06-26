@@ -7,6 +7,10 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 )
 
+const (
+	mongodbCmdOr = "$or"
+)
+
 type anyDoc = map[string]string
 
 type dao interface {

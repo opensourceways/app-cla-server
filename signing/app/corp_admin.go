@@ -31,9 +31,7 @@ func (s *corpAdminService) Add(csId string) (dto ManagerDTO, err error) {
 		return
 	}
 
-	if cs.HasAdmin() {
-		err = domain.NewDomainError(domain.ErrorCodeCorpAdminExists)
-
+	if err = cs.CanSetAdmin(); err != nil {
 		return
 	}
 

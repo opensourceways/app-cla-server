@@ -46,13 +46,21 @@ func (cs *CorpSigning) PrimaryEmailDomain() string {
 	return cs.Corp.PrimaryEmailDomain
 }
 
-func (cs *CorpSigning) HasAdmin() bool {
-	return !cs.Admin.isEmpty()
+func (cs *CorpSigning) CanSetAdmin() error {
+	if cs.PDF == "" {
+		return NewNotFoundDomainError(ErrorCodeCorpPDFNotFound)
+	}
+
+	if !cs.Admin.isEmpty() {
+		return NewDomainError(ErrorCodeCorpAdminExists)
+	}
+
+	return nil
 }
 
 func (cs *CorpSigning) SetAdmin(n int) error {
-	if cs.HasAdmin() {
-		return NewDomainError(ErrorCodeCorpAdminExists)
+	if err := cs.CanSetAdmin(); err != nil {
+		return err
 	}
 
 	v := RoleAdmin

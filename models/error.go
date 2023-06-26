@@ -48,6 +48,7 @@ const (
 	ErrInvalidPWRetrievalKey   ModelErrCode = "invalid_pw_retrieval_key"
 	ErrInvalidPassword         ModelErrCode = "invalid_password"
 	ErrBadRequestParameter     ModelErrCode = "bad_request_parameter"
+	ErrUnuploaed               ModelErrCode = "unuploaded"
 )
 
 type IModelError interface {

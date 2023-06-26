@@ -4,8 +4,8 @@ import "github.com/opensourceways/app-cla-server/signing/domain/dp"
 
 type User struct {
 	Account        dp.Account
-	EmailAddr      dp.EmailAddr
 	Password       dp.Password
+	EmailAddr      dp.EmailAddr
 	CorpSigningId  string
 	PasswordChaged bool
 }

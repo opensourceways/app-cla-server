@@ -105,6 +105,8 @@ func (adapter *employeeManagerAdatper) toManager(opt *models.EmployeeManager) (m
 
 	m.Id = opt.ID
 
+	_, err = m.Account()
+
 	return
 }
 

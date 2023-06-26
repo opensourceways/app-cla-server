@@ -83,8 +83,8 @@ func (impl *daoImpl) PushArrayDoc(filter bson.M, array string, v bson.M, version
 	return impl.updateDoc(filter, bson.M{array: v}, version, mongoCmdPush)
 }
 
-func (impl *daoImpl) UpdateDoc(filter bson.M, field string, v bson.M, version int) error {
-	return impl.updateDoc(filter, bson.M{field: v}, version, mongoCmdSet)
+func (impl *daoImpl) UpdateDoc(filter bson.M, v bson.M, version int) error {
+	return impl.updateDoc(filter, v, version, mongoCmdSet)
 }
 
 func (impl *daoImpl) updateDoc(filter, doc bson.M, version int, cmd string) error {

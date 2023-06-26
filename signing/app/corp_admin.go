@@ -44,13 +44,13 @@ func (s *corpAdminService) Add(csId string) (dto ManagerDTO, err error) {
 		return
 	}
 
-	pws, err := s.userService.Add(cs.Link.Id, csId, []domain.Manager{cs.Admin})
+	pws, ids, err := s.userService.Add(cs.Link.Id, csId, []domain.Manager{cs.Admin})
 	if err != nil {
 		return
 	}
 
 	if err = s.repo.AddAdmin(&cs); err != nil {
-		s.userService.Remove(cs.Link.Id, []domain.Manager{cs.Admin})
+		s.userService.Remove(ids)
 
 		return
 	}

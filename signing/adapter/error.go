@@ -33,6 +33,15 @@ func codeMap(code string) models.ModelErrCode {
 	case domain.ErrorCodeCorpPDFNotFound:
 		return models.ErrUnuploaed
 
+	case domain.ErrorCodeUserSamePassword:
+		return models.ErrSamePassword
+
+	case domain.ErrorCodeUserInvalidPassword:
+		return models.ErrInvalidPassword
+
+	case domain.ErrorCodeUserUnmatchedPassword:
+		return models.ErrNoLinkOrNoManager
+
 	default:
 		return models.ErrBadRequestParameter
 	}

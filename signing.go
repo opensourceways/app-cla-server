@@ -30,11 +30,13 @@ func initSigning() {
 		passwordimpl.NewPasswordImpl(),
 	)
 
+	ua := adapter.NewUserAdapter(app.NewUserService(userService))
+
 	ca := adapter.NewCorpAdminAdapter(app.NewCorpAdminService(repo, userService))
 
 	cs := adapter.NewCorpSigningAdapter(app.NewCorpSigningService(repo))
 
 	es := adapter.NewEmployeeSigningAdapter(app.NewEmployeeSigningService(repo))
 
-	models.Init(ca, cs, es)
+	models.Init(ua, ca, cs, es)
 }

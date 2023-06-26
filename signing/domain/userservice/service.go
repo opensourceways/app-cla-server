@@ -24,12 +24,9 @@ func NewUserService(
 }
 
 type UserService interface {
-	Add(linkId, csId string, managers []domain.Manager) (map[string]string, error)
-	Remove(string, []domain.Manager)
-	FindByAccount(dp.Account, dp.Password) (domain.User, error)
-	FindByEmail(dp.EmailAddr, dp.Password) (domain.User, error)
-	IsValidPassword(p dp.Password) bool
-	ChangePassword(u *domain.User, p dp.Password) error
+	Add(linkId, csId string, managers []domain.Manager) (map[string]string, []string, error)
+	Remove([]string)
+	ChangePassword(index string, old, newOne dp.Password) error
 }
 
 type userService struct {
@@ -38,87 +35,67 @@ type userService struct {
 	password userpassword.UserPassword
 }
 
-func (s *userService) Add(linkId, csId string, managers []domain.Manager) (pws map[string]string, err error) {
-	j := 0
+func (s *userService) Add(linkId, csId string, managers []domain.Manager) (pws map[string]string, ids []string, err error) {
 	pw := ""
+	index := ""
 
 	for i := range managers {
 		item := &managers[i]
 
-		if pw, err = s.add(linkId, csId, item); err != nil {
+		if pw, index, err = s.add(linkId, csId, item); err != nil {
 			if commonRepo.IsErrorDuplicateCreating(err) {
 				err = domain.NewDomainError(domain.ErrorCodeUserExists)
 			}
 
-			j = i
 			break
 		}
 
 		pws[item.Id] = pw
+		ids = append(ids, index)
 	}
 
-	if err != nil && j > 0 {
-		s.Remove(linkId, managers[:j])
+	if err != nil && len(ids) > 0 {
+		s.Remove(ids)
 	}
 
 	return
 }
 
-func (s *userService) Remove(linkId string, managers []domain.Manager) {
-	for i := range managers {
-		a, err := managers[i].Account()
-		if err != nil {
-			continue
-		}
-
-		if err := s.repo.Remove(linkId, a); err != nil {
+func (s *userService) Remove(ids []string) {
+	for _, v := range ids {
+		if err := s.repo.Remove(v); err != nil {
 			logrus.Errorf(
-				"remove user failed, user: %s, err: %s",
-				a.Account(), err.Error(),
+				"remove user failed, user id: %s, err: %s",
+				v, err.Error(),
 			)
 		}
 	}
 }
 
-func (s *userService) FindByAccount(a dp.Account, p dp.Password) (u domain.User, err error) {
-	v, err := s.encrypt.Ecrypt(p.Password())
-	if err != nil {
-		return
-	}
-
-	return s.repo.FindByAccount(a, v)
-}
-
-func (s *userService) FindByEmail(e dp.EmailAddr, p dp.Password) (u domain.User, err error) {
-	v, err := s.encrypt.Ecrypt(p.Password())
-	if err != nil {
-		return
-	}
-
-	return s.repo.FindByEmail(e, v)
-}
-
-func (s *userService) IsValidPassword(p dp.Password) bool {
-	return s.password.IsValid(p.Password())
-}
-
-func (s *userService) ChangePassword(u *domain.User, p dp.Password) error {
-	v, err := s.encrypt.Ecrypt(p.Password())
+func (s *userService) ChangePassword(index string, old, newOne dp.Password) error {
+	u, err := s.repo.Find(index)
 	if err != nil {
 		return err
 	}
 
-	pw, err := dp.NewPassword(v)
+	old1, err := s.checkPassword(old)
 	if err != nil {
 		return err
 	}
 
-	u.ChangePassword(pw)
+	newOne1, err := s.checkPassword(newOne)
+	if err != nil {
+		return err
+	}
 
-	return s.repo.Save(u)
+	if err := u.ChangePassword(old1, newOne1); err != nil {
+		return err
+	}
+
+	return s.repo.SavePassword(&u)
 }
 
-func (s *userService) add(linkId, csId string, manager *domain.Manager) (p string, err error) {
+func (s *userService) add(linkId, csId string, manager *domain.Manager) (p string, index string, err error) {
 	p, err = s.password.New()
 	if err != nil {
 		return
@@ -139,7 +116,7 @@ func (s *userService) add(linkId, csId string, manager *domain.Manager) (p strin
 		return
 	}
 
-	err = s.repo.Add(&domain.User{
+	index, err = s.repo.Add(&domain.User{
 		LinkId:        linkId,
 		Account:       a,
 		Password:      pw,
@@ -148,4 +125,17 @@ func (s *userService) add(linkId, csId string, manager *domain.Manager) (p strin
 	})
 
 	return
+}
+
+func (s *userService) checkPassword(p dp.Password) (dp.Password, error) {
+	if !s.password.IsValid(p.Password()) {
+		return nil, domain.NewDomainError(domain.ErrorCodeUserInvalidPassword)
+	}
+
+	v, err := s.encrypt.Ecrypt(p.Password())
+	if err != nil {
+		return nil, err
+	}
+
+	return dp.NewPassword(v)
 }

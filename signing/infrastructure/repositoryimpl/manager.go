@@ -26,3 +26,26 @@ func (impl *corpSigning) AddAdmin(cs *domain.CorpSigning) error {
 
 	return err
 }
+
+func (impl *corpSigning) AddManagers(cs *domain.CorpSigning, ms []domain.Manager) error {
+	index, err := impl.toCorpSigningIndex(cs.Id)
+	if err != nil {
+		return err
+	}
+
+	docs := make(bson.A, len(ms))
+	for i := range ms {
+		v := toManagerDO(&ms[i])
+
+		if docs[i], err = v.toDoc(); err != nil {
+			return err
+		}
+	}
+
+	err = impl.dao.PushArrayMultiItems(index, fieldManagers, docs, cs.Version)
+	if err != nil && impl.dao.IsDocNotExists(err) {
+		err = commonRepo.NewErrorConcurrentUpdating(err)
+	}
+
+	return err
+}

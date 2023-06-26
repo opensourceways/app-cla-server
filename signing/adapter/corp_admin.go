@@ -22,11 +22,5 @@ func (adapter *corpAdminAdatper) Add(csId string) (
 		return dbmodels.CorporationManagerCreateOption{}, toModelError(err)
 	}
 
-	return dbmodels.CorporationManagerCreateOption{
-		ID:       dto.Id,
-		Role:     dbmodels.RoleAdmin,
-		Name:     dto.Name,
-		Email:    dto.EmailAddr,
-		Password: dto.Password,
-	}, nil
+	return toCorporationManagerCreateOption(&dto), nil
 }

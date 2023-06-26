@@ -26,6 +26,7 @@ func NewUserService(
 type UserService interface {
 	Add(linkId, csId string, managers []domain.Manager) (map[string]string, []string, error)
 	Remove([]string)
+	RemoveByAccount(accounts []dp.Account)
 	ChangePassword(index string, old, newOne dp.Password) error
 }
 
@@ -67,6 +68,17 @@ func (s *userService) Remove(ids []string) {
 			logrus.Errorf(
 				"remove user failed, user id: %s, err: %s",
 				v, err.Error(),
+			)
+		}
+	}
+}
+
+func (s *userService) RemoveByAccount(accounts []dp.Account) {
+	for _, v := range accounts {
+		if err := s.repo.RemoveByAccount(v); err != nil {
+			logrus.Errorf(
+				"remove user failed, user: %s, err: %s",
+				v.Account(), err.Error(),
 			)
 		}
 	}

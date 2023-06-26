@@ -7,6 +7,7 @@ type CorpSigning interface {
 	AddEmployee(*domain.CorpSigning, *domain.EmployeeSigning) error
 	AddAdmin(*domain.CorpSigning) error
 	AddEmployeeManagers(*domain.CorpSigning, []domain.Manager) error
+	RemoveEmployeeManagers(*domain.CorpSigning, []string) error
 
 	// count the corp by the email domain
 	Count(linkId, domain string) (int, error)

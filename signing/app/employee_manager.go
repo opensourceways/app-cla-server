@@ -2,6 +2,7 @@ package app
 
 import (
 	"github.com/opensourceways/app-cla-server/signing/domain"
+	"github.com/opensourceways/app-cla-server/signing/domain/dp"
 	"github.com/opensourceways/app-cla-server/signing/domain/repository"
 	"github.com/opensourceways/app-cla-server/signing/domain/userservice"
 )
@@ -45,6 +46,42 @@ func (s *employeeManagerService) Add(cmd *CmdToAddEmployeeManager) ([]ManagerDTO
 	}
 
 	return s.toManageDTOs(pws, cmd.Managers)
+}
+
+func (s *employeeManagerService) Remove(cmd *CmdToRemoveEmployeeManager) (dtos []RemovedManagerDTO, err error) {
+	cs, err := s.repo.Find(cmd.CorpSigningId)
+	if err != nil {
+		return
+	}
+
+	ms, err := cs.RemoveManagers(cmd.Managers)
+	if err != nil {
+		return
+	}
+
+	if err = s.repo.RemoveEmployeeManagers(&cs, cmd.Managers); err != nil {
+		return
+	}
+
+	accounts := make([]dp.Account, len(ms))
+	dtos = make([]RemovedManagerDTO, len(ms))
+
+	for i := range ms {
+		item := &ms[i]
+
+		if accounts[i], err = item.Account(); err != nil {
+			return
+		}
+
+		dtos[i] = RemovedManagerDTO{
+			Name:  item.Name.Name(),
+			Email: item.EmailAddr.EmailAddr(),
+		}
+	}
+
+	s.userService.RemoveByAccount(accounts)
+
+	return
 }
 
 func (s *employeeManagerService) toManageDTOs(pws map[string]string, ms []domain.Manager) ([]ManagerDTO, error) {

@@ -94,6 +94,14 @@ func (impl *daoImpl) PushArrayMultiItems(filter bson.M, array string, value bson
 	)
 }
 
+func (impl *daoImpl) PullArrayMultiItems(filter bson.M, array string, filterOfItem bson.M, version int) error {
+	return impl.updateDoc(
+		filter,
+		bson.M{array: filterOfItem},
+		version, mongoCmdPull,
+	)
+}
+
 func (impl *daoImpl) UpdateDoc(filter bson.M, v bson.M, version int) error {
 	return impl.updateDoc(filter, v, version, mongoCmdSet)
 }

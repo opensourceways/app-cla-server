@@ -5,6 +5,7 @@ import (
 
 	commonRepo "github.com/opensourceways/app-cla-server/common/domain/repository"
 	"github.com/opensourceways/app-cla-server/signing/domain"
+	"github.com/opensourceways/app-cla-server/signing/domain/dp"
 )
 
 func NewUser(dao dao) *user {
@@ -44,6 +45,13 @@ func (impl *user) Remove(index string) error {
 	if err != nil {
 		return err
 	}
+
+	return impl.dao.DeleteDoc(filter)
+}
+
+func (impl *user) RemoveByAccount(linkId string, account dp.Account) error {
+	filter := linkIdFilter(linkId)
+	filter[fieldAccount] = account.Account()
 
 	return impl.dao.DeleteDoc(filter)
 }

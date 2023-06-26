@@ -67,6 +67,21 @@ func (impl *user) SavePassword(u *domain.User) error {
 	return err
 }
 
-func (impl *user) Find(string) (domain.User, error) {
-	return domain.User{}, nil
+func (impl *user) Find(index string) (u domain.User, err error) {
+	filter, err := impl.dao.DocIdFilter(index)
+	if err != nil {
+		return
+	}
+
+	var do userDO
+
+	if err = impl.dao.GetDoc(filter, nil, &do); err != nil {
+		if impl.dao.IsDocNotExists(err) {
+			err = commonRepo.NewErrorResourceNotFound(err)
+		}
+	} else {
+		err = do.toUser(&u)
+	}
+
+	return
 }

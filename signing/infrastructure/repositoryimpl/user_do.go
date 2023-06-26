@@ -5,6 +5,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 
 	"github.com/opensourceways/app-cla-server/signing/domain"
+	"github.com/opensourceways/app-cla-server/signing/domain/dp"
 )
 
 const (
@@ -27,6 +28,28 @@ type userDO struct {
 
 func (do *userDO) toDoc() (bson.M, error) {
 	return genDoc(do)
+}
+
+func (do *userDO) toUser(u *domain.User) (err error) {
+	if u.EmailAddr, err = dp.NewEmailAddr(do.Email); err != nil {
+		return
+	}
+
+	if u.Account, err = dp.NewAccount(do.Account); err != nil {
+		return
+	}
+
+	if u.Password, err = dp.NewPassword(do.Password); err != nil {
+		return
+	}
+
+	u.Id = do.Id.Hex()
+	u.LinkId = do.LinkId
+	u.CorpSigningId = do.CorpSigningId
+	u.PasswordChaged = do.PasswordChaged
+	u.Version = do.Version
+
+	return
 }
 
 func toUserDO(u *domain.User) userDO {

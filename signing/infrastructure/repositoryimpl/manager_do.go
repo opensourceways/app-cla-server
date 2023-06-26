@@ -15,7 +15,7 @@ func toManagerDO(m *domain.Manager) managerDO {
 
 // managerDO
 type managerDO struct {
-	Id string `bson:"id" json:"account"`
+	Id string `bson:"id" json:"id"`
 
 	RepDO `bson:",inline"`
 }

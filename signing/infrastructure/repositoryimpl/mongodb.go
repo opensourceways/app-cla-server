@@ -20,8 +20,9 @@ type dao interface {
 	NewDocId() string
 	DocIdFilter(s string) (bson.M, error)
 
-	PushArrayDoc(filter bson.M, field string, doc bson.M, version int) error
 	UpdateDoc(filter bson.M, doc bson.M, version int) error
+	PushArraySingleItem(filter bson.M, field string, doc bson.M, version int) error
+	PushArrayMultiItems(filter bson.M, array string, value bson.A, version int) error
 
 	InsertDocIfNotExists(filter, doc bson.M) (string, error)
 

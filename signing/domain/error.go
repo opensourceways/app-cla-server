@@ -5,6 +5,7 @@ import "strings"
 const (
 	ErrorCodeUserExists            = "user_exists"
 	ErrorCodeUserSamePassword      = "user_same_password"
+	ErrorCodeUserInvalidAccount    = "user_invalid_account"
 	ErrorCodeUserInvalidPassword   = "user_invalid_password"
 	ErrorCodeUserUnmatchedPassword = "user_unmatched_password"
 
@@ -14,6 +15,11 @@ const (
 
 	ErrorCodeCorpSigningNotFound  = "corp_signing_not_found"
 	ErrorCodeCorpSigningReSigning = "corp_signing_resigning"
+
+	ErrorCodeEmployeeManagerExists         = "employee_manager_exists"
+	ErrorCodeEmployeeManagerTooMany        = "employee_manager_too_many"
+	ErrorCodeEmployeeManagerNotSameCorp    = "employee_manager_not_same_corp"
+	ErrorCodeEmployeeManagerAdminAsManager = "employee_manager_admin_as_manager"
 
 	ErrorCodeEmployeeSigningReSigning    = "employee_signing_resigning"
 	ErrorCodeEmployeeSigningEnableAgain  = "employee_signing_enable_again"

@@ -30,14 +30,16 @@ type Link struct {
 }
 
 type CorpSigning struct {
-	Id        string
-	PDF       string
-	Date      string
-	Link      Link
-	Rep       Representative
-	Corp      Corporation
+	Id      string
+	PDF     string
+	Date    string
+	Link    Link
+	Rep     Representative
+	Corp    Corporation
+	AllInfo AllSingingInfo
+
 	Admin     Manager
-	AllInfo   AllSingingInfo
+	Managers  []Manager
 	Employees []EmployeeSigning
 	Version   int
 }
@@ -78,6 +80,30 @@ func (cs *CorpSigning) AllEmailDomains() []string {
 	return cs.Corp.AllEmailDomains
 }
 
+func (cs *CorpSigning) AddManagers(managers []Manager) error {
+	if len(cs.Managers)+len(managers) > config.MaxNumOfEmployeeManager {
+		return NewDomainError(ErrorCodeEmployeeManagerTooMany)
+	}
+
+	for i := range managers {
+		item := &managers[i]
+
+		if !cs.isSameCorp(item.EmailAddr) {
+			return NewDomainError(ErrorCodeEmployeeManagerNotSameCorp)
+		}
+
+		if cs.hasManager(item) {
+			return NewDomainError(ErrorCodeEmployeeManagerExists)
+		}
+
+		if cs.Admin.IsSame(item) {
+			return NewDomainError(ErrorCodeEmployeeManagerAdminAsManager)
+		}
+	}
+
+	return nil
+}
+
 func (cs *CorpSigning) AddEmployee(es *EmployeeSigning) error {
 	// TODO manager
 
@@ -92,10 +118,16 @@ func (cs *CorpSigning) AddEmployee(es *EmployeeSigning) error {
 	return nil
 }
 
-func (cs *CorpSigning) NewestEmployee() *EmployeeSigning {
-	if n := len(cs.Employees); n > 0 {
-		return &cs.Employees[n-1]
+func (cs *CorpSigning) isSameCorp(email dp.EmailAddr) bool {
+	return cs.Corp.isMyEmail(email)
+}
+
+func (cs *CorpSigning) hasManager(m *Manager) bool {
+	for j := range cs.Managers {
+		if cs.Managers[j].IsSame(m) {
+			return true
+		}
 	}
 
-	return nil
+	return false
 }

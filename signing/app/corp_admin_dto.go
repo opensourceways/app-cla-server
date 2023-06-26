@@ -1,8 +1,9 @@
 package app
 
 type ManagerDTO struct {
-	Id        string
+	Role      string
 	Name      string
+	Account   string
 	Password  string
 	EmailAddr string
 }

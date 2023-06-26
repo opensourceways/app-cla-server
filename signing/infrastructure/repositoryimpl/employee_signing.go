@@ -5,22 +5,20 @@ import (
 	"github.com/opensourceways/app-cla-server/signing/domain"
 )
 
-func (impl *corpSigning) AddEmployee(cs *domain.CorpSigning) error {
+func (impl *corpSigning) AddEmployee(cs *domain.CorpSigning, es *domain.EmployeeSigning) error {
 	index, err := impl.toCorpSigningIndex(cs.Id)
 	if err != nil {
 		return err
 	}
 
-	e := cs.NewestEmployee()
-	e.Id = impl.dao.NewDocId()
-
-	v := toEmployeeSigningDO(e)
+	es.Id = impl.dao.NewDocId()
+	v := toEmployeeSigningDO(es)
 	doc, err := v.toDoc()
 	if err != nil {
 		return err
 	}
 
-	err = impl.dao.PushArrayDoc(index, fieldEmployees, doc, cs.Version)
+	err = impl.dao.PushArraySingleItem(index, fieldEmployees, doc, cs.Version)
 	if err != nil && impl.dao.IsDocNotExists(err) {
 		err = commonRepo.NewErrorConcurrentUpdating(err)
 	}

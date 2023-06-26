@@ -17,3 +17,15 @@ type Corporation struct {
 	AllEmailDomains    []string
 	PrimaryEmailDomain string
 }
+
+func (c *Corporation) isMyEmail(email dp.EmailAddr) bool {
+	domain := email.Domain()
+
+	for _, v := range c.AllEmailDomains {
+		if v == domain {
+			return true
+		}
+	}
+
+	return false
+}

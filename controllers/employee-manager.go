@@ -39,19 +39,8 @@ func (this *EmployeeManagerController) Post() {
 		return
 	}
 
-	domains, fr := listCorpEmailDomain(pl.LinkID, pl.Email)
-	if fr != nil {
-		fr.statusCode = 500
-		sendResp(fr)
-		return
-	}
-
-	if err := info.ValidateWhenAdding(pl.LinkID, pl.Email, domains); err != nil {
-		this.sendModelErrorAsResp(err, action)
-		return
-	}
-
-	added, merr := info.Create(pl.LinkID)
+	// TODO csid
+	added, merr := info.Add("")
 	if merr != nil {
 		this.sendModelErrorAsResp(merr, action)
 		return

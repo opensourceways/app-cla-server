@@ -7,6 +7,7 @@ var (
 	corpAdminAdatperInstance       corpAdminAdatper
 	corpSigningAdapterInstance     corpSigningAdapter
 	employeeSigningAdapterInstance employeeSigningAdapter
+	employeeManagerAdapterInstance employeeManagerAdapter
 )
 
 type corpSigningAdapter interface {
@@ -25,14 +26,20 @@ type userAdapter interface {
 	ChangePassword(string, *CorporationManagerResetPassword) IModelError
 }
 
+type employeeManagerAdapter interface {
+	Add(string, *EmployeeManagerCreateOption) ([]dbmodels.CorporationManagerCreateOption, IModelError)
+}
+
 func Init(
 	ua userAdapter,
 	ca corpAdminAdatper,
 	cs corpSigningAdapter,
 	es employeeSigningAdapter,
+	em employeeManagerAdapter,
 ) {
 	userAdapterInstance = ua
 	corpAdminAdatperInstance = ca
 	corpSigningAdapterInstance = cs
 	employeeSigningAdapterInstance = es
+	employeeManagerAdapterInstance = em
 }

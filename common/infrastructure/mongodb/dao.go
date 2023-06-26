@@ -17,6 +17,7 @@ const (
 	mongoCmdAll         = "$all"
 	mongoCmdSet         = "$set"
 	mongoCmdInc         = "$inc"
+	mongoCmdEach        = "$each"
 	mongoCmdPush        = "$push"
 	mongoCmdPull        = "$pull"
 	mongoCmdMatch       = "$match"
@@ -79,8 +80,18 @@ func (impl *daoImpl) InsertDocIfNotExists(filter, doc bson.M) (string, error) {
 	return docId, err
 }
 
-func (impl *daoImpl) PushArrayDoc(filter bson.M, array string, v bson.M, version int) error {
-	return impl.updateDoc(filter, bson.M{array: v}, version, mongoCmdPush)
+func (impl *daoImpl) PushArraySingleItem(filter bson.M, array string, v bson.M, version int) error {
+	return impl.updateDoc(
+		filter, bson.M{array: v}, version, mongoCmdPush,
+	)
+}
+
+func (impl *daoImpl) PushArrayMultiItems(filter bson.M, array string, value bson.A, version int) error {
+	return impl.updateDoc(
+		filter,
+		bson.M{array: bson.M{mongoCmdEach: value}},
+		version, mongoCmdPush,
+	)
 }
 
 func (impl *daoImpl) UpdateDoc(filter bson.M, v bson.M, version int) error {

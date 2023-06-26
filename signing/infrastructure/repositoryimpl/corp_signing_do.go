@@ -17,6 +17,7 @@ const (
 	fieldDomain    = "domain"
 	fieldLinkId    = "link_id"
 	fieldVersion   = "version"
+	fieldManagers  = "managers"
 	fieldEmployees = "employees"
 )
 
@@ -46,6 +47,7 @@ type corpSigningDO struct {
 	AllInfo  anyDoc             `bson:"info"     json:"info,omitempty"`
 
 	Admin     managerDO           `bson:"admin"         json:"admin"`
+	Managers  []managerDO         `bson:"managers"      json:"managers"`
 	Employees []employeeSigningDO `bson:"employees"     json:"employees"`
 	Version   int                 `bson:"version"       json:"-"`
 }
@@ -75,6 +77,11 @@ func (do *corpSigningDO) toCorpSigning(cs *domain.CorpSigning) (err error) {
 		return
 	}
 
+	managers, err := do.toManagers()
+	if err != nil {
+		return
+	}
+
 	*cs = domain.CorpSigning{
 		Id:        do.Id.Hex(),
 		Date:      do.Date,
@@ -82,6 +89,7 @@ func (do *corpSigningDO) toCorpSigning(cs *domain.CorpSigning) (err error) {
 		Corp:      corp,
 		AllInfo:   do.AllInfo,
 		Admin:     admin,
+		Managers:  managers,
 		Employees: es,
 		Version:   do.Version,
 	}
@@ -98,6 +106,18 @@ func (do *corpSigningDO) toEmployeeSignings() (es []domain.EmployeeSigning, err 
 
 	for i := range do.Employees {
 		if err = do.Employees[i].toEmployeeSigning(&es[i]); err != nil {
+			return
+		}
+	}
+
+	return
+}
+
+func (do *corpSigningDO) toManagers() (ms []domain.Manager, err error) {
+	ms = make([]domain.Manager, len(do.Managers))
+
+	for i := range do.Managers {
+		if ms[i], err = do.Managers[i].toManager(); err != nil {
 			return
 		}
 	}

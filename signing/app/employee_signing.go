@@ -33,5 +33,5 @@ func (s *employeeSigningService) Sign(cmd *CmdToSignEmployeeCLA) error {
 		return err
 	}
 
-	return s.repo.AddEmployee(&cs)
+	return s.repo.AddEmployee(&cs, &es)
 }

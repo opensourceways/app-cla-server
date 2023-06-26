@@ -18,6 +18,12 @@ type EmployeeManager struct {
 	Name  string `json:"name"`
 }
 
+func (opt *EmployeeManagerCreateOption) Add(csId string) (
+	[]dbmodels.CorporationManagerCreateOption, IModelError,
+) {
+	return employeeManagerAdapterInstance.Add(csId, opt)
+}
+
 func (this *EmployeeManagerCreateOption) ValidateWhenAdding(linkID, adminEmail string, emailDomains map[string]bool) IModelError {
 	if len(this.Managers) == 0 {
 		return newModelError(ErrEmptyPayload, fmt.Errorf("no employee mangers"))

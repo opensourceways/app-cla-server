@@ -81,6 +81,10 @@ func (this CorporationManagerResetPassword) Validate() IModelError {
 	return checkPassword(this.NewPassword)
 }
 
+func (opt *CorporationManagerResetPassword) ChangePassword(index string) IModelError {
+	return userAdapterInstance.ChangePassword(index, opt)
+}
+
 func (this CorporationManagerResetPassword) Reset(linkID, email string) IModelError {
 	err := dbmodels.GetDB().ResetCorporationManagerPassword(
 		linkID, email, dbmodels.CorporationManagerResetPassword(this),

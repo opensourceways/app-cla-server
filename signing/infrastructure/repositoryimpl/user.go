@@ -5,7 +5,6 @@ import (
 
 	commonRepo "github.com/opensourceways/app-cla-server/common/domain/repository"
 	"github.com/opensourceways/app-cla-server/signing/domain"
-	"github.com/opensourceways/app-cla-server/signing/domain/dp"
 )
 
 func NewUser(dao dao) *user {
@@ -68,10 +67,6 @@ func (impl *user) SavePassword(u *domain.User) error {
 	return err
 }
 
-func (impl *user) FindByAccount(dp.Account, string) (domain.User, error) {
-	return domain.User{}, nil
-}
-
-func (impl *user) FindByEmail(dp.EmailAddr, string) (domain.User, error) {
+func (impl *user) Find(string) (domain.User, error) {
 	return domain.User{}, nil
 }

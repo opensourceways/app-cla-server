@@ -26,9 +26,7 @@ func NewUserService(
 type UserService interface {
 	Add(linkId, csId string, managers []domain.Manager) (map[string]string, []string, error)
 	Remove([]string)
-	FindByAccount(dp.Account, dp.Password) (domain.User, error)
-	FindByEmail(dp.EmailAddr, dp.Password) (domain.User, error)
-	ChangePassword(u *domain.User, old, newOne dp.Password) error
+	ChangePassword(index string, old, newOne dp.Password) error
 }
 
 type userService struct {
@@ -74,25 +72,12 @@ func (s *userService) Remove(ids []string) {
 	}
 }
 
-func (s *userService) FindByAccount(a dp.Account, p dp.Password) (u domain.User, err error) {
-	v, err := s.encrypt.Ecrypt(p.Password())
+func (s *userService) ChangePassword(index string, old, newOne dp.Password) error {
+	u, err := s.repo.Find(index)
 	if err != nil {
-		return
+		return err
 	}
 
-	return s.repo.FindByAccount(a, v)
-}
-
-func (s *userService) FindByEmail(e dp.EmailAddr, p dp.Password) (u domain.User, err error) {
-	v, err := s.encrypt.Ecrypt(p.Password())
-	if err != nil {
-		return
-	}
-
-	return s.repo.FindByEmail(e, v)
-}
-
-func (s *userService) ChangePassword(u *domain.User, old, newOne dp.Password) error {
 	old1, err := s.checkPassword(old)
 	if err != nil {
 		return err
@@ -107,7 +92,7 @@ func (s *userService) ChangePassword(u *domain.User, old, newOne dp.Password) er
 		return err
 	}
 
-	return s.repo.SavePassword(u)
+	return s.repo.SavePassword(&u)
 }
 
 func (s *userService) add(linkId, csId string, manager *domain.Manager) (p string, index string, err error) {

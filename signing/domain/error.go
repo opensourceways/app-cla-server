@@ -3,7 +3,10 @@ package domain
 import "strings"
 
 const (
-	ErrorCodeUserExists = "user_exists"
+	ErrorCodeUserExists            = "user_exists"
+	ErrorCodeUserSamePassword      = "user_same_password"
+	ErrorCodeUserInvalidPassword   = "user_invalid_password"
+	ErrorCodeUserUnmatchedPassword = "user_unmatched_password"
 
 	ErrorCodeCorpAdminExists = "corp_admin_exists"
 

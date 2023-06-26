@@ -6,9 +6,9 @@ import (
 )
 
 type User interface {
-	Add(*domain.User) error
-	Remove(string, dp.Account) error
-	Save(*domain.User) error
+	Add(*domain.User) (string, error)
+	Remove(string) error
+	SavePassword(*domain.User) error
 	FindByAccount(dp.Account, string) (domain.User, error)
 	FindByEmail(dp.EmailAddr, string) (domain.User, error)
 }

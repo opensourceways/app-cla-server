@@ -18,11 +18,11 @@ type user struct {
 	dao dao
 }
 
-func (impl *user) Add(v *domain.User) error {
+func (impl *user) Add(v *domain.User) (string, error) {
 	do := toUserDO(v)
 	doc, err := do.toDoc()
 	if err != nil {
-		return err
+		return "", err
 	}
 	doc[fieldVersion] = 0
 
@@ -32,23 +32,40 @@ func (impl *user) Add(v *domain.User) error {
 		bson.M{fieldAccount: v.Account.Account()},
 	}
 
-	_, err = impl.dao.InsertDocIfNotExists(docFilter, doc)
+	index, err := impl.dao.InsertDocIfNotExists(docFilter, doc)
 	if err != nil && impl.dao.IsDocExists(err) {
 		err = commonRepo.NewErrorDuplicateCreating(err)
 	}
 
-	return err
+	return index, err
 }
 
-func (impl *user) Remove(linkId string, a dp.Account) error {
-	filter := linkIdFilter(linkId)
-	filter[fieldAccount] = a.Account()
+func (impl *user) Remove(index string) error {
+	filter, err := impl.dao.DocIdFilter(index)
+	if err != nil {
+		return err
+	}
 
 	return impl.dao.DeleteDoc(filter)
 }
 
-func (impl *user) Save(*domain.User) error {
-	return nil
+func (impl *user) SavePassword(u *domain.User) error {
+	filter, err := impl.dao.DocIdFilter(u.Id)
+	if err != nil {
+		return err
+	}
+
+	doc := bson.M{
+		fieldPassword: u.Password.Password(),
+		fieldChanged:  u.PasswordChaged,
+	}
+
+	err = impl.dao.UpdateDoc(filter, doc, u.Version)
+	if err != nil && impl.dao.IsDocNotExists(err) {
+		err = commonRepo.NewErrorConcurrentUpdating(err)
+	}
+
+	return err
 }
 
 func (impl *user) FindByAccount(dp.Account, string) (domain.User, error) {

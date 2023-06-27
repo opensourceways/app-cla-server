@@ -23,6 +23,7 @@ const (
 	ErrorCodeEmployeeManagerAdminAsManager = "employee_manager_admin_as_manager"
 
 	ErrorCodeEmployeeSigningReSigning    = "employee_signing_resigning"
+	ErrorCodeEmployeeSigningNoManager    = "employee_signing_no_manager"
 	ErrorCodeEmployeeSigningEnableAgain  = "employee_signing_enable_again"
 	ErrorCodeEmployeeSigningDisableAgain = "employee_signing_disable_again"
 	ErrorCodeEmployeeSigningCanNotDelete = "employee_signing_can_not_delete"

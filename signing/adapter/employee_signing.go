@@ -1,6 +1,7 @@
 package adapter
 
 import (
+	"github.com/opensourceways/app-cla-server/dbmodels"
 	"github.com/opensourceways/app-cla-server/models"
 	"github.com/opensourceways/app-cla-server/signing/app"
 	"github.com/opensourceways/app-cla-server/signing/domain/dp"
@@ -14,17 +15,25 @@ type employeeSigningAdatper struct {
 	s app.EmployeeSigningService
 }
 
-func (adapter *employeeSigningAdatper) Sign(opt *models.EmployeeSigning) models.IModelError {
+func (adapter *employeeSigningAdatper) Sign(opt *models.EmployeeSigning) (
+	[]dbmodels.CorporationManagerListResult, models.IModelError,
+) {
 	cmd, err := adapter.cmdToSignEmployeeCLA(opt)
 	if err != nil {
-		return toModelError(err)
+		return nil, toModelError(err)
 	}
 
-	if err = adapter.s.Sign(&cmd); err != nil {
-		return toModelError(err)
+	ms, err := adapter.s.Sign(&cmd)
+	if err != nil {
+		return nil, toModelError(err)
 	}
 
-	return nil
+	v := make([]dbmodels.CorporationManagerListResult, len(ms))
+	for i := range ms {
+		v[i] = toCorporationManagerListResult(&ms[i])
+	}
+
+	return v, nil
 }
 
 func (adapter *employeeSigningAdatper) cmdToSignEmployeeCLA(opt *models.EmployeeSigning) (

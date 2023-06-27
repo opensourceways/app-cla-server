@@ -94,13 +94,7 @@ func (s *employeeManagerService) List(csId string) ([]EmployeeManagerDTO, error)
 
 	dtos := make([]EmployeeManagerDTO, len(ms))
 	for i := range ms {
-		item := &ms[i]
-
-		dtos[i] = EmployeeManagerDTO{
-			ID:    item.Id,
-			Name:  item.Name.Name(),
-			Email: item.EmailAddr.EmailAddr(),
-		}
+		dtos[i] = toEmployeeManagerDTO(&ms[i])
 	}
 
 	return dtos, nil

@@ -143,7 +143,9 @@ func (cs *CorpSigning) RemoveManagers(managers []string) ([]Manager, error) {
 }
 
 func (cs *CorpSigning) AddEmployee(es *EmployeeSigning) error {
-	// TODO manager
+	if len(cs.Managers) == 0 {
+		return NewDomainError(ErrorCodeEmployeeSigningNoManager)
+	}
 
 	for i := range cs.Employees {
 		if cs.Employees[i].isMe(es) {

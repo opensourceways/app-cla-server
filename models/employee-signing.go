@@ -8,12 +8,8 @@ type EmployeeSigning struct {
 	CorpSigningId string `json:"corp_signing_id" required:"true"`
 }
 
-func (es *EmployeeSigning) Create(linkId string) IModelError {
-	if employeeSigningAdapterInstance != nil {
-		return employeeSigningAdapterInstance.Sign(es)
-	}
-
-	return es.IndividualSigning.Create(linkId, false)
+func (es *EmployeeSigning) Sign() ([]dbmodels.CorporationManagerListResult, IModelError) {
+	return employeeSigningAdapterInstance.Sign(es)
 }
 
 func ListIndividualSigning(linkID, corpEmail, claLang string) ([]dbmodels.IndividualSigningBasicInfo, IModelError) {

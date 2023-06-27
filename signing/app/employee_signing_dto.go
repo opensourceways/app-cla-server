@@ -20,3 +20,16 @@ func (cmd *CmdToSignEmployeeCLA) toEmployeeSigning() domain.EmployeeSigning {
 		AllInfo: cmd.AllSingingInfo,
 	}
 }
+
+// CmdToUpdateEmployeeSigning
+type CmdToUpdateEmployeeSigning struct {
+	CmdToRemoveEmployeeSigning
+
+	Enabled bool
+}
+
+// CmdToRemoveEmployeeSigning
+type CmdToRemoveEmployeeSigning struct {
+	CorpSigningId     string
+	EmployeeSigningId string
+}

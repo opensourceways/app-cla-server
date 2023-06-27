@@ -12,6 +12,7 @@ func NewEmployeeSigningService(repo repository.CorpSigning) *employeeSigningServ
 
 type EmployeeSigningService interface {
 	Sign(cmd *CmdToSignEmployeeCLA) ([]EmployeeManagerDTO, error)
+	Update(cmd CmdToUpdateEmployeeSigning) ([]EmployeeManagerDTO, error)
 }
 
 type employeeSigningService struct {
@@ -34,6 +35,29 @@ func (s *employeeSigningService) Sign(cmd *CmdToSignEmployeeCLA) ([]EmployeeMana
 	}
 
 	if err := s.repo.AddEmployee(&cs, &es); err != nil {
+		return nil, err
+	}
+
+	dtos := make([]EmployeeManagerDTO, len(cs.Managers))
+	for i := range cs.Managers {
+		dtos[i] = toEmployeeManagerDTO(&cs.Managers[i])
+	}
+
+	return dtos, nil
+}
+
+func (s *employeeSigningService) Update(cmd CmdToUpdateEmployeeSigning) ([]EmployeeManagerDTO, error) {
+	cs, err := s.repo.Find(cmd.CorpSigningId)
+	if err != nil {
+		return nil, err
+	}
+
+	es, err := cs.UpdateEmployee(cmd.EmployeeSigningId, cmd.Enabled)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := s.repo.SaveEmployee(&cs, es); err != nil {
 		return nil, err
 	}
 

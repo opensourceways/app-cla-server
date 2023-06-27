@@ -9,6 +9,7 @@ type CorpSigning interface {
 	Find(string) (domain.CorpSigning, error)
 
 	AddEmployee(*domain.CorpSigning, *domain.EmployeeSigning) error
+	SaveEmployee(*domain.CorpSigning, *domain.EmployeeSigning) error
 
 	AddAdmin(*domain.CorpSigning) error
 

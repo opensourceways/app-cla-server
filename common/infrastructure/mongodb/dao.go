@@ -3,6 +3,7 @@ package mongodb
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -126,6 +127,42 @@ func (impl *daoImpl) updateDoc(filter, doc bson.M, version int, cmd string) erro
 
 		if r.MatchedCount == 0 {
 			return errDocNotExists
+		}
+
+		return nil
+	})
+}
+
+func (impl *daoImpl) UpdateArraySingleItem(filter bson.M, array string, filterOfArray, doc bson.M, version int) error {
+	return impl.withContext(func(ctx context.Context) error {
+		filter[fieldVersion] = version
+
+		cmd := bson.M{}
+		for k, v := range doc {
+			cmd[fmt.Sprintf("%s.$[i].%s", array, k)] = v
+		}
+
+		arrayFilter := bson.M{}
+		for k, v := range filterOfArray {
+			arrayFilter["i."+k] = v
+		}
+
+		_, err := impl.col.UpdateOne(
+			ctx, filter,
+			bson.M{
+				mongoCmdSet: cmd,
+				mongoCmdInc: bson.M{fieldVersion: 1},
+			},
+			&options.UpdateOptions{
+				ArrayFilters: &options.ArrayFilters{
+					Filters: bson.A{
+						arrayFilter,
+					},
+				},
+			},
+		)
+		if err != nil {
+			return err
 		}
 
 		return nil

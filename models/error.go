@@ -48,6 +48,7 @@ const (
 	ErrInvalidPWRetrievalKey   ModelErrCode = "invalid_pw_retrieval_key"
 	ErrInvalidPassword         ModelErrCode = "invalid_password"
 	ErrBadRequestParameter     ModelErrCode = "bad_request_parameter"
+	ErrNoCorpEmployeeManager   ModelErrCode = "no_employee_manager"
 	ErrUnuploaed               ModelErrCode = "unuploaded"
 )
 

@@ -11,27 +11,36 @@ func NewEmployeeSigningService(repo repository.CorpSigning) *employeeSigningServ
 }
 
 type EmployeeSigningService interface {
-	Sign(cmd *CmdToSignEmployeeCLA) error
+	Sign(cmd *CmdToSignEmployeeCLA) ([]EmployeeManagerDTO, error)
 }
 
 type employeeSigningService struct {
 	repo repository.CorpSigning
 }
 
-func (s *employeeSigningService) Sign(cmd *CmdToSignEmployeeCLA) error {
+func (s *employeeSigningService) Sign(cmd *CmdToSignEmployeeCLA) ([]EmployeeManagerDTO, error) {
 	cs, err := s.repo.Find(cmd.CorpSigningId)
 	if err != nil {
 		if commonRepo.IsErrorResourceNotFound(err) {
 			err = domain.NewNotFoundDomainError(domain.ErrorCodeCorpSigningNotFound)
 		}
 
-		return err
+		return nil, err
 	}
 
 	es := cmd.toEmployeeSigning()
 	if err := cs.AddEmployee(&es); err != nil {
-		return err
+		return nil, err
 	}
 
-	return s.repo.AddEmployee(&cs, &es)
+	if err := s.repo.AddEmployee(&cs, &es); err != nil {
+		return nil, err
+	}
+
+	dtos := make([]EmployeeManagerDTO, len(cs.Managers))
+	for i := range cs.Managers {
+		dtos[i] = toEmployeeManagerDTO(&cs.Managers[i])
+	}
+
+	return dtos, nil
 }

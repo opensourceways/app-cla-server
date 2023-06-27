@@ -24,15 +24,19 @@ func codeMap(code string) models.ModelErrCode {
 	case domain.ErrorCodeCorpSigningReSigning, domain.ErrorCodeEmployeeSigningReSigning:
 		return models.ErrNoLinkOrResigned
 
+	// corp admin
 	case domain.ErrorCodeCorpAdminExists:
 		return models.ErrNoLinkOrManagerExists
 
+	// corp signing
 	case domain.ErrorCodeCorpSigningNotFound:
 		return models.ErrUnsigned
 
+	// corp pdf
 	case domain.ErrorCodeCorpPDFNotFound:
 		return models.ErrUnuploaed
 
+	// user
 	case domain.ErrorCodeUserSamePassword:
 		return models.ErrSamePassword
 
@@ -45,6 +49,7 @@ func codeMap(code string) models.ModelErrCode {
 	case domain.ErrorCodeUserInvalidAccount:
 		return models.ErrInvalidManagerID
 
+	// employee manager
 	case domain.ErrorCodeEmployeeManagerExists:
 		return models.ErrCorpManagerExists
 
@@ -56,6 +61,10 @@ func codeMap(code string) models.ModelErrCode {
 
 	case domain.ErrorCodeEmployeeManagerAdminAsManager:
 		return models.ErrAdminAsManager
+
+	// employee signing
+	case domain.ErrorCodeEmployeeSigningNoManager:
+		return models.ErrNoCorpEmployeeManager
 
 	default:
 		return models.ErrBadRequestParameter

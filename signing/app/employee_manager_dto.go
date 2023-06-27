@@ -24,3 +24,11 @@ type EmployeeManagerDTO struct {
 	Name  string `json:"name"`
 	Email string `json:"email"`
 }
+
+func toEmployeeManagerDTO(m *domain.Manager) EmployeeManagerDTO {
+	return EmployeeManagerDTO{
+		ID:    m.Id,
+		Name:  m.Name.Name(),
+		Email: m.EmailAddr.EmailAddr(),
+	}
+}

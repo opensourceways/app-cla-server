@@ -184,15 +184,17 @@ func (adapter *employeeManagerAdatper) List(csId string) (
 
 	v := make([]dbmodels.CorporationManagerListResult, len(ms))
 	for i := range ms {
-		item := &ms[i]
-
-		v[i] = dbmodels.CorporationManagerListResult{
-			ID:    item.ID,
-			Name:  item.Name,
-			Email: item.Email,
-			Role:  dbmodels.RoleManager,
-		}
+		v[i] = toCorporationManagerListResult(&ms[i])
 	}
 
 	return v, nil
+}
+
+func toCorporationManagerListResult(m *app.EmployeeManagerDTO) dbmodels.CorporationManagerListResult {
+	return dbmodels.CorporationManagerListResult{
+		ID:    m.ID,
+		Name:  m.Name,
+		Email: m.Email,
+		Role:  dbmodels.RoleManager,
+	}
 }

@@ -73,15 +73,7 @@ func (this *EmployeeSigningController) Post() {
 		return
 	}
 
-	managers, merr := models.ListCorporationManagers(linkID, info.Email, dbmodels.RoleManager)
-	if merr != nil {
-		this.sendModelErrorAsResp(merr, action)
-		return
-	}
-	if len(managers) <= 0 {
-		this.sendFailedResponse(400, errNoCorpEmployeeManager, fmt.Errorf("no managers"), action)
-		return
-	}
+	var managers []dbmodels.CorporationManagerListResult
 
 	fr := signHelper(
 		linkID, claLang, dbmodels.ApplyToIndividual,
@@ -92,15 +84,19 @@ func (this *EmployeeSigningController) Post() {
 
 			info.Info = getSingingInfo(info.Info, claInfo.Fields)
 
-			if err := info.Create(linkID); err != nil {
+			ms, err := info.Sign()
+			if err != nil {
 				if err.IsErrorOf(models.ErrNoLinkOrResigned) {
 					return newFailedApiResult(400, errResigned, err)
 				}
 				return parseModelError(err)
 			}
+
+			managers = ms
 			return nil
 		},
 	)
+
 	if fr != nil {
 		this.sendFailedResultAsResp(fr, action)
 	} else {

@@ -158,6 +158,25 @@ func (cs *CorpSigning) AddEmployee(es *EmployeeSigning) error {
 	return nil
 }
 
+func (cs *CorpSigning) UpdateEmployee(index string, enabled bool) (es *EmployeeSigning, err error) {
+	i, ok := cs.posOfEmployee(index)
+	if !ok {
+		err = NewDomainError(ErrorCodeEmployeeSigningNotFound)
+
+		return
+	}
+
+	es = &cs.Employees[i]
+
+	if enabled {
+		err = es.Enable()
+	} else {
+		err = es.Disable()
+	}
+
+	return
+}
+
 func (cs *CorpSigning) isSameCorp(email dp.EmailAddr) bool {
 	return cs.Corp.isMyEmail(email)
 }
@@ -175,6 +194,16 @@ func (cs *CorpSigning) hasManager(m *Manager) bool {
 func (cs *CorpSigning) posOfManager(index string) (int, bool) {
 	for j := range cs.Managers {
 		if cs.Managers[j].Id == index {
+			return j, true
+		}
+	}
+
+	return 0, false
+}
+
+func (cs *CorpSigning) posOfEmployee(index string) (int, bool) {
+	for j := range cs.Employees {
+		if cs.Employees[j].Id == index {
 			return j, true
 		}
 	}

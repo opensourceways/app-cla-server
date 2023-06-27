@@ -26,6 +26,7 @@ type dao interface {
 	PushArraySingleItem(filter bson.M, field string, doc bson.M, version int) error
 	PushArrayMultiItems(filter bson.M, array string, value bson.A, version int) error
 	PullArrayMultiItems(filter bson.M, array string, filterOfItem bson.M, version int) error
+	UpdateArraySingleItem(filter bson.M, array string, filterOfArray, doc bson.M, version int) error
 
 	InsertDocIfNotExists(filter, doc bson.M) (string, error)
 

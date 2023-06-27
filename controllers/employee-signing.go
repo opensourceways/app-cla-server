@@ -117,13 +117,14 @@ func (this *EmployeeSigningController) Post() {
 func (this *EmployeeSigningController) GetAll() {
 	action := "list employees"
 
-	pl, fr := this.tokenPayloadBasedOnCorpManager()
+	_, fr := this.tokenPayloadBasedOnCorpManager()
 	if fr != nil {
 		this.sendFailedResultAsResp(fr, action)
 		return
 	}
 
-	r, merr := models.ListIndividualSigning(pl.LinkID, pl.Email, this.GetString("cla_language"))
+	// TODO csid
+	r, merr := models.ListEmployeeSignings("")
 	if merr != nil {
 		this.sendModelErrorAsResp(merr, action)
 		return

@@ -33,3 +33,16 @@ type CmdToRemoveEmployeeSigning struct {
 	CorpSigningId     string
 	EmployeeSigningId string
 }
+
+type IndividualSigningDTO struct {
+	ID    string `json:"id"`
+	Name  string `json:"name"`
+	Date  string `json:"date"`
+	Email string `json:"email"`
+}
+
+type EmployeeSigningDTO struct {
+	IndividualSigningDTO
+
+	Enabled bool `json:"enabled"`
+}

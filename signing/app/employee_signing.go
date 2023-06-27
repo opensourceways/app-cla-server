@@ -12,6 +12,7 @@ func NewEmployeeSigningService(repo repository.CorpSigning) *employeeSigningServ
 
 type EmployeeSigningService interface {
 	Sign(cmd *CmdToSignEmployeeCLA) ([]EmployeeManagerDTO, error)
+	Remove(cmd *CmdToRemoveEmployeeSigning) (string, error)
 	Update(cmd *CmdToUpdateEmployeeSigning) (string, error)
 	List(csId string) ([]EmployeeSigningDTO, error)
 }
@@ -20,6 +21,7 @@ type employeeSigningService struct {
 	repo repository.CorpSigning
 }
 
+// Sign
 func (s *employeeSigningService) Sign(cmd *CmdToSignEmployeeCLA) ([]EmployeeManagerDTO, error) {
 	cs, err := s.repo.Find(cmd.CorpSigningId)
 	if err != nil {
@@ -47,6 +49,26 @@ func (s *employeeSigningService) Sign(cmd *CmdToSignEmployeeCLA) ([]EmployeeMana
 	return dtos, nil
 }
 
+// Remove
+func (s *employeeSigningService) Remove(cmd *CmdToRemoveEmployeeSigning) (string, error) {
+	cs, err := s.repo.Find(cmd.CorpSigningId)
+	if err != nil {
+		return "", err
+	}
+
+	es, err := cs.RemoveEmployee(cmd.EmployeeSigningId)
+	if err != nil {
+		return "", err
+	}
+
+	if err := s.repo.RemoveEmployee(&cs, es); err != nil {
+		return "", err
+	}
+
+	return es.Rep.EmailAddr.EmailAddr(), nil
+}
+
+// Update
 func (s *employeeSigningService) Update(cmd *CmdToUpdateEmployeeSigning) (string, error) {
 	cs, err := s.repo.Find(cmd.CorpSigningId)
 	if err != nil {
@@ -65,6 +87,7 @@ func (s *employeeSigningService) Update(cmd *CmdToUpdateEmployeeSigning) (string
 	return es.Rep.EmailAddr.EmailAddr(), nil
 }
 
+// List
 func (s *employeeSigningService) List(csId string) ([]EmployeeSigningDTO, error) {
 	v, err := s.repo.FindEmployees(csId)
 	if err != nil || len(v) == 0 {

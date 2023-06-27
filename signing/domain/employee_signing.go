@@ -21,7 +21,6 @@ type EmployeeSigning struct {
 	Rep     Representative
 	Date    string
 	Enabled bool
-	Deleted bool
 	AllInfo AllSingingInfo
 	Logs    []EmployeeSigningLog
 }
@@ -30,7 +29,7 @@ func (es *EmployeeSigning) isMe(es1 *EmployeeSigning) bool {
 	return es.Rep.EmailAddr.EmailAddr() == es1.Rep.EmailAddr.EmailAddr()
 }
 
-func (es *EmployeeSigning) Enable() error {
+func (es *EmployeeSigning) enable() error {
 	if es.Enabled {
 		return NewDomainError(ErrorCodeEmployeeSigningEnableAgain)
 	}
@@ -41,7 +40,7 @@ func (es *EmployeeSigning) Enable() error {
 	return nil
 }
 
-func (es *EmployeeSigning) Disable() error {
+func (es *EmployeeSigning) disable() error {
 	if !es.Enabled {
 		return NewDomainError(ErrorCodeEmployeeSigningDisableAgain)
 	}
@@ -52,12 +51,11 @@ func (es *EmployeeSigning) Disable() error {
 	return nil
 }
 
-func (es *EmployeeSigning) Delete() error {
-	if es.Enabled || es.Deleted {
+func (es *EmployeeSigning) remove() error {
+	if es.Enabled {
 		return NewDomainError(ErrorCodeEmployeeSigningCanNotDelete)
 	}
 
-	es.Deleted = true
 	es.addLog(employeeSigningActionDelete)
 
 	return nil

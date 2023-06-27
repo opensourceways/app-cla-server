@@ -16,6 +16,7 @@ const (
 	fieldEmail     = "email"
 	fieldDomain    = "domain"
 	fieldLinkId    = "link_id"
+	fieldDeleted   = "deleted"
 	fieldVersion   = "version"
 	fieldManagers  = "managers"
 	fieldEmployees = "employees"
@@ -49,6 +50,7 @@ type corpSigningDO struct {
 	Admin     managerDO           `bson:"admin"         json:"admin"`
 	Managers  []managerDO         `bson:"managers"      json:"managers"`
 	Employees []employeeSigningDO `bson:"employees"     json:"employees"`
+	Deleted   []employeeSigningDO `bson:"deleted"       json:"deleted"`
 	Version   int                 `bson:"version"       json:"-"`
 }
 

@@ -11,6 +11,7 @@ type CorpSigning interface {
 	AddEmployee(*domain.CorpSigning, *domain.EmployeeSigning) error
 	SaveEmployee(*domain.CorpSigning, *domain.EmployeeSigning) error
 	FindEmployees(string) ([]domain.EmployeeSigning, error)
+	RemoveEmployee(*domain.CorpSigning, *domain.EmployeeSigning) error
 
 	AddAdmin(*domain.CorpSigning) error
 

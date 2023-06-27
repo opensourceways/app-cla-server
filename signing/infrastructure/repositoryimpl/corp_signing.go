@@ -54,7 +54,7 @@ func (impl *corpSigning) Find(index string) (cs domain.CorpSigning, err error) {
 
 	var do corpSigningDO
 
-	if err = impl.dao.GetDoc(filter, nil, &do); err != nil {
+	if err = impl.dao.GetDoc(filter, bson.M{fieldDeleted: 0}, &do); err != nil {
 		if impl.dao.IsDocNotExists(err) {
 			err = commonRepo.NewErrorResourceNotFound(err)
 		}

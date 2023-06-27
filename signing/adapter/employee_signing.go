@@ -15,6 +15,7 @@ type employeeSigningAdatper struct {
 	s app.EmployeeSigningService
 }
 
+// Sign
 func (adapter *employeeSigningAdatper) Sign(opt *models.EmployeeSigning) (
 	[]dbmodels.CorporationManagerListResult, models.IModelError,
 ) {
@@ -58,6 +59,20 @@ func (adapter *employeeSigningAdatper) cmdToSignEmployeeCLA(opt *models.Employee
 	cmd.AllSingingInfo = opt.Info
 
 	return
+}
+
+// Remove
+func (adapter *employeeSigningAdatper) Remove(csId, esId string) (string, models.IModelError) {
+	cmd := app.CmdToRemoveEmployeeSigning{}
+	cmd.CorpSigningId = csId
+	cmd.EmployeeSigningId = esId
+
+	email, err := adapter.s.Remove(&cmd)
+	if err != nil {
+		return "", toModelError(err)
+	}
+
+	return email, nil
 }
 
 // Update

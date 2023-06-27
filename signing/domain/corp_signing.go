@@ -169,10 +169,25 @@ func (cs *CorpSigning) UpdateEmployee(index string, enabled bool) (es *EmployeeS
 	es = &cs.Employees[i]
 
 	if enabled {
-		err = es.Enable()
+		err = es.enable()
 	} else {
-		err = es.Disable()
+		err = es.disable()
 	}
+
+	return
+}
+
+func (cs *CorpSigning) RemoveEmployee(index string) (es *EmployeeSigning, err error) {
+	i, ok := cs.posOfEmployee(index)
+	if !ok {
+		err = NewDomainError(ErrorCodeEmployeeSigningNotFound)
+
+		return
+	}
+
+	es = &cs.Employees[i]
+
+	err = es.remove()
 
 	return
 }

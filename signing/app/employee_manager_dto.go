@@ -18,3 +18,9 @@ type RemovedManagerDTO struct {
 	Name  string
 	Email string
 }
+
+type EmployeeManagerDTO struct {
+	ID    string `json:"id"`
+	Name  string `json:"name"`
+	Email string `json:"email"`
+}

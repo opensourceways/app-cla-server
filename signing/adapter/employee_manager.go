@@ -172,3 +172,27 @@ func (adapter *employeeManagerAdatper) cmdToRemoveEmployeeManager(
 
 	return
 }
+
+// List
+func (adapter *employeeManagerAdatper) List(csId string) (
+	[]dbmodels.CorporationManagerListResult, models.IModelError,
+) {
+	ms, err := adapter.s.List(csId)
+	if err != nil {
+		return nil, toModelError(err)
+	}
+
+	v := make([]dbmodels.CorporationManagerListResult, len(ms))
+	for i := range ms {
+		item := &ms[i]
+
+		v[i] = dbmodels.CorporationManagerListResult{
+			ID:    item.ID,
+			Name:  item.Name,
+			Email: item.Email,
+			Role:  dbmodels.RoleManager,
+		}
+	}
+
+	return v, nil
+}

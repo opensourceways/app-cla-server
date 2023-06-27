@@ -193,6 +193,7 @@ func (this *EmployeeSigningController) Delete() {
 		return
 	}
 
+	// TODO csid
 	employeeEmail, err := models.RemoveEmployeeSigning("", employeeSigningId)
 	if err != nil {
 		this.sendModelErrorAsResp(err, action)

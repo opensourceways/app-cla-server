@@ -12,8 +12,10 @@ import (
 )
 
 const (
+	fieldIndex   = "_id"
 	fieldVersion = "version"
 
+	mongoCmdIn          = "$in"
 	mongoCmdAll         = "$all"
 	mongoCmdSet         = "$set"
 	mongoCmdInc         = "$inc"
@@ -179,6 +181,14 @@ func (impl *daoImpl) DeleteDoc(filter bson.M) error {
 	})
 }
 
+func (impl *daoImpl) DeleteDocs(filter bson.M) error {
+	return impl.withContext(func(ctx context.Context) error {
+		_, err := impl.col.DeleteMany(ctx, filter)
+
+		return err
+	})
+}
+
 func (impl *daoImpl) NewDocId() string {
 	return primitive.NewObjectID().Hex()
 }
@@ -190,6 +200,23 @@ func (impl *daoImpl) DocIdFilter(s string) (bson.M, error) {
 	}
 
 	return bson.M{
-		"_id": v,
+		fieldIndex: v,
+	}, nil
+}
+
+func (impl *daoImpl) DocIdsFilter(ids []string) (bson.M, error) {
+	oids := make(bson.A, len(ids))
+
+	for i, s := range ids {
+		v, err := primitive.ObjectIDFromHex(s)
+		if err != nil {
+			return nil, err
+		}
+
+		oids[i] = v
+	}
+
+	return bson.M{
+		fieldIndex: bson.M{mongoCmdIn: oids},
 	}, nil
 }

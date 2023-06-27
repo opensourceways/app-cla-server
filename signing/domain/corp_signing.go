@@ -105,6 +105,10 @@ func (cs *CorpSigning) AddManagers(managers []Manager) error {
 }
 
 func (cs *CorpSigning) RemoveManagers(managers []string) ([]Manager, error) {
+	if len(managers) > config.MaxNumOfEmployeeManager {
+		return nil, NewDomainError(ErrorCodeEmployeeManagerTooMany)
+	}
+
 	toRemove := make(map[int]bool)
 
 	for i := range managers {

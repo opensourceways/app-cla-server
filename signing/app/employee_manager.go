@@ -19,6 +19,7 @@ func NewEmployeeManagerService(
 
 type EmployeeManagerService interface {
 	Add(cmd *CmdToAddEmployeeManager) ([]ManagerDTO, error)
+	Remove(cmd *CmdToRemoveEmployeeManager) (dtos []RemovedManagerDTO, err error)
 }
 
 type employeeManagerService struct {
@@ -54,7 +55,7 @@ func (s *employeeManagerService) Remove(cmd *CmdToRemoveEmployeeManager) (dtos [
 		return
 	}
 
-	ms, err := cs.RemoveManagers(cmd.Managers)
+	removed, err := cs.RemoveManagers(cmd.Managers)
 	if err != nil {
 		return
 	}
@@ -63,11 +64,11 @@ func (s *employeeManagerService) Remove(cmd *CmdToRemoveEmployeeManager) (dtos [
 		return
 	}
 
-	accounts := make([]dp.Account, len(ms))
-	dtos = make([]RemovedManagerDTO, len(ms))
+	accounts := make([]dp.Account, len(removed))
+	dtos = make([]RemovedManagerDTO, len(removed))
 
-	for i := range ms {
-		item := &ms[i]
+	for i := range removed {
+		item := &removed[i]
 
 		if accounts[i], err = item.Account(); err != nil {
 			return
@@ -79,7 +80,7 @@ func (s *employeeManagerService) Remove(cmd *CmdToRemoveEmployeeManager) (dtos [
 		}
 	}
 
-	s.userService.RemoveByAccount(accounts)
+	s.userService.RemoveByAccount(cs.Link.Id, accounts)
 
 	return
 }

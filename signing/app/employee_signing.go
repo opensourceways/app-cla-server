@@ -13,6 +13,7 @@ func NewEmployeeSigningService(repo repository.CorpSigning) *employeeSigningServ
 type EmployeeSigningService interface {
 	Sign(cmd *CmdToSignEmployeeCLA) ([]EmployeeManagerDTO, error)
 	Update(cmd *CmdToUpdateEmployeeSigning) (string, error)
+	List(csId string) ([]EmployeeSigningDTO, error)
 }
 
 type employeeSigningService struct {
@@ -62,4 +63,32 @@ func (s *employeeSigningService) Update(cmd *CmdToUpdateEmployeeSigning) (string
 	}
 
 	return es.Rep.EmailAddr.EmailAddr(), nil
+}
+
+func (s *employeeSigningService) List(csId string) ([]EmployeeSigningDTO, error) {
+	v, err := s.repo.FindEmployees(csId)
+	if err != nil || len(v) == 0 {
+		return nil, err
+	}
+
+	r := make([]EmployeeSigningDTO, len(v))
+	for i := range v {
+		r[i] = s.toEmployeeSigningDTO(&v[i])
+	}
+
+	return r, nil
+}
+
+func (s *employeeSigningService) toEmployeeSigningDTO(v *domain.EmployeeSigning) EmployeeSigningDTO {
+	dto := IndividualSigningDTO{
+		ID:    v.Id,
+		Name:  v.Rep.Name.Name(),
+		Date:  v.Date,
+		Email: v.Rep.EmailAddr.EmailAddr(),
+	}
+
+	return EmployeeSigningDTO{
+		IndividualSigningDTO: dto,
+		Enabled:              v.Enabled,
+	}
 }

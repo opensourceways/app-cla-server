@@ -74,3 +74,27 @@ func (adapter *employeeSigningAdatper) Update(csId, esId string, enabled bool) (
 
 	return email, nil
 }
+
+// List
+func (adapter *employeeSigningAdatper) List(csId string) (
+	[]dbmodels.IndividualSigningBasicInfo, models.IModelError,
+) {
+	v, err := adapter.s.List(csId)
+	if err != nil {
+		return nil, toModelError(err)
+	}
+
+	r := make([]dbmodels.IndividualSigningBasicInfo, len(v))
+	for i := range v {
+		item := &v[i]
+		r[i] = dbmodels.IndividualSigningBasicInfo{
+			ID:      item.ID,
+			Name:    item.Name,
+			Email:   item.Email,
+			Date:    item.Date,
+			Enabled: item.Enabled,
+		}
+	}
+
+	return r, nil
+}

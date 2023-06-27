@@ -56,3 +56,7 @@ func UpdateEmployeeSigning(csId, esId string, enabled bool) (string, IModelError
 func ListEmployeeSignings(csId string) ([]dbmodels.IndividualSigningBasicInfo, IModelError) {
 	return employeeSigningAdapterInstance.List(csId)
 }
+
+func RemoveEmployeeSigning(csId, esId string) (string, IModelError) {
+	return employeeSigningAdapterInstance.Remove(csId, esId)
+}

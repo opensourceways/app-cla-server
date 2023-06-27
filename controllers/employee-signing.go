@@ -8,7 +8,6 @@ import (
 	"github.com/opensourceways/app-cla-server/dbmodels"
 	"github.com/opensourceways/app-cla-server/email"
 	"github.com/opensourceways/app-cla-server/models"
-	"github.com/opensourceways/app-cla-server/util"
 )
 
 type EmployeeSigningController struct {
@@ -181,12 +180,12 @@ func (this *EmployeeSigningController) Update() {
 
 // @Title Delete
 // @Description delete employee signing
-// @Param	:email		path 	string	true		"email"
+// @Param  signing_id  path  string  true  "employee signing id"
 // @Success 204 {string} delete success!
-// @router /:email [delete]
+// @router /:signing_id [delete]
 func (this *EmployeeSigningController) Delete() {
 	action := "delete employee signing"
-	employeeEmail := this.GetString(":email")
+	employeeSigningId := this.GetString(":signing_id")
 
 	pl, fr := this.tokenPayloadBasedOnCorpManager()
 	if fr != nil {
@@ -194,19 +193,8 @@ func (this *EmployeeSigningController) Delete() {
 		return
 	}
 
-	domains, fr := listCorpEmailDomain(pl.LinkID, pl.Email)
-	if fr != nil {
-		fr.statusCode = 500
-		this.sendFailedResultAsResp(fr, action)
-		return
-	}
-
-	if !domains[util.EmailSuffix(employeeEmail)] {
-		this.sendFailedResponse(400, errNotSameCorp, fmt.Errorf("not same corp"), action)
-		return
-	}
-
-	if err := models.DeleteEmployeeSigning(pl.LinkID, employeeEmail); err != nil {
+	employeeEmail, err := models.RemoveEmployeeSigning("", employeeSigningId)
+	if err != nil {
 		this.sendModelErrorAsResp(err, action)
 		return
 	}

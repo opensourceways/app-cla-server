@@ -85,41 +85,44 @@ func (impl *daoImpl) InsertDocIfNotExists(filter, doc bson.M) (string, error) {
 
 func (impl *daoImpl) PushArraySingleItem(filter bson.M, array string, v bson.M, version int) error {
 	return impl.updateDoc(
-		filter, bson.M{array: v}, version, mongoCmdPush,
+		filter, version, bson.M{mongoCmdPush: bson.M{array: v}},
 	)
 }
 
 func (impl *daoImpl) PushArrayMultiItems(filter bson.M, array string, value bson.A, version int) error {
 	return impl.updateDoc(
-		filter,
-		bson.M{array: bson.M{mongoCmdEach: value}},
-		version, mongoCmdPush,
+		filter, version,
+		bson.M{mongoCmdPush: bson.M{array: bson.M{mongoCmdEach: value}}},
 	)
 }
 
 func (impl *daoImpl) PullArrayMultiItems(filter bson.M, array string, filterOfItem bson.M, version int) error {
 	return impl.updateDoc(
-		filter,
-		bson.M{array: filterOfItem},
-		version, mongoCmdPull,
+		filter, version,
+		bson.M{mongoCmdPull: bson.M{array: filterOfItem}},
+	)
+}
+
+func (impl *daoImpl) MoveArrayItem(filter bson.M, from string, filterOfItem bson.M, to string, value bson.M, version int) error {
+	return impl.updateDoc(
+		filter, version,
+		bson.M{
+			mongoCmdPull: bson.M{from: filterOfItem},
+			mongoCmdPush: bson.M{to: value},
+		},
 	)
 }
 
 func (impl *daoImpl) UpdateDoc(filter bson.M, v bson.M, version int) error {
-	return impl.updateDoc(filter, v, version, mongoCmdSet)
+	return impl.updateDoc(filter, version, bson.M{mongoCmdSet: v})
 }
 
-func (impl *daoImpl) updateDoc(filter, doc bson.M, version int, cmd string) error {
+func (impl *daoImpl) updateDoc(filter bson.M, version int, cmd bson.M) error {
 	return impl.withContext(func(ctx context.Context) error {
 		filter[fieldVersion] = version
+		cmd[mongoCmdInc] = bson.M{fieldVersion: 1}
 
-		r, err := impl.col.UpdateOne(
-			ctx, filter,
-			bson.M{
-				cmd:         doc,
-				mongoCmdInc: bson.M{fieldVersion: 1},
-			},
-		)
+		r, err := impl.col.UpdateOne(ctx, filter, cmd)
 
 		if err != nil {
 			return err
@@ -147,7 +150,7 @@ func (impl *daoImpl) UpdateArraySingleItem(filter bson.M, array string, filterOf
 			arrayFilter["i."+k] = v
 		}
 
-		_, err := impl.col.UpdateOne(
+		r, err := impl.col.UpdateOne(
 			ctx, filter,
 			bson.M{
 				mongoCmdSet: cmd,
@@ -163,6 +166,10 @@ func (impl *daoImpl) UpdateArraySingleItem(filter bson.M, array string, filterOf
 		)
 		if err != nil {
 			return err
+		}
+
+		if r.MatchedCount == 0 {
+			return errDocNotExists
 		}
 
 		return nil

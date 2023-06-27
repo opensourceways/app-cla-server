@@ -15,7 +15,6 @@ func toEmployeeSigningDO(es *domain.EmployeeSigning) employeeSigningDO {
 		RepDO:    toRepDO(&es.Rep),
 		Date:     es.Date,
 		Enabled:  es.Enabled,
-		Deleted:  es.Deleted,
 		AllInfo:  es.AllInfo,
 		Logs:     toEmployeeSigningLogDOs(es.Logs),
 	}
@@ -56,7 +55,6 @@ type employeeSigningDO struct {
 	Language string                 `bson:"lang"     json:"lang"     required:"true"`
 	Date     string                 `bson:"date"     json:"date"     required:"true"`
 	Enabled  bool                   `bson:"enabled"  json:"enabled"`
-	Deleted  bool                   `bson:"deleted"  json:"deleted,omitempty"`
 	AllInfo  anyDoc                 `bson:"info"     json:"info,omitempty"`
 	Logs     []employeeSigningLogDO `bson:"logs"     json:"logs"`
 
@@ -78,7 +76,6 @@ func (do *employeeSigningDO) toEmployeeSigning(es *domain.EmployeeSigning) (err 
 		Rep:     rep,
 		Date:    do.Date,
 		Enabled: do.Enabled,
-		Deleted: do.Deleted,
 		AllInfo: do.AllInfo,
 		Logs:    do.toEmployeeSigningLogs(),
 	}

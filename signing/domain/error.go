@@ -18,6 +18,7 @@ const (
 
 	ErrorCodeEmployeeManagerExists         = "employee_manager_exists"
 	ErrorCodeEmployeeManagerTooMany        = "employee_manager_too_many"
+	ErrorCodeEmployeeManagerNotExists      = "employee_manager_not_exists"
 	ErrorCodeEmployeeManagerNotSameCorp    = "employee_manager_not_same_corp"
 	ErrorCodeEmployeeManagerAdminAsManager = "employee_manager_admin_as_manager"
 

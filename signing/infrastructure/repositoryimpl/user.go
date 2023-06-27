@@ -5,6 +5,7 @@ import (
 
 	commonRepo "github.com/opensourceways/app-cla-server/common/domain/repository"
 	"github.com/opensourceways/app-cla-server/signing/domain"
+	"github.com/opensourceways/app-cla-server/signing/domain/dp"
 )
 
 func NewUser(dao dao) *user {
@@ -39,13 +40,40 @@ func (impl *user) Add(v *domain.User) (string, error) {
 	return index, err
 }
 
-func (impl *user) Remove(index string) error {
-	filter, err := impl.dao.DocIdFilter(index)
+func (impl *user) Remove(ids []string) error {
+	if len(ids) == 1 {
+		filter, err := impl.dao.DocIdFilter(ids[0])
+		if err != nil {
+			return err
+		}
+
+		return impl.dao.DeleteDoc(filter)
+	}
+
+	filter, err := impl.dao.DocIdsFilter(ids)
 	if err != nil {
 		return err
 	}
 
-	return impl.dao.DeleteDoc(filter)
+	return impl.dao.DeleteDocs(filter)
+}
+
+func (impl *user) RemoveByAccount(linkId string, accounts []dp.Account) error {
+	filter := linkIdFilter(linkId)
+
+	if len(accounts) == 1 {
+		filter[fieldAccount] = accounts[0].Account()
+
+		return impl.dao.DeleteDoc(filter)
+	}
+
+	v := make(bson.A, len(accounts))
+	for i := range accounts {
+		v[i] = accounts[i].Account()
+	}
+	filter[fieldAccount] = bson.M{mongodbCmdIn: v}
+
+	return impl.dao.DeleteDocs(filter)
 }
 
 func (impl *user) SavePassword(u *domain.User) error {

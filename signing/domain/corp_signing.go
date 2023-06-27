@@ -104,6 +104,44 @@ func (cs *CorpSigning) AddManagers(managers []Manager) error {
 	return nil
 }
 
+func (cs *CorpSigning) RemoveManagers(managers []string) ([]Manager, error) {
+	if len(managers) > config.MaxNumOfEmployeeManager {
+		return nil, NewDomainError(ErrorCodeEmployeeManagerTooMany)
+	}
+
+	toRemove := make(map[int]bool)
+
+	for i := range managers {
+		j, exists := cs.posOfManager(managers[i])
+		if !exists {
+			return nil, NewDomainError(ErrorCodeEmployeeManagerNotExists)
+		}
+		toRemove[j] = true
+	}
+
+	var r = []Manager{}
+
+	if n := len(cs.Managers) - len(toRemove); n <= 0 {
+		r = cs.Managers
+		cs.Managers = nil
+	} else {
+		m := make([]Manager, 0, n)
+		r = make([]Manager, 0, len(toRemove))
+
+		for i := range cs.Managers {
+			if toRemove[i] {
+				r = append(r, cs.Managers[i])
+			} else {
+				m = append(m, cs.Managers[i])
+			}
+		}
+
+		cs.Managers = m
+	}
+
+	return r, nil
+}
+
 func (cs *CorpSigning) AddEmployee(es *EmployeeSigning) error {
 	// TODO manager
 
@@ -130,4 +168,14 @@ func (cs *CorpSigning) hasManager(m *Manager) bool {
 	}
 
 	return false
+}
+
+func (cs *CorpSigning) posOfManager(index string) (int, bool) {
+	for j := range cs.Managers {
+		if cs.Managers[j].Id == index {
+			return j, true
+		}
+	}
+
+	return 0, false
 }

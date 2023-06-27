@@ -6,6 +6,8 @@ import (
 	"github.com/opensourceways/app-cla-server/signing/domain"
 )
 
+const fieldId = "id"
+
 func toManagerDO(m *domain.Manager) managerDO {
 	return managerDO{
 		Id:    m.Id,

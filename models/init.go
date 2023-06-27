@@ -28,6 +28,7 @@ type userAdapter interface {
 
 type employeeManagerAdapter interface {
 	Add(string, *EmployeeManagerCreateOption) ([]dbmodels.CorporationManagerCreateOption, IModelError)
+	Remove(string, *EmployeeManagerCreateOption) ([]dbmodels.CorporationManagerCreateOption, IModelError)
 }
 
 func Init(

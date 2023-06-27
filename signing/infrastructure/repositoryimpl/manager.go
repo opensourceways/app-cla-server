@@ -49,3 +49,21 @@ func (impl *corpSigning) AddEmployeeManagers(cs *domain.CorpSigning, ms []domain
 
 	return err
 }
+
+func (impl *corpSigning) RemoveEmployeeManagers(cs *domain.CorpSigning, ms []string) error {
+	index, err := impl.toCorpSigningIndex(cs.Id)
+	if err != nil {
+		return err
+	}
+
+	filterOfItem := bson.M{
+		fieldId: bson.M{"$in": ms},
+	}
+
+	err = impl.dao.PullArrayMultiItems(index, fieldManagers, filterOfItem, cs.Version)
+	if err != nil && impl.dao.IsDocNotExists(err) {
+		err = commonRepo.NewErrorConcurrentUpdating(err)
+	}
+
+	return err
+}

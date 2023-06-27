@@ -119,3 +119,56 @@ func toCorporationManagerCreateOption(dto *app.ManagerDTO) dbmodels.CorporationM
 		Password: dto.Password,
 	}
 }
+
+// Remove
+func (adapter *employeeManagerAdatper) Remove(
+	csId string, opt *models.EmployeeManagerCreateOption,
+) (
+	[]dbmodels.CorporationManagerCreateOption, models.IModelError,
+) {
+	cmd, me := adapter.cmdToRemoveEmployeeManager(csId, opt)
+	if me != nil {
+		return nil, me
+	}
+
+	dto, err := adapter.s.Remove(&cmd)
+	if err != nil {
+		return nil, toModelError(err)
+	}
+
+	r := make([]dbmodels.CorporationManagerCreateOption, len(dto))
+	for i := range dto {
+		item := &dto[i]
+
+		r[i] = dbmodels.CorporationManagerCreateOption{
+			Name:  item.Name,
+			Email: item.Email,
+		}
+	}
+
+	return r, nil
+}
+
+func (adapter *employeeManagerAdatper) cmdToRemoveEmployeeManager(
+	csId string, opt *models.EmployeeManagerCreateOption,
+) (
+	cmd app.CmdToRemoveEmployeeManager, me models.IModelError,
+) {
+	if len(opt.Managers) == 0 {
+		me = models.NewModelError(
+			models.ErrEmptyPayload, errors.New("no employee mangers"),
+		)
+
+		return
+	}
+
+	ids := make([]string, len(opt.Managers))
+	for i := range opt.Managers {
+		ids[i] = opt.Managers[i].ID
+	}
+
+	cmd.CorpSigningId = csId
+	cmd.Managers = ids
+
+	return
+}

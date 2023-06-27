@@ -138,6 +138,10 @@ func (this *EmployeeManagerCreateOption) ValidateWhenDeleting(adminEmail string,
 }
 
 func (this *EmployeeManagerCreateOption) Delete(linkID string) ([]dbmodels.CorporationManagerCreateOption, IModelError) {
+	if employeeManagerAdapterInstance != nil {
+		return employeeManagerAdapterInstance.Remove(linkID, this)
+	}
+
 	emails := make([]string, 0, len(this.Managers))
 	es := map[string]bool{}
 	for i := range this.Managers {

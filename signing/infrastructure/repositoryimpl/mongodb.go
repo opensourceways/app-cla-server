@@ -9,6 +9,7 @@ import (
 
 const (
 	mongodbCmdOr = "$or"
+	mongodbCmdIn = "$in"
 )
 
 type anyDoc = map[string]string
@@ -19,14 +20,17 @@ type dao interface {
 
 	NewDocId() string
 	DocIdFilter(s string) (bson.M, error)
+	DocIdsFilter(ids []string) (bson.M, error)
 
 	UpdateDoc(filter bson.M, doc bson.M, version int) error
 	PushArraySingleItem(filter bson.M, field string, doc bson.M, version int) error
 	PushArrayMultiItems(filter bson.M, array string, value bson.A, version int) error
+	PullArrayMultiItems(filter bson.M, array string, filterOfItem bson.M, version int) error
 
 	InsertDocIfNotExists(filter, doc bson.M) (string, error)
 
 	DeleteDoc(filter bson.M) error
+	DeleteDocs(filter bson.M) error
 
 	GetDoc(filter, project bson.M, result interface{}) error
 	GetDocs(filter, project bson.M, result interface{}) error

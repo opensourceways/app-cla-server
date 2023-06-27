@@ -3,7 +3,6 @@ package controllers
 import (
 	"fmt"
 
-	"github.com/opensourceways/app-cla-server/dbmodels"
 	"github.com/opensourceways/app-cla-server/email"
 	"github.com/opensourceways/app-cla-server/models"
 )
@@ -100,13 +99,14 @@ func (this *EmployeeManagerController) Delete() {
 func (this *EmployeeManagerController) GetAll() {
 	sendResp := this.newFuncForSendingFailedResp("list employee managers")
 
-	pl, fr := this.tokenPayloadBasedOnCorpManager()
+	_, fr := this.tokenPayloadBasedOnCorpManager()
 	if fr != nil {
 		sendResp(fr)
 		return
 	}
 
-	r, err := models.ListCorporationManagers(pl.LinkID, pl.Email, dbmodels.RoleManager)
+	// TODO csid
+	r, err := models.ListEmployeeManagers("")
 	if err == nil {
 		this.sendSuccessResp(r)
 	} else {

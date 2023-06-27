@@ -163,3 +163,7 @@ func (this *EmployeeManagerCreateOption) Delete(linkID string) ([]dbmodels.Corpo
 
 	return nil, parseDBError(err)
 }
+
+func ListEmployeeManagers(csId string) ([]dbmodels.CorporationManagerListResult, IModelError) {
+	return employeeManagerAdapterInstance.List(csId)
+}

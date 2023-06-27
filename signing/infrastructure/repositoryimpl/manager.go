@@ -67,3 +67,22 @@ func (impl *corpSigning) RemoveEmployeeManagers(cs *domain.CorpSigning, ms []str
 
 	return err
 }
+
+func (impl *corpSigning) FindEmployeeManagers(csId string) ([]domain.Manager, error) {
+	filter, err := impl.toCorpSigningIndex(csId)
+	if err != nil {
+		return nil, err
+	}
+
+	var do corpSigningDO
+
+	if err = impl.dao.GetDoc(filter, bson.M{fieldManagers: 1}, &do); err != nil {
+		if impl.dao.IsDocNotExists(err) {
+			err = commonRepo.NewErrorResourceNotFound(err)
+		}
+
+		return nil, err
+	}
+
+	return do.toManagers()
+}

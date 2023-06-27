@@ -16,6 +16,7 @@ type corpSigningAdapter interface {
 
 type employeeSigningAdapter interface {
 	Sign(opt *EmployeeSigning) ([]dbmodels.CorporationManagerListResult, IModelError)
+	Update(csId, esId string, enabled bool) (string, IModelError)
 }
 
 type corpAdminAdatper interface {

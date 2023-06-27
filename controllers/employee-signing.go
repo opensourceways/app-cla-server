@@ -134,29 +134,18 @@ func (this *EmployeeSigningController) GetAll() {
 
 // @Title Update
 // @Description enable/unable employee signing
-// @Param	:email		path 	string	true		"email"
+// @Param  signing_id  path  string                           true  "employee signing id"
+// @Param  param       body  models.EmployeeSigningUdateInfo  true  "body of updating employee signing"
 // @Success 202 {int} map
-// @router /:email [put]
+// @router /:signing_id [put]
 func (this *EmployeeSigningController) Update() {
 	action := "enable/unable employee signing"
 	sendResp := this.newFuncForSendingFailedResp(action)
-	employeeEmail := this.GetString(":email")
+	employeeSigningId := this.GetString(":signing_id")
 
 	pl, fr := this.tokenPayloadBasedOnCorpManager()
 	if fr != nil {
 		sendResp(fr)
-		return
-	}
-
-	domains, fr := listCorpEmailDomain(pl.LinkID, pl.Email)
-	if fr != nil {
-		fr.statusCode = 500
-		sendResp(fr)
-		return
-	}
-
-	if !domains[util.EmailSuffix(employeeEmail)] {
-		this.sendFailedResponse(400, errNotSameCorp, fmt.Errorf("not same corp"), action)
 		return
 	}
 
@@ -166,7 +155,9 @@ func (this *EmployeeSigningController) Update() {
 		return
 	}
 
-	if err := (&info).Update(pl.LinkID, employeeEmail); err != nil {
+	// TODO csid
+	employeeEmail, err := models.UpdateEmployeeSigning("", employeeSigningId, info.Enabled)
+	if err != nil {
 		if err.IsErrorOf(models.ErrNoLinkOrUnsigned) {
 			this.sendFailedResponse(400, errUnsigned, err, action)
 		} else {

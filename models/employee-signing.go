@@ -48,3 +48,7 @@ func DeleteEmployeeSigning(linkID, email string) IModelError {
 	}
 	return parseDBError(err)
 }
+
+func UpdateEmployeeSigning(csId, esId string, enabled bool) (string, IModelError) {
+	return employeeSigningAdapterInstance.Update(csId, esId, enabled)
+}

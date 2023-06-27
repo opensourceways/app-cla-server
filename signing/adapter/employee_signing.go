@@ -59,3 +59,18 @@ func (adapter *employeeSigningAdatper) cmdToSignEmployeeCLA(opt *models.Employee
 
 	return
 }
+
+// Update
+func (adapter *employeeSigningAdatper) Update(csId, esId string, enabled bool) (string, models.IModelError) {
+	cmd := app.CmdToUpdateEmployeeSigning{}
+	cmd.CorpSigningId = csId
+	cmd.EmployeeSigningId = esId
+	cmd.Enabled = enabled
+
+	email, err := adapter.s.Update(&cmd)
+	if err != nil {
+		return "", toModelError(err)
+	}
+
+	return email, nil
+}

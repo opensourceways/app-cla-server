@@ -20,7 +20,7 @@ type EmailController struct {
 func (this *EmailController) Prepare() {
 	this.stopRunIfSignSerivceIsUnabled()
 
-	if strings.HasSuffix(this.routerPattern(), "authcodeurl/:platform") {
+	if !strings.HasSuffix(this.routerPattern(), "auth/:platform") {
 		this.apiPrepare(PermissionOwnerOfOrg)
 	}
 }
@@ -102,9 +102,8 @@ func (this *EmailController) Get() {
 
 // @Title Code
 // @Description send Email authorization verification code
-// @Param  link_id   path  string  true  "link id"
 // @Param  platform  path  string  true  "email authorize"
-// @router /:link_id/code/:platform [post]
+// @router /code/:platform [post]
 func (this *EmailController) Code() {
 	action := "send Email authorization verification code"
 	platform := this.GetString(":platform")
@@ -115,7 +114,7 @@ func (this *EmailController) Code() {
 		return
 	}
 
-	code, me := models.CreateCodeForChangingOrgEmail(this.GetString(":link_id"), info.Email)
+	code, me := models.CreateCodeForSettingOrgEmail(info.Email)
 	if me != nil {
 		this.sendModelErrorAsResp(me, action)
 		return
@@ -139,9 +138,8 @@ func (this *EmailController) Code() {
 
 // @Title Authorize
 // @Description Email authorization verification
-// @Param  link_id   path  string  true  "link id"
 // @Param  platform  path  string  true  "email authorize"
-// @router /:link_id/authorize/:platform [post]
+// @router /authorize/:platform [post]
 func (this *EmailController) Authorize() {
 	action := "Email authorization verification"
 	platform := this.GetString(":platform")
@@ -154,7 +152,7 @@ func (this *EmailController) Authorize() {
 
 	info.Purpose = models.PurposeOfEmailAuthorization(info.Email)
 
-	if verr := (&info).Validate(this.GetString(":link_id")); verr != nil {
+	if verr := (&info).Validate(); verr != nil {
 		this.sendModelErrorAsResp(verr, action)
 		return
 	}

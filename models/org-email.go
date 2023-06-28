@@ -73,8 +73,8 @@ type EmailAuthorization struct {
 	Authorize string `json:"authorize"`
 }
 
-func (e *EmailAuthorization) Validate(linkId string) IModelError {
-	return validateCodeForChangingOrgEmail(linkId, e.Email, e.Code)
+func (e *EmailAuthorization) Validate() IModelError {
+	return validateCodeForSettingOrgEmail(e.Email, e.Code)
 }
 
 func PurposeOfEmailAuthorization(email string) string {

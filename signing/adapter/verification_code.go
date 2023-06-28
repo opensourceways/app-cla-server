@@ -54,15 +54,15 @@ func (adapter *verificationCodeAdatper) toCmdToCreateCodeForSigning(linkId strin
 }
 
 // org email
-func (adapter *verificationCodeAdatper) CreateForChangingOrgEmail(linkId string, email string) (
+func (adapter *verificationCodeAdatper) CreateForSettingOrgEmail(email string) (
 	string, models.IModelError,
 ) {
-	v, err := adapter.toCmdToCreateCodeForSigning(linkId, email)
+	v, err := dp.NewEmailAddr(email)
 	if err != nil {
 		return "", toModelError(err)
 	}
 
-	cmd := app.CmdToCreateCodeForChangingOrgEmail(v)
+	cmd := app.CmdToCreateCodeForSettingOrgEmail{EmailAddr: v}
 
 	code, err := adapter.s.New(&cmd)
 	if err != nil {
@@ -72,15 +72,15 @@ func (adapter *verificationCodeAdatper) CreateForChangingOrgEmail(linkId string,
 	return code, nil
 }
 
-func (adapter *verificationCodeAdatper) ValidateForChangingOrgEmail(
-	linkId string, email, code string,
+func (adapter *verificationCodeAdatper) ValidateForSettingOrgEmail(
+	email, code string,
 ) models.IModelError {
-	v, err := adapter.toCmdToCreateCodeForSigning(linkId, email)
+	v, err := dp.NewEmailAddr(email)
 	if err != nil {
 		return toModelError(err)
 	}
 
-	cmd := app.CmdToCreateCodeForChangingOrgEmail(v)
+	cmd := app.CmdToCreateCodeForSettingOrgEmail{EmailAddr: v}
 
 	if err := adapter.s.Validate(&cmd, code); err != nil {
 		return toModelError(err)

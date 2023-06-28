@@ -70,10 +70,10 @@ func validateCodeForPasswordRetrieval(linkId string, email, code string) IModelE
 	return verificationCodeAdapterInstance.ValidateForPasswordRetrieval(linkId, email, code)
 }
 
-func CreateCodeForChangingOrgEmail(linkId string, email string) (string, IModelError) {
-	return verificationCodeAdapterInstance.CreateForChangingOrgEmail(linkId, email)
+func CreateCodeForSettingOrgEmail(email string) (string, IModelError) {
+	return verificationCodeAdapterInstance.CreateForSettingOrgEmail(email)
 }
 
-func validateCodeForChangingOrgEmail(linkId string, email, code string) IModelError {
-	return verificationCodeAdapterInstance.ValidateForChangingOrgEmail(linkId, email, code)
+func validateCodeForSettingOrgEmail(email, code string) IModelError {
+	return verificationCodeAdapterInstance.ValidateForSettingOrgEmail(email, code)
 }

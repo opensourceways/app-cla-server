@@ -42,10 +42,14 @@ func (cmd *CmdToCreateCodeForEmailDomain) purpose() (dp.Purpose, error) {
 }
 
 // org email
-type CmdToCreateCodeForChangingOrgEmail CmdToCreateCodeForSigning
+type CmdToCreateCodeForSettingOrgEmail struct {
+	EmailAddr dp.EmailAddr
+}
 
-func (cmd *CmdToCreateCodeForChangingOrgEmail) purpose() (dp.Purpose, error) {
-	return (*CmdToCreateCodeForSigning)(cmd).newPurpose("org email")
+func (cmd *CmdToCreateCodeForSettingOrgEmail) purpose() (dp.Purpose, error) {
+	return dp.NewPurpose(
+		fmt.Sprintf("seting org email, %s", cmd.EmailAddr.EmailAddr()),
+	)
 }
 
 // password retrieval

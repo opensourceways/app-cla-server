@@ -49,8 +49,8 @@ type verificationCodeAdapter interface {
 	CreateForAddingEmailDomain(csId string, email string) (string, IModelError)
 	ValidateForAddingEmailDomain(csId string, email, code string) IModelError
 
-	CreateForChangingOrgEmail(linkId string, email string) (string, IModelError)
-	ValidateForChangingOrgEmail(linkId string, email, code string) IModelError
+	CreateForSettingOrgEmail(email string) (string, IModelError)
+	ValidateForSettingOrgEmail(email, code string) IModelError
 
 	CreateForPasswordRetrieval(linkId string, email string) (string, IModelError)
 	ValidateForPasswordRetrieval(linkId string, email, code string) IModelError

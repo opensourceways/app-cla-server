@@ -18,4 +18,7 @@ type CorpSigning interface {
 	AddEmployeeManagers(*domain.CorpSigning, []domain.Manager) error
 	RemoveEmployeeManagers(*domain.CorpSigning, []string) error
 	FindEmployeeManagers(string) ([]domain.Manager, error)
+
+	AddEmailDomain(*domain.CorpSigning, string) error
+	FindEmailDomains(string) ([]string, error)
 }

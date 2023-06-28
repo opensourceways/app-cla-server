@@ -15,7 +15,7 @@ type CorpEmailDomainCreateOption struct {
 	VerificationCode string `json:"verification_code"`
 }
 
-func (cse CorpEmailDomainCreateOption) Validate(adminEmail string) IModelError {
+func (cse *CorpEmailDomainCreateOption) Validate(adminEmail string) IModelError {
 	if err := checkEmailFormat(cse.SubEmail); err != nil {
 		return err
 	}
@@ -32,6 +32,17 @@ func (cse CorpEmailDomainCreateOption) Validate(adminEmail string) IModelError {
 		return newModelError(ErrUnmatchedEmailDomain, fmt.Errorf("unmatched email domain"))
 	}
 	return nil
+}
+
+func (cse *CorpEmailDomainCreateOption) Check(csId string) IModelError {
+	if err := checkEmailFormat(cse.SubEmail); err != nil {
+		return err
+	}
+
+	return checkVerificationCode(
+		cse.SubEmail, cse.VerificationCode,
+		PurposeOfAddingEmailDomain(csId),
+	)
 }
 
 func (cse CorpEmailDomainCreateOption) Create(linkID, adminEmail string) IModelError {
@@ -62,6 +73,14 @@ func ListCorpEmailDomain(linkID, email string) ([]string, IModelError) {
 	return v, parseDBError(err)
 }
 
+func AddCorpEmailDomain(csId string, opt *CorpEmailDomainCreateOption) IModelError {
+	return corpEmailDomainAdapterInstance.Add(csId, opt)
+}
+
+func ListCorpEmailDomains(csId string) ([]string, IModelError) {
+	return corpEmailDomainAdapterInstance.List(csId)
+}
+
 func isMatchedEmailDomain(email1, email2 string) bool {
 	e1 := strings.Split(util.EmailSuffix(email1), ".")
 	e2 := strings.Split(util.EmailSuffix(email2), ".")
@@ -80,6 +99,6 @@ func isMatchedEmailDomain(email1, email2 string) bool {
 	return true
 }
 
-func PurposeOfAddingEmailDomain(email string) string {
-	return fmt.Sprintf("adding email domain:%s", email)
+func PurposeOfAddingEmailDomain(csId string) string {
+	return fmt.Sprintf("adding email domain:%s", csId)
 }

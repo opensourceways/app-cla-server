@@ -34,7 +34,7 @@ func (this *CorpEmailDomainController) Post() {
 	action := "add email domain"
 	sendResp := this.newFuncForSendingFailedResp(action)
 
-	pl, fr := this.tokenPayloadBasedOnCorpManager()
+	_, fr := this.tokenPayloadBasedOnCorpManager()
 	if fr != nil {
 		sendResp(fr)
 		return
@@ -46,12 +46,14 @@ func (this *CorpEmailDomainController) Post() {
 		return
 	}
 
-	if err := info.Validate(pl.Email); err != nil {
+	// TODO csid
+	if err := info.Check(""); err != nil {
 		this.sendModelErrorAsResp(err, action)
 		return
 	}
 
-	if merr := info.Create(pl.LinkID, pl.Email); merr != nil {
+	// TODO csid
+	if merr := models.AddCorpEmailDomain("", info); merr != nil {
 		this.sendModelErrorAsResp(merr, action)
 		return
 	}
@@ -76,13 +78,14 @@ func (this *CorpEmailDomainController) Post() {
 func (this *CorpEmailDomainController) GetAll() {
 	action := "list all domains"
 
-	pl, fr := this.tokenPayloadBasedOnCorpManager()
+	_, fr := this.tokenPayloadBasedOnCorpManager()
 	if fr != nil {
 		this.sendFailedResultAsResp(fr, action)
 		return
 	}
 
-	r, merr := models.ListCorpEmailDomain(pl.LinkID, pl.Email)
+	// TODO csid
+	r, merr := models.ListCorpEmailDomains("")
 	if merr != nil {
 		this.sendModelErrorAsResp(merr, action)
 		return

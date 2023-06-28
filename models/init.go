@@ -8,6 +8,7 @@ var (
 	corpSigningAdapterInstance     corpSigningAdapter
 	employeeSigningAdapterInstance employeeSigningAdapter
 	employeeManagerAdapterInstance employeeManagerAdapter
+	corpEmailDomainAdapterInstance corpEmailDomainAdapter
 )
 
 type corpSigningAdapter interface {
@@ -35,16 +36,23 @@ type employeeManagerAdapter interface {
 	List(csId string) ([]dbmodels.CorporationManagerListResult, IModelError)
 }
 
+type corpEmailDomainAdapter interface {
+	Add(csId string, opt *CorpEmailDomainCreateOption) IModelError
+	List(csId string) ([]string, IModelError)
+}
+
 func Init(
 	ua userAdapter,
 	ca corpAdminAdatper,
 	cs corpSigningAdapter,
 	es employeeSigningAdapter,
 	em employeeManagerAdapter,
+	ed corpEmailDomainAdapter,
 ) {
 	userAdapterInstance = ua
 	corpAdminAdatperInstance = ca
 	corpSigningAdapterInstance = cs
 	employeeSigningAdapterInstance = es
 	employeeManagerAdapterInstance = em
+	corpEmailDomainAdapterInstance = ed
 }

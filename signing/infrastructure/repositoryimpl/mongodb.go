@@ -10,6 +10,7 @@ import (
 const (
 	mongodbCmdOr = "$or"
 	mongodbCmdIn = "$in"
+	mongodbCmdLt = "$lt"
 )
 
 type anyDoc = map[string]string
@@ -30,12 +31,14 @@ type dao interface {
 	MoveArrayItem(filter bson.M, from string, filterOfItem bson.M, to string, value bson.M, version int) error
 
 	InsertDocIfNotExists(filter, doc bson.M) (string, error)
+	InsertDoc(doc bson.M) (string, error)
 
 	DeleteDoc(filter bson.M) error
 	DeleteDocs(filter bson.M) error
 
 	GetDoc(filter, project bson.M, result interface{}) error
 	GetDocs(filter, project bson.M, result interface{}) error
+	GetDocAndDelete(filter, project bson.M, result interface{}) error
 }
 
 func genDoc(doc interface{}) (m bson.M, err error) {

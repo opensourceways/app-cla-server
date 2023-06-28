@@ -3,7 +3,7 @@ package userservice
 import (
 	"strings"
 
-	"github.com/sirupsen/logrus"
+	"github.com/beego/beego/v2/core/logs"
 
 	commonRepo "github.com/opensourceways/app-cla-server/common/domain/repository"
 	"github.com/opensourceways/app-cla-server/signing/domain"
@@ -66,7 +66,7 @@ func (s *userService) Add(linkId, csId string, managers []domain.Manager) (pws m
 
 func (s *userService) Remove(ids []string) {
 	if err := s.repo.Remove(ids); err != nil {
-		logrus.Errorf(
+		logs.Error(
 			"remove user failed, user id: %s, err: %s",
 			strings.Join(ids, ","), err.Error(),
 		)
@@ -80,7 +80,7 @@ func (s *userService) RemoveByAccount(linkId string, accounts []dp.Account) {
 			v[i] = accounts[i].Account()
 		}
 
-		logrus.Errorf(
+		logs.Error(
 			"remove user failed, user: %s, err: %s",
 			strings.Join(v, ","), err.Error(),
 		)

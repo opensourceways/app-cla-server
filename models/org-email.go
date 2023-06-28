@@ -69,7 +69,6 @@ func GetOrgEmailInfo(email string) (*OrgEmail, IModelError) {
 type EmailAuthorization struct {
 	Email     string `json:"email"`
 	Code      string `json:"code"`
-	Purpose   string `json:"purpose"`
 	Authorize string `json:"authorize"`
 }
 

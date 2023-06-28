@@ -150,8 +150,6 @@ func (this *EmailController) Authorize() {
 		return
 	}
 
-	info.Purpose = models.PurposeOfEmailAuthorization(info.Email)
-
 	if verr := (&info).Validate(); verr != nil {
 		this.sendModelErrorAsResp(verr, action)
 		return

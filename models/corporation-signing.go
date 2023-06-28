@@ -165,3 +165,14 @@ func ListDeletedCorpSignings(linkID string) ([]dbmodels.CorporationSigningBasicI
 func RemoveCorpSigning(csId string) IModelError {
 	return corpSigningAdapterInstance.Remove(csId)
 }
+
+type CorporationSigningSummary struct {
+	dbmodels.CorporationSigningBasicInfo
+	Id          string `json:"string"`
+	AdminAdded  bool   `json:"admin_added"`
+	PDFUploaded bool   `json:"pdf_uploaded"`
+}
+
+func ListCorpSigning(linkID string) ([]CorporationSigningSummary, IModelError) {
+	return corpSigningAdapterInstance.List(linkID)
+}

@@ -2,12 +2,23 @@ package repository
 
 import "github.com/opensourceways/app-cla-server/signing/domain"
 
+type CorpSigningSummary struct {
+	Id    string
+	PDF   string
+	Date  string
+	Link  domain.Link
+	Rep   domain.Representative
+	Corp  domain.Corporation
+	Admin domain.Manager
+}
+
 type CorpSigning interface {
 	Add(*domain.CorpSigning) error
 	// count the corp by the email domain
 	Count(linkId, domain string) (int, error)
 	Find(string) (domain.CorpSigning, error)
 	Remove(*domain.CorpSigning) error
+	FindAll(linkId string) ([]CorpSigningSummary, error)
 
 	AddEmployee(*domain.CorpSigning, *domain.EmployeeSigning) error
 	SaveEmployee(*domain.CorpSigning, *domain.EmployeeSigning) error

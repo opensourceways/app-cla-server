@@ -176,3 +176,7 @@ type CorporationSigningSummary struct {
 func ListCorpSigning(linkID string) ([]CorporationSigningSummary, IModelError) {
 	return corpSigningAdapterInstance.List(linkID)
 }
+
+func GetCorpSigning(csId string) (CorporationSigning, IModelError) {
+	return corpSigningAdapterInstance.Get(csId)
+}

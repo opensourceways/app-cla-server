@@ -64,6 +64,27 @@ func (adapter *corpSigningAdatper) Remove(csId string) models.IModelError {
 	return nil
 }
 
+// Get
+func (adapter *corpSigningAdatper) Get(csId string) (
+	models.CorporationSigning, models.IModelError,
+) {
+	item, err := adapter.s.Get(csId)
+	if err != nil {
+		return models.CorporationSigning{}, toModelError(err)
+	}
+
+	return models.CorporationSigning{
+		CorporationSigningBasicInfo: dbmodels.CorporationSigningBasicInfo{
+			Date:            item.Date,
+			AdminName:       item.RepName,
+			AdminEmail:      item.RepEmail,
+			CLALanguage:     item.Language,
+			CorporationName: item.CorpName,
+		},
+		Info: item.AllInfo,
+	}, nil
+}
+
 // List
 func (adapter *corpSigningAdatper) List(linkId string) (
 	[]models.CorporationSigningSummary, models.IModelError,

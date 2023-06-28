@@ -13,6 +13,7 @@ func NewCorpSigningService(repo repository.CorpSigning) *corpSigningService {
 type CorpSigningService interface {
 	Sign(cmd *CmdToSignCorpCLA) error
 	Remove(csId string) error
+	Get(csId string) (CorpSigningInfoDTO, error)
 	List(linkId string) ([]CorpSigningDTO, error)
 }
 
@@ -48,6 +49,22 @@ func (s *corpSigningService) Remove(csId string) error {
 	}
 
 	return s.repo.Remove(&cs)
+}
+
+func (s *corpSigningService) Get(csId string) (CorpSigningInfoDTO, error) {
+	item, err := s.repo.Find(csId)
+	if err != nil {
+		return CorpSigningInfoDTO{}, err
+	}
+
+	return CorpSigningInfoDTO{
+		Date:     item.Date,
+		Language: item.Link.Language.Language(),
+		CorpName: item.Corp.Name.CorpName(),
+		RepName:  item.Rep.Name.Name(),
+		RepEmail: item.Rep.EmailAddr.EmailAddr(),
+		AllInfo:  item.AllInfo,
+	}, nil
 }
 
 func (s *corpSigningService) List(linkId string) ([]CorpSigningDTO, error) {

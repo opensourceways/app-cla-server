@@ -15,6 +15,7 @@ var (
 type corpSigningAdapter interface {
 	Sign(opt *CorporationSigningCreateOption, linkId string) IModelError
 	Remove(string) IModelError
+	Get(csId string) (CorporationSigning, IModelError)
 	List(linkId string) ([]CorporationSigningSummary, IModelError)
 }
 

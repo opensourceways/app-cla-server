@@ -76,8 +76,8 @@ func (cs *CorpSigning) SetAdmin(n int) error {
 	return nil
 }
 
-func (cs *CorpSigning) AllEmailDomains() []string {
-	return cs.Corp.AllEmailDomains
+func (cs *CorpSigning) AddEmailDomain(email dp.EmailAddr) error {
+	return cs.Corp.addEmailDomain(email.Domain())
 }
 
 func (cs *CorpSigning) AddManagers(managers []Manager) error {

@@ -16,6 +16,9 @@ const (
 	ErrorCodeCorpSigningNotFound  = "corp_signing_not_found"
 	ErrorCodeCorpSigningReSigning = "corp_signing_resigning"
 
+	ErrorCodeCorpEmailDomainExists   = "corp_email_domain_exists"
+	ErrorCodeCorpEmailDomainNotMatch = "corp_email_domain_not_match"
+
 	ErrorCodeEmployeeManagerExists         = "employee_manager_exists"
 	ErrorCodeEmployeeManagerTooMany        = "employee_manager_too_many"
 	ErrorCodeEmployeeManagerNotExists      = "employee_manager_not_exists"

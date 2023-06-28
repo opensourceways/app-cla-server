@@ -40,5 +40,7 @@ func initSigning() {
 
 	em := adapter.NewEmployeeManagerAdapter(app.NewEmployeeManagerService(repo, userService))
 
-	models.Init(ua, ca, cs, es, em)
+	ed := adapter.NewCorpEmailDomainAdapter(app.NewCorpEmailDomainService(repo))
+
+	models.Init(ua, ca, cs, es, em, ed)
 }

@@ -95,7 +95,7 @@ func (this *VerificationCodeController) EmailDomain() {
 	}
 
 	code, err := this.createCode(
-		corpEmail, models.PurposeOfAddingEmailDomain(pl.Email),
+		corpEmail, models.PurposeOfAddingEmailDomain(""), //TODO csid
 	)
 	if err != nil {
 		this.sendModelErrorAsResp(err, action)

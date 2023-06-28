@@ -69,6 +69,10 @@ func codeMap(code string) models.ModelErrCode {
 	case domain.ErrorCodeEmployeeSigningNotFound:
 		return models.ErrNoLinkOrUnsigned
 
+	// corp email domain
+	case domain.ErrorCodeCorpEmailDomainNotMatch:
+		return models.ErrUnmatchedEmailDomain
+
 	default:
 		return models.ErrBadRequestParameter
 	}

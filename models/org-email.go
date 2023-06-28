@@ -69,13 +69,13 @@ func GetOrgEmailInfo(email string) (*OrgEmail, IModelError) {
 type EmailAuthorization struct {
 	Email     string `json:"email"`
 	Code      string `json:"code"`
-	Purpose   string `json:"purpose"`
 	Authorize string `json:"authorize"`
 }
 
 func (e *EmailAuthorization) Validate() IModelError {
-	return checkVerificationCode(e.Email, e.Code, e.Purpose)
+	return validateCodeForSettingOrgEmail(e.Email, e.Code)
 }
+
 func PurposeOfEmailAuthorization(email string) string {
 	return fmt.Sprintf("email authorization: %s", email)
 }

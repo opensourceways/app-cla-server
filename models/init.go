@@ -3,12 +3,13 @@ package models
 import "github.com/opensourceways/app-cla-server/dbmodels"
 
 var (
-	userAdapterInstance            userAdapter
-	corpAdminAdatperInstance       corpAdminAdatper
-	corpSigningAdapterInstance     corpSigningAdapter
-	employeeSigningAdapterInstance employeeSigningAdapter
-	employeeManagerAdapterInstance employeeManagerAdapter
-	corpEmailDomainAdapterInstance corpEmailDomainAdapter
+	userAdapterInstance             userAdapter
+	corpAdminAdatperInstance        corpAdminAdatper
+	corpSigningAdapterInstance      corpSigningAdapter
+	employeeSigningAdapterInstance  employeeSigningAdapter
+	employeeManagerAdapterInstance  employeeManagerAdapter
+	corpEmailDomainAdapterInstance  corpEmailDomainAdapter
+	verificationCodeAdapterInstance verificationCodeAdapter
 )
 
 type corpSigningAdapter interface {
@@ -41,6 +42,20 @@ type corpEmailDomainAdapter interface {
 	List(csId string) ([]string, IModelError)
 }
 
+type verificationCodeAdapter interface {
+	CreateForSigning(linkId string, email string) (string, IModelError)
+	ValidateForSigning(linkId string, email, code string) IModelError
+
+	CreateForAddingEmailDomain(csId string, email string) (string, IModelError)
+	ValidateForAddingEmailDomain(csId string, email, code string) IModelError
+
+	CreateForSettingOrgEmail(email string) (string, IModelError)
+	ValidateForSettingOrgEmail(email, code string) IModelError
+
+	CreateForPasswordRetrieval(linkId string, email string) (string, IModelError)
+	ValidateForPasswordRetrieval(linkId string, email, code string) IModelError
+}
+
 func Init(
 	ua userAdapter,
 	ca corpAdminAdatper,
@@ -48,6 +63,7 @@ func Init(
 	es employeeSigningAdapter,
 	em employeeManagerAdapter,
 	ed corpEmailDomainAdapter,
+	vc verificationCodeAdapter,
 ) {
 	userAdapterInstance = ua
 	corpAdminAdatperInstance = ca
@@ -55,4 +71,5 @@ func Init(
 	employeeSigningAdapterInstance = es
 	employeeManagerAdapterInstance = em
 	corpEmailDomainAdapterInstance = ed
+	verificationCodeAdapterInstance = vc
 }

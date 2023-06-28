@@ -6,7 +6,6 @@ import (
 
 	"github.com/beego/beego/v2/core/logs"
 
-	"github.com/opensourceways/app-cla-server/config"
 	"github.com/opensourceways/app-cla-server/email"
 	"github.com/opensourceways/app-cla-server/models"
 	"github.com/opensourceways/app-cla-server/worker"
@@ -21,7 +20,7 @@ type EmailController struct {
 func (this *EmailController) Prepare() {
 	this.stopRunIfSignSerivceIsUnabled()
 
-	if strings.HasSuffix(this.routerPattern(), "authcodeurl/:platform") {
+	if !strings.HasSuffix(this.routerPattern(), "auth/:platform") {
 		this.apiPrepare(PermissionOwnerOfOrg)
 	}
 }
@@ -103,7 +102,7 @@ func (this *EmailController) Get() {
 
 // @Title Code
 // @Description send Email authorization verification code
-// @Param  :platform  path  string  true  "email authorize"
+// @Param  platform  path  string  true  "email authorize"
 // @router /code/:platform [post]
 func (this *EmailController) Code() {
 	action := "send Email authorization verification code"
@@ -115,9 +114,9 @@ func (this *EmailController) Code() {
 		return
 	}
 
-	code, ierr := models.CreateVerificationCode(info.Email, models.PurposeOfEmailAuthorization(info.Email), config.AppConfig.VerificationCodeExpiry)
-	if ierr != nil {
-		this.sendModelErrorAsResp(ierr, action)
+	code, me := models.CreateCodeForSettingOrgEmail(info.Email)
+	if me != nil {
+		this.sendModelErrorAsResp(me, action)
 		return
 	}
 
@@ -139,7 +138,7 @@ func (this *EmailController) Code() {
 
 // @Title Authorize
 // @Description Email authorization verification
-// @Param  :platform  path  string  true  "email authorize"
+// @Param  platform  path  string  true  "email authorize"
 // @router /authorize/:platform [post]
 func (this *EmailController) Authorize() {
 	action := "Email authorization verification"
@@ -150,8 +149,6 @@ func (this *EmailController) Authorize() {
 		this.sendFailedResultAsResp(fr, action)
 		return
 	}
-
-	info.Purpose = models.PurposeOfEmailAuthorization(info.Email)
 
 	if verr := (&info).Validate(); verr != nil {
 		this.sendModelErrorAsResp(verr, action)

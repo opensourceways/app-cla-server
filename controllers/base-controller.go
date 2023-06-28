@@ -144,12 +144,12 @@ func (this *baseController) tokenPayloadBasedOnCorpManager() (*acForCorpManagerP
 }
 
 func (this *baseController) fetchInputPayload(info interface{}) *failedApiResult {
-	return fetchInputPayloadData(&this.Ctx.Input.RequestBody, info)
+	return fetchInputPayloadData(this.Ctx.Input.RequestBody, info)
 }
 
 func (this *baseController) fetchInputPayloadFromFormData(info interface{}) *failedApiResult {
 	input := []byte(this.Ctx.Request.FormValue("data"))
-	return fetchInputPayloadData(&input, info)
+	return fetchInputPayloadData(input, info)
 }
 
 func (this *baseController) checkPathParameter() *failedApiResult {

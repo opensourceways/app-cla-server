@@ -39,9 +39,8 @@ func (cse *CorpEmailDomainCreateOption) Check(csId string) IModelError {
 		return err
 	}
 
-	return checkVerificationCode(
-		cse.SubEmail, cse.VerificationCode,
-		PurposeOfAddingEmailDomain(csId),
+	return validateCodeForAddingEmailDomain(
+		csId, cse.SubEmail, cse.VerificationCode,
 	)
 }
 

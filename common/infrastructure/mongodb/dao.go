@@ -57,6 +57,23 @@ func (impl *daoImpl) IsDocExists(err error) bool {
 	return errors.Is(err, errDocExists)
 }
 
+func (impl *daoImpl) InsertDoc(doc bson.M) (string, error) {
+	docId := ""
+
+	err := impl.withContext(func(ctx context.Context) error {
+		r, err := impl.col.InsertOne(ctx, doc)
+		if err != nil {
+			return err
+		}
+
+		docId = toDocId(r.InsertedID)
+
+		return nil
+	})
+
+	return docId, err
+}
+
 func (impl *daoImpl) InsertDocIfNotExists(filter, doc bson.M) (string, error) {
 	docId := ""
 
@@ -179,6 +196,7 @@ func (impl *daoImpl) UpdateArraySingleItem(filter bson.M, array string, filterOf
 func (impl *daoImpl) GetDoc(filter, project bson.M, result interface{}) error {
 	return impl.withContext(func(ctx context.Context) error {
 		var sr *mongo.SingleResult
+
 		if len(project) > 0 {
 			sr = impl.col.FindOne(ctx, filter, &options.FindOneOptions{
 				Projection: project,
@@ -214,6 +232,30 @@ func (impl *daoImpl) GetDocs(filter, project bson.M, result interface{}) error {
 		}
 
 		return cursor.All(ctx, result)
+	})
+}
+
+func (impl *daoImpl) GetDocAndDelete(filter, project bson.M, result interface{}) error {
+	return impl.withContext(func(ctx context.Context) error {
+		var sr *mongo.SingleResult
+
+		if len(project) > 0 {
+			sr = impl.col.FindOneAndDelete(
+				ctx, filter,
+				&options.FindOneAndDeleteOptions{
+					Projection: project,
+				},
+			)
+		} else {
+			sr = impl.col.FindOneAndDelete(ctx, filter)
+		}
+
+		err := sr.Decode(result)
+		if err != nil && isErrOfNoDocuments(err) {
+			return errDocNotExists
+		}
+
+		return err
 	})
 }
 

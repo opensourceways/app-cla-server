@@ -21,12 +21,13 @@ type CorporationSigningCreateOption struct {
 	VerificationCode string `json:"verification_code"`
 }
 
-func (this *CorporationSigningCreateOption) Validate(orgCLAID string) IModelError {
+func (this *CorporationSigningCreateOption) Validate(linkId string) IModelError {
 	if err := checkEmailFormat(this.AdminEmail); err != nil {
 		return err
 	}
 
-	if err := checkVerificationCode(this.AdminEmail, this.VerificationCode, orgCLAID); err != nil {
+	err := validateCodeForSigning(linkId, this.AdminEmail, this.VerificationCode)
+	if err != nil {
 		return err
 	}
 
@@ -36,14 +37,14 @@ func (this *CorporationSigningCreateOption) Validate(orgCLAID string) IModelErro
 	return nil
 }
 
-func (this *CorporationSigningCreateOption) Create(orgCLAID string) IModelError {
+func (this *CorporationSigningCreateOption) Create(linkId string) IModelError {
 	if corpSigningAdapterInstance != nil {
-		return corpSigningAdapterInstance.Sign(this, orgCLAID)
+		return corpSigningAdapterInstance.Sign(this, linkId)
 	}
 
 	this.Date = util.Date()
 
-	err := dbmodels.GetDB().SignCorpCLA(orgCLAID, &this.CorporationSigning)
+	err := dbmodels.GetDB().SignCorpCLA(linkId, &this.CorporationSigning)
 	if err == nil {
 		return nil
 	}

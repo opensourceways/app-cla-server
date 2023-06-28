@@ -52,7 +52,7 @@ func (this *PasswordRetrievalController) Post() {
 		return
 	}
 
-	b, mErr := info.Create(linkID, config.AppConfig.VerificationCodeExpiry)
+	b, mErr := info.Create(linkID)
 	if mErr != nil {
 		this.sendModelErrorAsResp(mErr, action)
 		return

@@ -5,6 +5,7 @@ type Config struct {
 }
 
 type Collections struct {
-	User        string `json:"user"          required:"true"`
-	CorpSigning string `json:"corp_signing"  required:"true"`
+	User             string `json:"user"               required:"true"`
+	CorpSigning      string `json:"corp_signing"       required:"true"`
+	VerificationCode string `json:"verification_code"  required:"true"`
 }

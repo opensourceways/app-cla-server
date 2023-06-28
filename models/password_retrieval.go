@@ -21,7 +21,8 @@ func (p PasswordRetrieval) Create(linkID string, key []byte) IModelError {
 		return err
 	}
 
-	if err := checkVerificationCode(k.Email, k.Code, genDescOfPasswordRetrieval(linkID)); err != nil {
+	err := validateCodeForPasswordRetrieval(linkID, k.Email, k.Code)
+	if err != nil {
 		return err
 	}
 
@@ -35,8 +36,8 @@ type PasswordRetrievalKey struct {
 	Email string `json:"email" required:"true"`
 }
 
-func (p PasswordRetrievalKey) Create(linkID string, expiry int64) ([]byte, IModelError) {
-	code, mErr := CreateVerificationCode(p.Email, genDescOfPasswordRetrieval(linkID), expiry)
+func (p PasswordRetrievalKey) Create(linkID string) ([]byte, IModelError) {
+	code, mErr := createCodeForPasswordRetrieval(linkID, p.Email)
 	if mErr != nil {
 		return nil, mErr
 	}

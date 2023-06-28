@@ -211,7 +211,7 @@ type corpsSigningResult struct {
 // @Title GetAll
 // @Description get all the corporations which have signed to a org
 // @Param  link_id  path  string  true  "link id"
-// @Success 200 {object} controllers.corpsSigningResult
+// @Success 200 {object} models.CorporationSigningSummary
 // @Failure 400 missing_url_path_parameter: missing url path parameter
 // @Failure 401 missing_token:              token is missing
 // @Failure 402 unknown_token:              token is unknown

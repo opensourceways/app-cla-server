@@ -32,6 +32,9 @@ func codeMap(code string) models.ModelErrCode {
 	case domain.ErrorCodeCorpSigningNotFound:
 		return models.ErrUnsigned
 
+	case domain.ErrorCodeCorpSigningCanNotDelete:
+		return models.ErrCorpManagerExists
+
 	// corp pdf
 	case domain.ErrorCodeCorpPDFNotFound:
 		return models.ErrUnuploaed

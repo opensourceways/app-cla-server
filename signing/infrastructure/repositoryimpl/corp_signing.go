@@ -53,7 +53,7 @@ func (impl *corpSigning) Remove(cs *domain.CorpSigning) error {
 	}
 	filter[fieldVersion] = cs.Version
 
-	if err = impl.dao.DeleteDoc(filter); err != nil {
+	if err = impl.dao.DeleteDoc(filter); err != nil && impl.dao.IsDocNotExists(err) {
 		err = commonRepo.NewErrorConcurrentUpdating(err)
 	}
 

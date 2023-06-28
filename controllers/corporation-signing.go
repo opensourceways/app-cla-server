@@ -115,8 +115,8 @@ func (this *CorporationSigningController) checkCLAForSigning(claFile string, cla
 
 // @Title Delete
 // @Description delete corp signing
-// @Param	:link_id	path 	string		true		"link id"
-// @Param	:email		path 	string		true		"corp email"
+// @Param  link_id     path  string  true  "link id"
+// @Param  signing_id  path  string  true  "corp signing id"
 // @Success 204 {string} delete success!
 // @Failure 400 missing_url_path_parameter: missing url path parameter
 // @Failure 401 missing_token:              token is missing
@@ -127,11 +127,10 @@ func (this *CorporationSigningController) checkCLAForSigning(claFile string, cla
 // @Failure 406 unknown_link:               unkown link id
 // @Failure 407 no_link:                    the link id is not exists
 // @Failure 500 system_error:               system error
-// @router /:link_id/:email [delete]
+// @router /:link_id/:signing_id [delete]
 func (this *CorporationSigningController) Delete() {
 	action := "delete corp signing"
 	linkID := this.GetString(":link_id")
-	corpEmail := this.GetString(":email")
 
 	pl, fr := this.tokenPayloadBasedOnCodePlatform()
 	if fr != nil {
@@ -150,19 +149,8 @@ func (this *CorporationSigningController) Delete() {
 	}
 	defer unlock()
 
-	managers, merr := models.ListCorporationManagers(linkID, corpEmail, dbmodels.RoleAdmin)
-	if merr != nil {
-		this.sendModelErrorAsResp(merr, action)
-		return
-	}
-	if len(managers) > 0 {
-		this.sendFailedResponse(
-			400, errCorpManagerExists,
-			fmt.Errorf("can't delete corp signing info, because admin manager exists"), action)
-		return
-	}
-
-	if err := models.DeleteCorpSigning(linkID, corpEmail); err != nil {
+	csId := this.GetString(":signing_id")
+	if err := models.RemoveCorpSigning(csId); err != nil {
 		this.sendModelErrorAsResp(err, action)
 		return
 	}

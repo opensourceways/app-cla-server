@@ -53,3 +53,12 @@ func (adapter *corpSigningAdatper) cmdToSignCorpCLA(opt *models.CorporationSigni
 
 	return
 }
+
+// Remove
+func (adapter *corpSigningAdatper) Remove(csId string) models.IModelError {
+	if err := adapter.s.Remove(csId); err != nil {
+		return toModelError(err)
+	}
+
+	return nil
+}

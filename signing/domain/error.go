@@ -13,8 +13,9 @@ const (
 
 	ErrorCodeCorpPDFNotFound = "corp_pdf_not_found"
 
-	ErrorCodeCorpSigningNotFound  = "corp_signing_not_found"
-	ErrorCodeCorpSigningReSigning = "corp_signing_resigning"
+	ErrorCodeCorpSigningNotFound     = "corp_signing_not_found"
+	ErrorCodeCorpSigningReSigning    = "corp_signing_resigning"
+	ErrorCodeCorpSigningCanNotDelete = "corp_signing_can_not_delete"
 
 	ErrorCodeCorpEmailDomainExists   = "corp_email_domain_exists"
 	ErrorCodeCorpEmailDomainNotMatch = "corp_email_domain_not_match"

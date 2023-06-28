@@ -7,6 +7,7 @@ type CorpSigning interface {
 	// count the corp by the email domain
 	Count(linkId, domain string) (int, error)
 	Find(string) (domain.CorpSigning, error)
+	Remove(*domain.CorpSigning) error
 
 	AddEmployee(*domain.CorpSigning, *domain.EmployeeSigning) error
 	SaveEmployee(*domain.CorpSigning, *domain.EmployeeSigning) error

@@ -12,6 +12,7 @@ func NewCorpSigningService(repo repository.CorpSigning) *corpSigningService {
 
 type CorpSigningService interface {
 	Sign(cmd *CmdToSignCorpCLA) error
+	Remove(csId string) error
 }
 
 type corpSigningService struct {
@@ -29,4 +30,21 @@ func (s *corpSigningService) Sign(cmd *CmdToSignCorpCLA) error {
 	}
 
 	return err
+}
+
+func (s *corpSigningService) Remove(csId string) error {
+	cs, err := s.repo.Find(csId)
+	if err != nil {
+		if commonRepo.IsErrorResourceNotFound(err) {
+			return nil
+		}
+
+		return err
+	}
+
+	if err := cs.CanRemove(); err != nil {
+		return err
+	}
+
+	return s.repo.Remove(&cs)
 }

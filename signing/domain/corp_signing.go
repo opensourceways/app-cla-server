@@ -48,6 +48,14 @@ func (cs *CorpSigning) PrimaryEmailDomain() string {
 	return cs.Corp.PrimaryEmailDomain
 }
 
+func (cs *CorpSigning) CanRemove() error {
+	if !cs.Admin.isEmpty() {
+		return NewDomainError(ErrorCodeCorpSigningCanNotDelete)
+	}
+
+	return nil
+}
+
 func (cs *CorpSigning) CanSetAdmin() error {
 	if cs.PDF == "" {
 		return NewNotFoundDomainError(ErrorCodeCorpPDFNotFound)

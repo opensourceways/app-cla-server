@@ -7,11 +7,17 @@ func Init(cfg *Config) {
 }
 
 type Config struct {
-	MaxNumOfEmployeeManager      int `json:"max_num_of_employee_manager"`
-	MinNumOfSameEmailDomainParts int `json:"min_num_of_same_email_domain_parts"`
+	// VerificationCodeExpiry is the one in seconds
+	VerificationCodeExpiry       int64 `json:"verification_code_expiry"`
+	MaxNumOfEmployeeManager      int   `json:"max_num_of_employee_manager"`
+	MinNumOfSameEmailDomainParts int   `json:"min_num_of_same_email_domain_parts"`
 }
 
 func (cfg *Config) SetDefault() {
+	if cfg.VerificationCodeExpiry <= 0 {
+		cfg.VerificationCodeExpiry = 300
+	}
+
 	if cfg.MaxNumOfEmployeeManager <= 0 {
 		cfg.MaxNumOfEmployeeManager = 5
 	}

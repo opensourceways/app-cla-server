@@ -31,6 +31,8 @@ const (
 	ErrorCodeEmployeeSigningEnableAgain  = "employee_signing_enable_again"
 	ErrorCodeEmployeeSigningDisableAgain = "employee_signing_disable_again"
 	ErrorCodeEmployeeSigningCanNotDelete = "employee_signing_can_not_delete"
+
+	ErrorCodeVerificationCodeWrong = "verification_code_wrong"
 )
 
 // domainError

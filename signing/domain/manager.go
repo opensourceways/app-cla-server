@@ -15,7 +15,7 @@ type Manager struct {
 	account dp.Account
 }
 
-func (m *Manager) isEmpty() bool {
+func (m *Manager) IsEmpty() bool {
 	return m.Id == ""
 }
 
@@ -28,7 +28,7 @@ func (m *Manager) Account() (dp.Account, error) {
 		return m.account, nil
 	}
 
-	if m.isEmpty() {
+	if m.IsEmpty() {
 		return nil, errors.New("not a manager")
 	}
 

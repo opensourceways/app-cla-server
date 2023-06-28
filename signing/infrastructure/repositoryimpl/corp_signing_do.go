@@ -6,12 +6,15 @@ import (
 
 	"github.com/opensourceways/app-cla-server/signing/domain"
 	"github.com/opensourceways/app-cla-server/signing/domain/dp"
+	"github.com/opensourceways/app-cla-server/signing/domain/repository"
 )
 
 const (
 	fieldRep       = "rep"
+	fieldDate      = "date"
 	fieldCorp      = "corp"
 	fieldName      = "name"
+	fieldLang      = "lang"
 	fieldAdmin     = "admin"
 	fieldEmail     = "email"
 	fieldLinkId    = "link_id"
@@ -57,6 +60,36 @@ type corpSigningDO struct {
 
 func (do *corpSigningDO) toDoc() (bson.M, error) {
 	return genDoc(do)
+}
+
+func (do *corpSigningDO) toCorpSigningSummary(cs *repository.CorpSigningSummary) (err error) {
+	rep, err := do.Rep.toRep()
+	if err != nil {
+		return
+	}
+
+	corp, err := do.Corp.toCorp()
+	if err != nil {
+		return
+	}
+
+	admin, err := do.Admin.toManager()
+	if err != nil {
+		return
+	}
+
+	*cs = repository.CorpSigningSummary{
+		Id:    do.Id.Hex(),
+		Date:  do.Date,
+		Rep:   rep,
+		Corp:  corp,
+		Admin: admin,
+	}
+
+	cs.Link.Id = do.LinkId
+	cs.Link.Language, err = dp.NewLanguage(do.Language)
+
+	return
 }
 
 func (do *corpSigningDO) toCorpSigning(cs *domain.CorpSigning) (err error) {

@@ -22,3 +22,14 @@ func (cmd *CmdToSignCorpCLA) toCorpSigning() domain.CorpSigning {
 		AllInfo: cmd.AllSingingInfo,
 	}
 }
+
+type CorpSigningDTO struct {
+	Id             string `json:"id"`
+	Date           string `json:"date"`
+	Language       string `json:"cla_language"`
+	CorpName       string `json:"corporation_name"`
+	RepName        string `json:"rep_name"`
+	RepEmail       string `json:"rep_email"`
+	HasAdminAdded  bool   `json:"has_admin_added"`
+	HasPDFUploaded bool   `json:"has_pdf_uploaded"`
+}

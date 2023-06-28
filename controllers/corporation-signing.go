@@ -210,7 +210,7 @@ type corpsSigningResult struct {
 
 // @Title GetAll
 // @Description get all the corporations which have signed to a org
-// @Param	:link_id	path 	string		true		"link id"
+// @Param  link_id  path  string  true  "link id"
 // @Success 200 {object} controllers.corpsSigningResult
 // @Failure 400 missing_url_path_parameter: missing url path parameter
 // @Failure 401 missing_token:              token is missing
@@ -235,34 +235,11 @@ func (this *CorporationSigningController) GetAll() {
 		return
 	}
 
-	r, merr := models.ListCorpSignings(linkID, this.GetString("cla_language"))
-	if merr != nil {
+	if r, merr := models.ListCorpSigning(linkID); merr != nil {
 		this.sendModelErrorAsResp(merr, action)
-		return
+	} else {
+		this.sendSuccessResp(r)
 	}
-	if len(r) == 0 {
-		this.sendSuccessResp(nil)
-		return
-	}
-
-	pdfs, err := models.ListCorpsWithPDFUploaded(linkID)
-	if err != nil {
-		this.sendModelErrorAsResp(err, action)
-		return
-	}
-	pdfMap := map[string]bool{}
-	for i := range pdfs {
-		pdfMap[pdfs[i]] = true
-	}
-
-	details := make([]corpsSigningResult, 0, len(r))
-	for k := range r {
-		details = append(details, corpsSigningResult{
-			CorporationSigningSummary: &r[k],
-			PDFUploaded:               pdfMap[util.EmailSuffix(r[k].AdminEmail)]},
-		)
-	}
-	this.sendSuccessResp(details)
 }
 
 // @Title GetAll

@@ -5,6 +5,7 @@ import (
 
 	commonRepo "github.com/opensourceways/app-cla-server/common/domain/repository"
 	"github.com/opensourceways/app-cla-server/signing/domain"
+	"github.com/opensourceways/app-cla-server/signing/domain/repository"
 )
 
 func NewCorpSigning(dao dao) *corpSigning {
@@ -90,4 +91,32 @@ func (impl *corpSigning) Count(linkId, domain string) (int, error) {
 	err := impl.dao.GetDocs(filter, bson.M{fieldLinkId: 1}, &dos)
 
 	return len(dos), err
+}
+
+func (impl *corpSigning) FindAll(linkId string) ([]repository.CorpSigningSummary, error) {
+	filter := linkIdFilter(linkId)
+
+	project := bson.M{
+		fieldDate:   1,
+		fieldLang:   1,
+		fieldRep:    1,
+		fieldCorp:   1,
+		fieldAdmin:  1,
+		fieldLinkId: 1,
+	}
+
+	var dos []corpSigningDO
+
+	if err := impl.dao.GetDocs(filter, project, &dos); err != nil {
+		return nil, err
+	}
+
+	v := make([]repository.CorpSigningSummary, len(dos))
+	for i := range dos {
+		if err := dos[i].toCorpSigningSummary(&v[i]); err != nil {
+			return nil, err
+		}
+	}
+
+	return v, nil
 }

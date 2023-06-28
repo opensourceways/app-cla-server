@@ -1,6 +1,7 @@
 package adapter
 
 import (
+	"github.com/opensourceways/app-cla-server/dbmodels"
 	"github.com/opensourceways/app-cla-server/models"
 	"github.com/opensourceways/app-cla-server/signing/app"
 	"github.com/opensourceways/app-cla-server/signing/domain/dp"
@@ -61,4 +62,34 @@ func (adapter *corpSigningAdatper) Remove(csId string) models.IModelError {
 	}
 
 	return nil
+}
+
+// List
+func (adapter *corpSigningAdatper) List(linkId string) (
+	[]models.CorporationSigningSummary, models.IModelError,
+) {
+	v, err := adapter.s.List(linkId)
+	if err != nil {
+		return nil, toModelError(err)
+	}
+
+	r := make([]models.CorporationSigningSummary, len(v))
+	for i := range v {
+		item := &v[i]
+
+		r[i] = models.CorporationSigningSummary{
+			CorporationSigningBasicInfo: dbmodels.CorporationSigningBasicInfo{
+				Date:            item.Date,
+				AdminName:       item.RepName,
+				AdminEmail:      item.RepEmail,
+				CLALanguage:     item.Language,
+				CorporationName: item.CorpName,
+			},
+			Id:          item.Id,
+			AdminAdded:  item.HasAdminAdded,
+			PDFUploaded: item.HasPDFUploaded,
+		}
+	}
+
+	return r, nil
 }

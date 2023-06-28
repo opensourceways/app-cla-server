@@ -6,11 +6,8 @@ import (
 )
 
 type VerificationCodeService interface {
-	CreateForSigning(cmd *CmdToCreateCodeForSigning) (string, error)
-	ValidateForSigning(cmd *CmdToValidateCodeForSigning) error
-
-	CreateForAddingEmailDomain(cmd *CmdToCreateCodeForEmailDomain) (string, error)
-	ValidateForAddingEmailDomain(cmd *CmdToValidateCodeForEmailDomain) error
+	New(vcPurpose) (string, error)
+	Validate(vcPurpose, string) error
 }
 
 func NewVerificationCodeService(
@@ -26,7 +23,7 @@ type verificationCodeService struct {
 	vcService vcservice.VCService
 }
 
-func (s *verificationCodeService) CreateForSigning(cmd *CmdToCreateCodeForSigning) (string, error) {
+func (s *verificationCodeService) New(cmd vcPurpose) (string, error) {
 	p, err := cmd.purpose()
 	if err != nil {
 		return "", err
@@ -35,36 +32,13 @@ func (s *verificationCodeService) CreateForSigning(cmd *CmdToCreateCodeForSignin
 	return s.vcService.New(p)
 }
 
-func (s *verificationCodeService) ValidateForSigning(cmd *CmdToValidateCodeForSigning) error {
+func (s *verificationCodeService) Validate(cmd vcPurpose, code string) error {
 	p, err := cmd.purpose()
 	if err != nil {
 		return err
 	}
 
-	key := domain.NewVerificationCodeKey(cmd.Code, p)
-
-	return s.vcService.Verify(&key)
-
-}
-
-func (s *verificationCodeService) CreateForAddingEmailDomain(cmd *CmdToCreateCodeForEmailDomain) (
-	string, error,
-) {
-	p, err := cmd.purpose()
-	if err != nil {
-		return "", err
-	}
-
-	return s.vcService.New(p)
-}
-
-func (s *verificationCodeService) ValidateForAddingEmailDomain(cmd *CmdToValidateCodeForEmailDomain) error {
-	p, err := cmd.purpose()
-	if err != nil {
-		return err
-	}
-
-	key := domain.NewVerificationCodeKey(cmd.Code, p)
+	key := domain.NewVerificationCodeKey(code, p)
 
 	return s.vcService.Verify(&key)
 }

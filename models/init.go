@@ -45,8 +45,15 @@ type corpEmailDomainAdapter interface {
 type verificationCodeAdapter interface {
 	CreateForSigning(linkId string, email string) (string, IModelError)
 	ValidateForSigning(linkId string, email, code string) IModelError
+
 	CreateForAddingEmailDomain(csId string, email string) (string, IModelError)
 	ValidateForAddingEmailDomain(csId string, email, code string) IModelError
+
+	CreateForChangingOrgEmail(linkId string, email string) (string, IModelError)
+	ValidateForChangingOrgEmail(linkId string, email, code string) IModelError
+
+	CreateForPasswordRetrieval(linkId string, email string) (string, IModelError)
+	ValidateForPasswordRetrieval(linkId string, email, code string) IModelError
 }
 
 func Init(

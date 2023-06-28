@@ -6,7 +6,6 @@ import (
 
 	"github.com/beego/beego/v2/core/logs"
 
-	"github.com/opensourceways/app-cla-server/config"
 	"github.com/opensourceways/app-cla-server/email"
 	"github.com/opensourceways/app-cla-server/models"
 	"github.com/opensourceways/app-cla-server/worker"
@@ -103,8 +102,9 @@ func (this *EmailController) Get() {
 
 // @Title Code
 // @Description send Email authorization verification code
-// @Param  :platform  path  string  true  "email authorize"
-// @router /code/:platform [post]
+// @Param  link_id   path  string  true  "link id"
+// @Param  platform  path  string  true  "email authorize"
+// @router /:link_id/code/:platform [post]
 func (this *EmailController) Code() {
 	action := "send Email authorization verification code"
 	platform := this.GetString(":platform")
@@ -115,9 +115,9 @@ func (this *EmailController) Code() {
 		return
 	}
 
-	code, ierr := models.CreateVerificationCode(info.Email, models.PurposeOfEmailAuthorization(info.Email), config.AppConfig.VerificationCodeExpiry)
-	if ierr != nil {
-		this.sendModelErrorAsResp(ierr, action)
+	code, me := models.CreateCodeForChangingOrgEmail(this.GetString(":link_id"), info.Email)
+	if me != nil {
+		this.sendModelErrorAsResp(me, action)
 		return
 	}
 
@@ -139,8 +139,9 @@ func (this *EmailController) Code() {
 
 // @Title Authorize
 // @Description Email authorization verification
-// @Param  :platform  path  string  true  "email authorize"
-// @router /authorize/:platform [post]
+// @Param  link_id   path  string  true  "link id"
+// @Param  platform  path  string  true  "email authorize"
+// @router /:link_id/authorize/:platform [post]
 func (this *EmailController) Authorize() {
 	action := "Email authorization verification"
 	platform := this.GetString(":platform")
@@ -153,7 +154,7 @@ func (this *EmailController) Authorize() {
 
 	info.Purpose = models.PurposeOfEmailAuthorization(info.Email)
 
-	if verr := (&info).Validate(); verr != nil {
+	if verr := (&info).Validate(this.GetString(":link_id")); verr != nil {
 		this.sendModelErrorAsResp(verr, action)
 		return
 	}

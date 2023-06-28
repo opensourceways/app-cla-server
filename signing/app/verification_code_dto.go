@@ -6,22 +6,27 @@ import (
 	"github.com/opensourceways/app-cla-server/signing/domain/dp"
 )
 
+type vcPurpose interface {
+	purpose() (dp.Purpose, error)
+}
+
+// signing
 type CmdToCreateCodeForSigning struct {
 	LinkId    string
 	EmailAddr dp.EmailAddr
 }
 
 func (cmd *CmdToCreateCodeForSigning) purpose() (dp.Purpose, error) {
+	return cmd.newPurpose("signing")
+}
+
+func (cmd *CmdToCreateCodeForSigning) newPurpose(action string) (dp.Purpose, error) {
 	return dp.NewPurpose(
-		fmt.Sprintf("sign %s, %s", cmd.LinkId, cmd.EmailAddr.EmailAddr()),
+		fmt.Sprintf("%s %s, %s", action, cmd.LinkId, cmd.EmailAddr.EmailAddr()),
 	)
 }
 
-type CmdToValidateCodeForSigning struct {
-	CmdToCreateCodeForSigning
-	Code string
-}
-
+// email domain
 type CmdToCreateCodeForEmailDomain struct {
 	CorpSigningId string
 	EmailAddr     dp.EmailAddr
@@ -36,7 +41,16 @@ func (cmd *CmdToCreateCodeForEmailDomain) purpose() (dp.Purpose, error) {
 	)
 }
 
-type CmdToValidateCodeForEmailDomain struct {
-	CmdToCreateCodeForEmailDomain
-	Code string
+// org email
+type CmdToCreateCodeForChangingOrgEmail CmdToCreateCodeForSigning
+
+func (cmd *CmdToCreateCodeForChangingOrgEmail) purpose() (dp.Purpose, error) {
+	return (*CmdToCreateCodeForSigning)(cmd).newPurpose("org email")
+}
+
+// password retrieval
+type CmdToCreateCodeForPasswordRetrieval CmdToCreateCodeForSigning
+
+func (cmd *CmdToCreateCodeForPasswordRetrieval) purpose() (dp.Purpose, error) {
+	return (*CmdToCreateCodeForSigning)(cmd).newPurpose("password retrieval")
 }

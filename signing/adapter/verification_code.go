@@ -14,20 +14,16 @@ type verificationCodeAdatper struct {
 	s app.VerificationCodeService
 }
 
+// signing
 func (adapter *verificationCodeAdatper) CreateForSigning(linkId string, email string) (
 	string, models.IModelError,
 ) {
-	cmd := app.CmdToCreateCodeForSigning{
-		LinkId: linkId,
-	}
-
-	var err error
-
-	if cmd.EmailAddr, err = dp.NewEmailAddr(email); err != nil {
+	cmd, err := adapter.toCmdToCreateCodeForSigning(linkId, email)
+	if err != nil {
 		return "", toModelError(err)
 	}
 
-	code, err := adapter.s.CreateForSigning(&cmd)
+	code, err := adapter.s.New(&cmd)
 	if err != nil {
 		return "", toModelError(err)
 	}
@@ -36,38 +32,109 @@ func (adapter *verificationCodeAdatper) CreateForSigning(linkId string, email st
 }
 
 func (adapter *verificationCodeAdatper) ValidateForSigning(linkId string, email, code string) models.IModelError {
-	cmd := app.CmdToValidateCodeForSigning{
-		Code: code,
-	}
-	cmd.LinkId = linkId
-
-	var err error
-
-	if cmd.EmailAddr, err = dp.NewEmailAddr(email); err != nil {
+	cmd, err := adapter.toCmdToCreateCodeForSigning(linkId, email)
+	if err != nil {
 		return toModelError(err)
 	}
 
-	if err := adapter.s.ValidateForSigning(&cmd); err != nil {
+	if err := adapter.s.Validate(&cmd, code); err != nil {
 		return toModelError(err)
 	}
 
 	return nil
 }
 
-func (adapter *verificationCodeAdatper) CreateForAddingEmailDomain(csId string, email string) (
+func (adapter *verificationCodeAdatper) toCmdToCreateCodeForSigning(linkId string, email string) (
+	cmd app.CmdToCreateCodeForSigning, err error,
+) {
+	cmd.LinkId = linkId
+	cmd.EmailAddr, err = dp.NewEmailAddr(email)
+
+	return
+}
+
+// org email
+func (adapter *verificationCodeAdatper) CreateForChangingOrgEmail(linkId string, email string) (
 	string, models.IModelError,
 ) {
-	cmd := app.CmdToCreateCodeForEmailDomain{
-		CorpSigningId: csId,
-	}
-
-	var err error
-
-	if cmd.EmailAddr, err = dp.NewEmailAddr(email); err != nil {
+	v, err := adapter.toCmdToCreateCodeForSigning(linkId, email)
+	if err != nil {
 		return "", toModelError(err)
 	}
 
-	code, err := adapter.s.CreateForAddingEmailDomain(&cmd)
+	cmd := app.CmdToCreateCodeForChangingOrgEmail(v)
+
+	code, err := adapter.s.New(&cmd)
+	if err != nil {
+		return "", toModelError(err)
+	}
+
+	return code, nil
+}
+
+func (adapter *verificationCodeAdatper) ValidateForChangingOrgEmail(
+	linkId string, email, code string,
+) models.IModelError {
+	v, err := adapter.toCmdToCreateCodeForSigning(linkId, email)
+	if err != nil {
+		return toModelError(err)
+	}
+
+	cmd := app.CmdToCreateCodeForChangingOrgEmail(v)
+
+	if err := adapter.s.Validate(&cmd, code); err != nil {
+		return toModelError(err)
+	}
+
+	return nil
+}
+
+// password retrieval
+func (adapter *verificationCodeAdatper) CreateForPasswordRetrieval(linkId string, email string) (
+	string, models.IModelError,
+) {
+	v, err := adapter.toCmdToCreateCodeForSigning(linkId, email)
+	if err != nil {
+		return "", toModelError(err)
+	}
+
+	cmd := app.CmdToCreateCodeForPasswordRetrieval(v)
+
+	code, err := adapter.s.New(&cmd)
+	if err != nil {
+		return "", toModelError(err)
+	}
+
+	return code, nil
+}
+
+func (adapter *verificationCodeAdatper) ValidateForPasswordRetrieval(
+	linkId string, email, code string,
+) models.IModelError {
+	v, err := adapter.toCmdToCreateCodeForSigning(linkId, email)
+	if err != nil {
+		return toModelError(err)
+	}
+
+	cmd := app.CmdToCreateCodeForPasswordRetrieval(v)
+
+	if err := adapter.s.Validate(&cmd, code); err != nil {
+		return toModelError(err)
+	}
+
+	return nil
+}
+
+// email domain
+func (adapter *verificationCodeAdatper) CreateForAddingEmailDomain(csId string, email string) (
+	string, models.IModelError,
+) {
+	cmd, err := adapter.toCmdToCreateCodeForEmailDomain(csId, email)
+	if err != nil {
+		return "", toModelError(err)
+	}
+
+	code, err := adapter.s.New(&cmd)
 	if err != nil {
 		return "", toModelError(err)
 	}
@@ -78,21 +145,26 @@ func (adapter *verificationCodeAdatper) CreateForAddingEmailDomain(csId string, 
 func (adapter *verificationCodeAdatper) ValidateForAddingEmailDomain(
 	csId string, email, code string,
 ) models.IModelError {
-
-	cmd := app.CmdToValidateCodeForEmailDomain{
-		Code: code,
-	}
-	cmd.CorpSigningId = csId
-
-	var err error
-
-	if cmd.EmailAddr, err = dp.NewEmailAddr(email); err != nil {
+	cmd, err := adapter.toCmdToCreateCodeForEmailDomain(csId, email)
+	if err != nil {
 		return toModelError(err)
 	}
 
-	if err := adapter.s.ValidateForAddingEmailDomain(&cmd); err != nil {
+	if err := adapter.s.Validate(&cmd, code); err != nil {
 		return toModelError(err)
 	}
 
 	return nil
+}
+
+func (adapter *verificationCodeAdatper) toCmdToCreateCodeForEmailDomain(csId string, email string) (
+	cmd app.CmdToCreateCodeForEmailDomain, err error,
+) {
+	cmd = app.CmdToCreateCodeForEmailDomain{
+		CorpSigningId: csId,
+	}
+
+	cmd.EmailAddr, err = dp.NewEmailAddr(email)
+
+	return
 }

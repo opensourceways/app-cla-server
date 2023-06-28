@@ -46,6 +46,20 @@ func (impl *corpSigning) Add(v *domain.CorpSigning) error {
 	return err
 }
 
+func (impl *corpSigning) Remove(cs *domain.CorpSigning) error {
+	filter, err := impl.toCorpSigningIndex(cs.Id)
+	if err != nil {
+		return err
+	}
+	filter[fieldVersion] = cs.Version
+
+	if err = impl.dao.DeleteDoc(filter); err != nil && impl.dao.IsDocNotExists(err) {
+		err = commonRepo.NewErrorConcurrentUpdating(err)
+	}
+
+	return err
+}
+
 func (impl *corpSigning) Find(index string) (cs domain.CorpSigning, err error) {
 	filter, err := impl.toCorpSigningIndex(index)
 	if err != nil {

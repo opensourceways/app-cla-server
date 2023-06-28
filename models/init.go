@@ -14,6 +14,7 @@ var (
 
 type corpSigningAdapter interface {
 	Sign(opt *CorporationSigningCreateOption, linkId string) IModelError
+	Remove(string) IModelError
 }
 
 type employeeSigningAdapter interface {

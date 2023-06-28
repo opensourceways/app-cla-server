@@ -161,3 +161,7 @@ func ListDeletedCorpSignings(linkID string) ([]dbmodels.CorporationSigningBasicI
 	}
 	return v, parseDBError(err)
 }
+
+func RemoveCorpSigning(csId string) IModelError {
+	return corpSigningAdapterInstance.Remove(csId)
+}

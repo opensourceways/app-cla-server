@@ -38,17 +38,17 @@ func (impl *verificationCode) Add(code *domain.VerificationCode) error {
 	return err
 }
 
-func (impl *verificationCode) Find(key *domain.VerificationCodeKey) (vc domain.VerificationCode, err error) {
+func (impl *verificationCode) Find(key *domain.VerificationCodeKey) (domain.VerificationCode, error) {
 	filter := toVerificationCodeFilter(key)
 
 	var do verificationCodeDO
 
-	if err = impl.dao.GetDocAndDelete(filter, nil, &do); err != nil {
+	if err := impl.dao.GetDocAndDelete(filter, nil, &do); err != nil {
 		if impl.dao.IsDocNotExists(err) {
 			err = commonRepo.NewErrorResourceNotFound(err)
 		}
 
-		return
+		return domain.VerificationCode{}, err
 	}
 
 	return do.toVerificationCode()

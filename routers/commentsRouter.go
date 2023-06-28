@@ -153,18 +153,18 @@ func init() {
 
 	beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:CorporationSigningController"] = append(beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:CorporationSigningController"],
 		beego.ControllerComments{
-			Method:           "ResendCorpSigningEmail",
-			Router:           `/:link_id/:email`,
-			AllowHTTPMethods: []string{"post"},
+			Method:           "Delete",
+			Router:           `/:link_id/:signing_id`,
+			AllowHTTPMethods: []string{"delete"},
 			MethodParams:     param.Make(),
 			Filters:          nil,
 			Params:           nil})
 
 	beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:CorporationSigningController"] = append(beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:CorporationSigningController"],
 		beego.ControllerComments{
-			Method:           "Delete",
+			Method:           "ResendCorpSigningEmail",
 			Router:           `/:link_id/:signing_id`,
-			AllowHTTPMethods: []string{"delete"},
+			AllowHTTPMethods: []string{"post"},
 			MethodParams:     param.Make(),
 			Filters:          nil,
 			Params:           nil})

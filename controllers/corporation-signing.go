@@ -160,14 +160,13 @@ func (this *CorporationSigningController) Delete() {
 
 // @Title ResendCorpSigningEmail
 // @Description resend corp signing email
-// @Param	:org_id		path 	string		true		"org cla id"
-// @Param	:email		path 	string		true		"corp email"
+// @Param  link_id      path  string  true  "link id"
+// @Param  signing_id  path  string  true  "corp email"
 // @Success 201 {int} map
-// @router /:link_id/:email [post]
+// @router /:link_id/:signing_id [post]
 func (this *CorporationSigningController) ResendCorpSigningEmail() {
 	action := "resend corp signing email"
 	linkID := this.GetString(":link_id")
-	corpEmail := this.GetString(":email")
 
 	pl, fr := this.tokenPayloadBasedOnCodePlatform()
 	if fr != nil {
@@ -179,25 +178,22 @@ func (this *CorporationSigningController) ResendCorpSigningEmail() {
 		return
 	}
 
-	claInfo, signingInfo, merr := models.GetCorpSigningDetail(linkID, corpEmail)
+	signingInfo, merr := models.GetCorpSigning(this.GetString(":signing_id"))
 	if merr != nil {
 		this.sendModelErrorAsResp(merr, action)
 		return
 	}
-	if claInfo == nil {
-		this.sendFailedResponse(400, errUnsigned, fmt.Errorf("no data"), action)
+
+	claInfo, merr := models.GetCLAInfoToSign(linkID, signingInfo.CLALanguage, dbmodels.ApplyToCorporation)
+	if merr != nil {
+		this.sendModelErrorAsResp(merr, action)
 		return
 	}
 
 	claFile := genCLAFilePath(linkID, dbmodels.ApplyToCorporation, signingInfo.CLALanguage, claInfo.CLAHash)
 
 	worker.GetEmailWorker().GenCLAPDFForCorporationAndSendIt(
-		linkID, claFile, *pl.orgInfo(linkID),
-		models.CorporationSigning{
-			CorporationSigningBasicInfo: signingInfo.CorporationSigningBasicInfo,
-			Info:                        signingInfo.Info,
-		},
-		claInfo.Fields,
+		linkID, claFile, *pl.orgInfo(linkID), signingInfo, claInfo.Fields,
 	)
 
 	this.sendSuccessResp("resend email successfully")

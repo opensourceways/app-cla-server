@@ -33,3 +33,12 @@ type CorpSigningDTO struct {
 	HasAdminAdded  bool   `json:"has_admin_added"`
 	HasPDFUploaded bool   `json:"has_pdf_uploaded"`
 }
+
+type CorpSigningInfoDTO struct {
+	Date     string                `json:"date"`
+	Language string                `json:"cla_language"`
+	CorpName string                `json:"corporation_name"`
+	RepName  string                `json:"rep_name"`
+	RepEmail string                `json:"rep_email"`
+	AllInfo  domain.AllSingingInfo `json:"info"`
+}

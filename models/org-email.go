@@ -76,6 +76,7 @@ type EmailAuthorization struct {
 func (e *EmailAuthorization) Validate() IModelError {
 	return checkVerificationCode(e.Email, e.Code, e.Purpose)
 }
+
 func PurposeOfEmailAuthorization(email string) string {
 	return fmt.Sprintf("email authorization: %s", email)
 }

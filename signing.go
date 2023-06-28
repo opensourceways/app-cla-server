@@ -8,8 +8,10 @@ import (
 	"github.com/opensourceways/app-cla-server/signing/app"
 	"github.com/opensourceways/app-cla-server/signing/domain/dp"
 	"github.com/opensourceways/app-cla-server/signing/domain/userservice"
+	"github.com/opensourceways/app-cla-server/signing/domain/vcservice"
 	"github.com/opensourceways/app-cla-server/signing/infrastructure/encryptionimpl"
 	"github.com/opensourceways/app-cla-server/signing/infrastructure/passwordimpl"
+	"github.com/opensourceways/app-cla-server/signing/infrastructure/randomcodeimpl"
 	"github.com/opensourceways/app-cla-server/signing/infrastructure/repositoryimpl"
 )
 
@@ -42,5 +44,14 @@ func initSigning() {
 
 	ed := adapter.NewCorpEmailDomainAdapter(app.NewCorpEmailDomainService(repo))
 
-	models.Init(ua, ca, cs, es, em, ed)
+	vc := adapter.NewVerificationCodeAdapter(app.NewVerificationCodeService(
+		vcservice.NewVCService(
+			repositoryimpl.NewVerificationCode(
+				mongodb.DAO(cfg.Mongodb.Collections.VerificationCode),
+			),
+			randomcodeimpl.NewRandomCodeImpl(),
+		),
+	))
+
+	models.Init(ua, ca, cs, es, em, ed, vc)
 }

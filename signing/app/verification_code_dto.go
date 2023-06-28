@@ -1,14 +1,20 @@
 package app
 
-import "github.com/opensourceways/app-cla-server/signing/domain/dp"
+import (
+	"fmt"
+
+	"github.com/opensourceways/app-cla-server/signing/domain/dp"
+)
 
 type CmdToCreateCodeForSigning struct {
 	LinkId    string
 	EmailAddr dp.EmailAddr
 }
 
-func (cmd *CmdToCreateCodeForSigning) purpose() dp.Purpose {
-	return dp.NewPurposeOfSigning(cmd.LinkId, cmd.EmailAddr)
+func (cmd *CmdToCreateCodeForSigning) purpose() (dp.Purpose, error) {
+	return dp.NewPurpose(
+		fmt.Sprintf("sign %s, %s", cmd.LinkId, cmd.EmailAddr.EmailAddr()),
+	)
 }
 
 type CmdToValidateCodeForSigning struct {
@@ -21,8 +27,13 @@ type CmdToCreateCodeForEmailDomain struct {
 	EmailAddr     dp.EmailAddr
 }
 
-func (cmd *CmdToCreateCodeForEmailDomain) purpose() dp.Purpose {
-	return dp.NewPurposeOfSigning(cmd.CorpSigningId, cmd.EmailAddr)
+func (cmd *CmdToCreateCodeForEmailDomain) purpose() (dp.Purpose, error) {
+	return dp.NewPurpose(
+		fmt.Sprintf(
+			"add email domain: %s, %s",
+			cmd.CorpSigningId, cmd.EmailAddr.EmailAddr(),
+		),
+	)
 }
 
 type CmdToValidateCodeForEmailDomain struct {

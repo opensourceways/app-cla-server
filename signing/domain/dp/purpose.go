@@ -1,9 +1,6 @@
 package dp
 
-import (
-	"errors"
-	"fmt"
-)
+import "errors"
 
 type Purpose interface {
 	Purpose() string
@@ -21,16 +18,4 @@ func NewPurpose(v string) (Purpose, error) {
 	}
 
 	return purpose(v), nil
-}
-
-func NewPurposeOfSigning(linkId string, email EmailAddr) Purpose {
-	return purpose(
-		fmt.Sprintf("sign %s, %s", linkId, email.EmailAddr()),
-	)
-}
-
-func NewPurposeOfAddingEmailDomain(csId string, email EmailAddr) Purpose {
-	return purpose(
-		fmt.Sprintf("add email domain: %s, %s", csId, email.EmailAddr()),
-	)
 }

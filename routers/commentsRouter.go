@@ -361,7 +361,7 @@ func init() {
 	beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:VerificationCodeController"] = append(beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:VerificationCodeController"],
 		beego.ControllerComments{
 			Method:           "EmailDomain",
-			Router:           `/:email`,
+			Router:           `/`,
 			AllowHTTPMethods: []string{"post"},
 			MethodParams:     param.Make(),
 			Filters:          nil,
@@ -370,7 +370,7 @@ func init() {
 	beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:VerificationCodeController"] = append(beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:VerificationCodeController"],
 		beego.ControllerComments{
 			Method:           "Post",
-			Router:           `/:link_id/:email`,
+			Router:           `/:link_id`,
 			AllowHTTPMethods: []string{"post"},
 			MethodParams:     param.Make(),
 			Filters:          nil,

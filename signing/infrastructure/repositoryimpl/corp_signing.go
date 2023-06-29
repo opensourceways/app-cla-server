@@ -67,9 +67,14 @@ func (impl *corpSigning) Find(index string) (cs domain.CorpSigning, err error) {
 		return
 	}
 
+	project := bson.M{
+		fieldPDF:     0,
+		fieldDeleted: 0,
+	}
+
 	var do corpSigningDO
 
-	if err = impl.dao.GetDoc(filter, bson.M{fieldDeleted: 0}, &do); err != nil {
+	if err = impl.dao.GetDoc(filter, project, &do); err != nil {
 		if impl.dao.IsDocNotExists(err) {
 			err = commonRepo.NewErrorResourceNotFound(err)
 		}
@@ -103,6 +108,7 @@ func (impl *corpSigning) FindAll(linkId string) ([]repository.CorpSigningSummary
 		fieldCorp:   1,
 		fieldAdmin:  1,
 		fieldLinkId: 1,
+		fieldHasPDF: 1,
 	}
 
 	var dos []corpSigningDO

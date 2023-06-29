@@ -10,6 +10,7 @@ import (
 )
 
 const (
+	fieldPDF       = "pdf"
 	fieldRep       = "rep"
 	fieldDate      = "date"
 	fieldCorp      = "corp"
@@ -17,6 +18,7 @@ const (
 	fieldLang      = "lang"
 	fieldAdmin     = "admin"
 	fieldEmail     = "email"
+	fieldHasPDF    = "has_pdf"
 	fieldLinkId    = "link_id"
 	fieldDomain    = "domain"
 	fieldDomains   = "domains"
@@ -51,6 +53,8 @@ type corpSigningDO struct {
 	Corp     corpDO             `bson:"corp"     json:"corp"     required:"true"`
 	AllInfo  anyDoc             `bson:"info"     json:"info,omitempty"`
 
+	PDF       []byte              `bson:"pdf"           json:"pdf,omitempty"`
+	HasPDF    bool                `bson:"has_pdf"       json:"has_pdf"`
 	Admin     managerDO           `bson:"admin"         json:"admin"`
 	Managers  []managerDO         `bson:"managers"      json:"managers"`
 	Employees []employeeSigningDO `bson:"employees"     json:"employees"`
@@ -79,11 +83,12 @@ func (do *corpSigningDO) toCorpSigningSummary(cs *repository.CorpSigningSummary)
 	}
 
 	*cs = repository.CorpSigningSummary{
-		Id:    do.Id.Hex(),
-		Date:  do.Date,
-		Rep:   rep,
-		Corp:  corp,
-		Admin: admin,
+		Id:     do.Id.Hex(),
+		Date:   do.Date,
+		HasPDF: do.HasPDF,
+		Rep:    rep,
+		Corp:   corp,
+		Admin:  admin,
 	}
 
 	cs.Link.Id = do.LinkId
@@ -124,6 +129,7 @@ func (do *corpSigningDO) toCorpSigning(cs *domain.CorpSigning) (err error) {
 		Rep:       rep,
 		Corp:      corp,
 		AllInfo:   do.AllInfo,
+		HasPDF:    do.HasPDF,
 		Admin:     admin,
 		Managers:  managers,
 		Employees: es,

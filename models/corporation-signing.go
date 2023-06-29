@@ -180,3 +180,11 @@ func ListCorpSigning(linkID string) ([]CorporationSigningSummary, IModelError) {
 func GetCorpSigning(csId string) (CorporationSigning, IModelError) {
 	return corpSigningAdapterInstance.Get(csId)
 }
+
+func UploadCorpPDF(csId string, pdf []byte) IModelError {
+	return corpPDFAdapterInstance.Upload(csId, pdf)
+}
+
+func DownloadCorpPDF(csId string) ([]byte, IModelError) {
+	return corpPDFAdapterInstance.Download(csId)
+}

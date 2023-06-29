@@ -85,7 +85,7 @@ func (s *corpSigningService) List(linkId string) ([]CorpSigningDTO, error) {
 			RepName:        item.Rep.Name.Name(),
 			RepEmail:       item.Rep.EmailAddr.EmailAddr(),
 			HasAdminAdded:  !item.Admin.IsEmpty(),
-			HasPDFUploaded: item.PDF != "",
+			HasPDFUploaded: item.HasPDF,
 		}
 	}
 

@@ -4,6 +4,7 @@ import "github.com/opensourceways/app-cla-server/dbmodels"
 
 var (
 	userAdapterInstance             userAdapter
+	corpPDFAdapterInstance          corpPDFAdapter
 	corpAdminAdatperInstance        corpAdminAdatper
 	corpSigningAdapterInstance      corpSigningAdapter
 	employeeSigningAdapterInstance  employeeSigningAdapter
@@ -45,6 +46,11 @@ type corpEmailDomainAdapter interface {
 	List(csId string) ([]string, IModelError)
 }
 
+type corpPDFAdapter interface {
+	Upload(csId string, pdf []byte) IModelError
+	Download(csId string) ([]byte, IModelError)
+}
+
 type verificationCodeAdapter interface {
 	CreateForSigning(linkId string, email string) (string, IModelError)
 	ValidateForSigning(linkId string, email, code string) IModelError
@@ -61,6 +67,7 @@ type verificationCodeAdapter interface {
 
 func Init(
 	ua userAdapter,
+	cp corpPDFAdapter,
 	ca corpAdminAdatper,
 	cs corpSigningAdapter,
 	es employeeSigningAdapter,
@@ -69,6 +76,7 @@ func Init(
 	vc verificationCodeAdapter,
 ) {
 	userAdapterInstance = ua
+	corpPDFAdapterInstance = cp
 	corpAdminAdatperInstance = ca
 	corpSigningAdapterInstance = cs
 	employeeSigningAdapterInstance = es

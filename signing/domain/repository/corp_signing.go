@@ -3,13 +3,13 @@ package repository
 import "github.com/opensourceways/app-cla-server/signing/domain"
 
 type CorpSigningSummary struct {
-	Id    string
-	PDF   string
-	Date  string
-	Link  domain.Link
-	Rep   domain.Representative
-	Corp  domain.Corporation
-	Admin domain.Manager
+	Id     string
+	Date   string
+	HasPDF bool
+	Link   domain.Link
+	Rep    domain.Representative
+	Corp   domain.Corporation
+	Admin  domain.Manager
 }
 
 type CorpSigning interface {
@@ -33,4 +33,7 @@ type CorpSigning interface {
 
 	AddEmailDomain(*domain.CorpSigning, string) error
 	FindEmailDomains(string) ([]string, error)
+
+	SaveCorpPDF(*domain.CorpSigning, []byte) error
+	FindCorpPDF(string) ([]byte, error)
 }

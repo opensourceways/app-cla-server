@@ -118,7 +118,7 @@ func init() {
 	beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:CorporationPDFController"] = append(beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:CorporationPDFController"],
 		beego.ControllerComments{
 			Method:           "Upload",
-			Router:           `/:link_id/:email`,
+			Router:           `/:link_id/:signing_id`,
 			AllowHTTPMethods: []string{"patch"},
 			MethodParams:     param.Make(),
 			Filters:          nil,
@@ -127,7 +127,7 @@ func init() {
 	beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:CorporationPDFController"] = append(beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:CorporationPDFController"],
 		beego.ControllerComments{
 			Method:           "Download",
-			Router:           `/:link_id/:email`,
+			Router:           `/:link_id/:signing_id`,
 			AllowHTTPMethods: []string{"get"},
 			MethodParams:     param.Make(),
 			Filters:          nil,

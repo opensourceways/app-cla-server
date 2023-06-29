@@ -44,6 +44,8 @@ func initSigning() {
 
 	ed := adapter.NewCorpEmailDomainAdapter(app.NewCorpEmailDomainService(repo))
 
+	cp := adapter.NewCorpPDFAdapter(app.NewCorpPDFService(repo))
+
 	vc := adapter.NewVerificationCodeAdapter(app.NewVerificationCodeService(
 		vcservice.NewVCService(
 			repositoryimpl.NewVerificationCode(
@@ -53,5 +55,5 @@ func initSigning() {
 		),
 	))
 
-	models.Init(ua, ca, cs, es, em, ed, vc)
+	models.Init(ua, cp, ca, cs, es, em, ed, vc)
 }

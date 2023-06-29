@@ -31,13 +31,13 @@ type Link struct {
 
 type CorpSigning struct {
 	Id      string
-	PDF     string
 	Date    string
 	Link    Link
 	Rep     Representative
 	Corp    Corporation
 	AllInfo AllSingingInfo
 
+	HasPDF    bool // true if pdf has uploaded
 	Admin     Manager
 	Managers  []Manager
 	Employees []EmployeeSigning
@@ -57,7 +57,7 @@ func (cs *CorpSigning) CanRemove() error {
 }
 
 func (cs *CorpSigning) CanSetAdmin() error {
-	if cs.PDF == "" {
+	if !cs.HasPDF {
 		return NewNotFoundDomainError(ErrorCodeCorpPDFNotFound)
 	}
 

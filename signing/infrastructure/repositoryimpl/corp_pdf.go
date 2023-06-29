@@ -7,14 +7,14 @@ import (
 	"github.com/opensourceways/app-cla-server/signing/domain"
 )
 
-func (impl *corpSigning) AddEmailDomain(cs *domain.CorpSigning, domain string) error {
+func (impl *corpSigning) SaveCorpPDF(cs *domain.CorpSigning, pdf []byte) error {
 	index, err := impl.toCorpSigningIndex(cs.Id)
 	if err != nil {
 		return err
 	}
 
-	err = impl.dao.PushArraySingleItem(
-		index, childField(fieldCorp, fieldDomains), domain, cs.Version,
+	err = impl.dao.UpdateDoc(
+		index, bson.M{fieldPDF: pdf, fieldHasPDF: true}, cs.Version,
 	)
 	if err != nil && impl.dao.IsDocNotExists(err) {
 		err = commonRepo.NewErrorConcurrentUpdating(err)
@@ -23,7 +23,7 @@ func (impl *corpSigning) AddEmailDomain(cs *domain.CorpSigning, domain string) e
 	return err
 }
 
-func (impl *corpSigning) FindEmailDomains(csId string) ([]string, error) {
+func (impl *corpSigning) FindCorpPDF(csId string) ([]byte, error) {
 	filter, err := impl.toCorpSigningIndex(csId)
 	if err != nil {
 		return nil, err
@@ -31,7 +31,7 @@ func (impl *corpSigning) FindEmailDomains(csId string) ([]string, error) {
 
 	var do corpSigningDO
 
-	err = impl.dao.GetDoc(filter, bson.M{childField(fieldCorp, fieldDomains): 1}, &do)
+	err = impl.dao.GetDoc(filter, bson.M{fieldPDF: 1}, &do)
 	if err != nil {
 		if impl.dao.IsDocNotExists(err) {
 			err = commonRepo.NewErrorResourceNotFound(err)
@@ -40,5 +40,5 @@ func (impl *corpSigning) FindEmailDomains(csId string) ([]string, error) {
 		return nil, err
 	}
 
-	return do.Corp.Domains, nil
+	return do.PDF, nil
 }

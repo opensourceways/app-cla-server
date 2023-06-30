@@ -18,7 +18,7 @@ func NewIndividualSigningService(
 
 type IndividualSigningService interface {
 	Sign(cmd *CmdToSignIndividualCLA) error
-	Check(cmd *CmdToCheckSinging) bool
+	Check(cmd *CmdToCheckSinging) (bool, error)
 }
 
 type individualSigningService struct {
@@ -28,8 +28,15 @@ type individualSigningService struct {
 
 // Sign
 func (s *individualSigningService) Sign(cmd *CmdToSignIndividualCLA) error {
-	is := cmd.toIndividualSigning()
+	n, err := s.corpRepo.Count(cmd.Link.Id, cmd.Rep.EmailAddr.Domain())
+	if err != nil {
+		return err
+	}
+	if n > 0 {
+		return domain.NewDomainError(domain.ErrorCodeIndividualSigningCorpExists)
+	}
 
+	is := cmd.toIndividualSigning()
 	if err := s.repo.Add(&is); err != nil {
 		if commonRepo.IsErrorDuplicateCreating(err) {
 			return domain.NewDomainError(domain.ErrorCodeIndividualSigningReSigning)
@@ -42,15 +49,19 @@ func (s *individualSigningService) Sign(cmd *CmdToSignIndividualCLA) error {
 }
 
 // Check
-func (s *individualSigningService) Check(cmd *CmdToCheckSinging) bool {
-	if n, err := s.repo.Count(cmd.LinkId, cmd.EmailAddr); err == nil && n > 0 {
-		return true
+func (s *individualSigningService) Check(cmd *CmdToCheckSinging) (bool, error) {
+	n, err := s.repo.Count(cmd.LinkId, cmd.EmailAddr)
+	if err != nil {
+		return false, err
+	}
+	if n > 0 {
+		return true, nil
 	}
 
 	v, err := s.corpRepo.FindEmployeesByEmail(cmd.LinkId, cmd.EmailAddr)
-	if err == nil && len(v) > 0 {
-		return v[0].Enabled
+	if err != nil || len(v) == 0 {
+		return false, err
 	}
 
-	return false
+	return v[0].Enabled, nil
 }

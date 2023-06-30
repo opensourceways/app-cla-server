@@ -114,3 +114,24 @@ func (adapter *corpSigningAdatper) List(linkId string) (
 
 	return r, nil
 }
+
+// FindCorpSigningId
+func (adapter *corpSigningAdatper) FindCorpSummary(linkId string, email string) (
+	interface{}, models.IModelError,
+) {
+	cmd := app.CmdToFindCorpSummary{
+		LinkId: linkId,
+	}
+
+	var err error
+	if cmd.EmailAddr, err = dp.NewEmailAddr(email); err != nil {
+		return false, toModelError(err)
+	}
+
+	v, err := adapter.s.FindCorpSummary(&cmd)
+	if err != nil {
+		return nil, toModelError(err)
+	}
+
+	return v, nil
+}

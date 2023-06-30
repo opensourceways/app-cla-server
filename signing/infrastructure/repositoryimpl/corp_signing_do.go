@@ -66,6 +66,10 @@ func (do *corpSigningDO) toDoc() (bson.M, error) {
 	return genDoc(do)
 }
 
+func (do *corpSigningDO) index() string {
+	return do.Id.Hex()
+}
+
 func (do *corpSigningDO) toCorpSigningSummary(cs *repository.CorpSigningSummary) (err error) {
 	rep, err := do.Rep.toRep()
 	if err != nil {
@@ -83,7 +87,7 @@ func (do *corpSigningDO) toCorpSigningSummary(cs *repository.CorpSigningSummary)
 	}
 
 	*cs = repository.CorpSigningSummary{
-		Id:     do.Id.Hex(),
+		Id:     do.index(),
 		Date:   do.Date,
 		HasPDF: do.HasPDF,
 		Rep:    rep,
@@ -124,7 +128,7 @@ func (do *corpSigningDO) toCorpSigning(cs *domain.CorpSigning) (err error) {
 	}
 
 	*cs = domain.CorpSigning{
-		Id:        do.Id.Hex(),
+		Id:        do.index(),
 		Date:      do.Date,
 		Rep:       rep,
 		Corp:      corp,

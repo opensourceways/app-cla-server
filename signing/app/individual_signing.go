@@ -28,11 +28,11 @@ type individualSigningService struct {
 
 // Sign
 func (s *individualSigningService) Sign(cmd *CmdToSignIndividualCLA) error {
-	n, err := s.corpRepo.Count(cmd.Link.Id, cmd.Rep.EmailAddr.Domain())
+	v, err := s.corpRepo.FindCorpSummary(cmd.Link.Id, cmd.Rep.EmailAddr.Domain())
 	if err != nil {
 		return err
 	}
-	if n > 0 {
+	if len(v) > 0 {
 		return domain.NewDomainError(domain.ErrorCodeIndividualSigningCorpExists)
 	}
 

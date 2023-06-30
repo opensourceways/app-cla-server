@@ -15,6 +15,7 @@ type CorpSigningService interface {
 	Remove(csId string) error
 	Get(csId string) (CorpSigningInfoDTO, error)
 	List(linkId string) ([]CorpSigningDTO, error)
+	FindCorpSummary(cmd *CmdToFindCorpSummary) ([]CorpSummaryDTO, error)
 }
 
 type corpSigningService struct {
@@ -90,4 +91,21 @@ func (s *corpSigningService) List(linkId string) ([]CorpSigningDTO, error) {
 	}
 
 	return dtos, nil
+}
+
+func (s *corpSigningService) FindCorpSummary(cmd *CmdToFindCorpSummary) ([]CorpSummaryDTO, error) {
+	v, err := s.repo.FindCorpSummary(cmd.LinkId, cmd.EmailAddr.Domain())
+	if err != nil || len(v) == 0 {
+		return nil, err
+	}
+
+	r := make([]CorpSummaryDTO, 0, len(v))
+	for i := range v {
+		r[i] = CorpSummaryDTO{
+			CorpName:      v[i].CorpName.CorpName(),
+			CorpSigningId: v[i].CorpSigningId,
+		}
+	}
+
+	return r, nil
 }

@@ -253,26 +253,7 @@ func (this *CorporationSigningController) GetAll() {
 // @Failure 500 system_error:               system error
 // @router /deleted/:link_id [get]
 func (this *CorporationSigningController) ListDeleted() {
-	action := "list deleted corporations"
-	linkID := this.GetString(":link_id")
-
-	pl, fr := this.tokenPayloadBasedOnCodePlatform()
-	if fr != nil {
-		this.sendFailedResultAsResp(fr, action)
-		return
-	}
-	if fr := pl.isOwnerOfLink(linkID); fr != nil {
-		this.sendFailedResultAsResp(fr, action)
-		return
-	}
-
-	r, merr := models.ListDeletedCorpSignings(linkID)
-	if merr != nil {
-		this.sendModelErrorAsResp(merr, action)
-		return
-	}
-
-	this.sendSuccessResp(r)
+	this.sendSuccessResp(nil)
 }
 
 // @Title GetCorpInfo

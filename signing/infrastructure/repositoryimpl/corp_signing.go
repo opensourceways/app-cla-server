@@ -85,17 +85,32 @@ func (impl *corpSigning) Find(index string) (cs domain.CorpSigning, err error) {
 	return
 }
 
-func (impl *corpSigning) Count(linkId, domain string) (int, error) {
+func (impl *corpSigning) FindCorpSummary(linkId, domain string) ([]repository.CorpSummary, error) {
 	filter := linkIdFilter(linkId)
 	filter[childField(fieldCorp, fieldDomains)] = bson.M{mongodbCmdIn: bson.A{domain}}
 
-	var dos []struct {
-		LinkId string `bson:"link_id"`
+	var dos []corpSigningDO
+
+	if err := impl.dao.GetDocs(filter, bson.M{fieldCorp: 1}, &dos); err != nil {
+		return nil, err
 	}
 
-	err := impl.dao.GetDocs(filter, bson.M{fieldLinkId: 1}, &dos)
+	v := make([]repository.CorpSummary, len(dos))
+	for i := range dos {
+		item := &dos[i]
 
-	return len(dos), err
+		corp, err := item.Corp.toCorp()
+		if err != nil {
+			return nil, err
+		}
+
+		v[i] = repository.CorpSummary{
+			CorpSigningId: item.index(),
+			CorpName:      corp.Name,
+		}
+	}
+
+	return v, nil
 }
 
 func (impl *corpSigning) FindAll(linkId string) ([]repository.CorpSigningSummary, error) {

@@ -17,7 +17,8 @@ type CorporationSigningController struct {
 func (this *CorporationSigningController) Prepare() {
 	this.stopRunIfSignSerivceIsUnabled()
 
-	if strings.HasSuffix(this.routerPattern(), ":cla_hash") {
+	v := this.routerPattern()
+	if strings.HasSuffix(v, ":cla_hash") || strings.HasSuffix(v, ":link_id/corps/:email") {
 		this.apiPrepare("")
 	} else {
 		// not signing
@@ -272,4 +273,26 @@ func (this *CorporationSigningController) ListDeleted() {
 	}
 
 	this.sendSuccessResp(r)
+}
+
+// @Title GetCorpInfo
+// @Description get all the corporations by email
+// @Param  link_id  path  string  true  "link id"
+// @Param  email    path  string  true  "email"
+// @Success 200 {object}
+// @Failure 400 missing_url_path_parameter: missing url path parameter
+// @Failure 401 unknown_link:               unkown link id
+// @Failure 500 system_error:               system error
+// @router /:link_id/corps/:email [get]
+func (this *CorporationSigningController) GetCorpInfo() {
+	action := "list corporation info"
+
+	r, merr := models.FindCorpSummary(
+		this.GetString(":link_id"), this.GetString(":email"),
+	)
+	if merr != nil {
+		this.sendModelErrorAsResp(merr, action)
+	} else {
+		this.sendSuccessResp(r)
+	}
 }

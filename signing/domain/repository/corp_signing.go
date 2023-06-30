@@ -19,10 +19,14 @@ type EmployeeSigningSummary struct {
 	Enabled bool
 }
 
+type CorpSummary struct {
+	CorpSigningId string
+	CorpName      dp.CorpName
+}
+
 type CorpSigning interface {
 	Add(*domain.CorpSigning) error
-	// count the corp by the email domain
-	Count(linkId, domain string) (int, error)
+	FindCorpSummary(linkId, domain string) ([]CorpSummary, error)
 	Find(string) (domain.CorpSigning, error)
 	Remove(*domain.CorpSigning) error
 	FindAll(linkId string) ([]CorpSigningSummary, error)

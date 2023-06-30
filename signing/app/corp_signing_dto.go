@@ -42,3 +42,10 @@ type CorpSigningInfoDTO struct {
 	RepEmail string                `json:"rep_email"`
 	AllInfo  domain.AllSingingInfo `json:"info"`
 }
+
+type CmdToFindCorpSummary = CmdToCheckSinging
+
+type CorpSummaryDTO struct {
+	CorpName      string `json:"corp_name"`
+	CorpSigningId string `json:"corp_signing_id"`
+}

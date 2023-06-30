@@ -19,6 +19,7 @@ type corpSigningAdapter interface {
 	Remove(string) IModelError
 	Get(csId string) (CorporationSigning, IModelError)
 	List(linkId string) ([]CorporationSigningSummary, IModelError)
+	FindCorpSummary(linkId string, email string) (interface{}, IModelError)
 }
 
 type employeeSigningAdapter interface {

@@ -35,12 +35,12 @@ func (s *corpAdminService) Add(csId string) (dto ManagerDTO, err error) {
 		return
 	}
 
-	n, err := s.repo.Count(cs.Link.Id, cs.PrimaryEmailDomain())
+	v, err := s.repo.FindCorpSummary(cs.Link.Id, cs.PrimaryEmailDomain())
 	if err != nil {
 		return
 	}
 
-	if err = cs.SetAdmin(n); err != nil {
+	if err = cs.SetAdmin(len(v)); err != nil {
 		return
 	}
 

@@ -188,3 +188,7 @@ func UploadCorpPDF(csId string, pdf []byte) IModelError {
 func DownloadCorpPDF(csId string) ([]byte, IModelError) {
 	return corpPDFAdapterInstance.Download(csId)
 }
+
+func FindCorpSummary(linkId string, email string) (interface{}, IModelError) {
+	return corpSigningAdapterInstance.FindCorpSummary(linkId, email)
+}

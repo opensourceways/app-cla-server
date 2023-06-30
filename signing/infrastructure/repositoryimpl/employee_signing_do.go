@@ -7,6 +7,8 @@ import (
 	"github.com/opensourceways/app-cla-server/signing/domain/dp"
 )
 
+const fieldEnabled = "enabled"
+
 func toEmployeeSigningDO(es *domain.EmployeeSigning) employeeSigningDO {
 	return employeeSigningDO{
 		Id:       es.Id,

@@ -50,6 +50,7 @@ const (
 	ErrBadRequestParameter     ModelErrCode = "bad_request_parameter"
 	ErrNoCorpEmployeeManager   ModelErrCode = "no_employee_manager"
 	ErrUnuploaed               ModelErrCode = "unuploaded"
+	ErrGoToSignEmployeeCLA     ModelErrCode = "go_to_sign_employee_cla"
 )
 
 type IModelError interface {

@@ -21,14 +21,14 @@ func toModelError(err error) models.IModelError {
 
 func codeMap(code string) models.ModelErrCode {
 	switch code {
-	case domain.ErrorCodeCorpSigningReSigning, domain.ErrorCodeEmployeeSigningReSigning:
-		return models.ErrNoLinkOrResigned
-
 	// corp admin
 	case domain.ErrorCodeCorpAdminExists:
 		return models.ErrNoLinkOrManagerExists
 
 	// corp signing
+	case domain.ErrorCodeCorpSigningReSigning:
+		return models.ErrNoLinkOrResigned
+
 	case domain.ErrorCodeCorpSigningNotFound:
 		return models.ErrUnsigned
 
@@ -66,6 +66,9 @@ func codeMap(code string) models.ModelErrCode {
 		return models.ErrAdminAsManager
 
 	// employee signing
+	case domain.ErrorCodeEmployeeSigningReSigning:
+		return models.ErrNoLinkOrResigned
+
 	case domain.ErrorCodeEmployeeSigningNoManager:
 		return models.ErrNoCorpEmployeeManager
 
@@ -75,6 +78,13 @@ func codeMap(code string) models.ModelErrCode {
 	// corp email domain
 	case domain.ErrorCodeCorpEmailDomainNotMatch:
 		return models.ErrUnmatchedEmailDomain
+
+	// individual signing
+	case domain.ErrorCodeIndividualSigningReSigning:
+		return models.ErrNoLinkOrResigned
+
+	case domain.ErrorCodeIndividualSigningCorpExists:
+		return models.ErrGoToSignEmployeeCLA
 
 	default:
 		return models.ErrBadRequestParameter

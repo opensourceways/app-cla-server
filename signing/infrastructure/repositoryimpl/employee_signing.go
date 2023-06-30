@@ -5,6 +5,8 @@ import (
 
 	commonRepo "github.com/opensourceways/app-cla-server/common/domain/repository"
 	"github.com/opensourceways/app-cla-server/signing/domain"
+	"github.com/opensourceways/app-cla-server/signing/domain/dp"
+	"github.com/opensourceways/app-cla-server/signing/domain/repository"
 )
 
 func (impl *corpSigning) AddEmployee(cs *domain.CorpSigning, es *domain.EmployeeSigning) error {
@@ -90,4 +92,36 @@ func (impl *corpSigning) FindEmployees(csId string) ([]domain.EmployeeSigning, e
 	}
 
 	return do.toEmployeeSignings()
+}
+
+func (impl *corpSigning) FindEmployeesByEmail(linkId string, email dp.EmailAddr) (
+	[]repository.EmployeeSigningSummary, error,
+) {
+	filter := linkIdFilter(linkId)
+	filter[childField(fieldCorp, fieldDomains)] = bson.M{mongodbCmdIn: bson.A{email.Domain()}}
+
+	var dos []corpSigningDO
+
+	err := impl.dao.GetArrayItem(
+		filter, fieldEmployees,
+		bson.M{fieldEmail: email.EmailAddr()},
+		bson.M{childField(fieldEmployees, fieldEnabled): 1}, &dos,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	r := make([]repository.EmployeeSigningSummary, 0, len(dos))
+
+	for i := range dos {
+		if len(dos[i].Employees) == 0 {
+			continue
+		}
+
+		r = append(r, repository.EmployeeSigningSummary{
+			Enabled: dos[i].Employees[0].Enabled,
+		})
+	}
+
+	return r, nil
 }

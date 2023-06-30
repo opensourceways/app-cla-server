@@ -55,5 +55,12 @@ func initSigning() {
 		),
 	))
 
-	models.Init(ua, cp, ca, cs, es, em, ed, vc)
+	is := adapter.NewIndividualSigningAdapter(app.NewIndividualSigningService(
+		repositoryimpl.NewIndividualSigning(
+			mongodb.DAO(cfg.Mongodb.Collections.IndividualSigning),
+		),
+		repo,
+	))
+
+	models.Init(ua, cp, ca, cs, es, em, ed, vc, is)
 }

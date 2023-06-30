@@ -259,6 +259,47 @@ func (impl *daoImpl) GetDocAndDelete(filter, project bson.M, result interface{})
 	})
 }
 
+func conditionTofilterArray(filterOfArray bson.M) bson.M {
+	cond := make(bson.A, 0, len(filterOfArray))
+	for k, v := range filterOfArray {
+		cond = append(cond, bson.M{"$eq": bson.A{"$$this." + k, v}})
+	}
+
+	if len(filterOfArray) == 1 {
+		return cond[0].(bson.M)
+	}
+
+	return bson.M{"$and": cond}
+}
+
+func (impl *daoImpl) GetArrayItem(
+	filter bson.M, array string, filterOfArray, project bson.M, result interface{},
+) error {
+	return impl.withContext(func(ctx context.Context) error {
+		pipeline := bson.A{bson.M{"$match": filter}}
+
+		project1 := bson.M{}
+
+		project1[array] = bson.M{"$filter": bson.M{
+			"input": fmt.Sprintf("$%s", array),
+			"cond":  conditionTofilterArray(filterOfArray),
+		}}
+
+		pipeline = append(pipeline, bson.M{"$project": project1})
+
+		if len(project) > 0 {
+			pipeline = append(pipeline, bson.M{"$project": project})
+		}
+
+		cursor, err := impl.col.Aggregate(ctx, pipeline)
+		if err != nil {
+			return err
+		}
+
+		return cursor.All(ctx, result)
+	})
+}
+
 func (impl *daoImpl) DeleteDoc(filter bson.M) error {
 	return impl.withContext(func(ctx context.Context) error {
 		_, err := impl.col.DeleteOne(ctx, filter)

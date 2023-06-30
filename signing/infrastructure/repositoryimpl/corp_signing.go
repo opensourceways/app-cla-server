@@ -87,7 +87,7 @@ func (impl *corpSigning) Find(index string) (cs domain.CorpSigning, err error) {
 
 func (impl *corpSigning) Count(linkId, domain string) (int, error) {
 	filter := linkIdFilter(linkId)
-	filter[childField(fieldCorp, fieldDomain)] = domain
+	filter[childField(fieldCorp, fieldDomains)] = bson.M{mongodbCmdIn: bson.A{domain}}
 
 	var dos []struct {
 		LinkId string `bson:"link_id"`

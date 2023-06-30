@@ -3,14 +3,15 @@ package models
 import "github.com/opensourceways/app-cla-server/dbmodels"
 
 var (
-	userAdapterInstance             userAdapter
-	corpPDFAdapterInstance          corpPDFAdapter
-	corpAdminAdatperInstance        corpAdminAdatper
-	corpSigningAdapterInstance      corpSigningAdapter
-	employeeSigningAdapterInstance  employeeSigningAdapter
-	employeeManagerAdapterInstance  employeeManagerAdapter
-	corpEmailDomainAdapterInstance  corpEmailDomainAdapter
-	verificationCodeAdapterInstance verificationCodeAdapter
+	userAdapterInstance              userAdapter
+	corpPDFAdapterInstance           corpPDFAdapter
+	corpAdminAdatperInstance         corpAdminAdatper
+	corpSigningAdapterInstance       corpSigningAdapter
+	employeeSigningAdapterInstance   employeeSigningAdapter
+	employeeManagerAdapterInstance   employeeManagerAdapter
+	corpEmailDomainAdapterInstance   corpEmailDomainAdapter
+	verificationCodeAdapterInstance  verificationCodeAdapter
+	individualSigningAdapterInstance individualSigningAdapter
 )
 
 type corpSigningAdapter interface {
@@ -25,6 +26,11 @@ type employeeSigningAdapter interface {
 	Remove(csId, esId string) (string, IModelError)
 	Update(csId, esId string, enabled bool) (string, IModelError)
 	List(csId string) ([]dbmodels.IndividualSigningBasicInfo, IModelError)
+}
+
+type individualSigningAdapter interface {
+	Sign(linkId string, opt *IndividualSigning) IModelError
+	Check(linkId string, email string) (bool, IModelError)
 }
 
 type corpAdminAdatper interface {
@@ -74,6 +80,7 @@ func Init(
 	em employeeManagerAdapter,
 	ed corpEmailDomainAdapter,
 	vc verificationCodeAdapter,
+	is individualSigningAdapter,
 ) {
 	userAdapterInstance = ua
 	corpPDFAdapterInstance = cp
@@ -83,4 +90,5 @@ func Init(
 	employeeManagerAdapterInstance = em
 	corpEmailDomainAdapterInstance = ed
 	verificationCodeAdapterInstance = vc
+	individualSigningAdapterInstance = is
 }

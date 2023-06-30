@@ -1,6 +1,9 @@
 package repository
 
-import "github.com/opensourceways/app-cla-server/signing/domain"
+import (
+	"github.com/opensourceways/app-cla-server/signing/domain"
+	"github.com/opensourceways/app-cla-server/signing/domain/dp"
+)
 
 type CorpSigningSummary struct {
 	Id     string
@@ -10,6 +13,10 @@ type CorpSigningSummary struct {
 	Rep    domain.Representative
 	Corp   domain.Corporation
 	Admin  domain.Manager
+}
+
+type EmployeeSigningSummary struct {
+	Enabled bool
 }
 
 type CorpSigning interface {
@@ -24,6 +31,7 @@ type CorpSigning interface {
 	SaveEmployee(*domain.CorpSigning, *domain.EmployeeSigning) error
 	FindEmployees(string) ([]domain.EmployeeSigning, error)
 	RemoveEmployee(*domain.CorpSigning, *domain.EmployeeSigning) error
+	FindEmployeesByEmail(linkId string, email dp.EmailAddr) ([]EmployeeSigningSummary, error)
 
 	AddAdmin(*domain.CorpSigning) error
 

@@ -39,6 +39,7 @@ type dao interface {
 	GetDoc(filter, project bson.M, result interface{}) error
 	GetDocs(filter, project bson.M, result interface{}) error
 	GetDocAndDelete(filter, project bson.M, result interface{}) error
+	GetArrayItem(filter bson.M, array string, filterOfArray, project bson.M, result interface{}) error
 }
 
 func genDoc(doc interface{}) (m bson.M, err error) {

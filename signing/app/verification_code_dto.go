@@ -22,7 +22,7 @@ func (cmd *CmdToCreateCodeForSigning) purpose() (dp.Purpose, error) {
 
 func (cmd *CmdToCreateCodeForSigning) newPurpose(action string) (dp.Purpose, error) {
 	return dp.NewPurpose(
-		fmt.Sprintf("%s %s, %s", action, cmd.LinkId, cmd.EmailAddr.EmailAddr()),
+		fmt.Sprintf("%s, %s, %s", action, cmd.LinkId, cmd.EmailAddr.EmailAddr()),
 	)
 }
 

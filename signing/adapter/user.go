@@ -1,8 +1,11 @@
 package adapter
 
 import (
+	"errors"
+
 	"github.com/opensourceways/app-cla-server/models"
 	"github.com/opensourceways/app-cla-server/signing/app"
+	"github.com/opensourceways/app-cla-server/signing/domain"
 	"github.com/opensourceways/app-cla-server/signing/domain/dp"
 )
 
@@ -57,6 +60,15 @@ func (adapter *userAdatper) Login(opt *models.CorporationManagerAuthentication) 
 
 	v, err := adapter.s.Login(&cmd)
 	if err != nil {
+		if code, ok := err.(errorCode); ok {
+			if code.ErrorCode() == domain.ErrorCodeUserWrongAccountOrPassword {
+				return r, models.NewModelError(
+					models.ErrWrongIDOrPassword,
+					errors.New("wrong account or password"),
+				)
+			}
+		}
+
 		return r, toModelError(err)
 	}
 

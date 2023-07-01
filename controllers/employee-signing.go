@@ -175,7 +175,7 @@ func (this *EmployeeSigningController) Update() {
 
 	this.sendSuccessResp("enabled employee successfully")
 
-	msg := this.newEmployeeNotification(orgInfo, pl.Email, employeeEmail)
+	msg := this.newEmployeeNotification(employeeEmail, orgInfo, pl.Email)
 	if info.Enabled {
 		msg.Active = true
 		sendEmailToIndividual(employeeEmail, orgInfo.OrgEmail, "Activate CLA signing", msg)
@@ -216,7 +216,7 @@ func (this *EmployeeSigningController) Delete() {
 
 	this.sendSuccessResp("delete employee successfully")
 
-	msg := this.newEmployeeNotification(orgInfo, pl.Email, employeeEmail)
+	msg := this.newEmployeeNotification(employeeEmail, orgInfo, pl.Email)
 	msg.Removing = true
 	sendEmailToIndividual(employeeEmail, orgInfo.OrgEmail, "Remove employee", msg)
 }
@@ -251,7 +251,7 @@ func (this *EmployeeSigningController) notifyManagers(managers []dbmodels.Corpor
 }
 
 func (this *EmployeeSigningController) newEmployeeNotification(
-	orgInfo *models.OrgInfo, employeeName string, managerEmail string,
+	employeeName string, orgInfo *models.OrgInfo, managerEmail string,
 ) *email.EmployeeNotification {
 	return &email.EmployeeNotification{
 		Name:       employeeName,

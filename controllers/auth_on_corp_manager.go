@@ -5,12 +5,20 @@ import (
 	"github.com/opensourceways/app-cla-server/models"
 )
 
+type corpAuthInfo struct {
+	models.OrgRepo
+
+	Role             string `json:"role"`
+	Token            string `json:"token"`
+	InitialPWChanged bool   `json:"initial_pw_changed"`
+}
+
 // @Title authenticate corporation manager
 // @Description authenticate corporation manager
 // @Param	body		body 	models.CorporationManagerAuthentication	true		"body for corporation manager info"
-// @Success 201 {int} map
+// @Success 201 {int} controllers.corpAuthInfo
 // @Failure util.ErrNoCLABindingDoc	"no cla binding applied to corporation"
-// @router /auth/ [post]
+// @router /auth [post]
 func (this *CorporationManagerController) Auth() {
 	action := "authenticate as corp/employee manager"
 
@@ -38,28 +46,21 @@ func (this *CorporationManagerController) Auth() {
 		return
 	}
 
-	type authInfo struct {
-		models.OrgRepo
-
-		Role             string `json:"role"`
-		Token            string `json:"token"`
-		InitialPWChanged bool   `json:"initial_pw_changed"`
-	}
-
-	result := []authInfo{}
-
 	token, err := this.newAccessToken(info.LinkID, &v)
 	if err != nil {
+		this.sendFailedResponse(400, errSystemError, err, action)
+
+		return
 	}
 
-	result = append(result, authInfo{
-		OrgRepo:          orgInfo.OrgRepo,
-		Role:             v.Role,
-		Token:            token,
-		InitialPWChanged: v.InitialPWChanged,
+	this.sendSuccessResp([]corpAuthInfo{
+		{
+			OrgRepo:          orgInfo.OrgRepo,
+			Role:             v.Role,
+			Token:            token,
+			InitialPWChanged: v.InitialPWChanged,
+		},
 	})
-
-	this.sendSuccessResp(result)
 }
 
 func (this *CorporationManagerController) newAccessToken(linkID string, info *models.CorpManagerLoginInfo) (string, error) {

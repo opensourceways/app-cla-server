@@ -51,6 +51,7 @@ const (
 	ErrNoCorpEmployeeManager   ModelErrCode = "no_employee_manager"
 	ErrUnuploaed               ModelErrCode = "unuploaded"
 	ErrGoToSignEmployeeCLA     ModelErrCode = "go_to_sign_employee_cla"
+	ErrWrongIDOrPassword       ModelErrCode = "wrong_id_or_pw"
 )
 
 type IModelError interface {

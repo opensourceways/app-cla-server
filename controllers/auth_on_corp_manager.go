@@ -75,17 +75,17 @@ func (this *CorporationManagerController) newAccessToken(linkID string, info *mo
 	return this.newApiToken(
 		permission,
 		&acForCorpManagerPayload{
-			Corp:       info.CorpName,
-			Email:      info.Email,
-			LinkID:     linkID,
-			SigniingId: info.SigningId,
+			Corp:      info.CorpName,
+			Email:     info.Email,
+			LinkID:    linkID,
+			SigningId: info.SigningId,
 		},
 	)
 }
 
 type acForCorpManagerPayload struct {
-	Corp       string `json:"corp"`
-	Email      string `json:"email"`
-	LinkID     string `json:"link_id"`
-	SigniingId string `json:"csid"`
+	Corp      string `json:"corp"`
+	Email     string `json:"email"`
+	LinkID    string `json:"link_id"`
+	SigningId string `json:"csid"`
 }

@@ -48,7 +48,7 @@ func (this *CorporationManagerController) Auth() {
 
 	token, err := this.newAccessToken(info.LinkID, &v)
 	if err != nil {
-		this.sendFailedResponse(400, errSystemError, err, action)
+		this.sendFailedResponse(500, errSystemError, err, action)
 
 		return
 	}

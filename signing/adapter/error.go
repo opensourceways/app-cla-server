@@ -86,10 +86,6 @@ func codeMap(code string) models.ModelErrCode {
 	case domain.ErrorCodeIndividualSigningCorpExists:
 		return models.ErrGoToSignEmployeeCLA
 
-	// corp user login
-	case domain.ErrorCodeUserWrongAccountOrPassword:
-		return models.ErrWrongIDOrPassword
-
 	default:
 		return models.ErrBadRequestParameter
 	}

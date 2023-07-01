@@ -57,7 +57,14 @@ func (this *CLAController) Add() {
 		return
 	}
 
-	unlock, fr := lockOnRepo(pl.orgInfo(linkID))
+	orgInfo, merr := models.GetOrgOfLink(linkID)
+	if merr != nil {
+		this.sendModelErrorAsResp(merr, action)
+
+		return
+	}
+
+	unlock, fr := lockOnRepo(orgInfo)
 	if fr != nil {
 		this.sendFailedResultAsResp(fr, action)
 		return
@@ -94,7 +101,14 @@ func (this *CLAController) Delete() {
 		return
 	}
 
-	unlock, fr := lockOnRepo(pl.orgInfo(linkID))
+	orgInfo, merr := models.GetOrgOfLink(linkID)
+	if merr != nil {
+		this.sendModelErrorAsResp(merr, action)
+
+		return
+	}
+
+	unlock, fr := lockOnRepo(orgInfo)
 	if fr != nil {
 		this.sendFailedResultAsResp(fr, action)
 		return

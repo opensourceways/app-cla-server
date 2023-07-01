@@ -66,6 +66,8 @@ type MongodbConfig struct {
 
 type apiConfig struct {
 	LimitedAPIs         []string `json:"limited_apis"`
+	CookieDomain        string   `json:"cookie_domain" required:"true"`
+	CookieTimeout       int      `json:"cookie_timeout"` // seconds
 	WaitingTimeForVC    int      `json:"waiting_time_for_vc"`
 	MaxRequestPerMinute int      `json:"max_request_per_minute"`
 }
@@ -84,6 +86,10 @@ func (cfg *apiConfig) setDefault() {
 
 	if cfg.WaitingTimeForVC <= 0 {
 		cfg.WaitingTimeForVC = 60
+	}
+
+	if cfg.CookieTimeout <= 0 {
+		cfg.CookieTimeout = 1800
 	}
 }
 

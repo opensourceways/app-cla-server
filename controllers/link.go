@@ -18,9 +18,7 @@ func (this *LinkController) Prepare() {
 	this.stopRunIfSignSerivceIsUnabled()
 
 	if strings.HasSuffix(this.routerPattern(), ":apply_to") {
-		if this.apiReqHeader(headerToken) != "" {
-			this.apiPrepare(PermissionIndividualSigner)
-		}
+		this.apiPrepare("")
 	} else {
 		this.apiPrepare(PermissionOwnerOfOrg)
 	}
@@ -184,11 +182,7 @@ func (this *LinkController) ListLinks() {
 		return
 	}
 
-	orgs := make([]string, 0, len(pl.Orgs))
-	for k := range pl.Orgs {
-		orgs = append(orgs, k)
-	}
-	r, merr := models.ListLinks(pl.Platform, orgs)
+	r, merr := models.ListLinks(pl.Platform, pl.Orgs)
 	if merr != nil {
 		this.sendModelErrorAsResp(merr, action)
 		return

@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 
@@ -68,83 +69,55 @@ func (this *AuthController) Callback() {
 		return
 	}
 
-	permission := ""
-	switch purpose {
-	case platformAuth.AuthApplyToLogin:
-		permission = PermissionOwnerOfOrg
-	case platformAuth.AuthApplyToSign:
-		permission = PermissionIndividualSigner
+	if purpose != platformAuth.AuthApplyToLogin {
+		rs(errSystemError, errors.New("unknown purpose"))
+
+		return
 	}
 
-	pl, ec, err := this.genACPayload(platform, permission, token)
+	pl, ec, err := this.genACPayload(platform, token)
 	if err != nil {
 		rs(ec, err)
 		return
 	}
 
-	at, err := this.newApiToken(permission, pl)
+	at, err := this.newApiToken(PermissionOwnerOfOrg, pl)
 	if err != nil {
 		rs(errSystemError, err)
 		return
 	}
 
-	cookies := map[string]string{"access_token": at, "platform_token": token}
-	if permission == PermissionIndividualSigner {
-		cookies["sign_user"] = pl.User
-		cookies["sign_email"] = pl.Email
-	}
-	this.setCookies(cookies)
+	//this.setCookies()
+
+	this.setTokenToCookies(at)
 	this.redirect(authHelper.WebRedirectDir(true))
 }
 
-func (this *AuthController) genACPayload(platform, permission, platformToken string) (*acForCodePlatformPayload, string, error) {
+func (this *AuthController) genACPayload(platform, platformToken string) (*acForCodePlatformPayload, string, error) {
 	pt, err := platforms.NewPlatform(platformToken, "", platform)
 	if err != nil {
 		return nil, errSystemError, err
 	}
 
-	orgm := map[string]bool{}
-	links := map[string]models.OrgInfo{}
-	if permission == PermissionOwnerOfOrg {
-		orgs, err := pt.ListOrg()
-		if err == nil {
-			for _, item := range orgs {
-				orgm[item] = true
-			}
-
-			if r, err := models.ListLinks(platform, orgs); err == nil {
-				for i := range r {
-					links[r[i].LinkID] = r[i].OrgInfo
-				}
-			}
-		}
-	}
-
-	email := ""
-	if permission == PermissionIndividualSigner {
-		if email, err = pt.GetAuthorizedEmail(); err != nil {
-			if platforms.IsErrOfRefusedToAuthorizeEmail(err) {
-				return nil, errRefuseToAuthorizeEmail, err
-			}
-			if platforms.IsErrOfNoPulicEmail(err) {
-				return nil, errNoPublicEmail, err
-			}
-			return nil, errSystemError, err
-		}
-	}
-
+	// user
 	user, err := pt.GetUser()
 	if err != nil {
 		return nil, errSystemError, err
 	}
 
+	// orgs
+	orgs, err := pt.ListOrg()
+	if err != nil {
+		return nil, errSystemError, err
+	}
+	if len(orgs) == 0 {
+		return nil, errNoOrg, errors.New("no org")
+	}
+
 	return &acForCodePlatformPayload{
-		User:          user,
-		Email:         email,
-		Platform:      platform,
-		PlatformToken: platformToken,
-		Orgs:          orgm,
-		Links:         links,
+		User:     user,
+		Platform: platform,
+		Orgs:     orgs,
 	}, "", nil
 }
 
@@ -178,72 +151,30 @@ func (this *AuthController) AuthCodeURL() {
 }
 
 type acForCodePlatformPayload struct {
-	User          string `json:"user"`
-	Email         string `json:"email"`
-	Platform      string `json:"platform"`
-	PlatformToken string `json:"platform_token"`
-
-	Orgs  map[string]bool           `json:"orgs"`
-	Links map[string]models.OrgInfo `json:"links"`
+	User     string   `json:"user"`
+	Platform string   `json:"platform"`
+	Orgs     []string `json:"orgs"`
 }
 
-func (this *acForCodePlatformPayload) orgInfo(linkID string) *models.OrgInfo {
-	if this.Links == nil {
-		return nil
-	}
-
-	if v, ok := this.Links[linkID]; ok {
-		return &v
-	}
-	return nil
-}
-
-func (this *acForCodePlatformPayload) isOwnerOfLink(link string) *failedApiResult {
-	if this.Links == nil {
-		this.Links = map[string]models.OrgInfo{}
-	}
-
-	if _, ok := this.Links[link]; ok {
-		return nil
-	}
-
+func (pl *acForCodePlatformPayload) isOwnerOfLink(link string) *failedApiResult {
 	orgInfo, err := models.GetOrgOfLink(link)
 	if err != nil {
 		if err.IsErrorOf(models.ErrNoLink) {
 			return newFailedApiResult(400, errUnknownLink, err)
 		}
+
 		return parseModelError(err)
 	}
 
-	if err := this.isOwnerOfOrg(orgInfo.OrgID); err != nil {
-		return err
-	}
-
-	this.Links[link] = *orgInfo
-	return nil
+	return pl.isOwnerOfOrg(orgInfo.OrgID)
 }
 
-func (this *acForCodePlatformPayload) isOwnerOfOrg(org string) *failedApiResult {
-	if this.Orgs == nil {
-		this.Orgs = map[string]bool{}
+func (pl *acForCodePlatformPayload) isOwnerOfOrg(org string) *failedApiResult {
+	for _, v := range pl.Orgs {
+		if v == org {
+			return nil
+		}
 	}
 
-	if this.Orgs[org] {
-		return nil
-	}
-
-	p, err := platforms.NewPlatform(this.PlatformToken, "", this.Platform)
-	if err != nil {
-		return newFailedApiResult(400, errSystemError, err)
-	}
-
-	if b, err := p.IsOrgExist(org); err != nil {
-		// TODO token expiry
-		return newFailedApiResult(500, errSystemError, err)
-	} else if !b {
-		return newFailedApiResult(400, errNotYoursOrg, fmt.Errorf("not the org of owner"))
-	}
-
-	this.Orgs[org] = true
-	return nil
+	return newFailedApiResult(400, errNotYoursOrg, fmt.Errorf("not the org of owner"))
 }

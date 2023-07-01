@@ -143,13 +143,6 @@ func (this *CorporationSigningController) Delete() {
 		return
 	}
 
-	unlock, fr := lockOnRepo(pl.orgInfo(linkID))
-	if fr != nil {
-		this.sendFailedResultAsResp(fr, action)
-		return
-	}
-	defer unlock()
-
 	csId := this.GetString(":signing_id")
 	if err := models.RemoveCorpSigning(csId); err != nil {
 		this.sendModelErrorAsResp(err, action)
@@ -179,6 +172,13 @@ func (this *CorporationSigningController) ResendCorpSigningEmail() {
 		return
 	}
 
+	orgInfo, merr := models.GetOrgOfLink(linkID)
+	if merr != nil {
+		this.sendModelErrorAsResp(merr, action)
+
+		return
+	}
+
 	signingInfo, merr := models.GetCorpSigning(this.GetString(":signing_id"))
 	if merr != nil {
 		this.sendModelErrorAsResp(merr, action)
@@ -194,7 +194,7 @@ func (this *CorporationSigningController) ResendCorpSigningEmail() {
 	claFile := genCLAFilePath(linkID, dbmodels.ApplyToCorporation, signingInfo.CLALanguage, claInfo.CLAHash)
 
 	worker.GetEmailWorker().GenCLAPDFForCorporationAndSendIt(
-		linkID, claFile, *pl.orgInfo(linkID), signingInfo, claInfo.Fields,
+		linkID, claFile, *orgInfo, signingInfo, claInfo.Fields,
 	)
 
 	this.sendSuccessResp("resend email successfully")

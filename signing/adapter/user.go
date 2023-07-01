@@ -48,6 +48,39 @@ func (adapter *userAdatper) cmdToChangePassword(
 	return
 }
 
+// Reset
+func (adapter *userAdatper) ResetPassword(
+	linkId string, email string, password string,
+) models.IModelError {
+	cmd, err := adapter.cmdToResetPassword(linkId, email, password)
+	if err != nil {
+		return toModelError(err)
+	}
+
+	if err = adapter.s.ResetPassword(&cmd); err != nil {
+		return toModelError(err)
+	}
+
+	return nil
+}
+
+func (adapter *userAdatper) cmdToResetPassword(
+	linkId string, email string, password string,
+) (cmd app.CmdToResetPassword, err error) {
+	if cmd.NewOne, err = dp.NewPassword(password); err != nil {
+		return
+	}
+
+	if cmd.EmailAddr, err = dp.NewEmailAddr(email); err != nil {
+		return
+	}
+
+	cmd.LinkId = linkId
+
+	return
+}
+
+// Login
 func (adapter *userAdatper) Login(opt *models.CorporationManagerAuthentication) (
 	models.CorpManagerLoginInfo, models.IModelError,
 ) {

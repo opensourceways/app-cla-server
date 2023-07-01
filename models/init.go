@@ -40,6 +40,7 @@ type corpAdminAdatper interface {
 
 type userAdapter interface {
 	ChangePassword(string, *CorporationManagerResetPassword) IModelError
+	ResetPassword(linkId string, email string, password string) IModelError
 	Login(opt *CorporationManagerAuthentication) (CorpManagerLoginInfo, IModelError)
 }
 

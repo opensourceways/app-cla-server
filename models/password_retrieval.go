@@ -26,10 +26,7 @@ func (p PasswordRetrieval) Create(linkID string, key []byte) IModelError {
 		return err
 	}
 
-	m := CorporationManagerResetPassword{
-		NewPassword: p.Password,
-	}
-	return m.Reset(linkID, k.Email)
+	return userAdapterInstance.ResetPassword(linkID, k.Email, p.Password)
 }
 
 type PasswordRetrievalKey struct {

@@ -28,6 +28,11 @@ func (u *User) ChangePassword(old, newOne dp.Password) error {
 	return nil
 }
 
+func (u *User) ResetPassword(newOne dp.Password) {
+	u.Password = newOne
+	u.PasswordChaged = true
+}
+
 func (u *User) IsCorrectPassword(p dp.Password) bool {
 	return u.Password.Password() == p.Password()
 }

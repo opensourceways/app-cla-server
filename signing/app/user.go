@@ -19,6 +19,7 @@ func NewUserService(
 type UserService interface {
 	ChangePassword(cmd *CmdToChangePassword) error
 	Login(cmd *CmdToLogin) (dto UserLoginDTO, err error)
+	ResetPassword(cmd *CmdToResetPassword) error
 }
 
 type userService struct {
@@ -28,6 +29,10 @@ type userService struct {
 
 func (s *userService) ChangePassword(cmd *CmdToChangePassword) error {
 	return s.us.ChangePassword(cmd.Id, cmd.OldOne, cmd.NewOne)
+}
+
+func (s *userService) ResetPassword(cmd *CmdToResetPassword) error {
+	return s.us.ResetPassword(cmd.LinkId, cmd.EmailAddr, cmd.NewOne)
 }
 
 func (s *userService) Login(cmd *CmdToLogin) (dto UserLoginDTO, err error) {

@@ -25,3 +25,10 @@ type CmdToChangePassword struct {
 	OldOne dp.Password
 	NewOne dp.Password
 }
+
+// CmdToResetPassword
+type CmdToResetPassword struct {
+	NewOne    dp.Password
+	LinkId    string
+	EmailAddr dp.EmailAddr
+}

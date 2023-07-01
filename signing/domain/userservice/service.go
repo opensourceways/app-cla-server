@@ -30,6 +30,7 @@ type UserService interface {
 	Remove([]string)
 	RemoveByAccount(linkId string, accounts []dp.Account)
 	ChangePassword(index string, old, newOne dp.Password) error
+	ResetPassword(linkId string, email dp.EmailAddr, newOne dp.Password) error
 	LoginByAccount(linkId string, a dp.Account, p dp.Password) (domain.User, error)
 	LoginByEmail(linkId string, e dp.EmailAddr, p dp.Password) (u domain.User, err error)
 }
@@ -108,6 +109,22 @@ func (s *userService) ChangePassword(index string, old, newOne dp.Password) erro
 	if err := u.ChangePassword(old1, newOne1); err != nil {
 		return err
 	}
+
+	return s.repo.SavePassword(&u)
+}
+
+func (s *userService) ResetPassword(linkId string, email dp.EmailAddr, newOne dp.Password) error {
+	u, err := s.repo.FindByEmail(linkId, email)
+	if err != nil {
+		return err
+	}
+
+	newOne1, err := s.checkPassword(newOne)
+	if err != nil {
+		return err
+	}
+
+	u.ResetPassword(newOne1)
 
 	return s.repo.SavePassword(&u)
 }

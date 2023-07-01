@@ -1,8 +1,6 @@
 package controllers
 
 import (
-	"fmt"
-
 	"github.com/opensourceways/app-cla-server/dbmodels"
 	"github.com/opensourceways/app-cla-server/models"
 )
@@ -12,7 +10,7 @@ import (
 // @Param	body		body 	models.CorporationManagerAuthentication	true		"body for corporation manager info"
 // @Success 201 {int} map
 // @Failure util.ErrNoCLABindingDoc	"no cla binding applied to corporation"
-// @router /auth [post]
+// @router /auth/ [post]
 func (this *CorporationManagerController) Auth() {
 	action := "authenticate as corp/employee manager"
 
@@ -27,13 +25,16 @@ func (this *CorporationManagerController) Auth() {
 		return
 	}
 
-	v, merr := (&info).Authenticate()
+	orgInfo, merr := models.GetOrgOfLink(info.LinkID)
 	if merr != nil {
 		this.sendModelErrorAsResp(merr, action)
+
 		return
 	}
-	if len(v) == 0 {
-		this.sendFailedResponse(400, errWrongIDOrPassword, fmt.Errorf("wrong id or pw"), action)
+
+	v, merr := models.CorpManagerLogin(&info)
+	if merr != nil {
+		this.sendModelErrorAsResp(merr, action)
 		return
 	}
 
@@ -45,26 +46,23 @@ func (this *CorporationManagerController) Auth() {
 		InitialPWChanged bool   `json:"initial_pw_changed"`
 	}
 
-	result := make([]authInfo, 0, len(v))
+	result := []authInfo{}
 
-	for linkID, item := range v {
-		token, err := this.newAccessToken(linkID, &item)
-		if err != nil {
-			continue
-		}
-
-		result = append(result, authInfo{
-			OrgRepo:          item.OrgRepo,
-			Role:             item.Role,
-			Token:            token,
-			InitialPWChanged: item.InitialPWChanged,
-		})
+	token, err := this.newAccessToken(info.LinkID, &v)
+	if err != nil {
 	}
+
+	result = append(result, authInfo{
+		OrgRepo:          orgInfo.OrgRepo,
+		Role:             v.Role,
+		Token:            token,
+		InitialPWChanged: v.InitialPWChanged,
+	})
 
 	this.sendSuccessResp(result)
 }
 
-func (this *CorporationManagerController) newAccessToken(linkID string, info *dbmodels.CorporationManagerCheckResult) (string, error) {
+func (this *CorporationManagerController) newAccessToken(linkID string, info *models.CorpManagerLoginInfo) (string, error) {
 	permission := ""
 	switch info.Role {
 	case dbmodels.RoleAdmin:
@@ -76,20 +74,17 @@ func (this *CorporationManagerController) newAccessToken(linkID string, info *db
 	return this.newApiToken(
 		permission,
 		&acForCorpManagerPayload{
-			Corp:    info.Corp,
-			Name:    info.Name,
-			Email:   info.Email,
-			LinkID:  linkID,
-			OrgInfo: info.OrgInfo,
+			Corp:       info.CorpName,
+			Email:      info.Email,
+			LinkID:     linkID,
+			SigniingId: info.SigningId,
 		},
 	)
 }
 
 type acForCorpManagerPayload struct {
-	Corp   string `json:"corp"`
-	Name   string `json:"name"`
-	Email  string `json:"email"`
-	LinkID string `json:"link_id"`
-
-	models.OrgInfo
+	Corp       string `json:"corp"`
+	Email      string `json:"email"`
+	LinkID     string `json:"link_id"`
+	SigniingId string `json:"csid"`
 }

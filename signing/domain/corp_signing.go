@@ -44,6 +44,10 @@ type CorpSigning struct {
 	Version   int
 }
 
+func (cs *CorpSigning) CorpName() dp.CorpName {
+	return cs.Corp.Name
+}
+
 func (cs *CorpSigning) GetRole(e dp.EmailAddr) string {
 	if cs.Admin.hasEmail(e) {
 		return RoleAdmin

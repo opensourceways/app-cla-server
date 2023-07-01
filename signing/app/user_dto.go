@@ -13,7 +13,8 @@ type CmdToLogin struct {
 // UserLoginDTO
 type UserLoginDTO struct {
 	Role             string
-	Account          string
+	Email            string
+	CorpName         string
 	CorpSigningId    string
 	InitialPWChanged bool
 }

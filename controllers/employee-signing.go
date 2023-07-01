@@ -149,6 +149,13 @@ func (this *EmployeeSigningController) Update() {
 		return
 	}
 
+	orgInfo, merr := models.GetOrgOfLink(pl.LinkID)
+	if merr != nil {
+		this.sendModelErrorAsResp(merr, action)
+
+		return
+	}
+
 	var info models.EmployeeSigningUdateInfo
 	if fr := this.fetchInputPayload(&info); fr != nil {
 		sendResp(fr)
@@ -168,13 +175,13 @@ func (this *EmployeeSigningController) Update() {
 
 	this.sendSuccessResp("enabled employee successfully")
 
-	msg := this.newEmployeeNotification(pl, employeeEmail)
+	msg := this.newEmployeeNotification(orgInfo, pl.Email, employeeEmail)
 	if info.Enabled {
 		msg.Active = true
-		sendEmailToIndividual(employeeEmail, pl.OrgEmail, "Activate CLA signing", msg)
+		sendEmailToIndividual(employeeEmail, orgInfo.OrgEmail, "Activate CLA signing", msg)
 	} else {
 		msg.Inactive = true
-		sendEmailToIndividual(employeeEmail, pl.OrgEmail, "Inactivate CLA signing", msg)
+		sendEmailToIndividual(employeeEmail, orgInfo.OrgEmail, "Inactivate CLA signing", msg)
 	}
 }
 
@@ -193,6 +200,13 @@ func (this *EmployeeSigningController) Delete() {
 		return
 	}
 
+	orgInfo, merr := models.GetOrgOfLink(pl.LinkID)
+	if merr != nil {
+		this.sendModelErrorAsResp(merr, action)
+
+		return
+	}
+
 	// TODO csid
 	employeeEmail, err := models.RemoveEmployeeSigning("", employeeSigningId)
 	if err != nil {
@@ -202,9 +216,9 @@ func (this *EmployeeSigningController) Delete() {
 
 	this.sendSuccessResp("delete employee successfully")
 
-	msg := this.newEmployeeNotification(pl, employeeEmail)
+	msg := this.newEmployeeNotification(orgInfo, pl.Email, employeeEmail)
 	msg.Removing = true
-	sendEmailToIndividual(employeeEmail, pl.OrgEmail, "Remove employee", msg)
+	sendEmailToIndividual(employeeEmail, orgInfo.OrgEmail, "Remove employee", msg)
 }
 
 func (this *EmployeeSigningController) notifyManagers(managers []dbmodels.CorporationManagerListResult, info *models.EmployeeSigning, orgInfo *models.OrgInfo) {
@@ -236,11 +250,13 @@ func (this *EmployeeSigningController) notifyManagers(managers []dbmodels.Corpor
 	sendEmail(to, orgInfo.OrgEmail, "An employee has signed CLA", msg1)
 }
 
-func (this *EmployeeSigningController) newEmployeeNotification(pl *acForCorpManagerPayload, employeeName string) *email.EmployeeNotification {
+func (this *EmployeeSigningController) newEmployeeNotification(
+	orgInfo *models.OrgInfo, employeeName string, managerEmail string,
+) *email.EmployeeNotification {
 	return &email.EmployeeNotification{
 		Name:       employeeName,
-		Manager:    pl.Email,
-		Org:        pl.OrgAlias,
-		ProjectURL: pl.ProjectURL(),
+		Manager:    managerEmail,
+		Org:        orgInfo.OrgAlias,
+		ProjectURL: orgInfo.ProjectURL(),
 	}
 }

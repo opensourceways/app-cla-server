@@ -56,7 +56,8 @@ func (s *userService) Login(cmd *CmdToLogin) (dto UserLoginDTO, err error) {
 		return
 	}
 
-	dto.Account = u.Account.Account()
+	dto.Email = u.EmailAddr.EmailAddr()
+	dto.CorpName = cs.CorpName().CorpName()
 	dto.CorpSigningId = u.CorpSigningId
 	dto.InitialPWChanged = u.PasswordChaged
 

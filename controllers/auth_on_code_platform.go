@@ -157,7 +157,7 @@ type acForCodePlatformPayload struct {
 }
 
 func (pl *acForCodePlatformPayload) isOwnerOfLink(link string) *failedApiResult {
-	orgInfo, err := models.GetOrgOfLink(link)
+	v, err := models.GetOrgOfLink(link)
 	if err != nil {
 		if err.IsErrorOf(models.ErrNoLink) {
 			return newFailedApiResult(400, errUnknownLink, err)
@@ -166,13 +166,15 @@ func (pl *acForCodePlatformPayload) isOwnerOfLink(link string) *failedApiResult 
 		return parseModelError(err)
 	}
 
-	return pl.isOwnerOfOrg(orgInfo.OrgID)
+	return pl.isOwnerOfOrg(v.Platform, v.OrgID)
 }
 
-func (pl *acForCodePlatformPayload) isOwnerOfOrg(org string) *failedApiResult {
-	for _, v := range pl.Orgs {
-		if v == org {
-			return nil
+func (pl *acForCodePlatformPayload) isOwnerOfOrg(platform, org string) *failedApiResult {
+	if pl.Platform == platform {
+		for _, v := range pl.Orgs {
+			if v == org {
+				return nil
+			}
 		}
 	}
 

@@ -50,7 +50,7 @@ func (this *LinkController) Link() {
 		return
 	}
 
-	if fr := pl.isOwnerOfOrg(input.OrgID); fr != nil {
+	if fr := pl.isOwnerOfOrg(input.Platform, input.OrgID); fr != nil {
 		sendResp(fr)
 		return
 	}

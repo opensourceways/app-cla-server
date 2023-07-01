@@ -302,9 +302,16 @@ func (impl *daoImpl) GetArrayItem(
 
 func (impl *daoImpl) DeleteDoc(filter bson.M) error {
 	return impl.withContext(func(ctx context.Context) error {
-		_, err := impl.col.DeleteOne(ctx, filter)
+		r, err := impl.col.DeleteOne(ctx, filter)
+		if err != nil {
+			return err
+		}
 
-		return err
+		if r.DeletedCount == 0 {
+			return errDocNotExists
+		}
+
+		return nil
 	})
 }
 

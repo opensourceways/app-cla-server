@@ -113,3 +113,37 @@ func (impl *user) Find(index string) (u domain.User, err error) {
 
 	return
 }
+
+func (impl *user) FindByAccount(linkId string, a dp.Account) (u domain.User, err error) {
+	filter := linkIdFilter(linkId)
+	filter[fieldAccount] = a.Account()
+
+	var do userDO
+
+	if err = impl.dao.GetDoc(filter, nil, &do); err != nil {
+		if impl.dao.IsDocNotExists(err) {
+			err = commonRepo.NewErrorResourceNotFound(err)
+		}
+	} else {
+		err = do.toUser(&u)
+	}
+
+	return
+}
+
+func (impl *user) FindByEmail(linkId string, e dp.EmailAddr) (u domain.User, err error) {
+	filter := linkIdFilter(linkId)
+	filter[fieldEmail] = e.EmailAddr()
+
+	var do userDO
+
+	if err = impl.dao.GetDoc(filter, nil, &do); err != nil {
+		if impl.dao.IsDocNotExists(err) {
+			err = commonRepo.NewErrorResourceNotFound(err)
+		}
+	} else {
+		err = do.toUser(&u)
+	}
+
+	return
+}

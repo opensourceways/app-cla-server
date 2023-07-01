@@ -14,11 +14,11 @@ type User struct {
 }
 
 func (u *User) ChangePassword(old, newOne dp.Password) error {
-	if u.Password.Password() != old.Password() {
+	if !u.IsCorrectPassword(old) {
 		return NewDomainError(ErrorCodeUserUnmatchedPassword)
 	}
 
-	if u.Password.Password() == newOne.Password() {
+	if u.IsCorrectPassword(newOne) {
 		return NewDomainError(ErrorCodeUserSamePassword)
 	}
 
@@ -26,4 +26,8 @@ func (u *User) ChangePassword(old, newOne dp.Password) error {
 	u.PasswordChaged = true
 
 	return nil
+}
+
+func (u *User) IsCorrectPassword(p dp.Password) bool {
+	return u.Password.Password() == p.Password()
 }

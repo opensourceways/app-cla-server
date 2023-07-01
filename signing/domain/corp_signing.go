@@ -44,6 +44,20 @@ type CorpSigning struct {
 	Version   int
 }
 
+func (cs *CorpSigning) GetRole(e dp.EmailAddr) string {
+	if cs.Admin.hasEmail(e) {
+		return RoleAdmin
+	}
+
+	for i := range cs.Managers {
+		if cs.Managers[i].hasEmail(e) {
+			return RoleManager
+		}
+	}
+
+	return ""
+}
+
 func (cs *CorpSigning) PrimaryEmailDomain() string {
 	return cs.Corp.PrimaryEmailDomain
 }

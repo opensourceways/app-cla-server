@@ -32,6 +32,13 @@ func (this *EmployeeManagerController) Post() {
 		return
 	}
 
+	orgInfo, merr := models.GetOrgOfLink(pl.LinkID)
+	if merr != nil {
+		this.sendModelErrorAsResp(merr, action)
+
+		return
+	}
+
 	info := &models.EmployeeManagerCreateOption{}
 	if fr := this.fetchInputPayload(info); fr != nil {
 		sendResp(fr)
@@ -47,7 +54,7 @@ func (this *EmployeeManagerController) Post() {
 
 	this.sendSuccessResp(action + " successfully")
 
-	notifyCorpManagerWhenAdding(&pl.OrgInfo, added)
+	notifyCorpManagerWhenAdding(orgInfo, added)
 }
 
 // @Title Delete
@@ -62,6 +69,13 @@ func (this *EmployeeManagerController) Delete() {
 	pl, fr := this.tokenPayloadBasedOnCorpManager()
 	if fr != nil {
 		sendResp(fr)
+		return
+	}
+
+	orgInfo, merr := models.GetOrgOfLink(pl.LinkID)
+	if merr != nil {
+		this.sendModelErrorAsResp(merr, action)
+
 		return
 	}
 
@@ -80,15 +94,15 @@ func (this *EmployeeManagerController) Delete() {
 
 	this.sendSuccessResp(action + "successfully")
 
-	subject := fmt.Sprintf("Revoking the authorization on project of \"%s\"", pl.OrgAlias)
+	subject := fmt.Sprintf("Revoking the authorization on project of \"%s\"", orgInfo.OrgAlias)
 
 	for _, item := range deleted {
 		msg := email.RemovingCorpManager{
 			User:       item.Name,
-			Org:        pl.OrgAlias,
-			ProjectURL: pl.ProjectURL(),
+			Org:        orgInfo.OrgAlias,
+			ProjectURL: orgInfo.ProjectURL(),
 		}
-		sendEmailToIndividual(item.Email, pl.OrgEmail, subject, msg)
+		sendEmailToIndividual(item.Email, orgInfo.OrgEmail, subject, msg)
 	}
 }
 

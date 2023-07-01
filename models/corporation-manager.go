@@ -114,3 +114,15 @@ func ListCorporationManagers(linkID, email, role string) ([]dbmodels.Corporation
 
 	return v, parseDBError(err)
 }
+
+type CorpManagerLoginInfo struct {
+	Role             string
+	Email            string
+	CorpName         string
+	SigningId        string
+	InitialPWChanged bool
+}
+
+func CorpManagerLogin(opt *CorporationManagerAuthentication) (CorpManagerLoginInfo, IModelError) {
+	return userAdapterInstance.Login(opt)
+}

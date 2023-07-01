@@ -32,7 +32,7 @@ func initSigning() {
 		passwordimpl.NewPasswordImpl(),
 	)
 
-	ua := adapter.NewUserAdapter(app.NewUserService(userService))
+	ua := adapter.NewUserAdapter(app.NewUserService(userService, repo))
 
 	ca := adapter.NewCorpAdminAdapter(app.NewCorpAdminService(repo, userService))
 

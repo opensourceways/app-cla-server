@@ -30,6 +30,8 @@ type UserService interface {
 	Remove([]string)
 	RemoveByAccount(linkId string, accounts []dp.Account)
 	ChangePassword(index string, old, newOne dp.Password) error
+	LoginByAccount(linkId string, a dp.Account, p dp.Password) (domain.User, error)
+	LoginByEmail(linkId string, e dp.EmailAddr, p dp.Password) (u domain.User, err error)
 }
 
 type userService struct {
@@ -153,4 +155,52 @@ func (s *userService) checkPassword(p dp.Password) (dp.Password, error) {
 	}
 
 	return dp.NewPassword(v)
+}
+
+func (s *userService) LoginByAccount(linkId string, a dp.Account, p dp.Password) (domain.User, error) {
+	return s.login(
+		func() (domain.User, error) {
+			return s.repo.FindByAccount(linkId, a)
+		},
+		p,
+	)
+}
+
+func (s *userService) LoginByEmail(linkId string, e dp.EmailAddr, p dp.Password) (u domain.User, err error) {
+	return s.login(
+		func() (domain.User, error) {
+			return s.repo.FindByEmail(linkId, e)
+		},
+		p,
+	)
+}
+
+func (s *userService) login(find func() (domain.User, error), p dp.Password) (u domain.User, err error) {
+	loginErr := domain.NewDomainError(domain.ErrorCodeUserWrongAccountOrPassword)
+
+	if !s.password.IsValid(p.Password()) {
+		err = loginErr
+
+		return
+	}
+
+	np, err := s.checkPassword(p)
+	if err != nil {
+		return
+	}
+
+	u, err = find()
+	if err != nil {
+		if commonRepo.IsErrorResourceNotFound(err) {
+			err = loginErr
+		}
+
+		return
+	}
+
+	if !u.IsCorrectPassword(np) {
+		err = loginErr
+	}
+
+	return
 }

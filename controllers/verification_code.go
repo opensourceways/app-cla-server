@@ -120,6 +120,13 @@ func (this *VerificationCodeController) EmailDomain() {
 		return
 	}
 
+	orgInfo, merr := models.GetOrgOfLink(pl.LinkID)
+	if merr != nil {
+		this.sendModelErrorAsResp(merr, action)
+
+		return
+	}
+
 	// TODO csid
 	code, err := models.CreateCodeForAddingEmailDomain("", req.Email)
 	if err != nil {
@@ -130,13 +137,13 @@ func (this *VerificationCodeController) EmailDomain() {
 	this.sendSuccessResp("create verification code successfully")
 
 	sendEmailToIndividual(
-		req.Email, pl.OrgEmail,
+		req.Email, orgInfo.OrgEmail,
 		"Verification code for adding corporation's another email domain",
 		email.AddingCorpEmailDomain{
 			Corp:       pl.Corp,
-			Org:        pl.OrgAlias,
+			Org:        orgInfo.OrgAlias,
 			Code:       code,
-			ProjectURL: pl.OrgInfo.ProjectURL(),
+			ProjectURL: orgInfo.ProjectURL(),
 		},
 	)
 }

@@ -11,10 +11,9 @@ import (
 )
 
 const (
-	PermissionOwnerOfOrg       = "owner of org"
-	PermissionIndividualSigner = "individual signer"
-	PermissionCorpAdmin        = "corporation administrator"
-	PermissionEmployeeManager  = "employee manager"
+	PermissionOwnerOfOrg      = "owner of org"
+	PermissionCorpAdmin       = "corporation administrator"
+	PermissionEmployeeManager = "employee manager"
 )
 
 type accessController struct {

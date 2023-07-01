@@ -49,15 +49,13 @@ func (this *CorporationManagerController) Put() {
 		this.sendFailedResultAsResp(fr, action)
 		return
 	}
-	orgInfo := pl.orgInfo(linkID)
 
-	// lock to avoid the conflict with the deleting corp signing
-	unlock, fr := lockOnRepo(orgInfo)
-	if fr != nil {
-		this.sendFailedResultAsResp(fr, action)
+	orgInfo, merr := models.GetOrgOfLink(linkID)
+	if merr != nil {
+		this.sendModelErrorAsResp(merr, action)
+
 		return
 	}
-	defer unlock()
 
 	added, merr := models.CreateCorporationAdministratorByAdapter(csId)
 	if merr != nil {

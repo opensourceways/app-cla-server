@@ -15,6 +15,8 @@ import (
 	"github.com/opensourceways/app-cla-server/util"
 )
 
+const accessToken = "access_token"
+
 type failedApiResult struct {
 	reason     error
 	errCode    string
@@ -210,8 +212,6 @@ func (this *baseController) newAccessController(permission string) *accessContro
 	switch permission {
 	case PermissionOwnerOfOrg:
 		acp = &acForCodePlatformPayload{}
-	case PermissionIndividualSigner:
-		acp = &acForCodePlatformPayload{}
 	case PermissionCorpAdmin:
 		acp = &acForCorpManagerPayload{}
 	case PermissionEmployeeManager:
@@ -306,9 +306,21 @@ func (this *baseController) redirect(webRedirectDir string) {
 }
 
 func (this *baseController) setCookies(value map[string]string) {
+	cfg := config.AppConfig.APIConfig
+
+	// TODO check the property of cookie
 	for k, v := range value {
-		this.Ctx.SetCookie(k, v, "3600", "/")
+		this.Ctx.SetCookie(k, v, cfg.CookieTimeout, "/")
 	}
+}
+
+func (this *baseController) setTokenToCookies(t string) {
+	// TODO samesite?
+	cfg := config.AppConfig.APIConfig
+
+	this.Ctx.SetCookie(
+		accessToken, t, cfg.CookieTimeout, "/", cfg.CookieDomain, true, true,
+	)
 }
 
 func (this *baseController) getRemoteAddr() (string, *failedApiResult) {

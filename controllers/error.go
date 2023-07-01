@@ -43,6 +43,7 @@ const (
 	errMissingPWRetrievalKey    = "missing_pw_retrieval_key"
 	errInvalidPWRetrievalKey    = string(models.ErrInvalidPWRetrievalKey)
 	errTooManyRequest           = "too_many_request"
+	errNoOrg                    = "no_org"
 )
 
 func parseModelError(err models.IModelError) *failedApiResult {

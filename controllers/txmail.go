@@ -22,7 +22,7 @@ func (this *TXmailController) Prepare() {
 func (this *TXmailController) Code() {
 	action := "send Email authorization verification code"
 
-	var info models.EmailAuthorization
+	var info models.EmailAuthorizationReq
 	if fr := this.fetchInputPayloadFromFormData(&info); fr != nil {
 		this.sendFailedResultAsResp(fr, action)
 		return
@@ -72,13 +72,7 @@ func (this *TXmailController) Authorize() {
 		return
 	}
 
-	opt := models.OrgEmail{
-		Email:    info.Email,
-		AuthCode: info.Authorize,
-		Platform: txmailimpl.Platform(),
-	}
-
-	if cerr := opt.CreateUseAuthCode(); cerr != nil {
+	if cerr := models.AddTxmailCredential(&info.EmailAuthorizationReq); cerr != nil {
 		this.sendModelErrorAsResp(cerr, action)
 	} else {
 		this.sendSuccessResp("Email Authorization Success")

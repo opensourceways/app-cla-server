@@ -39,43 +39,21 @@ func (this *GmailController) Auth() {
 		return
 	}
 
-	emailClient := gmailimpl.GmailClient()
-
 	if this.GetString("state") != authURLState {
 		rs(errSystemError, fmt.Errorf("unkown state"))
 		return
 	}
 
-	token, err := emailClient.GetToken(this.GetString("code"), this.GetString("scope"))
+	addr, err := models.AddGmailCredential(
+		this.GetString("code"), this.GetString("scope"),
+	)
 	if err != nil {
-		rs(errSystemError, err)
+		rs(parseModelError(err).errCode, err)
+
 		return
 	}
 
-	emailAddr, err := emailClient.GetAuthorizedEmail(token)
-	if err != nil {
-		rs(errSystemError, err)
-		return
-	}
-
-	if token.RefreshToken == "" {
-		if _, err := models.GetOrgEmailInfo(emailAddr); err != nil {
-			rs(errNoRefreshToken, fmt.Errorf("no refresh token"))
-			return
-		}
-	} else {
-		opt := models.OrgEmail{
-			Token:    token,
-			Email:    emailAddr,
-			Platform: gmailimpl.Platform(),
-		}
-		if err := opt.Create(); err != nil {
-			rs(parseModelError(err).errCode, err)
-			return
-		}
-	}
-
-	this.setCookies(map[string]string{"email": emailAddr})
+	this.setCookies(map[string]string{"email": addr})
 	this.redirect(cfg.WebRedirectDirOnSuccessForEmail)
 }
 

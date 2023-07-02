@@ -7,6 +7,7 @@ var (
 	corpPDFAdapterInstance           corpPDFAdapter
 	corpAdminAdatperInstance         corpAdminAdatper
 	corpSigningAdapterInstance       corpSigningAdapter
+	emailCredentialAdapterInstance   emailCredentialAdapter
 	employeeSigningAdapterInstance   employeeSigningAdapter
 	employeeManagerAdapterInstance   employeeManagerAdapter
 	corpEmailDomainAdapterInstance   corpEmailDomainAdapter
@@ -74,21 +75,29 @@ type verificationCodeAdapter interface {
 	ValidateForPasswordRetrieval(linkId string, email, code string) IModelError
 }
 
+type emailCredentialAdapter interface {
+	AddGmailCredential(code, scope string) (string, IModelError)
+	AddTXmailCredential(email, code string) IModelError
+}
+
 func Init(
 	ua userAdapter,
 	cp corpPDFAdapter,
 	ca corpAdminAdatper,
 	cs corpSigningAdapter,
+	ec emailCredentialAdapter,
 	es employeeSigningAdapter,
 	em employeeManagerAdapter,
 	ed corpEmailDomainAdapter,
 	vc verificationCodeAdapter,
 	is individualSigningAdapter,
+
 ) {
 	userAdapterInstance = ua
 	corpPDFAdapterInstance = cp
 	corpAdminAdatperInstance = ca
 	corpSigningAdapterInstance = cs
+	emailCredentialAdapterInstance = ec
 	employeeSigningAdapterInstance = es
 	employeeManagerAdapterInstance = em
 	corpEmailDomainAdapterInstance = ed

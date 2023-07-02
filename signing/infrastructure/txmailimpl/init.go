@@ -8,20 +8,29 @@ import (
 
 const platform = "txmail"
 
-func Platform() string {
-	return platform
-}
-
 var txcli = &txmailClient{}
 
 func TXmailClient() *txmailClient {
 	return txcli
 }
 
+func (cli *txmailClient) GenEmailCredential(email, code string) (ec domain.EmailCredential, err error) {
+	if ec.Addr, err = dp.NewEmailAddr(email); err != nil {
+		return
+	}
+
+	ec.Token = []byte(code)
+	ec.Platform = platform
+
+	return
+}
+
 func Init() {
 	txcli.initialize()
+}
 
-	emailservice.Register(platform, &emailServiceImpl{})
+func RegisterEmailService(f GetCredential) {
+	emailservice.Register(platform, &emailServiceImpl{f})
 }
 
 type GetCredential func(dp.EmailAddr) (domain.EmailCredential, error)

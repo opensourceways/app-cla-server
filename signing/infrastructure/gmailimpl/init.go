@@ -1,6 +1,8 @@
 package gmailimpl
 
 import (
+	"encoding/json"
+
 	"github.com/opensourceways/app-cla-server/signing/domain"
 	"github.com/opensourceways/app-cla-server/signing/domain/dp"
 	"github.com/opensourceways/app-cla-server/signing/domain/emailservice"
@@ -8,24 +10,41 @@ import (
 
 const platform = "gmail"
 
-func Platform() string {
-	return platform
-}
-
 var gcli = &gmailClient{}
 
 func GmailClient() *gmailClient {
 	return gcli
 }
 
-func Init(cfg *Config) error {
-	if err := gcli.initialize([]byte(cfg.Credentials)); err != nil {
-		return err
+func (cli *gmailClient) GenEmailCredential(code, scope string) (ec domain.EmailCredential, hasRefreshToken bool, err error) {
+	token, err := cli.GetToken(code, scope)
+	if err != nil {
+		return
 	}
 
-	emailservice.Register(platform, &emailServiceImpl{})
+	emailAddr, err := cli.GetAuthorizedEmail(token)
+	if err != nil {
+		return
+	}
 
-	return nil
+	ec.Platform = platform
+	if ec.Addr, err = dp.NewEmailAddr(emailAddr); err != nil {
+		return
+	}
+
+	ec.Token, err = json.Marshal(token)
+
+	hasRefreshToken = token.RefreshToken != ""
+
+	return
+}
+
+func Init(cfg *Config) error {
+	return gcli.initialize([]byte(cfg.Credentials))
+}
+
+func RegisterEmailService(f GetCredential) {
+	emailservice.Register(platform, &emailServiceImpl{f})
 }
 
 type GetCredential func(dp.EmailAddr) (domain.EmailCredential, error)

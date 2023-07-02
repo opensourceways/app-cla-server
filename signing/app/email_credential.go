@@ -8,27 +8,27 @@ import (
 
 type CmdToAddEmailCredential = domain.EmailCredential
 
-func NewEmailCredential(
+func NewEmailCredentialService(
 	es emailcredential.EmailCredential,
-) EmailCredential {
-	return &emailCredential{
+) EmailCredentialService {
+	return &emailCredentialService{
 		es: es,
 	}
 }
 
-type EmailCredential interface {
+type EmailCredentialService interface {
 	Add(cmd *CmdToAddEmailCredential) error
 	Find(ed dp.EmailAddr) (domain.EmailCredential, error)
 }
 
-type emailCredential struct {
+type emailCredentialService struct {
 	es emailcredential.EmailCredential
 }
 
-func (s *emailCredential) Add(cmd *CmdToAddEmailCredential) error {
+func (s *emailCredentialService) Add(cmd *CmdToAddEmailCredential) error {
 	return s.es.Add(cmd)
 }
 
-func (s *emailCredential) Find(ed dp.EmailAddr) (domain.EmailCredential, error) {
+func (s *emailCredentialService) Find(ed dp.EmailAddr) (domain.EmailCredential, error) {
 	return s.es.Find(ed)
 }

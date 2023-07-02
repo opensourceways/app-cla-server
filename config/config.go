@@ -37,7 +37,6 @@ type appConfig struct {
 	PDFOrgSignatureDir        string        `json:"pdf_org_signature_dir" required:"true"`
 	PDFOutDir                 string        `json:"pdf_out_dir" required:"true"`
 	CodePlatformConfigFile    string        `json:"code_platforms" required:"true"`
-	EmailPlatformConfigFile   string        `json:"email_platforms" required:"true"`
 	EmployeeManagersNumber    int           `json:"employee_managers_number" required:"true"`
 	CLAPlatformURL            string        `json:"cla_platform_url" required:"true"`
 	PasswordResetURL          string        `json:"password_reset_url" required:"true"`
@@ -208,10 +207,6 @@ func (cfg *appConfig) validate() error {
 
 	if util.IsFileNotExist(cfg.CodePlatformConfigFile) {
 		return fmt.Errorf("the file:%s is not exist", cfg.CodePlatformConfigFile)
-	}
-
-	if util.IsFileNotExist(cfg.EmailPlatformConfigFile) {
-		return fmt.Errorf("the file:%s is not exist", cfg.EmailPlatformConfigFile)
 	}
 
 	if _, err := url.Parse(cfg.CLAPlatformURL); err != nil {

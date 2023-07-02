@@ -66,10 +66,14 @@ func GetOrgEmailInfo(email string) (*OrgEmail, IModelError) {
 	}, nil
 }
 
-type EmailAuthorization struct {
+type EmailAuthorizationReq struct {
 	Email     string `json:"email"`
-	Code      string `json:"code"`
 	Authorize string `json:"authorize"`
+}
+
+type EmailAuthorization struct {
+	Code string `json:"code"`
+	EmailAuthorizationReq
 }
 
 func (e *EmailAuthorization) Validate() IModelError {
@@ -78,4 +82,14 @@ func (e *EmailAuthorization) Validate() IModelError {
 
 func PurposeOfEmailAuthorization(email string) string {
 	return fmt.Sprintf("email authorization: %s", email)
+}
+
+func AddTxmailCredential(opt *EmailAuthorizationReq) IModelError {
+	return emailCredentialAdapterInstance.AddTXmailCredential(
+		opt.Email, opt.Authorize,
+	)
+}
+
+func AddGmailCredential(code, scope string) (string, IModelError) {
+	return emailCredentialAdapterInstance.AddGmailCredential(code, scope)
 }

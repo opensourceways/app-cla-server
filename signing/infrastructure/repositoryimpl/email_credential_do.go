@@ -15,7 +15,6 @@ func toEmailCredentialDO(e *domain.EmailCredential) emailCredentialDO {
 	return emailCredentialDO{
 		Platform: e.Platform,
 		Email:    e.Addr.EmailAddr(),
-		Token:    e.Token,
 	}
 }
 

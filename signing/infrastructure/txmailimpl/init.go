@@ -43,6 +43,15 @@ type emailServiceImpl struct {
 }
 
 func (impl *emailServiceImpl) SendEmail(msg *emailservice.EmailMessage) error {
-	// TODO get code
-	return txcli.Send("", msg)
+	e, err := dp.NewEmailAddr(msg.From)
+	if err != nil {
+		return err
+	}
+
+	c, err := impl.getCredential(e)
+	if err != nil {
+		return err
+	}
+
+	return txcli.Send(string(c.Token), msg)
 }

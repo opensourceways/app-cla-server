@@ -2,6 +2,9 @@ package gmailimpl
 
 import (
 	"encoding/json"
+	"fmt"
+
+	"golang.org/x/oauth2"
 
 	"github.com/opensourceways/app-cla-server/signing/domain"
 	"github.com/opensourceways/app-cla-server/signing/domain/dp"
@@ -16,9 +19,15 @@ func GmailClient() *gmailClient {
 	return gcli
 }
 
-func (cli *gmailClient) GenEmailCredential(code, scope string) (ec domain.EmailCredential, hasRefreshToken bool, err error) {
+func (cli *gmailClient) GenEmailCredential(code, scope string) (
+	ec domain.EmailCredential, hasRefreshToken bool, err error,
+) {
 	token, err := cli.GetToken(code, scope)
 	if err != nil {
+		return
+	}
+
+	if ec.Token, err = json.Marshal(token); err != nil {
 		return
 	}
 
@@ -27,12 +36,11 @@ func (cli *gmailClient) GenEmailCredential(code, scope string) (ec domain.EmailC
 		return
 	}
 
-	ec.Platform = platform
 	if ec.Addr, err = dp.NewEmailAddr(emailAddr); err != nil {
 		return
 	}
 
-	ec.Token, err = json.Marshal(token)
+	ec.Platform = platform
 
 	hasRefreshToken = token.RefreshToken != ""
 
@@ -57,6 +65,21 @@ type emailServiceImpl struct {
 }
 
 func (impl *emailServiceImpl) SendEmail(msg *emailservice.EmailMessage) error {
-	// TODO get token
-	return gcli.sendEmail(nil, msg)
+	e, err := dp.NewEmailAddr(msg.From)
+	if err != nil {
+		return err
+	}
+
+	c, err := impl.getCredential(e)
+	if err != nil {
+		return err
+	}
+
+	var token oauth2.Token
+
+	if err := json.Unmarshal(c.Token, &token); err != nil {
+		return fmt.Errorf("Failed to unmarshal oauth2 token: %s", err.Error())
+	}
+
+	return gcli.sendEmail(&token, msg)
 }

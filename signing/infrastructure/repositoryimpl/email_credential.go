@@ -1,9 +1,9 @@
 package repositoryimpl
 
 import (
-	//"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson"
 
-	//commonRepo "github.com/opensourceways/app-cla-server/common/domain/repository"
+	commonRepo "github.com/opensourceways/app-cla-server/common/domain/repository"
 	"github.com/opensourceways/app-cla-server/signing/domain"
 	"github.com/opensourceways/app-cla-server/signing/domain/dp"
 )
@@ -18,9 +18,33 @@ type emailCredential struct {
 	dao dao
 }
 
-func (impl *emailCredential) Add(*domain.EmailCredential) error {
-	return nil
+func (impl *emailCredential) Add(ec *domain.EmailCredential) error {
+	do := toEmailCredentialDO(ec)
+	doc, err := do.toDoc()
+	if err != nil {
+		return err
+	}
+	doc[fieldToken] = ec.Token
+
+	filter := bson.M{fieldEmail: ec.Addr.EmailAddr()}
+
+	_, err = impl.dao.ReplaceDoc(filter, doc)
+
+	return err
 }
-func (impl *emailCredential) Find(dp.EmailAddr) (domain.EmailCredential, error) {
-	return domain.EmailCredential{}, nil
+
+func (impl *emailCredential) Find(addr dp.EmailAddr) (domain.EmailCredential, error) {
+	filter := bson.M{fieldEmail: addr.EmailAddr()}
+
+	var do emailCredentialDO
+
+	if err := impl.dao.GetDoc(filter, nil, &do); err != nil {
+		if impl.dao.IsDocNotExists(err) {
+			err = commonRepo.NewErrorResourceNotFound(err)
+		}
+
+		return domain.EmailCredential{}, err
+	}
+
+	return do.toEmailCredential()
 }

@@ -12,14 +12,14 @@ func Platform() string {
 	return platform
 }
 
-type GetCredential func(dp.EmailAddr) (domain.EmailCredential, error)
-
-type EmailMessage = emailservice.EmailMessage
-
 var gcli = &gmailClient{}
 
+func GmailClient() *gmailClient {
+	return gcli
+}
+
 func Init(cfg *Config) error {
-	if err := gcli.initialize(cfg.Credentials); err != nil {
+	if err := gcli.initialize([]byte(cfg.Credentials)); err != nil {
 		return err
 	}
 
@@ -28,10 +28,11 @@ func Init(cfg *Config) error {
 	return nil
 }
 
-func GmailClient() *gmailClient {
-	return gcli
-}
+type GetCredential func(dp.EmailAddr) (domain.EmailCredential, error)
 
+type EmailMessage = emailservice.EmailMessage
+
+// emailServiceImpl
 type emailServiceImpl struct {
 	getCredential GetCredential
 }

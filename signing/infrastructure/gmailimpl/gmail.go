@@ -26,8 +26,8 @@ type gmailClient struct {
 	emailTemp *template.Template
 }
 
-func (this *gmailClient) initialize(path string) error {
-	cfg, err := this.getOauth2Config(path)
+func (this *gmailClient) initialize(credentials []byte) error {
+	cfg, err := this.getOauth2Config(credentials)
 	if err != nil {
 		return fmt.Errorf("Failtd to initialize gmail client: %s", err.Error())
 	}
@@ -87,13 +87,8 @@ func (this *gmailClient) sendEmail(token *oauth2.Token, msg *EmailMessage) error
 	return err
 }
 
-func (this *gmailClient) getOauth2Config(path string) (*oauth2.Config, error) {
-	b, err := ioutil.ReadFile(path)
-	if err != nil {
-		return nil, fmt.Errorf("Unable to read client secret file: %v", err)
-	}
-
-	config, err := google.ConfigFromJSON(b, this.getScope()...)
+func (this *gmailClient) getOauth2Config(credentials []byte) (*oauth2.Config, error) {
+	config, err := google.ConfigFromJSON(credentials, this.getScope()...)
 	if err != nil {
 		return nil, fmt.Errorf("Unable to parse client secret file to config: %v", err)
 	}

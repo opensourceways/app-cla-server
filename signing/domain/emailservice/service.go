@@ -9,7 +9,7 @@ var (
 )
 
 func SendEmail(platform string, e *EmailMessage) error {
-	return impl.SendEmail(platform, e)
+	return impl.sendEmail(platform, e)
 }
 
 func Register(platform string, e iEmail) {
@@ -43,7 +43,7 @@ func (impl *emailServiceImpl) add(platform string, e iEmail) {
 	impl.clients[platform] = e
 }
 
-func (impl *emailServiceImpl) SendEmail(platform string, e *EmailMessage) error {
+func (impl *emailServiceImpl) sendEmail(platform string, e *EmailMessage) error {
 	cli, ok := impl.clients[platform]
 	if !ok {
 		return errors.New("unsupported email platform")

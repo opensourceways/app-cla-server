@@ -43,7 +43,7 @@ func (s *emailCredential) Find(ed dp.EmailAddr) (domain.EmailCredential, error) 
 	e, err := s.repo.Find(ed)
 	if err != nil {
 		if commonRepo.IsErrorResourceNotFound(err) {
-			err = domain.NewDomainError(domain.ErrorCodeEmailNotFound)
+			err = domain.NewDomainError(domain.ErrorCodeEmailCredentialNotFound)
 		}
 
 		return e, err

@@ -12,11 +12,11 @@ func Platform() string {
 	return platform
 }
 
-type GetCredential func(dp.EmailAddr) (domain.EmailCredential, error)
-
-type EmailMessage = emailservice.EmailMessage
-
 var txcli = &txmailClient{}
+
+func TXmailClient() *txmailClient {
+	return txcli
+}
 
 func Init() {
 	txcli.initialize()
@@ -24,10 +24,11 @@ func Init() {
 	emailservice.Register(platform, &emailServiceImpl{})
 }
 
-func TXmailClient() *txmailClient {
-	return txcli
-}
+type GetCredential func(dp.EmailAddr) (domain.EmailCredential, error)
 
+type EmailMessage = emailservice.EmailMessage
+
+// emailServiceImpl
 type emailServiceImpl struct {
 	getCredential GetCredential
 }

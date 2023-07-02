@@ -78,6 +78,7 @@ func ParseToOrgRepo(s string) OrgRepo {
 
 type OrgInfo struct {
 	OrgRepo
-	OrgAlias string `json:"org_alias"`
-	OrgEmail string `json:"org_email"`
+	OrgAlias         string `json:"org_alias"`
+	OrgEmail         string `json:"org_email"`
+	OrgEmailPlatform string `json:"org_email_platform"`
 }

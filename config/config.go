@@ -65,11 +65,13 @@ type MongodbConfig struct {
 }
 
 type apiConfig struct {
-	LimitedAPIs         []string `json:"limited_apis"`
-	CookieDomain        string   `json:"cookie_domain" required:"true"`
-	CookieTimeout       int      `json:"cookie_timeout"` // seconds
-	WaitingTimeForVC    int      `json:"waiting_time_for_vc"`
-	MaxRequestPerMinute int      `json:"max_request_per_minute"`
+	LimitedAPIs                     []string `json:"limited_apis"`
+	CookieDomain                    string   `json:"cookie_domain" required:"true"`
+	CookieTimeout                   int      `json:"cookie_timeout"` // seconds
+	WaitingTimeForVC                int      `json:"waiting_time_for_vc"`
+	MaxRequestPerMinute             int      `json:"max_request_per_minute"`
+	WebRedirectDirOnSuccessForEmail string   `json:"web_redirect_dir_on_success_for_email"`
+	WebRedirectDirOnFailureForEmail string   `json:"web_redirect_dir_on_failure_for_email"`
 }
 
 func (cfg *apiConfig) setDefault() {
@@ -90,6 +92,14 @@ func (cfg *apiConfig) setDefault() {
 
 	if cfg.CookieTimeout <= 0 {
 		cfg.CookieTimeout = 1800
+	}
+
+	if cfg.WebRedirectDirOnSuccessForEmail == "" {
+		cfg.WebRedirectDirOnSuccessForEmail = "/config-email"
+	}
+
+	if cfg.WebRedirectDirOnFailureForEmail == "" {
+		cfg.WebRedirectDirOnFailureForEmail = "/config-email"
 	}
 }
 

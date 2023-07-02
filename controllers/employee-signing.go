@@ -6,8 +6,8 @@ import (
 
 	"github.com/opensourceways/app-cla-server/config"
 	"github.com/opensourceways/app-cla-server/dbmodels"
-	"github.com/opensourceways/app-cla-server/email"
 	"github.com/opensourceways/app-cla-server/models"
+	"github.com/opensourceways/app-cla-server/signing/infrastructure/emailtmpl"
 )
 
 type EmployeeSigningController struct {
@@ -178,10 +178,10 @@ func (this *EmployeeSigningController) Update() {
 	msg := this.newEmployeeNotification(employeeEmail, orgInfo, pl.Email)
 	if info.Enabled {
 		msg.Active = true
-		sendEmailToIndividual(employeeEmail, orgInfo.OrgEmail, "Activate CLA signing", msg)
+		sendEmailToIndividual(employeeEmail, orgInfo, "Activate CLA signing", msg)
 	} else {
 		msg.Inactive = true
-		sendEmailToIndividual(employeeEmail, orgInfo.OrgEmail, "Inactivate CLA signing", msg)
+		sendEmailToIndividual(employeeEmail, orgInfo, "Inactivate CLA signing", msg)
 	}
 }
 
@@ -218,7 +218,7 @@ func (this *EmployeeSigningController) Delete() {
 
 	msg := this.newEmployeeNotification(employeeEmail, orgInfo, pl.Email)
 	msg.Removing = true
-	sendEmailToIndividual(employeeEmail, orgInfo.OrgEmail, "Remove employee", msg)
+	sendEmailToIndividual(employeeEmail, orgInfo, "Remove employee", msg)
 }
 
 func (this *EmployeeSigningController) notifyManagers(managers []dbmodels.CorporationManagerListResult, info *models.EmployeeSigning, orgInfo *models.OrgInfo) {
@@ -229,31 +229,31 @@ func (this *EmployeeSigningController) notifyManagers(managers []dbmodels.Corpor
 		ms = append(ms, fmt.Sprintf("%s: %s", item.Name, item.Email))
 	}
 
-	msg := email.EmployeeSigning{
+	msg := emailtmpl.EmployeeSigning{
 		Name:       info.Name,
 		Org:        orgInfo.OrgAlias,
 		ProjectURL: orgInfo.ProjectURL(),
 		Managers:   "  " + strings.Join(ms, "\n  "),
 	}
 	sendEmailToIndividual(
-		info.Email, orgInfo.OrgEmail,
+		info.Email, orgInfo,
 		fmt.Sprintf("Signing CLA on project of \"%s\"", msg.Org),
 		msg,
 	)
 
-	msg1 := email.NotifyingManager{
+	msg1 := emailtmpl.NotifyingManager{
 		Org:              orgInfo.OrgAlias,
 		EmployeeEmail:    info.Email,
 		ProjectURL:       orgInfo.ProjectURL(),
 		URLOfCLAPlatform: config.AppConfig.CLAPlatformURL,
 	}
-	sendEmail(to, orgInfo.OrgEmail, "An employee has signed CLA", msg1)
+	sendEmail(to, orgInfo, "An employee has signed CLA", msg1)
 }
 
 func (this *EmployeeSigningController) newEmployeeNotification(
 	employeeName string, orgInfo *models.OrgInfo, managerEmail string,
-) *email.EmployeeNotification {
-	return &email.EmployeeNotification{
+) *emailtmpl.EmployeeNotification {
+	return &emailtmpl.EmployeeNotification{
 		Name:       employeeName,
 		Manager:    managerEmail,
 		Org:        orgInfo.OrgAlias,

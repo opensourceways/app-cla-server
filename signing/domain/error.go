@@ -3,6 +3,8 @@ package domain
 import "strings"
 
 const (
+	ErrorCodeEmailNotFound = "email_not_found"
+
 	ErrorCodeUserExists                 = "user_exists"
 	ErrorCodeUserSamePassword           = "user_same_password"
 	ErrorCodeUserInvalidAccount         = "user_invalid_account"

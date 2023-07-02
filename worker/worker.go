@@ -9,18 +9,20 @@ import (
 
 	"github.com/beego/beego/v2/core/logs"
 
-	"github.com/opensourceways/app-cla-server/email"
 	"github.com/opensourceways/app-cla-server/models"
 	"github.com/opensourceways/app-cla-server/pdf"
+	"github.com/opensourceways/app-cla-server/signing/domain/emailservice"
+	"github.com/opensourceways/app-cla-server/signing/infrastructure/emailtmpl"
 	"github.com/opensourceways/app-cla-server/util"
 )
 
 var worker IEmailWorker
 
+type EmailMessage = emailservice.EmailMessage
+
 type IEmailWorker interface {
 	GenCLAPDFForCorporationAndSendIt(string, string, models.OrgInfo, models.CorporationSigning, []models.CLAField)
-	SendSimpleMessage(msg *email.EmailMessage)
-	SendAuthVerificationCode(orgEmail, platform, AuthCode string, msg *email.EmailMessage)
+	SendSimpleMessage(platform string, msg *EmailMessage)
 	Shutdown()
 }
 
@@ -56,19 +58,17 @@ func (w *emailWorker) Shutdown() {
 	w.wg.Wait()
 }
 
-func (w *emailWorker) GenCLAPDFForCorporationAndSendIt(linkID, claFile string, orgInfo models.OrgInfo, signing models.CorporationSigning, claFields []models.CLAField) {
+func (w *emailWorker) GenCLAPDFForCorporationAndSendIt(
+	linkID, claFile string, orgInfo models.OrgInfo,
+	signing models.CorporationSigning,
+	claFields []models.CLAField,
+) {
 	f := func() {
 		defer func() {
 			w.wg.Done()
 		}()
 
-		ec, err := getEmailClient(orgInfo.OrgEmail)
-		if err != nil {
-			logs.Error("get email client failed, err:", err)
-			return
-		}
-
-		data := email.CorporationSigning{
+		data := emailtmpl.CorporationSigning{
 			Org:         orgInfo.OrgAlias,
 			Date:        signing.Date,
 			AdminName:   signing.AdminName,
@@ -87,6 +87,8 @@ func (w *emailWorker) GenCLAPDFForCorporationAndSendIt(linkID, claFile string, o
 			}
 		}()
 
+		var err error
+
 		genFile := func() error {
 			if fileExist() {
 				return nil
@@ -100,7 +102,7 @@ func (w *emailWorker) GenCLAPDFForCorporationAndSendIt(linkID, claFile string, o
 			return nil
 		}
 
-		var msg *email.EmailMessage
+		var msg *EmailMessage
 		genMsg := func() error {
 			if msg != nil {
 				return nil
@@ -127,7 +129,7 @@ func (w *emailWorker) GenCLAPDFForCorporationAndSendIt(linkID, claFile string, o
 
 			msg.Attachment = file
 			msg.From = orgInfo.OrgEmail
-			if err := ec.SendEmail(msg); err != nil {
+			if err := emailservice.SendEmail(orgInfo.OrgEmailPlatform, msg); err != nil {
 				return fmt.Errorf("error to send email, err:%s", err.Error())
 			}
 			return nil
@@ -151,48 +153,14 @@ func (w *emailWorker) GenCLAPDFForCorporationAndSendIt(linkID, claFile string, o
 	go f()
 }
 
-func (w *emailWorker) SendSimpleMessage(msg *email.EmailMessage) {
+func (w *emailWorker) SendSimpleMessage(emailPlatform string, msg *EmailMessage) {
 	f := func() {
 		defer func() {
 			w.wg.Done()
 		}()
 
-		ec, err := getEmailClient(msg.From)
-		if err != nil {
-			return
-		}
-
 		action := func() error {
-			if err := ec.SendEmail(msg); err != nil {
-				return fmt.Errorf("error to send email, err:%s", err.Error())
-			}
-			return nil
-		}
-
-		w.tryToSendEmail(action)
-	}
-
-	w.wg.Add(1)
-	go f()
-}
-
-func (w *emailWorker) SendAuthVerificationCode(orgEmail, platform, AuthCode string, msg *email.EmailMessage) {
-	f := func() {
-		defer w.wg.Done()
-
-		emailCfg := &models.OrgEmail{
-			Email:    orgEmail,
-			Platform: platform,
-			AuthCode: AuthCode,
-		}
-
-		ec, err := email.EmailAgent.GetEmailClient(emailCfg)
-		if err != nil {
-			return
-		}
-
-		action := func() error {
-			if err := ec.SendEmail(msg); err != nil {
+			if err := emailservice.SendEmail(emailPlatform, msg); err != nil {
 				return fmt.Errorf("error to send email, err:%s", err.Error())
 			}
 			return nil
@@ -231,23 +199,6 @@ func (w *emailWorker) tryToSendEmail(action func() error) {
 		case <-t.C:
 		}
 	}
-}
-
-func getEmailClient(orgEmail string) (email.IEmail, error) {
-	emailCfg, merr := models.GetOrgEmailInfo(orgEmail)
-	if merr != nil {
-		logs.Info(merr.Error())
-		return nil, merr
-	}
-
-	ec, err := email.EmailAgent.GetEmailClient(emailCfg)
-	if err != nil {
-		logs.Info(err.Error())
-
-		return nil, err
-	}
-
-	return ec, nil
 }
 
 func buildCorpSigningInfo(signing *models.CorporationSigning, claFields []models.CLAField) string {

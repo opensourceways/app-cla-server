@@ -3,6 +3,7 @@ package config
 import (
 	"github.com/opensourceways/app-cla-server/common/infrastructure/mongodb"
 	"github.com/opensourceways/app-cla-server/signing/domain/dp"
+	"github.com/opensourceways/app-cla-server/signing/infrastructure/gmailimpl"
 	"github.com/opensourceways/app-cla-server/signing/infrastructure/repositoryimpl"
 )
 
@@ -25,12 +26,14 @@ type mongodbConfig struct {
 }
 
 type signingConfig struct {
-	Mongodb mongodbConfig `json:"mongodb"     required:"true"`
-	Domain  domainConfig  `json:"domain"      required:"true"`
+	Gmail   gmailimpl.Config `json:"gmail"       required:"true"`
+	Domain  domainConfig     `json:"domain"      required:"true"`
+	Mongodb mongodbConfig    `json:"mongodb"     required:"true"`
 }
 
 func (cfg *signingConfig) configItems() []interface{} {
 	return []interface{}{
+		&cfg.Gmail,
 		&cfg.Mongodb.DB,
 		&cfg.Mongodb.Config,
 		&cfg.Domain.DomainPrimitive,

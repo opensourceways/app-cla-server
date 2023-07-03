@@ -134,6 +134,30 @@ func (impl *daoImpl) UpdateDoc(filter bson.M, v bson.M, version int) error {
 	return impl.updateDoc(filter, version, bson.M{mongoCmdSet: v})
 }
 
+func (impl *daoImpl) ReplaceDoc(filter, doc bson.M) (string, error) {
+	docId := ""
+
+	err := impl.withContext(func(ctx context.Context) error {
+		upsert := true
+
+		r, err := impl.col.ReplaceOne(
+			ctx, filter, doc,
+			&options.ReplaceOptions{Upsert: &upsert},
+		)
+		if err != nil {
+			return err
+		}
+
+		if r.UpsertedID != nil {
+			docId = toDocId(r.UpsertedID)
+		}
+
+		return nil
+	})
+
+	return docId, err
+}
+
 func (impl *daoImpl) updateDoc(filter bson.M, version int, cmd bson.M) error {
 	return impl.withContext(func(ctx context.Context) error {
 		filter[fieldVersion] = version

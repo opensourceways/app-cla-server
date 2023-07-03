@@ -187,42 +187,6 @@ func init() {
 			Filters:          nil,
 			Params:           nil})
 
-	beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:EmailController"] = append(beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:EmailController"],
-		beego.ControllerComments{
-			Method:           "Auth",
-			Router:           `/auth/:platform`,
-			AllowHTTPMethods: []string{"get"},
-			MethodParams:     param.Make(),
-			Filters:          nil,
-			Params:           nil})
-
-	beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:EmailController"] = append(beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:EmailController"],
-		beego.ControllerComments{
-			Method:           "Get",
-			Router:           `/authcodeurl/:platform`,
-			AllowHTTPMethods: []string{"get"},
-			MethodParams:     param.Make(),
-			Filters:          nil,
-			Params:           nil})
-
-	beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:EmailController"] = append(beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:EmailController"],
-		beego.ControllerComments{
-			Method:           "Authorize",
-			Router:           `/authorize/:platform`,
-			AllowHTTPMethods: []string{"post"},
-			MethodParams:     param.Make(),
-			Filters:          nil,
-			Params:           nil})
-
-	beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:EmailController"] = append(beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:EmailController"],
-		beego.ControllerComments{
-			Method:           "Code",
-			Router:           `/code/:platform`,
-			AllowHTTPMethods: []string{"post"},
-			MethodParams:     param.Make(),
-			Filters:          nil,
-			Params:           nil})
-
 	beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:EmployeeManagerController"] = append(beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:EmployeeManagerController"],
 		beego.ControllerComments{
 			Method:           "Post",
@@ -282,6 +246,24 @@ func init() {
 			Method:           "Delete",
 			Router:           `/:signing_id`,
 			AllowHTTPMethods: []string{"delete"},
+			MethodParams:     param.Make(),
+			Filters:          nil,
+			Params:           nil})
+
+	beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:GmailController"] = append(beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:GmailController"],
+		beego.ControllerComments{
+			Method:           "Auth",
+			Router:           `/auth`,
+			AllowHTTPMethods: []string{"get"},
+			MethodParams:     param.Make(),
+			Filters:          nil,
+			Params:           nil})
+
+	beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:GmailController"] = append(beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:GmailController"],
+		beego.ControllerComments{
+			Method:           "Get",
+			Router:           `/authcodeurl`,
+			AllowHTTPMethods: []string{"get"},
 			MethodParams:     param.Make(),
 			Filters:          nil,
 			Params:           nil})
@@ -363,6 +345,24 @@ func init() {
 			Method:           "Reset",
 			Router:           `/:link_id`,
 			AllowHTTPMethods: []string{"patch"},
+			MethodParams:     param.Make(),
+			Filters:          nil,
+			Params:           nil})
+
+	beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:TXmailController"] = append(beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:TXmailController"],
+		beego.ControllerComments{
+			Method:           "Authorize",
+			Router:           `/authorize`,
+			AllowHTTPMethods: []string{"post"},
+			MethodParams:     param.Make(),
+			Filters:          nil,
+			Params:           nil})
+
+	beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:TXmailController"] = append(beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:TXmailController"],
+		beego.ControllerComments{
+			Method:           "Code",
+			Router:           `/code`,
+			AllowHTTPMethods: []string{"post"},
 			MethodParams:     param.Make(),
 			Filters:          nil,
 			Params:           nil})

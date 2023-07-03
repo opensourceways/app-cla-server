@@ -88,8 +88,8 @@ func (this *CorporationSigningController) Post() {
 			}
 
 			worker.GetEmailWorker().GenCLAPDFForCorporationAndSendIt(
-				linkID, claFile, *orgInfo,
-				info.CorporationSigning, claInfo.Fields,
+				linkID, claFile, orgInfo,
+				&info.CorporationSigning, claInfo.Fields,
 			)
 
 			return nil
@@ -194,7 +194,7 @@ func (this *CorporationSigningController) ResendCorpSigningEmail() {
 	claFile := genCLAFilePath(linkID, dbmodels.ApplyToCorporation, signingInfo.CLALanguage, claInfo.CLAHash)
 
 	worker.GetEmailWorker().GenCLAPDFForCorporationAndSendIt(
-		linkID, claFile, *orgInfo, signingInfo, claInfo.Fields,
+		linkID, claFile, orgInfo, &signingInfo, claInfo.Fields,
 	)
 
 	this.sendSuccessResp("resend email successfully")

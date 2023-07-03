@@ -14,10 +14,12 @@ import (
 	"github.com/opensourceways/app-cla-server/config"
 	"github.com/opensourceways/app-cla-server/controllers"
 	"github.com/opensourceways/app-cla-server/dbmodels"
-	"github.com/opensourceways/app-cla-server/email"
 	"github.com/opensourceways/app-cla-server/mongodb"
 	"github.com/opensourceways/app-cla-server/pdf"
 	_ "github.com/opensourceways/app-cla-server/routers"
+	"github.com/opensourceways/app-cla-server/signing/infrastructure/emailtmpl"
+	"github.com/opensourceways/app-cla-server/signing/infrastructure/gmailimpl"
+	"github.com/opensourceways/app-cla-server/signing/infrastructure/txmailimpl"
 	"github.com/opensourceways/app-cla-server/util"
 	"github.com/opensourceways/app-cla-server/worker"
 )
@@ -31,7 +33,7 @@ func main() {
 	configFile, err := beego.AppConfig.String("appconf")
 	if err != nil {
 		logs.Error(err)
-		os.Exit(1)
+		return
 	}
 
 	startSignSerivce(configFile)
@@ -40,7 +42,7 @@ func main() {
 func startSignSerivce(configPath string) {
 	if err := config.InitAppConfig(configPath); err != nil {
 		logs.Error(err)
-		os.Exit(1)
+		return
 	}
 	cfg := config.AppConfig
 
@@ -48,39 +50,46 @@ func startSignSerivce(configPath string) {
 	if util.IsNotDir(path) {
 		if err := os.Mkdir(path, 0732); err != nil {
 			logs.Error(err)
-			os.Exit(1)
+			return
 		}
 	}
 
-	if err := email.Initialize(cfg.EmailPlatformConfigFile); err != nil {
+	if err := emailtmpl.Init(); err != nil {
 		logs.Error(err)
-		os.Exit(1)
+		return
 	}
+
+	if err := gmailimpl.Init(&cfg.SigningConfig.Gmail); err != nil {
+		logs.Error(err)
+		return
+	}
+
+	txmailimpl.Init()
 
 	if err := platformAuth.Initialize(cfg.CodePlatformConfigFile); err != nil {
 		logs.Error(err)
-		os.Exit(1)
+		return
 	}
 
 	err := pdf.InitPDFGenerator(cfg.PythonBin, cfg.PDFOutDir, cfg.PDFOrgSignatureDir)
 	if err != nil {
 		logs.Error(err)
-		os.Exit(1)
+		return
 	}
 
 	if err := controllers.LoadLinks(); err != nil {
 		logs.Error(err)
-		os.Exit(1)
+		return
 	}
 
 	if err := controllers.Init(); err != nil {
 		logs.Error(err)
-		os.Exit(1)
+		return
 	}
 
 	if err := startMongoService(); err != nil {
 		logs.Error(err)
-		os.Exit(1)
+		return
 	}
 
 	defer exitMongoService()

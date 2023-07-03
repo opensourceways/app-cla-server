@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/opensourceways/app-cla-server/email"
 	"github.com/opensourceways/app-cla-server/models"
+	"github.com/opensourceways/app-cla-server/signing/infrastructure/emailtmpl"
 )
 
 type VerificationCodeController struct {
@@ -72,12 +72,12 @@ func (this *VerificationCodeController) Post() {
 	this.sendSuccessResp("create verification code successfully")
 
 	sendEmailToIndividual(
-		req.Email, orgInfo.OrgEmail,
+		req.Email, orgInfo,
 		fmt.Sprintf(
 			"Verification code for signing CLA on project of \"%s\"",
 			orgInfo.OrgAlias,
 		),
-		email.VerificationCode{
+		emailtmpl.VerificationCode{
 			Email:      req.Email,
 			Org:        orgInfo.OrgAlias,
 			Code:       code,
@@ -137,9 +137,9 @@ func (this *VerificationCodeController) EmailDomain() {
 	this.sendSuccessResp("create verification code successfully")
 
 	sendEmailToIndividual(
-		req.Email, orgInfo.OrgEmail,
+		req.Email, orgInfo,
 		"Verification code for adding corporation's another email domain",
-		email.AddingCorpEmailDomain{
+		emailtmpl.AddingCorpEmailDomain{
 			Corp:       pl.Corp,
 			Org:        orgInfo.OrgAlias,
 			Code:       code,

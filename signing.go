@@ -7,12 +7,16 @@ import (
 	"github.com/opensourceways/app-cla-server/signing/adapter"
 	"github.com/opensourceways/app-cla-server/signing/app"
 	"github.com/opensourceways/app-cla-server/signing/domain/dp"
+	"github.com/opensourceways/app-cla-server/signing/domain/emailcredential"
 	"github.com/opensourceways/app-cla-server/signing/domain/userservice"
 	"github.com/opensourceways/app-cla-server/signing/domain/vcservice"
 	"github.com/opensourceways/app-cla-server/signing/infrastructure/encryptionimpl"
+	"github.com/opensourceways/app-cla-server/signing/infrastructure/gmailimpl"
 	"github.com/opensourceways/app-cla-server/signing/infrastructure/passwordimpl"
 	"github.com/opensourceways/app-cla-server/signing/infrastructure/randomcodeimpl"
 	"github.com/opensourceways/app-cla-server/signing/infrastructure/repositoryimpl"
+	"github.com/opensourceways/app-cla-server/signing/infrastructure/symmetricencryptionimpl"
+	"github.com/opensourceways/app-cla-server/signing/infrastructure/txmailimpl"
 )
 
 func initSigning() {
@@ -62,5 +66,20 @@ func initSigning() {
 		repo,
 	))
 
-	models.Init(ua, cp, ca, cs, es, em, ed, vc, is)
+	ecRepo := repositoryimpl.NewEmailCredential(
+		mongodb.DAO(cfg.Mongodb.Collections.EmailCredential),
+	)
+
+	echelper := emailcredential.NewEmailCredential(
+		ecRepo, symmetricencryptionimpl.NewSymmetricEncryptionImpl(),
+	)
+
+	gmailimpl.RegisterEmailService(echelper.Find)
+	txmailimpl.RegisterEmailService(echelper.Find)
+
+	ec := adapter.NewEmailCredentialAdapter(
+		app.NewEmailCredentialService(echelper), ecRepo,
+	)
+
+	models.Init(ua, cp, ca, cs, ec, es, em, ed, vc, is)
 }

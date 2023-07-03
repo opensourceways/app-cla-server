@@ -52,6 +52,7 @@ const (
 	ErrUnuploaed               ModelErrCode = "unuploaded"
 	ErrGoToSignEmployeeCLA     ModelErrCode = "go_to_sign_employee_cla"
 	ErrWrongIDOrPassword       ModelErrCode = "wrong_id_or_pw"
+	ErrNoRefreshToken          ModelErrCode = "no_refresh_token"
 )
 
 type IModelError interface {

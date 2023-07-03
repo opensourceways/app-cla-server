@@ -6,8 +6,8 @@ import (
 	"path"
 
 	"github.com/opensourceways/app-cla-server/config"
-	"github.com/opensourceways/app-cla-server/email"
 	"github.com/opensourceways/app-cla-server/models"
+	"github.com/opensourceways/app-cla-server/signing/infrastructure/emailtmpl"
 )
 
 type PasswordRetrievalController struct {
@@ -68,9 +68,9 @@ func (this *PasswordRetrievalController) Post() {
 
 	sendEmailToIndividual(
 		info.Email,
-		orgInfo.OrgEmail,
+		orgInfo,
 		"[CLA Sign] Retrieving Password of Corporation Manager",
-		email.PasswordRetrieval{
+		emailtmpl.PasswordRetrieval{
 			Org:          orgInfo.OrgAlias,
 			Timeout:      config.AppConfig.PasswordRetrievalExpiry / 60,
 			ResetURL:     genURLToResetPassword(linkID, key),

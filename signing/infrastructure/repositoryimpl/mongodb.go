@@ -30,8 +30,9 @@ type dao interface {
 	UpdateArraySingleItem(filter bson.M, array string, filterOfArray, doc bson.M, version int) error
 	MoveArrayItem(filter bson.M, from string, filterOfItem bson.M, to string, value bson.M, version int) error
 
-	InsertDocIfNotExists(filter, doc bson.M) (string, error)
 	InsertDoc(doc bson.M) (string, error)
+	ReplaceDoc(filter, doc bson.M) (string, error)
+	InsertDocIfNotExists(filter, doc bson.M) (string, error)
 
 	DeleteDoc(filter bson.M) error
 	DeleteDocs(filter bson.M) error

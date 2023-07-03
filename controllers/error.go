@@ -44,6 +44,7 @@ const (
 	errInvalidPWRetrievalKey    = string(models.ErrInvalidPWRetrievalKey)
 	errTooManyRequest           = "too_many_request"
 	errNoOrg                    = "no_org"
+	errInvalidEmailAuthCode     = "invalid_email_auth_code"
 )
 
 func parseModelError(err models.IModelError) *failedApiResult {

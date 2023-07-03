@@ -10,8 +10,9 @@ import (
 
 	"github.com/opensourceways/app-cla-server/config"
 	"github.com/opensourceways/app-cla-server/dbmodels"
-	"github.com/opensourceways/app-cla-server/email"
 	"github.com/opensourceways/app-cla-server/models"
+	"github.com/opensourceways/app-cla-server/signing/domain/emailservice"
+	"github.com/opensourceways/app-cla-server/signing/infrastructure/emailtmpl"
 	"github.com/opensourceways/app-cla-server/util"
 	"github.com/opensourceways/app-cla-server/worker"
 )
@@ -23,21 +24,21 @@ const (
 	fileNameOfUploadingOrgSignatue = "org_signature_file"
 )
 
-func sendEmailToIndividual(to, from, subject string, builder email.IEmailMessageBulder) {
-	sendEmail([]string{to}, from, subject, builder)
+func sendEmailToIndividual(to string, orgInfo *models.OrgInfo, subject string, builder emailservice.IEmailMessageBulder) {
+	sendEmail([]string{to}, orgInfo, subject, builder)
 }
 
-func sendEmail(to []string, from, subject string, builder email.IEmailMessageBulder) {
+func sendEmail(to []string, orgInfo *models.OrgInfo, subject string, builder emailservice.IEmailMessageBulder) {
 	msg, err := builder.GenEmailMsg()
 	if err != nil {
 		logs.Error(err)
 		return
 	}
-	msg.From = from
+	msg.From = orgInfo.OrgEmail
 	msg.To = to
 	msg.Subject = subject
 
-	worker.GetEmailWorker().SendSimpleMessage(msg)
+	worker.GetEmailWorker().SendSimpleMessage(orgInfo.OrgEmailPlatform, msg)
 }
 
 func notifyCorpAdmin(orgInfo *models.OrgInfo, info *dbmodels.CorporationManagerCreateOption) {
@@ -50,7 +51,7 @@ func notifyCorpManagerWhenAdding(orgInfo *models.OrgInfo, info []dbmodels.Corpor
 
 	for i := range info {
 		item := &info[i]
-		d := email.AddingCorpManager{
+		d := emailtmpl.AddingCorpManager{
 			Admin:            admin,
 			ID:               item.ID,
 			User:             item.Name,
@@ -61,7 +62,7 @@ func notifyCorpManagerWhenAdding(orgInfo *models.OrgInfo, info []dbmodels.Corpor
 			URLOfCLAPlatform: config.AppConfig.CLAPlatformURL,
 		}
 
-		sendEmailToIndividual(item.Email, orgInfo.OrgEmail, subject, d)
+		sendEmailToIndividual(item.Email, orgInfo, subject, d)
 	}
 }
 

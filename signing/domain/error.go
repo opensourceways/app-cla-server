@@ -38,6 +38,8 @@ const (
 	ErrorCodeIndividualSigningCorpExists = "individual_signing_corp_exists"
 
 	ErrorCodeVerificationCodeWrong = "verification_code_wrong"
+
+	ErrorCodeEmailCredentialNotFound = "email_credential_not_found"
 )
 
 // domainError

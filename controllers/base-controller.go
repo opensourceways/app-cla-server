@@ -15,7 +15,10 @@ import (
 	"github.com/opensourceways/app-cla-server/models"
 )
 
-const accessToken = "access_token"
+const (
+	csrfToken   = "csrf_token"
+	accessToken = "access_token"
+)
 
 type failedApiResult struct {
 	reason     error
@@ -298,12 +301,17 @@ func (this *baseController) redirect(webRedirectDir string) {
 }
 
 func (this *baseController) setCookies(value map[string]string) {
+	for k, v := range value {
+		this.setCookie(k, v, false)
+	}
+}
+
+func (this *baseController) setCookie(k, v string, httpOnly bool) {
 	cfg := config.AppConfig.APIConfig
 
-	// TODO check the property of cookie
-	for k, v := range value {
-		this.Ctx.SetCookie(k, v, cfg.CookieTimeout, "/")
-	}
+	this.Ctx.SetCookie(
+		k, v, cfg.CookieTimeout, "/", cfg.CookieDomain, true, httpOnly, "strict",
+	)
 }
 
 func (this *baseController) getToken() (t models.AccessToken, fr *failedApiResult) {
@@ -321,14 +329,8 @@ func (this *baseController) getToken() (t models.AccessToken, fr *failedApiResul
 }
 
 func (this *baseController) setToken(t models.AccessToken) {
-	this.setCookies(map[string]string{"csrf": t.CSRF})
-
-	// TODO samesite?
-	cfg := config.AppConfig.APIConfig
-
-	this.Ctx.SetCookie(
-		accessToken, t.Id, cfg.CookieTimeout, "/", cfg.CookieDomain, true, true,
-	)
+	this.setCookie(csrfToken, t.CSRF, false)
+	this.setCookie(accessToken, t.Id, true)
 }
 
 func (this *baseController) getRemoteAddr() (string, *failedApiResult) {

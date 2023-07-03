@@ -43,6 +43,7 @@ func (this *AuthController) Callback() {
 
 	rs := func(errCode string, reason error) {
 		this.setCookies(map[string]string{"error_code": errCode, "error_msg": reason.Error()})
+
 		this.redirect(authHelper.WebRedirectDir(false))
 	}
 

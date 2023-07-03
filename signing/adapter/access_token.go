@@ -16,13 +16,13 @@ type accessTokenAdatper struct {
 	s app.AccessTokenService
 }
 
-func (adapter *accessTokenAdatper) Add(payload []byte) (string, string, models.IModelError) {
+func (adapter *accessTokenAdatper) Add(payload []byte) (models.AccessToken, models.IModelError) {
 	v, err := adapter.s.Add(payload)
 	if err != nil {
-		return "", "", models.NewModelError(models.ErrSystemError, err)
+		return models.AccessToken{}, models.NewModelError(models.ErrSystemError, err)
 	}
 
-	return v.Id, v.CSRF, nil
+	return models.AccessToken{Id: v.Id, CSRF: v.CSRF}, nil
 }
 
 func (adapter *accessTokenAdatper) ValidateAndRefresh(old models.AccessToken) (

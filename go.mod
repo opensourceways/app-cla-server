@@ -6,7 +6,6 @@ require (
 	gitee.com/openeuler/go-gitee v0.0.0-20220530104019-3af895bc380c
 	github.com/antihax/optional v1.0.0
 	github.com/beego/beego/v2 v2.0.3
-	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/google/go-github/v33 v33.0.0
 	github.com/opensourceways/gofpdf v1.16.4
 	github.com/opensourceways/server-common-lib v0.0.0-20230208064916-61fc43dfb8db
@@ -15,7 +14,6 @@ require (
 	golang.org/x/oauth2 v0.0.0-20210514164344-f6687ab2804c
 	google.golang.org/api v0.30.0
 	gopkg.in/gomail.v2 v2.0.0-20160411212932-81ebce5c23df
-	k8s.io/apimachinery v0.27.3
 	sigs.k8s.io/yaml v1.3.0
 )
 
@@ -26,6 +24,7 @@ require (
 	github.com/golang/groupcache v0.0.0-20200121045136-8c9f03a8e57e // indirect
 	github.com/golang/protobuf v1.5.3 // indirect
 	github.com/golang/snappy v0.0.1 // indirect
+	github.com/google/go-cmp v0.5.9 // indirect
 	github.com/google/go-querystring v1.0.0 // indirect
 	github.com/googleapis/gax-go/v2 v2.0.5 // indirect
 	github.com/hashicorp/golang-lru v0.5.4 // indirect

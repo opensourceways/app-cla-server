@@ -51,6 +51,6 @@ Your personal data collected by us is stored in the Hong Kong Special Administra
 #### 9. How This Statement Is Updated
 We may update this statement from time to time according to changes of our services or data processing methods. If we update this statement, we will publish the latest version of the statement on this website, and it will take effect immediately upon its release. You are advised to review this statement periodically for any changes. If we make any substantial changes to this statement, we will notify you through appropriate channels and obtain your consent.  
 #### 10. How to Contact Us
-If you have any questions, comments, or suggestions about your personal data or any matters related to this agreement, or exercise your rights related to personal data, please contact us at chenzeng765@gmail.com.
+If you have any questions, comments, or suggestions about your personal data or any matters related to this agreement, or exercise your rights related to personal data, please contact us at cla-contact@osinfra.cn.
 
 Last updated: August 2022

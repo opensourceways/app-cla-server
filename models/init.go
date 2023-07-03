@@ -6,6 +6,7 @@ var (
 	userAdapterInstance              userAdapter
 	corpPDFAdapterInstance           corpPDFAdapter
 	corpAdminAdatperInstance         corpAdminAdatper
+	accessTokenAdapterInstance       accessTokenAdapter
 	corpSigningAdapterInstance       corpSigningAdapter
 	emailCredentialAdapterInstance   emailCredentialAdapter
 	employeeSigningAdapterInstance   employeeSigningAdapter
@@ -78,6 +79,15 @@ type verificationCodeAdapter interface {
 type emailCredentialAdapter interface {
 	AddGmailCredential(code, scope string) (string, IModelError)
 	AddTXmailCredential(email, code string) IModelError
+}
+
+type accessTokenAdapter interface {
+	Add(payload []byte) (AccessToken, IModelError)
+	ValidateAndRefresh(AccessToken) (AccessToken, []byte, IModelError)
+}
+
+func RegisterAccessTokenAdapter(at accessTokenAdapter) {
+	accessTokenAdapterInstance = at
 }
 
 func Init(

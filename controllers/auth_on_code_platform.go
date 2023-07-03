@@ -87,9 +87,7 @@ func (this *AuthController) Callback() {
 		return
 	}
 
-	//this.setCookies()
-
-	this.setTokenToCookies(at)
+	this.setToken(at)
 	this.redirect(authHelper.WebRedirectDir(true))
 }
 

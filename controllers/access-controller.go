@@ -1,108 +1,29 @@
 package controllers
 
-import (
-	"encoding/json"
-	"fmt"
-
-	"github.com/dgrijalva/jwt-go"
-	"k8s.io/apimachinery/pkg/util/sets"
-
-	"github.com/opensourceways/app-cla-server/util"
-)
+import "errors"
 
 const (
-	PermissionOwnerOfOrg      = "owner of org"
 	PermissionCorpAdmin       = "corporation administrator"
+	PermissionOwnerOfOrg      = "owner of org"
 	PermissionEmployeeManager = "employee manager"
 )
 
 type accessController struct {
 	RemoteAddr string      `json:"remote_addr"`
-	Expiry     int64       `json:"expiry"`
 	Permission string      `json:"permission"`
 	Payload    interface{} `json:"payload"`
 }
 
-func (this *accessController) newToken(secret string) (string, error) {
-	body, err := util.BuildRequestBody(this, "")
-	if err != nil {
-		return "", fmt.Errorf("failed to create token: build body failed: %s", err.Error())
+func (ctl *accessController) verify(permission []string, addr string) error {
+	if ctl.RemoteAddr != addr {
+		return errors.New("unmatched remote address")
 	}
 
-	token := jwt.New(jwt.SigningMethodHS256)
-	token.Claims = jwt.MapClaims(body)
-
-	s, err := token.SignedString([]byte(secret))
-	if err != nil {
-		return "", err
-	}
-
-	return this.encryptToken(s)
-}
-
-func (this *accessController) refreshToken(expiry int64, secret string) (string, error) {
-	this.Expiry = util.Expiry(expiry)
-	return this.newToken(secret)
-}
-
-func (this *accessController) parseToken(token, secret string) error {
-	token1, err := this.decryptToken(token)
-	if err != nil {
-		return err
-	}
-
-	t, err := jwt.Parse(token1, func(t1 *jwt.Token) (interface{}, error) {
-		if _, ok := t1.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, fmt.Errorf("unexpected signing method")
+	for _, p := range permission {
+		if p == ctl.Permission {
+			return nil
 		}
-
-		return []byte(secret), nil
-	})
-	if err != nil {
-		return err
-	}
-	if !t.Valid {
-		return fmt.Errorf("not a valid token")
 	}
 
-	claims, ok := t.Claims.(jwt.MapClaims)
-	if !ok {
-		return fmt.Errorf("not valid claims")
-	}
-
-	d, err := json.Marshal(claims)
-	if err != nil {
-		return err
-	}
-
-	return json.Unmarshal(d, this)
-}
-
-func (this *accessController) isTokenExpired() bool {
-	return this.Expiry < util.Now()
-}
-
-func (this *accessController) verify(permission []string, addr string) error {
-	if !sets.NewString(permission...).Has(this.Permission) {
-		return fmt.Errorf("not allowed permission")
-	}
-
-	if this.RemoteAddr != addr {
-		return fmt.Errorf("unmatched remote address")
-	}
-
-	return nil
-}
-
-func (this *accessController) encryptToken(token string) (string, error) {
-	return encryptData([]byte(token))
-}
-
-func (this *accessController) decryptToken(token string) (string, error) {
-	b, err := decryptData(token)
-	if err != nil {
-		return "", err
-	}
-
-	return string(b), nil
+	return errors.New("not allowed permission")
 }

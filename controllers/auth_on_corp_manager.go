@@ -9,7 +9,6 @@ type corpAuthInfo struct {
 	models.OrgRepo
 
 	Role             string `json:"role"`
-	Token            string `json:"token"`
 	InitialPWChanged bool   `json:"initial_pw_changed"`
 }
 
@@ -46,8 +45,7 @@ func (this *CorporationManagerController) Auth() {
 		return
 	}
 
-	token, err := this.newAccessToken(info.LinkID, &v)
-	if err != nil {
+	if err := this.genToken(info.LinkID, &v); err != nil {
 		this.sendFailedResponse(500, errSystemError, err, action)
 
 		return
@@ -55,15 +53,14 @@ func (this *CorporationManagerController) Auth() {
 
 	this.sendSuccessResp([]corpAuthInfo{
 		{
-			OrgRepo:          orgInfo.OrgRepo,
 			Role:             v.Role,
-			Token:            token,
+			OrgRepo:          orgInfo.OrgRepo,
 			InitialPWChanged: v.InitialPWChanged,
 		},
 	})
 }
 
-func (this *CorporationManagerController) newAccessToken(linkID string, info *models.CorpManagerLoginInfo) (string, error) {
+func (this *CorporationManagerController) genToken(linkID string, info *models.CorpManagerLoginInfo) error {
 	permission := ""
 	switch info.Role {
 	case dbmodels.RoleAdmin:
@@ -72,7 +69,7 @@ func (this *CorporationManagerController) newAccessToken(linkID string, info *mo
 		permission = PermissionEmployeeManager
 	}
 
-	return this.newApiToken(
+	token, err := this.newApiToken(
 		permission,
 		&acForCorpManagerPayload{
 			Corp:      info.CorpName,
@@ -81,6 +78,11 @@ func (this *CorporationManagerController) newAccessToken(linkID string, info *mo
 			SigningId: info.SigningId,
 		},
 	)
+	if err == nil {
+		this.setToken(token)
+	}
+
+	return err
 }
 
 type acForCorpManagerPayload struct {

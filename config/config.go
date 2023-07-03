@@ -32,7 +32,6 @@ type appConfig struct {
 	MaxSizeOfCLAContent       int           `json:"max_size_of_cla_content"`
 	VerificationCodeExpiry    int64         `json:"verification_code_expiry" required:"true"`
 	APITokenExpiry            int64         `json:"api_token_expiry" required:"true"`
-	APITokenKey               string        `json:"api_token_key" required:"true"`
 	SymmetricEncryptionKey    string        `json:"symmetric_encryption_key" required:"true"`
 	PDFOrgSignatureDir        string        `json:"pdf_org_signature_dir" required:"true"`
 	PDFOutDir                 string        `json:"pdf_out_dir" required:"true"`
@@ -187,10 +186,6 @@ func (cfg *appConfig) validate() error {
 
 	if cfg.EmployeeManagersNumber <= 0 {
 		return fmt.Errorf("the employee_managers_number:%d should be bigger than 0", cfg.EmployeeManagersNumber)
-	}
-
-	if len(cfg.APITokenKey) < 20 {
-		return fmt.Errorf("the length of api_token_key should be bigger than 20")
 	}
 
 	if _, err := util.NewSymmetricEncryption(cfg.SymmetricEncryptionKey, ""); err != nil {

@@ -40,6 +40,8 @@ const (
 	ErrorCodeVerificationCodeWrong = "verification_code_wrong"
 
 	ErrorCodeEmailCredentialNotFound = "email_credential_not_found"
+
+	ErrorCodeAccessTokenInvalid = "access_token_invalid"
 )
 
 // domainError

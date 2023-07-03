@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net"
@@ -12,10 +13,12 @@ import (
 
 	"github.com/opensourceways/app-cla-server/config"
 	"github.com/opensourceways/app-cla-server/models"
-	"github.com/opensourceways/app-cla-server/util"
 )
 
-const accessToken = "access_token"
+const (
+	csrfToken   = "csrf_token"
+	accessToken = "access_token"
+)
 
 type failedApiResult struct {
 	reason     error
@@ -38,14 +41,6 @@ type baseController struct {
 }
 
 func (this *baseController) sendResponse(body interface{}, statusCode int) {
-	if token, err := this.refreshAccessToken(); err == nil {
-		// this code must run before `this.Ctx.ResponseWriter.WriteHeader`
-		// otherwise the header can't be set successfully.
-		// The reason is relevant to the variable of 'Response.Started' at
-		// beego/context/context.go
-		this.Ctx.Output.Header(headerToken, token)
-	}
-
 	if statusCode != 0 {
 		// if success, don't set status code, otherwise the header set in this.ServeJSON
 		// will not work. The reason maybe the same as above.
@@ -93,32 +88,24 @@ func (this *baseController) sendFailedResponse(statusCode int, errCode string, r
 	this.sendResponse(d, statusCode)
 }
 
-func (this *baseController) newApiToken(permission string, pl interface{}) (string, error) {
+func (this *baseController) newApiToken(permission string, pl interface{}) (models.AccessToken, error) {
 	addr, fr := this.getRemoteAddr()
 	if fr != nil {
-		return "", fr.reason
+		return models.AccessToken{}, fr.reason
 	}
+
 	ac := &accessController{
-		Expiry:     util.Expiry(config.AppConfig.APITokenExpiry),
-		Permission: permission,
 		Payload:    pl,
 		RemoteAddr: addr,
+		Permission: permission,
 	}
 
-	return ac.newToken(config.AppConfig.APITokenKey)
-}
-
-func (this *baseController) refreshAccessToken() (string, *failedApiResult) {
-	ac, fr := this.getAccessController()
-	if fr != nil {
-		return "", fr
+	v, err := json.Marshal(ac)
+	if err != nil {
+		return models.AccessToken{}, err
 	}
 
-	token, err := ac.refreshToken(config.AppConfig.APITokenExpiry, config.AppConfig.APITokenKey)
-	if err == nil {
-		return token, nil
-	}
-	return "", newFailedApiResult(500, errSystemError, err)
+	return models.NewAccessToken(v)
 }
 
 func (this *baseController) tokenPayloadBasedOnCodePlatform() (*acForCodePlatformPayload, *failedApiResult) {
@@ -222,17 +209,25 @@ func (this *baseController) newAccessController(permission string) *accessContro
 }
 
 func (this *baseController) checkApiReqToken(ac *accessController, permission []string) *failedApiResult {
-	token := this.apiReqHeader(headerToken)
-	if token == "" {
-		return newFailedApiResult(401, errMissingToken, fmt.Errorf("no token passed"))
+	token, fr := this.getToken()
+	if fr != nil {
+		return fr
 	}
 
-	if err := ac.parseToken(token, config.AppConfig.APITokenKey); err != nil {
-		return newFailedApiResult(401, errUnknownToken, err)
+	newToken, v, err := models.ValidateAndRefreshAccessToken(token)
+
+	if err != nil {
+		if err.IsErrorOf(models.ErrInvalidToken) {
+			return newFailedApiResult(401, errUnknownToken, err)
+		}
+
+		return newFailedApiResult(500, errSystemError, err)
 	}
 
-	if ac.isTokenExpired() {
-		return newFailedApiResult(403, errExpiredToken, fmt.Errorf("token is expired"))
+	this.setToken(newToken)
+
+	if err := json.Unmarshal(v, ac); err != nil {
+		return newFailedApiResult(500, errSystemError, err)
 	}
 
 	addr, fr := this.getRemoteAddr()
@@ -306,21 +301,36 @@ func (this *baseController) redirect(webRedirectDir string) {
 }
 
 func (this *baseController) setCookies(value map[string]string) {
-	cfg := config.AppConfig.APIConfig
-
-	// TODO check the property of cookie
 	for k, v := range value {
-		this.Ctx.SetCookie(k, v, cfg.CookieTimeout, "/")
+		this.setCookie(k, v, false)
 	}
 }
 
-func (this *baseController) setTokenToCookies(t string) {
-	// TODO samesite?
+func (this *baseController) setCookie(k, v string, httpOnly bool) {
 	cfg := config.AppConfig.APIConfig
 
 	this.Ctx.SetCookie(
-		accessToken, t, cfg.CookieTimeout, "/", cfg.CookieDomain, true, true,
+		k, v, cfg.CookieTimeout, "/", cfg.CookieDomain, true, httpOnly, "strict",
 	)
+}
+
+func (this *baseController) getToken() (t models.AccessToken, fr *failedApiResult) {
+	if t.CSRF = this.apiReqHeader(headerToken); t.CSRF == "" {
+		fr = newFailedApiResult(401, errMissingToken, fmt.Errorf("no token passed"))
+
+		return
+	}
+
+	if t.Id = this.Ctx.GetCookie(accessToken); t.Id == "" {
+		fr = newFailedApiResult(401, errMissingToken, fmt.Errorf("no token passed"))
+	}
+
+	return
+}
+
+func (this *baseController) setToken(t models.AccessToken) {
+	this.setCookie(csrfToken, t.CSRF, false)
+	this.setCookie(accessToken, t.Id, true)
 }
 
 func (this *baseController) getRemoteAddr() (string, *failedApiResult) {

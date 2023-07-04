@@ -1,6 +1,9 @@
 package app
 
-import "github.com/opensourceways/app-cla-server/signing/domain/dp"
+import (
+	"github.com/opensourceways/app-cla-server/signing/domain"
+	"github.com/opensourceways/app-cla-server/signing/domain/dp"
+)
 
 // CmdToLogin
 type CmdToLogin struct {
@@ -24,6 +27,14 @@ type CmdToChangePassword struct {
 	Id     string
 	OldOne dp.Password
 	NewOne dp.Password
+}
+
+func (cmd *CmdToChangePassword) Validate() error {
+	if cmd.OldOne.Password() == cmd.NewOne.Password() {
+		return domain.NewDomainError(domain.ErrorCodeUserSamePassword)
+	}
+
+	return nil
 }
 
 // CmdToResetPassword

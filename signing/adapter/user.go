@@ -44,6 +44,7 @@ func (adapter *userAdatper) cmdToChangePassword(
 	}
 
 	cmd.Id = index
+	err = cmd.Validate()
 
 	return
 }

@@ -3,52 +3,59 @@ package encryptionimpl
 import (
 	"crypto/rand"
 	"crypto/sha256"
-	"encoding/base64"
-	"encoding/hex"
 
 	"golang.org/x/crypto/pbkdf2"
 )
 
 const (
 	saltLen       = 16
+	iterTimes     = 10000
 	encryptKeyLen = 32
-	iter          = 10000
 )
 
-func NewEncryptionImpl() *encryptionImpl {
-	return &encryptionImpl{}
+func NewEncryptionImpl() encryptionImpl {
+	return encryptionImpl{}
 }
 
 type encryptionImpl struct{}
 
-func (impl *encryptionImpl) Encrypt(pwd string) (string, error) {
+func (impl encryptionImpl) Encrypt(plainText string) ([]byte, error) {
 	salt, err := impl.genSalt()
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	return salt + impl.encrypt(pwd, salt), nil
+	return append(salt, impl.encrypt(plainText, salt)...), nil
 }
 
-func (impl *encryptionImpl) Check(pwd, encryptStr string) bool {
-	enPwd := encryptStr[saltLen:]
-	salt := encryptStr[0:saltLen]
+func (impl encryptionImpl) IsSame(plainText string, encrypted []byte) bool {
+	if len(encrypted) < saltLen+1 {
+		return false
+	}
 
-	return enPwd == impl.encrypt(pwd, salt)
+	v := impl.encrypt(plainText, encrypted[:saltLen])
+	v1 := encrypted[saltLen:]
+
+	if len(v) != len(v1) {
+		return false
+	}
+
+	for i := range v {
+		if v[i] != v1[i] {
+			return false
+		}
+	}
+
+	return true
 }
 
-func (impl *encryptionImpl) encrypt(pwd, salt string) string {
-	dk := pbkdf2.Key([]byte(pwd), []byte(salt), iter, encryptKeyLen, sha256.New)
-	return hex.EncodeToString(dk)
+func (impl encryptionImpl) encrypt(plainText string, salt []byte) []byte {
+	return pbkdf2.Key([]byte(plainText), salt, iterTimes, encryptKeyLen, sha256.New)
 }
 
-func (impl *encryptionImpl) genSalt() (string, error) {
+func (impl encryptionImpl) genSalt() ([]byte, error) {
 	b := make([]byte, saltLen)
-	if _, err := rand.Read(b); err != nil {
-		return "", err
-	}
+	_, err := rand.Read(b)
 
-	encodeSalt := base64.StdEncoding.EncodeToString(b)
-
-	return encodeSalt[0:saltLen], nil
+	return b, err
 }

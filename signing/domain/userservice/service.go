@@ -91,40 +91,49 @@ func (s *userService) RemoveByAccount(linkId string, accounts []dp.Account) {
 }
 
 func (s *userService) ChangePassword(index string, old, newOne dp.Password) error {
+	if err := s.checkPassword(newOne); err != nil {
+		return err
+	}
+
+	if err := s.checkPassword(old); err != nil {
+		return err
+	}
+
 	u, err := s.repo.Find(index)
 	if err != nil {
 		return err
 	}
 
-	old1, err := s.checkPassword(old)
+	if !s.encrypt.IsSame(old.Password(), u.UserPassword()) {
+		return domain.NewDomainError(domain.ErrorCodeUserUnmatchedPassword)
+	}
+
+	v, err := s.encrypt.Encrypt(newOne.Password())
 	if err != nil {
 		return err
 	}
 
-	newOne1, err := s.checkPassword(newOne)
-	if err != nil {
-		return err
-	}
-
-	if err := u.ChangePassword(old1, newOne1); err != nil {
-		return err
-	}
+	u.ResetPassword(v)
 
 	return s.repo.SavePassword(&u)
 }
 
 func (s *userService) ResetPassword(linkId string, email dp.EmailAddr, newOne dp.Password) error {
+	if !s.password.IsValid(newOne.Password()) {
+		return domain.NewDomainError(domain.ErrorCodeUserInvalidPassword)
+	}
+
+	v, err := s.encrypt.Encrypt(newOne.Password())
+	if err != nil {
+		return err
+	}
+
 	u, err := s.repo.FindByEmail(linkId, email)
 	if err != nil {
 		return err
 	}
 
-	newOne1, err := s.checkPassword(newOne)
-	if err != nil {
-		return err
-	}
-
-	u.ResetPassword(newOne1)
+	u.ResetPassword(v)
 
 	return s.repo.SavePassword(&u)
 }
@@ -135,12 +144,7 @@ func (s *userService) add(linkId, csId string, manager *domain.Manager) (p strin
 		return
 	}
 
-	v, err := s.encrypt.Ecrypt(p)
-	if err != nil {
-		return
-	}
-
-	pw, err := dp.NewPassword(v)
+	v, err := s.encrypt.Encrypt(p)
 	if err != nil {
 		return
 	}
@@ -153,7 +157,7 @@ func (s *userService) add(linkId, csId string, manager *domain.Manager) (p strin
 	index, err = s.repo.Add(&domain.User{
 		LinkId:        linkId,
 		Account:       a,
-		Password:      pw,
+		Password:      v,
 		EmailAddr:     manager.EmailAddr,
 		CorpSigningId: csId,
 	})
@@ -161,17 +165,12 @@ func (s *userService) add(linkId, csId string, manager *domain.Manager) (p strin
 	return
 }
 
-func (s *userService) checkPassword(p dp.Password) (dp.Password, error) {
+func (s *userService) checkPassword(p dp.Password) error {
 	if !s.password.IsValid(p.Password()) {
-		return nil, domain.NewDomainError(domain.ErrorCodeUserInvalidPassword)
+		return domain.NewDomainError(domain.ErrorCodeUserInvalidPassword)
 	}
 
-	v, err := s.encrypt.Ecrypt(p.Password())
-	if err != nil {
-		return nil, err
-	}
-
-	return dp.NewPassword(v)
+	return nil
 }
 
 func (s *userService) LoginByAccount(linkId string, a dp.Account, p dp.Password) (domain.User, error) {
@@ -201,11 +200,6 @@ func (s *userService) login(find func() (domain.User, error), p dp.Password) (u 
 		return
 	}
 
-	np, err := s.checkPassword(p)
-	if err != nil {
-		return
-	}
-
 	u, err = find()
 	if err != nil {
 		if commonRepo.IsErrorResourceNotFound(err) {
@@ -215,7 +209,7 @@ func (s *userService) login(find func() (domain.User, error), p dp.Password) (u 
 		return
 	}
 
-	if !u.IsCorrectPassword(np) {
+	if !s.encrypt.IsSame(p.Password(), u.UserPassword()) {
 		err = loginErr
 	}
 

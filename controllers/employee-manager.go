@@ -45,8 +45,7 @@ func (this *EmployeeManagerController) Post() {
 		return
 	}
 
-	// TODO csid
-	added, merr := info.Add("")
+	added, merr := info.Add(pl.SigningId)
 	if merr != nil {
 		this.sendModelErrorAsResp(merr, action)
 		return
@@ -85,8 +84,7 @@ func (this *EmployeeManagerController) Delete() {
 		return
 	}
 
-	// TODO csid
-	deleted, merr := info.Delete("")
+	deleted, merr := info.Delete(pl.SigningId)
 	if merr != nil {
 		this.sendModelErrorAsResp(merr, action)
 		return
@@ -113,14 +111,13 @@ func (this *EmployeeManagerController) Delete() {
 func (this *EmployeeManagerController) GetAll() {
 	sendResp := this.newFuncForSendingFailedResp("list employee managers")
 
-	_, fr := this.tokenPayloadBasedOnCorpManager()
+	pl, fr := this.tokenPayloadBasedOnCorpManager()
 	if fr != nil {
 		sendResp(fr)
 		return
 	}
 
-	// TODO csid
-	r, err := models.ListEmployeeManagers("")
+	r, err := models.ListEmployeeManagers(pl.SigningId)
 	if err == nil {
 		this.sendSuccessResp(r)
 	} else {

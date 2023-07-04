@@ -81,7 +81,7 @@ func (this *CorporationManagerController) Patch() {
 	action := "change password of corp's manager"
 	sendResp := this.newFuncForSendingFailedResp(action)
 
-	_, fr := this.tokenPayloadBasedOnCorpManager()
+	pl, fr := this.tokenPayloadBasedOnCorpManager()
 	if fr != nil {
 		sendResp(fr)
 		return
@@ -93,8 +93,7 @@ func (this *CorporationManagerController) Patch() {
 		return
 	}
 
-	// TODO user index
-	if err := info.ChangePassword(""); err != nil {
+	if err := info.ChangePassword(pl.UserId); err != nil {
 		this.sendModelErrorAsResp(err, action)
 		return
 	}

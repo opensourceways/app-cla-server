@@ -123,14 +123,13 @@ func (this *CorporationPDFController) Download() {
 func (this *CorporationPDFController) Review() {
 	action := "download corp's signing pdf"
 
-	_, fr := this.tokenPayloadBasedOnCorpManager()
+	pl, fr := this.tokenPayloadBasedOnCorpManager()
 	if fr != nil {
 		this.sendFailedResultAsResp(fr, action)
 		return
 	}
 
-	// TODO csid
-	if fr := this.downloadCorpPDF(""); fr != nil {
+	if fr := this.downloadCorpPDF(pl.SigningId); fr != nil {
 		this.sendFailedResultAsResp(fr, action)
 	}
 }

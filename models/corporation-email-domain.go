@@ -15,25 +15,6 @@ type CorpEmailDomainCreateOption struct {
 	VerificationCode string `json:"verification_code"`
 }
 
-func (cse *CorpEmailDomainCreateOption) Validate(adminEmail string) IModelError {
-	if err := checkEmailFormat(cse.SubEmail); err != nil {
-		return err
-	}
-
-	err := checkVerificationCode(
-		cse.SubEmail, cse.VerificationCode,
-		PurposeOfAddingEmailDomain(adminEmail),
-	)
-	if err != nil {
-		return err
-	}
-
-	if !isMatchedEmailDomain(adminEmail, cse.SubEmail) {
-		return newModelError(ErrUnmatchedEmailDomain, fmt.Errorf("unmatched email domain"))
-	}
-	return nil
-}
-
 func (cse *CorpEmailDomainCreateOption) Check(csId string) IModelError {
 	if err := checkEmailFormat(cse.SubEmail); err != nil {
 		return err

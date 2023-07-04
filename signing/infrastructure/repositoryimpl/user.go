@@ -25,6 +25,7 @@ func (impl *user) Add(v *domain.User) (string, error) {
 		return "", err
 	}
 	doc[fieldVersion] = 0
+	doc[fieldPassword] = v.Password
 
 	docFilter := linkIdFilter(v.LinkId)
 	docFilter[mongodbCmdOr] = bson.A{
@@ -83,7 +84,7 @@ func (impl *user) SavePassword(u *domain.User) error {
 	}
 
 	doc := bson.M{
-		fieldPassword: u.Password.Password(),
+		fieldPassword: u.Password,
 		fieldChanged:  u.PasswordChaged,
 	}
 

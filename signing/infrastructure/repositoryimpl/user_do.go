@@ -20,7 +20,7 @@ type userDO struct {
 	Email          string             `bson:"email"     json:"email"     required:"true"`
 	LinkId         string             `bson:"link_id"   json:"link_id"   required:"true"`
 	Account        string             `bson:"account"   json:"account"   required:"true"`
-	Password       string             `bson:"password"  json:"password"  required:"true"`
+	Password       []byte             `bson:"password"  json:"-"`
 	CorpSigningId  string             `bson:"cs_id"     json:"cs_id"     required:"true"`
 	PasswordChaged bool               `bson:"changed"   json:"changed"`
 	Version        int                `bson:"version"   json:"-"`
@@ -39,13 +39,10 @@ func (do *userDO) toUser(u *domain.User) (err error) {
 		return
 	}
 
-	if u.Password, err = dp.NewPassword(do.Password); err != nil {
-		return
-	}
-
 	u.Id = do.Id.Hex()
 	u.LinkId = do.LinkId
 	u.CorpSigningId = do.CorpSigningId
+	u.Password = do.Password
 	u.PasswordChaged = do.PasswordChaged
 	u.Version = do.Version
 
@@ -57,7 +54,6 @@ func toUserDO(u *domain.User) userDO {
 		Email:          u.EmailAddr.EmailAddr(),
 		LinkId:         u.LinkId,
 		Account:        u.Account.Account(),
-		Password:       u.Password.Password(),
 		CorpSigningId:  u.CorpSigningId,
 		PasswordChaged: u.PasswordChaged,
 	}

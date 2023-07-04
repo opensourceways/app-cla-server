@@ -5,7 +5,7 @@ import "github.com/opensourceways/app-cla-server/signing/domain/dp"
 type User struct {
 	Id             string
 	Account        dp.Account
-	Password       dp.Password
+	Password       []byte
 	EmailAddr      dp.EmailAddr
 	LinkId         string
 	CorpSigningId  string
@@ -13,26 +13,11 @@ type User struct {
 	Version        int
 }
 
-func (u *User) ChangePassword(old, newOne dp.Password) error {
-	if !u.IsCorrectPassword(old) {
-		return NewDomainError(ErrorCodeUserUnmatchedPassword)
-	}
-
-	if u.IsCorrectPassword(newOne) {
-		return NewDomainError(ErrorCodeUserSamePassword)
-	}
-
-	u.Password = newOne
-	u.PasswordChaged = true
-
-	return nil
-}
-
-func (u *User) ResetPassword(newOne dp.Password) {
+func (u *User) ResetPassword(newOne []byte) {
 	u.Password = newOne
 	u.PasswordChaged = true
 }
 
-func (u *User) IsCorrectPassword(p dp.Password) bool {
-	return u.Password.Password() == p.Password()
+func (u *User) UserPassword() []byte {
+	return u.Password
 }

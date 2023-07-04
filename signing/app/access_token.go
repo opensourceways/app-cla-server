@@ -1,6 +1,9 @@
 package app
 
-import ats "github.com/opensourceways/app-cla-server/signing/domain/accesstokenservice"
+import (
+	"github.com/opensourceways/app-cla-server/signing/domain"
+	ats "github.com/opensourceways/app-cla-server/signing/domain/accesstokenservice"
+)
 
 func NewAccessTokenService(
 	at ats.AccessTokenService,
@@ -10,22 +13,22 @@ func NewAccessTokenService(
 	}
 }
 
-type AccessTokenKeyDTO = ats.AccessTokenKey
-type CmdToValidateAccessToken = ats.AccessTokenKey
+type AccessTokenKeyDTO = domain.AccessTokenKey
+type CmdToValidateAccessToken = domain.AccessTokenKey
 
 type AccessTokenService interface {
-	Add(payload []byte) (k ats.AccessTokenKey, err error)
-	ValidateAndRefresh(old ats.AccessTokenKey) (ats.AccessTokenKey, []byte, error)
+	Add(payload []byte) (k domain.AccessTokenKey, err error)
+	ValidateAndRefresh(old domain.AccessTokenKey) (domain.AccessTokenKey, []byte, error)
 }
 
 type accessTokenService struct {
 	at ats.AccessTokenService
 }
 
-func (s *accessTokenService) Add(payload []byte) (k ats.AccessTokenKey, err error) {
+func (s *accessTokenService) Add(payload []byte) (k domain.AccessTokenKey, err error) {
 	return s.at.Add(payload)
 }
 
-func (s *accessTokenService) ValidateAndRefresh(old ats.AccessTokenKey) (ats.AccessTokenKey, []byte, error) {
+func (s *accessTokenService) ValidateAndRefresh(old domain.AccessTokenKey) (domain.AccessTokenKey, []byte, error) {
 	return s.at.ValidateAndRefresh(old)
 }

@@ -1,6 +1,6 @@
 package encryption
 
 type Encryption interface {
-	Encrypt(string) ([]byte, error)
-	IsSame(plainText string, encrypted []byte) bool
+	Encrypt([]byte) ([]byte, error)
+	IsSame(plainText []byte, encrypted []byte) bool
 }

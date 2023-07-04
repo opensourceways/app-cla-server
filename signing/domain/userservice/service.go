@@ -104,11 +104,11 @@ func (s *userService) ChangePassword(index string, old, newOne dp.Password) erro
 		return err
 	}
 
-	if !s.encrypt.IsSame(old.Password(), u.UserPassword()) {
+	if !s.isSamePassword(old, u.UserPassword()) {
 		return domain.NewDomainError(domain.ErrorCodeUserUnmatchedPassword)
 	}
 
-	v, err := s.encrypt.Encrypt(newOne.Password())
+	v, err := s.encryptPassword(newOne.Password())
 	if err != nil {
 		return err
 	}
@@ -128,7 +128,7 @@ func (s *userService) ResetPassword(linkId string, email dp.EmailAddr, newOne dp
 		return err
 	}
 
-	v, err := s.encrypt.Encrypt(newOne.Password())
+	v, err := s.encryptPassword(newOne.Password())
 	if err != nil {
 		return err
 	}
@@ -144,7 +144,7 @@ func (s *userService) add(linkId, csId string, manager *domain.Manager) (p strin
 		return
 	}
 
-	v, err := s.encrypt.Encrypt(p)
+	v, err := s.encryptPassword(p)
 	if err != nil {
 		return
 	}
@@ -209,9 +209,17 @@ func (s *userService) login(find func() (domain.User, error), p dp.Password) (u 
 		return
 	}
 
-	if !s.encrypt.IsSame(p.Password(), u.UserPassword()) {
+	if !s.isSamePassword(p, u.UserPassword()) {
 		err = loginErr
 	}
 
 	return
+}
+
+func (s *userService) isSamePassword(p dp.Password, encrypted []byte) bool {
+	return s.encrypt.IsSame([]byte(p.Password()), encrypted)
+}
+
+func (s *userService) encryptPassword(p string) ([]byte, error) {
+	return s.encrypt.Encrypt([]byte(p))
 }

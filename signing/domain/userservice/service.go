@@ -119,16 +119,16 @@ func (s *userService) ChangePassword(index string, old, newOne dp.Password) erro
 }
 
 func (s *userService) ResetPassword(linkId string, email dp.EmailAddr, newOne dp.Password) error {
-	if !s.password.IsValid(newOne.Password()) {
-		return domain.NewDomainError(domain.ErrorCodeUserInvalidPassword)
-	}
-
-	v, err := s.encrypt.Encrypt(newOne.Password())
-	if err != nil {
+	if err := s.checkPassword(newOne); err != nil {
 		return err
 	}
 
 	u, err := s.repo.FindByEmail(linkId, email)
+	if err != nil {
+		return err
+	}
+
+	v, err := s.encrypt.Encrypt(newOne.Password())
 	if err != nil {
 		return err
 	}

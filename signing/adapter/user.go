@@ -18,7 +18,7 @@ type userAdatper struct {
 }
 
 func (adapter *userAdatper) ChangePassword(
-	index string, opt *models.CorporationManagerResetPassword,
+	index string, opt *models.CorporationManagerChangePassword,
 ) models.IModelError {
 	cmd, err := adapter.cmdToChangePassword(index, opt)
 	if err != nil {
@@ -33,7 +33,7 @@ func (adapter *userAdatper) ChangePassword(
 }
 
 func (adapter *userAdatper) cmdToChangePassword(
-	index string, opt *models.CorporationManagerResetPassword,
+	index string, opt *models.CorporationManagerChangePassword,
 ) (cmd app.CmdToChangePassword, err error) {
 	if cmd.OldOne, err = dp.NewPassword(opt.OldPassword); err != nil {
 		return
@@ -54,12 +54,12 @@ func (adapter *userAdatper) cmdToChangePassword(
 func (adapter *userAdatper) GenKeyForPasswordRetrieval(linkId string, email string) (
 	string, models.IModelError,
 ) {
-	cmd, err := adapter.toCmdToGenKeyForResettingPassword(linkId, email)
+	cmd, err := adapter.toCmdToGenKeyForPasswordRetrieval(linkId, email)
 	if err != nil {
 		return "", toModelError(err)
 	}
 
-	k, err := adapter.s.GenKeyForResettingPassword(&cmd)
+	k, err := adapter.s.GenKeyForPasswordRetrieval(&cmd)
 	if err != nil {
 		return "", toModelError(err)
 	}
@@ -67,8 +67,8 @@ func (adapter *userAdatper) GenKeyForPasswordRetrieval(linkId string, email stri
 	return k, nil
 }
 
-func (adapter *userAdatper) toCmdToGenKeyForResettingPassword(linkId string, email string) (
-	cmd app.CmdToGenKeyForResettingPassword, err error,
+func (adapter *userAdatper) toCmdToGenKeyForPasswordRetrieval(linkId string, email string) (
+	cmd app.CmdToGenKeyForPasswordRetrieval, err error,
 ) {
 	cmd.LinkId = linkId
 	cmd.EmailAddr, err = dp.NewEmailAddr(email)

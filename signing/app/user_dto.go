@@ -44,10 +44,10 @@ type CmdToResetPassword struct {
 	Key    string
 }
 
-// CmdToGenKeyForResettingPassword
-type CmdToGenKeyForResettingPassword CmdToCreateCodeForSigning
+// CmdToGenKeyForPasswordRetrieval
+type CmdToGenKeyForPasswordRetrieval CmdToCreateCodeForSigning
 
-func (cmd *CmdToGenKeyForResettingPassword) purpose() (dp.Purpose, error) {
+func (cmd *CmdToGenKeyForPasswordRetrieval) purpose() (dp.Purpose, error) {
 	return (*CmdToCreateCodeForSigning)(cmd).newPurpose("password retrieval")
 }
 

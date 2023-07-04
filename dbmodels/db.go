@@ -44,7 +44,7 @@ type ICorporationManager interface {
 	AddCorpAdministrator(linkID string, opt *CorporationManagerCreateOption) IDBError
 	AddEmployeeManager(linkID string, opt []CorporationManagerCreateOption) IDBError
 	DeleteEmployeeManager(orgCLAID string, emails []string) ([]CorporationManagerCreateOption, IDBError)
-	ResetCorporationManagerPassword(string, string, CorporationManagerResetPassword) IDBError
+	ResetCorporationManagerPassword(string, string, CorporationManagerChangePassword) IDBError
 	ListCorporationManager(orgCLAID, email, role string) ([]CorporationManagerListResult, IDBError)
 }
 

@@ -150,7 +150,7 @@ func (this *client) CheckCorporationManagerExist(opt dbmodels.CorporationManager
 	return result, nil
 }
 
-func (this *client) ResetCorporationManagerPassword(linkID, email string, opt dbmodels.CorporationManagerResetPassword) dbmodels.IDBError {
+func (this *client) ResetCorporationManagerPassword(linkID, email string, opt dbmodels.CorporationManagerChangePassword) dbmodels.IDBError {
 	updateCmd := bson.M{
 		fieldPassword: opt.NewPassword,
 		fieldChanged:  true,

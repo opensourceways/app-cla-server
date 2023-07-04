@@ -19,7 +19,7 @@ func (this *CorporationManagerController) Prepare() {
 		this.apiPrepare(PermissionOwnerOfOrg)
 
 	case http.MethodPatch:
-		// reset password of manager
+		// change password of manager
 		this.apiPrepareWithAC(
 			&accessController{Payload: &acForCorpManagerPayload{}},
 			[]string{PermissionCorpAdmin, PermissionEmployeeManager},
@@ -73,12 +73,12 @@ func (this *CorporationManagerController) Put() {
 }
 
 // @Title Patch
-// @Description reset password of corporation manager
+// @Description change password of corporation manager
 // @Success 204 {int} map
 // @Failure util.ErrInvalidAccountOrPw
 // @router / [patch]
 func (this *CorporationManagerController) Patch() {
-	action := "reset password of corp's manager"
+	action := "change password of corp's manager"
 	sendResp := this.newFuncForSendingFailedResp(action)
 
 	_, fr := this.tokenPayloadBasedOnCorpManager()
@@ -87,7 +87,7 @@ func (this *CorporationManagerController) Patch() {
 		return
 	}
 
-	var info models.CorporationManagerResetPassword
+	var info models.CorporationManagerChangePassword
 	if fr := this.fetchInputPayload(&info); fr != nil {
 		sendResp(fr)
 		return
@@ -99,5 +99,5 @@ func (this *CorporationManagerController) Patch() {
 		return
 	}
 
-	this.sendSuccessResp("reset password successfully")
+	this.sendSuccessResp("change password successfully")
 }

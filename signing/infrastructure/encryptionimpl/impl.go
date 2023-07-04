@@ -19,7 +19,7 @@ func NewEncryptionImpl() encryptionImpl {
 
 type encryptionImpl struct{}
 
-func (impl encryptionImpl) Encrypt(plainText string) ([]byte, error) {
+func (impl encryptionImpl) Encrypt(plainText []byte) ([]byte, error) {
 	salt, err := impl.genSalt()
 	if err != nil {
 		return nil, err
@@ -28,7 +28,7 @@ func (impl encryptionImpl) Encrypt(plainText string) ([]byte, error) {
 	return append(salt, impl.encrypt(plainText, salt)...), nil
 }
 
-func (impl encryptionImpl) IsSame(plainText string, encrypted []byte) bool {
+func (impl encryptionImpl) IsSame(plainText, encrypted []byte) bool {
 	if len(encrypted) < saltLen+1 {
 		return false
 	}
@@ -49,8 +49,8 @@ func (impl encryptionImpl) IsSame(plainText string, encrypted []byte) bool {
 	return true
 }
 
-func (impl encryptionImpl) encrypt(plainText string, salt []byte) []byte {
-	return pbkdf2.Key([]byte(plainText), salt, iterTimes, encryptKeyLen, sha256.New)
+func (impl encryptionImpl) encrypt(plainText, salt []byte) []byte {
+	return pbkdf2.Key(plainText, salt, iterTimes, encryptKeyLen, sha256.New)
 }
 
 func (impl encryptionImpl) genSalt() ([]byte, error) {

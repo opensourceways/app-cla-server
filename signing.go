@@ -14,8 +14,8 @@ import (
 	"github.com/opensourceways/app-cla-server/signing/infrastructure/encryptionimpl"
 	"github.com/opensourceways/app-cla-server/signing/infrastructure/gmailimpl"
 	"github.com/opensourceways/app-cla-server/signing/infrastructure/passwordimpl"
+	"github.com/opensourceways/app-cla-server/signing/infrastructure/randombytesimpl"
 	"github.com/opensourceways/app-cla-server/signing/infrastructure/randomcodeimpl"
-	"github.com/opensourceways/app-cla-server/signing/infrastructure/randomstrimpl"
 	"github.com/opensourceways/app-cla-server/signing/infrastructure/repositoryimpl"
 	"github.com/opensourceways/app-cla-server/signing/infrastructure/symmetricencryptionimpl"
 	"github.com/opensourceways/app-cla-server/signing/infrastructure/txmailimpl"
@@ -88,7 +88,8 @@ func initSigning() {
 	at := accesstokenservice.NewAccessTokenService(
 		nil,
 		config.AppConfig.APITokenExpiry,
-		symmetricEncrypt, randomstrimpl.NewRandomStrImpl(),
+		encryptionimpl.NewEncryptionImpl(),
+		randombytesimpl.NewRandomBytesImpl(),
 	)
 
 	models.RegisterAccessTokenAdapter(

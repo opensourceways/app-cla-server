@@ -89,42 +89,6 @@ func (adapter *verificationCodeAdatper) ValidateForSettingOrgEmail(
 	return nil
 }
 
-// password retrieval
-func (adapter *verificationCodeAdatper) CreateForPasswordRetrieval(linkId string, email string) (
-	string, models.IModelError,
-) {
-	v, err := adapter.toCmdToCreateCodeForSigning(linkId, email)
-	if err != nil {
-		return "", toModelError(err)
-	}
-
-	cmd := app.CmdToCreateCodeForPasswordRetrieval(v)
-
-	code, err := adapter.s.New(&cmd)
-	if err != nil {
-		return "", toModelError(err)
-	}
-
-	return code, nil
-}
-
-func (adapter *verificationCodeAdatper) ValidateForPasswordRetrieval(
-	linkId string, email, code string,
-) models.IModelError {
-	v, err := adapter.toCmdToCreateCodeForSigning(linkId, email)
-	if err != nil {
-		return toModelError(err)
-	}
-
-	cmd := app.CmdToCreateCodeForPasswordRetrieval(v)
-
-	if err := adapter.s.Validate(&cmd, code); err != nil {
-		return toModelError(err)
-	}
-
-	return nil
-}
-
 // email domain
 func (adapter *verificationCodeAdatper) CreateForAddingEmailDomain(csId string, email string) (
 	string, models.IModelError,

@@ -93,11 +93,6 @@ func (this *CorporationManagerController) Patch() {
 		return
 	}
 
-	if err := info.Validate(); err != nil {
-		sendResp(parseModelError(err))
-		return
-	}
-
 	// TODO user index
 	if err := info.ChangePassword(""); err != nil {
 		this.sendModelErrorAsResp(err, action)

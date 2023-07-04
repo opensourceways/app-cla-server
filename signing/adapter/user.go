@@ -49,11 +49,38 @@ func (adapter *userAdatper) cmdToChangePassword(
 	return
 }
 
+//
+// password retrieval
+func (adapter *userAdatper) GenKeyForPasswordRetrieval(linkId string, email string) (
+	string, models.IModelError,
+) {
+	cmd, err := adapter.toCmdToGenKeyForResettingPassword(linkId, email)
+	if err != nil {
+		return "", toModelError(err)
+	}
+
+	k, err := adapter.s.GenKeyForResettingPassword(&cmd)
+	if err != nil {
+		return "", toModelError(err)
+	}
+
+	return k, nil
+}
+
+func (adapter *userAdatper) toCmdToGenKeyForResettingPassword(linkId string, email string) (
+	cmd app.CmdToGenKeyForResettingPassword, err error,
+) {
+	cmd.LinkId = linkId
+	cmd.EmailAddr, err = dp.NewEmailAddr(email)
+
+	return
+}
+
 // Reset
 func (adapter *userAdatper) ResetPassword(
-	linkId string, email string, password string,
+	linkId string, key string, password string,
 ) models.IModelError {
-	cmd, err := adapter.cmdToResetPassword(linkId, email, password)
+	cmd, err := adapter.cmdToResetPassword(linkId, key, password)
 	if err != nil {
 		return toModelError(err)
 	}
@@ -66,16 +93,13 @@ func (adapter *userAdatper) ResetPassword(
 }
 
 func (adapter *userAdatper) cmdToResetPassword(
-	linkId string, email string, password string,
+	linkId string, key string, password string,
 ) (cmd app.CmdToResetPassword, err error) {
 	if cmd.NewOne, err = dp.NewPassword(password); err != nil {
 		return
 	}
 
-	if cmd.EmailAddr, err = dp.NewEmailAddr(email); err != nil {
-		return
-	}
-
+	cmd.Key = key
 	cmd.LinkId = linkId
 
 	return

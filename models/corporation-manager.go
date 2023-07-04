@@ -73,14 +73,6 @@ func CreateCorporationAdministrator(linkID, name, email string) (dbmodels.Corpor
 
 type CorporationManagerResetPassword dbmodels.CorporationManagerResetPassword
 
-func (this CorporationManagerResetPassword) Validate() IModelError {
-	if this.NewPassword == this.OldPassword {
-		return newModelError(ErrSamePassword, fmt.Errorf("the new password is same as old one"))
-	}
-
-	return checkPassword(this.NewPassword)
-}
-
 func (opt *CorporationManagerResetPassword) ChangePassword(index string) IModelError {
 	return userAdapterInstance.ChangePassword(index, opt)
 }

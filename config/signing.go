@@ -4,7 +4,9 @@ import (
 	"github.com/opensourceways/app-cla-server/common/infrastructure/mongodb"
 	"github.com/opensourceways/app-cla-server/signing/domain/dp"
 	"github.com/opensourceways/app-cla-server/signing/infrastructure/gmailimpl"
+	"github.com/opensourceways/app-cla-server/signing/infrastructure/passwordimpl"
 	"github.com/opensourceways/app-cla-server/signing/infrastructure/repositoryimpl"
+	"github.com/opensourceways/app-cla-server/signing/infrastructure/symmetricencryptionimpl"
 )
 
 type configValidate interface {
@@ -26,9 +28,11 @@ type mongodbConfig struct {
 }
 
 type signingConfig struct {
-	Gmail   gmailimpl.Config `json:"gmail"       required:"true"`
-	Domain  domainConfig     `json:"domain"      required:"true"`
-	Mongodb mongodbConfig    `json:"mongodb"     required:"true"`
+	Gmail     gmailimpl.Config               `json:"gmail"       required:"true"`
+	Domain    domainConfig                   `json:"domain"      required:"true"`
+	Mongodb   mongodbConfig                  `json:"mongodb"     required:"true"`
+	Password  passwordimpl.Config            `json:"password"    required:"true"`
+	Symmetric symmetricencryptionimpl.Config `json:"symmetric"   required:"true"`
 }
 
 func (cfg *signingConfig) configItems() []interface{} {
@@ -36,6 +40,8 @@ func (cfg *signingConfig) configItems() []interface{} {
 		&cfg.Gmail,
 		&cfg.Mongodb.DB,
 		&cfg.Mongodb.Config,
+		&cfg.Password,
+		&cfg.Symmetric,
 		&cfg.Domain.DomainPrimitive,
 	}
 }

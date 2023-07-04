@@ -52,15 +52,9 @@ func (this *PasswordRetrievalController) Post() {
 		return
 	}
 
-	b, mErr := info.Create(linkID)
+	key, mErr := models.GenKeyForPasswordRetrieval(linkID, &info)
 	if mErr != nil {
 		this.sendModelErrorAsResp(mErr, action)
-		return
-	}
-
-	key, err := encryptData(b)
-	if err != nil {
-		this.sendFailedResponse(500, errSystemError, err, action)
 		return
 	}
 
@@ -106,27 +100,14 @@ func (this *PasswordRetrievalController) Reset() {
 		return
 	}
 
-	b, err := decryptData(key)
-	if err != nil {
-		this.sendFailedResponse(
-			400, errInvalidPWRetrievalKey,
-			fmt.Errorf("invalid password retrival key"), action,
-		)
-		return
-	}
-
 	var param models.PasswordRetrieval
 	if fr := this.fetchInputPayload(&param); fr != nil {
 		sendResp(fr)
 		return
 	}
 
-	if mErr := param.Validate(); mErr != nil {
-		this.sendModelErrorAsResp(mErr, action)
-		return
-	}
-
-	if mErr := param.Create(this.GetString(":link_id"), b); mErr != nil {
+	mErr := models.ResetPassword(this.GetString(":link_id"), &param, key)
+	if mErr != nil {
 		sendResp(parseModelError(mErr))
 		return
 	}

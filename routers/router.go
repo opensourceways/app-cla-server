@@ -75,6 +75,11 @@ func init() {
 				&controllers.AuthController{},
 			),
 		),
+		beego.NSNamespace("/organization",
+			beego.NSInclude(
+				&controllers.OrganizationController{},
+			),
+		),
 		beego.NSNamespace("/verification-code",
 			beego.NSInclude(
 				&controllers.VerificationCodeController{},

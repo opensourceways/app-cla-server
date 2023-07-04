@@ -116,14 +116,13 @@ func (this *EmployeeSigningController) Post() {
 func (this *EmployeeSigningController) GetAll() {
 	action := "list employees"
 
-	_, fr := this.tokenPayloadBasedOnCorpManager()
+	pl, fr := this.tokenPayloadBasedOnCorpManager()
 	if fr != nil {
 		this.sendFailedResultAsResp(fr, action)
 		return
 	}
 
-	// TODO csid
-	r, merr := models.ListEmployeeSignings("")
+	r, merr := models.ListEmployeeSignings(pl.SigningId)
 	if merr != nil {
 		this.sendModelErrorAsResp(merr, action)
 		return
@@ -162,8 +161,9 @@ func (this *EmployeeSigningController) Update() {
 		return
 	}
 
-	// TODO csid
-	employeeEmail, err := models.UpdateEmployeeSigning("", employeeSigningId, info.Enabled)
+	employeeEmail, err := models.UpdateEmployeeSigning(
+		pl.SigningId, employeeSigningId, info.Enabled,
+	)
 	if err != nil {
 		if err.IsErrorOf(models.ErrNoLinkOrUnsigned) {
 			this.sendFailedResponse(400, errUnsigned, err, action)
@@ -207,8 +207,9 @@ func (this *EmployeeSigningController) Delete() {
 		return
 	}
 
-	// TODO csid
-	employeeEmail, err := models.RemoveEmployeeSigning("", employeeSigningId)
+	employeeEmail, err := models.RemoveEmployeeSigning(
+		pl.SigningId, employeeSigningId,
+	)
 	if err != nil {
 		this.sendModelErrorAsResp(err, action)
 		return

@@ -96,6 +96,7 @@ func ListCorporationManagers(linkID, email, role string) ([]dbmodels.Corporation
 type CorpManagerLoginInfo struct {
 	Role             string
 	Email            string
+	UserId           string
 	CorpName         string
 	SigningId        string
 	InitialPWChanged bool

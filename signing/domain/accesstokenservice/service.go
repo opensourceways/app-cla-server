@@ -36,12 +36,6 @@ func NewAccessTokenService(
 	}
 }
 
-type randomValue []byte
-
-func (v randomValue) String() string {
-	return base64.StdEncoding.EncodeToString(v)
-}
-
 // accessTokenService
 type accessTokenService struct {
 	repo        repository.AccessToken
@@ -56,7 +50,7 @@ func (s *accessTokenService) Add(payload []byte) (k domain.AccessTokenKey, err e
 		return
 	}
 
-	v, err := s.encrypt.Encrypt(bytes)
+	csrf, err := s.encryptToken(bytes)
 	if err != nil {
 		return
 	}
@@ -64,7 +58,7 @@ func (s *accessTokenService) Add(payload []byte) (k domain.AccessTokenKey, err e
 	token := domain.AccessToken{
 		Expiry:        s.expiry + util.Now(),
 		Payload:       payload,
-		EncryptedCSRF: v,
+		EncryptedCSRF: csrf,
 	}
 
 	index, err := s.repo.Add(&token)
@@ -97,7 +91,7 @@ func (s *accessTokenService) validate(old domain.AccessTokenKey) ([]byte, error)
 		return nil, invalidToken
 	}
 
-	if !s.encrypt.IsSame(csrf, token.EncryptedCSRF) {
+	if !s.isSameToken(csrf, token.EncryptedCSRF) {
 		return nil, invalidToken
 	}
 
@@ -121,4 +115,12 @@ func (s *accessTokenService) ValidateAndRefresh(old domain.AccessTokenKey) (
 	}
 
 	return
+}
+
+func (s *accessTokenService) isSameToken(plain, encrypted []byte) bool {
+	return s.encrypt.IsSame(plain, encrypted)
+}
+
+func (s *accessTokenService) encryptToken(plain []byte) ([]byte, error) {
+	return s.encrypt.Encrypt(plain)
 }

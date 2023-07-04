@@ -71,32 +71,10 @@ func CreateCorporationAdministrator(linkID, name, email string) (dbmodels.Corpor
 	return opt, parseDBError(err)
 }
 
-type CorporationManagerResetPassword dbmodels.CorporationManagerResetPassword
+type CorporationManagerChangePassword dbmodels.CorporationManagerChangePassword
 
-func (this CorporationManagerResetPassword) Validate() IModelError {
-	if this.NewPassword == this.OldPassword {
-		return newModelError(ErrSamePassword, fmt.Errorf("the new password is same as old one"))
-	}
-
-	return checkPassword(this.NewPassword)
-}
-
-func (opt *CorporationManagerResetPassword) ChangePassword(index string) IModelError {
+func (opt *CorporationManagerChangePassword) ChangePassword(index string) IModelError {
 	return userAdapterInstance.ChangePassword(index, opt)
-}
-
-func (this CorporationManagerResetPassword) Reset(linkID, email string) IModelError {
-	err := dbmodels.GetDB().ResetCorporationManagerPassword(
-		linkID, email, dbmodels.CorporationManagerResetPassword(this),
-	)
-	if err == nil {
-		return nil
-	}
-
-	if err.IsErrorOf(dbmodels.ErrNoDBRecord) {
-		return newModelError(ErrNoLinkOrNoManager, err)
-	}
-	return parseDBError(err)
 }
 
 func ListCorporationManagers(linkID, email, role string) ([]dbmodels.CorporationManagerListResult, IModelError) {

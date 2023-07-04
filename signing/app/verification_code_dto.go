@@ -51,10 +51,3 @@ func (cmd *CmdToCreateCodeForSettingOrgEmail) purpose() (dp.Purpose, error) {
 		fmt.Sprintf("seting org email, %s", cmd.EmailAddr.EmailAddr()),
 	)
 }
-
-// password retrieval
-type CmdToCreateCodeForPasswordRetrieval CmdToCreateCodeForSigning
-
-func (cmd *CmdToCreateCodeForPasswordRetrieval) purpose() (dp.Purpose, error) {
-	return (*CmdToCreateCodeForSigning)(cmd).newPurpose("password retrieval")
-}

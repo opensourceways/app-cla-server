@@ -39,7 +39,24 @@ func (cmd *CmdToChangePassword) Validate() error {
 
 // CmdToResetPassword
 type CmdToResetPassword struct {
-	NewOne    dp.Password
-	LinkId    string
-	EmailAddr dp.EmailAddr
+	NewOne dp.Password
+	LinkId string
+	Key    string
+}
+
+// CmdToGenKeyForPasswordRetrieval
+type CmdToGenKeyForPasswordRetrieval CmdToCreateCodeForSigning
+
+func (cmd *CmdToGenKeyForPasswordRetrieval) purpose() (dp.Purpose, error) {
+	return (*CmdToCreateCodeForSigning)(cmd).newPurpose("password retrieval")
+}
+
+// resettingPasswordKey
+type resettingPasswordKey struct {
+	Email string `json:"email"`
+	Code  string `json:"code"`
+}
+
+func (k *resettingPasswordKey) toEmail() (dp.EmailAddr, error) {
+	return dp.NewEmailAddr(k.Email)
 }

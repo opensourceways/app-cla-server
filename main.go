@@ -95,7 +95,11 @@ func startSignSerivce(configPath string) {
 	defer exitMongoService()
 
 	// must run after init mongodb
-	initSigning()
+	if err := initSigning(); err != nil {
+		logs.Error(err)
+
+		return
+	}
 
 	worker.Init(pdf.GetPDFGenerator())
 	defer worker.Exit()

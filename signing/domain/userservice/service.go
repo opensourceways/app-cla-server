@@ -216,8 +216,8 @@ func (s *userService) login(find func() (domain.User, error), p dp.Password) (u 
 	return
 }
 
-func (s *userService) isSamePassword(p dp.Password, encrypted []byte) bool {
-	return s.encrypt.IsSame([]byte(p.Password()), encrypted)
+func (s *userService) isSamePassword(p dp.Password, ciphertext []byte) bool {
+	return s.encrypt.IsSame([]byte(p.Password()), ciphertext)
 }
 
 func (s *userService) encryptPassword(p string) ([]byte, error) {

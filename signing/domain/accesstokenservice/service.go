@@ -117,10 +117,10 @@ func (s *accessTokenService) ValidateAndRefresh(old domain.AccessTokenKey) (
 	return
 }
 
-func (s *accessTokenService) isSameToken(plain, encrypted []byte) bool {
-	return s.encrypt.IsSame(plain, encrypted)
+func (s *accessTokenService) isSameToken(plaintext, ciphertext []byte) bool {
+	return s.encrypt.IsSame(plaintext, ciphertext)
 }
 
-func (s *accessTokenService) encryptToken(plain []byte) ([]byte, error) {
-	return s.encrypt.Encrypt(plain)
+func (s *accessTokenService) encryptToken(plaintext []byte) ([]byte, error) {
+	return s.encrypt.Encrypt(plaintext)
 }

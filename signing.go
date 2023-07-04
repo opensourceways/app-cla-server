@@ -21,8 +21,13 @@ import (
 	"github.com/opensourceways/app-cla-server/signing/infrastructure/txmailimpl"
 )
 
-func initSigning() {
+func initSigning() error {
 	cfg := &config.AppConfig.SigningConfig
+
+	symmetric, err := symmetricencryptionimpl.NewSymmetricEncryptionImpl(&cfg.Symmetric)
+	if err != nil {
+		return err
+	}
 
 	dp.Init(&cfg.Domain.DomainPrimitive)
 
@@ -35,10 +40,8 @@ func initSigning() {
 			mongodb.DAO(cfg.Mongodb.Collections.CorpSigning),
 		),
 		encryptionimpl.NewEncryptionImpl(),
-		passwordimpl.NewPasswordImpl(),
+		passwordimpl.NewPasswordImpl(&cfg.Password),
 	)
-
-	ua := adapter.NewUserAdapter(app.NewUserService(userService, repo))
 
 	ca := adapter.NewCorpAdminAdapter(app.NewCorpAdminService(repo, userService))
 
@@ -52,14 +55,18 @@ func initSigning() {
 
 	cp := adapter.NewCorpPDFAdapter(app.NewCorpPDFService(repo))
 
-	vc := adapter.NewVerificationCodeAdapter(app.NewVerificationCodeService(
-		vcservice.NewVCService(
-			repositoryimpl.NewVerificationCode(
-				mongodb.DAO(cfg.Mongodb.Collections.VerificationCode),
-			),
-			randomcodeimpl.NewRandomCodeImpl(),
+	vcService := vcservice.NewVCService(
+		repositoryimpl.NewVerificationCode(
+			mongodb.DAO(cfg.Mongodb.Collections.VerificationCode),
 		),
+		randomcodeimpl.NewRandomCodeImpl(),
+	)
+
+	vc := adapter.NewVerificationCodeAdapter(app.NewVerificationCodeService(
+		vcService,
 	))
+
+	ua := adapter.NewUserAdapter(app.NewUserService(userService, repo, symmetric, vcService))
 
 	is := adapter.NewIndividualSigningAdapter(app.NewIndividualSigningService(
 		repositoryimpl.NewIndividualSigning(
@@ -72,9 +79,7 @@ func initSigning() {
 		mongodb.DAO(cfg.Mongodb.Collections.EmailCredential),
 	)
 
-	symmetricEncrypt := symmetricencryptionimpl.NewSymmetricEncryptionImpl()
-
-	echelper := emailcredential.NewEmailCredential(ecRepo, symmetricEncrypt)
+	echelper := emailcredential.NewEmailCredential(ecRepo, symmetric)
 
 	gmailimpl.RegisterEmailService(echelper.Find)
 	txmailimpl.RegisterEmailService(echelper.Find)
@@ -95,4 +100,6 @@ func initSigning() {
 	models.RegisterAccessTokenAdapter(
 		adapter.NewAccessTokenAdapter(app.NewAccessTokenService(at)),
 	)
+
+	return nil
 }

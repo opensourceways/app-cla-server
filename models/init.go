@@ -41,9 +41,10 @@ type corpAdminAdatper interface {
 }
 
 type userAdapter interface {
-	ChangePassword(string, *CorporationManagerResetPassword) IModelError
+	ChangePassword(string, *CorporationManagerChangePassword) IModelError
 	ResetPassword(linkId string, email string, password string) IModelError
 	Login(opt *CorporationManagerAuthentication) (CorpManagerLoginInfo, IModelError)
+	GenKeyForPasswordRetrieval(linkId string, email string) (string, IModelError)
 }
 
 type employeeManagerAdapter interface {
@@ -71,9 +72,6 @@ type verificationCodeAdapter interface {
 
 	CreateForSettingOrgEmail(email string) (string, IModelError)
 	ValidateForSettingOrgEmail(email, code string) IModelError
-
-	CreateForPasswordRetrieval(linkId string, email string) (string, IModelError)
-	ValidateForPasswordRetrieval(linkId string, email, code string) IModelError
 }
 
 type emailCredentialAdapter interface {

@@ -21,7 +21,7 @@ type CorporationManagerCheckInfo struct {
 	LinkID      string
 }
 
-type CorporationManagerResetPassword struct {
+type CorporationManagerChangePassword struct {
 	OldPassword string `json:"old_password"`
 	NewPassword string `json:"new_password"`
 }

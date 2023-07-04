@@ -62,14 +62,6 @@ func validateCodeForAddingEmailDomain(csId string, email, code string) IModelErr
 	return verificationCodeAdapterInstance.ValidateForAddingEmailDomain(csId, email, code)
 }
 
-func createCodeForPasswordRetrieval(linkId string, email string) (string, IModelError) {
-	return verificationCodeAdapterInstance.CreateForPasswordRetrieval(linkId, email)
-}
-
-func validateCodeForPasswordRetrieval(linkId string, email, code string) IModelError {
-	return verificationCodeAdapterInstance.ValidateForPasswordRetrieval(linkId, email, code)
-}
-
 func CreateCodeForSettingOrgEmail(email string) (string, IModelError) {
 	return verificationCodeAdapterInstance.CreateForSettingOrgEmail(email)
 }

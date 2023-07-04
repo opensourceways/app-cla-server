@@ -32,7 +32,6 @@ type appConfig struct {
 	MaxSizeOfCLAContent       int           `json:"max_size_of_cla_content"`
 	VerificationCodeExpiry    int64         `json:"verification_code_expiry" required:"true"`
 	APITokenExpiry            int64         `json:"api_token_expiry" required:"true"`
-	SymmetricEncryptionKey    string        `json:"symmetric_encryption_key" required:"true"`
 	PDFOrgSignatureDir        string        `json:"pdf_org_signature_dir" required:"true"`
 	PDFOutDir                 string        `json:"pdf_out_dir" required:"true"`
 	CodePlatformConfigFile    string        `json:"code_platforms" required:"true"`
@@ -43,8 +42,6 @@ type appConfig struct {
 	PasswordRetrievalExpiry   int64         `json:"password_retrieval_expiry"`
 	Mongodb                   MongodbConfig `json:"mongodb" required:"true"`
 	RestrictedCorpEmailSuffix []string      `json:"restricted_corp_email_suffix"`
-	MinLengthOfPassword       int           `json:"min_length_of_password"`
-	MaxLengthOfPassword       int           `json:"max_length_of_password"`
 	APIConfig                 apiConfig     `json:"api"     required:"true"`
 	CLAConfig                 claConfig     `json:"-"`
 	SigningConfig             signingConfig `json:"signing" required:"true"`
@@ -154,14 +151,6 @@ func (cfg *appConfig) setDefault() {
 		cfg.MaxSizeOfCLAContent = 2 << 20
 	}
 
-	if cfg.MinLengthOfPassword <= 0 {
-		cfg.MinLengthOfPassword = 8
-	}
-
-	if cfg.MaxLengthOfPassword <= 0 {
-		cfg.MaxLengthOfPassword = 16
-	}
-
 	if cfg.PasswordRetrievalExpiry < 3600 {
 		cfg.PasswordRetrievalExpiry = 3600
 	}
@@ -186,10 +175,6 @@ func (cfg *appConfig) validate() error {
 
 	if cfg.EmployeeManagersNumber <= 0 {
 		return fmt.Errorf("the employee_managers_number:%d should be bigger than 0", cfg.EmployeeManagersNumber)
-	}
-
-	if _, err := util.NewSymmetricEncryption(cfg.SymmetricEncryptionKey, ""); err != nil {
-		return fmt.Errorf("the symmetric encryption key is not valid, %s", err.Error())
 	}
 
 	if util.IsNotDir(cfg.PDFOrgSignatureDir) {

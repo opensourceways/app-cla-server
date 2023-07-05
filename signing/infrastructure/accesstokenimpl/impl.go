@@ -1,34 +1,31 @@
 package accesstokenimpl
 
 import (
-	"github.com/go-redis/redis/v8"
 	"github.com/google/uuid"
 
-	commonRepo "github.com/opensourceways/app-cla-server/common/domain/repository"
-	"github.com/opensourceways/app-cla-server/common/infrastructure/redisdb"
 	"github.com/opensourceways/app-cla-server/signing/domain"
 )
 
-func NewAccessTokenImpl(c *redis.Client, cfg *Config) *accessTokenImpl {
+func NewAccessTokenImpl(d dao, cfg *Config) *accessTokenImpl {
 	return &accessTokenImpl{
-		cli: c,
+		dao: d,
 		cfg: cfg,
 	}
 }
 
 type accessTokenImpl struct {
-	cli *redis.Client
+	dao dao
 	cfg *Config
 }
 
-func (impl *accessTokenImpl) Add(value *domain.AccessToken) (string, error) {
+func (impl *accessTokenImpl) Add(value *domain.AccessTokenDO) (string, error) {
 	key, err := uuid.NewUUID()
 	if err != nil {
 		return "", err
 	}
 
 	// 0 means never expire
-	err = impl.cli.Set(redisdb.Ctx(), key.String(), value, 0).Err()
+	err = impl.dao.Set(key.String(), value, 0)
 	if err != nil {
 		return "", err
 	}
@@ -36,17 +33,12 @@ func (impl *accessTokenImpl) Add(value *domain.AccessToken) (string, error) {
 	return key.String(), nil
 }
 
-func (impl *accessTokenImpl) Find(key string) (token domain.AccessToken, err error) {
-	err = impl.cli.Get(redisdb.Ctx(), key).Scan(&token)
-	if err == redis.Nil {
-		return token, commonRepo.NewErrorResourceNotFound(err)
-	} else if err != nil {
-		return
-	} else {
-		return token, nil
-	}
+func (impl *accessTokenImpl) Find(key string) (token domain.AccessTokenDO, err error) {
+	err = impl.dao.Get(key, &token)
+
+	return
 }
 
 func (impl *accessTokenImpl) Delete(key string) error {
-	return impl.cli.Expire(redisdb.Ctx(), key, impl.cfg.expire()).Err()
+	return impl.dao.Expire(key, impl.cfg.expire())
 }

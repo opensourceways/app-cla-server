@@ -20,12 +20,11 @@ func Init(cfg *Config) error {
 		DB:   cfg.DB,
 	})
 
-	_, err := rdb.Ping(Ctx()).Result()
-	if err != nil {
-		return err
-	}
+	return WithContext(func(ctx context.Context) error {
+		_, err := rdb.Ping(ctx).Result()
 
-	return nil
+		return err
+	})
 }
 
 func Close() error {
@@ -36,12 +35,15 @@ func Close() error {
 	return nil
 }
 
-func Instance() *redis.Client {
-	return cli
+func DAO() *daoImpl {
+	return &daoImpl{
+		instance: cli,
+	}
 }
 
-func Ctx() context.Context {
-	ctx, _ := context.WithTimeout(context.Background(), timeout)
+func WithContext(f func(context.Context) error) error {
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
 
-	return ctx
+	return f(ctx)
 }

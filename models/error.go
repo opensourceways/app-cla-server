@@ -54,6 +54,7 @@ const (
 	ErrWrongIDOrPassword       ModelErrCode = "wrong_id_or_pw"
 	ErrNoRefreshToken          ModelErrCode = "no_refresh_token"
 	ErrInvalidToken            ModelErrCode = "invalid_token"
+	ErrCLAExists               ModelErrCode = "cla_exists"
 )
 
 type IModelError interface {

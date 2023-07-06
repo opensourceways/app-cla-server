@@ -18,12 +18,6 @@ type EmployeeManager struct {
 	Name  string `json:"name"`
 }
 
-func (opt *EmployeeManagerCreateOption) Add(csId string) (
-	[]dbmodels.CorporationManagerCreateOption, IModelError,
-) {
-	return employeeManagerAdapterInstance.Add(csId, opt)
-}
-
 func (this *EmployeeManagerCreateOption) ValidateWhenAdding(linkID, adminEmail string, emailDomains map[string]bool) IModelError {
 	if len(this.Managers) == 0 {
 		return newModelError(ErrEmptyPayload, fmt.Errorf("no employee mangers"))
@@ -138,10 +132,6 @@ func (this *EmployeeManagerCreateOption) ValidateWhenDeleting(adminEmail string,
 }
 
 func (this *EmployeeManagerCreateOption) Delete(linkID string) ([]dbmodels.CorporationManagerCreateOption, IModelError) {
-	if employeeManagerAdapterInstance != nil {
-		return employeeManagerAdapterInstance.Remove(linkID, this)
-	}
-
 	emails := make([]string, 0, len(this.Managers))
 	es := map[string]bool{}
 	for i := range this.Managers {
@@ -162,8 +152,4 @@ func (this *EmployeeManagerCreateOption) Delete(linkID string) ([]dbmodels.Corpo
 	}
 
 	return nil, parseDBError(err)
-}
-
-func ListEmployeeManagers(csId string) ([]dbmodels.CorporationManagerListResult, IModelError) {
-	return employeeManagerAdapterInstance.List(csId)
 }

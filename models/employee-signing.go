@@ -8,10 +8,6 @@ type EmployeeSigning struct {
 	CorpSigningId string `json:"corp_signing_id" required:"true"`
 }
 
-func (es *EmployeeSigning) Sign() ([]dbmodels.CorporationManagerListResult, IModelError) {
-	return employeeSigningAdapterInstance.Sign(es)
-}
-
 func ListIndividualSigning(linkID, corpEmail, claLang string) ([]dbmodels.IndividualSigningBasicInfo, IModelError) {
 	v, err := dbmodels.GetDB().ListIndividualSigning(linkID, corpEmail, claLang)
 	if err == nil {
@@ -47,16 +43,4 @@ func DeleteEmployeeSigning(linkID, email string) IModelError {
 		return newModelError(ErrNoLink, err)
 	}
 	return parseDBError(err)
-}
-
-func UpdateEmployeeSigning(csId, esId string, enabled bool) (string, IModelError) {
-	return employeeSigningAdapterInstance.Update(csId, esId, enabled)
-}
-
-func ListEmployeeSignings(csId string) ([]dbmodels.IndividualSigningBasicInfo, IModelError) {
-	return employeeSigningAdapterInstance.List(csId)
-}
-
-func RemoveEmployeeSigning(csId, esId string) (string, IModelError) {
-	return employeeSigningAdapterInstance.Remove(csId, esId)
 }

@@ -6,7 +6,7 @@ import (
 )
 
 type CmdToSignEmployeeCLA struct {
-	CLA            domain.CLA
+	CLA            domain.CLAInfo
 	Rep            domain.Representative
 	CorpSigningId  string
 	AllSingingInfo domain.AllSingingInfo

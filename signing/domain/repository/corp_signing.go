@@ -9,7 +9,7 @@ type CorpSigningSummary struct {
 	Id     string
 	Date   string
 	HasPDF bool
-	Link   domain.Link
+	Link   domain.LinkInfo
 	Rep    domain.Representative
 	Corp   domain.Corporation
 	Admin  domain.Manager

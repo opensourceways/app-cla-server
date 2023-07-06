@@ -15,8 +15,10 @@ type corpSigningAdatper struct {
 	s app.CorpSigningService
 }
 
-func (adapter *corpSigningAdatper) Sign(opt *models.CorporationSigningCreateOption, linkId string) models.IModelError {
-	cmd, err := adapter.cmdToSignCorpCLA(opt, linkId)
+func (adapter *corpSigningAdatper) Sign(
+	linkId string, opt *models.CorporationSigningCreateOption,
+) models.IModelError {
+	cmd, err := adapter.cmdToSignCorpCLA(linkId, opt)
 	if err != nil {
 		return toModelError(err)
 	}
@@ -28,12 +30,13 @@ func (adapter *corpSigningAdatper) Sign(opt *models.CorporationSigningCreateOpti
 	return nil
 }
 
-func (adapter *corpSigningAdatper) cmdToSignCorpCLA(opt *models.CorporationSigningCreateOption, linkId string) (
+func (adapter *corpSigningAdatper) cmdToSignCorpCLA(
+	linkId string, opt *models.CorporationSigningCreateOption,
+) (
 	cmd app.CmdToSignCorpCLA, err error,
 ) {
 	cmd.Link.Id = linkId
-	// TODO missing cla id
-	cmd.Link.CLAId = opt.CLALanguage
+	cmd.Link.CLAId = opt.CLAId
 	if cmd.Link.Language, err = dp.NewLanguage(opt.CLALanguage); err != nil {
 		return
 	}
@@ -78,6 +81,7 @@ func (adapter *corpSigningAdatper) Get(csId string) (
 			Date:            item.Date,
 			AdminName:       item.RepName,
 			AdminEmail:      item.RepEmail,
+			CLAId:           item.CLAId,
 			CLALanguage:     item.Language,
 			CorporationName: item.CorpName,
 		},

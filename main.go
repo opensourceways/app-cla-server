@@ -13,8 +13,6 @@ import (
 	commondb "github.com/opensourceways/app-cla-server/common/infrastructure/mongodb"
 	"github.com/opensourceways/app-cla-server/config"
 	"github.com/opensourceways/app-cla-server/controllers"
-	"github.com/opensourceways/app-cla-server/dbmodels"
-	"github.com/opensourceways/app-cla-server/mongodb"
 	"github.com/opensourceways/app-cla-server/pdf"
 	_ "github.com/opensourceways/app-cla-server/routers"
 	"github.com/opensourceways/app-cla-server/signing/infrastructure/emailtmpl"
@@ -113,9 +111,6 @@ func startMongoService() error {
 	if err := commondb.Init(&cfg.Mongodb.DB); err != nil {
 		return err
 	}
-
-	c := mongodb.Initialize(commondb.Collection(), &config.AppConfig.Mongodb)
-	dbmodels.RegisterDB(c)
 
 	return nil
 }

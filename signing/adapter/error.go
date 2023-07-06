@@ -86,6 +86,14 @@ func codeMap(code string) models.ModelErrCode {
 	case domain.ErrorCodeIndividualSigningCorpExists:
 		return models.ErrGoToSignEmployeeCLA
 
+	// cla
+	case domain.ErrorCodeCLAExists:
+		return models.ErrCLAExists
+
+	// link
+	case domain.ErrorCodeLinkNotExists:
+		return models.ErrNoLink
+
 	default:
 		return models.ErrBadRequestParameter
 	}

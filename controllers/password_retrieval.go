@@ -35,7 +35,7 @@ func (this *PasswordRetrievalController) Post() {
 	action := "send an email to retrieve password"
 	linkID := this.GetString(":link_id")
 
-	orgInfo, mErr := models.GetOrgOfLink(linkID)
+	orgInfo, mErr := models.GetLink(linkID)
 	if mErr != nil {
 		this.sendModelErrorAsResp(mErr, action)
 		return
@@ -62,7 +62,7 @@ func (this *PasswordRetrievalController) Post() {
 
 	sendEmailToIndividual(
 		info.Email,
-		orgInfo,
+		&orgInfo,
 		"[CLA Sign] Retrieving Password of Corporation Manager",
 		emailtmpl.PasswordRetrieval{
 			Org:          orgInfo.OrgAlias,

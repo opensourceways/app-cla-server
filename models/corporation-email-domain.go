@@ -53,14 +53,6 @@ func ListCorpEmailDomain(linkID, email string) ([]string, IModelError) {
 	return v, parseDBError(err)
 }
 
-func AddCorpEmailDomain(csId string, opt *CorpEmailDomainCreateOption) IModelError {
-	return corpEmailDomainAdapterInstance.Add(csId, opt)
-}
-
-func ListCorpEmailDomains(csId string) ([]string, IModelError) {
-	return corpEmailDomainAdapterInstance.List(csId)
-}
-
 func isMatchedEmailDomain(email1, email2 string) bool {
 	e1 := strings.Split(util.EmailSuffix(email1), ".")
 	e2 := strings.Split(util.EmailSuffix(email2), ".")

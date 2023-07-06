@@ -74,26 +74,6 @@ func (o *CLACreateOpt) UploadCLAPDF(linkID, applyTo string) IModelError {
 	return parseDBError(err)
 }
 
-func (this *CLACreateOpt) AddCLAInfo(linkID, applyTo string) IModelError {
-	err := dbmodels.GetDB().AddCLAInfo(linkID, applyTo, this.GenCLAInfo())
-	if err == nil {
-		return nil
-	}
-
-	if err.IsErrorOf(dbmodels.ErrNoDBRecord) {
-		return newModelError(ErrNoLinkOrCLAExists, err)
-	}
-	return parseDBError(err)
-}
-
-func (this *CLACreateOpt) GenCLAInfo() *CLAInfo {
-	return &CLAInfo{
-		CLAHash: this.hash,
-		CLALang: this.Language,
-		Fields:  this.Fields,
-	}
-}
-
 func (this *CLACreateOpt) Validate(applyTo string, langs map[string]bool) IModelError {
 	this.Language = strings.ToLower(this.Language)
 

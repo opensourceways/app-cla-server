@@ -40,7 +40,6 @@ type appConfig struct {
 	PasswordResetURL          string        `json:"password_reset_url" required:"true"`
 	PasswordRetrievalURL      string        `json:"password_retrieval_url" required:"true"`
 	PasswordRetrievalExpiry   int64         `json:"password_retrieval_expiry"`
-	Mongodb                   MongodbConfig `json:"mongodb" required:"true"`
 	RestrictedCorpEmailSuffix []string      `json:"restricted_corp_email_suffix"`
 	APIConfig                 apiConfig     `json:"api"     required:"true"`
 	CLAConfig                 claConfig     `json:"-"`

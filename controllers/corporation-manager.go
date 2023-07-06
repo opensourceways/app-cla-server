@@ -50,7 +50,7 @@ func (this *CorporationManagerController) Put() {
 		return
 	}
 
-	orgInfo, merr := models.GetOrgOfLink(linkID)
+	orgInfo, merr := models.GetLink(linkID)
 	if merr != nil {
 		this.sendModelErrorAsResp(merr, action)
 
@@ -69,7 +69,7 @@ func (this *CorporationManagerController) Put() {
 
 	this.sendSuccessResp(action + " successfully")
 
-	notifyCorpAdmin(orgInfo, &added)
+	notifyCorpAdmin(&orgInfo, &added)
 }
 
 // @Title Patch
@@ -93,7 +93,7 @@ func (this *CorporationManagerController) Patch() {
 		return
 	}
 
-	if err := info.ChangePassword(pl.UserId); err != nil {
+	if err := models.ChangePassword(pl.UserId, &info); err != nil {
 		this.sendModelErrorAsResp(err, action)
 		return
 	}

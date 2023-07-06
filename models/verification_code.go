@@ -45,27 +45,3 @@ func checkVerificationCode(email, code, purpose string) IModelError {
 	}
 	return parseDBError(err)
 }
-
-func CreateCodeForSigning(linkId string, email string) (string, IModelError) {
-	return verificationCodeAdapterInstance.CreateForSigning(linkId, email)
-}
-
-func validateCodeForSigning(linkId string, email, code string) IModelError {
-	return verificationCodeAdapterInstance.ValidateForSigning(linkId, email, code)
-}
-
-func CreateCodeForAddingEmailDomain(csId string, email string) (string, IModelError) {
-	return verificationCodeAdapterInstance.CreateForAddingEmailDomain(csId, email)
-}
-
-func validateCodeForAddingEmailDomain(csId string, email, code string) IModelError {
-	return verificationCodeAdapterInstance.ValidateForAddingEmailDomain(csId, email, code)
-}
-
-func CreateCodeForSettingOrgEmail(email string) (string, IModelError) {
-	return verificationCodeAdapterInstance.CreateForSettingOrgEmail(email)
-}
-
-func validateCodeForSettingOrgEmail(email, code string) IModelError {
-	return verificationCodeAdapterInstance.ValidateForSettingOrgEmail(email, code)
-}

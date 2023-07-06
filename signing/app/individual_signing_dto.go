@@ -7,7 +7,7 @@ import (
 )
 
 type CmdToSignIndividualCLA struct {
-	Link           domain.Link
+	Link           domain.LinkInfo
 	Rep            domain.Representative
 	AllSingingInfo domain.AllSingingInfo
 }

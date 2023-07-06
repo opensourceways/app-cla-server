@@ -57,7 +57,7 @@ func (this *VerificationCodeController) Post() {
 		return
 	}
 
-	orgInfo, merr := models.GetOrgOfLink(linkID)
+	orgInfo, merr := models.GetLink(linkID)
 	if merr != nil {
 		this.sendFailedResponse(0, "", merr, action)
 		return
@@ -72,7 +72,7 @@ func (this *VerificationCodeController) Post() {
 	this.sendSuccessResp("create verification code successfully")
 
 	sendEmailToIndividual(
-		req.Email, orgInfo,
+		req.Email, &orgInfo,
 		fmt.Sprintf(
 			"Verification code for signing CLA on project of \"%s\"",
 			orgInfo.OrgAlias,
@@ -120,7 +120,7 @@ func (this *VerificationCodeController) EmailDomain() {
 		return
 	}
 
-	orgInfo, merr := models.GetOrgOfLink(pl.LinkID)
+	orgInfo, merr := models.GetLink(pl.LinkID)
 	if merr != nil {
 		this.sendModelErrorAsResp(merr, action)
 
@@ -136,7 +136,7 @@ func (this *VerificationCodeController) EmailDomain() {
 	this.sendSuccessResp("create verification code successfully")
 
 	sendEmailToIndividual(
-		req.Email, orgInfo,
+		req.Email, &orgInfo,
 		"Verification code for adding corporation's another email domain",
 		emailtmpl.AddingCorpEmailDomain{
 			Corp:       pl.Corp,

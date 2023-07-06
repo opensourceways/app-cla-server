@@ -48,11 +48,12 @@ func (this *EmployeeSigningController) Prepare() {
 // @Failure 412 unmatched_cla:              the cla hash is not equal to the one of backend server
 // @Failure 413 resigned:                   the signer has signed the cla
 // @Failure 500 system_error:               system error
-// @router /:link_id/:cla_lang/:cla_hash [post]
+// @router /:link_id/:cla_lang/:cla_id [post]
 func (this *EmployeeSigningController) Post() {
 	action := "sign employeee cla"
 	linkID := this.GetString(":link_id")
 	claLang := this.GetString(":cla_lang")
+	claId := this.GetString(":cla_id")
 
 	var info models.EmployeeSigning
 	if fr := this.fetchInputPayload(&info); fr != nil {
@@ -66,42 +67,28 @@ func (this *EmployeeSigningController) Post() {
 		return
 	}
 
-	orgInfo, merr := models.GetOrgOfLink(linkID)
+	orgInfo, claInfo, merr := models.GetLinkCLA(linkID, claId)
 	if merr != nil {
 		this.sendModelErrorAsResp(merr, action)
 		return
 	}
 
-	var managers []dbmodels.CorporationManagerListResult
+	info.Info = getSingingInfo(info.Info, claInfo.Fields)
+	info.CLAId = claId
 
-	fr := signHelper(
-		linkID, claLang, dbmodels.ApplyToIndividual,
-		func(claInfo *models.CLAInfo) *failedApiResult {
-			if claInfo.CLAHash != this.GetString(":cla_hash") {
-				return newFailedApiResult(400, errUnmatchedCLA, fmt.Errorf("invalid cla"))
-			}
+	managers, merr := models.SignEmployeeCLA(&info)
+	if merr != nil {
+		if merr.IsErrorOf(models.ErrNoLinkOrResigned) {
+			this.sendFailedResponse(400, errResigned, merr, action)
+		} else {
+			this.sendModelErrorAsResp(merr, action)
+		}
 
-			info.Info = getSingingInfo(info.Info, claInfo.Fields)
-
-			ms, err := info.Sign()
-			if err != nil {
-				if err.IsErrorOf(models.ErrNoLinkOrResigned) {
-					return newFailedApiResult(400, errResigned, err)
-				}
-				return parseModelError(err)
-			}
-
-			managers = ms
-			return nil
-		},
-	)
-
-	if fr != nil {
-		this.sendFailedResultAsResp(fr, action)
-	} else {
-		this.sendSuccessResp("sign successfully")
-		this.notifyManagers(managers, &info, orgInfo)
+		return
 	}
+
+	this.sendSuccessResp("sign successfully")
+	this.notifyManagers(managers, &info, &orgInfo)
 }
 
 // @Title GetAll
@@ -148,7 +135,7 @@ func (this *EmployeeSigningController) Update() {
 		return
 	}
 
-	orgInfo, merr := models.GetOrgOfLink(pl.LinkID)
+	orgInfo, merr := models.GetLink(pl.LinkID)
 	if merr != nil {
 		this.sendModelErrorAsResp(merr, action)
 
@@ -175,13 +162,13 @@ func (this *EmployeeSigningController) Update() {
 
 	this.sendSuccessResp("enabled employee successfully")
 
-	msg := this.newEmployeeNotification(employeeEmail, orgInfo, pl.Email)
+	msg := this.newEmployeeNotification(employeeEmail, &orgInfo, pl.Email)
 	if info.Enabled {
 		msg.Active = true
-		sendEmailToIndividual(employeeEmail, orgInfo, "Activate CLA signing", msg)
+		sendEmailToIndividual(employeeEmail, &orgInfo, "Activate CLA signing", msg)
 	} else {
 		msg.Inactive = true
-		sendEmailToIndividual(employeeEmail, orgInfo, "Inactivate CLA signing", msg)
+		sendEmailToIndividual(employeeEmail, &orgInfo, "Inactivate CLA signing", msg)
 	}
 }
 
@@ -200,7 +187,7 @@ func (this *EmployeeSigningController) Delete() {
 		return
 	}
 
-	orgInfo, merr := models.GetOrgOfLink(pl.LinkID)
+	orgInfo, merr := models.GetLink(pl.LinkID)
 	if merr != nil {
 		this.sendModelErrorAsResp(merr, action)
 
@@ -217,9 +204,9 @@ func (this *EmployeeSigningController) Delete() {
 
 	this.sendSuccessResp("delete employee successfully")
 
-	msg := this.newEmployeeNotification(employeeEmail, orgInfo, pl.Email)
+	msg := this.newEmployeeNotification(employeeEmail, &orgInfo, pl.Email)
 	msg.Removing = true
-	sendEmailToIndividual(employeeEmail, orgInfo, "Remove employee", msg)
+	sendEmailToIndividual(employeeEmail, &orgInfo, "Remove employee", msg)
 }
 
 func (this *EmployeeSigningController) notifyManagers(managers []dbmodels.CorporationManagerListResult, info *models.EmployeeSigning, orgInfo *models.OrgInfo) {

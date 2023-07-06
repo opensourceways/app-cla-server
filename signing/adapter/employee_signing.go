@@ -40,8 +40,7 @@ func (adapter *employeeSigningAdatper) Sign(opt *models.EmployeeSigning) (
 func (adapter *employeeSigningAdatper) cmdToSignEmployeeCLA(opt *models.EmployeeSigning) (
 	cmd app.CmdToSignEmployeeCLA, err error,
 ) {
-	// TODO missing cla id
-	cmd.CLA.CLAId = opt.CLALanguage
+	cmd.CLA.CLAId = opt.CLAId
 	if cmd.CLA.Language, err = dp.NewLanguage(opt.CLALanguage); err != nil {
 		return
 	}

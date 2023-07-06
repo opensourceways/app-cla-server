@@ -44,10 +44,6 @@ func (this CorporationManagerAuthentication) Authenticate() (map[string]dbmodels
 	return nil, parseDBError(err)
 }
 
-func CreateCorporationAdministratorByAdapter(csId string) (dbmodels.CorporationManagerCreateOption, IModelError) {
-	return corpAdminAdatperInstance.Add(csId)
-}
-
 func CreateCorporationAdministrator(linkID, name, email string) (dbmodels.CorporationManagerCreateOption, IModelError) {
 	pw := util.RandStr(8, "alphanum")
 
@@ -73,10 +69,6 @@ func CreateCorporationAdministrator(linkID, name, email string) (dbmodels.Corpor
 
 type CorporationManagerChangePassword dbmodels.CorporationManagerChangePassword
 
-func (opt *CorporationManagerChangePassword) ChangePassword(index string) IModelError {
-	return userAdapterInstance.ChangePassword(index, opt)
-}
-
 func ListCorporationManagers(linkID, email, role string) ([]dbmodels.CorporationManagerListResult, IModelError) {
 	v, err := dbmodels.GetDB().ListCorporationManager(linkID, email, role)
 	if err == nil {
@@ -100,8 +92,4 @@ type CorpManagerLoginInfo struct {
 	CorpName         string
 	SigningId        string
 	InitialPWChanged bool
-}
-
-func CorpManagerLogin(opt *CorporationManagerAuthentication) (CorpManagerLoginInfo, IModelError) {
-	return userAdapterInstance.Login(opt)
 }

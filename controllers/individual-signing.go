@@ -1,11 +1,6 @@
 package controllers
 
-import (
-	"fmt"
-
-	"github.com/opensourceways/app-cla-server/dbmodels"
-	"github.com/opensourceways/app-cla-server/models"
-)
+import "github.com/opensourceways/app-cla-server/models"
 
 type IndividualSigningController struct {
 	baseController
@@ -36,11 +31,12 @@ func (this *IndividualSigningController) Prepare() {
 // @Failure 410 no_link:                    the link id is not exists
 // @Failure 411 go_to_sign_employee_cla:    should sign employee cla instead
 // @Failure 500 system_error:               system error
-// @router /:link_id/:cla_lang/:cla_hash [post]
+// @router /:link_id/:cla_lang/:cla_id [post]
 func (this *IndividualSigningController) Post() {
 	action := "sign individual cla"
 	linkID := this.GetString(":link_id")
 	claLang := this.GetString(":cla_lang")
+	claId := this.GetString(":cla_id")
 
 	var info models.IndividualSigning
 	if fr := this.fetchInputPayload(&info); fr != nil {
@@ -54,29 +50,26 @@ func (this *IndividualSigningController) Post() {
 		return
 	}
 
-	fr := signHelper(
-		linkID, claLang, dbmodels.ApplyToIndividual,
-		func(claInfo *models.CLAInfo) *failedApiResult {
-			if claInfo.CLAHash != this.GetString(":cla_hash") {
-				return newFailedApiResult(400, errUnmatchedCLA, fmt.Errorf("invalid cla"))
-			}
-
-			info.Info = getSingingInfo(info.Info, claInfo.Fields)
-
-			if err := models.SignIndividualCLA(linkID, &info); err != nil {
-				if err.IsErrorOf(models.ErrNoLinkOrResigned) {
-					return newFailedApiResult(400, errResigned, err)
-				}
-				return parseModelError(err)
-			}
-			return nil
-		},
-	)
-	if fr != nil {
-		this.sendFailedResultAsResp(fr, action)
-	} else {
-		this.sendSuccessResp("sign successfully")
+	_, claInfo, merr := models.GetLinkCLA(linkID, claId)
+	if merr != nil {
+		this.sendModelErrorAsResp(merr, action)
+		return
 	}
+
+	info.Info = getSingingInfo(info.Info, claInfo.Fields)
+	info.CLAId = claId
+
+	if err := models.SignIndividualCLA(linkID, &info); err != nil {
+		if err.IsErrorOf(models.ErrNoLinkOrResigned) {
+			this.sendFailedResponse(400, errResigned, err, action)
+		} else {
+			this.sendModelErrorAsResp(err, action)
+		}
+
+		return
+	}
+
+	this.sendSuccessResp("sign successfully")
 }
 
 // @Title Check

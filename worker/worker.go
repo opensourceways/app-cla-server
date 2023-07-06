@@ -21,7 +21,7 @@ type EmailMessage = emailservice.EmailMessage
 
 type IEmailWorker interface {
 	GenCLAPDFForCorporationAndSendIt(
-		string, string, *models.OrgInfo, *models.CorporationSigning, []models.CLAField,
+		string, *models.OrgInfo, *models.CLAInfo, *models.CorporationSigning,
 	)
 	SendSimpleMessage(platform string, msg *EmailMessage)
 	Shutdown()
@@ -61,10 +61,9 @@ func (w *emailWorker) Shutdown() {
 
 func (w *emailWorker) GenCLAPDFForCorporationAndSendIt(
 	linkID string,
-	claFile string,
 	orgInfo *models.OrgInfo,
+	claInfo *models.CLAInfo,
 	signing *models.CorporationSigning,
-	claFields []models.CLAField,
 ) {
 	f := func(impl *corpPDFEmail) {
 		w.tryToSendEmail(func() error {
@@ -85,7 +84,7 @@ func (w *emailWorker) GenCLAPDFForCorporationAndSendIt(
 
 	w.wg.Add(1)
 
-	go f(newCorpPDFEmail(linkID, claFile, orgInfo, signing, claFields))
+	go f(newCorpPDFEmail(linkID, orgInfo, claInfo, signing))
 }
 
 func (w *emailWorker) SendSimpleMessage(emailPlatform string, msg *EmailMessage) {

@@ -2,7 +2,7 @@ package domain
 
 type IndividualSigning struct {
 	Id      string
-	Link    Link
+	Link    LinkInfo
 	Rep     Representative
 	Date    string
 	AllInfo AllSingingInfo

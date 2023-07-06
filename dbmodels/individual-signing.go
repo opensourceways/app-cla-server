@@ -11,6 +11,7 @@ type IndividualSigningBasicInfo struct {
 type IndividualSigningInfo struct {
 	IndividualSigningBasicInfo
 
+	CLAId       string
 	CLALanguage string          `json:"cla_language"`
 	Info        TypeSigningInfo `json:"info"`
 }

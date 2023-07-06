@@ -156,7 +156,7 @@ type acForCodePlatformPayload struct {
 }
 
 func (pl *acForCodePlatformPayload) isOwnerOfLink(link string) *failedApiResult {
-	v, err := models.GetOrgOfLink(link)
+	v, err := models.GetLink(link)
 	if err != nil {
 		if err.IsErrorOf(models.ErrNoLink) {
 			return newFailedApiResult(400, errUnknownLink, err)

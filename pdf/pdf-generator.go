@@ -14,10 +14,9 @@ import (
 )
 
 type pdfGenerator struct {
-	pdfOutDir    string
-	pdfOrgSigDir string
-	pythonBin    string
-	corp         []*corpSigningPDF
+	pdfOutDir string
+	pythonBin string
+	corp      []*corpSigningPDF
 }
 
 func (this *pdfGenerator) LangSupported() map[string]bool {
@@ -26,10 +25,6 @@ func (this *pdfGenerator) LangSupported() map[string]bool {
 		v[item.language] = true
 	}
 	return v
-}
-
-func (this *pdfGenerator) GetBlankSignaturePath(claLang string) string {
-	return util.GenFilePath(this.pdfOrgSigDir, strings.ToLower(claLang)+"_blank_signature.pdf")
 }
 
 func (this *pdfGenerator) generator(claLang string) *corpSigningPDF {

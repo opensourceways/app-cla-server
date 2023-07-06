@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"os"
 	"time"
 
 	"github.com/beego/beego/v2/core/logs"
@@ -18,7 +17,6 @@ import (
 	"github.com/opensourceways/app-cla-server/signing/infrastructure/emailtmpl"
 	"github.com/opensourceways/app-cla-server/signing/infrastructure/gmailimpl"
 	"github.com/opensourceways/app-cla-server/signing/infrastructure/txmailimpl"
-	"github.com/opensourceways/app-cla-server/util"
 	"github.com/opensourceways/app-cla-server/worker"
 )
 
@@ -38,18 +36,10 @@ func main() {
 }
 
 func startSignSerivce(configPath string) {
-	if err := config.InitAppConfig(configPath); err != nil {
+	cfg, err := config.Load(configPath)
+	if err != nil {
 		logs.Error(err)
 		return
-	}
-	cfg := config.AppConfig
-
-	path := util.GenFilePath(cfg.PDFOutDir, "tmp")
-	if util.IsNotDir(path) {
-		if err := os.Mkdir(path, 0732); err != nil {
-			logs.Error(err)
-			return
-		}
 	}
 
 	if err := emailtmpl.Init(); err != nil {
@@ -57,35 +47,29 @@ func startSignSerivce(configPath string) {
 		return
 	}
 
-	if err := gmailimpl.Init(&cfg.SigningConfig.Gmail); err != nil {
+	if err := gmailimpl.Init(&cfg.Gmail); err != nil {
 		logs.Error(err)
 		return
 	}
 
 	txmailimpl.Init()
 
-	if err := platformAuth.Initialize(cfg.CodePlatformConfigFile); err != nil {
+	if err := platformAuth.Initialize(&cfg.CodePlatform); err != nil {
 		logs.Error(err)
 		return
 	}
 
-	err := pdf.InitPDFGenerator(cfg.PythonBin, cfg.PDFOutDir, cfg.PDFOrgSignatureDir)
-	if err != nil {
+	if err := pdf.InitPDFGenerator(&cfg.PDF); err != nil {
 		logs.Error(err)
 		return
 	}
 
-	if err := controllers.LoadLinks(); err != nil {
+	if err := controllers.Init(&cfg.API); err != nil {
 		logs.Error(err)
 		return
 	}
 
-	if err := controllers.Init(); err != nil {
-		logs.Error(err)
-		return
-	}
-
-	if err := startMongoService(); err != nil {
+	if err := commondb.Init(&cfg.Mongodb.DB); err != nil {
 		logs.Error(err)
 		return
 	}
@@ -93,7 +77,7 @@ func startSignSerivce(configPath string) {
 	defer exitMongoService()
 
 	// must run after init mongodb
-	if err := initSigning(); err != nil {
+	if err := initSigning(&cfg); err != nil {
 		logs.Error(err)
 
 		return
@@ -103,16 +87,6 @@ func startSignSerivce(configPath string) {
 	defer worker.Exit()
 
 	run()
-}
-
-func startMongoService() error {
-	cfg := &config.AppConfig.SigningConfig
-
-	if err := commondb.Init(&cfg.Mongodb.DB); err != nil {
-		return err
-	}
-
-	return nil
 }
 
 func exitMongoService() {

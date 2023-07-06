@@ -3,7 +3,6 @@ package controllers
 import (
 	"sync"
 
-	"github.com/opensourceways/app-cla-server/config"
 	"github.com/opensourceways/app-cla-server/util"
 )
 
@@ -12,7 +11,7 @@ var emailLimiter *emailLimiterImpl
 func initEmailLimiter() {
 	emailLimiter = &emailLimiterImpl{
 		cache: make(map[string]int64),
-		wait:  int64(config.AppConfig.APIConfig.WaitingTimeForVC),
+		wait:  int64(config.WaitingTimeForVC),
 	}
 }
 

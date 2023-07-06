@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/opensourceways/app-cla-server/config"
 	"github.com/opensourceways/app-cla-server/dbmodels"
 	"github.com/opensourceways/app-cla-server/models"
 	"github.com/opensourceways/app-cla-server/signing/infrastructure/emailtmpl"
@@ -15,8 +14,6 @@ type EmployeeSigningController struct {
 }
 
 func (this *EmployeeSigningController) Prepare() {
-	this.stopRunIfSignSerivceIsUnabled()
-
 	if this.isPostRequest() {
 		// sign as employee
 		this.apiPrepare("")
@@ -233,7 +230,7 @@ func (this *EmployeeSigningController) notifyManagers(managers []dbmodels.Corpor
 		Org:              orgInfo.OrgAlias,
 		EmployeeEmail:    info.Email,
 		ProjectURL:       orgInfo.ProjectURL(),
-		URLOfCLAPlatform: config.AppConfig.CLAPlatformURL,
+		URLOfCLAPlatform: config.CLAPlatformURL,
 	}
 	sendEmail(to, orgInfo, "An employee has signed CLA", msg1)
 }

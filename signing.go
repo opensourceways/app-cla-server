@@ -23,9 +23,7 @@ import (
 	"github.com/opensourceways/app-cla-server/signing/infrastructure/txmailimpl"
 )
 
-func initSigning() error {
-	cfg := &config.AppConfig.SigningConfig
-
+func initSigning(cfg *config.Config) error {
 	symmetric, err := symmetricencryptionimpl.NewSymmetricEncryptionImpl(&cfg.Symmetric)
 	if err != nil {
 		return err
@@ -50,7 +48,10 @@ func initSigning() error {
 	)
 
 	models.RegisterCorpSigningAdapter(
-		adapter.NewCorpSigningAdapter(app.NewCorpSigningService(repo)),
+		adapter.NewCorpSigningAdapter(
+			app.NewCorpSigningService(repo),
+			cfg.Domain.Config.InvalidCorpEmailDomain,
+		),
 	)
 
 	models.RegisterEmployeeSigningAdapter(
@@ -113,8 +114,8 @@ func initSigning() error {
 
 	// access token
 	at := accesstokenservice.NewAccessTokenService(
-		nil,
-		config.AppConfig.APITokenExpiry,
+		nil, // TODO access token repo
+		cfg.Domain.Config.AccessTokenExpiry,
 		encryptionimpl.NewEncryptionImpl(),
 		randombytesimpl.NewRandomBytesImpl(),
 	)
@@ -130,7 +131,10 @@ func initSigning() error {
 	)
 	cla := claservice.NewCLAService(linkRepo, localclaimpl.NewLocalCLAImpl(&cfg.LocalCLA))
 
-	claAapter := adapter.NewCLAAdapter(app.NewCLAService(linkRepo, cla), 0) // TODO
+	claAapter := adapter.NewCLAAdapter(
+		app.NewCLAService(linkRepo, cla),
+		cfg.Domain.Config.MaxSizeOfCLAContent,
+	)
 
 	models.RegisterCLAAdapter(claAapter)
 

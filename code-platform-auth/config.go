@@ -2,9 +2,8 @@ package oauth
 
 import "github.com/opensourceways/app-cla-server/oauth2"
 
-type authConfigs struct {
+type Config struct {
 	Login authConfig `json:"login" required:"true"`
-	Sign  authConfig `json:"sign" required:"true"`
 }
 
 type authConfig struct {

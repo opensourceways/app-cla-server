@@ -11,8 +11,6 @@ type TXmailController struct {
 }
 
 func (this *TXmailController) Prepare() {
-	this.stopRunIfSignSerivceIsUnabled()
-
 	this.apiPrepare(PermissionOwnerOfOrg)
 }
 

@@ -11,7 +11,6 @@ import (
 	"github.com/beego/beego/v2/core/logs"
 	beego "github.com/beego/beego/v2/server/web"
 
-	"github.com/opensourceways/app-cla-server/config"
 	"github.com/opensourceways/app-cla-server/models"
 )
 
@@ -307,10 +306,8 @@ func (this *baseController) setCookies(value map[string]string) {
 }
 
 func (this *baseController) setCookie(k, v string, httpOnly bool) {
-	cfg := config.AppConfig.APIConfig
-
 	this.Ctx.SetCookie(
-		k, v, cfg.CookieTimeout, "/", cfg.CookieDomain, true, httpOnly, "strict",
+		k, v, config.CookieTimeout, "/", config.CookieDomain, true, httpOnly, "strict",
 	)
 }
 
@@ -342,10 +339,4 @@ func (this *baseController) getRemoteAddr() (string, *failedApiResult) {
 	}
 
 	return "", newFailedApiResult(400, errCanNotFetchClientIP, fmt.Errorf("can not fetch client ip"))
-}
-
-func (this *baseController) stopRunIfSignSerivceIsUnabled() {
-	if config.AppConfig == nil {
-		this.StopRun()
-	}
 }

@@ -2,6 +2,7 @@ package pdf
 
 import (
 	"fmt"
+	"os"
 	"text/template"
 
 	"github.com/opensourceways/gofpdf"
@@ -12,18 +13,23 @@ import (
 
 type IPDFGenerator interface {
 	LangSupported() map[string]bool
-	GetBlankSignaturePath(string) string
 
 	GenPDFForCorporationSigning(linkID, claFile string, signing *models.CorporationSigning, claFields []models.CLAField) (string, error)
 }
 
 var generator *pdfGenerator
 
-func InitPDFGenerator(pythonBin, pdfOutDir, pdfOrgSigDir string) error {
+func InitPDFGenerator(cfg *Config) error {
+	path := util.GenFilePath(cfg.PDFOutDir, "tmp")
+	if util.IsNotDir(path) {
+		if err := os.Mkdir(path, 0644); err != nil {
+			return err
+		}
+	}
+
 	generator = &pdfGenerator{
-		pythonBin:    pythonBin,
-		pdfOutDir:    pdfOutDir,
-		pdfOrgSigDir: pdfOrgSigDir,
+		pythonBin: cfg.PythonBin,
+		pdfOutDir: cfg.PDFOutDir,
 	}
 
 	corp := []*corpSigningPDF{}
@@ -37,10 +43,6 @@ func InitPDFGenerator(pythonBin, pdfOutDir, pdfOrgSigDir string) error {
 			return err
 		}
 
-		blankPDF := generator.GetBlankSignaturePath(c.language)
-		if err = c.genBlankSignaturePage(blankPDF); err != nil {
-			return err
-		}
 		corp = append(corp, c)
 	}
 

@@ -14,13 +14,12 @@ const (
 var Auth = map[string]*codePlatformAuth{}
 
 func Initialize(cfg *Config) error {
-	f := func(purpose string, ac *authConfig) {
+	f := func(purpose string, configs []platformConfig) {
 		cpa := &codePlatformAuth{
-			webRedirectDir: ac.webRedirectDirConfig,
-			clients:        map[string]AuthInterface{},
+			clients: map[string]AuthInterface{},
 		}
 
-		for _, item := range ac.Configs {
+		for _, item := range configs {
 			cpa.clients[item.Platform] = &authClient{
 				c: oauth2.NewOauth2Client(item.Oauth2Config),
 			}
@@ -29,7 +28,7 @@ func Initialize(cfg *Config) error {
 		Auth[purpose] = cpa
 	}
 
-	f(AuthApplyToLogin, &cfg.Login)
+	f(AuthApplyToLogin, cfg.Login)
 	return nil
 }
 
@@ -40,8 +39,7 @@ type AuthInterface interface {
 }
 
 type codePlatformAuth struct {
-	webRedirectDir webRedirectDirConfig
-	clients        map[string]AuthInterface
+	clients map[string]AuthInterface
 }
 
 func (this *codePlatformAuth) GetAuthInstance(platform string) (AuthInterface, error) {
@@ -49,13 +47,6 @@ func (this *codePlatformAuth) GetAuthInstance(platform string) (AuthInterface, e
 		return c, nil
 	}
 	return nil, fmt.Errorf("Failed to get oauth instance: unknown platform: %s", platform)
-}
-
-func (this *codePlatformAuth) WebRedirectDir(success bool) string {
-	if success {
-		return this.webRedirectDir.WebRedirectDirOnSuccess
-	}
-	return this.webRedirectDir.WebRedirectDirOnFailure
 }
 
 type authClient struct {

@@ -13,8 +13,6 @@ type CorporationSigningController struct {
 }
 
 func (this *CorporationSigningController) Prepare() {
-	this.stopRunIfSignSerivceIsUnabled()
-
 	v := this.routerPattern()
 	if strings.HasSuffix(v, ":cla_hash") || strings.HasSuffix(v, ":link_id/corps/:email") {
 		this.apiPrepare("")

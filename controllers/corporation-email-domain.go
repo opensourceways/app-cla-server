@@ -9,8 +9,6 @@ type CorpEmailDomainController struct {
 }
 
 func (this *CorpEmailDomainController) Prepare() {
-	this.stopRunIfSignSerivceIsUnabled()
-
 	this.apiPrepare(PermissionCorpAdmin)
 }
 

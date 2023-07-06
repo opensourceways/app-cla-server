@@ -3,7 +3,6 @@ package models
 import (
 	"fmt"
 
-	"github.com/opensourceways/app-cla-server/config"
 	"github.com/opensourceways/app-cla-server/dbmodels"
 	"github.com/opensourceways/app-cla-server/util"
 )
@@ -31,9 +30,6 @@ func (this *CorporationSigningCreateOption) Validate(linkId string) IModelError 
 		return err
 	}
 
-	if config.AppConfig.IsRestrictedEmailSuffix(util.EmailSuffix(this.AdminEmail)) {
-		return newModelError(ErrRestrictedEmailSuffix, fmt.Errorf("email suffix is restricted"))
-	}
 	return nil
 }
 

@@ -1,18 +1,45 @@
 package adapter
 
 import (
+	"errors"
+	"strings"
+
 	"github.com/opensourceways/app-cla-server/dbmodels"
 	"github.com/opensourceways/app-cla-server/models"
 	"github.com/opensourceways/app-cla-server/signing/app"
 	"github.com/opensourceways/app-cla-server/signing/domain/dp"
 )
 
-func NewCorpSigningAdapter(s app.CorpSigningService) *corpSigningAdatper {
-	return &corpSigningAdatper{s}
+func NewCorpSigningAdapter(
+	s app.CorpSigningService,
+	invalidCorpEmailDomain []string,
+) *corpSigningAdatper {
+	v := make([]string, len(invalidCorpEmailDomain))
+	for i, item := range invalidCorpEmailDomain {
+		v[i] = strings.ToLower(item)
+	}
+
+	return &corpSigningAdatper{
+		s:                      s,
+		invalidCorpEmailDomain: v,
+	}
 }
 
 type corpSigningAdatper struct {
-	s app.CorpSigningService
+	s                      app.CorpSigningService
+	invalidCorpEmailDomain []string
+}
+
+func (adapter *corpSigningAdatper) isValidaCorpEmailDomain(v string) bool {
+	v = strings.ToLower(v)
+
+	for _, item := range adapter.invalidCorpEmailDomain {
+		if item == v {
+			return false
+		}
+	}
+
+	return true
 }
 
 func (adapter *corpSigningAdatper) Sign(
@@ -50,6 +77,12 @@ func (adapter *corpSigningAdatper) cmdToSignCorpCLA(
 	}
 
 	if cmd.Rep.EmailAddr, err = dp.NewEmailAddr(opt.AdminEmail); err != nil {
+		return
+	}
+
+	if !adapter.isValidaCorpEmailDomain(cmd.Rep.EmailAddr.Domain()) {
+		err = errors.New("invalid email domain")
+
 		return
 	}
 

@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/opensourceways/app-cla-server/config"
 	"github.com/opensourceways/app-cla-server/models"
 	"github.com/opensourceways/app-cla-server/signing/infrastructure/gmailimpl"
 )
@@ -16,8 +15,6 @@ type GmailController struct {
 }
 
 func (this *GmailController) Prepare() {
-	this.stopRunIfSignSerivceIsUnabled()
-
 	if !strings.HasSuffix(this.routerPattern(), "auth") {
 		this.apiPrepare(PermissionOwnerOfOrg)
 	}
@@ -27,11 +24,9 @@ func (this *GmailController) Prepare() {
 // @Description authorized by org email
 // @router /auth [get]
 func (this *GmailController) Auth() {
-	cfg := &config.AppConfig.APIConfig
-
 	rs := func(errCode string, reason error) {
 		this.setCookies(map[string]string{"error_code": errCode, "error_msg": reason.Error()})
-		this.redirect(cfg.WebRedirectDirOnFailureForEmail)
+		this.redirect(config.WebRedirectDirOnFailureForEmail)
 	}
 
 	if err := this.GetString("error"); err != "" {
@@ -54,7 +49,7 @@ func (this *GmailController) Auth() {
 	}
 
 	this.setCookies(map[string]string{"email": addr})
-	this.redirect(cfg.WebRedirectDirOnSuccessForEmail)
+	this.redirect(config.WebRedirectDirOnSuccessForEmail)
 }
 
 // @Title Get

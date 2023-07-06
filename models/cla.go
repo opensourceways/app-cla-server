@@ -1,13 +1,9 @@
 package models
 
 import (
-	"fmt"
 	"io/ioutil"
 	"os"
-	"strconv"
-	"strings"
 
-	"github.com/opensourceways/app-cla-server/config"
 	"github.com/opensourceways/app-cla-server/dbmodels"
 	"github.com/opensourceways/app-cla-server/util"
 )
@@ -74,62 +70,9 @@ func (o *CLACreateOpt) UploadCLAPDF(linkID, applyTo string) IModelError {
 	return parseDBError(err)
 }
 
-func (this *CLACreateOpt) Validate(applyTo string, langs map[string]bool) IModelError {
-	this.Language = strings.ToLower(this.Language)
-
-	switch applyTo {
-	case dbmodels.ApplyToCorporation:
-		if langs != nil && !langs[this.Language] {
-			return newModelError(ErrUnsupportedCLALang, fmt.Errorf("unsupported_cla_lang"))
-		}
-
-		return this.validate(config.AppConfig.CLAConfig.AllowedCorpCLAFields)
-
-	case dbmodels.ApplyToIndividual:
-		return this.validate(config.AppConfig.CLAConfig.AllowedIndividualCLAFields)
-
-	default:
-		return newModelError(ErrSystemError, fmt.Errorf("unknown cla type"))
-	}
-}
-
 type claFileds interface {
 	Number() int
 	Has(t string) bool
-}
-
-func (this *CLACreateOpt) validate(fields claFileds) IModelError {
-	if len(this.Fields) <= 0 {
-		return newModelError(ErrNoCLAField, fmt.Errorf("no fields"))
-	}
-
-	if len(this.Fields) > fields.Number() {
-		return newModelError(ErrManyCLAField, fmt.Errorf("exceeds the max fields number"))
-	}
-
-	for i := range this.Fields {
-		item := &this.Fields[i]
-
-		if _, err := strconv.Atoi(item.ID); err != nil {
-			return newModelError(ErrCLAFieldID, fmt.Errorf("invalid field id"))
-		}
-
-		if !fields.Has(item.Type) {
-			return newModelError(ErrCLAFieldID, fmt.Errorf("unknown field"))
-		}
-	}
-
-	text, err := downloadCLA(this.URL)
-	if err != nil {
-		return newModelError(ErrSystemError, err)
-	}
-	this.SetCLAContent(text)
-
-	return nil
-}
-
-func downloadCLA(url string) ([]byte, error) {
-	return util.DownloadFile(url, "pdf", config.AppConfig.MaxSizeOfCLAContent)
 }
 
 func GetCLAByType(linkID, applyTo string) ([]dbmodels.CLADetail, IModelError) {

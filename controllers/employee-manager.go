@@ -12,8 +12,6 @@ type EmployeeManagerController struct {
 }
 
 func (this *EmployeeManagerController) Prepare() {
-	this.stopRunIfSignSerivceIsUnabled()
-
 	this.apiPrepare(PermissionCorpAdmin)
 }
 

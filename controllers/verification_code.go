@@ -15,8 +15,6 @@ type VerificationCodeController struct {
 }
 
 func (this *VerificationCodeController) Prepare() {
-	this.stopRunIfSignSerivceIsUnabled()
-
 	if strings.HasSuffix(this.routerPattern(), "/:link_id/:email") {
 		this.apiPrepare("")
 	} else {

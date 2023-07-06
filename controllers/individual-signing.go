@@ -7,7 +7,6 @@ type IndividualSigningController struct {
 }
 
 func (this *IndividualSigningController) Prepare() {
-	this.stopRunIfSignSerivceIsUnabled()
 	this.apiPrepare("")
 }
 

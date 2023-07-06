@@ -12,7 +12,6 @@ type Config struct {
 	MaxLengthOfEmail    int `json:"max_length_of_email"       required:"true"`
 	MaxLengthOfAccount  int `json:"max_length_of_account"     required:"true"`
 	MaxLengthOfCorpName int `json:"max_length_of_corp_name"   required:"true"`
-	MinLengthOfPassword int `json:"min_length_of_password"    required:"true"`
 
 	SupportedLanguages           []string `json:"supported_languages"`
 	SupportedCorpCLAFields       []string `json:"supported_corp_cla_fields"`

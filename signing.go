@@ -50,7 +50,7 @@ func initSigning(cfg *config.Config) error {
 	models.RegisterCorpSigningAdapter(
 		adapter.NewCorpSigningAdapter(
 			app.NewCorpSigningService(repo),
-			cfg.Domain.Config.InvalidCorpEmailDomain,
+			cfg.Domain.Config.InvalidCorpEmailDomains(),
 		),
 	)
 

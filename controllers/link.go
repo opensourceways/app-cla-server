@@ -133,22 +133,6 @@ func (this *LinkController) GetCLAForSigning() {
 // @Param  :link_id  path  string  true	 "link id"
 // @router /update/:link_id [post]
 func (this *LinkController) UpdateLinkEmail() {
-	action := "update link email"
-	linkID := this.GetString(":link_id")
-	email := this.GetString("email")
-
-	_, mErr := models.GetOrgOfLink(linkID)
-	if mErr != nil {
-		this.sendModelErrorAsResp(mErr, action)
-		return
-	}
-
-	err := models.UpdateLinkEmail(linkID, email)
-	if err != nil {
-		this.sendFailedResponse(500, errSystemError, err, action)
-		return
-	}
-
-	this.sendSuccessResp("success")
+	this.sendSuccessResp("unimplemented")
 	return
 }

@@ -45,8 +45,9 @@ type CLACreateOption struct {
 }
 
 type CLAInfo struct {
+	CLAId   string
+	CLAFile string
 	CLALang string
-	CLAHash string
 	Fields  []Field
 }
 

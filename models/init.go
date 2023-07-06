@@ -3,6 +3,8 @@ package models
 import "github.com/opensourceways/app-cla-server/dbmodels"
 
 var (
+	claAdapterInstance               claAdapter
+	linkAdapterInstance              linkAdapter
 	userAdapterInstance              userAdapter
 	corpPDFAdapterInstance           corpPDFAdapter
 	corpAdminAdatperInstance         corpAdminAdatper
@@ -17,13 +19,18 @@ var (
 )
 
 type corpSigningAdapter interface {
-	Sign(opt *CorporationSigningCreateOption, linkId string) IModelError
+	Sign(linkId string, opt *CorporationSigningCreateOption) IModelError
 	Remove(string) IModelError
 	Get(csId string) (CorporationSigning, IModelError)
 	List(linkId string) ([]CorporationSigningSummary, IModelError)
 	FindCorpSummary(linkId string, email string) (interface{}, IModelError)
 }
 
+func RegisterCorpSigningAdapter(a corpSigningAdapter) {
+	corpSigningAdapterInstance = a
+}
+
+// employeeSigningAdapter
 type employeeSigningAdapter interface {
 	Sign(opt *EmployeeSigning) ([]dbmodels.CorporationManagerListResult, IModelError)
 	Remove(csId, esId string) (string, IModelError)
@@ -31,15 +38,30 @@ type employeeSigningAdapter interface {
 	List(csId string) ([]dbmodels.IndividualSigningBasicInfo, IModelError)
 }
 
+func RegisterEmployeeSigningAdapter(a employeeSigningAdapter) {
+	employeeSigningAdapterInstance = a
+}
+
+// individualSigningAdapter
 type individualSigningAdapter interface {
 	Sign(linkId string, opt *IndividualSigning) IModelError
 	Check(linkId string, email string) (bool, IModelError)
 }
 
+func RegisterIndividualSigningAdapter(a individualSigningAdapter) {
+	individualSigningAdapterInstance = a
+}
+
+// corpAdminAdatper
 type corpAdminAdatper interface {
 	Add(csId string) (dbmodels.CorporationManagerCreateOption, IModelError)
 }
 
+func RegisterCorpAdminAdatper(a corpAdminAdatper) {
+	corpAdminAdatperInstance = a
+}
+
+// userAdapter
 type userAdapter interface {
 	ChangePassword(string, *CorporationManagerChangePassword) IModelError
 	ResetPassword(linkId string, email string, password string) IModelError
@@ -47,22 +69,42 @@ type userAdapter interface {
 	GenKeyForPasswordRetrieval(linkId string, email string) (string, IModelError)
 }
 
+func RegisterUserAdapter(a userAdapter) {
+	userAdapterInstance = a
+}
+
+// employeeManagerAdapter
 type employeeManagerAdapter interface {
 	Add(string, *EmployeeManagerCreateOption) ([]dbmodels.CorporationManagerCreateOption, IModelError)
 	Remove(string, *EmployeeManagerCreateOption) ([]dbmodels.CorporationManagerCreateOption, IModelError)
 	List(csId string) ([]dbmodels.CorporationManagerListResult, IModelError)
 }
 
+func RegisterEmployeeManagerAdapter(a employeeManagerAdapter) {
+	employeeManagerAdapterInstance = a
+}
+
+// corpEmailDomainAdapter
 type corpEmailDomainAdapter interface {
 	Add(csId string, opt *CorpEmailDomainCreateOption) IModelError
 	List(csId string) ([]string, IModelError)
 }
 
+func RegisterCorpEmailDomainAdapter(a corpEmailDomainAdapter) {
+	corpEmailDomainAdapterInstance = a
+}
+
+// corpPDFAdapter
 type corpPDFAdapter interface {
 	Upload(csId string, pdf []byte) IModelError
 	Download(csId string) ([]byte, IModelError)
 }
 
+func RegisterCorpPDFAdapter(a corpPDFAdapter) {
+	corpPDFAdapterInstance = a
+}
+
+// verificationCodeAdapter
 type verificationCodeAdapter interface {
 	CreateForSigning(linkId string, email string) (string, IModelError)
 	ValidateForSigning(linkId string, email, code string) IModelError
@@ -74,11 +116,21 @@ type verificationCodeAdapter interface {
 	ValidateForSettingOrgEmail(email, code string) IModelError
 }
 
+func RegisterVerificationCodeAdapter(a verificationCodeAdapter) {
+	verificationCodeAdapterInstance = a
+}
+
+// emailCredentialAdapter
 type emailCredentialAdapter interface {
 	AddGmailCredential(code, scope string) (string, IModelError)
 	AddTXmailCredential(email, code string) IModelError
 }
 
+func RegisterEmailCredentialAdapter(a emailCredentialAdapter) {
+	emailCredentialAdapterInstance = a
+}
+
+// accessTokenAdapter
 type accessTokenAdapter interface {
 	Add(payload []byte) (AccessToken, IModelError)
 	ValidateAndRefresh(AccessToken) (AccessToken, []byte, IModelError)
@@ -88,27 +140,28 @@ func RegisterAccessTokenAdapter(at accessTokenAdapter) {
 	accessTokenAdapterInstance = at
 }
 
-func Init(
-	ua userAdapter,
-	cp corpPDFAdapter,
-	ca corpAdminAdatper,
-	cs corpSigningAdapter,
-	ec emailCredentialAdapter,
-	es employeeSigningAdapter,
-	em employeeManagerAdapter,
-	ed corpEmailDomainAdapter,
-	vc verificationCodeAdapter,
-	is individualSigningAdapter,
+// claAdapter
+type claAdapter interface {
+	Add(linkId string, opt *CLACreateOpt, applyTo string) IModelError
+	Remove(linkId, claId string) IModelError
+	CLALocalFilePath(linkId, claId string) string
+	List(linkId string) (dbmodels.CLAOfLink, IModelError)
+}
 
-) {
-	userAdapterInstance = ua
-	corpPDFAdapterInstance = cp
-	corpAdminAdatperInstance = ca
-	corpSigningAdapterInstance = cs
-	emailCredentialAdapterInstance = ec
-	employeeSigningAdapterInstance = es
-	employeeManagerAdapterInstance = em
-	corpEmailDomainAdapterInstance = ed
-	verificationCodeAdapterInstance = vc
-	individualSigningAdapterInstance = is
+func RegisterCLAAdapter(a claAdapter) {
+	claAdapterInstance = a
+}
+
+// linkAdapter
+type linkAdapter interface {
+	Add(submitter string, opt *LinkCreateOption) IModelError
+	Remove(linkId string) IModelError
+	List(platform string, orgs []string) ([]dbmodels.LinkInfo, IModelError)
+	GetLink(linkId string) (org dbmodels.OrgInfo, merr IModelError)
+	GetLinkCLA(linkId, claId string) (dbmodels.OrgInfo, dbmodels.CLAInfo, IModelError)
+	ListCLAs(linkId, applyTo string) ([]dbmodels.CLADetail, IModelError)
+}
+
+func RegisterLinkAdapter(a linkAdapter) {
+	linkAdapterInstance = a
 }

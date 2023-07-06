@@ -17,7 +17,7 @@ type EmployeeSigningLog struct {
 
 type EmployeeSigning struct {
 	Id      string
-	CLA     CLA
+	CLA     CLAInfo
 	Rep     Representative
 	Date    string
 	Enabled bool

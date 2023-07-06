@@ -4,23 +4,16 @@ import (
 	"fmt"
 
 	"github.com/opensourceways/app-cla-server/oauth2"
-	"github.com/opensourceways/app-cla-server/util"
 )
 
 const (
 	AuthApplyToLogin = "login"
-	AuthApplyToSign  = "sign"
 )
 
 // key is the purpose that authorization applies to
 var Auth = map[string]*codePlatformAuth{}
 
-func Initialize(credentialFile string) error {
-	cfg := authConfigs{}
-	if err := util.LoadFromYaml(credentialFile, &cfg); err != nil {
-		return err
-	}
-
+func Initialize(cfg *Config) error {
 	f := func(purpose string, ac *authConfig) {
 		cpa := &codePlatformAuth{
 			webRedirectDir: ac.webRedirectDirConfig,
@@ -37,7 +30,6 @@ func Initialize(credentialFile string) error {
 	}
 
 	f(AuthApplyToLogin, &cfg.Login)
-	f(AuthApplyToSign, &cfg.Sign)
 	return nil
 }
 

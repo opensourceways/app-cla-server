@@ -1,22 +1,51 @@
 package adapter
 
 import (
+	"errors"
+	"strings"
+
 	"github.com/opensourceways/app-cla-server/dbmodels"
 	"github.com/opensourceways/app-cla-server/models"
 	"github.com/opensourceways/app-cla-server/signing/app"
 	"github.com/opensourceways/app-cla-server/signing/domain/dp"
 )
 
-func NewCorpSigningAdapter(s app.CorpSigningService) *corpSigningAdatper {
-	return &corpSigningAdatper{s}
+func NewCorpSigningAdapter(
+	s app.CorpSigningService,
+	invalidCorpEmailDomain []string,
+) *corpSigningAdatper {
+	v := make([]string, len(invalidCorpEmailDomain))
+	for i, item := range invalidCorpEmailDomain {
+		v[i] = strings.ToLower(item)
+	}
+
+	return &corpSigningAdatper{
+		s:                      s,
+		invalidCorpEmailDomain: v,
+	}
 }
 
 type corpSigningAdatper struct {
-	s app.CorpSigningService
+	s                      app.CorpSigningService
+	invalidCorpEmailDomain []string
 }
 
-func (adapter *corpSigningAdatper) Sign(opt *models.CorporationSigningCreateOption, linkId string) models.IModelError {
-	cmd, err := adapter.cmdToSignCorpCLA(opt, linkId)
+func (adapter *corpSigningAdatper) isValidaCorpEmailDomain(v string) bool {
+	v = strings.ToLower(v)
+
+	for _, item := range adapter.invalidCorpEmailDomain {
+		if item == v {
+			return false
+		}
+	}
+
+	return true
+}
+
+func (adapter *corpSigningAdatper) Sign(
+	linkId string, opt *models.CorporationSigningCreateOption,
+) models.IModelError {
+	cmd, err := adapter.cmdToSignCorpCLA(linkId, opt)
 	if err != nil {
 		return toModelError(err)
 	}
@@ -28,12 +57,13 @@ func (adapter *corpSigningAdatper) Sign(opt *models.CorporationSigningCreateOpti
 	return nil
 }
 
-func (adapter *corpSigningAdatper) cmdToSignCorpCLA(opt *models.CorporationSigningCreateOption, linkId string) (
+func (adapter *corpSigningAdatper) cmdToSignCorpCLA(
+	linkId string, opt *models.CorporationSigningCreateOption,
+) (
 	cmd app.CmdToSignCorpCLA, err error,
 ) {
 	cmd.Link.Id = linkId
-	// TODO missing cla id
-	cmd.Link.CLAId = opt.CLALanguage
+	cmd.Link.CLAId = opt.CLAId
 	if cmd.Link.Language, err = dp.NewLanguage(opt.CLALanguage); err != nil {
 		return
 	}
@@ -47,6 +77,12 @@ func (adapter *corpSigningAdatper) cmdToSignCorpCLA(opt *models.CorporationSigni
 	}
 
 	if cmd.Rep.EmailAddr, err = dp.NewEmailAddr(opt.AdminEmail); err != nil {
+		return
+	}
+
+	if !adapter.isValidaCorpEmailDomain(cmd.Rep.EmailAddr.Domain()) {
+		err = errors.New("invalid email domain")
+
 		return
 	}
 
@@ -78,6 +114,7 @@ func (adapter *corpSigningAdatper) Get(csId string) (
 			Date:            item.Date,
 			AdminName:       item.RepName,
 			AdminEmail:      item.RepEmail,
+			CLAId:           item.CLAId,
 			CLALanguage:     item.Language,
 			CorporationName: item.CorpName,
 		},

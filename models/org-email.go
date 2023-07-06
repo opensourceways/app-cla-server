@@ -83,13 +83,3 @@ func (e *EmailAuthorization) Validate() IModelError {
 func PurposeOfEmailAuthorization(email string) string {
 	return fmt.Sprintf("email authorization: %s", email)
 }
-
-func AddTxmailCredential(opt *EmailAuthorizationReq) IModelError {
-	return emailCredentialAdapterInstance.AddTXmailCredential(
-		opt.Email, opt.Authorize,
-	)
-}
-
-func AddGmailCredential(code, scope string) (string, IModelError) {
-	return emailCredentialAdapterInstance.AddGmailCredential(code, scope)
-}

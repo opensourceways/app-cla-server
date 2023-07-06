@@ -5,7 +5,6 @@ import (
 	"net/url"
 	"path"
 
-	"github.com/opensourceways/app-cla-server/config"
 	"github.com/opensourceways/app-cla-server/models"
 	"github.com/opensourceways/app-cla-server/signing/infrastructure/emailtmpl"
 )
@@ -15,8 +14,6 @@ type PasswordRetrievalController struct {
 }
 
 func (this *PasswordRetrievalController) Prepare() {
-	this.stopRunIfSignSerivceIsUnabled()
-
 	this.apiPrepare("")
 }
 
@@ -35,7 +32,7 @@ func (this *PasswordRetrievalController) Post() {
 	action := "send an email to retrieve password"
 	linkID := this.GetString(":link_id")
 
-	orgInfo, mErr := models.GetOrgOfLink(linkID)
+	orgInfo, mErr := models.GetLink(linkID)
 	if mErr != nil {
 		this.sendModelErrorAsResp(mErr, action)
 		return
@@ -62,11 +59,11 @@ func (this *PasswordRetrievalController) Post() {
 
 	sendEmailToIndividual(
 		info.Email,
-		orgInfo,
+		&orgInfo,
 		"[CLA Sign] Retrieving Password of Corporation Manager",
 		emailtmpl.PasswordRetrieval{
 			Org:          orgInfo.OrgAlias,
-			Timeout:      config.AppConfig.PasswordRetrievalExpiry / 60,
+			Timeout:      config.PasswordRetrievalExpiry / 60,
 			ResetURL:     genURLToResetPassword(linkID, key),
 			RetrievalURL: genURLToRetrievalPassword(linkID),
 		},
@@ -116,7 +113,7 @@ func (this *PasswordRetrievalController) Reset() {
 }
 
 func genURLToResetPassword(linkID, key string) string {
-	v, _ := url.Parse(config.AppConfig.PasswordResetURL)
+	v, _ := url.Parse(config.PasswordResetURL)
 
 	q := v.Query()
 	q.Add("key", key)
@@ -127,7 +124,7 @@ func genURLToResetPassword(linkID, key string) string {
 }
 
 func genURLToRetrievalPassword(linkID string) string {
-	v, _ := url.Parse(config.AppConfig.PasswordRetrievalURL)
+	v, _ := url.Parse(config.PasswordRetrievalURL)
 	v.Path = path.Join(v.Path, linkID)
 	return v.String()
 }

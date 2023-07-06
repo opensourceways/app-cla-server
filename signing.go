@@ -7,12 +7,14 @@ import (
 	"github.com/opensourceways/app-cla-server/signing/adapter"
 	"github.com/opensourceways/app-cla-server/signing/app"
 	"github.com/opensourceways/app-cla-server/signing/domain/accesstokenservice"
+	"github.com/opensourceways/app-cla-server/signing/domain/claservice"
 	"github.com/opensourceways/app-cla-server/signing/domain/dp"
 	"github.com/opensourceways/app-cla-server/signing/domain/emailcredential"
 	"github.com/opensourceways/app-cla-server/signing/domain/userservice"
 	"github.com/opensourceways/app-cla-server/signing/domain/vcservice"
 	"github.com/opensourceways/app-cla-server/signing/infrastructure/encryptionimpl"
 	"github.com/opensourceways/app-cla-server/signing/infrastructure/gmailimpl"
+	"github.com/opensourceways/app-cla-server/signing/infrastructure/localclaimpl"
 	"github.com/opensourceways/app-cla-server/signing/infrastructure/passwordimpl"
 	"github.com/opensourceways/app-cla-server/signing/infrastructure/randombytesimpl"
 	"github.com/opensourceways/app-cla-server/signing/infrastructure/randomcodeimpl"
@@ -21,9 +23,7 @@ import (
 	"github.com/opensourceways/app-cla-server/signing/infrastructure/txmailimpl"
 )
 
-func initSigning() error {
-	cfg := &config.AppConfig.SigningConfig
-
+func initSigning(cfg *config.Config) error {
 	symmetric, err := symmetricencryptionimpl.NewSymmetricEncryptionImpl(&cfg.Symmetric)
 	if err != nil {
 		return err
@@ -43,17 +43,32 @@ func initSigning() error {
 		passwordimpl.NewPasswordImpl(&cfg.Password),
 	)
 
-	ca := adapter.NewCorpAdminAdapter(app.NewCorpAdminService(repo, userService))
+	models.RegisterCorpAdminAdatper(
+		adapter.NewCorpAdminAdapter(app.NewCorpAdminService(repo, userService)),
+	)
 
-	cs := adapter.NewCorpSigningAdapter(app.NewCorpSigningService(repo))
+	models.RegisterCorpSigningAdapter(
+		adapter.NewCorpSigningAdapter(
+			app.NewCorpSigningService(repo),
+			cfg.Domain.Config.InvalidCorpEmailDomain,
+		),
+	)
 
-	es := adapter.NewEmployeeSigningAdapter(app.NewEmployeeSigningService(repo))
+	models.RegisterEmployeeSigningAdapter(
+		adapter.NewEmployeeSigningAdapter(app.NewEmployeeSigningService(repo)),
+	)
 
-	em := adapter.NewEmployeeManagerAdapter(app.NewEmployeeManagerService(repo, userService))
+	models.RegisterEmployeeManagerAdapter(
+		adapter.NewEmployeeManagerAdapter(app.NewEmployeeManagerService(repo, userService)),
+	)
 
-	ed := adapter.NewCorpEmailDomainAdapter(app.NewCorpEmailDomainService(repo))
+	models.RegisterCorpEmailDomainAdapter(
+		adapter.NewCorpEmailDomainAdapter(app.NewCorpEmailDomainService(repo)),
+	)
 
-	cp := adapter.NewCorpPDFAdapter(app.NewCorpPDFService(repo))
+	models.RegisterCorpPDFAdapter(
+		adapter.NewCorpPDFAdapter(app.NewCorpPDFService(repo)),
+	)
 
 	vcService := vcservice.NewVCService(
 		repositoryimpl.NewVerificationCode(
@@ -62,19 +77,26 @@ func initSigning() error {
 		randomcodeimpl.NewRandomCodeImpl(),
 	)
 
-	vc := adapter.NewVerificationCodeAdapter(app.NewVerificationCodeService(
-		vcService,
-	))
+	models.RegisterVerificationCodeAdapter(
+		adapter.NewVerificationCodeAdapter(app.NewVerificationCodeService(
+			vcService,
+		)),
+	)
 
-	ua := adapter.NewUserAdapter(app.NewUserService(userService, repo, symmetric, vcService))
+	models.RegisterUserAdapter(
+		adapter.NewUserAdapter(app.NewUserService(userService, repo, symmetric, vcService)),
+	)
 
-	is := adapter.NewIndividualSigningAdapter(app.NewIndividualSigningService(
-		repositoryimpl.NewIndividualSigning(
-			mongodb.DAO(cfg.Mongodb.Collections.IndividualSigning),
-		),
-		repo,
-	))
+	models.RegisterIndividualSigningAdapter(
+		adapter.NewIndividualSigningAdapter(app.NewIndividualSigningService(
+			repositoryimpl.NewIndividualSigning(
+				mongodb.DAO(cfg.Mongodb.Collections.IndividualSigning),
+			),
+			repo,
+		)),
+	)
 
+	// email credential
 	ecRepo := repositoryimpl.NewEmailCredential(
 		mongodb.DAO(cfg.Mongodb.Collections.EmailCredential),
 	)
@@ -84,21 +106,43 @@ func initSigning() error {
 	gmailimpl.RegisterEmailService(echelper.Find)
 	txmailimpl.RegisterEmailService(echelper.Find)
 
-	ec := adapter.NewEmailCredentialAdapter(
-		app.NewEmailCredentialService(echelper), ecRepo,
+	models.RegisterEmailCredentialAdapter(
+		adapter.NewEmailCredentialAdapter(
+			app.NewEmailCredentialService(echelper), ecRepo,
+		),
 	)
 
-	models.Init(ua, cp, ca, cs, ec, es, em, ed, vc, is)
-
+	// access token
 	at := accesstokenservice.NewAccessTokenService(
-		nil,
-		config.AppConfig.APITokenExpiry,
+		nil, // TODO access token repo
+		cfg.Domain.Config.AccessTokenExpiry,
 		encryptionimpl.NewEncryptionImpl(),
 		randombytesimpl.NewRandomBytesImpl(),
 	)
 
 	models.RegisterAccessTokenAdapter(
 		adapter.NewAccessTokenAdapter(app.NewAccessTokenService(at)),
+	)
+
+	// link
+	linkRepo := repositoryimpl.NewLink(
+		mongodb.DAO(cfg.Mongodb.Collections.Link),
+		mongodb.DAO(cfg.Mongodb.Collections.CLA),
+	)
+	cla := claservice.NewCLAService(linkRepo, localclaimpl.NewLocalCLAImpl(&cfg.LocalCLA))
+
+	claAapter := adapter.NewCLAAdapter(
+		app.NewCLAService(linkRepo, cla),
+		cfg.Domain.Config.MaxSizeOfCLAContent,
+	)
+
+	models.RegisterCLAAdapter(claAapter)
+
+	models.RegisterLinkAdapter(
+		adapter.NewLinkAdapter(
+			app.NewLinkService(linkRepo, cla, echelper),
+			claAapter,
+		),
 	)
 
 	return nil

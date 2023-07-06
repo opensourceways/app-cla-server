@@ -7,7 +7,6 @@ import (
 
 	"github.com/beego/beego/v2/core/logs"
 
-	"github.com/opensourceways/app-cla-server/config"
 	"github.com/opensourceways/app-cla-server/models"
 	"github.com/opensourceways/app-cla-server/util"
 )
@@ -17,8 +16,6 @@ type CorporationPDFController struct {
 }
 
 func (this *CorporationPDFController) Prepare() {
-	this.stopRunIfSignSerivceIsUnabled()
-
 	if strings.HasSuffix(this.routerPattern(), "/") {
 		// admin reviews pdf
 		this.apiPrepare(PermissionCorpAdmin)
@@ -38,7 +35,7 @@ func (this *CorporationPDFController) downloadCorpPDF(csId string) *failedApiRes
 	}
 
 	fn, err := util.WriteToTempFile(
-		util.GenFilePath(config.AppConfig.PDFOutDir, "tmp"),
+		util.GenFilePath(config.PDFOutDir, "tmp"),
 		fmt.Sprintf("%s_*.pdf", csId),
 		pdf,
 	)
@@ -75,7 +72,7 @@ func (this *CorporationPDFController) Upload() {
 		return
 	}
 
-	data, fr := this.readInputFile("pdf", config.AppConfig.MaxSizeOfCorpCLAPDF)
+	data, fr := this.readInputFile("pdf", config.MaxSizeOfCorpCLAPDF)
 	if fr != nil {
 		this.sendFailedResultAsResp(fr, action)
 		return

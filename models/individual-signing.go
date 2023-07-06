@@ -44,11 +44,3 @@ func IsIndividualSigned(linkID, email string) (bool, IModelError) {
 	}
 	return b, parseDBError(err)
 }
-
-func SignIndividualCLA(linkId string, opt *IndividualSigning) IModelError {
-	return individualSigningAdapterInstance.Sign(linkId, opt)
-}
-
-func CheckSigning(linkId string, email string) (bool, IModelError) {
-	return individualSigningAdapterInstance.Check(linkId, email)
-}

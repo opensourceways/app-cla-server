@@ -32,8 +32,7 @@ func (adapter *individualSigningAdatper) cmdToSignIndividualCLA(linkId string, o
 	cmd app.CmdToSignIndividualCLA, err error,
 ) {
 	cmd.Link.Id = linkId
-	// TODO missing cla id
-	cmd.Link.CLAId = opt.CLALanguage
+	cmd.Link.CLAId = opt.CLAId
 	if cmd.Link.Language, err = dp.NewLanguage(opt.CLALanguage); err != nil {
 		return
 	}

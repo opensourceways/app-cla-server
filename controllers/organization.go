@@ -5,8 +5,6 @@ type OrganizationController struct {
 }
 
 func (ctl *OrganizationController) Prepare() {
-	ctl.stopRunIfSignSerivceIsUnabled()
-
 	ctl.apiPrepare(PermissionOwnerOfOrg)
 }
 

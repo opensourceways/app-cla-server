@@ -7,7 +7,7 @@ import (
 )
 
 type CmdToSignCorpCLA struct {
-	Link           domain.Link
+	Link           domain.LinkInfo
 	CorpName       dp.CorpName
 	Rep            domain.Representative
 	AllSingingInfo domain.AllSingingInfo
@@ -36,6 +36,7 @@ type CorpSigningDTO struct {
 
 type CorpSigningInfoDTO struct {
 	Date     string                `json:"date"`
+	CLAId    string                `json:"cla_id"`
 	Language string                `json:"cla_language"`
 	CorpName string                `json:"corporation_name"`
 	RepName  string                `json:"rep_name"`

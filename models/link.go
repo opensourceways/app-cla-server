@@ -1,10 +1,6 @@
 package models
 
-import (
-	"fmt"
-
-	"github.com/opensourceways/app-cla-server/dbmodels"
-)
+import "github.com/opensourceways/app-cla-server/dbmodels"
 
 type OrgInfo = dbmodels.OrgInfo
 type OrgRepo = dbmodels.OrgRepo
@@ -20,41 +16,6 @@ type LinkCreateOption struct {
 	CorpCLA       *CLACreateOpt `json:"corp_cla"`
 
 	orgEmailInfo *dbmodels.OrgEmailCreateInfo `json:"-"`
-}
-
-func (this *LinkCreateOption) Validate(langs map[string]bool) IModelError {
-	individualcla := this.IndividualCLA
-	corpCLA := this.CorpCLA
-
-	if (individualcla == nil) && (corpCLA == nil) {
-		return newModelError(
-			ErrMissgingCLA,
-			fmt.Errorf("must specify one of individual and corp clas"),
-		)
-	}
-
-	if individualcla != nil {
-		if err := individualcla.Validate("", langs); err != nil {
-			return err
-		}
-	}
-
-	if corpCLA != nil {
-		if err := corpCLA.Validate(dbmodels.ApplyToCorporation, langs); err != nil {
-			return err
-		}
-	}
-
-	orgEmail, err := dbmodels.GetDB().GetOrgEmailInfo(this.OrgEmail)
-	if err != nil {
-		if err.IsErrorOf(dbmodels.ErrNoDBRecord) {
-			return newModelError(ErrOrgEmailNotExists, err)
-		}
-		return parseDBError(err)
-	}
-	this.orgEmailInfo = orgEmail
-
-	return nil
 }
 
 func (this LinkCreateOption) Create(linkID, submitter string) IModelError {

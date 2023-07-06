@@ -13,17 +13,16 @@ import (
 )
 
 func newCorpPDFEmail(
-	linkID, claFile string,
+	linkID string,
 	orgInfo *models.OrgInfo,
+	claInfo *models.CLAInfo,
 	signing *models.CorporationSigning,
-	claFields []models.CLAField,
 ) *corpPDFEmail {
 	return &corpPDFEmail{
-		linkID:    linkID,
-		claFile:   claFile,
-		orgInfo:   *orgInfo,
-		signing:   *signing,
-		claFields: claFields,
+		linkID:  linkID,
+		claInfo: *claInfo,
+		orgInfo: *orgInfo,
+		signing: *signing,
 	}
 }
 
@@ -45,11 +44,10 @@ type corpPDFEmail struct {
 	tmplDone    bool
 	pdfFilePath string
 
-	linkID    string
-	claFile   string
-	orgInfo   models.OrgInfo
-	signing   models.CorporationSigning
-	claFields []models.CLAField
+	linkID  string
+	claInfo models.CLAInfo
+	orgInfo models.OrgInfo
+	signing models.CorporationSigning
 }
 
 func (impl *corpPDFEmail) do() error {
@@ -87,7 +85,7 @@ func (impl *corpPDFEmail) genFile() error {
 	}
 
 	v, err := pdfGenerator.GenPDFForCorporationSigning(
-		impl.linkID, impl.claFile, &impl.signing, impl.claFields,
+		impl.linkID, impl.claInfo.CLAFile, &impl.signing, impl.claInfo.Fields,
 	)
 	if err != nil {
 		return fmt.Errorf("error to generate pdf, err: %s", err.Error())
@@ -111,7 +109,7 @@ func (impl *corpPDFEmail) genEmailTmpl() {
 		Date:        signing.Date,
 		AdminName:   signing.AdminName,
 		ProjectURL:  orgInfo.ProjectURL(),
-		SigningInfo: buildCorpSigningInfo(signing, impl.claFields),
+		SigningInfo: buildCorpSigningInfo(signing, impl.claInfo.Fields),
 	}
 
 	impl.tmplDone = true

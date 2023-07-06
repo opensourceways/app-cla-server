@@ -3,7 +3,6 @@ package models
 import (
 	"fmt"
 
-	"github.com/opensourceways/app-cla-server/config"
 	"github.com/opensourceways/app-cla-server/dbmodels"
 	"github.com/opensourceways/app-cla-server/util"
 )
@@ -31,17 +30,10 @@ func (this *CorporationSigningCreateOption) Validate(linkId string) IModelError 
 		return err
 	}
 
-	if config.AppConfig.IsRestrictedEmailSuffix(util.EmailSuffix(this.AdminEmail)) {
-		return newModelError(ErrRestrictedEmailSuffix, fmt.Errorf("email suffix is restricted"))
-	}
 	return nil
 }
 
-func (this *CorporationSigningCreateOption) Create(linkId string) IModelError {
-	if corpSigningAdapterInstance != nil {
-		return corpSigningAdapterInstance.Sign(this, linkId)
-	}
-
+func (this *CorporationSigningCreateOption) Create(linkId string, claId string) IModelError {
 	this.Date = util.Date()
 
 	err := dbmodels.GetDB().SignCorpCLA(linkId, &this.CorporationSigning)
@@ -162,33 +154,9 @@ func ListDeletedCorpSignings(linkID string) ([]dbmodels.CorporationSigningBasicI
 	return v, parseDBError(err)
 }
 
-func RemoveCorpSigning(csId string) IModelError {
-	return corpSigningAdapterInstance.Remove(csId)
-}
-
 type CorporationSigningSummary struct {
 	dbmodels.CorporationSigningBasicInfo
 	Id          string `json:"string"`
 	AdminAdded  bool   `json:"admin_added"`
 	PDFUploaded bool   `json:"pdf_uploaded"`
-}
-
-func ListCorpSigning(linkID string) ([]CorporationSigningSummary, IModelError) {
-	return corpSigningAdapterInstance.List(linkID)
-}
-
-func GetCorpSigning(csId string) (CorporationSigning, IModelError) {
-	return corpSigningAdapterInstance.Get(csId)
-}
-
-func UploadCorpPDF(csId string, pdf []byte) IModelError {
-	return corpPDFAdapterInstance.Upload(csId, pdf)
-}
-
-func DownloadCorpPDF(csId string) ([]byte, IModelError) {
-	return corpPDFAdapterInstance.Download(csId)
-}
-
-func FindCorpSummary(linkId string, email string) (interface{}, IModelError) {
-	return corpSigningAdapterInstance.FindCorpSummary(linkId, email)
 }

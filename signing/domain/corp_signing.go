@@ -18,21 +18,21 @@ type Representative struct {
 	EmailAddr dp.EmailAddr
 }
 
-type CLA struct {
+type CLAInfo struct {
 	CLAId    string
 	Language dp.Language
 }
 
-type Link struct {
+type LinkInfo struct {
 	Id string
 
-	CLA
+	CLAInfo
 }
 
 type CorpSigning struct {
 	Id      string
 	Date    string
-	Link    Link
+	Link    LinkInfo
 	Rep     Representative
 	Corp    Corporation
 	AllInfo AllSingingInfo

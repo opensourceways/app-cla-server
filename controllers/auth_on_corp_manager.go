@@ -32,7 +32,7 @@ func (this *CorporationManagerController) Auth() {
 		return
 	}
 
-	orgInfo, merr := models.GetOrgOfLink(info.LinkID)
+	orgInfo, merr := models.GetLink(info.LinkID)
 	if merr != nil {
 		this.sendModelErrorAsResp(merr, action)
 

@@ -42,6 +42,11 @@ const (
 	ErrorCodeEmailCredentialNotFound = "email_credential_not_found"
 
 	ErrorCodeAccessTokenInvalid = "access_token_invalid"
+
+	ErrorCodeCLAExists    = "cla_exists"
+	ErrorCodeCLANotExists = "cla_not_exists"
+
+	ErrorCodeLinkNotExists = "link_not_exists"
 )
 
 // domainError

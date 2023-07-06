@@ -60,6 +60,7 @@ func (s *corpSigningService) Get(csId string) (CorpSigningInfoDTO, error) {
 
 	return CorpSigningInfoDTO{
 		Date:     item.Date,
+		CLAId:    item.Link.CLAId,
 		Language: item.Link.Language.Language(),
 		CorpName: item.Corp.Name.CorpName(),
 		RepName:  item.Rep.Name.Name(),

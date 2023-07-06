@@ -1,13 +1,9 @@
 package controllers
 
 import (
-	"fmt"
 	"strings"
 
-	"github.com/opensourceways/app-cla-server/dbmodels"
 	"github.com/opensourceways/app-cla-server/models"
-	"github.com/opensourceways/app-cla-server/pdf"
-	"github.com/opensourceways/app-cla-server/util"
 )
 
 type LinkController struct {
@@ -15,8 +11,6 @@ type LinkController struct {
 }
 
 func (this *LinkController) Prepare() {
-	this.stopRunIfSignSerivceIsUnabled()
-
 	if strings.HasSuffix(this.routerPattern(), ":apply_to") {
 		this.apiPrepare("")
 	} else {
@@ -45,88 +39,17 @@ func (this *LinkController) Link() {
 		return
 	}
 
-	if merr := input.Validate(pdf.GetPDFGenerator().LangSupported()); merr != nil {
-		this.sendModelErrorAsResp(merr, action)
-		return
-	}
-
 	if fr := pl.isOwnerOfOrg(input.Platform, input.OrgID); fr != nil {
 		sendResp(fr)
 		return
 	}
 
-	filePath := genOrgFileLockPath(input.Platform, input.OrgID, input.RepoID)
-	if err := util.CreateLockedFile(filePath); err != nil {
-		this.sendFailedResponse(500, errSystemError, err, action)
-		return
-	}
-
-	unlock, err := util.Lock(filePath)
-	if err != nil {
-		this.sendFailedResponse(500, errSystemError, err, action)
-		return
-	}
-	defer unlock()
-
-	orgRepo := buildOrgRepo(input.Platform, input.OrgID, input.RepoID)
-	_, merr := models.GetLinkID(orgRepo)
-	if merr == nil {
-		this.sendFailedResponse(400, errLinkExists, fmt.Errorf("recreate link"), action)
-		return
-	}
-	if !merr.IsErrorOf(models.ErrNoLink) {
-		this.sendModelErrorAsResp(merr, action)
-		return
-	}
-
-	linkID := genLinkID(orgRepo)
-	if fr := saveCLAPDF(input.CorpCLA, linkID, dbmodels.ApplyToCorporation); fr != nil {
-		sendResp(fr)
-		return
-	}
-
-	if fr := saveCLAPDF(input.IndividualCLA, linkID, dbmodels.ApplyToIndividual); fr != nil {
-		sendResp(fr)
-		return
-	}
-
-	if fr := this.initializeSigning(input, linkID, orgRepo); fr != nil {
-		sendResp(fr)
-		return
-	}
-
-	if merr := input.Create(linkID, pl.User); merr != nil {
+	if merr := models.AddLink(pl.User, input); merr != nil {
 		this.sendModelErrorAsResp(merr, action)
 		return
 	}
 
 	this.sendResponse("create org cla successfully", 0)
-}
-
-func (this *LinkController) initializeSigning(input *models.LinkCreateOption, linkID string, orgRepo *dbmodels.OrgRepo) *failedApiResult {
-	var info *dbmodels.CLAInfo
-	if input.IndividualCLA != nil {
-		info = input.IndividualCLA.GenCLAInfo()
-	}
-	if merr := models.InitializeIndividualSigning(linkID, info); merr != nil {
-		return parseModelError(merr)
-	}
-
-	orgInfo := dbmodels.OrgInfo{
-		OrgRepo:  *orgRepo,
-		OrgEmail: input.OrgEmail,
-		OrgAlias: input.OrgAlias,
-	}
-	if input.CorpCLA != nil {
-		info = input.CorpCLA.GenCLAInfo()
-	} else {
-		info = nil
-	}
-	if merr := models.InitializeCorpSigning(linkID, &orgInfo, info); merr != nil {
-		return parseModelError(merr)
-	}
-
-	return nil
 }
 
 // @Title Unlink
@@ -151,7 +74,7 @@ func (this *LinkController) Unlink() {
 		return
 	}
 
-	if err := models.Unlink(linkID); err != nil {
+	if err := models.RemoveLink(linkID); err != nil {
 		this.sendModelErrorAsResp(err, action)
 		return
 	}
@@ -177,18 +100,11 @@ func (this *LinkController) ListLinks() {
 		return
 	}
 
-	if len(pl.Orgs) == 0 {
-		this.sendSuccessResp(nil)
-		return
-	}
-
-	r, merr := models.ListLinks(pl.Platform, pl.Orgs)
-	if merr != nil {
+	if r, merr := models.ListLink(pl.Platform, pl.Orgs); merr != nil {
 		this.sendModelErrorAsResp(merr, action)
-		return
+	} else {
+		this.sendSuccessResp(r)
 	}
-
-	this.sendSuccessResp(r)
 }
 
 // @Title GetCLAForSigning
@@ -201,80 +117,15 @@ func (this *LinkController) ListLinks() {
 // @router /:link_id/:apply_to [get]
 func (this *LinkController) GetCLAForSigning() {
 	action := "fetch signing page info"
-	applyTo := this.GetString(":apply_to")
 
-	if applyTo != dbmodels.ApplyToCorporation && applyTo != dbmodels.ApplyToIndividual {
-		this.sendFailedResponse(400, errUnmatchedCLAType, fmt.Errorf("unmatched cla type"), action)
-		return
-	}
-
-	linkID := this.GetString(":link_id")
-	if result, err := models.GetCLAByType(linkID, applyTo); err != nil {
+	result, err := models.ListCLAs(
+		this.GetString(":link_id"), this.GetString(":apply_to"),
+	)
+	if err != nil {
 		this.sendModelErrorAsResp(err, action)
 	} else {
 		this.sendSuccessResp(result)
 	}
-}
-
-func LoadLinks() error {
-	links, err := models.GetAllLinks()
-	if err != nil {
-		return err
-	}
-
-	f := func(linkID, apply string, cla *dbmodels.CLADetail) error {
-		path := genCLAFilePath(linkID, apply, cla.Language, cla.CLAHash)
-		s, _ := util.Md5sumOfFile(path)
-		if s == cla.CLAHash {
-			return nil
-		}
-
-		index := models.CLAPDFIndex{
-			LinkID: linkID,
-			Apply:  apply,
-			Lang:   cla.Language,
-			Hash:   cla.CLAHash,
-		}
-		pdf, err := models.DownloadCLAPDF(index)
-		if err != nil {
-			return fmt.Errorf("download cla pdf failed, err: %v, index: %v", err, index)
-		}
-
-		opt := &models.CLACreateOpt{}
-		opt.SetCLAContent(pdf)
-		return opt.SaveCLAAtLocal(path)
-	}
-
-	for i := range links {
-		link := &links[i]
-
-		orgRepo := &link.OrgInfo
-		filePath := genOrgFileLockPath(orgRepo.Platform, orgRepo.OrgID, orgRepo.RepoID)
-		if err := util.CreateLockedFile(filePath); err != nil {
-			return err
-		}
-
-		linkID := link.LinkID
-
-		info, err := models.GetAllCLA(linkID)
-		if err != nil {
-			return err
-		}
-
-		for j := range info.CorpCLAs {
-			if err := f(linkID, dbmodels.ApplyToCorporation, &info.CorpCLAs[j]); err != nil {
-				return err
-			}
-		}
-
-		for j := range info.IndividualCLAs {
-			if err := f(linkID, dbmodels.ApplyToIndividual, &info.IndividualCLAs[j]); err != nil {
-				return err
-			}
-		}
-	}
-
-	return nil
 }
 
 // @Title UpdateLinkEmail

@@ -5,6 +5,8 @@ type Config struct {
 }
 
 type Collections struct {
+	CLA               string `json:"cla"                required:"true"`
+	Link              string `json:"link"               required:"true"`
 	User              string `json:"user"               required:"true"`
 	CorpSigning       string `json:"corp_signing"       required:"true"`
 	EmailCredential   string `json:"email_credential"   required:"true"`

@@ -10,23 +10,26 @@ import (
 	beego "github.com/beego/beego/v2/server/web"
 	"github.com/ulule/limiter/v3"
 	"github.com/ulule/limiter/v3/drivers/store/memory"
-
-	"github.com/opensourceways/app-cla-server/config"
 )
 
 var requestLimiter *requestLimiterImpl
 
-func Init() error {
+func Init(cfg *Config) error {
+	if err := initRequestLimiter(cfg.LimitedAPIs); err != nil {
+		return err
+	}
+
 	initEmailLimiter()
 
-	return initRequestLimiter()
+	config = *cfg
+
+	return nil
 }
 
-func initRequestLimiter() error {
-	cfg := &config.AppConfig.APIConfig
+func initRequestLimiter(limitedAPIs []string) error {
 
 	requestRate, err := limiter.NewRateFromFormatted(
-		fmt.Sprintf("%d-M", cfg.MaxRequestPerMinute),
+		fmt.Sprintf("%d-M", config.MaxRequestPerMinute),
 	)
 	if err != nil {
 		return err
@@ -34,7 +37,7 @@ func initRequestLimiter() error {
 
 	requestLimiter = &requestLimiterImpl{
 		limiterImpl: limiter.New(memory.NewStore(), requestRate),
-		limitedApis: cfg.LimitedAPIs,
+		limitedApis: limitedAPIs,
 	}
 
 	adapter.InsertFilter(

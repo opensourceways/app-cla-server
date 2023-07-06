@@ -194,8 +194,8 @@ func (this *client) GetCorpSigningDetail(linkID, email string) (*dbmodels.CLAInf
 	}
 	cla := &clas[0]
 	return &dbmodels.CLAInfo{
-		CLAHash: cla.CLAHash,
-		Fields:  toModelOfCLAFields(cla.Fields),
+		CLAId:  cla.CLAHash,
+		Fields: toModelOfCLAFields(cla.Fields),
 	}, info, nil
 }
 

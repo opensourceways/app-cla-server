@@ -12,8 +12,6 @@ type EmployeeManagerController struct {
 }
 
 func (this *EmployeeManagerController) Prepare() {
-	this.stopRunIfSignSerivceIsUnabled()
-
 	this.apiPrepare(PermissionCorpAdmin)
 }
 
@@ -32,7 +30,7 @@ func (this *EmployeeManagerController) Post() {
 		return
 	}
 
-	orgInfo, merr := models.GetOrgOfLink(pl.LinkID)
+	orgInfo, merr := models.GetLink(pl.LinkID)
 	if merr != nil {
 		this.sendModelErrorAsResp(merr, action)
 
@@ -45,7 +43,7 @@ func (this *EmployeeManagerController) Post() {
 		return
 	}
 
-	added, merr := info.Add(pl.SigningId)
+	added, merr := models.AddEmployeeManager(pl.SigningId, info)
 	if merr != nil {
 		this.sendModelErrorAsResp(merr, action)
 		return
@@ -53,7 +51,7 @@ func (this *EmployeeManagerController) Post() {
 
 	this.sendSuccessResp(action + " successfully")
 
-	notifyCorpManagerWhenAdding(orgInfo, added)
+	notifyCorpManagerWhenAdding(&orgInfo, added)
 }
 
 // @Title Delete
@@ -71,7 +69,7 @@ func (this *EmployeeManagerController) Delete() {
 		return
 	}
 
-	orgInfo, merr := models.GetOrgOfLink(pl.LinkID)
+	orgInfo, merr := models.GetLink(pl.LinkID)
 	if merr != nil {
 		this.sendModelErrorAsResp(merr, action)
 
@@ -84,7 +82,7 @@ func (this *EmployeeManagerController) Delete() {
 		return
 	}
 
-	deleted, merr := info.Delete(pl.SigningId)
+	deleted, merr := models.RemoveEmployeeManager(pl.SigningId, info)
 	if merr != nil {
 		this.sendModelErrorAsResp(merr, action)
 		return
@@ -100,7 +98,7 @@ func (this *EmployeeManagerController) Delete() {
 			Org:        orgInfo.OrgAlias,
 			ProjectURL: orgInfo.ProjectURL(),
 		}
-		sendEmailToIndividual(item.Email, orgInfo, subject, msg)
+		sendEmailToIndividual(item.Email, &orgInfo, subject, msg)
 	}
 }
 

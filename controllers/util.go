@@ -8,12 +8,10 @@ import (
 
 	"github.com/beego/beego/v2/core/logs"
 
-	"github.com/opensourceways/app-cla-server/config"
 	"github.com/opensourceways/app-cla-server/dbmodels"
 	"github.com/opensourceways/app-cla-server/models"
 	"github.com/opensourceways/app-cla-server/signing/domain/emailservice"
 	"github.com/opensourceways/app-cla-server/signing/infrastructure/emailtmpl"
-	"github.com/opensourceways/app-cla-server/util"
 	"github.com/opensourceways/app-cla-server/worker"
 )
 
@@ -59,7 +57,7 @@ func notifyCorpManagerWhenAdding(orgInfo *models.OrgInfo, info []dbmodels.Corpor
 			Password:         item.Password,
 			Org:              orgInfo.OrgAlias,
 			ProjectURL:       orgInfo.ProjectURL(),
-			URLOfCLAPlatform: config.AppConfig.CLAPlatformURL,
+			URLOfCLAPlatform: config.CLAPlatformURL,
 		}
 
 		sendEmailToIndividual(item.Email, orgInfo, subject, d)
@@ -97,19 +95,6 @@ func buildOrgRepo(platform, orgID, repoID string) *models.OrgRepo {
 	}
 }
 
-func genOrgFileLockPath(platform, org, repo string) string {
-	return util.GenFilePath(
-		config.AppConfig.PDFOrgSignatureDir,
-		util.GenFileName("lock", platform, org, repo),
-	)
-}
-
-func genCLAFilePath(linkID, applyTo, language, hash string) string {
-	return util.GenFilePath(
-		config.AppConfig.PDFOrgSignatureDir,
-		util.GenFileName("cla", linkID, applyTo, language, hash, ".pdf"))
-}
-
 func genLinkID(v *dbmodels.OrgRepo) string {
 	repo := ""
 	if v.RepoID != "" {
@@ -133,38 +118,6 @@ func getCLAInfoSigned(linkID, claLang, applyTo string) (*models.CLAInfo, *failed
 	return nil, parseModelError(merr)
 }
 
-func signHelper(linkID, claLang, applyTo string, doSign func(*models.CLAInfo) *failedApiResult) *failedApiResult {
-	claInfo, fr := getCLAInfoSigned(linkID, claLang, applyTo)
-	if fr != nil {
-		return fr
-	}
-
-	if claInfo == nil {
-		orgInfo, merr := models.GetOrgOfLink(linkID)
-		if merr != nil {
-			return parseModelError(merr)
-		}
-
-		// no contributor signed for this language. lock to avoid the cla to be changed
-		// before writing to the db.
-		unlock, fr := lockOnRepo(orgInfo)
-		if fr != nil {
-			return fr
-		}
-		defer unlock()
-
-		claInfo, merr = models.GetCLAInfoToSign(linkID, claLang, applyTo)
-		if merr != nil {
-			return parseModelError(merr)
-		}
-		if claInfo == nil {
-			return newFailedApiResult(500, errSystemError, fmt.Errorf("no cla info, impossible"))
-		}
-	}
-
-	return doSign(claInfo)
-}
-
 func fetchInputPayloadData(input []byte, info interface{}) *failedApiResult {
 	if err := json.Unmarshal(input, info); err != nil {
 		return newFailedApiResult(
@@ -172,14 +125,6 @@ func fetchInputPayloadData(input []byte, info interface{}) *failedApiResult {
 		)
 	}
 	return nil
-}
-
-func lockOnRepo(orgInfo *dbmodels.OrgInfo) (func(), *failedApiResult) {
-	unlock, err := util.Lock(genOrgFileLockPath(orgInfo.Platform, orgInfo.OrgID, orgInfo.RepoID))
-	if err != nil {
-		return nil, newFailedApiResult(500, errSystemError, err)
-	}
-	return unlock, nil
 }
 
 func listCorpEmailDomain(linkID, adminEmail string) (map[string]bool, *failedApiResult) {

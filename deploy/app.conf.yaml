@@ -1,35 +1,68 @@
-python_bin: /usr/bin/python3
+pdf:
+  python_bin: /usr/bin/python3
+  pdf_out_dir: ./conf/pdfs/output
 
-verification_code_expiry: 300
-api_token_expiry: 1800
-api_token_key: "${API_TOKEN_KEY}"
-symmetric_encryption_key: "${SYMMETRIC_ENCRYPTION_KEY}"
+api:
+  pdf_out_dir: ./conf/pdfs/output
+  cookie_domain: "${COOKIE_DOMAIN}"
+  cla_platform_url: "${CLA_PLATFORM_URL}"
+  password_reset_url: "${PASSWORD_RESET_URL}"
+  password_retrieval_url: "${PASSWORD_RETRIEVAL_URL}"
 
-pdf_org_signature_dir: ./conf/pdfs/org_signature_pdf
-pdf_out_dir: ./conf/pdfs/output
+gmail:
+  credentials: "${GMAIL_CREDENTIALS}"
 
-code_platforms: ./conf/platforms/code_platforms.yaml
-email_platforms: ./conf/platforms/email.yaml
-
-employee_managers_number: 5
-
-max_size_of_corp_cla_pdf: 5242880
-max_size_of_org_signature_pdfa: 204800
-
-cla_platform_url: "${CLA_PLATFORM_URL}"
-password_reset_url: "${PASSWORD_RESET_URL}"
-password_retrieval_url: "${PASSWORD_RETRIEVAL_URL}"
-
-restricted_corp_email_suffix: ${RESTRICTED_CORP_EMAIL_SUFFIX}
+domain:
+  invalid_corp_email_domain: "${RESTRICTED_CORP_EMAIL_SUFFIX}"
+  domain_primitive:
+  max_length_of_name: 50
+  max_length_of_title: 50
+  max_length_of_email: 100
+  max_length_of_account: 100
+  max_length_of_corp_name: 50
 
 mongodb:
-  mongodb_conn: "${MONGODB_CONNECTION}"
-  mongodb_db: "${MONGODB_NAME}"
-  
-  link_collection: links
-  cla_pdf_collection: cla_pdfs
-  corp_pdf_collection: corp_pdfs
-  org_email_collection: org_emails
-  verification_code_collection: verification_codes
-  corp_signing_collection: corp_signings
-  individual_signing_collection: individual_signings
+  db:
+    conn: "${MONGODB_CONNECTION}"
+    db: cla
+  collections: 
+    cla: cla
+    link: link
+    user: user
+    corp_signing: corp_signing
+    email_credential: email_credential
+    verification_code: verification_code
+    individual_signing: individual_signing
+
+password:
+  min_length: 8
+  max_length: 16
+
+local_cla:
+  dir: ./conf/pdfs/local
+
+symmetric:
+  encryption_key: "${SYMMETRIC_ENCRYPTION_KEY}"
+
+code_platform:
+  login:
+    web_redirect_dir_on_success: /home
+    web_redirect_dir_on_failure: /platformSelect
+    platforms:
+    - platform: gitee
+      client_id: "${GITEE_CLIENT_ID}"
+      client_secret: "${GITEE_CLIENT_SECRET}"
+      auth_url: https://gitee.com/oauth/authorize
+      token_url: https://gitee.com/oauth/token
+      redirect_url: "${CLA_PLATFORM_URL}/api/v1/auth/gitee/login"
+      scope:
+      - user_info
+      - groups  
+    - platform: github
+      client_id: "${GITHUB_CLIENT_ID}"
+      client_secret: "${GITHUB_CLIENT_SECRET}"
+      auth_url: https://github.com/login/oauth/authorize
+      token_url: https://github.com/login/oauth/access_token
+      redirect_url: "${CLA_PLATFORM_URL}/api/v1/auth/github/login"
+      scope:
+      - read:org

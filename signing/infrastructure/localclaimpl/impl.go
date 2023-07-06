@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 
 	"github.com/opensourceways/app-cla-server/signing/domain"
+	"github.com/opensourceways/app-cla-server/util"
 )
 
 func NewLocalCLAImpl(cfg *Config) *localCLAImpl {
@@ -39,4 +40,14 @@ func (impl *localCLAImpl) localPath(linkId, claId string) string {
 // config
 type Config struct {
 	Dir string `json:"dir" required:"true"`
+}
+
+func (cfg *Config) Validate() error {
+	if util.IsNotDir(cfg.Dir) {
+		if err := os.Mkdir(cfg.Dir, 0644); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }

@@ -1,5 +1,7 @@
 package domain
 
+import "strings"
+
 var config Config
 
 func Init(cfg *Config) {
@@ -10,13 +12,17 @@ type Config struct {
 	MaxSizeOfCLAContent int `json:"max_size_of_cla_content"`
 
 	// AccessTokenExpiry is the one in seconds
-	AccessTokenExpiry int64 `json:"access_token_expiry" required:"true"`
+	AccessTokenExpiry int64 `json:"access_token_expiry"`
 
 	// VerificationCodeExpiry is the one in seconds
-	VerificationCodeExpiry       int64    `json:"verification_code_expiry"`
-	MaxNumOfEmployeeManager      int      `json:"max_num_of_employee_manager"`
-	MinNumOfSameEmailDomainParts int      `json:"min_num_of_same_email_domain_parts"`
-	InvalidCorpEmailDomain       []string `json:"invalid_corp_email_domain"`
+	VerificationCodeExpiry       int64  `json:"verification_code_expiry"`
+	InvalidCorpEmailDomain       string `json:"invalid_corp_email_domain"`
+	MaxNumOfEmployeeManager      int    `json:"max_num_of_employee_manager"`
+	MinNumOfSameEmailDomainParts int    `json:"min_num_of_same_email_domain_parts"`
+}
+
+func (cfg *Config) InvalidCorpEmailDomains() []string {
+	return strings.Split(cfg.InvalidCorpEmailDomain, ",")
 }
 
 func (cfg *Config) SetDefault() {

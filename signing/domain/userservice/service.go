@@ -104,16 +104,18 @@ func (s *userService) ChangePassword(index string, old, newOne dp.Password) erro
 		return err
 	}
 
-	if !s.isSamePassword(old, u.UserPassword()) {
-		return domain.NewDomainError(domain.ErrorCodeUserUnmatchedPassword)
-	}
+	err = u.ChangePassword(
+		func(ciphertext []byte) bool {
+			return s.isSamePassword(old, ciphertext)
+		},
 
-	v, err := s.encryptPassword(newOne.Password())
+		func() ([]byte, error) {
+			return s.encryptPassword(newOne.Password())
+		},
+	)
 	if err != nil {
 		return err
 	}
-
-	u.ResetPassword(v)
 
 	return s.repo.SavePassword(&u)
 }
@@ -173,6 +175,16 @@ func (s *userService) checkPassword(p dp.Password) error {
 	return nil
 }
 
+func (s *userService) Logout(userId string) {
+	if u, err := s.repo.Find(userId); err == nil {
+		u.Logout()
+
+		if err := s.repo.SaveLoginInfo(&u); err != nil {
+			logs.Error("save log out info, err:%s", err.Error())
+		}
+	}
+}
+
 func (s *userService) LoginByAccount(linkId string, a dp.Account, p dp.Password) (domain.User, error) {
 	return s.login(
 		func() (domain.User, error) {
@@ -209,8 +221,14 @@ func (s *userService) login(find func() (domain.User, error), p dp.Password) (u 
 		return
 	}
 
-	if !s.isSamePassword(p, u.UserPassword()) {
-		err = loginErr
+	changed, err := u.Login(func(ciphertext []byte) bool {
+		return s.isSamePassword(p, ciphertext)
+	})
+
+	if changed {
+		if err1 := s.repo.SaveLoginInfo(&u); err1 != nil {
+			logs.Error("save login info, err:%s", err1.Error())
+		}
 	}
 
 	return

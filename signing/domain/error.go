@@ -3,6 +3,7 @@ package domain
 import "strings"
 
 const (
+	ErrorCodeUserFrozen                 = "user_frozen"
 	ErrorCodeUserExists                 = "user_exists"
 	ErrorCodeUserSamePassword           = "user_same_password"
 	ErrorCodeUserInvalidAccount         = "user_invalid_account"

@@ -77,6 +77,26 @@ func (impl *user) RemoveByAccount(linkId string, accounts []dp.Account) error {
 	return impl.dao.DeleteDocs(filter)
 }
 
+func (impl *user) SaveLoginInfo(u *domain.User) error {
+	filter, err := impl.dao.DocIdFilter(u.Id)
+	if err != nil {
+		return err
+	}
+
+	doc := bson.M{
+		fieldFailedNum:  u.FailedNum,
+		fieldLoginTime:  u.LoginTime,
+		fieldFrozenTime: u.FrozenTime,
+	}
+
+	err = impl.dao.UpdateDoc(filter, doc, u.Version)
+	if err != nil && impl.dao.IsDocNotExists(err) {
+		err = commonRepo.NewErrorConcurrentUpdating(err)
+	}
+
+	return err
+}
+
 func (impl *user) SavePassword(u *domain.User) error {
 	filter, err := impl.dao.DocIdFilter(u.Id)
 	if err != nil {

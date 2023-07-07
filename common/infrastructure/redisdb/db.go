@@ -16,8 +16,10 @@ func Init(cfg *Config) error {
 	timeout = cfg.timeout()
 
 	rdb := redis.NewClient(&redis.Options{
-		Addr: cfg.Address,
-		DB:   cfg.DB,
+		Addr:     cfg.Address,
+		Username: cfg.Username,
+		Password: cfg.Password,
+		DB:       cfg.DB,
 	})
 
 	return WithContext(func(ctx context.Context) error {

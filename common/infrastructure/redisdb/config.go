@@ -3,9 +3,11 @@ package redisdb
 import "time"
 
 type Config struct {
-	Address string `json:"address"  required:"true"`
-	DB      int    `json:"db"`
-	Timeout int64  `json:"timeout"`
+	Address  string `json:"address"  required:"true"`
+	Username string `json:"username" required:"true"`
+	Password string `json:"password" required:"true"`
+	DB       int    `json:"db"`
+	Timeout  int64  `json:"timeout"`
 }
 
 func (cfg *Config) SetDefault() {

@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/opensourceways/app-cla-server/common/infrastructure/mongodb"
+	"github.com/opensourceways/app-cla-server/common/infrastructure/redisdb"
 	"github.com/opensourceways/app-cla-server/config"
 	"github.com/opensourceways/app-cla-server/models"
 	"github.com/opensourceways/app-cla-server/signing/adapter"
@@ -12,6 +13,7 @@ import (
 	"github.com/opensourceways/app-cla-server/signing/domain/emailcredential"
 	"github.com/opensourceways/app-cla-server/signing/domain/userservice"
 	"github.com/opensourceways/app-cla-server/signing/domain/vcservice"
+	"github.com/opensourceways/app-cla-server/signing/infrastructure/accesstokenimpl"
 	"github.com/opensourceways/app-cla-server/signing/infrastructure/encryptionimpl"
 	"github.com/opensourceways/app-cla-server/signing/infrastructure/gmailimpl"
 	"github.com/opensourceways/app-cla-server/signing/infrastructure/localclaimpl"
@@ -114,7 +116,7 @@ func initSigning(cfg *config.Config) error {
 
 	// access token
 	at := accesstokenservice.NewAccessTokenService(
-		nil, // TODO access token repo
+		accesstokenimpl.NewAccessTokenImpl(redisdb.DAO(), &cfg.Redisdb.Config),
 		cfg.Domain.Config.AccessTokenExpiry,
 		encryptionimpl.NewEncryptionImpl(),
 		randombytesimpl.NewRandomBytesImpl(),

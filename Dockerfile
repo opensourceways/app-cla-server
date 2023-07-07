@@ -4,7 +4,7 @@ MAINTAINER TommyLike<tommylikehu@gmail.com>
 
 # build binary
 COPY . /go/src/github.com/opensourceways/app-cla-server
-RUN cd /go/src/github.com/opensourceways/app-cla-server && GO111MODULE=on CGO_ENABLED=0 go build
+RUN cd /go/src/github.com/opensourceways/app-cla-server && GO111MODULE=on CGO_ENABLED=0 go build -o cla-server
 
 # copy binary config and utils
 FROM golang:latest

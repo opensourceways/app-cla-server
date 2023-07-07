@@ -10,6 +10,7 @@ import (
 
 	platformAuth "github.com/opensourceways/app-cla-server/code-platform-auth"
 	commondb "github.com/opensourceways/app-cla-server/common/infrastructure/mongodb"
+	"github.com/opensourceways/app-cla-server/common/infrastructure/redisdb"
 	"github.com/opensourceways/app-cla-server/config"
 	"github.com/opensourceways/app-cla-server/controllers"
 	"github.com/opensourceways/app-cla-server/pdf"
@@ -76,6 +77,13 @@ func startSignSerivce(configPath string) {
 
 	defer exitMongoService()
 
+	if err := redisdb.Init(&cfg.Redisdb.DB); err != nil {
+		logs.Error(err)
+		return
+	}
+
+	defer exitRedisService()
+
 	// must run after init mongodb
 	if err := initSigning(&cfg); err != nil {
 		logs.Error(err)
@@ -91,6 +99,12 @@ func startSignSerivce(configPath string) {
 
 func exitMongoService() {
 	if err := commondb.Close(); err != nil {
+		logs.Error(err)
+	}
+}
+
+func exitRedisService() {
+	if err := redisdb.Close(); err != nil {
 		logs.Error(err)
 	}
 }

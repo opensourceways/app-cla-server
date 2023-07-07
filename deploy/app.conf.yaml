@@ -36,7 +36,9 @@ mongodb:
 
 redisdb:
   db:
-    address: "${REDISDB_CONNECTION}"
+    address: "${REDISDB_IP}"
+    username: "${REDISDB_USERNAME}"
+    password: "${REDISDB_PASSWORD}"
 
 password:
   min_length: 8

@@ -1,9 +1,6 @@
 package models
 
 import (
-	"io/ioutil"
-	"os"
-
 	"github.com/opensourceways/app-cla-server/dbmodels"
 	"github.com/opensourceways/app-cla-server/util"
 )
@@ -35,15 +32,6 @@ func (o *CLACreateOpt) toCLACreateOption() *dbmodels.CLACreateOption {
 			CLAHash: o.hash,
 		},
 	}
-}
-
-func (this *CLACreateOpt) SaveCLAAtLocal(path string) error {
-	if this.content == nil {
-		return nil
-	}
-
-	os.Remove(path)
-	return ioutil.WriteFile(path, this.content, 0644)
 }
 
 type CLAPDFIndex = dbmodels.CLAPDFIndex

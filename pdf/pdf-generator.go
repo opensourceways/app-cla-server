@@ -76,8 +76,11 @@ func genSignaturePDF(c *corpSigningPDF, signing *models.CorporationSigning, claF
 	c.addSignature(pdf, signing.Info, orders, titles)
 
 	if !util.IsFileNotExist(outFile) {
-		os.Remove(outFile)
+		if err := os.Remove(outFile); err != nil {
+			return err
+		}
 	}
+
 	if err := c.end(pdf, outFile); err != nil {
 		return fmt.Errorf("generate signing pdf of corp failed: %s", err.Error())
 	}
@@ -103,38 +106,9 @@ func genCorporPDF(c *corpSigningPDF, signing *models.CorporationSigning, claFiel
 	c.addSignature(pdf, signing.Info, orders, titles)
 
 	if !util.IsFileNotExist(outFile) {
-		os.Remove(outFile)
-	}
-	if err := c.end(pdf, outFile); err != nil {
-		return fmt.Errorf("generate signing pdf of corp failed: %s", err.Error())
-	}
-	return nil
-}
-
-func genCorporPDFMissingSig(c *corpSigningPDF, orgInfo *models.OrgInfo, signing *models.CorporationSigning, claFields []models.CLAField, claFile, outFile string) error {
-	text, err := ioutil.ReadFile(claFile)
-	if err != nil {
-		return fmt.Errorf("failed to read cla file(%s): %s", claFile, err.Error())
-	}
-
-	pdf := c.begin()
-
-	// first page
-	c.firstPage(pdf, orgInfo.OrgAlias)
-	c.welcome(pdf, orgInfo.OrgAlias, orgInfo.OrgEmail)
-
-	orders, titles := BuildCorpContact(claFields)
-	c.contact(pdf, signing.Info, orders, titles)
-
-	c.declare(pdf)
-	c.cla(pdf, string(text))
-	c.projectURL(pdf, fmt.Sprintf("[1]. %s", orgInfo.ProjectURL()))
-
-	// second page
-	c.secondPage(pdf, signing.Date)
-
-	if !util.IsFileNotExist(outFile) {
-		os.Remove(outFile)
+		if err = os.Remove(outFile); err != nil {
+			return err
+		}
 	}
 	if err := c.end(pdf, outFile); err != nil {
 		return fmt.Errorf("generate signing pdf of corp failed: %s", err.Error())

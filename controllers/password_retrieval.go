@@ -5,6 +5,8 @@ import (
 	"net/url"
 	"path"
 
+	"github.com/beego/beego/v2/core/logs"
+
 	"github.com/opensourceways/app-cla-server/models"
 	"github.com/opensourceways/app-cla-server/signing/infrastructure/emailtmpl"
 )
@@ -113,7 +115,12 @@ func (this *PasswordRetrievalController) Reset() {
 }
 
 func genURLToResetPassword(linkID, key string) string {
-	v, _ := url.Parse(config.PasswordResetURL)
+	v, err := url.Parse(config.PasswordResetURL)
+	if err != nil {
+		logs.Error(err)
+
+		return ""
+	}
 
 	q := v.Query()
 	q.Add("key", key)
@@ -124,7 +131,13 @@ func genURLToResetPassword(linkID, key string) string {
 }
 
 func genURLToRetrievalPassword(linkID string) string {
-	v, _ := url.Parse(config.PasswordRetrievalURL)
+	v, err := url.Parse(config.PasswordRetrievalURL)
+	if err != nil {
+		logs.Error(err)
+
+		return ""
+	}
+
 	v.Path = path.Join(v.Path, linkID)
 	return v.String()
 }

@@ -1,8 +1,6 @@
 package domain
 
-import (
-	"github.com/opensourceways/app-cla-server/util"
-)
+import "github.com/opensourceways/app-cla-server/util"
 
 type AccessTokenKey struct {
 	Id   string

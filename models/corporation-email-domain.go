@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/opensourceways/app-cla-server/dbmodels"
 	"github.com/opensourceways/app-cla-server/util"
 )
 
@@ -23,34 +22,6 @@ func (cse *CorpEmailDomainCreateOption) Check(csId string) IModelError {
 	return validateCodeForAddingEmailDomain(
 		csId, cse.SubEmail, cse.VerificationCode,
 	)
-}
-
-func (cse CorpEmailDomainCreateOption) Create(linkID, adminEmail string) IModelError {
-	err := dbmodels.GetDB().AddCorpEmailDomain(linkID, adminEmail, util.EmailSuffix(cse.SubEmail))
-	if err == nil {
-		return nil
-	}
-
-	if err.IsErrorOf(dbmodels.ErrNoDBRecord) {
-		return newModelError(ErrNoLinkOrUnsigned, err)
-	}
-	return parseDBError(err)
-}
-
-func ListCorpEmailDomain(linkID, email string) ([]string, IModelError) {
-	v, err := dbmodels.GetDB().GetCorpEmailDomains(linkID, email)
-	if err == nil {
-		if v == nil {
-			v = []string{}
-		}
-		return v, nil
-	}
-
-	if err.IsErrorOf(dbmodels.ErrNoDBRecord) {
-		return v, newModelError(ErrNoLink, err)
-	}
-
-	return v, parseDBError(err)
 }
 
 func isMatchedEmailDomain(email1, email2 string) bool {

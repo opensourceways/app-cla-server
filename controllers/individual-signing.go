@@ -82,7 +82,7 @@ func (this *IndividualSigningController) Post() {
 func (this *IndividualSigningController) Check() {
 	action := "check individual signing"
 
-	v, merr := models.IsIndividualSigned(
+	v, merr := models.CheckSigning(
 		this.GetString(":link_id"), this.GetString("email"),
 	)
 	if merr != nil {

@@ -8,10 +8,10 @@ import (
 	"github.com/opensourceways/app-cla-server/signing/domain"
 )
 
-func NewAccessTokenImpl(d dao, e time.Duration) *accessTokenImpl {
+func NewAccessTokenImpl(d dao, c *Config) *accessTokenImpl {
 	return &accessTokenImpl{
 		dao:    d,
-		expiry: e,
+		expiry: c.expire(),
 	}
 }
 

@@ -9,7 +9,7 @@ type Config struct {
 
 func (cfg *Config) SetDefault() {
 	if cfg.Expire <= 0 {
-		cfg.Expire = 10
+		cfg.Expire = 5
 	}
 }
 

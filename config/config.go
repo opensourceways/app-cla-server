@@ -3,6 +3,7 @@ package config
 import (
 	platformAuth "github.com/opensourceways/app-cla-server/code-platform-auth"
 	"github.com/opensourceways/app-cla-server/common/infrastructure/mongodb"
+	"github.com/opensourceways/app-cla-server/common/infrastructure/redisdb"
 	"github.com/opensourceways/app-cla-server/controllers"
 	"github.com/opensourceways/app-cla-server/pdf"
 	"github.com/opensourceways/app-cla-server/signing/domain"
@@ -55,6 +56,7 @@ type Config struct {
 	Gmail        gmailimpl.Config               `json:"gmail"           required:"true"`
 	Domain       domainConfig                   `json:"domain"          required:"true"`
 	Mongodb      mongodbConfig                  `json:"mongodb"         required:"true"`
+	Redisdb      redisdb.Config                 `json:"redisdb"         required:"true"`
 	Password     passwordimpl.Config            `json:"password"        required:"true"`
 	LocalCLA     localclaimpl.Config            `json:"local_cla"       required:"true"`
 	Symmetric    symmetricencryptionimpl.Config `json:"symmetric"       required:"true"`
@@ -66,13 +68,14 @@ func (cfg *Config) configItems() []interface{} {
 		&cfg.PDF,
 		&cfg.API,
 		&cfg.Gmail,
+		&cfg.Domain.Config,
+		&cfg.Domain.DomainPrimitive,
 		&cfg.Mongodb.DB,
 		&cfg.Mongodb.Config,
+		&cfg.Redisdb,
 		&cfg.Password,
 		&cfg.LocalCLA,
 		&cfg.Symmetric,
-		&cfg.Domain.Config,
-		&cfg.Domain.DomainPrimitive,
 		&cfg.CodePlatform,
 	}
 }

@@ -34,6 +34,9 @@ mongodb:
     verification_code: verification_code
     individual_signing: individual_signing
 
+redisdb:
+  address: "${REDISDB_CONNECTION}"
+
 password:
   min_length: 8
   max_length: 16

@@ -220,7 +220,7 @@ func (this *CorporationSigningController) ListDeleted() {
 // @Description get all the corporations by email
 // @Param  link_id  path  string  true  "link id"
 // @Param  email    path  string  true  "email"
-// @Success 200 {object}
+// @Success 200 {object} interface{}
 // @Failure 400 missing_url_path_parameter: missing url path parameter
 // @Failure 401 unknown_link:               unkown link id
 // @Failure 500 system_error:               system error

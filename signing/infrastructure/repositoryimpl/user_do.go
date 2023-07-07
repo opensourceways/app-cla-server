@@ -9,21 +9,27 @@ import (
 )
 
 const (
-	fieldAccount  = "account"
-	fieldChanged  = "changed"
-	fieldPassword = "password"
+	fieldAccount    = "account"
+	fieldChanged    = "changed"
+	fieldPassword   = "password"
+	fieldFailedNum  = "failed_num"
+	fieldLoginTime  = "login_time"
+	fieldFrozenTime = "frozen_time"
 )
 
 // userDO
 type userDO struct {
-	Id             primitive.ObjectID `bson:"_id"       json:"-"`
-	Email          string             `bson:"email"     json:"email"     required:"true"`
-	LinkId         string             `bson:"link_id"   json:"link_id"   required:"true"`
-	Account        string             `bson:"account"   json:"account"   required:"true"`
-	Password       []byte             `bson:"password"  json:"-"`
-	CorpSigningId  string             `bson:"cs_id"     json:"cs_id"     required:"true"`
-	PasswordChaged bool               `bson:"changed"   json:"changed"`
-	Version        int                `bson:"version"   json:"-"`
+	Id             primitive.ObjectID `bson:"_id"           json:"-"`
+	Email          string             `bson:"email"         json:"email"     required:"true"`
+	LinkId         string             `bson:"link_id"       json:"link_id"   required:"true"`
+	Account        string             `bson:"account"       json:"account"   required:"true"`
+	Password       []byte             `bson:"password"      json:"-"`
+	CorpSigningId  string             `bson:"cs_id"         json:"cs_id"     required:"true"`
+	PasswordChaged bool               `bson:"changed"       json:"changed"`
+	FailedNum      int                `bson:"failed_num"    json:"failed_num"`
+	LoginTime      int64              `bson:"login_time"    json:"login_time"`
+	FrozenTime     int64              `bson:"frozen_time"   json:"frozen_time"`
+	Version        int                `bson:"version"       json:"-"`
 }
 
 func (do *userDO) toDoc() (bson.M, error) {

@@ -105,6 +105,11 @@ func (adapter *userAdatper) cmdToResetPassword(
 	return
 }
 
+// Logout
+func (adapter *userAdatper) Logout(userId string) {
+	adapter.s.Logout(userId)
+}
+
 // Login
 func (adapter *userAdatper) Login(opt *models.CorporationManagerAuthentication) (
 	models.CorpManagerLoginInfo, models.IModelError,

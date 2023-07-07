@@ -19,6 +19,10 @@ type Config struct {
 	InvalidCorpEmailDomain       string `json:"invalid_corp_email_domain"`
 	MaxNumOfEmployeeManager      int    `json:"max_num_of_employee_manager"`
 	MinNumOfSameEmailDomainParts int    `json:"min_num_of_same_email_domain_parts"`
+
+	MaxNumOfFailedLogin   int   `json:"max_num_of_failed_login"`
+	PeriodOfLoginFrozen   int64 `json:"period_of_login_frozen"`
+	PeriodOfLoginChecking int64 `json:"period_of_login_checking"`
 }
 
 func (cfg *Config) InvalidCorpEmailDomains() []string {
@@ -44,5 +48,17 @@ func (cfg *Config) SetDefault() {
 
 	if cfg.AccessTokenExpiry <= 0 {
 		cfg.AccessTokenExpiry = 3600
+	}
+
+	if cfg.MaxNumOfFailedLogin <= 0 {
+		cfg.MaxNumOfFailedLogin = 5
+	}
+
+	if cfg.PeriodOfLoginChecking <= 0 {
+		cfg.PeriodOfLoginChecking = 300
+	}
+
+	if cfg.PeriodOfLoginFrozen <= 0 {
+		cfg.PeriodOfLoginFrozen = 300
 	}
 }

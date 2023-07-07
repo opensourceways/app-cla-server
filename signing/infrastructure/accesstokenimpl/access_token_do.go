@@ -6,30 +6,30 @@ import (
 	"github.com/opensourceways/app-cla-server/signing/domain"
 )
 
-type AccessTokenDO struct {
+type accessTokenDO struct {
 	Expiry        int64  `json:"expiry"`
 	Payload       []byte `json:"payload"`
 	EncryptedCSRF []byte `json:"encrypted_csrf"`
 }
 
 //MarshalBinary in order to store struct directly in redis
-func (do *AccessTokenDO) MarshalBinary() ([]byte, error) {
+func (do *accessTokenDO) MarshalBinary() ([]byte, error) {
 	return json.Marshal(do)
 }
 
-func (do *AccessTokenDO) UnmarshalBinary(data []byte) error {
+func (do *accessTokenDO) UnmarshalBinary(data []byte) error {
 	return json.Unmarshal(data, do)
 }
 
-func toAccessTokenDo(v *domain.AccessToken) AccessTokenDO {
-	return AccessTokenDO{
+func toAccessTokenDo(v *domain.AccessToken) accessTokenDO {
+	return accessTokenDO{
 		Expiry:        v.Expiry,
 		Payload:       v.Payload,
 		EncryptedCSRF: v.EncryptedCSRF,
 	}
 }
 
-func (do *AccessTokenDO) toAccessToken() domain.AccessToken {
+func (do *accessTokenDO) toAccessToken() domain.AccessToken {
 	return domain.AccessToken{
 		Expiry:        do.Expiry,
 		Payload:       do.Payload,

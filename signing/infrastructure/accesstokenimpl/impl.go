@@ -1,21 +1,23 @@
 package accesstokenimpl
 
 import (
+	"time"
+
 	"github.com/google/uuid"
 
 	"github.com/opensourceways/app-cla-server/signing/domain"
 )
 
-func NewAccessTokenImpl(d dao, cfg *Config) *accessTokenImpl {
+func NewAccessTokenImpl(d dao, e time.Duration) *accessTokenImpl {
 	return &accessTokenImpl{
-		dao: d,
-		cfg: cfg,
+		dao:    d,
+		expiry: e,
 	}
 }
 
 type accessTokenImpl struct {
-	dao dao
-	cfg *Config
+	dao    dao
+	expiry time.Duration
 }
 
 func (impl *accessTokenImpl) Add(value *domain.AccessToken) (string, error) {
@@ -33,7 +35,7 @@ func (impl *accessTokenImpl) Add(value *domain.AccessToken) (string, error) {
 }
 
 func (impl *accessTokenImpl) Find(key string) (domain.AccessToken, error) {
-	var do AccessTokenDO
+	var do accessTokenDO
 	if err := impl.dao.Get(key, &do); err != nil {
 		return domain.AccessToken{}, err
 	}
@@ -42,5 +44,5 @@ func (impl *accessTokenImpl) Find(key string) (domain.AccessToken, error) {
 }
 
 func (impl *accessTokenImpl) Delete(key string) error {
-	return impl.dao.Expire(key, impl.cfg.expire())
+	return impl.dao.Expire(key, impl.expiry)
 }

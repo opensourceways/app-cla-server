@@ -27,6 +27,7 @@ func NewUserService(
 
 type UserService interface {
 	ChangePassword(cmd *CmdToChangePassword) error
+	Logout(userId string)
 	Login(cmd *CmdToLogin) (dto UserLoginDTO, err error)
 	GenKeyForPasswordRetrieval(*CmdToGenKeyForPasswordRetrieval) (string, error)
 	ResetPassword(cmd *CmdToResetPassword) error
@@ -99,6 +100,10 @@ func (s *userService) ResetPassword(cmd *CmdToResetPassword) error {
 	}
 
 	return s.us.ResetPassword(cmd.LinkId, e, cmd.NewOne)
+}
+
+func (s *userService) Logout(userId string) {
+	s.us.Logout(userId)
 }
 
 func (s *userService) Login(cmd *CmdToLogin) (dto UserLoginDTO, err error) {

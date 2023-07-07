@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/opensourceways/app-cla-server/models"
 )
@@ -11,18 +12,24 @@ type CorporationManagerController struct {
 }
 
 func (this *CorporationManagerController) Prepare() {
-	switch this.apiRequestMethod() {
-	case http.MethodPut:
+	m := this.apiRequestMethod()
+
+	if m == http.MethodPost {
+		return
+	}
+
+	if m == http.MethodPut && strings.HasSuffix(this.routerPattern(), ":signing_id") {
 		// add administrator
 		this.apiPrepare(PermissionOwnerOfOrg)
 
-	case http.MethodPatch:
-		// change password of manager
-		this.apiPrepareWithAC(
-			&accessController{Payload: &acForCorpManagerPayload{}},
-			[]string{PermissionCorpAdmin, PermissionEmployeeManager},
-		)
+		return
 	}
+
+	// change password of manager
+	this.apiPrepareWithAC(
+		&accessController{Payload: &acForCorpManagerPayload{}},
+		[]string{PermissionCorpAdmin, PermissionEmployeeManager},
+	)
 }
 
 // @Title Put

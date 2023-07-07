@@ -12,6 +12,26 @@ type corpAuthInfo struct {
 	InitialPWChanged bool   `json:"initial_pw_changed"`
 }
 
+// @Title logout
+// @Description corporation manager logout
+// @Success 202 {int} controllers.corpAuthInfo
+// @Failure util.ErrNoCLABindingDoc	"no cla binding applied to corporation"
+// @router /auth [put]
+func (this *CorporationManagerController) Logout() {
+	action := "corp manager logout"
+	sendResp := this.newFuncForSendingFailedResp(action)
+
+	pl, fr := this.tokenPayloadBasedOnCorpManager()
+	if fr != nil {
+		sendResp(fr)
+		return
+	}
+
+	models.CorpManagerLogout(pl.UserId)
+
+	this.sendSuccessResp(action + " successfully")
+}
+
 // @Title authenticate corporation manager
 // @Description authenticate corporation manager
 // @Param	body		body 	models.CorporationManagerAuthentication	true		"body for corporation manager info"

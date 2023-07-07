@@ -31,6 +31,7 @@ type UserService interface {
 	RemoveByAccount(linkId string, accounts []dp.Account)
 	ChangePassword(index string, old, newOne dp.Password) error
 	ResetPassword(linkId string, email dp.EmailAddr, newOne dp.Password) error
+	Logout(userId string)
 	LoginByAccount(linkId string, a dp.Account, p dp.Password) (domain.User, error)
 	LoginByEmail(linkId string, e dp.EmailAddr, p dp.Password) (u domain.User, err error)
 }

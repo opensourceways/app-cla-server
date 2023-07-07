@@ -8,6 +8,7 @@ import (
 	"github.com/opensourceways/app-cla-server/pdf"
 	"github.com/opensourceways/app-cla-server/signing/domain"
 	"github.com/opensourceways/app-cla-server/signing/domain/dp"
+	"github.com/opensourceways/app-cla-server/signing/infrastructure/accesstokenimpl"
 	"github.com/opensourceways/app-cla-server/signing/infrastructure/gmailimpl"
 	"github.com/opensourceways/app-cla-server/signing/infrastructure/localclaimpl"
 	"github.com/opensourceways/app-cla-server/signing/infrastructure/passwordimpl"
@@ -50,13 +51,19 @@ type mongodbConfig struct {
 	repositoryimpl.Config
 }
 
+type redisdbConfig struct {
+	DB redisdb.Config `json:"db" required:"true"`
+
+	accesstokenimpl.Config
+}
+
 type Config struct {
 	PDF          pdf.Config                     `json:"pdf"             required:"true"`
 	API          controllers.Config             `json:"api"             required:"true"`
 	Gmail        gmailimpl.Config               `json:"gmail"           required:"true"`
 	Domain       domainConfig                   `json:"domain"          required:"true"`
 	Mongodb      mongodbConfig                  `json:"mongodb"         required:"true"`
-	Redisdb      redisdb.Config                 `json:"redisdb"         required:"true"`
+	Redisdb      redisdbConfig                  `json:"redisdb"         required:"true"`
 	Password     passwordimpl.Config            `json:"password"        required:"true"`
 	LocalCLA     localclaimpl.Config            `json:"local_cla"       required:"true"`
 	Symmetric    symmetricencryptionimpl.Config `json:"symmetric"       required:"true"`
@@ -72,7 +79,8 @@ func (cfg *Config) configItems() []interface{} {
 		&cfg.Domain.DomainPrimitive,
 		&cfg.Mongodb.DB,
 		&cfg.Mongodb.Config,
-		&cfg.Redisdb,
+		&cfg.Redisdb.DB,
+		&cfg.Redisdb.Config,
 		&cfg.Password,
 		&cfg.LocalCLA,
 		&cfg.Symmetric,

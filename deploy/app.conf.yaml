@@ -10,16 +10,16 @@ api:
   password_retrieval_url: "${PASSWORD_RETRIEVAL_URL}"
 
 gmail:
-  credentials: "${GMAIL_CREDENTIALS}"
+  credentials: '${GMAIL_CREDENTIALS}'
 
 domain:
   invalid_corp_email_domain: "${RESTRICTED_CORP_EMAIL_SUFFIX}"
   domain_primitive:
-  max_length_of_name: 50
-  max_length_of_title: 50
-  max_length_of_email: 100
-  max_length_of_account: 100
-  max_length_of_corp_name: 50
+    max_length_of_name: 50
+    max_length_of_title: 50
+    max_length_of_email: 100
+    max_length_of_account: 100
+    max_length_of_corp_name: 50
 
 mongodb:
   db:
@@ -35,7 +35,8 @@ mongodb:
     individual_signing: individual_signing
 
 redisdb:
-  address: "${REDISDB_CONNECTION}"
+  db:
+    address: "${REDISDB_CONNECTION}"
 
 password:
   min_length: 8

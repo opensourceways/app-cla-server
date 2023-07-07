@@ -13,9 +13,9 @@ type daoImpl struct {
 	instance *redis.Client
 }
 
-func (impl *daoImpl) Set(key string, val interface{}, expire time.Duration) error {
+func (impl *daoImpl) Set(key string, val interface{}) error {
 	return WithContext(func(ctx context.Context) error {
-		return impl.instance.Set(ctx, key, val, expire).Err()
+		return impl.instance.Set(ctx, key, val, 0).Err()
 	})
 }
 
@@ -24,11 +24,9 @@ func (impl *daoImpl) Get(key string, data interface{}) error {
 		err := impl.instance.Get(ctx, key).Scan(data)
 		if err == redis.Nil {
 			return commonRepo.NewErrorResourceNotFound(err)
-		} else if err != nil {
-			return err
-		} else {
-			return nil
 		}
+
+		return err
 	})
 }
 

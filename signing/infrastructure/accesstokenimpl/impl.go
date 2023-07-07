@@ -18,14 +18,13 @@ type accessTokenImpl struct {
 	cfg *Config
 }
 
-func (impl *accessTokenImpl) Add(value *domain.AccessTokenDO) (string, error) {
+func (impl *accessTokenImpl) Add(value *domain.AccessToken) (string, error) {
 	key, err := uuid.NewUUID()
 	if err != nil {
 		return "", err
 	}
 
-	// 0 means never expire
-	err = impl.dao.Set(key.String(), value, 0)
+	err = impl.dao.Set(key.String(), toAccessTokenDo(value))
 	if err != nil {
 		return "", err
 	}
@@ -33,10 +32,13 @@ func (impl *accessTokenImpl) Add(value *domain.AccessTokenDO) (string, error) {
 	return key.String(), nil
 }
 
-func (impl *accessTokenImpl) Find(key string) (token domain.AccessTokenDO, err error) {
-	err = impl.dao.Get(key, &token)
+func (impl *accessTokenImpl) Find(key string) (domain.AccessToken, error) {
+	var do AccessTokenDO
+	if err := impl.dao.Get(key, &do); err != nil {
+		return domain.AccessToken{}, err
+	}
 
-	return
+	return do.toAccessToken(), nil
 }
 
 func (impl *accessTokenImpl) Delete(key string) error {

@@ -24,7 +24,7 @@ domain:
 mongodb:
   db:
     conn: "${MONGODB_CONNECTION}"
-    db: cla
+    db: "${MONGODB_NAME}"
   collections: 
     cla: cla
     link: link

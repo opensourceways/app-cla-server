@@ -3,8 +3,6 @@ package controllers
 import (
 	"encoding/json"
 	"fmt"
-	"strings"
-	"time"
 
 	"github.com/beego/beego/v2/core/logs"
 
@@ -79,45 +77,6 @@ func getSingingInfo(info dbmodels.TypeSigningInfo, fields []dbmodels.Field) dbmo
 	return r
 }
 
-func parseOrgAndRepo(s string) (string, string) {
-	v := strings.Split(s, ":")
-	if len(v) == 2 {
-		return v[0], v[1]
-	}
-	return s, ""
-}
-
-func buildOrgRepo(platform, orgID, repoID string) *models.OrgRepo {
-	return &models.OrgRepo{
-		Platform: platform,
-		OrgID:    orgID,
-		RepoID:   repoID,
-	}
-}
-
-func genLinkID(v *dbmodels.OrgRepo) string {
-	repo := ""
-	if v.RepoID != "" {
-		repo = fmt.Sprintf("_%s", v.RepoID)
-	}
-	return fmt.Sprintf("%s_%s%s-%d", v.Platform, v.OrgID, repo, time.Now().UnixNano())
-}
-
-func getCLAInfoSigned(linkID, claLang, applyTo string) (*models.CLAInfo, *failedApiResult) {
-	claInfo, merr := models.GetCLAInfoSigned(linkID, claLang, applyTo)
-	if merr == nil {
-		if claInfo == nil {
-			return nil, newFailedApiResult(500, errSystemError, fmt.Errorf("cla info is empty, impossible"))
-		}
-		return claInfo, nil
-	}
-
-	if merr.IsErrorOf(models.ErrNoLinkOrUnsigned) {
-		return nil, nil
-	}
-	return nil, parseModelError(merr)
-}
-
 func fetchInputPayloadData(input []byte, info interface{}) *failedApiResult {
 	if err := json.Unmarshal(input, info); err != nil {
 		return newFailedApiResult(
@@ -125,20 +84,4 @@ func fetchInputPayloadData(input []byte, info interface{}) *failedApiResult {
 		)
 	}
 	return nil
-}
-
-func listCorpEmailDomain(linkID, adminEmail string) (map[string]bool, *failedApiResult) {
-	d, err := models.ListCorpEmailDomain(linkID, adminEmail)
-	if err != nil {
-		return nil, parseModelError(err)
-	}
-	if len(d) == 0 {
-		return nil, newFailedApiResult(400, errUnsigned, fmt.Errorf("unsigned"))
-	}
-
-	m := map[string]bool{}
-	for _, i := range d {
-		m[i] = true
-	}
-	return m, nil
 }

@@ -12,14 +12,12 @@ func WriteToTempFile(dir, name string, data []byte) (string, error) {
 	}
 
 	fn := f.Name()
+	defer os.Remove(fn)
 
-	if err = writeAllAndClose(f, data); err == nil {
-		return fn, nil
-	}
+	err = writeAllAndClose(f, data)
 
-	err1 := os.Remove(fn)
+	return fn, nil
 
-	return "", MultiErrors(err, err1)
 }
 
 func writeAllAndClose(f *os.File, data []byte) error {

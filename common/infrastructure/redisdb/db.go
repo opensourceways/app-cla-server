@@ -17,7 +17,6 @@ func Init(cfg *Config) error {
 
 	rdb := redis.NewClient(&redis.Options{
 		Addr:     cfg.Address,
-		Username: cfg.Username,
 		Password: cfg.Password,
 		DB:       cfg.DB,
 	})

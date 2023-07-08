@@ -15,6 +15,8 @@ import (
 	"github.com/opensourceways/app-cla-server/controllers"
 	"github.com/opensourceways/app-cla-server/pdf"
 	_ "github.com/opensourceways/app-cla-server/routers"
+	"github.com/opensourceways/app-cla-server/signing/domain"
+	"github.com/opensourceways/app-cla-server/signing/domain/dp"
 	"github.com/opensourceways/app-cla-server/signing/infrastructure/emailtmpl"
 	"github.com/opensourceways/app-cla-server/signing/infrastructure/gmailimpl"
 	"github.com/opensourceways/app-cla-server/signing/infrastructure/txmailimpl"
@@ -42,6 +44,9 @@ func startSignSerivce(configPath string) {
 		logs.Error(err)
 		return
 	}
+
+	dp.Init(&cfg.Domain.DomainPrimitive)
+	domain.Init(&cfg.Domain.Config)
 
 	if err := emailtmpl.Init(); err != nil {
 		logs.Error(err)

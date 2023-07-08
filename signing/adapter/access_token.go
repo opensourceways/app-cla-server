@@ -16,6 +16,10 @@ type accessTokenAdatper struct {
 	s app.AccessTokenService
 }
 
+func (adapter *accessTokenAdatper) Remove(tokenId string) {
+	adapter.s.Remove(tokenId)
+}
+
 func (adapter *accessTokenAdatper) Add(payload []byte) (models.AccessToken, models.IModelError) {
 	v, err := adapter.s.Add(payload)
 	if err != nil {

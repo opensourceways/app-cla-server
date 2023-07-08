@@ -11,22 +11,22 @@ type CorporationManagerController struct {
 	baseController
 }
 
-func (this *CorporationManagerController) Prepare() {
-	m := this.apiRequestMethod()
+func (ctl *CorporationManagerController) Prepare() {
+	m := ctl.apiRequestMethod()
 
 	if m == http.MethodPost {
 		return
 	}
 
-	if m == http.MethodPut && strings.HasSuffix(this.routerPattern(), ":signing_id") {
+	if m == http.MethodPut && strings.HasSuffix(ctl.routerPattern(), ":signing_id") {
 		// add administrator
-		this.apiPrepare(PermissionOwnerOfOrg)
+		ctl.apiPrepare(PermissionOwnerOfOrg)
 
 		return
 	}
 
 	// change password of manager
-	this.apiPrepareWithAC(
+	ctl.apiPrepareWithAC(
 		&accessController{Payload: &acForCorpManagerPayload{}},
 		[]string{PermissionCorpAdmin, PermissionEmployeeManager},
 	)
@@ -40,24 +40,24 @@ func (this *CorporationManagerController) Prepare() {
 // @Failure util.ErrPDFHasNotUploaded
 // @Failure util.ErrNumOfCorpManagersExceeded
 // @router /:link_id/:signing_id [put]
-func (this *CorporationManagerController) Put() {
+func (ctl *CorporationManagerController) Put() {
 	action := "add corp administrator"
-	linkID := this.GetString(":link_id")
-	csId := this.GetString(":signing_id")
+	linkID := ctl.GetString(":link_id")
+	csId := ctl.GetString(":signing_id")
 
-	pl, fr := this.tokenPayloadBasedOnCodePlatform()
+	pl, fr := ctl.tokenPayloadBasedOnCodePlatform()
 	if fr != nil {
-		this.sendFailedResultAsResp(fr, action)
+		ctl.sendFailedResultAsResp(fr, action)
 		return
 	}
 	if fr := pl.isOwnerOfLink(linkID); fr != nil {
-		this.sendFailedResultAsResp(fr, action)
+		ctl.sendFailedResultAsResp(fr, action)
 		return
 	}
 
 	orgInfo, merr := models.GetLink(linkID)
 	if merr != nil {
-		this.sendModelErrorAsResp(merr, action)
+		ctl.sendModelErrorAsResp(merr, action)
 
 		return
 	}
@@ -65,14 +65,14 @@ func (this *CorporationManagerController) Put() {
 	added, merr := models.CreateCorporationAdministratorByAdapter(csId)
 	if merr != nil {
 		if merr.IsErrorOf(models.ErrNoLinkOrManagerExists) {
-			this.sendFailedResponse(400, errCorpManagerExists, merr, action)
+			ctl.sendFailedResponse(400, errCorpManagerExists, merr, action)
 		} else {
-			this.sendModelErrorAsResp(merr, action)
+			ctl.sendModelErrorAsResp(merr, action)
 		}
 		return
 	}
 
-	this.sendSuccessResp(action + " successfully")
+	ctl.sendSuccessResp(action + " successfully")
 
 	notifyCorpAdmin(&orgInfo, &added)
 }
@@ -82,26 +82,28 @@ func (this *CorporationManagerController) Put() {
 // @Success 204 {int} map
 // @Failure util.ErrInvalidAccountOrPw
 // @router / [patch]
-func (this *CorporationManagerController) Patch() {
+func (ctl *CorporationManagerController) Patch() {
 	action := "change password of corp's manager"
-	sendResp := this.newFuncForSendingFailedResp(action)
+	sendResp := ctl.newFuncForSendingFailedResp(action)
 
-	pl, fr := this.tokenPayloadBasedOnCorpManager()
+	pl, fr := ctl.tokenPayloadBasedOnCorpManager()
 	if fr != nil {
 		sendResp(fr)
 		return
 	}
 
 	var info models.CorporationManagerChangePassword
-	if fr := this.fetchInputPayload(&info); fr != nil {
+	if fr := ctl.fetchInputPayload(&info); fr != nil {
 		sendResp(fr)
 		return
 	}
 
 	if err := models.ChangePassword(pl.UserId, &info); err != nil {
-		this.sendModelErrorAsResp(err, action)
+		ctl.sendModelErrorAsResp(err, action)
 		return
 	}
 
-	this.sendSuccessResp("change password successfully")
+	ctl.logout()
+
+	ctl.sendSuccessResp("change password successfully")
 }

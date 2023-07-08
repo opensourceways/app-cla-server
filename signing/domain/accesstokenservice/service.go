@@ -18,6 +18,7 @@ var csrfTokenLen = 24
 var invalidToken = domain.NewDomainError(domain.ErrorCodeAccessTokenInvalid)
 
 type AccessTokenService interface {
+	Remove(string)
 	Add(payload []byte) (k domain.AccessTokenKey, err error)
 	ValidateAndRefresh(old domain.AccessTokenKey) (newOne domain.AccessTokenKey, p []byte, err error)
 }
@@ -42,6 +43,12 @@ type accessTokenService struct {
 	expiry      int64
 	encrypt     encryption.Encryption
 	randomBytes randombytes.RandomBytes
+}
+
+func (s *accessTokenService) Remove(tokenId string) {
+	if err := s.repo.Delete(tokenId); err != nil {
+		logs.Error("remove token failed, err:%s", err.Error())
+	}
 }
 
 func (s *accessTokenService) Add(payload []byte) (k domain.AccessTokenKey, err error) {

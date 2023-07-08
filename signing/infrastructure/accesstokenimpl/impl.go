@@ -26,7 +26,9 @@ func (impl *accessTokenImpl) Add(value *domain.AccessToken) (string, error) {
 		return "", err
 	}
 
-	err = impl.dao.Set(key.String(), toAccessTokenDo(value))
+	v := toAccessTokenDo(value)
+	// must pass *accessTokenDO, because it implements the interface of MarshalBinary
+	err = impl.dao.Set(key.String(), &v)
 	if err != nil {
 		return "", err
 	}
@@ -36,6 +38,7 @@ func (impl *accessTokenImpl) Add(value *domain.AccessToken) (string, error) {
 
 func (impl *accessTokenImpl) Find(key string) (domain.AccessToken, error) {
 	var do accessTokenDO
+	// note the *accessTokenDO implements interface of UnmarshalBinary
 	if err := impl.dao.Get(key, &do); err != nil {
 		return domain.AccessToken{}, err
 	}

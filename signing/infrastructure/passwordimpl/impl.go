@@ -5,7 +5,22 @@ import (
 	"regexp"
 )
 
-var pwRe = regexp.MustCompile("^[\x21-\x7E]+$")
+const (
+	charNum        = 26
+	digitalNum     = 10
+	firstCharOfPw  = 0x21
+	firstLowercase = 'a'
+	lastLowercase  = 'z'
+	firstUppercase = 'A'
+	lastUppercase  = 'Z'
+	firstDigital   = '0'
+	lastDigital    = '9'
+)
+
+var (
+	pwRe    = regexp.MustCompile("^[\x21-\x7E]+$")
+	pwRange = byte(0x7E - 0x20)
+)
 
 func NewPasswordImpl(cfg *Config) *passwordImpl {
 	return &passwordImpl{cfg: *cfg}
@@ -22,21 +37,31 @@ func (impl *passwordImpl) New() (string, error) {
 		return "", err
 	}
 
-	n := byte(0x7E - 0x20)
 	items := make([]byte, len(bytes))
 	for k, v := range bytes {
-		items[k] = 0x21 + v%n
+		items[k] = firstCharOfPw + v%pwRange
 	}
 
 	if s := string(items); impl.goodFormat(s) {
 		return s, nil
 	}
 
-	items[0] = byte('a') + bytes[0]%26
-	items[1] = byte('A') + bytes[1]%26
-	items[2] = byte('0') + bytes[1]%10
+	for i := range bytes {
+		items[i] = impl.genChar(i, bytes[i])
+	}
 
 	return string(items), nil
+}
+
+func (impl *passwordImpl) genChar(i int, v byte) byte {
+	switch i % 3 {
+	case 0:
+		return byte(firstLowercase) + v%charNum
+	case 1:
+		return byte(firstUppercase) + v%charNum
+	default:
+		return byte(firstDigital) + v%digitalNum
+	}
 }
 
 func (impl *passwordImpl) IsValid(s string) bool {
@@ -52,14 +77,18 @@ func (impl *passwordImpl) IsValid(s string) bool {
 }
 
 func (impl *passwordImpl) goodFormat(s string) bool {
+	return impl.hasMultiChars(s) && !impl.hasConsecutive(s)
+}
+
+func (impl *passwordImpl) hasMultiChars(s string) bool {
 	part := make([]bool, 4)
 
 	for _, c := range s {
-		if c >= 'a' && c <= 'z' {
+		if c >= firstLowercase && c <= lastLowercase {
 			part[0] = true
-		} else if c >= 'A' && c <= 'Z' {
+		} else if c >= firstUppercase && c <= lastUppercase {
 			part[1] = true
-		} else if c >= '0' && c <= '9' {
+		} else if c >= firstDigital && c <= lastDigital {
 			part[2] = true
 		} else {
 			part[3] = true
@@ -73,5 +102,22 @@ func (impl *passwordImpl) goodFormat(s string) bool {
 		}
 	}
 
-	return i >= 3
+	return i >= impl.cfg.MinNumOfKindOfPasswordChar
+}
+
+func (impl *passwordImpl) hasConsecutive(str string) bool {
+	max := impl.cfg.MaxNumOfConsecutiveChars
+
+	count := 1
+	for i := 1; i < len(str); i++ {
+		if str[i] == str[i-1] {
+			if count++; count > max {
+				return true
+			}
+		} else {
+			count = 1
+		}
+	}
+
+	return false
 }

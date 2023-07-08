@@ -133,6 +133,7 @@ func RegisterEmailCredentialAdapter(a emailCredentialAdapter) {
 
 // accessTokenAdapter
 type accessTokenAdapter interface {
+	Remove(string)
 	Add(payload []byte) (AccessToken, IModelError)
 	ValidateAndRefresh(AccessToken) (AccessToken, []byte, IModelError)
 }

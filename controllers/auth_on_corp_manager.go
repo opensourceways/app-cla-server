@@ -17,11 +17,11 @@ type corpAuthInfo struct {
 // @Success 202 {int} controllers.corpAuthInfo
 // @Failure util.ErrNoCLABindingDoc	"no cla binding applied to corporation"
 // @router /auth [put]
-func (this *CorporationManagerController) Logout() {
+func (ctl *CorporationManagerController) Logout() {
 	action := "corp manager logout"
-	sendResp := this.newFuncForSendingFailedResp(action)
+	sendResp := ctl.newFuncForSendingFailedResp(action)
 
-	pl, fr := this.tokenPayloadBasedOnCorpManager()
+	pl, fr := ctl.tokenPayloadBasedOnCorpManager()
 	if fr != nil {
 		sendResp(fr)
 		return
@@ -29,7 +29,9 @@ func (this *CorporationManagerController) Logout() {
 
 	models.CorpManagerLogout(pl.UserId)
 
-	this.sendSuccessResp(action + " successfully")
+	ctl.logout()
+
+	ctl.sendSuccessResp(action + " successfully")
 }
 
 // @Title authenticate corporation manager
@@ -38,40 +40,40 @@ func (this *CorporationManagerController) Logout() {
 // @Success 201 {int} controllers.corpAuthInfo
 // @Failure util.ErrNoCLABindingDoc	"no cla binding applied to corporation"
 // @router /auth [post]
-func (this *CorporationManagerController) Auth() {
+func (ctl *CorporationManagerController) Auth() {
 	action := "authenticate as corp/employee manager"
 
 	var info models.CorporationManagerAuthentication
-	if fr := this.fetchInputPayload(&info); fr != nil {
-		this.sendFailedResultAsResp(fr, action)
+	if fr := ctl.fetchInputPayload(&info); fr != nil {
+		ctl.sendFailedResultAsResp(fr, action)
 		return
 	}
 
 	if merr := info.Validate(); merr != nil {
-		this.sendModelErrorAsResp(merr, action)
+		ctl.sendModelErrorAsResp(merr, action)
 		return
 	}
 
 	orgInfo, merr := models.GetLink(info.LinkID)
 	if merr != nil {
-		this.sendModelErrorAsResp(merr, action)
+		ctl.sendModelErrorAsResp(merr, action)
 
 		return
 	}
 
 	v, merr := models.CorpManagerLogin(&info)
 	if merr != nil {
-		this.sendModelErrorAsResp(merr, action)
+		ctl.sendModelErrorAsResp(merr, action)
 		return
 	}
 
-	if err := this.genToken(info.LinkID, &v); err != nil {
-		this.sendFailedResponse(500, errSystemError, err, action)
+	if err := ctl.genToken(info.LinkID, &v); err != nil {
+		ctl.sendFailedResponse(500, errSystemError, err, action)
 
 		return
 	}
 
-	this.sendSuccessResp([]corpAuthInfo{
+	ctl.sendSuccessResp([]corpAuthInfo{
 		{
 			Role:             v.Role,
 			OrgRepo:          orgInfo.OrgRepo,
@@ -80,7 +82,7 @@ func (this *CorporationManagerController) Auth() {
 	})
 }
 
-func (this *CorporationManagerController) genToken(linkID string, info *models.CorpManagerLoginInfo) error {
+func (ctl *CorporationManagerController) genToken(linkID string, info *models.CorpManagerLoginInfo) error {
 	permission := ""
 	switch info.Role {
 	case dbmodels.RoleAdmin:
@@ -89,7 +91,7 @@ func (this *CorporationManagerController) genToken(linkID string, info *models.C
 		permission = PermissionEmployeeManager
 	}
 
-	token, err := this.newApiToken(
+	token, err := ctl.newApiToken(
 		permission,
 		&acForCorpManagerPayload{
 			Corp:      info.CorpName,
@@ -100,7 +102,7 @@ func (this *CorporationManagerController) genToken(linkID string, info *models.C
 		},
 	)
 	if err == nil {
-		this.setToken(token)
+		ctl.setToken(token)
 	}
 
 	return err

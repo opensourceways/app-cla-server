@@ -17,12 +17,17 @@ type AccessTokenKeyDTO = domain.AccessTokenKey
 type CmdToValidateAccessToken = domain.AccessTokenKey
 
 type AccessTokenService interface {
+	Remove(tokenId string)
 	Add(payload []byte) (k domain.AccessTokenKey, err error)
 	ValidateAndRefresh(old domain.AccessTokenKey) (domain.AccessTokenKey, []byte, error)
 }
 
 type accessTokenService struct {
 	at ats.AccessTokenService
+}
+
+func (s *accessTokenService) Remove(tokenId string) {
+	s.at.Remove(tokenId)
 }
 
 func (s *accessTokenService) Add(payload []byte) (k domain.AccessTokenKey, err error) {

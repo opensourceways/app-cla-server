@@ -266,6 +266,10 @@ func (this *baseController) isPostRequest() bool {
 	return this.apiRequestMethod() == http.MethodPost
 }
 
+func (this *baseController) isPutRequest() bool {
+	return this.apiRequestMethod() == http.MethodPut
+}
+
 func (this *baseController) readInputFile(fileName string, maxSize int) ([]byte, *failedApiResult) {
 	if v := this.Ctx.Request.ContentLength; v <= 0 || v > int64(maxSize) {
 		return nil, newFailedApiResult(400, errTooBigPDF, fmt.Errorf("big pdf file"))
@@ -339,4 +343,11 @@ func (this *baseController) getRemoteAddr() (string, *failedApiResult) {
 	}
 
 	return "", newFailedApiResult(400, errCanNotFetchClientIP, fmt.Errorf("can not fetch client ip"))
+}
+
+func (ctl *baseController) logout() {
+	if t := ctl.Ctx.GetCookie(accessToken); t != "" {
+		models.RemoveAccessToken(t)
+	}
+	ctl.setToken(models.AccessToken{})
 }

@@ -9,6 +9,15 @@ func init() {
 
 	beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:AuthController"] = append(beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:AuthController"],
 		beego.ControllerComments{
+			Method:           "Logout",
+			Router:           `/`,
+			AllowHTTPMethods: []string{"put"},
+			MethodParams:     param.Make(),
+			Filters:          nil,
+			Params:           nil})
+
+	beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:AuthController"] = append(beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:AuthController"],
+		beego.ControllerComments{
 			Method:           "Callback",
 			Router:           `/:platform/:purpose`,
 			AllowHTTPMethods: []string{"get"},

@@ -14,11 +14,30 @@ type AuthController struct {
 	baseController
 }
 
-func (this *AuthController) Prepare() {
-	b := strings.HasSuffix(this.routerPattern(), "/authcodeurl/:platform/:purpose")
-	if b || this.isPostRequest() {
-		this.apiPrepare("")
+func (ctl *AuthController) Prepare() {
+	if strings.HasSuffix(ctl.routerPattern(), "/authcodeurl/:platform/:purpose") {
+		ctl.apiPrepare("")
+
+		return
 	}
+
+	if ctl.isPutRequest() {
+		ctl.apiPrepare(PermissionOwnerOfOrg)
+	}
+}
+
+// @Title logout
+// @Description community manager logout
+// @Tags AuthOnCodePlatform
+// @Accept json
+// @Success 202 {int} controllers.respData
+// @router / [put]
+func (ctl *AuthController) Logout() {
+	action := "community manager logout"
+
+	ctl.logout()
+
+	ctl.sendSuccessResp(action + " successfully")
 }
 
 // @Title Callback
@@ -31,27 +50,27 @@ func (this *AuthController) Prepare() {
 // @Failure 403 no_public_email:           no public email
 // @Failure 500 system_error:              system error
 // @router /:platform/:purpose [get]
-func (this *AuthController) Callback() {
-	purpose := this.GetString(":purpose")
-	platform := this.GetString(":platform")
+func (ctl *AuthController) Callback() {
+	purpose := ctl.GetString(":purpose")
+	platform := ctl.GetString(":platform")
 	authHelper, ok := platformAuth.Auth[purpose]
 	if !ok {
 		return
 	}
 
 	rs := func(errCode string, reason error) {
-		this.setCookies(map[string]string{"error_code": errCode, "error_msg": reason.Error()})
+		ctl.setCookies(map[string]string{"error_code": errCode, "error_msg": reason.Error()})
 
-		this.redirect(authHelper.WebRedirectDir(false))
+		ctl.redirect(authHelper.WebRedirectDir(false))
 	}
 
-	if this.GetString("state") != authURLState {
+	if ctl.GetString("state") != authURLState {
 		rs(errSystemError, fmt.Errorf("unkown state"))
 		return
 	}
 
-	if err := this.GetString("error"); err != "" {
-		rs(errAuthFailed, fmt.Errorf("%s, %s", err, this.GetString("error_description")))
+	if err := ctl.GetString("error"); err != "" {
+		rs(errAuthFailed, fmt.Errorf("%s, %s", err, ctl.GetString("error_description")))
 		return
 	}
 
@@ -62,7 +81,7 @@ func (this *AuthController) Callback() {
 	}
 
 	// gitee don't pass the scope paramter
-	token, err := cp.GetToken(this.GetString("code"), this.GetString("scope"))
+	token, err := cp.GetToken(ctl.GetString("code"), ctl.GetString("scope"))
 	if err != nil {
 		rs(errSystemError, err)
 		return
@@ -74,23 +93,23 @@ func (this *AuthController) Callback() {
 		return
 	}
 
-	pl, ec, err := this.genACPayload(platform, token)
+	pl, ec, err := ctl.genACPayload(platform, token)
 	if err != nil {
 		rs(ec, err)
 		return
 	}
 
-	at, err := this.newApiToken(PermissionOwnerOfOrg, pl)
+	at, err := ctl.newApiToken(PermissionOwnerOfOrg, pl)
 	if err != nil {
 		rs(errSystemError, err)
 		return
 	}
 
-	this.setToken(at)
-	this.redirect(authHelper.WebRedirectDir(true))
+	ctl.setToken(at)
+	ctl.redirect(authHelper.WebRedirectDir(true))
 }
 
-func (this *AuthController) genACPayload(platform, platformToken string) (*acForCodePlatformPayload, string, error) {
+func (ctl *AuthController) genACPayload(platform, platformToken string) (*acForCodePlatformPayload, string, error) {
 	pt, err := platforms.NewPlatform(platformToken, "", platform)
 	if err != nil {
 		return nil, errSystemError, err
@@ -127,22 +146,22 @@ func (this *AuthController) genACPayload(platform, platformToken string) (*acFor
 // @Failure 401 unsupported_code_platform:  unsupported code platform
 // @Failure 402 unkown_purpose_for_auth:    unknown purpose parameter
 // @router /authcodeurl/:platform/:purpose [get]
-func (this *AuthController) AuthCodeURL() {
+func (ctl *AuthController) AuthCodeURL() {
 	action := "fetch auth code url of gitee/github"
 
-	authHelper, ok := platformAuth.Auth[this.GetString(":purpose")]
+	authHelper, ok := platformAuth.Auth[ctl.GetString(":purpose")]
 	if !ok {
-		this.sendFailedResponse(400, errUnkownPurposeForAuth, fmt.Errorf("unkonw purpose"), action)
+		ctl.sendFailedResponse(400, errUnkownPurposeForAuth, fmt.Errorf("unkonw purpose"), action)
 		return
 	}
 
-	cp, err := authHelper.GetAuthInstance(this.GetString(":platform"))
+	cp, err := authHelper.GetAuthInstance(ctl.GetString(":platform"))
 	if err != nil {
-		this.sendFailedResponse(400, errUnsupportedCodePlatform, err, action)
+		ctl.sendFailedResponse(400, errUnsupportedCodePlatform, err, action)
 		return
 	}
 
-	this.sendSuccessResp(map[string]string{
+	ctl.sendSuccessResp(map[string]string{
 		"url": cp.GetAuthCodeURL(authURLState),
 	})
 }

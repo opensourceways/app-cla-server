@@ -9,7 +9,6 @@ import (
 	"github.com/opensourceways/app-cla-server/signing/app"
 	"github.com/opensourceways/app-cla-server/signing/domain/accesstokenservice"
 	"github.com/opensourceways/app-cla-server/signing/domain/claservice"
-	"github.com/opensourceways/app-cla-server/signing/domain/dp"
 	"github.com/opensourceways/app-cla-server/signing/domain/emailcredential"
 	"github.com/opensourceways/app-cla-server/signing/domain/userservice"
 	"github.com/opensourceways/app-cla-server/signing/domain/vcservice"
@@ -30,8 +29,6 @@ func initSigning(cfg *config.Config) error {
 	if err != nil {
 		return err
 	}
-
-	dp.Init(&cfg.Domain.DomainPrimitive)
 
 	repo := repositoryimpl.NewCorpSigning(
 		mongodb.DAO(cfg.Mongodb.Collections.CorpSigning),

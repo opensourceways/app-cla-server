@@ -113,7 +113,7 @@ func (ctl *LinkController) ListLinks() {
 // @Param	:link_id	path 	string				true		"link id"
 // @Param	:apply_to	path 	string				true		"apply to"
 // @Success 201 {int} map
-// @Failure util.ErrNoCLABindingDoc	"ctl org/repo has not been bound any clas"
+// @Failure util.ErrNoCLABindingDoc	"org has not been bound any clas"
 // @Failure util.ErrNotReadyToSign	"the corp signing is not ready"
 // @router /:link_id/:apply_to [get]
 func (ctl *LinkController) GetCLAForSigning() {

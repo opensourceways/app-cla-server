@@ -14,12 +14,10 @@ type Config struct {
 }
 
 func (cfg *Config) SetDefault() {
-	if cfg.Host == "" {
-		cfg.Host = "smtpImpl.exmail.qq.com"
-	}
-
-	if cfg.Port <= 0 {
+	if cfg.Host == "" || cfg.Port <= 0 || cfg.Platform == "" {
 		cfg.Port = 465
+		cfg.Host = "smtpImpl.exmail.qq.com"
+		cfg.Platform = "txmail"
 	}
 }
 

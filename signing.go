@@ -111,6 +111,10 @@ func initSigning(cfg *config.Config) error {
 		),
 	)
 
+	models.RegisterSMTPAdapter(
+		adapter.NewSMTPAdapter(app.NewSMTPService(vcService, echelper)),
+	)
+
 	// access token
 	at := accesstokenservice.NewAccessTokenService(
 		accesstokenimpl.NewAccessTokenImpl(redisdb.DAO(), &cfg.Redisdb.Config),

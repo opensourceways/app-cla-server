@@ -65,9 +65,9 @@ func init() {
 				&controllers.GmailController{},
 			),
 		),
-		beego.NSNamespace("/txmail",
+		beego.NSNamespace("/smtp",
 			beego.NSInclude(
-				&controllers.TXmailController{},
+				&controllers.SMTPController{},
 			),
 		),
 		beego.NSNamespace("/auth",

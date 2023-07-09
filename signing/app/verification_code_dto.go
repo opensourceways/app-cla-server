@@ -40,14 +40,3 @@ func (cmd *CmdToCreateCodeForEmailDomain) purpose() (dp.Purpose, error) {
 		),
 	)
 }
-
-// org email
-type CmdToCreateCodeForSettingOrgEmail struct {
-	EmailAddr dp.EmailAddr
-}
-
-func (cmd *CmdToCreateCodeForSettingOrgEmail) purpose() (dp.Purpose, error) {
-	return dp.NewPurpose(
-		fmt.Sprintf("seting org email, %s", cmd.EmailAddr.EmailAddr()),
-	)
-}

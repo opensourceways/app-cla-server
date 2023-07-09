@@ -1,4 +1,4 @@
-package txmailimpl
+package smtpimpl
 
 import (
 	"github.com/opensourceways/app-cla-server/signing/domain"
@@ -6,31 +6,24 @@ import (
 	"github.com/opensourceways/app-cla-server/signing/domain/emailservice"
 )
 
-const platform = "txmail"
+var smtp *smtpImpl
 
-var txcli = &txmailClient{}
-
-func TXmailClient() *txmailClient {
-	return txcli
+func SMTP() *smtpImpl {
+	return smtp
 }
 
-func (cli *txmailClient) GenEmailCredential(email, code string) (ec domain.EmailCredential, err error) {
-	if ec.Addr, err = dp.NewEmailAddr(email); err != nil {
-		return
+func Init(cfg *Config) {
+	smtp = &smtpImpl{
+		cfg: *cfg,
 	}
-
-	ec.Token = []byte(code)
-	ec.Platform = platform
-
-	return
 }
 
-func Init() {
-	txcli.initialize()
+func Platform() string {
+	return smtp.cfg.Platform
 }
 
 func RegisterEmailService(f GetCredential) {
-	emailservice.Register(platform, &emailServiceImpl{f})
+	emailservice.Register(Platform(), &emailServiceImpl{f})
 }
 
 type GetCredential func(dp.EmailAddr) (domain.EmailCredential, error)
@@ -53,5 +46,5 @@ func (impl *emailServiceImpl) SendEmail(msg *emailservice.EmailMessage) error {
 		return err
 	}
 
-	return txcli.Send(string(c.Token), msg)
+	return smtp.Send(string(c.Token), msg)
 }

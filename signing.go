@@ -20,8 +20,8 @@ import (
 	"github.com/opensourceways/app-cla-server/signing/infrastructure/randombytesimpl"
 	"github.com/opensourceways/app-cla-server/signing/infrastructure/randomcodeimpl"
 	"github.com/opensourceways/app-cla-server/signing/infrastructure/repositoryimpl"
+	"github.com/opensourceways/app-cla-server/signing/infrastructure/smtpimpl"
 	"github.com/opensourceways/app-cla-server/signing/infrastructure/symmetricencryptionimpl"
-	"github.com/opensourceways/app-cla-server/signing/infrastructure/txmailimpl"
 )
 
 func initSigning(cfg *config.Config) error {
@@ -103,7 +103,7 @@ func initSigning(cfg *config.Config) error {
 	echelper := emailcredential.NewEmailCredential(ecRepo, symmetric)
 
 	gmailimpl.RegisterEmailService(echelper.Find)
-	txmailimpl.RegisterEmailService(echelper.Find)
+	smtpimpl.RegisterEmailService(echelper.Find)
 
 	models.RegisterEmailCredentialAdapter(
 		adapter.NewEmailCredentialAdapter(
@@ -132,7 +132,8 @@ func initSigning(cfg *config.Config) error {
 
 	claAapter := adapter.NewCLAAdapter(
 		app.NewCLAService(linkRepo, cla),
-		cfg.Domain.Config.MaxSizeOfCLAContent,
+		cfg.Domain.MaxSizeOfCLAContent,
+		cfg.Domain.FileTypeOfCLAContent,
 	)
 
 	models.RegisterCLAAdapter(claAapter)

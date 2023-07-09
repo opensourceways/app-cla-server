@@ -14,17 +14,20 @@ import (
 
 func NewCLAAdapter(
 	s app.CLAService,
-	maxSizeOfPDF int,
+	maxSizeOfCLAContent int,
+	fileTypeOfCLAContent string,
 ) *claAdatper {
 	return &claAdatper{
-		s:            s,
-		maxSizeOfPDF: maxSizeOfPDF,
+		s:                    s,
+		maxSizeOfCLAContent:  maxSizeOfCLAContent,
+		fileTypeOfCLAContent: fileTypeOfCLAContent,
 	}
 }
 
 type claAdatper struct {
-	maxSizeOfPDF int
-	s            app.CLAService
+	s                    app.CLAService
+	maxSizeOfCLAContent  int
+	fileTypeOfCLAContent string
 }
 
 // Remove
@@ -91,7 +94,9 @@ func (adapter *claAdatper) Add(linkId string, opt *models.CLACreateOpt, applyTo 
 func (adapter *claAdatper) cmdToAddCLA(opt *models.CLACreateOpt, applyTo string) (
 	cmd app.CmdToAddCLA, err error,
 ) {
-	cmd.Text, err = util.DownloadFile(opt.URL, "pdf", adapter.maxSizeOfPDF)
+	cmd.Text, err = util.DownloadFile(
+		opt.URL, adapter.fileTypeOfCLAContent, adapter.maxSizeOfCLAContent,
+	)
 	if err != nil {
 		return
 	}

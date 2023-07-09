@@ -10,32 +10,33 @@ type LinkController struct {
 	baseController
 }
 
-func (this *LinkController) Prepare() {
-	if strings.HasSuffix(this.routerPattern(), ":apply_to") {
-		this.apiPrepare("")
+func (ctl *LinkController) Prepare() {
+	if strings.HasSuffix(ctl.routerPattern(), ":apply_to") {
+		ctl.apiPrepare("")
 	} else {
-		this.apiPrepare(PermissionOwnerOfOrg)
+		ctl.apiPrepare(PermissionOwnerOfOrg)
 	}
 }
 
 // @Title Link
-// @Description link org and cla
-// @Param	body		body 	models.LinkCreateOption	true		"body for creating link"
-// @Success 201 {string} "create org cla successfully"
+// @Description create a link(cla application)
+// @Tags Link
+// @Param  body  body  models.LinkCreateOption  true  "body for creating link"
+// @Success 201 {object} controllers.respData
 // @router / [post]
-func (this *LinkController) Link() {
+func (ctl *LinkController) Link() {
 	action := "create link"
-	sendResp := this.newFuncForSendingFailedResp(action)
+	sendResp := ctl.newFuncForSendingFailedResp(action)
 
-	pl, fr := this.tokenPayloadBasedOnCodePlatform()
+	pl, fr := ctl.tokenPayloadBasedOnCodePlatform()
 	if fr != nil {
 		sendResp(fr)
 		return
 	}
 
 	input := &models.LinkCreateOption{}
-	if fr := this.fetchInputPayloadFromFormData(input); fr != nil {
-		this.sendFailedResultAsResp(fr, action)
+	if fr := ctl.fetchInputPayloadFromFormData(input); fr != nil {
+		ctl.sendFailedResultAsResp(fr, action)
 		return
 	}
 
@@ -45,11 +46,11 @@ func (this *LinkController) Link() {
 	}
 
 	if merr := models.AddLink(pl.User, input); merr != nil {
-		this.sendModelErrorAsResp(merr, action)
+		ctl.sendModelErrorAsResp(merr, action)
 		return
 	}
 
-	this.sendResponse("create org cla successfully", 0)
+	ctl.sendResponse("create org cla successfully", 0)
 }
 
 // @Title Unlink
@@ -58,12 +59,12 @@ func (this *LinkController) Link() {
 // @Success 204 {string} delete success!
 // @Failure 403 uid is empty
 // @router /:link_id [delete]
-func (this *LinkController) Unlink() {
+func (ctl *LinkController) Unlink() {
 	action := "unlink"
-	sendResp := this.newFuncForSendingFailedResp(action)
-	linkID := this.GetString(":link_id")
+	sendResp := ctl.newFuncForSendingFailedResp(action)
+	linkID := ctl.GetString(":link_id")
 
-	pl, fr := this.tokenPayloadBasedOnCodePlatform()
+	pl, fr := ctl.tokenPayloadBasedOnCodePlatform()
 	if fr != nil {
 		sendResp(fr)
 		return
@@ -75,11 +76,11 @@ func (this *LinkController) Unlink() {
 	}
 
 	if err := models.RemoveLink(linkID); err != nil {
-		this.sendModelErrorAsResp(err, action)
+		ctl.sendModelErrorAsResp(err, action)
 		return
 	}
 
-	this.sendSuccessResp(action + "successfully")
+	ctl.sendSuccessResp(action + "successfully")
 }
 
 // @Title ListLinks
@@ -91,19 +92,19 @@ func (this *LinkController) Unlink() {
 // @Failure 404 unauthorized_token:         the permission of token is unmatched
 // @Failure 500 system_error:               system error
 // @router / [get]
-func (this *LinkController) ListLinks() {
+func (ctl *LinkController) ListLinks() {
 	action := "list links"
 
-	pl, fr := this.tokenPayloadBasedOnCodePlatform()
+	pl, fr := ctl.tokenPayloadBasedOnCodePlatform()
 	if fr != nil {
-		this.sendFailedResultAsResp(fr, action)
+		ctl.sendFailedResultAsResp(fr, action)
 		return
 	}
 
 	if r, merr := models.ListLink(pl.Platform, pl.Orgs); merr != nil {
-		this.sendModelErrorAsResp(merr, action)
+		ctl.sendModelErrorAsResp(merr, action)
 	} else {
-		this.sendSuccessResp(r)
+		ctl.sendSuccessResp(r)
 	}
 }
 
@@ -112,19 +113,19 @@ func (this *LinkController) ListLinks() {
 // @Param	:link_id	path 	string				true		"link id"
 // @Param	:apply_to	path 	string				true		"apply to"
 // @Success 201 {int} map
-// @Failure util.ErrNoCLABindingDoc	"this org/repo has not been bound any clas"
+// @Failure util.ErrNoCLABindingDoc	"ctl org/repo has not been bound any clas"
 // @Failure util.ErrNotReadyToSign	"the corp signing is not ready"
 // @router /:link_id/:apply_to [get]
-func (this *LinkController) GetCLAForSigning() {
+func (ctl *LinkController) GetCLAForSigning() {
 	action := "fetch signing page info"
 
 	result, err := models.ListCLAs(
-		this.GetString(":link_id"), this.GetString(":apply_to"),
+		ctl.GetString(":link_id"), ctl.GetString(":apply_to"),
 	)
 	if err != nil {
-		this.sendModelErrorAsResp(err, action)
+		ctl.sendModelErrorAsResp(err, action)
 	} else {
-		this.sendSuccessResp(result)
+		ctl.sendSuccessResp(result)
 	}
 }
 
@@ -132,7 +133,7 @@ func (this *LinkController) GetCLAForSigning() {
 // @Description update link email
 // @Param  :link_id  path  string  true	 "link id"
 // @router /update/:link_id [post]
-func (this *LinkController) UpdateLinkEmail() {
-	this.sendSuccessResp("unimplemented")
+func (ctl *LinkController) UpdateLinkEmail() {
+	ctl.sendSuccessResp("unimplemented")
 	return
 }

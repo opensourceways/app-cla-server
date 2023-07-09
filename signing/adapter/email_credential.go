@@ -8,7 +8,6 @@ import (
 	"github.com/opensourceways/app-cla-server/signing/app"
 	"github.com/opensourceways/app-cla-server/signing/domain/repository"
 	"github.com/opensourceways/app-cla-server/signing/infrastructure/gmailimpl"
-	"github.com/opensourceways/app-cla-server/signing/infrastructure/txmailimpl"
 )
 
 func NewEmailCredentialAdapter(
@@ -21,19 +20,6 @@ func NewEmailCredentialAdapter(
 type emailCredentialAdatper struct {
 	s    app.EmailCredentialService
 	repo repository.EmailCredential
-}
-
-func (adapter *emailCredentialAdatper) AddTXmailCredential(email, code string) models.IModelError {
-	ec, err := txmailimpl.TXmailClient().GenEmailCredential(email, code)
-	if err != nil {
-		return toModelError(err)
-	}
-
-	if err := adapter.s.Add(&ec); err != nil {
-		return toModelError(err)
-	}
-
-	return nil
 }
 
 func (adapter *emailCredentialAdatper) AddGmailCredential(code, scope string) (string, models.IModelError) {

@@ -53,42 +53,6 @@ func (adapter *verificationCodeAdatper) toCmdToCreateCodeForSigning(linkId strin
 	return
 }
 
-// org email
-func (adapter *verificationCodeAdatper) CreateForSettingOrgEmail(email string) (
-	string, models.IModelError,
-) {
-	v, err := dp.NewEmailAddr(email)
-	if err != nil {
-		return "", toModelError(err)
-	}
-
-	cmd := app.CmdToCreateCodeForSettingOrgEmail{EmailAddr: v}
-
-	code, err := adapter.s.New(&cmd)
-	if err != nil {
-		return "", toModelError(err)
-	}
-
-	return code, nil
-}
-
-func (adapter *verificationCodeAdatper) ValidateForSettingOrgEmail(
-	email, code string,
-) models.IModelError {
-	v, err := dp.NewEmailAddr(email)
-	if err != nil {
-		return toModelError(err)
-	}
-
-	cmd := app.CmdToCreateCodeForSettingOrgEmail{EmailAddr: v}
-
-	if err := adapter.s.Validate(&cmd, code); err != nil {
-		return toModelError(err)
-	}
-
-	return nil
-}
-
 // email domain
 func (adapter *verificationCodeAdatper) CreateForAddingEmailDomain(csId string, email string) (
 	string, models.IModelError,

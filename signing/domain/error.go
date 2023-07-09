@@ -42,6 +42,8 @@ const (
 
 	ErrorCodeEmailCredentialNotFound = "email_credential_not_found"
 
+	ErrorCodeGmailNoRefreshToken = "gmail_no_refresh_token"
+
 	ErrorCodeAccessTokenInvalid = "access_token_invalid"
 
 	ErrorCodeCLAExists    = "cla_exists"

@@ -39,7 +39,7 @@ func (this *GmailController) Auth() {
 		return
 	}
 
-	addr, err := models.AddGmailCredential(
+	addr, err := models.AuthorizeGmail(
 		this.GetString("code"), this.GetString("scope"),
 	)
 	if err != nil {

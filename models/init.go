@@ -4,14 +4,14 @@ import "github.com/opensourceways/app-cla-server/dbmodels"
 
 var (
 	claAdapterInstance               claAdapter
-	smtpAdapterInstance              smtpAdapter
 	linkAdapterInstance              linkAdapter
 	userAdapterInstance              userAdapter
+	smtpAdapterInstance              smtpAdapter
+	gmailAdapterInstance             gmailAdapter
 	corpPDFAdapterInstance           corpPDFAdapter
 	corpAdminAdatperInstance         corpAdminAdatper
 	accessTokenAdapterInstance       accessTokenAdapter
 	corpSigningAdapterInstance       corpSigningAdapter
-	emailCredentialAdapterInstance   emailCredentialAdapter
 	employeeSigningAdapterInstance   employeeSigningAdapter
 	employeeManagerAdapterInstance   employeeManagerAdapter
 	corpEmailDomainAdapterInstance   corpEmailDomainAdapter
@@ -119,13 +119,13 @@ func RegisterVerificationCodeAdapter(a verificationCodeAdapter) {
 	verificationCodeAdapterInstance = a
 }
 
-// emailCredentialAdapter
-type emailCredentialAdapter interface {
-	AddGmailCredential(code, scope string) (string, IModelError)
+// gmailAdapter
+type gmailAdapter interface {
+	Authorize(code, scope string) (string, IModelError)
 }
 
-func RegisterEmailCredentialAdapter(a emailCredentialAdapter) {
-	emailCredentialAdapterInstance = a
+func RegisterGmailAdapter(a gmailAdapter) {
+	gmailAdapterInstance = a
 }
 
 // smtpAdapter

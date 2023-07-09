@@ -179,8 +179,8 @@ func AuthorizeSMTPEmail(opt *EmailAuthorization) IModelError {
 	return smtpAdapterInstance.Authorize(opt)
 }
 
-func AddGmailCredential(code, scope string) (string, IModelError) {
-	return emailCredentialAdapterInstance.AddGmailCredential(code, scope)
+func AuthorizeGmail(code, scope string) (string, IModelError) {
+	return gmailAdapterInstance.Authorize(code, scope)
 }
 
 // password retrivieal

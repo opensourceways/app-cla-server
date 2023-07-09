@@ -30,7 +30,7 @@ func (ctl *AuthController) Prepare() {
 // @Description community manager logout
 // @Tags AuthOnCodePlatform
 // @Accept json
-// @Success 202 {int} controllers.respData
+// @Success 202 {object} controllers.respData
 // @router / [put]
 func (ctl *AuthController) Logout() {
 	action := "community manager logout"

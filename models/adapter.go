@@ -171,10 +171,12 @@ func CorpManagerLogin(opt *CorporationManagerAuthentication) (CorpManagerLoginIn
 
 // org email
 
-func AddTxmailCredential(opt *EmailAuthorizationReq) IModelError {
-	return emailCredentialAdapterInstance.AddTXmailCredential(
-		opt.Email, opt.Authorize,
-	)
+func VerifySMTPEmail(opt *EmailAuthorizationReq) (string, IModelError) {
+	return smtpAdapterInstance.Verify(opt)
+}
+
+func AuthorizeSMTPEmail(opt *EmailAuthorization) IModelError {
+	return smtpAdapterInstance.Authorize(opt)
 }
 
 func AddGmailCredential(code, scope string) (string, IModelError) {
@@ -209,12 +211,4 @@ func CreateCodeForAddingEmailDomain(csId string, email string) (string, IModelEr
 
 func validateCodeForAddingEmailDomain(csId string, email, code string) IModelError {
 	return verificationCodeAdapterInstance.ValidateForAddingEmailDomain(csId, email, code)
-}
-
-func CreateCodeForSettingOrgEmail(email string) (string, IModelError) {
-	return verificationCodeAdapterInstance.CreateForSettingOrgEmail(email)
-}
-
-func validateCodeForSettingOrgEmail(email, code string) IModelError {
-	return verificationCodeAdapterInstance.ValidateForSettingOrgEmail(email, code)
 }

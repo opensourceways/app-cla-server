@@ -11,6 +11,11 @@ import (
 	"github.com/opensourceways/app-cla-server/util"
 )
 
+const (
+	corpCLAFileType     = "pdf"
+	fileNameOfUploading = "pdf"
+)
+
 type CorporationPDFController struct {
 	baseController
 }
@@ -72,7 +77,9 @@ func (this *CorporationPDFController) Upload() {
 		return
 	}
 
-	data, fr := this.readInputFile("pdf", config.MaxSizeOfCorpCLAPDF)
+	data, fr := this.readInputFile(
+		fileNameOfUploading, config.MaxSizeOfCorpCLAPDF, corpCLAFileType,
+	)
 	if fr != nil {
 		this.sendFailedResultAsResp(fr, action)
 		return

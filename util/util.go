@@ -6,6 +6,7 @@ import (
 	"crypto/rand"
 	"fmt"
 	"io/ioutil"
+	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
@@ -141,4 +142,10 @@ func Md5sumOfBytes(data []byte) string {
 func GenFileName(fileNameParts ...string) string {
 	s := filepath.Join(fileNameParts...)
 	return strings.ReplaceAll(s, string(filepath.Separator), "_")
+}
+
+func CheckContentType(data []byte, t string) bool {
+	s := http.DetectContentType(data)
+
+	return strings.Contains(strings.ToLower(s), t)
 }

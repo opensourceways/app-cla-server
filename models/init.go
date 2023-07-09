@@ -4,6 +4,7 @@ import "github.com/opensourceways/app-cla-server/dbmodels"
 
 var (
 	claAdapterInstance               claAdapter
+	smtpAdapterInstance              smtpAdapter
 	linkAdapterInstance              linkAdapter
 	userAdapterInstance              userAdapter
 	corpPDFAdapterInstance           corpPDFAdapter
@@ -112,9 +113,6 @@ type verificationCodeAdapter interface {
 
 	CreateForAddingEmailDomain(csId string, email string) (string, IModelError)
 	ValidateForAddingEmailDomain(csId string, email, code string) IModelError
-
-	CreateForSettingOrgEmail(email string) (string, IModelError)
-	ValidateForSettingOrgEmail(email, code string) IModelError
 }
 
 func RegisterVerificationCodeAdapter(a verificationCodeAdapter) {
@@ -124,11 +122,20 @@ func RegisterVerificationCodeAdapter(a verificationCodeAdapter) {
 // emailCredentialAdapter
 type emailCredentialAdapter interface {
 	AddGmailCredential(code, scope string) (string, IModelError)
-	AddTXmailCredential(email, code string) IModelError
 }
 
 func RegisterEmailCredentialAdapter(a emailCredentialAdapter) {
 	emailCredentialAdapterInstance = a
+}
+
+// smtpAdapter
+type smtpAdapter interface {
+	Verify(opt *EmailAuthorizationReq) (string, IModelError)
+	Authorize(opt *EmailAuthorization) IModelError
+}
+
+func RegisterSMTPAdapter(a smtpAdapter) {
+	smtpAdapterInstance = a
 }
 
 // accessTokenAdapter

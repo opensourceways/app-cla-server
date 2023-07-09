@@ -13,6 +13,7 @@ import (
 	"github.com/opensourceways/app-cla-server/signing/infrastructure/localclaimpl"
 	"github.com/opensourceways/app-cla-server/signing/infrastructure/passwordimpl"
 	"github.com/opensourceways/app-cla-server/signing/infrastructure/repositoryimpl"
+	"github.com/opensourceways/app-cla-server/signing/infrastructure/smtpimpl"
 	"github.com/opensourceways/app-cla-server/signing/infrastructure/symmetricencryptionimpl"
 	"github.com/opensourceways/app-cla-server/util"
 )
@@ -60,6 +61,7 @@ type redisdbConfig struct {
 type Config struct {
 	PDF          pdf.Config                     `json:"pdf"             required:"true"`
 	API          controllers.Config             `json:"api"             required:"true"`
+	SMTP         smtpimpl.Config                `json:"smtp"            required:"true"`
 	Gmail        gmailimpl.Config               `json:"gmail"           required:"true"`
 	Domain       domainConfig                   `json:"domain"          required:"true"`
 	Mongodb      mongodbConfig                  `json:"mongodb"         required:"true"`
@@ -74,6 +76,7 @@ func (cfg *Config) configItems() []interface{} {
 	return []interface{}{
 		&cfg.PDF,
 		&cfg.API,
+		&cfg.SMTP,
 		&cfg.Gmail,
 		&cfg.Domain.Config,
 		&cfg.Domain.DomainPrimitive,

@@ -12,6 +12,7 @@ import (
 	beego "github.com/beego/beego/v2/server/web"
 
 	"github.com/opensourceways/app-cla-server/models"
+	"github.com/opensourceways/app-cla-server/util"
 )
 
 const (
@@ -39,39 +40,39 @@ type baseController struct {
 	ac *accessController
 }
 
-func (this *baseController) sendResponse(body interface{}, statusCode int) {
+func (ctl *baseController) sendResponse(body interface{}, statusCode int) {
 	if statusCode != 0 {
-		// if success, don't set status code, otherwise the header set in this.ServeJSON
+		// if success, don't set status code, otherwise the header set in ctl.ServeJSON
 		// will not work. The reason maybe the same as above.
-		this.Ctx.ResponseWriter.WriteHeader(statusCode)
+		ctl.Ctx.ResponseWriter.WriteHeader(statusCode)
 	}
 
-	this.Data["json"] = respData{
+	ctl.Data["json"] = respData{
 		Data: body,
 	}
 
-	this.ServeJSON()
+	ctl.ServeJSON()
 }
 
-func (this *baseController) sendSuccessResp(body interface{}) {
-	this.sendResponse(body, 0)
+func (ctl *baseController) sendSuccessResp(body interface{}) {
+	ctl.sendResponse(body, 0)
 }
 
-func (this *baseController) newFuncForSendingFailedResp(action string) func(fr *failedApiResult) {
+func (ctl *baseController) newFuncForSendingFailedResp(action string) func(fr *failedApiResult) {
 	return func(fr *failedApiResult) {
-		this.sendFailedResponse(fr.statusCode, fr.errCode, fr.reason, action)
+		ctl.sendFailedResponse(fr.statusCode, fr.errCode, fr.reason, action)
 	}
 }
 
-func (this *baseController) sendModelErrorAsResp(err models.IModelError, action string) {
-	this.sendFailedResultAsResp(parseModelError(err), action)
+func (ctl *baseController) sendModelErrorAsResp(err models.IModelError, action string) {
+	ctl.sendFailedResultAsResp(parseModelError(err), action)
 }
 
-func (this *baseController) sendFailedResultAsResp(fr *failedApiResult, action string) {
-	this.sendFailedResponse(fr.statusCode, fr.errCode, fr.reason, action)
+func (ctl *baseController) sendFailedResultAsResp(fr *failedApiResult, action string) {
+	ctl.sendFailedResponse(fr.statusCode, fr.errCode, fr.reason, action)
 }
 
-func (this *baseController) sendFailedResponse(statusCode int, errCode string, reason error, action string) {
+func (ctl *baseController) sendFailedResponse(statusCode int, errCode string, reason error, action string) {
 	if statusCode >= 500 {
 		logs.Error(fmt.Sprintf("Failed to %s, errCode: %s, err: %s", action, errCode, reason.Error()))
 
@@ -84,11 +85,11 @@ func (this *baseController) sendFailedResponse(statusCode int, errCode string, r
 		ErrMsg:  reason.Error(),
 	}
 
-	this.sendResponse(d, statusCode)
+	ctl.sendResponse(d, statusCode)
 }
 
-func (this *baseController) newApiToken(permission string, pl interface{}) (models.AccessToken, error) {
-	addr, fr := this.getRemoteAddr()
+func (ctl *baseController) newApiToken(permission string, pl interface{}) (models.AccessToken, error) {
+	addr, fr := ctl.getRemoteAddr()
 	if fr != nil {
 		return models.AccessToken{}, fr.reason
 	}
@@ -107,8 +108,8 @@ func (this *baseController) newApiToken(permission string, pl interface{}) (mode
 	return models.NewAccessToken(v)
 }
 
-func (this *baseController) tokenPayloadBasedOnCodePlatform() (*acForCodePlatformPayload, *failedApiResult) {
-	ac, fr := this.getAccessController()
+func (ctl *baseController) tokenPayloadBasedOnCodePlatform() (*acForCodePlatformPayload, *failedApiResult) {
+	ac, fr := ctl.getAccessController()
 	if fr != nil {
 		return nil, fr
 	}
@@ -119,8 +120,8 @@ func (this *baseController) tokenPayloadBasedOnCodePlatform() (*acForCodePlatfor
 	return nil, newFailedApiResult(500, errSystemError, fmt.Errorf("invalid token payload"))
 }
 
-func (this *baseController) tokenPayloadBasedOnCorpManager() (*acForCorpManagerPayload, *failedApiResult) {
-	ac, fr := this.getAccessController()
+func (ctl *baseController) tokenPayloadBasedOnCorpManager() (*acForCorpManagerPayload, *failedApiResult) {
+	ac, fr := ctl.getAccessController()
 	if fr != nil {
 		return nil, fr
 	}
@@ -131,24 +132,24 @@ func (this *baseController) tokenPayloadBasedOnCorpManager() (*acForCorpManagerP
 	return nil, newFailedApiResult(500, errSystemError, fmt.Errorf("invalid token payload"))
 }
 
-func (this *baseController) fetchInputPayload(info interface{}) *failedApiResult {
-	return fetchInputPayloadData(this.Ctx.Input.RequestBody, info)
+func (ctl *baseController) fetchInputPayload(info interface{}) *failedApiResult {
+	return fetchInputPayloadData(ctl.Ctx.Input.RequestBody, info)
 }
 
-func (this *baseController) fetchInputPayloadFromFormData(info interface{}) *failedApiResult {
-	input := []byte(this.Ctx.Request.FormValue("data"))
+func (ctl *baseController) fetchInputPayloadFromFormData(info interface{}) *failedApiResult {
+	input := []byte(ctl.Ctx.Request.FormValue("data"))
 	return fetchInputPayloadData(input, info)
 }
 
-func (this *baseController) checkPathParameter() *failedApiResult {
-	rp := this.routerPattern()
+func (ctl *baseController) checkPathParameter() *failedApiResult {
+	rp := ctl.routerPattern()
 	if rp == "" {
 		return nil
 	}
 
 	items := strings.Split(rp, "/")
 	for _, item := range items {
-		if strings.HasPrefix(item, ":") && this.GetString(item) == "" {
+		if strings.HasPrefix(item, ":") && ctl.GetString(item) == "" {
 			return newFailedApiResult(
 				400, errMissingURLPathParameter,
 				fmt.Errorf("missing path parameter:%s", item))
@@ -158,41 +159,41 @@ func (this *baseController) checkPathParameter() *failedApiResult {
 	return nil
 }
 
-func (this *baseController) routerPattern() string {
-	if v, ok := this.Data["RouterPattern"]; ok {
+func (ctl *baseController) routerPattern() string {
+	if v, ok := ctl.Data["RouterPattern"]; ok {
 		return v.(string)
 	}
 	return ""
 }
 
-func (this *baseController) apiPrepare(permission string) {
+func (ctl *baseController) apiPrepare(permission string) {
 	if permission != "" {
-		this.apiPrepareWithAC(
-			this.newAccessController(permission),
+		ctl.apiPrepareWithAC(
+			ctl.newAccessController(permission),
 			[]string{permission},
 		)
 	} else {
-		this.apiPrepareWithAC(nil, nil)
+		ctl.apiPrepareWithAC(nil, nil)
 	}
 }
 
-func (this *baseController) apiPrepareWithAC(ac *accessController, permission []string) {
-	if fr := this.checkPathParameter(); fr != nil {
-		this.sendFailedResultAsResp(fr, "")
-		this.StopRun()
+func (ctl *baseController) apiPrepareWithAC(ac *accessController, permission []string) {
+	if fr := ctl.checkPathParameter(); fr != nil {
+		ctl.sendFailedResultAsResp(fr, "")
+		ctl.StopRun()
 	}
 
 	if ac != nil && len(permission) != 0 {
-		if fr := this.checkApiReqToken(ac, permission); fr != nil {
-			this.sendFailedResultAsResp(fr, "")
-			this.StopRun()
+		if fr := ctl.checkApiReqToken(ac, permission); fr != nil {
+			ctl.sendFailedResultAsResp(fr, "")
+			ctl.StopRun()
 		}
 
-		this.Data[apiAccessController] = *ac
+		ctl.Data[apiAccessController] = *ac
 	}
 }
 
-func (this *baseController) newAccessController(permission string) *accessController {
+func (ctl *baseController) newAccessController(permission string) *accessController {
 	var acp interface{}
 
 	switch permission {
@@ -207,8 +208,8 @@ func (this *baseController) newAccessController(permission string) *accessContro
 	return &accessController{Payload: acp}
 }
 
-func (this *baseController) checkApiReqToken(ac *accessController, permission []string) *failedApiResult {
-	token, fr := this.getToken()
+func (ctl *baseController) checkApiReqToken(ac *accessController, permission []string) *failedApiResult {
+	token, fr := ctl.getToken()
 	if fr != nil {
 		return fr
 	}
@@ -223,13 +224,13 @@ func (this *baseController) checkApiReqToken(ac *accessController, permission []
 		return newFailedApiResult(500, errSystemError, err)
 	}
 
-	this.setToken(newToken)
+	ctl.setToken(newToken)
 
 	if err := json.Unmarshal(v, ac); err != nil {
 		return newFailedApiResult(500, errSystemError, err)
 	}
 
-	addr, fr := this.getRemoteAddr()
+	addr, fr := ctl.getRemoteAddr()
 	if fr != nil {
 		return fr
 	}
@@ -241,8 +242,8 @@ func (this *baseController) checkApiReqToken(ac *accessController, permission []
 	return nil
 }
 
-func (this *baseController) getAccessController() (*accessController, *failedApiResult) {
-	ac, ok := this.Data[apiAccessController]
+func (ctl *baseController) getAccessController() (*accessController, *failedApiResult) {
+	ac, ok := ctl.Data[apiAccessController]
 	if !ok {
 		return nil, newFailedApiResult(500, errSystemError, fmt.Errorf("no access controller"))
 	}
@@ -254,28 +255,28 @@ func (this *baseController) getAccessController() (*accessController, *failedApi
 	return nil, newFailedApiResult(500, errSystemError, fmt.Errorf("can't convert to access controller instance"))
 }
 
-func (this *baseController) apiReqHeader(h string) string {
-	return this.Ctx.Input.Header(h)
+func (ctl *baseController) apiReqHeader(h string) string {
+	return ctl.Ctx.Input.Header(h)
 }
 
-func (this *baseController) apiRequestMethod() string {
-	return this.Ctx.Request.Method
+func (ctl *baseController) apiRequestMethod() string {
+	return ctl.Ctx.Request.Method
 }
 
-func (this *baseController) isPostRequest() bool {
-	return this.apiRequestMethod() == http.MethodPost
+func (ctl *baseController) isPostRequest() bool {
+	return ctl.apiRequestMethod() == http.MethodPost
 }
 
-func (this *baseController) isPutRequest() bool {
-	return this.apiRequestMethod() == http.MethodPut
+func (ctl *baseController) isPutRequest() bool {
+	return ctl.apiRequestMethod() == http.MethodPut
 }
 
-func (this *baseController) readInputFile(fileName string, maxSize int) ([]byte, *failedApiResult) {
-	if v := this.Ctx.Request.ContentLength; v <= 0 || v > int64(maxSize) {
+func (ctl *baseController) readInputFile(fileName string, maxSize int, fileType string) ([]byte, *failedApiResult) {
+	if v := ctl.Ctx.Request.ContentLength; v <= 0 || v > int64(maxSize) {
 		return nil, newFailedApiResult(400, errTooBigPDF, fmt.Errorf("big pdf file"))
 	}
 
-	f, _, err := this.GetFile(fileName)
+	f, _, err := ctl.GetFile(fileName)
 	if err != nil {
 		return nil, newFailedApiResult(400, errReadingFile, err)
 	}
@@ -290,52 +291,56 @@ func (this *baseController) readInputFile(fileName string, maxSize int) ([]byte,
 		return nil, newFailedApiResult(400, errTooBigPDF, fmt.Errorf("big pdf file"))
 	}
 
+	if !util.CheckContentType(data, fileType) {
+		return nil, newFailedApiResult(400, errWrongFileType, fmt.Errorf("unsupported file type"))
+	}
+
 	return data, nil
 }
 
-func (this *baseController) downloadFile(path string) {
-	this.Ctx.Output.Download(path)
+func (ctl *baseController) downloadFile(path string) {
+	ctl.Ctx.Output.Download(path)
 }
 
-func (this *baseController) redirect(webRedirectDir string) {
+func (ctl *baseController) redirect(webRedirectDir string) {
 	http.Redirect(
-		this.Ctx.ResponseWriter, this.Ctx.Request, webRedirectDir, http.StatusFound,
+		ctl.Ctx.ResponseWriter, ctl.Ctx.Request, webRedirectDir, http.StatusFound,
 	)
 }
 
-func (this *baseController) setCookies(value map[string]string) {
+func (ctl *baseController) setCookies(value map[string]string) {
 	for k, v := range value {
-		this.setCookie(k, v, false)
+		ctl.setCookie(k, v, false)
 	}
 }
 
-func (this *baseController) setCookie(k, v string, httpOnly bool) {
-	this.Ctx.SetCookie(
+func (ctl *baseController) setCookie(k, v string, httpOnly bool) {
+	ctl.Ctx.SetCookie(
 		k, v, config.CookieTimeout, "/", config.CookieDomain, true, httpOnly, "strict",
 	)
 }
 
-func (this *baseController) getToken() (t models.AccessToken, fr *failedApiResult) {
-	if t.CSRF = this.apiReqHeader(headerToken); t.CSRF == "" {
+func (ctl *baseController) getToken() (t models.AccessToken, fr *failedApiResult) {
+	if t.CSRF = ctl.apiReqHeader(headerToken); t.CSRF == "" {
 		fr = newFailedApiResult(401, errMissingToken, fmt.Errorf("no token passed"))
 
 		return
 	}
 
-	if t.Id = this.Ctx.GetCookie(accessToken); t.Id == "" {
+	if t.Id = ctl.Ctx.GetCookie(accessToken); t.Id == "" {
 		fr = newFailedApiResult(401, errMissingToken, fmt.Errorf("no token passed"))
 	}
 
 	return
 }
 
-func (this *baseController) setToken(t models.AccessToken) {
-	this.setCookie(csrfToken, t.CSRF, false)
-	this.setCookie(accessToken, t.Id, true)
+func (ctl *baseController) setToken(t models.AccessToken) {
+	ctl.setCookie(csrfToken, t.CSRF, false)
+	ctl.setCookie(accessToken, t.Id, true)
 }
 
-func (this *baseController) getRemoteAddr() (string, *failedApiResult) {
-	ips := this.Ctx.Request.Header.Get("x-forwarded-for")
+func (ctl *baseController) getRemoteAddr() (string, *failedApiResult) {
+	ips := ctl.Ctx.Request.Header.Get("x-forwarded-for")
 	for _, item := range strings.Split(ips, ", ") {
 		if net.ParseIP(item) != nil {
 			return item, nil

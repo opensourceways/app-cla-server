@@ -19,7 +19,7 @@ import (
 	"github.com/opensourceways/app-cla-server/signing/domain/dp"
 	"github.com/opensourceways/app-cla-server/signing/infrastructure/emailtmpl"
 	"github.com/opensourceways/app-cla-server/signing/infrastructure/gmailimpl"
-	"github.com/opensourceways/app-cla-server/signing/infrastructure/txmailimpl"
+	"github.com/opensourceways/app-cla-server/signing/infrastructure/smtpimpl"
 	"github.com/opensourceways/app-cla-server/worker"
 )
 
@@ -58,7 +58,7 @@ func startSignSerivce(configPath string) {
 		return
 	}
 
-	txmailimpl.Init()
+	smtpimpl.Init(&cfg.SMTP)
 
 	if err := platformAuth.Initialize(&cfg.CodePlatform); err != nil {
 		logs.Error(err)

@@ -45,6 +45,7 @@ const (
 	errTooManyRequest           = "too_many_request"
 	errNoOrg                    = "no_org"
 	errInvalidEmailAuthCode     = "invalid_email_auth_code"
+	errWrongFileType            = "wrong_file_type"
 )
 
 func parseModelError(err models.IModelError) *failedApiResult {

@@ -24,10 +24,6 @@ type EmailAuthorization struct {
 	EmailAuthorizationReq
 }
 
-func (e *EmailAuthorization) Validate() IModelError {
-	return validateCodeForSettingOrgEmail(e.Email, e.Code)
-}
-
 func PurposeOfEmailAuthorization(email string) string {
 	return fmt.Sprintf("email authorization: %s", email)
 }

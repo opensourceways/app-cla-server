@@ -376,7 +376,7 @@ func init() {
 			Filters:          nil,
 			Params:           nil})
 
-	beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:TXmailController"] = append(beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:TXmailController"],
+	beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:SMTPController"] = append(beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:SMTPController"],
 		beego.ControllerComments{
 			Method:           "Authorize",
 			Router:           `/authorize`,
@@ -385,10 +385,10 @@ func init() {
 			Filters:          nil,
 			Params:           nil})
 
-	beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:TXmailController"] = append(beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:TXmailController"],
+	beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:SMTPController"] = append(beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:SMTPController"],
 		beego.ControllerComments{
-			Method:           "Code",
-			Router:           `/code`,
+			Method:           "Verify",
+			Router:           `/verify`,
 			AllowHTTPMethods: []string{"post"},
 			MethodParams:     param.Make(),
 			Filters:          nil,

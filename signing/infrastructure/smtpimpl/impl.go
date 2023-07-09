@@ -1,4 +1,4 @@
-package txmailimpl
+package smtpimpl
 
 import (
 	"regexp"
@@ -7,50 +7,48 @@ import (
 	"gopkg.in/gomail.v2"
 )
 
-type txmailConfig struct {
-	host string
-	port int
+type Config struct {
+	Port     int    `json:"port"`
+	Host     string `json:"host"`
+	Platform string `json:"platform"`
 }
 
-type txmailClient struct {
-	cfg *txmailConfig
-}
-
-func (this *txmailClient) initialize() error {
-	this.cfg = &txmailConfig{
-		host: "smtp.exmail.qq.com",
-		port: 465,
+func (cfg *Config) SetDefault() {
+	if cfg.Host == "" || cfg.Port <= 0 || cfg.Platform == "" {
+		cfg.Port = 465
+		cfg.Host = "smtpImpl.exmail.qq.com"
+		cfg.Platform = "txmail"
 	}
-
-	return nil
 }
 
-func (this *txmailClient) Send(AuthCode string, msg *EmailMessage) error {
-	m, err := this.createTxMailMessage(msg)
+type smtpImpl struct {
+	cfg Config
+}
+
+func (impl *smtpImpl) Send(AuthCode string, msg *EmailMessage) error {
+	m, err := impl.createTxMailMessage(msg)
 	if err != nil {
 		return err
 	}
 
-	d := gomail.NewDialer(this.cfg.host, this.cfg.port, msg.From, AuthCode)
+	d := gomail.NewDialer(impl.cfg.Host, impl.cfg.Port, msg.From, AuthCode)
 
-	err = d.DialAndSend(m)
-	if err != nil {
-		return err
-	}
-	return nil
+	return d.DialAndSend(m)
 }
 
-func (this *txmailClient) createTxMailMessage(msg *EmailMessage) (*gomail.Message, error) {
+func (impl *smtpImpl) createTxMailMessage(msg *EmailMessage) (*gomail.Message, error) {
 	attachment := msg.Attachment
 	if attachment == "" {
 		return simpleTxmailMessage(msg), nil
 	}
+
 	m := gomail.NewMessage()
 	m.SetHeader("From", msg.From)
 	m.SetHeader("To", msg.To[0])
 	m.SetHeader("Subject", msg.Subject)
 	m.SetBody("text/plain", msg.Content)
 	m.Attach(msg.Attachment)
+
 	return m, nil
 }
 
@@ -76,5 +74,6 @@ func simpleTxmailMessage(msg *EmailMessage) *gomail.Message {
 	} else {
 		m.SetBody("text/plain", msg.Content)
 	}
+
 	return m
 }

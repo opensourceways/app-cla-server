@@ -102,17 +102,20 @@ func initSigning(cfg *config.Config) error {
 
 	echelper := emailcredential.NewEmailCredential(ecRepo, symmetric)
 
-	gmailimpl.RegisterEmailService(echelper.Find)
+	// smtp
 	smtpimpl.RegisterEmailService(echelper.Find)
-
-	models.RegisterEmailCredentialAdapter(
-		adapter.NewEmailCredentialAdapter(
-			app.NewEmailCredentialService(echelper), ecRepo,
-		),
-	)
 
 	models.RegisterSMTPAdapter(
 		adapter.NewSMTPAdapter(app.NewSMTPService(vcService, echelper)),
+	)
+
+	// gmail
+	gmailimpl.RegisterEmailService(echelper.Find)
+
+	models.RegisterGmailAdapter(
+		adapter.NewGmailAdapter(
+			app.NewGmailService(echelper, ecRepo),
+		),
 	)
 
 	// access token

@@ -141,6 +141,9 @@ func CheckSigning(linkId string, email string) (bool, IModelError) {
 }
 
 // email domain
+func VerifyCorpEmailDomain(csId string, email string) (string, IModelError) {
+	return corpEmailDomainAdapterInstance.Verify(csId, email)
+}
 
 func AddCorpEmailDomain(csId string, opt *CorpEmailDomainCreateOption) IModelError {
 	return corpEmailDomainAdapterInstance.Add(csId, opt)
@@ -203,12 +206,4 @@ func CreateCodeForSigning(linkId string, email string) (string, IModelError) {
 
 func validateCodeForSigning(linkId string, email, code string) IModelError {
 	return verificationCodeAdapterInstance.ValidateForSigning(linkId, email, code)
-}
-
-func CreateCodeForAddingEmailDomain(csId string, email string) (string, IModelError) {
-	return verificationCodeAdapterInstance.CreateForAddingEmailDomain(csId, email)
-}
-
-func validateCodeForAddingEmailDomain(csId string, email, code string) IModelError {
-	return verificationCodeAdapterInstance.ValidateForAddingEmailDomain(csId, email, code)
 }

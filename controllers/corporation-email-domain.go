@@ -2,19 +2,81 @@ package controllers
 
 import (
 	"github.com/opensourceways/app-cla-server/models"
+	"github.com/opensourceways/app-cla-server/signing/infrastructure/emailtmpl"
 )
 
 type CorpEmailDomainController struct {
 	baseController
 }
 
-func (this *CorpEmailDomainController) Prepare() {
-	this.apiPrepare(PermissionCorpAdmin)
+func (ctl *CorpEmailDomainController) Prepare() {
+	ctl.apiPrepare(PermissionCorpAdmin)
+}
+
+// @Title Verify
+// @Description send verification code when adding email domain
+// @Param  body  body  controllers.verificationCodeRequest  true  "body for verification code"
+// @Success 201 {int} map
+// @Failure 400 missing_token:      token is missing
+// @Failure 401 unknown_token:      token is unknown
+// @Failure 402 expired_token:      token is expired
+// @Failure 403 unauthorized_token: the permission of token is unauthorized
+// @Failure 500 system_error:       system error
+// @router / [put]
+func (ctl *CorpEmailDomainController) Verify() {
+	action := "create verification code for adding email domain"
+	sendResp := ctl.newFuncForSendingFailedResp(action)
+
+	var req verificationCodeRequest
+	if fr := ctl.fetchInputPayload(&req); fr != nil {
+		ctl.sendFailedResultAsResp(fr, action)
+		return
+	}
+
+	if err := req.validate(); err != nil {
+		ctl.sendFailedResultAsResp(
+			newFailedApiResult(400, errParsingApiBody, err),
+			action,
+		)
+		return
+	}
+
+	pl, fr := ctl.tokenPayloadBasedOnCorpManager()
+	if fr != nil {
+		sendResp(fr)
+		return
+	}
+
+	orgInfo, merr := models.GetLink(pl.LinkID)
+	if merr != nil {
+		ctl.sendModelErrorAsResp(merr, action)
+
+		return
+	}
+
+	code, err := models.VerifyCorpEmailDomain(pl.SigningId, req.Email)
+	if err != nil {
+		ctl.sendModelErrorAsResp(err, action)
+		return
+	}
+
+	ctl.sendSuccessResp("create verification code successfully")
+
+	sendEmailToIndividual(
+		req.Email, &orgInfo,
+		"Verification code for adding corporation's another email domain",
+		emailtmpl.AddingCorpEmailDomain{
+			Corp:       pl.Corp,
+			Org:        orgInfo.OrgAlias,
+			Code:       code,
+			ProjectURL: orgInfo.ProjectURL(),
+		},
+	)
 }
 
 // @Title Post
 // @Description add email domain of corporation
-// @Param	body		body 	models.CorpEmailDomainCreateOption	true		"body for email domain"
+// @Param  body  body  models.CorpEmailDomainCreateOption  true  "body for email domain"
 // @Success 201 {int} map
 // @Failure 400 missing_token:              token is missing
 // @Failure 401 unknown_token:              token is unknown
@@ -28,38 +90,27 @@ func (this *CorpEmailDomainController) Prepare() {
 // @Failure 409 no_link_or_unsigned:        no link or corp has not signed
 // @Failure 500 system_error:               system error
 // @router / [post]
-func (this *CorpEmailDomainController) Post() {
+func (ctl *CorpEmailDomainController) Post() {
 	action := "add email domain"
-	sendResp := this.newFuncForSendingFailedResp(action)
+	sendResp := ctl.newFuncForSendingFailedResp(action)
 
-	pl, fr := this.tokenPayloadBasedOnCorpManager()
+	pl, fr := ctl.tokenPayloadBasedOnCorpManager()
 	if fr != nil {
 		sendResp(fr)
 		return
 	}
 
 	info := &models.CorpEmailDomainCreateOption{}
-	if fr := this.fetchInputPayload(info); fr != nil {
+	if fr := ctl.fetchInputPayload(info); fr != nil {
 		sendResp(fr)
 		return
 	}
 
-	if err := info.Check(pl.SigningId); err != nil {
-		this.sendModelErrorAsResp(err, action)
-		return
-	}
-
 	if merr := models.AddCorpEmailDomain(pl.SigningId, info); merr != nil {
-		this.sendModelErrorAsResp(merr, action)
-		return
+		ctl.sendModelErrorAsResp(merr, action)
+	} else {
+		ctl.sendSuccessResp(action + " successfully")
 	}
-
-	// Don't save the new email domain to the payload and refesh a new token.
-	// Because if it refreshes new token failed, then the later operations
-	// such as adding/deleting new manager will fail. Besides, the implementation
-	// is too coupled to those operations.
-
-	this.sendSuccessResp(action + " successfully")
 }
 
 // @Title GetAll
@@ -71,20 +122,19 @@ func (this *CorpEmailDomainController) Post() {
 // @Failure 403 unauthorized_token: the permission of token is unauthorized
 // @Failure 500 system_error:       system error
 // @router / [get]
-func (this *CorpEmailDomainController) GetAll() {
+func (ctl *CorpEmailDomainController) GetAll() {
 	action := "list all domains"
 
-	pl, fr := this.tokenPayloadBasedOnCorpManager()
+	pl, fr := ctl.tokenPayloadBasedOnCorpManager()
 	if fr != nil {
-		this.sendFailedResultAsResp(fr, action)
+		ctl.sendFailedResultAsResp(fr, action)
 		return
 	}
 
 	r, merr := models.ListCorpEmailDomains(pl.SigningId)
 	if merr != nil {
-		this.sendModelErrorAsResp(merr, action)
-		return
+		ctl.sendModelErrorAsResp(merr, action)
+	} else {
+		ctl.sendSuccessResp(r)
 	}
-
-	this.sendSuccessResp(r)
 }

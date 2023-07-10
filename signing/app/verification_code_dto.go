@@ -25,18 +25,3 @@ func (cmd *CmdToCreateCodeForSigning) newPurpose(action string) (dp.Purpose, err
 		fmt.Sprintf("%s, %s, %s", action, cmd.LinkId, cmd.EmailAddr.EmailAddr()),
 	)
 }
-
-// email domain
-type CmdToCreateCodeForEmailDomain struct {
-	CorpSigningId string
-	EmailAddr     dp.EmailAddr
-}
-
-func (cmd *CmdToCreateCodeForEmailDomain) purpose() (dp.Purpose, error) {
-	return dp.NewPurpose(
-		fmt.Sprintf(
-			"add email domain: %s, %s",
-			cmd.CorpSigningId, cmd.EmailAddr.EmailAddr(),
-		),
-	)
-}

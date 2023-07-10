@@ -10,19 +10,6 @@ type CorporationSigningCreateOption struct {
 	VerificationCode string `json:"verification_code"`
 }
 
-func (this *CorporationSigningCreateOption) Validate(linkId string) IModelError {
-	if err := checkEmailFormat(this.AdminEmail); err != nil {
-		return err
-	}
-
-	err := validateCodeForSigning(linkId, this.AdminEmail, this.VerificationCode)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
 type CorporationSigningSummary struct {
 	dbmodels.CorporationSigningBasicInfo
 	Id          string `json:"string"`

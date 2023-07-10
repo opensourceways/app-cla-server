@@ -64,6 +64,10 @@ func GetLink(linkId string) (dbmodels.OrgInfo, IModelError) {
 
 // corp signing
 
+func VCOfCorpSigning(linkId, email string) (string, IModelError) {
+	return corpSigningAdapterInstance.Verify(linkId, email)
+}
+
 func SignCropCLA(linkId string, opt *CorporationSigningCreateOption) IModelError {
 	return corpSigningAdapterInstance.Sign(linkId, opt)
 }
@@ -95,6 +99,10 @@ func DownloadCorpPDF(csId string) ([]byte, IModelError) {
 }
 
 // employee signing
+
+func VCOfEmployeeSigning(csId, email string) (string, IModelError) {
+	return employeeSigningAdapterInstance.Verify(csId, email)
+}
 
 func SignEmployeeCLA(opt *EmployeeSigning) ([]dbmodels.CorporationManagerListResult, IModelError) {
 	return employeeSigningAdapterInstance.Sign(opt)
@@ -131,6 +139,10 @@ func RemoveEmployeeManager(csId string, opt *EmployeeManagerCreateOption) (
 }
 
 // individual signing
+
+func VCOfIndividualSigning(linkId, email string) (string, IModelError) {
+	return individualSigningAdapterInstance.Verify(linkId, email)
+}
 
 func SignIndividualCLA(linkId string, opt *IndividualSigning) IModelError {
 	return individualSigningAdapterInstance.Sign(linkId, opt)
@@ -196,14 +208,4 @@ func GenKeyForPasswordRetrieval(linkId string, opt *PasswordRetrievalKey) (strin
 
 func ResetPassword(linkId string, opt *PasswordRetrieval, key string) IModelError {
 	return userAdapterInstance.ResetPassword(linkId, key, opt.Password)
-}
-
-// verification code
-
-func CreateCodeForSigning(linkId string, email string) (string, IModelError) {
-	return verificationCodeAdapterInstance.CreateForSigning(linkId, email)
-}
-
-func validateCodeForSigning(linkId string, email, code string) IModelError {
-	return verificationCodeAdapterInstance.ValidateForSigning(linkId, email, code)
 }

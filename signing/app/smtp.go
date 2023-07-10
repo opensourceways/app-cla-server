@@ -11,40 +11,31 @@ type SMTPService interface {
 }
 
 func NewSMTPService(
-	vcService vcservice.VCService,
+	vc vcservice.VCService,
 	es emailcredential.EmailCredential,
 ) SMTPService {
 	return &smtpService{
-		vc: vcService,
+		vc: verificationCodeService{vc},
 		es: es,
 	}
 }
 
 // smtpService
 type smtpService struct {
-	vc vcservice.VCService
+	vc verificationCodeService
 	es emailcredential.EmailCredential
 }
 
 func (s *smtpService) Verify(cmd *CmdToVerifySMTPEmail) (string, error) {
-	p, err := cmd.purpose()
-	if err != nil {
-		return "", err
-	}
-
-	return s.vc.New(p)
+	return s.vc.newCode(cmd)
 }
 
 func (s *smtpService) Authorize(cmd *CmdToAuthorizeSMTPEmail) error {
-	k, err := cmd.key()
-	if err != nil {
-		return err
-	}
-
-	if err := s.vc.Verify(&k); err != nil {
+	if err := s.vc.validate(cmd, cmd.Code); err != nil {
 		return err
 	}
 
 	v := cmd.emailCredential()
+
 	return s.es.Add(&v)
 }

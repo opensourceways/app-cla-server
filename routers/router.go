@@ -80,11 +80,6 @@ func init() {
 				&controllers.OrganizationController{},
 			),
 		),
-		beego.NSNamespace("/verification-code",
-			beego.NSInclude(
-				&controllers.VerificationCodeController{},
-			),
-		),
 		beego.NSNamespace("/password-retrieval",
 			beego.NSInclude(
 				&controllers.PasswordRetrievalController{},

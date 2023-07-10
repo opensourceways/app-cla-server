@@ -15,6 +15,10 @@ type employeeSigningAdatper struct {
 	s app.EmployeeSigningService
 }
 
+func (adapter *employeeSigningAdatper) Verify(csId, email string) (string, models.IModelError) {
+	return createCodeForSigning(csId, email, adapter.s.Verify)
+}
+
 // Sign
 func (adapter *employeeSigningAdatper) Sign(opt *models.EmployeeSigning) (
 	[]dbmodels.CorporationManagerListResult, models.IModelError,
@@ -54,8 +58,8 @@ func (adapter *employeeSigningAdatper) cmdToSignEmployeeCLA(opt *models.Employee
 	}
 
 	cmd.CorpSigningId = opt.CorpSigningId
-
 	cmd.AllSingingInfo = opt.Info
+	cmd.VerificationCode = opt.VerificationCode
 
 	return
 }

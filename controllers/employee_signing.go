@@ -24,6 +24,23 @@ func (this *EmployeeSigningController) Prepare() {
 }
 
 // @Title Post
+// @Description send verification code when signing
+// @Tags EmployeeSigning
+// @Param  link_id     path  string                               true  "link id"
+// @Param  signing_id  path  string                               true  "corp signing id"
+// @Param  body        body  controllers.verificationCodeRequest  true  "body for verification code"
+// @Success 201 {object} controllers.respData
+// @router /:link_id/:signing_id [post]
+func (ctl *EmployeeSigningController) SendVerificationCode() {
+	ctl.sendVerificationCodeWhenSigning(
+		ctl.GetString(":link_id"),
+		func(email string) (string, models.IModelError) {
+			return models.VCOfEmployeeSigning(ctl.GetString(":signing_id"), email)
+		},
+	)
+}
+
+// @Title Post
 // @Description sign employee cla
 // @Param	:link_id	path 	string				true		"link id"
 // @Param	:cla_lang	path 	string				true		"cla language"
@@ -58,11 +75,6 @@ func (this *EmployeeSigningController) Post() {
 		return
 	}
 	info.CLALanguage = claLang
-
-	if err := info.Validate(linkID); err != nil {
-		this.sendModelErrorAsResp(err, action)
-		return
-	}
 
 	orgInfo, claInfo, merr := models.GetLinkCLA(linkID, claId)
 	if merr != nil {

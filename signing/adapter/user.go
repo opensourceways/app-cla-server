@@ -70,7 +70,7 @@ func (adapter *userAdatper) GenKeyForPasswordRetrieval(linkId string, email stri
 func (adapter *userAdatper) toCmdToGenKeyForPasswordRetrieval(linkId string, email string) (
 	cmd app.CmdToGenKeyForPasswordRetrieval, err error,
 ) {
-	cmd.LinkId = linkId
+	cmd.Id = linkId
 	cmd.EmailAddr, err = dp.NewEmailAddr(email)
 
 	return

@@ -4,13 +4,21 @@ import (
 	commonRepo "github.com/opensourceways/app-cla-server/common/domain/repository"
 	"github.com/opensourceways/app-cla-server/signing/domain"
 	"github.com/opensourceways/app-cla-server/signing/domain/repository"
+	"github.com/opensourceways/app-cla-server/signing/domain/vcservice"
 )
 
-func NewEmployeeSigningService(repo repository.CorpSigning) *employeeSigningService {
-	return &employeeSigningService{repo}
+func NewEmployeeSigningService(
+	repo repository.CorpSigning,
+	vc vcservice.VCService,
+) *employeeSigningService {
+	return &employeeSigningService{
+		repo: repo,
+		vc:   verificationCodeService{vc},
+	}
 }
 
 type EmployeeSigningService interface {
+	Verify(cmd *CmdToCreateVerificationCode) (string, error)
 	Sign(cmd *CmdToSignEmployeeCLA) ([]EmployeeManagerDTO, error)
 	Remove(cmd *CmdToRemoveEmployeeSigning) (string, error)
 	Update(cmd *CmdToUpdateEmployeeSigning) (string, error)
@@ -18,11 +26,21 @@ type EmployeeSigningService interface {
 }
 
 type employeeSigningService struct {
+	vc   verificationCodeService
 	repo repository.CorpSigning
+}
+
+func (s *employeeSigningService) Verify(cmd *CmdToCreateVerificationCode) (string, error) {
+	return s.vc.newCode((*cmdToCreateCodeForEmployeeSigning)(cmd))
 }
 
 // Sign
 func (s *employeeSigningService) Sign(cmd *CmdToSignEmployeeCLA) ([]EmployeeManagerDTO, error) {
+	cmd1 := cmd.toCmd()
+	if err := s.vc.validate(&cmd1, cmd.VerificationCode); err != nil {
+		return nil, err
+	}
+
 	cs, err := s.repo.Find(cmd.CorpSigningId)
 	if err != nil {
 		if commonRepo.IsErrorResourceNotFound(err) {

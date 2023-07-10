@@ -162,6 +162,15 @@ func init() {
 
 	beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:CorporationSigningController"] = append(beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:CorporationSigningController"],
 		beego.ControllerComments{
+			Method:           "SendVerificationCode",
+			Router:           `/:link_id`,
+			AllowHTTPMethods: []string{"post"},
+			MethodParams:     param.Make(),
+			Filters:          nil,
+			Params:           nil})
+
+	beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:CorporationSigningController"] = append(beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:CorporationSigningController"],
+		beego.ControllerComments{
 			Method:           "GetAll",
 			Router:           `/:link_id`,
 			AllowHTTPMethods: []string{"get"},
@@ -191,7 +200,7 @@ func init() {
 		beego.ControllerComments{
 			Method:           "ResendCorpSigningEmail",
 			Router:           `/:link_id/:signing_id`,
-			AllowHTTPMethods: []string{"post"},
+			AllowHTTPMethods: []string{"put"},
 			MethodParams:     param.Make(),
 			Filters:          nil,
 			Params:           nil})
@@ -261,6 +270,15 @@ func init() {
 
 	beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:EmployeeSigningController"] = append(beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:EmployeeSigningController"],
 		beego.ControllerComments{
+			Method:           "SendVerificationCode",
+			Router:           `/:link_id/:signing_id`,
+			AllowHTTPMethods: []string{"post"},
+			MethodParams:     param.Make(),
+			Filters:          nil,
+			Params:           nil})
+
+	beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:EmployeeSigningController"] = append(beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:EmployeeSigningController"],
+		beego.ControllerComments{
 			Method:           "Update",
 			Router:           `/:signing_id`,
 			AllowHTTPMethods: []string{"put"},
@@ -291,6 +309,15 @@ func init() {
 			Method:           "Get",
 			Router:           `/authcodeurl`,
 			AllowHTTPMethods: []string{"get"},
+			MethodParams:     param.Make(),
+			Filters:          nil,
+			Params:           nil})
+
+	beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:IndividualSigningController"] = append(beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:IndividualSigningController"],
+		beego.ControllerComments{
+			Method:           "SendVerificationCode",
+			Router:           `/:link_id`,
+			AllowHTTPMethods: []string{"post"},
 			MethodParams:     param.Make(),
 			Filters:          nil,
 			Params:           nil})
@@ -398,15 +425,6 @@ func init() {
 		beego.ControllerComments{
 			Method:           "Verify",
 			Router:           `/verify`,
-			AllowHTTPMethods: []string{"post"},
-			MethodParams:     param.Make(),
-			Filters:          nil,
-			Params:           nil})
-
-	beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:VerificationCodeController"] = append(beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:VerificationCodeController"],
-		beego.ControllerComments{
-			Method:           "Post",
-			Router:           `/:link_id`,
 			AllowHTTPMethods: []string{"post"},
 			MethodParams:     param.Make(),
 			Filters:          nil,

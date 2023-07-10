@@ -1,6 +1,9 @@
 package app
 
-import "github.com/opensourceways/app-cla-server/signing/domain/repository"
+import (
+	"github.com/opensourceways/app-cla-server/signing/domain/repository"
+	"github.com/opensourceways/app-cla-server/signing/domain/vcservice"
+)
 
 func NewCorpEmailDomainService(
 	repo repository.CorpSigning,
@@ -11,17 +14,35 @@ func NewCorpEmailDomainService(
 }
 
 type CorpEmailDomainService interface {
+	Verify(cmd *CmdToVerifyEmailDomain) (string, error)
 	Add(cmd *CmdToAddEmailDomain) error
 	List(string) ([]string, error)
 }
 
-type CmdToAddEmailDomain = CmdToCreateCodeForEmailDomain
-
 type corpEmailDomainService struct {
+	vc   vcservice.VCService
 	repo repository.CorpSigning
 }
 
+func (s *corpEmailDomainService) Verify(cmd *CmdToVerifyEmailDomain) (string, error) {
+	p, err := cmd.purpose()
+	if err != nil {
+		return "", err
+	}
+
+	return s.vc.New(p)
+}
+
 func (s *corpEmailDomainService) Add(cmd *CmdToAddEmailDomain) error {
+	k, err := cmd.key()
+	if err != nil {
+		return err
+	}
+
+	if err := s.vc.Verify(&k); err != nil {
+		return err
+	}
+
 	cs, err := s.repo.Find(cmd.CorpSigningId)
 	if err != nil {
 		return err

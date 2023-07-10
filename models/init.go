@@ -88,6 +88,7 @@ func RegisterEmployeeManagerAdapter(a employeeManagerAdapter) {
 
 // corpEmailDomainAdapter
 type corpEmailDomainAdapter interface {
+	Verify(csId string, email string) (string, IModelError)
 	Add(csId string, opt *CorpEmailDomainCreateOption) IModelError
 	List(csId string) ([]string, IModelError)
 }
@@ -110,9 +111,6 @@ func RegisterCorpPDFAdapter(a corpPDFAdapter) {
 type verificationCodeAdapter interface {
 	CreateForSigning(linkId string, email string) (string, IModelError)
 	ValidateForSigning(linkId string, email, code string) IModelError
-
-	CreateForAddingEmailDomain(csId string, email string) (string, IModelError)
-	ValidateForAddingEmailDomain(csId string, email, code string) IModelError
 }
 
 func RegisterVerificationCodeAdapter(a verificationCodeAdapter) {

@@ -3,7 +3,7 @@ package dp
 import "errors"
 
 func NewLanguage(v string) (Language, error) {
-	if v == "" || !config.isValidLanguage(v) {
+	if v = config.getLanguage(v); v == "" {
 		return nil, errors.New("invalid language")
 	}
 

@@ -15,6 +15,7 @@ import (
 	"github.com/opensourceways/app-cla-server/signing/infrastructure/accesstokenimpl"
 	"github.com/opensourceways/app-cla-server/signing/infrastructure/encryptionimpl"
 	"github.com/opensourceways/app-cla-server/signing/infrastructure/gmailimpl"
+	"github.com/opensourceways/app-cla-server/signing/infrastructure/limiterimpl"
 	"github.com/opensourceways/app-cla-server/signing/infrastructure/localclaimpl"
 	"github.com/opensourceways/app-cla-server/signing/infrastructure/passwordimpl"
 	"github.com/opensourceways/app-cla-server/signing/infrastructure/randombytesimpl"
@@ -46,6 +47,7 @@ func initSigning(cfg *config.Config) error {
 		repositoryimpl.NewVerificationCode(
 			mongodb.DAO(cfg.Mongodb.Collections.VerificationCode),
 		),
+		limiterimpl.NewLimiterImpl(redisdb.DAO()),
 		randomcodeimpl.NewRandomCodeImpl(),
 	)
 

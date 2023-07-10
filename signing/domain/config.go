@@ -1,6 +1,9 @@
 package domain
 
-import "strings"
+import (
+	"strings"
+	"time"
+)
 
 var config Config
 
@@ -24,6 +27,9 @@ type Config struct {
 	MaxNumOfFailedLogin   int   `json:"max_num_of_failed_login"`
 	PeriodOfLoginFrozen   int64 `json:"period_of_login_frozen"`
 	PeriodOfLoginChecking int64 `json:"period_of_login_checking"`
+
+	// interval of creating verification code. seconds.
+	IntervalOfCreatingVC int `json:"interval_of_creating_vc"`
 }
 
 func (cfg *Config) InvalidCorpEmailDomains() []string {
@@ -66,4 +72,12 @@ func (cfg *Config) SetDefault() {
 	if cfg.PeriodOfLoginFrozen <= 0 {
 		cfg.PeriodOfLoginFrozen = 300
 	}
+
+	if cfg.IntervalOfCreatingVC <= 0 {
+		cfg.IntervalOfCreatingVC = 60
+	}
+}
+
+func (cfg *Config) GetIntervalOfCreatingVC() time.Duration {
+	return time.Duration(cfg.IntervalOfCreatingVC) * time.Second
 }

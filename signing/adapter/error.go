@@ -98,6 +98,10 @@ func codeMap(code string) models.ModelErrCode {
 	case domain.ErrorCodeGmailNoRefreshToken:
 		return models.ErrNoRefreshToken
 
+	// verification code
+	case domain.ErrorCodeVerificationCodeBusy:
+		return models.ErrTooManyRequest
+
 	default:
 		return models.ErrBadRequestParameter
 	}

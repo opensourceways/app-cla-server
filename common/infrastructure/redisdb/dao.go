@@ -8,10 +8,7 @@ import (
 	"github.com/go-redis/redis/v8"
 )
 
-var (
-	errDocExists    = errors.New("doc exists")
-	errDocNotExists = errors.New("doc doesn't exist")
-)
+var errDocNotExists = errors.New("doc doesn't exist")
 
 func (cli *client) Set(key string, val interface{}) error {
 	return cli.withContext(func(ctx context.Context) error {
@@ -60,8 +57,4 @@ func (cli *client) HasKey(key string) (bool, error) {
 
 func (impl *client) IsDocNotExists(err error) bool {
 	return errors.Is(err, errDocNotExists)
-}
-
-func (impl *client) IsDocExists(err error) bool {
-	return errors.Is(err, errDocExists)
 }

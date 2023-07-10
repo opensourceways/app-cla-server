@@ -55,6 +55,7 @@ const (
 	ErrNoRefreshToken          ModelErrCode = "no_refresh_token"
 	ErrInvalidToken            ModelErrCode = "invalid_token"
 	ErrCLAExists               ModelErrCode = "cla_exists"
+	ErrTooManyRequest          ModelErrCode = "too_many_request"
 )
 
 type IModelError interface {

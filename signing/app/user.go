@@ -3,6 +3,7 @@ package app
 import (
 	"encoding/hex"
 	"encoding/json"
+	"time"
 
 	"github.com/opensourceways/app-cla-server/signing/domain"
 	"github.com/opensourceways/app-cla-server/signing/domain/repository"
@@ -16,12 +17,14 @@ func NewUserService(
 	repo repository.CorpSigning,
 	encrypt symmetricencryption.Encryption,
 	vcService vcservice.VCService,
+	interval time.Duration,
 ) UserService {
 	return &userService{
 		us:        us,
 		repo:      repo,
 		encrypt:   encrypt,
 		vcService: verificationCodeService{vcService},
+		interval:  interval,
 	}
 }
 
@@ -37,6 +40,7 @@ type userService struct {
 	us        userservice.UserService
 	repo      repository.CorpSigning
 	encrypt   symmetricencryption.Encryption
+	interval  time.Duration
 	vcService verificationCodeService
 }
 
@@ -45,7 +49,7 @@ func (s *userService) ChangePassword(cmd *CmdToChangePassword) error {
 }
 
 func (s *userService) GenKeyForPasswordRetrieval(cmd *CmdToGenKeyForPasswordRetrieval) (string, error) {
-	code, err := s.vcService.newCode(cmd)
+	code, err := s.vcService.newCodeIfItCan(cmd, s.interval)
 	if err != nil {
 		return "", err
 	}

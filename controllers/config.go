@@ -13,7 +13,6 @@ var config Config
 type Config struct {
 	LimitedAPIs                     []string `json:"limited_apis"`
 	CookieTimeout                   int      `json:"cookie_timeout"` // seconds
-	WaitingTimeForVC                int      `json:"waiting_time_for_vc"`
 	MaxRequestPerMinute             int      `json:"max_request_per_minute"`
 	MaxSizeOfCorpCLAPDF             int      `json:"max_size_of_corp_cla_pdf"`
 	PasswordRetrievalExpiry         int64    `json:"password_retrieval_expiry"`
@@ -37,10 +36,6 @@ func (cfg *Config) SetDefault() {
 			"/v1/verification-code",
 			"/v1/password-retrieval",
 		}
-	}
-
-	if cfg.WaitingTimeForVC <= 0 {
-		cfg.WaitingTimeForVC = 60
 	}
 
 	if cfg.CookieTimeout <= 0 {

@@ -55,15 +55,19 @@ func initSigning(cfg *config.Config) error {
 		adapter.NewCorpAdminAdapter(app.NewCorpAdminService(repo, userService)),
 	)
 
+	interval := cfg.Domain.Config.GetIntervalOfCreatingVC()
+
 	models.RegisterCorpSigningAdapter(
 		adapter.NewCorpSigningAdapter(
-			app.NewCorpSigningService(repo, vcService),
+			app.NewCorpSigningService(repo, vcService, interval),
 			cfg.Domain.Config.InvalidCorpEmailDomains(),
 		),
 	)
 
 	models.RegisterEmployeeSigningAdapter(
-		adapter.NewEmployeeSigningAdapter(app.NewEmployeeSigningService(repo, vcService)),
+		adapter.NewEmployeeSigningAdapter(
+			app.NewEmployeeSigningService(repo, vcService, interval),
+		),
 	)
 
 	models.RegisterEmployeeManagerAdapter(
@@ -79,7 +83,9 @@ func initSigning(cfg *config.Config) error {
 	)
 
 	models.RegisterUserAdapter(
-		adapter.NewUserAdapter(app.NewUserService(userService, repo, symmetric, vcService)),
+		adapter.NewUserAdapter(
+			app.NewUserService(userService, repo, symmetric, vcService, interval),
+		),
 	)
 
 	models.RegisterIndividualSigningAdapter(
@@ -89,6 +95,7 @@ func initSigning(cfg *config.Config) error {
 				mongodb.DAO(cfg.Mongodb.Collections.IndividualSigning),
 			),
 			repo,
+			interval,
 		)),
 	)
 

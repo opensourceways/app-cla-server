@@ -3,7 +3,6 @@ package controllers
 import (
 	"errors"
 	"fmt"
-	"net/http"
 
 	"github.com/opensourceways/app-cla-server/models"
 	"github.com/opensourceways/app-cla-server/signing/infrastructure/emailtmpl"
@@ -25,15 +24,6 @@ func (ctl *baseController) sendVerificationCodeWhenSigning(
 			newFailedApiResult(400, errParsingApiBody, err),
 			action,
 		)
-		return
-	}
-
-	if !emailLimiter.check(linkID, req.Email) {
-		ctl.sendFailedResponse(
-			http.StatusBadRequest, errTooManyRequest,
-			fmt.Errorf("too many request"), action,
-		)
-
 		return
 	}
 

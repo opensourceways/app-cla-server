@@ -61,7 +61,7 @@ type redisdbConfig struct {
 type Config struct {
 	PDF          pdf.Config                     `json:"pdf"             required:"true"`
 	API          controllers.Config             `json:"api"             required:"true"`
-	SMTP         smtpimpl.Config                `json:"smtp"            required:"true"`
+	SMTP         smtpimpl.Config                `json:"smtp"`
 	Gmail        gmailimpl.Config               `json:"gmail"           required:"true"`
 	Domain       domainConfig                   `json:"domain"          required:"true"`
 	Mongodb      mongodbConfig                  `json:"mongodb"         required:"true"`

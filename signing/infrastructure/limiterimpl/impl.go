@@ -17,5 +17,7 @@ func (impl *limiterImpl) Add(k string, expiry time.Duration) error {
 }
 
 func (impl *limiterImpl) IsAllowed(k string) (bool, error) {
-	return impl.dao.HasKey(k)
+	v, err := impl.dao.HasKey(k)
+
+	return !v, err
 }

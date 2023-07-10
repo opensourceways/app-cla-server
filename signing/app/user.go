@@ -45,7 +45,7 @@ func (s *userService) ChangePassword(cmd *CmdToChangePassword) error {
 }
 
 func (s *userService) GenKeyForPasswordRetrieval(cmd *CmdToGenKeyForPasswordRetrieval) (string, error) {
-	code, err := s.vcService.New(cmd)
+	code, err := s.vcService.newCode(cmd)
 	if err != nil {
 		return "", err
 	}
@@ -90,12 +90,14 @@ func (s *userService) ResetPassword(cmd *CmdToResetPassword) error {
 		return err
 	}
 
-	cmd1 := CmdToGenKeyForPasswordRetrieval{
-		LinkId:    cmd.LinkId,
-		EmailAddr: e,
-	}
-
-	if err := s.vcService.Validate(&cmd1, k.Code); err != nil {
+	err = s.vcService.validate(
+		&CmdToGenKeyForPasswordRetrieval{
+			Id:        cmd.LinkId,
+			EmailAddr: e,
+		},
+		k.Code,
+	)
+	if err != nil {
 		return err
 	}
 

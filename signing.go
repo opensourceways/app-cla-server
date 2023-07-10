@@ -42,33 +42,6 @@ func initSigning(cfg *config.Config) error {
 		passwordimpl.NewPasswordImpl(&cfg.Password),
 	)
 
-	models.RegisterCorpAdminAdatper(
-		adapter.NewCorpAdminAdapter(app.NewCorpAdminService(repo, userService)),
-	)
-
-	models.RegisterCorpSigningAdapter(
-		adapter.NewCorpSigningAdapter(
-			app.NewCorpSigningService(repo),
-			cfg.Domain.Config.InvalidCorpEmailDomains(),
-		),
-	)
-
-	models.RegisterEmployeeSigningAdapter(
-		adapter.NewEmployeeSigningAdapter(app.NewEmployeeSigningService(repo)),
-	)
-
-	models.RegisterEmployeeManagerAdapter(
-		adapter.NewEmployeeManagerAdapter(app.NewEmployeeManagerService(repo, userService)),
-	)
-
-	models.RegisterCorpEmailDomainAdapter(
-		adapter.NewCorpEmailDomainAdapter(app.NewCorpEmailDomainService(repo)),
-	)
-
-	models.RegisterCorpPDFAdapter(
-		adapter.NewCorpPDFAdapter(app.NewCorpPDFService(repo)),
-	)
-
 	vcService := vcservice.NewVCService(
 		repositoryimpl.NewVerificationCode(
 			mongodb.DAO(cfg.Mongodb.Collections.VerificationCode),
@@ -76,10 +49,31 @@ func initSigning(cfg *config.Config) error {
 		randomcodeimpl.NewRandomCodeImpl(),
 	)
 
-	models.RegisterVerificationCodeAdapter(
-		adapter.NewVerificationCodeAdapter(app.NewVerificationCodeService(
-			vcService,
-		)),
+	models.RegisterCorpAdminAdatper(
+		adapter.NewCorpAdminAdapter(app.NewCorpAdminService(repo, userService)),
+	)
+
+	models.RegisterCorpSigningAdapter(
+		adapter.NewCorpSigningAdapter(
+			app.NewCorpSigningService(repo, vcService),
+			cfg.Domain.Config.InvalidCorpEmailDomains(),
+		),
+	)
+
+	models.RegisterEmployeeSigningAdapter(
+		adapter.NewEmployeeSigningAdapter(app.NewEmployeeSigningService(repo, vcService)),
+	)
+
+	models.RegisterEmployeeManagerAdapter(
+		adapter.NewEmployeeManagerAdapter(app.NewEmployeeManagerService(repo, userService)),
+	)
+
+	models.RegisterCorpEmailDomainAdapter(
+		adapter.NewCorpEmailDomainAdapter(app.NewCorpEmailDomainService(vcService, repo)),
+	)
+
+	models.RegisterCorpPDFAdapter(
+		adapter.NewCorpPDFAdapter(app.NewCorpPDFService(repo)),
 	)
 
 	models.RegisterUserAdapter(
@@ -88,6 +82,7 @@ func initSigning(cfg *config.Config) error {
 
 	models.RegisterIndividualSigningAdapter(
 		adapter.NewIndividualSigningAdapter(app.NewIndividualSigningService(
+			vcService,
 			repositoryimpl.NewIndividualSigning(
 				mongodb.DAO(cfg.Mongodb.Collections.IndividualSigning),
 			),

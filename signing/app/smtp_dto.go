@@ -16,8 +16,8 @@ type CmdToVerifySMTPEmail struct {
 func (cmd *CmdToVerifySMTPEmail) purpose() (dp.Purpose, error) {
 	return dp.NewPurpose(
 		fmt.Sprintf(
-			"setting smtp email, %s/%s %s",
-			cmd.Platform, cmd.Code, cmd.EmailAddr.EmailAddr(),
+			"%s, %s/%s %s",
+			vcTypeSMTPEmail, cmd.Platform, cmd.Code, cmd.EmailAddr.EmailAddr(),
 		),
 	)
 }

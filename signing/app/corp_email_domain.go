@@ -6,10 +6,12 @@ import (
 )
 
 func NewCorpEmailDomainService(
+	vc vcservice.VCService,
 	repo repository.CorpSigning,
 ) CorpEmailDomainService {
 	return &corpEmailDomainService{
 		repo: repo,
+		vc:   verificationCodeService{vc},
 	}
 }
 
@@ -20,26 +22,16 @@ type CorpEmailDomainService interface {
 }
 
 type corpEmailDomainService struct {
-	vc   vcservice.VCService
+	vc   verificationCodeService
 	repo repository.CorpSigning
 }
 
 func (s *corpEmailDomainService) Verify(cmd *CmdToVerifyEmailDomain) (string, error) {
-	p, err := cmd.purpose()
-	if err != nil {
-		return "", err
-	}
-
-	return s.vc.New(p)
+	return s.vc.newCode(cmd)
 }
 
 func (s *corpEmailDomainService) Add(cmd *CmdToAddEmailDomain) error {
-	k, err := cmd.key()
-	if err != nil {
-		return err
-	}
-
-	if err := s.vc.Verify(&k); err != nil {
+	if err := s.vc.validate(cmd, cmd.VerificationCode); err != nil {
 		return err
 	}
 

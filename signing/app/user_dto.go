@@ -46,10 +46,10 @@ type CmdToResetPassword struct {
 }
 
 // CmdToGenKeyForPasswordRetrieval
-type CmdToGenKeyForPasswordRetrieval CmdToCreateCodeForSigning
+type CmdToGenKeyForPasswordRetrieval CmdToCreateVerificationCode
 
 func (cmd *CmdToGenKeyForPasswordRetrieval) purpose() (dp.Purpose, error) {
-	return (*CmdToCreateCodeForSigning)(cmd).newPurpose("password retrieval")
+	return (*CmdToCreateVerificationCode)(cmd).genPurpose(vcTypePasswordRetrieval)
 }
 
 // resettingPasswordKey

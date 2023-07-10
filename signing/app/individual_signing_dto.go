@@ -7,9 +7,10 @@ import (
 )
 
 type CmdToSignIndividualCLA struct {
-	Link           domain.LinkInfo
-	Rep            domain.Representative
-	AllSingingInfo domain.AllSingingInfo
+	Link             domain.LinkInfo
+	Rep              domain.Representative
+	AllSingingInfo   domain.AllSingingInfo
+	VerificationCode string
 }
 
 func (cmd *CmdToSignIndividualCLA) toIndividualSigning() domain.IndividualSigning {
@@ -18,6 +19,13 @@ func (cmd *CmdToSignIndividualCLA) toIndividualSigning() domain.IndividualSignin
 		Rep:     cmd.Rep,
 		Date:    util.Date(),
 		AllInfo: cmd.AllSingingInfo,
+	}
+}
+
+func (cmd *CmdToSignIndividualCLA) toCmd() cmdToCreateCodeForIndividualSigning {
+	return cmdToCreateCodeForIndividualSigning{
+		Id:        cmd.Link.Id,
+		EmailAddr: cmd.Rep.EmailAddr,
 	}
 }
 

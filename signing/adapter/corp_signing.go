@@ -42,6 +42,10 @@ func (adapter *corpSigningAdatper) isValidaCorpEmailDomain(v string) bool {
 	return true
 }
 
+func (adapter *corpSigningAdatper) Verify(linkId, email string) (string, models.IModelError) {
+	return createCodeForSigning(linkId, email, adapter.s.Verify)
+}
+
 func (adapter *corpSigningAdatper) Sign(
 	linkId string, opt *models.CorporationSigningCreateOption,
 ) models.IModelError {
@@ -87,6 +91,7 @@ func (adapter *corpSigningAdatper) cmdToSignCorpCLA(
 	}
 
 	cmd.AllSingingInfo = opt.Info
+	cmd.VerificationCode = opt.VerificationCode
 
 	return
 }

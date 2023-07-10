@@ -4,13 +4,21 @@ import (
 	commonRepo "github.com/opensourceways/app-cla-server/common/domain/repository"
 	"github.com/opensourceways/app-cla-server/signing/domain"
 	"github.com/opensourceways/app-cla-server/signing/domain/repository"
+	"github.com/opensourceways/app-cla-server/signing/domain/vcservice"
 )
 
-func NewCorpSigningService(repo repository.CorpSigning) *corpSigningService {
-	return &corpSigningService{repo}
+func NewCorpSigningService(
+	repo repository.CorpSigning,
+	vc vcservice.VCService,
+) *corpSigningService {
+	return &corpSigningService{
+		repo: repo,
+		vc:   verificationCodeService{vc},
+	}
 }
 
 type CorpSigningService interface {
+	Verify(cmd *CmdToCreateVerificationCode) (string, error)
 	Sign(cmd *CmdToSignCorpCLA) error
 	Remove(csId string) error
 	Get(csId string) (CorpSigningInfoDTO, error)
@@ -19,10 +27,20 @@ type CorpSigningService interface {
 }
 
 type corpSigningService struct {
+	vc   verificationCodeService
 	repo repository.CorpSigning
 }
 
+func (s *corpSigningService) Verify(cmd *CmdToCreateVerificationCode) (string, error) {
+	return s.vc.newCode((*cmdToCreateCodeForCorpSigning)(cmd))
+}
+
 func (s *corpSigningService) Sign(cmd *CmdToSignCorpCLA) error {
+	cmd1 := cmd.toCmd()
+	if err := s.vc.validate(&cmd1, cmd.VerificationCode); err != nil {
+		return err
+	}
+
 	v := cmd.toCorpSigning()
 
 	err := s.repo.Add(&v)

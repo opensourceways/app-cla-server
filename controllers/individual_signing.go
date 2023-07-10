@@ -11,6 +11,24 @@ func (this *IndividualSigningController) Prepare() {
 }
 
 // @Title Post
+// @Description send verification code when signing
+// @Tags IndividualSigning
+// @Param  link_id  path  string                               true  "link id"
+// @Param  body     body  controllers.verificationCodeRequest  true  "body for verification code"
+// @Success 201 {object} controllers.respData
+// @router /:link_id [post]
+func (ctl *IndividualSigningController) SendVerificationCode() {
+	linkId := ctl.GetString(":link_id")
+
+	ctl.sendVerificationCodeWhenSigning(
+		linkId,
+		func(email string) (string, models.IModelError) {
+			return models.VCOfIndividualSigning(linkId, email)
+		},
+	)
+}
+
+// @Title Post
 // @Description sign individual cla
 // @Param	:link_id	path 	string				true		"link id"
 // @Param	:cla_lang	path 	string				true		"cla language"
@@ -43,11 +61,6 @@ func (this *IndividualSigningController) Post() {
 		return
 	}
 	info.CLALanguage = claLang
-
-	if err := (&info).Validate(linkID); err != nil {
-		this.sendModelErrorAsResp(err, action)
-		return
-	}
 
 	_, claInfo, merr := models.GetLinkCLA(linkID, claId)
 	if merr != nil {

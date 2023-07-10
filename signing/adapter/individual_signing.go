@@ -14,6 +14,10 @@ type individualSigningAdatper struct {
 	s app.IndividualSigningService
 }
 
+func (adapter *individualSigningAdatper) Verify(linkId, email string) (string, models.IModelError) {
+	return createCodeForSigning(linkId, email, adapter.s.Verify)
+}
+
 // Sign
 func (adapter *individualSigningAdatper) Sign(linkId string, opt *models.IndividualSigning) models.IModelError {
 	cmd, err := adapter.cmdToSignIndividualCLA(linkId, opt)
@@ -46,6 +50,7 @@ func (adapter *individualSigningAdatper) cmdToSignIndividualCLA(linkId string, o
 	}
 
 	cmd.AllSingingInfo = opt.Info
+	cmd.VerificationCode = opt.VerificationCode
 
 	return
 }
@@ -68,4 +73,27 @@ func (adapter *individualSigningAdatper) Check(linkId string, email string) (boo
 
 	return v, nil
 
+}
+
+func createCodeForSigning(
+	index string, email string,
+	f func(*app.CmdToCreateVerificationCode) (string, error),
+) (
+	string, models.IModelError,
+) {
+
+	e, err := dp.NewEmailAddr(email)
+	if err != nil {
+		return "", toModelError(err)
+	}
+
+	code, err := f(&app.CmdToCreateVerificationCode{
+		Id:        index,
+		EmailAddr: e,
+	})
+	if err != nil {
+		return "", toModelError(err)
+	}
+
+	return code, nil
 }

@@ -15,11 +15,11 @@ var (
 	employeeSigningAdapterInstance   employeeSigningAdapter
 	employeeManagerAdapterInstance   employeeManagerAdapter
 	corpEmailDomainAdapterInstance   corpEmailDomainAdapter
-	verificationCodeAdapterInstance  verificationCodeAdapter
 	individualSigningAdapterInstance individualSigningAdapter
 )
 
 type corpSigningAdapter interface {
+	Verify(linkId, email string) (string, IModelError)
 	Sign(linkId string, opt *CorporationSigningCreateOption) IModelError
 	Remove(string) IModelError
 	Get(csId string) (CorporationSigning, IModelError)
@@ -33,6 +33,7 @@ func RegisterCorpSigningAdapter(a corpSigningAdapter) {
 
 // employeeSigningAdapter
 type employeeSigningAdapter interface {
+	Verify(csId, email string) (string, IModelError)
 	Sign(opt *EmployeeSigning) ([]dbmodels.CorporationManagerListResult, IModelError)
 	Remove(csId, esId string) (string, IModelError)
 	Update(csId, esId string, enabled bool) (string, IModelError)
@@ -45,6 +46,7 @@ func RegisterEmployeeSigningAdapter(a employeeSigningAdapter) {
 
 // individualSigningAdapter
 type individualSigningAdapter interface {
+	Verify(linkId, email string) (string, IModelError)
 	Sign(linkId string, opt *IndividualSigning) IModelError
 	Check(linkId string, email string) (bool, IModelError)
 }
@@ -105,16 +107,6 @@ type corpPDFAdapter interface {
 
 func RegisterCorpPDFAdapter(a corpPDFAdapter) {
 	corpPDFAdapterInstance = a
-}
-
-// verificationCodeAdapter
-type verificationCodeAdapter interface {
-	CreateForSigning(linkId string, email string) (string, IModelError)
-	ValidateForSigning(linkId string, email, code string) IModelError
-}
-
-func RegisterVerificationCodeAdapter(a verificationCodeAdapter) {
-	verificationCodeAdapterInstance = a
 }
 
 // gmailAdapter

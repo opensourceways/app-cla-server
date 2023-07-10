@@ -4,30 +4,44 @@ import (
 	commonRepo "github.com/opensourceways/app-cla-server/common/domain/repository"
 	"github.com/opensourceways/app-cla-server/signing/domain"
 	"github.com/opensourceways/app-cla-server/signing/domain/repository"
+	"github.com/opensourceways/app-cla-server/signing/domain/vcservice"
 )
 
 func NewIndividualSigningService(
+	vc vcservice.VCService,
 	repo repository.IndividualSigning,
 	corpRepo repository.CorpSigning,
 ) *individualSigningService {
 	return &individualSigningService{
+		vc:       verificationCodeService{vc},
 		repo:     repo,
 		corpRepo: corpRepo,
 	}
 }
 
 type IndividualSigningService interface {
+	Verify(cmd *CmdToCreateVerificationCode) (string, error)
 	Sign(cmd *CmdToSignIndividualCLA) error
 	Check(cmd *CmdToCheckSinging) (bool, error)
 }
 
 type individualSigningService struct {
+	vc       verificationCodeService
 	repo     repository.IndividualSigning
 	corpRepo repository.CorpSigning
 }
 
+func (s *individualSigningService) Verify(cmd *CmdToCreateVerificationCode) (string, error) {
+	return s.vc.newCode((*cmdToCreateCodeForIndividualSigning)(cmd))
+}
+
 // Sign
 func (s *individualSigningService) Sign(cmd *CmdToSignIndividualCLA) error {
+	cmd1 := cmd.toCmd()
+	if err := s.vc.validate(&cmd1, cmd.VerificationCode); err != nil {
+		return err
+	}
+
 	v, err := s.corpRepo.FindCorpSummary(cmd.Link.Id, cmd.Rep.EmailAddr.Domain())
 	if err != nil {
 		return err

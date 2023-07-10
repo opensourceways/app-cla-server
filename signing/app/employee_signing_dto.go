@@ -6,10 +6,11 @@ import (
 )
 
 type CmdToSignEmployeeCLA struct {
-	CLA            domain.CLAInfo
-	Rep            domain.Representative
-	CorpSigningId  string
-	AllSingingInfo domain.AllSingingInfo
+	CLA              domain.CLAInfo
+	Rep              domain.Representative
+	CorpSigningId    string
+	AllSingingInfo   domain.AllSingingInfo
+	VerificationCode string
 }
 
 func (cmd *CmdToSignEmployeeCLA) toEmployeeSigning() domain.EmployeeSigning {
@@ -18,6 +19,13 @@ func (cmd *CmdToSignEmployeeCLA) toEmployeeSigning() domain.EmployeeSigning {
 		Rep:     cmd.Rep,
 		Date:    util.Date(),
 		AllInfo: cmd.AllSingingInfo,
+	}
+}
+
+func (cmd *CmdToSignEmployeeCLA) toCmd() cmdToCreateCodeForEmployeeSigning {
+	return cmdToCreateCodeForEmployeeSigning{
+		Id:        cmd.CorpSigningId,
+		EmailAddr: cmd.Rep.EmailAddr,
 	}
 }
 

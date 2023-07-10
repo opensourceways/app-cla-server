@@ -5,34 +5,21 @@ import (
 	"github.com/opensourceways/app-cla-server/signing/domain/vcservice"
 )
 
-type VerificationCodeService interface {
-	New(vcPurpose) (string, error)
-	Validate(vcPurpose, string) error
-}
-
-func NewVerificationCodeService(
-	vcService vcservice.VCService,
-) VerificationCodeService {
-	return &verificationCodeService{
-		vcService: vcService,
-	}
-}
-
 // verificationCodeService
 type verificationCodeService struct {
-	vcService vcservice.VCService
+	vc vcservice.VCService
 }
 
-func (s *verificationCodeService) New(cmd vcPurpose) (string, error) {
+func (s *verificationCodeService) newCode(cmd vcPurpose) (string, error) {
 	p, err := cmd.purpose()
 	if err != nil {
 		return "", err
 	}
 
-	return s.vcService.New(p)
+	return s.vc.New(p)
 }
 
-func (s *verificationCodeService) Validate(cmd vcPurpose, code string) error {
+func (s *verificationCodeService) validate(cmd vcPurpose, code string) error {
 	p, err := cmd.purpose()
 	if err != nil {
 		return err
@@ -40,5 +27,5 @@ func (s *verificationCodeService) Validate(cmd vcPurpose, code string) error {
 
 	key := domain.NewVerificationCodeKey(code, p)
 
-	return s.vcService.Verify(&key)
+	return s.vc.Verify(&key)
 }

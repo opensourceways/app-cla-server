@@ -12,14 +12,32 @@ type CorporationSigningController struct {
 	baseController
 }
 
-func (this *CorporationSigningController) Prepare() {
-	v := this.routerPattern()
-	if strings.HasSuffix(v, ":cla_hash") || strings.HasSuffix(v, ":link_id/corps/:email") {
-		this.apiPrepare("")
+func (ctl *CorporationSigningController) Prepare() {
+	v := ctl.routerPattern()
+	if strings.HasSuffix(v, ":link_id/corps/:email") || ctl.isPostRequest() {
+		ctl.apiPrepare("")
 	} else {
 		// not signing
-		this.apiPrepare(PermissionOwnerOfOrg)
+		ctl.apiPrepare(PermissionOwnerOfOrg)
 	}
+}
+
+// @Title Post
+// @Description send verification code when signing
+// @Tags CorpSigning
+// @Param  link_id  path  string                               true  "link id"
+// @Param  body     body  controllers.verificationCodeRequest  true  "body for verification code"
+// @Success 201 {object} controllers.respData
+// @router /:link_id [post]
+func (ctl *CorporationSigningController) SendVerificationCode() {
+	linkId := ctl.GetString(":link_id")
+
+	ctl.sendVerificationCodeWhenSigning(
+		linkId,
+		func(email string) (string, models.IModelError) {
+			return models.VCOfCorpSigning(linkId, email)
+		},
+	)
 }
 
 // @Title Post
@@ -39,27 +57,22 @@ func (this *CorporationSigningController) Prepare() {
 // @Failure 407 resigned:                   the signer has signed the cla
 // @Failure 500 system_error:               system error
 // @router /:link_id/:cla_lang/:cla_id [post]
-func (this *CorporationSigningController) Post() {
+func (ctl *CorporationSigningController) Post() {
 	action := "sign as corporation"
-	linkID := this.GetString(":link_id")
-	claLang := this.GetString(":cla_lang")
-	claId := this.GetString(":cla_id")
+	linkID := ctl.GetString(":link_id")
+	claLang := ctl.GetString(":cla_lang")
+	claId := ctl.GetString(":cla_id")
 
 	var info models.CorporationSigningCreateOption
-	if fr := this.fetchInputPayload(&info); fr != nil {
-		this.sendFailedResultAsResp(fr, action)
+	if fr := ctl.fetchInputPayload(&info); fr != nil {
+		ctl.sendFailedResultAsResp(fr, action)
 		return
 	}
 	info.CLALanguage = claLang
 
-	if err := info.Validate(linkID); err != nil {
-		this.sendModelErrorAsResp(err, action)
-		return
-	}
-
 	orgInfo, claInfo, merr := models.GetLinkCLA(linkID, claId)
 	if merr != nil {
-		this.sendModelErrorAsResp(merr, action)
+		ctl.sendModelErrorAsResp(merr, action)
 		return
 	}
 
@@ -68,9 +81,9 @@ func (this *CorporationSigningController) Post() {
 
 	if err := models.SignCropCLA(linkID, &info); err != nil {
 		if err.IsErrorOf(models.ErrNoLinkOrResigned) {
-			this.sendFailedResponse(400, errResigned, err, action)
+			ctl.sendFailedResponse(400, errResigned, err, action)
 		} else {
-			this.sendModelErrorAsResp(err, action)
+			ctl.sendModelErrorAsResp(err, action)
 		}
 
 		return
@@ -80,7 +93,7 @@ func (this *CorporationSigningController) Post() {
 		linkID, &orgInfo, &claInfo, &info.CorporationSigning,
 	)
 
-	this.sendSuccessResp("sign successfully")
+	ctl.sendSuccessResp("sign successfully")
 }
 
 // @Title Delete
@@ -98,27 +111,27 @@ func (this *CorporationSigningController) Post() {
 // @Failure 407 no_link:                    the link id is not exists
 // @Failure 500 system_error:               system error
 // @router /:link_id/:signing_id [delete]
-func (this *CorporationSigningController) Delete() {
+func (ctl *CorporationSigningController) Delete() {
 	action := "delete corp signing"
-	linkID := this.GetString(":link_id")
+	linkID := ctl.GetString(":link_id")
 
-	pl, fr := this.tokenPayloadBasedOnCodePlatform()
+	pl, fr := ctl.tokenPayloadBasedOnCodePlatform()
 	if fr != nil {
-		this.sendFailedResultAsResp(fr, action)
+		ctl.sendFailedResultAsResp(fr, action)
 		return
 	}
 	if fr := pl.isOwnerOfLink(linkID); fr != nil {
-		this.sendFailedResultAsResp(fr, action)
+		ctl.sendFailedResultAsResp(fr, action)
 		return
 	}
 
-	csId := this.GetString(":signing_id")
+	csId := ctl.GetString(":signing_id")
 	if err := models.RemoveCorpSigning(csId); err != nil {
-		this.sendModelErrorAsResp(err, action)
+		ctl.sendModelErrorAsResp(err, action)
 		return
 	}
 
-	this.sendSuccessResp("delete corp signing successfully")
+	ctl.sendSuccessResp("delete corp signing successfully")
 }
 
 // @Title ResendCorpSigningEmail
@@ -126,30 +139,30 @@ func (this *CorporationSigningController) Delete() {
 // @Param  link_id      path  string  true  "link id"
 // @Param  signing_id  path  string  true  "corp email"
 // @Success 201 {int} map
-// @router /:link_id/:signing_id [post]
-func (this *CorporationSigningController) ResendCorpSigningEmail() {
+// @router /:link_id/:signing_id [put]
+func (ctl *CorporationSigningController) ResendCorpSigningEmail() {
 	action := "resend corp signing email"
-	linkID := this.GetString(":link_id")
+	linkID := ctl.GetString(":link_id")
 
-	pl, fr := this.tokenPayloadBasedOnCodePlatform()
+	pl, fr := ctl.tokenPayloadBasedOnCodePlatform()
 	if fr != nil {
-		this.sendFailedResultAsResp(fr, action)
+		ctl.sendFailedResultAsResp(fr, action)
 		return
 	}
 	if fr := pl.isOwnerOfLink(linkID); fr != nil {
-		this.sendFailedResultAsResp(fr, action)
+		ctl.sendFailedResultAsResp(fr, action)
 		return
 	}
 
-	signingInfo, merr := models.GetCorpSigning(this.GetString(":signing_id"))
+	signingInfo, merr := models.GetCorpSigning(ctl.GetString(":signing_id"))
 	if merr != nil {
-		this.sendModelErrorAsResp(merr, action)
+		ctl.sendModelErrorAsResp(merr, action)
 		return
 	}
 
 	orgInfo, claInfo, merr := models.GetLinkCLA(linkID, signingInfo.CLAId)
 	if merr != nil {
-		this.sendModelErrorAsResp(merr, action)
+		ctl.sendModelErrorAsResp(merr, action)
 		return
 	}
 
@@ -157,7 +170,7 @@ func (this *CorporationSigningController) ResendCorpSigningEmail() {
 		linkID, &orgInfo, &claInfo, &signingInfo,
 	)
 
-	this.sendSuccessResp("resend email successfully")
+	ctl.sendSuccessResp("resend email successfully")
 }
 
 type corpsSigningResult struct {
@@ -178,24 +191,24 @@ type corpsSigningResult struct {
 // @Failure 406 not_yours_org:              the link doesn't belong to your community
 // @Failure 500 system_error:               system error
 // @router /:link_id [get]
-func (this *CorporationSigningController) GetAll() {
+func (ctl *CorporationSigningController) GetAll() {
 	action := "list corporation"
-	linkID := this.GetString(":link_id")
+	linkID := ctl.GetString(":link_id")
 
-	pl, fr := this.tokenPayloadBasedOnCodePlatform()
+	pl, fr := ctl.tokenPayloadBasedOnCodePlatform()
 	if fr != nil {
-		this.sendFailedResultAsResp(fr, action)
+		ctl.sendFailedResultAsResp(fr, action)
 		return
 	}
 	if fr := pl.isOwnerOfLink(linkID); fr != nil {
-		this.sendFailedResultAsResp(fr, action)
+		ctl.sendFailedResultAsResp(fr, action)
 		return
 	}
 
 	if r, merr := models.ListCorpSigning(linkID); merr != nil {
-		this.sendModelErrorAsResp(merr, action)
+		ctl.sendModelErrorAsResp(merr, action)
 	} else {
-		this.sendSuccessResp(r)
+		ctl.sendSuccessResp(r)
 	}
 }
 
@@ -212,8 +225,8 @@ func (this *CorporationSigningController) GetAll() {
 // @Failure 406 not_yours_org:              the link doesn't belong to your community
 // @Failure 500 system_error:               system error
 // @router /deleted/:link_id [get]
-func (this *CorporationSigningController) ListDeleted() {
-	this.sendSuccessResp(nil)
+func (ctl *CorporationSigningController) ListDeleted() {
+	ctl.sendSuccessResp(nil)
 }
 
 // @Title GetCorpInfo
@@ -225,15 +238,15 @@ func (this *CorporationSigningController) ListDeleted() {
 // @Failure 401 unknown_link:               unkown link id
 // @Failure 500 system_error:               system error
 // @router /:link_id/corps/:email [get]
-func (this *CorporationSigningController) GetCorpInfo() {
+func (ctl *CorporationSigningController) GetCorpInfo() {
 	action := "list corporation info"
 
 	r, merr := models.FindCorpSummary(
-		this.GetString(":link_id"), this.GetString(":email"),
+		ctl.GetString(":link_id"), ctl.GetString(":email"),
 	)
 	if merr != nil {
-		this.sendModelErrorAsResp(merr, action)
+		ctl.sendModelErrorAsResp(merr, action)
 	} else {
-		this.sendSuccessResp(r)
+		ctl.sendSuccessResp(r)
 	}
 }

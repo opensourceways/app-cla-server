@@ -9,32 +9,19 @@ import (
 	"github.com/opensourceways/app-cla-server/signing/infrastructure/emailtmpl"
 )
 
-type VerificationCodeController struct {
-	baseController
-}
-
-func (this *VerificationCodeController) Prepare() {
-	this.apiPrepare("")
-}
-
-// @Title Post
-// @Description send verification code when signing
-// @Param  link_id  path  string                               true  "link id"
-// @Param  body     body  controllers.verificationCodeRequest  true  "body for verification code"
-// @Success 201 {int} map
-// @router /:link_id [post]
-func (this *VerificationCodeController) Post() {
-	action := "create verification code"
-	linkID := this.GetString(":link_id")
+func (ctl *baseController) sendVerificationCodeWhenSigning(
+	linkID string, f func(string) (string, models.IModelError),
+) {
+	action := "send verification code when signing"
 
 	var req verificationCodeRequest
-	if fr := this.fetchInputPayload(&req); fr != nil {
-		this.sendFailedResultAsResp(fr, action)
+	if fr := ctl.fetchInputPayload(&req); fr != nil {
+		ctl.sendFailedResultAsResp(fr, action)
 		return
 	}
 
 	if err := req.validate(); err != nil {
-		this.sendFailedResultAsResp(
+		ctl.sendFailedResultAsResp(
 			newFailedApiResult(400, errParsingApiBody, err),
 			action,
 		)
@@ -42,7 +29,7 @@ func (this *VerificationCodeController) Post() {
 	}
 
 	if !emailLimiter.check(linkID, req.Email) {
-		this.sendFailedResponse(
+		ctl.sendFailedResponse(
 			http.StatusBadRequest, errTooManyRequest,
 			fmt.Errorf("too many request"), action,
 		)
@@ -52,17 +39,17 @@ func (this *VerificationCodeController) Post() {
 
 	orgInfo, merr := models.GetLink(linkID)
 	if merr != nil {
-		this.sendFailedResponse(0, "", merr, action)
+		ctl.sendFailedResponse(0, "", merr, action)
 		return
 	}
 
-	code, err := models.CreateCodeForSigning(linkID, req.Email)
+	code, err := f(req.Email)
 	if err != nil {
-		this.sendModelErrorAsResp(err, action)
+		ctl.sendModelErrorAsResp(err, action)
 		return
 	}
 
-	this.sendSuccessResp("create verification code successfully")
+	ctl.sendSuccessResp("create verification code successfully")
 
 	sendEmailToIndividual(
 		req.Email, &orgInfo,

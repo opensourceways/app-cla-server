@@ -15,8 +15,8 @@ type CmdToVerifyEmailDomain struct {
 func (cmd *CmdToVerifyEmailDomain) purpose() (dp.Purpose, error) {
 	return dp.NewPurpose(
 		fmt.Sprintf(
-			"add email domain: %s, %s",
-			cmd.CorpSigningId, cmd.EmailAddr.EmailAddr(),
+			"%s %s %s",
+			vcTypeEmailDomain, cmd.CorpSigningId, cmd.EmailAddr.EmailAddr(),
 		),
 	)
 }

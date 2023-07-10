@@ -15,6 +15,8 @@ type CorpEmailDomainService interface {
 	List(string) ([]string, error)
 }
 
+type CmdToAddEmailDomain = CmdToCreateCodeForEmailDomain
+
 type corpEmailDomainService struct {
 	repo repository.CorpSigning
 }

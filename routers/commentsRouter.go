@@ -81,7 +81,7 @@ func init() {
 
 	beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:CorpEmailDomainController"] = append(beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:CorpEmailDomainController"],
 		beego.ControllerComments{
-			Method:           "Post",
+			Method:           "Add",
 			Router:           `/`,
 			AllowHTTPMethods: []string{"post"},
 			MethodParams:     param.Make(),

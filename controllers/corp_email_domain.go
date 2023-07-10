@@ -15,8 +15,9 @@ func (ctl *CorpEmailDomainController) Prepare() {
 
 // @Title Verify
 // @Description send verification code when adding email domain
+// @Tags CorpEmailDomain
 // @Param  body  body  controllers.verificationCodeRequest  true  "body for verification code"
-// @Success 201 {int} map
+// @Success 202 {object} controllers.respData
 // @Failure 400 missing_token:      token is missing
 // @Failure 401 unknown_token:      token is unknown
 // @Failure 402 expired_token:      token is expired
@@ -74,10 +75,11 @@ func (ctl *CorpEmailDomainController) Verify() {
 	)
 }
 
-// @Title Post
+// @Title Add
 // @Description add email domain of corporation
+// @Tags CorpEmailDomain
 // @Param  body  body  models.CorpEmailDomainCreateOption  true  "body for email domain"
-// @Success 201 {int} map
+// @Success 201 {object} controllers.respData
 // @Failure 400 missing_token:              token is missing
 // @Failure 401 unknown_token:              token is unknown
 // @Failure 402 expired_token:              token is expired
@@ -90,7 +92,7 @@ func (ctl *CorpEmailDomainController) Verify() {
 // @Failure 409 no_link_or_unsigned:        no link or corp has not signed
 // @Failure 500 system_error:               system error
 // @router / [post]
-func (ctl *CorpEmailDomainController) Post() {
+func (ctl *CorpEmailDomainController) Add() {
 	action := "add email domain"
 	sendResp := ctl.newFuncForSendingFailedResp(action)
 
@@ -115,7 +117,8 @@ func (ctl *CorpEmailDomainController) Post() {
 
 // @Title GetAll
 // @Description get all the email domains
-// @Success 200 {string}
+// @Tags CorpEmailDomain
+// @Success 200 {object} controllers.respData
 // @Failure 400 missing_token:      token is missing
 // @Failure 401 unknown_token:      token is unknown
 // @Failure 402 expired_token:      token is expired

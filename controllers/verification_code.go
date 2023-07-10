@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"strings"
 
 	"github.com/opensourceways/app-cla-server/models"
 	"github.com/opensourceways/app-cla-server/signing/infrastructure/emailtmpl"
@@ -15,11 +14,7 @@ type VerificationCodeController struct {
 }
 
 func (this *VerificationCodeController) Prepare() {
-	if strings.HasSuffix(this.routerPattern(), "/:link_id/:email") {
-		this.apiPrepare("")
-	} else {
-		this.apiPrepare(PermissionCorpAdmin)
-	}
+	this.apiPrepare("")
 }
 
 // @Title Post

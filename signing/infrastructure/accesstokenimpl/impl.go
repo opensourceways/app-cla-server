@@ -5,6 +5,7 @@ import (
 
 	"github.com/google/uuid"
 
+	commonRepo "github.com/opensourceways/app-cla-server/common/domain/repository"
 	"github.com/opensourceways/app-cla-server/signing/domain"
 )
 
@@ -38,8 +39,13 @@ func (impl *accessTokenImpl) Add(value *domain.AccessToken) (string, error) {
 
 func (impl *accessTokenImpl) Find(key string) (domain.AccessToken, error) {
 	var do accessTokenDO
+
 	// note the *accessTokenDO implements interface of UnmarshalBinary
 	if err := impl.dao.Get(key, &do); err != nil {
+		if impl.dao.IsDocNotExists(err) {
+			err = commonRepo.NewErrorResourceNotFound(err)
+		}
+
 		return domain.AccessToken{}, err
 	}
 

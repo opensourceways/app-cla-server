@@ -1,6 +1,8 @@
 package app
 
 import (
+	"time"
+
 	"github.com/opensourceways/app-cla-server/signing/domain"
 	"github.com/opensourceways/app-cla-server/signing/domain/vcservice"
 )
@@ -17,6 +19,15 @@ func (s *verificationCodeService) newCode(cmd vcPurpose) (string, error) {
 	}
 
 	return s.vc.New(p)
+}
+
+func (s *verificationCodeService) newCodeIfItCan(cmd vcPurpose, interval time.Duration) (string, error) {
+	p, err := cmd.purpose()
+	if err != nil {
+		return "", err
+	}
+
+	return s.vc.NewIfItCan(p, interval)
 }
 
 func (s *verificationCodeService) validate(cmd vcPurpose, code string) error {

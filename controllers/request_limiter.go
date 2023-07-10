@@ -19,8 +19,6 @@ func Init(cfg *Config) error {
 		return err
 	}
 
-	initEmailLimiter()
-
 	config = *cfg
 
 	return nil

@@ -38,6 +38,7 @@ const (
 	ErrorCodeIndividualSigningReSigning  = "individual_signing_resigning"
 	ErrorCodeIndividualSigningCorpExists = "individual_signing_corp_exists"
 
+	ErrorCodeVerificationCodeBusy  = "verification_code_busy"
 	ErrorCodeVerificationCodeWrong = "verification_code_wrong"
 
 	ErrorCodeEmailCredentialNotFound = "email_credential_not_found"

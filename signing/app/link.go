@@ -13,8 +13,9 @@ func NewLinkService(
 	emailCredential repository.EmailCredential,
 ) *linkService {
 	return &linkService{
-		repo: repo,
-		cla:  cla,
+		repo:            repo,
+		cla:             cla,
+		emailCredential: emailCredential,
 	}
 }
 

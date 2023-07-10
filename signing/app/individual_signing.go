@@ -1,6 +1,8 @@
 package app
 
 import (
+	"time"
+
 	commonRepo "github.com/opensourceways/app-cla-server/common/domain/repository"
 	"github.com/opensourceways/app-cla-server/signing/domain"
 	"github.com/opensourceways/app-cla-server/signing/domain/repository"
@@ -11,11 +13,13 @@ func NewIndividualSigningService(
 	vc vcservice.VCService,
 	repo repository.IndividualSigning,
 	corpRepo repository.CorpSigning,
+	interval time.Duration,
 ) *individualSigningService {
 	return &individualSigningService{
 		vc:       verificationCodeService{vc},
 		repo:     repo,
 		corpRepo: corpRepo,
+		interval: interval,
 	}
 }
 
@@ -29,10 +33,11 @@ type individualSigningService struct {
 	vc       verificationCodeService
 	repo     repository.IndividualSigning
 	corpRepo repository.CorpSigning
+	interval time.Duration
 }
 
 func (s *individualSigningService) Verify(cmd *CmdToCreateVerificationCode) (string, error) {
-	return s.vc.newCode((*cmdToCreateCodeForIndividualSigning)(cmd))
+	return s.vc.newCodeIfItCan((*cmdToCreateCodeForIndividualSigning)(cmd), s.interval)
 }
 
 // Sign

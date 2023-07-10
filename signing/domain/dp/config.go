@@ -1,5 +1,7 @@
 package dp
 
+import "strings"
+
 var config Config
 
 func Init(cfg *Config) {
@@ -16,6 +18,8 @@ type Config struct {
 	SupportedLanguages           []string `json:"supported_languages"`
 	SupportedCorpCLAFields       []string `json:"supported_corp_cla_fields"`
 	SupportedIndividualCLAFields []string `json:"supported_individual_cla_fields"`
+
+	supportedLanguages map[string]string
 }
 
 func (cfg *Config) SetDefault() {
@@ -42,8 +46,19 @@ func (cfg *Config) SetDefault() {
 	}
 }
 
-func (cfg *Config) isValidLanguage(v string) bool {
-	return cfg.has(v, cfg.SupportedLanguages)
+func (cfg *Config) Validate() error {
+	v := map[string]string{}
+	for _, item := range cfg.SupportedLanguages {
+		v[strings.ToLower(item)] = item
+	}
+
+	cfg.supportedLanguages = v
+
+	return nil
+}
+
+func (cfg *Config) getLanguage(v string) string {
+	return cfg.supportedLanguages[strings.ToLower(v)]
 }
 
 func (cfg *Config) isValidCorpCLAField(v string) bool {

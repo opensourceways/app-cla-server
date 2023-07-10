@@ -122,7 +122,7 @@ func appendCorpPDFSignaturePage(pythonBin, pdfFile, sigFile, outfile string) err
 	}
 
 	// merge file
-	cmd := exec.Command(pythonBin, "./util/merge-signature.py", "append", pdfFile, sigFile, outfile)
+	cmd := exec.Command(pythonBin, "./util/merge_signature.py", "append", pdfFile, sigFile, outfile)
 	if out, err := cmd.Output(); err != nil {
 		return fmt.Errorf("append signature page of pdf failed: %s, %s", out, err.Error())
 	}
@@ -135,7 +135,7 @@ func mergeCorpPDFSignaturePage(pythonBin, pdfFile, sigFile, outfile string) erro
 	}
 
 	// merge file
-	cmd := exec.Command(pythonBin, "./util/merge-signature.py", "merge", pdfFile, sigFile, outfile)
+	cmd := exec.Command(pythonBin, "./util/merge_signature.py", "merge", pdfFile, sigFile, outfile)
 	if _, err := cmd.Output(); err != nil {
 		return fmt.Errorf("merge signature page of pdf failed: %s", err.Error())
 	}

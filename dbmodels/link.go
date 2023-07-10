@@ -1,9 +1,6 @@
 package dbmodels
 
-import (
-	"fmt"
-	"strings"
-)
+import "fmt"
 
 type LinkCreateOption struct {
 	LinkID    string `json:"link_id"`
@@ -38,42 +35,10 @@ type CLAOfLink struct {
 type OrgRepo struct {
 	Platform string `json:"platform"`
 	OrgID    string `json:"org_id"`
-	RepoID   string `json:"repo_id"`
 }
 
-func (this OrgRepo) OrgRepoID() string {
-	if this.RepoID == "" {
-		return fmt.Sprintf("%s/%s", this.Platform, this.OrgID)
-	}
-	return fmt.Sprintf("%s/%s/%s", this.Platform, this.OrgID, this.RepoID)
-}
-
-func (this OrgRepo) ProjectURL() string {
-	if this.RepoID == "" {
-		return fmt.Sprintf("https://%s.com/%s", this.Platform, this.OrgID)
-	}
-	return fmt.Sprintf("https://%s.com/%s/%s", this.Platform, this.OrgID, this.RepoID)
-}
-
-func ParseToOrgRepo(s string) OrgRepo {
-	r := OrgRepo{}
-
-	v := strings.Split(s, "/")
-	switch len(v) {
-	case 2:
-		r.Platform = v[0]
-		r.OrgID = v[1]
-		r.RepoID = ""
-	case 3:
-		r.Platform = v[0]
-		r.OrgID = v[1]
-		r.RepoID = v[2]
-	default:
-		r.Platform = s
-		r.OrgID = ""
-		r.RepoID = ""
-	}
-	return r
+func (p *OrgRepo) ProjectURL() string {
+	return fmt.Sprintf("https://%s.com/%s", p.Platform, p.OrgID)
 }
 
 type OrgInfo struct {

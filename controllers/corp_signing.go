@@ -45,10 +45,8 @@ func (ctl *CorporationSigningController) SendVerificationCode() {
 // @Description sign corporation cla
 // @Tags CorpSigning
 // @Accept json
-// @Param	:link_id	path 	string					true		"link id"
-// @Param	:cla_lang	path 	string					true		"cla language"
-// @Param	:cla_hash	path 	string					true		"the hash of cla content"
-// @Param	body		body 	models.CorporationSigningCreateOption	true		"body for signing corporation cla"
+// @Param  :link_id  path  string                                 true  "link id"
+// @Param  body      body  models.CorporationSigningCreateOption  true  "body for signing corporation cla"
 // @Success 201 {string} "sign successfully"
 // @Failure 400 missing_url_path_parameter: missing url path parameter
 // @Failure 401 error_parsing_api_body:     parse input paraemter failed

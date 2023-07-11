@@ -22,6 +22,8 @@ func (this *GmailController) Prepare() {
 
 // @Title Auth
 // @Description authorized by org email
+// @Tags Gmail
+// @Accept json
 // @router /auth [get]
 func (this *GmailController) Auth() {
 	rs := func(errCode string, reason error) {
@@ -54,6 +56,8 @@ func (this *GmailController) Auth() {
 
 // @Title Get
 // @Description get auth code url
+// @Tags Gmail
+// @Accept json
 // @router /authcodeurl [get]
 func (this *GmailController) Get() {
 	this.sendSuccessResp(map[string]string{

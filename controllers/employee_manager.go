@@ -17,6 +17,8 @@ func (this *EmployeeManagerController) Prepare() {
 
 // @Title Post
 // @Description add employee managers
+// @Tags EmployeeManager
+// @Accept json
 // @Param	body		body 	models.EmployeeManagerCreateOption	true		"body for employee manager"
 // @Success 201 {int} map
 // @router / [post]
@@ -56,6 +58,8 @@ func (this *EmployeeManagerController) Post() {
 
 // @Title Delete
 // @Description delete employee manager
+// @Tags EmployeeManager
+// @Accept json
 // @Param	body		body 	models.EmployeeManagerCreateOption	true		"body for employee manager"
 // @Success 204 {string} delete success!
 // @router / [delete]
@@ -104,6 +108,8 @@ func (this *EmployeeManagerController) Delete() {
 
 // @Title GetAll
 // @Description get all employee managers
+// @Tags EmployeeManager
+// @Accept json
 // @Success 200 {object} dbmodels.CorporationManagerListResult
 // @router / [get]
 func (this *EmployeeManagerController) GetAll() {

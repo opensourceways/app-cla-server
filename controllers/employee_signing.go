@@ -26,6 +26,7 @@ func (this *EmployeeSigningController) Prepare() {
 // @Title Post
 // @Description send verification code when signing
 // @Tags EmployeeSigning
+// @Accept json
 // @Param  link_id     path  string                               true  "link id"
 // @Param  signing_id  path  string                               true  "corp signing id"
 // @Param  body        body  controllers.verificationCodeRequest  true  "body for verification code"
@@ -42,6 +43,8 @@ func (ctl *EmployeeSigningController) SendVerificationCode() {
 
 // @Title Post
 // @Description sign employee cla
+// @Tags EmployeeSigning
+// @Accept json
 // @Param  link_id  path   string                  true    "link id"
 // @Param  body     body   models.EmployeeSigning  true    "body for employee signing"
 // @Success 201 {object} controllers.respData
@@ -96,6 +99,8 @@ func (this *EmployeeSigningController) Post() {
 
 // @Title GetAll
 // @Description get all the employees
+// @Tags EmployeeSigning
+// @Accept json
 // @Success 200 {object} dbmodels.IndividualSigningBasicInfo
 // @Failure 400 missing_token:      token is missing
 // @Failure 401 unknown_token:      token is unknown
@@ -123,6 +128,8 @@ func (this *EmployeeSigningController) GetAll() {
 
 // @Title Update
 // @Description enable/unable employee signing
+// @Tags EmployeeSigning
+// @Accept json
 // @Param  signing_id  path  string                           true  "employee signing id"
 // @Param  param       body  models.EmployeeSigningUdateInfo  true  "body of updating employee signing"
 // @Success 202 {int} map
@@ -177,6 +184,8 @@ func (this *EmployeeSigningController) Update() {
 
 // @Title Delete
 // @Description delete employee signing
+// @Tags EmployeeSigning
+// @Accept json
 // @Param  signing_id  path  string  true  "employee signing id"
 // @Success 204 {string} delete success!
 // @router /:signing_id [delete]

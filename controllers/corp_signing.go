@@ -25,6 +25,7 @@ func (ctl *CorporationSigningController) Prepare() {
 // @Title Post
 // @Description send verification code when signing
 // @Tags CorpSigning
+// @Accept json
 // @Param  link_id  path  string                               true  "link id"
 // @Param  body     body  controllers.verificationCodeRequest  true  "body for verification code"
 // @Success 201 {object} controllers.respData
@@ -42,6 +43,8 @@ func (ctl *CorporationSigningController) SendVerificationCode() {
 
 // @Title Post
 // @Description sign corporation cla
+// @Tags CorpSigning
+// @Accept json
 // @Param	:link_id	path 	string					true		"link id"
 // @Param	:cla_lang	path 	string					true		"cla language"
 // @Param	:cla_hash	path 	string					true		"the hash of cla content"
@@ -94,6 +97,8 @@ func (ctl *CorporationSigningController) Post() {
 
 // @Title Delete
 // @Description delete corp signing
+// @Tags CorpSigning
+// @Accept json
 // @Param  link_id     path  string  true  "link id"
 // @Param  signing_id  path  string  true  "corp signing id"
 // @Success 204 {string} delete success!
@@ -132,6 +137,8 @@ func (ctl *CorporationSigningController) Delete() {
 
 // @Title ResendCorpSigningEmail
 // @Description resend corp signing email
+// @Tags CorpSigning
+// @Accept json
 // @Param  link_id      path  string  true  "link id"
 // @Param  signing_id  path  string  true  "corp email"
 // @Success 201 {int} map
@@ -176,6 +183,8 @@ type corpsSigningResult struct {
 
 // @Title GetAll
 // @Description get all the corporations which have signed to a org
+// @Tags CorpSigning
+// @Accept json
 // @Param  link_id  path  string  true  "link id"
 // @Success 200 {object} models.CorporationSigningSummary
 // @Failure 400 missing_url_path_parameter: missing url path parameter
@@ -210,6 +219,8 @@ func (ctl *CorporationSigningController) GetAll() {
 
 // @Title GetAll
 // @Description get all the corporations which have been deleted
+// @Tags CorpSigning
+// @Accept json
 // @Param	:link_id	path 	string		true		"link id"
 // @Success 200 {object} dbmodels.CorporationSigningBasicInfo
 // @Failure 400 missing_url_path_parameter: missing url path parameter
@@ -227,6 +238,8 @@ func (ctl *CorporationSigningController) ListDeleted() {
 
 // @Title GetCorpInfo
 // @Description get all the corporations by email
+// @Tags CorpSigning
+// @Accept json
 // @Param  link_id  path  string  true  "link id"
 // @Param  email    path  string  true  "email"
 // @Success 200 {object} interface{}

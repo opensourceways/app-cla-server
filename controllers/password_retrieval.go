@@ -21,6 +21,8 @@ func (this *PasswordRetrievalController) Prepare() {
 
 // @Title Post
 // @Description retrieving the password by sending an email to the user
+// @Tags PasswordRetrieval
+// @Accept json
 // @Param 	link_id		path 	string				true		"link id"
 // @Param	body		body 	models.PasswordRetrievalKey	true		"body for retrieving password"
 // @Success 201 {string}
@@ -74,6 +76,8 @@ func (this *PasswordRetrievalController) Post() {
 
 // @Title Reset
 // @Description retrieve password of corporation manager by resetting it
+// @Tags PasswordRetrieval
+// @Accept json
 // @Param 	body		body 	models.PasswordRetrieval 	true 	"body of retrieving password"
 // @Success 201 {string}
 // @Failure 400 missing_url_path_parameter: missing url path parameter

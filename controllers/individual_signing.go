@@ -33,10 +33,8 @@ func (ctl *IndividualSigningController) SendVerificationCode() {
 // @Description sign individual cla
 // @Tags IndividualSigning
 // @Accept json
-// @Param	:link_id	path 	string				true		"link id"
-// @Param	:cla_lang	path 	string				true		"cla language"
-// @Param	:cla_hash	path 	string				true		"the hash of cla content"
-// @Param	body		body 	dbmodels.IndividualSigningInfo	true		"body for individual signing"
+// @Param  link_id  path   string                          true  "link id"
+// @Param  body     body   dbmodels.IndividualSigningInfo  true  "body for individual signing"
 // @Success 201 {string} "sign successfully"
 // @Failure 400 missing_url_path_parameter: missing url path parameter
 // @Failure 401 missing_token:              token is missing

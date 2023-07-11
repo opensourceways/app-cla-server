@@ -20,8 +20,8 @@ func ValidateAndRefreshAccessToken(token AccessToken) (AccessToken, []byte, IMod
 }
 
 // cla
-func AddCLAInstance(linkId string, opt *CLACreateOpt, applyTo string) IModelError {
-	return claAdapterInstance.Add(linkId, opt, applyTo)
+func AddCLAInstance(linkId string, opt *CLACreateOpt) IModelError {
+	return claAdapterInstance.Add(linkId, opt)
 }
 
 func CLAFile(linkId, claId string) string {

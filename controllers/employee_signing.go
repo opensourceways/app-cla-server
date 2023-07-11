@@ -30,7 +30,7 @@ func (this *EmployeeSigningController) Prepare() {
 // @Param  signing_id  path  string                               true  "corp signing id"
 // @Param  body        body  controllers.verificationCodeRequest  true  "body for verification code"
 // @Success 201 {object} controllers.respData
-// @router /:link_id/:signing_id [post]
+// @router /:link_id/:signing_id/code [post]
 func (ctl *EmployeeSigningController) SendVerificationCode() {
 	ctl.sendVerificationCodeWhenSigning(
 		ctl.GetString(":link_id"),
@@ -42,11 +42,9 @@ func (ctl *EmployeeSigningController) SendVerificationCode() {
 
 // @Title Post
 // @Description sign employee cla
-// @Param	:link_id	path 	string				true		"link id"
-// @Param	:cla_lang	path 	string				true		"cla language"
-// @Param	:cla_hash	path 	string				true		"the hash of cla content"
-// @Param	body		body 	models.EmployeeSigning		true		"body for individual signing"
-// @Success 201 {string} "sign successfully"
+// @Param  link_id  path   string                  true    "link id"
+// @Param  body     body   models.EmployeeSigning  true    "body for employee signing"
+// @Success 201 {object} controllers.respData
 // @Failure 400 missing_url_path_parameter: missing url path parameter
 // @Failure 401 missing_token:              token is missing
 // @Failure 402 unknown_token:              token is unknown
@@ -62,28 +60,24 @@ func (ctl *EmployeeSigningController) SendVerificationCode() {
 // @Failure 412 unmatched_cla:              the cla hash is not equal to the one of backend server
 // @Failure 413 resigned:                   the signer has signed the cla
 // @Failure 500 system_error:               system error
-// @router /:link_id/:cla_lang/:cla_id [post]
+// @router /:link_id/ [post]
 func (this *EmployeeSigningController) Post() {
 	action := "sign employeee cla"
 	linkID := this.GetString(":link_id")
-	claLang := this.GetString(":cla_lang")
-	claId := this.GetString(":cla_id")
 
 	var info models.EmployeeSigning
 	if fr := this.fetchInputPayload(&info); fr != nil {
 		this.sendFailedResultAsResp(fr, action)
 		return
 	}
-	info.CLALanguage = claLang
 
-	orgInfo, claInfo, merr := models.GetLinkCLA(linkID, claId)
+	orgInfo, claInfo, merr := models.GetLinkCLA(linkID, info.CLAId)
 	if merr != nil {
 		this.sendModelErrorAsResp(merr, action)
 		return
 	}
 
 	info.Info = getSingingInfo(info.Info, claInfo.Fields)
-	info.CLAId = claId
 
 	managers, merr := models.SignEmployeeCLA(&info)
 	if merr != nil {

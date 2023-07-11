@@ -14,6 +14,4 @@ type LinkCreateOption struct {
 
 	IndividualCLA *CLACreateOpt `json:"individual_cla"`
 	CorpCLA       *CLACreateOpt `json:"corp_cla"`
-
-	orgEmailInfo *dbmodels.OrgEmailCreateInfo `json:"-"`
 }

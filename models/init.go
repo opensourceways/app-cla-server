@@ -141,7 +141,7 @@ func RegisterAccessTokenAdapter(at accessTokenAdapter) {
 
 // claAdapter
 type claAdapter interface {
-	Add(linkId string, opt *CLACreateOpt, applyTo string) IModelError
+	Add(linkId string, opt *CLACreateOpt) IModelError
 	Remove(linkId, claId string) IModelError
 	CLALocalFilePath(linkId, claId string) string
 	List(linkId string) (dbmodels.CLAOfLink, IModelError)

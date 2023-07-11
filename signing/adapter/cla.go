@@ -78,8 +78,8 @@ func (adapter *claAdatper) CLALocalFilePath(linkId, claId string) string {
 }
 
 // Add
-func (adapter *claAdatper) Add(linkId string, opt *models.CLACreateOpt, applyTo string) models.IModelError {
-	cmd, err := adapter.cmdToAddCLA(opt, applyTo)
+func (adapter *claAdatper) Add(linkId string, opt *models.CLACreateOpt) models.IModelError {
+	cmd, err := adapter.cmdToAddCLA(opt)
 	if err != nil {
 		return toModelError(err)
 	}
@@ -91,7 +91,7 @@ func (adapter *claAdatper) Add(linkId string, opt *models.CLACreateOpt, applyTo 
 	return nil
 }
 
-func (adapter *claAdatper) cmdToAddCLA(opt *models.CLACreateOpt, applyTo string) (
+func (adapter *claAdatper) cmdToAddCLA(opt *models.CLACreateOpt) (
 	cmd app.CmdToAddCLA, err error,
 ) {
 	cmd.Text, err = util.DownloadFile(
@@ -105,7 +105,7 @@ func (adapter *claAdatper) cmdToAddCLA(opt *models.CLACreateOpt, applyTo string)
 		return
 	}
 
-	if cmd.Type, err = dp.NewCLAType(applyTo); err != nil {
+	if cmd.Type, err = dp.NewCLAType(opt.Type); err != nil {
 		return
 	}
 

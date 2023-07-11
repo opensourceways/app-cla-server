@@ -17,7 +17,7 @@ func (ctl *IndividualSigningController) Prepare() {
 // @Param  link_id  path  string                               true  "link id"
 // @Param  body     body  controllers.verificationCodeRequest  true  "body for verification code"
 // @Success 201 {object} controllers.respData
-// @router /:link_id [post]
+// @router /:link_id/code [post]
 func (ctl *IndividualSigningController) SendVerificationCode() {
 	linkId := ctl.GetString(":link_id")
 
@@ -51,28 +51,24 @@ func (ctl *IndividualSigningController) SendVerificationCode() {
 // @Failure 410 no_link:                    the link id is not exists
 // @Failure 411 go_to_sign_employee_cla:    should sign employee cla instead
 // @Failure 500 system_error:               system error
-// @router /:link_id/:cla_lang/:cla_id [post]
+// @router /:link_id/ [post]
 func (ctl *IndividualSigningController) Post() {
 	action := "sign individual cla"
 	linkID := ctl.GetString(":link_id")
-	claLang := ctl.GetString(":cla_lang")
-	claId := ctl.GetString(":cla_id")
 
 	var info models.IndividualSigning
 	if fr := ctl.fetchInputPayload(&info); fr != nil {
 		ctl.sendFailedResultAsResp(fr, action)
 		return
 	}
-	info.CLALanguage = claLang
 
-	_, claInfo, merr := models.GetLinkCLA(linkID, claId)
+	_, claInfo, merr := models.GetLinkCLA(linkID, info.CLAId)
 	if merr != nil {
 		ctl.sendModelErrorAsResp(merr, action)
 		return
 	}
 
 	info.Info = getSingingInfo(info.Info, claInfo.Fields)
-	info.CLAId = claId
 
 	if err := models.SignIndividualCLA(linkID, &info); err != nil {
 		if err.IsErrorOf(models.ErrNoLinkOrResigned) {
@@ -94,7 +90,7 @@ func (ctl *IndividualSigningController) Post() {
 // @Param  link_id  path   string  true  "link id"
 // @Param  email    query  string  true  "email of contributor"
 // @Success 200 {object} map
-// @Failure 400 no_link:      there is not link for ctl org and repo
+// @Failure 400 no_link:      there is not link for org
 // @Failure 500 system_error: system error
 // @router /:link_id [get]
 func (ctl *IndividualSigningController) Check() {

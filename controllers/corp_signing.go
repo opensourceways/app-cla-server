@@ -28,7 +28,7 @@ func (ctl *CorporationSigningController) Prepare() {
 // @Param  link_id  path  string                               true  "link id"
 // @Param  body     body  controllers.verificationCodeRequest  true  "body for verification code"
 // @Success 201 {object} controllers.respData
-// @router /:link_id [post]
+// @router /:link_id/code [post]
 func (ctl *CorporationSigningController) SendVerificationCode() {
 	linkId := ctl.GetString(":link_id")
 
@@ -56,28 +56,24 @@ func (ctl *CorporationSigningController) SendVerificationCode() {
 // @Failure 406 unmatched_cla:              the cla hash is not equal to the one of backend server
 // @Failure 407 resigned:                   the signer has signed the cla
 // @Failure 500 system_error:               system error
-// @router /:link_id/:cla_lang/:cla_id [post]
+// @router /:link_id/ [post]
 func (ctl *CorporationSigningController) Post() {
 	action := "sign as corporation"
 	linkID := ctl.GetString(":link_id")
-	claLang := ctl.GetString(":cla_lang")
-	claId := ctl.GetString(":cla_id")
 
 	var info models.CorporationSigningCreateOption
 	if fr := ctl.fetchInputPayload(&info); fr != nil {
 		ctl.sendFailedResultAsResp(fr, action)
 		return
 	}
-	info.CLALanguage = claLang
 
-	orgInfo, claInfo, merr := models.GetLinkCLA(linkID, claId)
+	orgInfo, claInfo, merr := models.GetLinkCLA(linkID, info.CLAId)
 	if merr != nil {
 		ctl.sendModelErrorAsResp(merr, action)
 		return
 	}
 
 	info.Info = getSingingInfo(info.Info, claInfo.Fields)
-	info.CLAId = claId
 
 	if err := models.SignCropCLA(linkID, &info); err != nil {
 		if err.IsErrorOf(models.ErrNoLinkOrResigned) {

@@ -3,7 +3,7 @@ package dbmodels
 type TypeSigningInfo map[string]string
 
 type CorporationSigningBasicInfo struct {
-	CLAId           string
+	CLAId           string `json:"cla_id"`
 	CLALanguage     string `json:"cla_language"`
 	AdminEmail      string `json:"admin_email"`
 	AdminName       string `json:"admin_name"`

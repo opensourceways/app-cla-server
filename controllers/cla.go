@@ -18,16 +18,16 @@ func (ctl *CLAController) Prepare() {
 	}
 }
 
-// @Title Link
-// @Description link org and cla
-// @Param	body		body 	models.OrgCLA	true		"body for org-repo content"
-// @Success 201 {int} models.OrgCLA
-// @Failure 403 body is empty
-// @router /:link_id/:apply_to [post]
+// @Title Add
+// @Description add cla
+// @Tags CLA
+// @Accept json
+// @Param  body  body  models.CLACreateOpt  true  "body for adding cla"
+// @Success 201 {object} controllers.respData
+// @router /:link_id [post]
 func (ctl *CLAController) Add() {
 	action := "add cla"
 	linkID := ctl.GetString(":link_id")
-	applyTo := ctl.GetString(":apply_to")
 
 	pl, fr := ctl.tokenPayloadBasedOnCodePlatform()
 	if fr != nil {
@@ -45,20 +45,20 @@ func (ctl *CLAController) Add() {
 		return
 	}
 
-	if err := models.AddCLAInstance(linkID, input, applyTo); err != nil {
+	if err := models.AddCLAInstance(linkID, input); err != nil {
 		ctl.sendModelErrorAsResp(err, action)
-
-		return
+	} else {
+		ctl.sendSuccessResp("add cla successfully")
 	}
-
-	ctl.sendSuccessResp("add cla successfully")
 }
 
-// @Title Delete CLA
+// @Title Delete
 // @Description delete cla
-// @Param	uid		path 	string	true		"cla id"
-// @Success 204 {string} delete success!
-// @Failure 403 uid is empty
+// @Tags CLA
+// @Accept json
+// @Param  link_id  path  string  true  "link id"
+// @Param  id       path  string  true  "cla id"
+// @Success 204 {object} controllers.respData
 // @router /:link_id/:id [delete]
 func (ctl *CLAController) Delete() {
 	action := "delete cla"
@@ -84,8 +84,12 @@ func (ctl *CLAController) Delete() {
 	ctl.sendSuccessResp("delete cla successfully")
 }
 
-// @Title Download CLA PDF
+// @Title DownloadPDF
 // @Description get cla pdf
+// @Tags CLA
+// @Accept json
+// @Param  link_id  path  string  true  "link id"
+// @Param  id       path  string  true  "cla id"
 // @Success 200
 // @router /:link_id/:id [get]
 func (ctl *CLAController) DownloadPDF() {
@@ -96,9 +100,10 @@ func (ctl *CLAController) DownloadPDF() {
 
 // @Title List
 // @Description list clas of link
-// @Param	link_id		path 	string	true		"link id"
-// @Success 200 {string} delete success!
-// @Failure 403 uid is empty
+// @Tags CLA
+// @Accept json
+// @Param  link_id  path  string  true  "link id"
+// @Success 200 {object} dbmodels.CLAOfLink
 // @router /:link_id [get]
 func (ctl *CLAController) List() {
 	action := "list cla"

@@ -13,27 +13,9 @@ type CorporationManagerCreateOption struct {
 	Password string
 }
 
-type CorporationManagerCheckInfo struct {
-	ID          string
-	Email       string
-	EmailSuffix string
-	Password    string
-	LinkID      string
-}
-
 type CorporationManagerChangePassword struct {
 	OldPassword string `json:"old_password"`
 	NewPassword string `json:"new_password"`
-}
-
-type CorporationManagerCheckResult struct {
-	Corp             string
-	Role             string
-	Name             string
-	Email            string
-	InitialPWChanged bool
-
-	OrgInfo
 }
 
 type CorporationManagerListResult struct {

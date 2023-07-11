@@ -10,11 +10,11 @@ type CLAController struct {
 	baseController
 }
 
-func (this *CLAController) Prepare() {
-	if strings.HasSuffix(this.routerPattern(), "/:hash") {
-		this.apiPrepare("")
+func (ctl *CLAController) Prepare() {
+	if ctl.isGetRequest() && strings.HasSuffix(ctl.routerPattern(), "/:link_id/:id") {
+		ctl.apiPrepare("")
 	} else {
-		this.apiPrepare(PermissionOwnerOfOrg)
+		ctl.apiPrepare(PermissionOwnerOfOrg)
 	}
 }
 
@@ -24,34 +24,34 @@ func (this *CLAController) Prepare() {
 // @Success 201 {int} models.OrgCLA
 // @Failure 403 body is empty
 // @router /:link_id/:apply_to [post]
-func (this *CLAController) Add() {
+func (ctl *CLAController) Add() {
 	action := "add cla"
-	linkID := this.GetString(":link_id")
-	applyTo := this.GetString(":apply_to")
+	linkID := ctl.GetString(":link_id")
+	applyTo := ctl.GetString(":apply_to")
 
-	pl, fr := this.tokenPayloadBasedOnCodePlatform()
+	pl, fr := ctl.tokenPayloadBasedOnCodePlatform()
 	if fr != nil {
-		this.sendFailedResultAsResp(fr, action)
+		ctl.sendFailedResultAsResp(fr, action)
 		return
 	}
 	if fr := pl.isOwnerOfLink(linkID); fr != nil {
-		this.sendFailedResultAsResp(fr, action)
+		ctl.sendFailedResultAsResp(fr, action)
 		return
 	}
 
 	input := &models.CLACreateOpt{}
-	if fr := this.fetchInputPayloadFromFormData(input); fr != nil {
-		this.sendFailedResultAsResp(fr, action)
+	if fr := ctl.fetchInputPayloadFromFormData(input); fr != nil {
+		ctl.sendFailedResultAsResp(fr, action)
 		return
 	}
 
 	if err := models.AddCLAInstance(linkID, input, applyTo); err != nil {
-		this.sendModelErrorAsResp(err, action)
+		ctl.sendModelErrorAsResp(err, action)
 
 		return
 	}
 
-	this.sendSuccessResp("add cla successfully")
+	ctl.sendSuccessResp("add cla successfully")
 }
 
 // @Title Delete CLA
@@ -60,37 +60,37 @@ func (this *CLAController) Add() {
 // @Success 204 {string} delete success!
 // @Failure 403 uid is empty
 // @router /:link_id/:id [delete]
-func (this *CLAController) Delete() {
+func (ctl *CLAController) Delete() {
 	action := "delete cla"
-	linkID := this.GetString(":link_id")
-	claId := this.GetString(":id")
+	linkID := ctl.GetString(":link_id")
+	claId := ctl.GetString(":id")
 
-	pl, fr := this.tokenPayloadBasedOnCodePlatform()
+	pl, fr := ctl.tokenPayloadBasedOnCodePlatform()
 	if fr != nil {
-		this.sendFailedResultAsResp(fr, action)
+		ctl.sendFailedResultAsResp(fr, action)
 		return
 	}
 	if fr := pl.isOwnerOfLink(linkID); fr != nil {
-		this.sendFailedResultAsResp(fr, action)
+		ctl.sendFailedResultAsResp(fr, action)
 		return
 	}
 
 	if err := models.RemoveCLAInstance(linkID, claId); err != nil {
-		this.sendModelErrorAsResp(err, action)
+		ctl.sendModelErrorAsResp(err, action)
 
 		return
 	}
 
-	this.sendSuccessResp("delete cla successfully")
+	ctl.sendSuccessResp("delete cla successfully")
 }
 
 // @Title Download CLA PDF
 // @Description get cla pdf
 // @Success 200
 // @router /:link_id/:id [get]
-func (this *CLAController) DownloadPDF() {
-	this.downloadFile(models.CLAFile(
-		this.GetString(":link_id"), this.GetString(":id"),
+func (ctl *CLAController) DownloadPDF() {
+	ctl.downloadFile(models.CLAFile(
+		ctl.GetString(":link_id"), ctl.GetString(":id"),
 	))
 }
 
@@ -100,23 +100,23 @@ func (this *CLAController) DownloadPDF() {
 // @Success 200 {string} delete success!
 // @Failure 403 uid is empty
 // @router /:link_id [get]
-func (this *CLAController) List() {
+func (ctl *CLAController) List() {
 	action := "list cla"
-	linkID := this.GetString(":link_id")
+	linkID := ctl.GetString(":link_id")
 
-	pl, fr := this.tokenPayloadBasedOnCodePlatform()
+	pl, fr := ctl.tokenPayloadBasedOnCodePlatform()
 	if fr != nil {
-		this.sendFailedResultAsResp(fr, action)
+		ctl.sendFailedResultAsResp(fr, action)
 		return
 	}
 	if fr := pl.isOwnerOfLink(linkID); fr != nil {
-		this.sendFailedResultAsResp(fr, action)
+		ctl.sendFailedResultAsResp(fr, action)
 		return
 	}
 
 	if clas, merr := models.ListCLAInstances(linkID); merr != nil {
-		this.sendModelErrorAsResp(merr, action)
+		ctl.sendModelErrorAsResp(merr, action)
 	} else {
-		this.sendSuccessResp(clas)
+		ctl.sendSuccessResp(clas)
 	}
 }

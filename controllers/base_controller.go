@@ -271,6 +271,10 @@ func (ctl *baseController) isPutRequest() bool {
 	return ctl.apiRequestMethod() == http.MethodPut
 }
 
+func (ctl *baseController) isGetRequest() bool {
+	return ctl.apiRequestMethod() == http.MethodGet
+}
+
 func (ctl *baseController) readInputFile(fileName string, maxSize int, fileType string) ([]byte, *failedApiResult) {
 	if v := ctl.Ctx.Request.ContentLength; v <= 0 || v > int64(maxSize) {
 		return nil, newFailedApiResult(400, errTooBigPDF, fmt.Errorf("big pdf file"))

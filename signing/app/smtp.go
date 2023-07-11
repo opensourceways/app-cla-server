@@ -31,7 +31,7 @@ func (s *smtpService) Verify(cmd *CmdToVerifySMTPEmail) (string, error) {
 }
 
 func (s *smtpService) Authorize(cmd *CmdToAuthorizeSMTPEmail) error {
-	if err := s.vc.validate(cmd, cmd.Code); err != nil {
+	if err := s.vc.validate(cmd, cmd.VerificationCode); err != nil {
 		return err
 	}
 

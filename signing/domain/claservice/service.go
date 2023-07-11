@@ -56,6 +56,7 @@ func (s *claService) CLALocalFilePath(index *domain.CLAIndex) string {
 
 func (s *claService) AddLink(link *domain.Link) error {
 	linkId := genLinkID(link)
+	link.Id = linkId
 
 	tempFiles := []string{}
 	clean := func() {

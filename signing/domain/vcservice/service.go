@@ -39,6 +39,8 @@ type vcService struct {
 }
 
 func (s *vcService) Verify(key *domain.VerificationCodeKey) error {
+	logs.Info("code = %s, %s", key.Code, key.Purpose.Purpose())
+
 	if !s.randomCode.IsValid(key.Code) {
 		return invalidCode
 	}

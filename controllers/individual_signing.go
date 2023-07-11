@@ -6,13 +6,14 @@ type IndividualSigningController struct {
 	baseController
 }
 
-func (this *IndividualSigningController) Prepare() {
-	this.apiPrepare("")
+func (ctl *IndividualSigningController) Prepare() {
+	ctl.apiPrepare("")
 }
 
 // @Title Post
 // @Description send verification code when signing
 // @Tags IndividualSigning
+// @Accept json
 // @Param  link_id  path  string                               true  "link id"
 // @Param  body     body  controllers.verificationCodeRequest  true  "body for verification code"
 // @Success 201 {object} controllers.respData
@@ -30,6 +31,8 @@ func (ctl *IndividualSigningController) SendVerificationCode() {
 
 // @Title Post
 // @Description sign individual cla
+// @Tags IndividualSigning
+// @Accept json
 // @Param	:link_id	path 	string				true		"link id"
 // @Param	:cla_lang	path 	string				true		"cla language"
 // @Param	:cla_hash	path 	string				true		"the hash of cla content"
@@ -49,22 +52,22 @@ func (ctl *IndividualSigningController) SendVerificationCode() {
 // @Failure 411 go_to_sign_employee_cla:    should sign employee cla instead
 // @Failure 500 system_error:               system error
 // @router /:link_id/:cla_lang/:cla_id [post]
-func (this *IndividualSigningController) Post() {
+func (ctl *IndividualSigningController) Post() {
 	action := "sign individual cla"
-	linkID := this.GetString(":link_id")
-	claLang := this.GetString(":cla_lang")
-	claId := this.GetString(":cla_id")
+	linkID := ctl.GetString(":link_id")
+	claLang := ctl.GetString(":cla_lang")
+	claId := ctl.GetString(":cla_id")
 
 	var info models.IndividualSigning
-	if fr := this.fetchInputPayload(&info); fr != nil {
-		this.sendFailedResultAsResp(fr, action)
+	if fr := ctl.fetchInputPayload(&info); fr != nil {
+		ctl.sendFailedResultAsResp(fr, action)
 		return
 	}
 	info.CLALanguage = claLang
 
 	_, claInfo, merr := models.GetLinkCLA(linkID, claId)
 	if merr != nil {
-		this.sendModelErrorAsResp(merr, action)
+		ctl.sendModelErrorAsResp(merr, action)
 		return
 	}
 
@@ -73,34 +76,36 @@ func (this *IndividualSigningController) Post() {
 
 	if err := models.SignIndividualCLA(linkID, &info); err != nil {
 		if err.IsErrorOf(models.ErrNoLinkOrResigned) {
-			this.sendFailedResponse(400, errResigned, err, action)
+			ctl.sendFailedResponse(400, errResigned, err, action)
 		} else {
-			this.sendModelErrorAsResp(err, action)
+			ctl.sendModelErrorAsResp(err, action)
 		}
 
 		return
 	}
 
-	this.sendSuccessResp("sign successfully")
+	ctl.sendSuccessResp("sign successfully")
 }
 
 // @Title Check
 // @Description check whether contributor has signed cla
+// @Tags IndividualSigning
+// @Accept json
 // @Param  link_id  path   string  true  "link id"
 // @Param  email    query  string  true  "email of contributor"
 // @Success 200 {object} map
-// @Failure 400 no_link:      there is not link for this org and repo
+// @Failure 400 no_link:      there is not link for ctl org and repo
 // @Failure 500 system_error: system error
 // @router /:link_id [get]
-func (this *IndividualSigningController) Check() {
+func (ctl *IndividualSigningController) Check() {
 	action := "check individual signing"
 
 	v, merr := models.CheckSigning(
-		this.GetString(":link_id"), this.GetString("email"),
+		ctl.GetString(":link_id"), ctl.GetString("email"),
 	)
 	if merr != nil {
-		this.sendModelErrorAsResp(merr, action)
+		ctl.sendModelErrorAsResp(merr, action)
 	} else {
-		this.sendSuccessResp(map[string]bool{"signed": v})
+		ctl.sendSuccessResp(map[string]bool{"signed": v})
 	}
 }

@@ -15,6 +15,7 @@ func (ctl *CorporationManagerController) Prepare() {
 	m := ctl.apiRequestMethod()
 
 	if m == http.MethodPost {
+		// login
 		return
 	}
 
@@ -25,7 +26,7 @@ func (ctl *CorporationManagerController) Prepare() {
 		return
 	}
 
-	// change password of manager
+	// change password of manager or logout
 	ctl.apiPrepareWithAC(
 		&accessController{Payload: &acForCorpManagerPayload{}},
 		[]string{PermissionCorpAdmin, PermissionEmployeeManager},
@@ -34,6 +35,8 @@ func (ctl *CorporationManagerController) Prepare() {
 
 // @Title Put
 // @Description add corporation administrator
+// @Tags CorpManager
+// @Accept json
 // @Param  link_id     path  string  true  "link id"
 // @Param  signing_id  path  string  true  "signing id"
 // @Success 202 {int} map
@@ -79,6 +82,8 @@ func (ctl *CorporationManagerController) Put() {
 
 // @Title Patch
 // @Description change password of corporation manager
+// @Tags CorpManager
+// @Accept json
 // @Success 204 {int} map
 // @Failure util.ErrInvalidAccountOrPw
 // @router / [patch]

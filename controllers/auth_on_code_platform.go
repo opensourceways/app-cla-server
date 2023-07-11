@@ -42,6 +42,8 @@ func (ctl *AuthController) Logout() {
 
 // @Title Callback
 // @Description callback of authentication by oauth2
+// @Tags AuthOnCodePlatform
+// @Accept json
 // @Param	:platform	path 	string		true		"gitee/github"
 // @Param	:purpose	path 	string		true		"purpose: login, sign"
 // @Failure 400 auth_failed:               authenticated on code platform failed
@@ -139,6 +141,8 @@ func (ctl *AuthController) genACPayload(platform, platformToken string) (*acForC
 
 // @Title AuthCodeURL
 // @Description get authentication code url
+// @Tags AuthOnCodePlatform
+// @Accept json
 // @Param	:platform	path 	string		true		"gitee/github"
 // @Param	:purpose	path 	string		true		"purpose: login, sign"
 // @Success 200 {object} map

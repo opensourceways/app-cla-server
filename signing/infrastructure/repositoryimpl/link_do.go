@@ -201,10 +201,16 @@ func (do *claDO) toDoc() (bson.M, error) {
 }
 
 func toCLADO(v *domain.CLA) claDO {
+	fields := make([]fieldDO, len(v.Fields))
+	for i := range v.Fields {
+		fields[i] = toFieldDO(&v.Fields[i])
+	}
+
 	return claDO{
 		Id:       v.Id,
 		URL:      v.URL.URL(),
 		Type:     v.Type.CLAType(),
+		Fields:   fields,
 		Language: v.Language.Language(),
 	}
 }

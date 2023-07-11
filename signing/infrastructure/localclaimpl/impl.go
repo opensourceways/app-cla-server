@@ -1,6 +1,7 @@
 package localclaimpl
 
 import (
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -34,7 +35,7 @@ func (impl *localCLAImpl) LocalPath(index *domain.CLAIndex) string {
 }
 
 func (impl *localCLAImpl) localPath(linkId, claId string) string {
-	return filepath.Join(impl.dir, linkId, claId+".pdf")
+	return filepath.Join(impl.dir, fmt.Sprintf("%s_%s.pdf", linkId, claId))
 }
 
 // config

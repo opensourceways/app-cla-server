@@ -10,6 +10,8 @@ func (ctl *OrganizationController) Prepare() {
 
 // @Title ListOrganizations
 // @Description list all organizations
+// @Tags Organization
+// @Accept json
 // @Success 200 {} map
 // @Failure 401 missing_token:              token is missing
 // @Failure 402 unknown_token:              token is unknown

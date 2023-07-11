@@ -16,6 +16,7 @@ func (ctl *CorpEmailDomainController) Prepare() {
 // @Title Verify
 // @Description send verification code when adding email domain
 // @Tags CorpEmailDomain
+// @Accept json
 // @Param  body  body  controllers.verificationCodeRequest  true  "body for verification code"
 // @Success 202 {object} controllers.respData
 // @Failure 400 missing_token:      token is missing
@@ -78,6 +79,7 @@ func (ctl *CorpEmailDomainController) Verify() {
 // @Title Add
 // @Description add email domain of corporation
 // @Tags CorpEmailDomain
+// @Accept json
 // @Param  body  body  models.CorpEmailDomainCreateOption  true  "body for email domain"
 // @Success 201 {object} controllers.respData
 // @Failure 400 missing_token:              token is missing
@@ -118,6 +120,7 @@ func (ctl *CorpEmailDomainController) Add() {
 // @Title GetAll
 // @Description get all the email domains
 // @Tags CorpEmailDomain
+// @Accept json
 // @Success 200 {object} controllers.respData
 // @Failure 400 missing_token:      token is missing
 // @Failure 401 unknown_token:      token is unknown

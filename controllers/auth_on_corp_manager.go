@@ -14,6 +14,8 @@ type corpAuthInfo struct {
 
 // @Title logout
 // @Description corporation manager logout
+// @Tags CorpManager
+// @Accept json
 // @Success 202 {int} controllers.corpAuthInfo
 // @Failure util.ErrNoCLABindingDoc	"no cla binding applied to corporation"
 // @router /auth [put]
@@ -36,7 +38,9 @@ func (ctl *CorporationManagerController) Logout() {
 
 // @Title authenticate corporation manager
 // @Description authenticate corporation manager
-// @Param	body		body 	models.CorporationManagerAuthentication	true		"body for corporation manager info"
+// @Tags CorpManager
+// @Accept json
+// @Param  body  body  models.CorporationManagerAuthentication  true  "body for corporation manager info"
 // @Success 201 {int} controllers.corpAuthInfo
 // @Failure util.ErrNoCLABindingDoc	"no cla binding applied to corporation"
 // @router /auth [post]

@@ -21,6 +21,7 @@ func (ctl *LinkController) Prepare() {
 // @Title Link
 // @Description create a link(cla application)
 // @Tags Link
+// @Accept json
 // @Param  body  body  models.LinkCreateOption  true  "body for creating link"
 // @Success 201 {object} controllers.respData
 // @router / [post]
@@ -55,6 +56,8 @@ func (ctl *LinkController) Link() {
 
 // @Title Unlink
 // @Description unlink cla
+// @Tags Link
+// @Accept json
 // @Param	uid		path 	string	true		"The uid of binding"
 // @Success 204 {string} delete success!
 // @Failure 403 uid is empty
@@ -85,6 +88,8 @@ func (ctl *LinkController) Unlink() {
 
 // @Title ListLinks
 // @Description list all links
+// @Tags Link
+// @Accept json
 // @Success 200 {object} dbmodels.LinkInfo
 // @Failure 401 missing_token:              token is missing
 // @Failure 402 unknown_token:              token is unknown
@@ -110,6 +115,8 @@ func (ctl *LinkController) ListLinks() {
 
 // @Title GetCLAForSigning
 // @Description get signing page info
+// @Tags Link
+// @Accept json
 // @Param	:link_id	path 	string				true		"link id"
 // @Param	:apply_to	path 	string				true		"apply to"
 // @Success 201 {int} map
@@ -131,6 +138,8 @@ func (ctl *LinkController) GetCLAForSigning() {
 
 // @Title UpdateLinkEmail
 // @Description update link email
+// @Tags Link
+// @Accept json
 // @Param  :link_id  path  string  true	 "link id"
 // @router /update/:link_id [post]
 func (ctl *LinkController) UpdateLinkEmail() {

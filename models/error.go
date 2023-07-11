@@ -1,11 +1,5 @@
 package models
 
-import (
-	"fmt"
-
-	"github.com/opensourceways/app-cla-server/dbmodels"
-)
-
 type ModelErrCode = string
 
 var NewModelError = newModelError
@@ -62,31 +56,6 @@ type IModelError interface {
 	Error() string
 	IsErrorOf(ModelErrCode) bool
 	ErrCode() ModelErrCode
-}
-
-func parseDBError(err dbmodels.IDBError) IModelError {
-	if err == nil {
-		return nil
-	}
-
-	var e error
-	e = err
-
-	var code ModelErrCode
-
-	switch err.ErrCode() {
-	case dbmodels.ErrMarshalDataFaield:
-		code = ErrSystemError
-
-	case dbmodels.ErrSystemError:
-		code = ErrSystemError
-
-	default:
-		code = ErrUnknownDBError
-		e = fmt.Errorf("db code:%s, err:%s", err.ErrCode(), err.Error())
-	}
-
-	return newModelError(code, e)
 }
 
 type modelError struct {

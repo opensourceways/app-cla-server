@@ -42,8 +42,10 @@ func (ctl *AuthController) Logout() {
 
 // @Title Callback
 // @Description callback of authentication by oauth2
-// @Param	:platform	path 	string		true		"gitee/github"
-// @Param	:purpose	path 	string		true		"purpose: login, sign"
+// @Tags AuthOnCodePlatform
+// @Accept json
+// @Param  platform  path   string  true  "gitee/github"
+// @Param  purpose   path   string  true  "purpose: login"
 // @Failure 400 auth_failed:               authenticated on code platform failed
 // @Failure 401 unsupported_code_platform: unsupported code platform
 // @Failure 402 refuse_to_authorize_email: the user refused to access his/her email
@@ -139,9 +141,11 @@ func (ctl *AuthController) genACPayload(platform, platformToken string) (*acForC
 
 // @Title AuthCodeURL
 // @Description get authentication code url
-// @Param	:platform	path 	string		true		"gitee/github"
-// @Param	:purpose	path 	string		true		"purpose: login, sign"
-// @Success 200 {object} map
+// @Tags AuthOnCodePlatform
+// @Accept json
+// @Param  platform  path  string  true  "gitee/github"
+// @Param  purpose   path  string  true  "purpose: login"
+// @Success 200 {object} controllers.authCodeURL
 // @Failure 400 missing_url_path_parameter: missing url path parameter
 // @Failure 401 unsupported_code_platform:  unsupported code platform
 // @Failure 402 unkown_purpose_for_auth:    unknown purpose parameter
@@ -161,9 +165,13 @@ func (ctl *AuthController) AuthCodeURL() {
 		return
 	}
 
-	ctl.sendSuccessResp(map[string]string{
-		"url": cp.GetAuthCodeURL(authURLState),
+	ctl.sendSuccessResp(authCodeURL{
+		cp.GetAuthCodeURL(authURLState),
 	})
+}
+
+type authCodeURL struct {
+	URL string `json:"url"`
 }
 
 type acForCodePlatformPayload struct {

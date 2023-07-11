@@ -59,6 +59,8 @@ func (this *CorporationPDFController) downloadCorpPDF(csId string) *failedApiRes
 
 // @Title Upload
 // @Description upload pdf of corporation signing
+// @Tags CorpPDF
+// @Accept json
 // @Param  link_id     path  string  true  "link id"
 // @Param  signing_id  path  string  true  "signing id"
 // @Success 204 {int} map
@@ -96,6 +98,8 @@ func (this *CorporationPDFController) Upload() {
 
 // @Title Download
 // @Description download pdf of corporation signing
+// @Tags CorpPDF
+// @Accept json
 // @Param  link_id     path  string  true  "link id"
 // @Param  signing_id  path  string  true  "signing id"
 // @Success 200 {int} map
@@ -122,6 +126,8 @@ func (this *CorporationPDFController) Download() {
 
 // @Title Review
 // @Description corp administrator review pdf of corporation signing
+// @Tags CorpPDF
+// @Accept json
 // @Success 200 {int} map
 // @router / [get]
 func (this *CorporationPDFController) Review() {

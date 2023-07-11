@@ -21,13 +21,6 @@ type Field struct {
 	Required    bool   `json:"required"`
 }
 
-type CLAListOptions struct {
-	Submitter string `json:"submitter"`
-	Name      string `json:"name"`
-	Language  string `json:"language"`
-	ApplyTo   string `json:"apply_to"`
-}
-
 type CLAData struct {
 	URL      string  `json:"url"`
 	Language string  `json:"language"`
@@ -36,12 +29,8 @@ type CLAData struct {
 
 type CLADetail struct {
 	CLAData
-	CLAHash string `json:"cla_hash"`
-	Text    string `json:"text"`
-}
 
-type CLACreateOption struct {
-	CLADetail
+	CLAId string `json:"cla_id"`
 }
 
 type CLAInfo struct {
@@ -49,11 +38,4 @@ type CLAInfo struct {
 	CLAFile string
 	CLALang string
 	Fields  []Field
-}
-
-type CLAPDFIndex struct {
-	LinkID string
-	Apply  string
-	Lang   string
-	Hash   string
 }

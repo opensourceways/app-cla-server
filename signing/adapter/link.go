@@ -93,7 +93,7 @@ func (adapter *linkAdatper) ListCLAs(linkId, applyTo string) ([]dbmodels.CLADeta
 		item := &v[i]
 
 		detail := &r[i]
-		detail.CLAHash = item.Id
+		detail.CLAId = item.Id
 		detail.Language = item.Language
 		detail.Fields = adapter.toFields(item.Fileds)
 	}
@@ -181,7 +181,9 @@ func (adapter *linkAdatper) cmdToAddLink(submitter string, opt *models.LinkCreat
 	}
 
 	if opt.IndividualCLA != nil {
-		v, err1 := adapter.cla.cmdToAddCLA(opt.IndividualCLA, dbmodels.ApplyToIndividual)
+		opt.IndividualCLA.Type = dbmodels.ApplyToIndividual
+
+		v, err1 := adapter.cla.cmdToAddCLA(opt.IndividualCLA)
 		if err1 != nil {
 			err = err1
 
@@ -192,7 +194,9 @@ func (adapter *linkAdatper) cmdToAddLink(submitter string, opt *models.LinkCreat
 	}
 
 	if opt.CorpCLA != nil {
-		v, err1 := adapter.cla.cmdToAddCLA(opt.CorpCLA, dbmodels.ApplyToCorporation)
+		opt.CorpCLA.Type = dbmodels.ApplyToCorporation
+
+		v, err1 := adapter.cla.cmdToAddCLA(opt.CorpCLA)
 		if err1 != nil {
 			err = err1
 

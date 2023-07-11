@@ -6,11 +6,9 @@ type CLAInfo = dbmodels.CLAInfo
 
 type CLAField = dbmodels.Field
 
-type CLACreateOpt struct {
-	dbmodels.CLAData
-
-	hash    string
-	content []byte `json:"-"`
+type CLACreateOpt = struct {
+	URL      string     `json:"url"`
+	Type     string     `json:"type"`
+	Fields   []CLAField `json:"fields"`
+	Language string     `json:"language"`
 }
-
-type CLAPDFIndex = dbmodels.CLAPDFIndex

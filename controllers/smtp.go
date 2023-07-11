@@ -17,6 +17,7 @@ func (ctl *SMTPController) Prepare() {
 // @Title Verify
 // @Description verify the email
 // @Tags SMTP
+// @Accept json
 // @Param  body  body  models.EmailAuthorizationReq  true  "body for verifying the email"
 // @Success 201 {object} controllers.respData
 // @router /verify [post]
@@ -59,6 +60,7 @@ func (ctl *SMTPController) Verify() {
 // @Title Authorize
 // @Description authorize the email
 // @Tags SMTP
+// @Accept json
 // @Param  body  body  models.EmailAuthorization  true  "body for authorizing the email"
 // @Success 201 {object} controllers.respData
 // @router /authorize [post]

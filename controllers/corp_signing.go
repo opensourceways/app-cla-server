@@ -3,7 +3,6 @@ package controllers
 import (
 	"strings"
 
-	"github.com/opensourceways/app-cla-server/dbmodels"
 	"github.com/opensourceways/app-cla-server/models"
 	"github.com/opensourceways/app-cla-server/worker"
 )
@@ -22,7 +21,7 @@ func (ctl *CorporationSigningController) Prepare() {
 	}
 }
 
-// @Title Post
+// @Title SendVerificationCode
 // @Description send verification code when signing
 // @Tags CorpSigning
 // @Accept json
@@ -41,13 +40,13 @@ func (ctl *CorporationSigningController) SendVerificationCode() {
 	)
 }
 
-// @Title Post
+// @Title Sign
 // @Description sign corporation cla
 // @Tags CorpSigning
 // @Accept json
-// @Param  :link_id  path  string                                 true  "link id"
-// @Param  body      body  models.CorporationSigningCreateOption  true  "body for signing corporation cla"
-// @Success 201 {string} "sign successfully"
+// @Param  link_id  path  string                                 true  "link id"
+// @Param  body     body  models.CorporationSigningCreateOption  true  "body for signing corporation cla"
+// @Success 201 {object} controllers.respData
 // @Failure 400 missing_url_path_parameter: missing url path parameter
 // @Failure 401 error_parsing_api_body:     parse input paraemter failed
 // @Failure 402 expired_verification_code:  the verification code is expired
@@ -58,7 +57,7 @@ func (ctl *CorporationSigningController) SendVerificationCode() {
 // @Failure 407 resigned:                   the signer has signed the cla
 // @Failure 500 system_error:               system error
 // @router /:link_id/ [post]
-func (ctl *CorporationSigningController) Post() {
+func (ctl *CorporationSigningController) Sign() {
 	action := "sign as corporation"
 	linkID := ctl.GetString(":link_id")
 
@@ -86,8 +85,10 @@ func (ctl *CorporationSigningController) Post() {
 		return
 	}
 
+	v := info.ToCorporationSigning()
+
 	worker.GetEmailWorker().GenCLAPDFForCorporationAndSendIt(
-		linkID, &orgInfo, &claInfo, &info.CorporationSigning,
+		linkID, &orgInfo, &claInfo, &v,
 	)
 
 	ctl.sendSuccessResp("sign successfully")
@@ -99,7 +100,7 @@ func (ctl *CorporationSigningController) Post() {
 // @Accept json
 // @Param  link_id     path  string  true  "link id"
 // @Param  signing_id  path  string  true  "corp signing id"
-// @Success 204 {string} delete success!
+// @Success 204 {object} controllers.respData
 // @Failure 400 missing_url_path_parameter: missing url path parameter
 // @Failure 401 missing_token:              token is missing
 // @Failure 402 unknown_token:              token is unknown
@@ -127,10 +128,9 @@ func (ctl *CorporationSigningController) Delete() {
 	csId := ctl.GetString(":signing_id")
 	if err := models.RemoveCorpSigning(csId); err != nil {
 		ctl.sendModelErrorAsResp(err, action)
-		return
+	} else {
+		ctl.sendSuccessResp("delete corp signing successfully")
 	}
-
-	ctl.sendSuccessResp("delete corp signing successfully")
 }
 
 // @Title ResendCorpSigningEmail
@@ -139,7 +139,7 @@ func (ctl *CorporationSigningController) Delete() {
 // @Accept json
 // @Param  link_id      path  string  true  "link id"
 // @Param  signing_id  path  string  true  "corp email"
-// @Success 201 {int} map
+// @Success 202 {object} controllers.respData
 // @router /:link_id/:signing_id [put]
 func (ctl *CorporationSigningController) ResendCorpSigningEmail() {
 	action := "resend corp signing email"
@@ -174,13 +174,8 @@ func (ctl *CorporationSigningController) ResendCorpSigningEmail() {
 	ctl.sendSuccessResp("resend email successfully")
 }
 
-type corpsSigningResult struct {
-	*dbmodels.CorporationSigningSummary
-	PDFUploaded bool `json:"pdf_uploaded"`
-}
-
 // @Title GetAll
-// @Description get all the corporations which have signed to a org
+// @Description get all the corporations
 // @Tags CorpSigning
 // @Accept json
 // @Param  link_id  path  string  true  "link id"
@@ -219,8 +214,8 @@ func (ctl *CorporationSigningController) GetAll() {
 // @Description get all the corporations which have been deleted
 // @Tags CorpSigning
 // @Accept json
-// @Param	:link_id	path 	string		true		"link id"
-// @Success 200 {object} dbmodels.CorporationSigningBasicInfo
+// @Param  link_id  path  string  true  "link id"
+// @Success 200 {object} models.CorporationSigningBasicInfo
 // @Failure 400 missing_url_path_parameter: missing url path parameter
 // @Failure 401 missing_token:              token is missing
 // @Failure 402 unknown_token:              token is unknown
@@ -240,7 +235,7 @@ func (ctl *CorporationSigningController) ListDeleted() {
 // @Accept json
 // @Param  link_id  path  string  true  "link id"
 // @Param  email    path  string  true  "email"
-// @Success 200 {object} interface{}
+// @Success 200 {object} app.CorpSummaryDTO
 // @Failure 400 missing_url_path_parameter: missing url path parameter
 // @Failure 401 unknown_link:               unkown link id
 // @Failure 500 system_error:               system error

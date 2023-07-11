@@ -11,22 +11,22 @@ type EmployeeManagerController struct {
 	baseController
 }
 
-func (this *EmployeeManagerController) Prepare() {
-	this.apiPrepare(PermissionCorpAdmin)
+func (ctl *EmployeeManagerController) Prepare() {
+	ctl.apiPrepare(PermissionCorpAdmin)
 }
 
 // @Title Post
 // @Description add employee managers
 // @Tags EmployeeManager
 // @Accept json
-// @Param	body		body 	models.EmployeeManagerCreateOption	true		"body for employee manager"
-// @Success 201 {int} map
+// @Param  body  body  models.EmployeeManagerCreateOption  true  "body for employee manager"
+// @Success 201 {object} controllers.respData
 // @router / [post]
-func (this *EmployeeManagerController) Post() {
+func (ctl *EmployeeManagerController) Post() {
 	action := "add employee managers"
-	sendResp := this.newFuncForSendingFailedResp(action)
+	sendResp := ctl.newFuncForSendingFailedResp(action)
 
-	pl, fr := this.tokenPayloadBasedOnCorpManager()
+	pl, fr := ctl.tokenPayloadBasedOnCorpManager()
 	if fr != nil {
 		sendResp(fr)
 		return
@@ -34,24 +34,24 @@ func (this *EmployeeManagerController) Post() {
 
 	orgInfo, merr := models.GetLink(pl.LinkID)
 	if merr != nil {
-		this.sendModelErrorAsResp(merr, action)
+		ctl.sendModelErrorAsResp(merr, action)
 
 		return
 	}
 
 	info := &models.EmployeeManagerCreateOption{}
-	if fr := this.fetchInputPayload(info); fr != nil {
+	if fr := ctl.fetchInputPayload(info); fr != nil {
 		sendResp(fr)
 		return
 	}
 
 	added, merr := models.AddEmployeeManager(pl.SigningId, info)
 	if merr != nil {
-		this.sendModelErrorAsResp(merr, action)
+		ctl.sendModelErrorAsResp(merr, action)
 		return
 	}
 
-	this.sendSuccessResp(action + " successfully")
+	ctl.sendSuccessResp(action + " successfully")
 
 	notifyCorpManagerWhenAdding(&orgInfo, added)
 }
@@ -60,14 +60,14 @@ func (this *EmployeeManagerController) Post() {
 // @Description delete employee manager
 // @Tags EmployeeManager
 // @Accept json
-// @Param	body		body 	models.EmployeeManagerCreateOption	true		"body for employee manager"
-// @Success 204 {string} delete success!
+// @Param  body  body  models.EmployeeManagerDeleteOption  true  "body for employee manager"
+// @Success 204 {object} controllers.respData
 // @router / [delete]
-func (this *EmployeeManagerController) Delete() {
+func (ctl *EmployeeManagerController) Delete() {
 	action := "delete employee managers"
-	sendResp := this.newFuncForSendingFailedResp(action)
+	sendResp := ctl.newFuncForSendingFailedResp(action)
 
-	pl, fr := this.tokenPayloadBasedOnCorpManager()
+	pl, fr := ctl.tokenPayloadBasedOnCorpManager()
 	if fr != nil {
 		sendResp(fr)
 		return
@@ -75,24 +75,24 @@ func (this *EmployeeManagerController) Delete() {
 
 	orgInfo, merr := models.GetLink(pl.LinkID)
 	if merr != nil {
-		this.sendModelErrorAsResp(merr, action)
+		ctl.sendModelErrorAsResp(merr, action)
 
 		return
 	}
 
-	info := &models.EmployeeManagerCreateOption{}
-	if fr := this.fetchInputPayload(info); fr != nil {
+	info := &models.EmployeeManagerDeleteOption{}
+	if fr := ctl.fetchInputPayload(info); fr != nil {
 		sendResp(fr)
 		return
 	}
 
 	deleted, merr := models.RemoveEmployeeManager(pl.SigningId, info)
 	if merr != nil {
-		this.sendModelErrorAsResp(merr, action)
+		ctl.sendModelErrorAsResp(merr, action)
 		return
 	}
 
-	this.sendSuccessResp(action + "successfully")
+	ctl.sendSuccessResp(action + "successfully")
 
 	subject := fmt.Sprintf("Revoking the authorization on project of \"%s\"", orgInfo.OrgAlias)
 
@@ -110,12 +110,12 @@ func (this *EmployeeManagerController) Delete() {
 // @Description get all employee managers
 // @Tags EmployeeManager
 // @Accept json
-// @Success 200 {object} dbmodels.CorporationManagerListResult
+// @Success 200 {object} models.CorporationManagerListResult
 // @router / [get]
-func (this *EmployeeManagerController) GetAll() {
-	sendResp := this.newFuncForSendingFailedResp("list employee managers")
+func (ctl *EmployeeManagerController) GetAll() {
+	sendResp := ctl.newFuncForSendingFailedResp("list employee managers")
 
-	pl, fr := this.tokenPayloadBasedOnCorpManager()
+	pl, fr := ctl.tokenPayloadBasedOnCorpManager()
 	if fr != nil {
 		sendResp(fr)
 		return
@@ -123,7 +123,7 @@ func (this *EmployeeManagerController) GetAll() {
 
 	r, err := models.ListEmployeeManagers(pl.SigningId)
 	if err == nil {
-		this.sendSuccessResp(r)
+		ctl.sendSuccessResp(r)
 	} else {
 		sendResp(parseModelError(err))
 	}

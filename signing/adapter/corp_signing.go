@@ -4,7 +4,6 @@ import (
 	"errors"
 	"strings"
 
-	"github.com/opensourceways/app-cla-server/dbmodels"
 	"github.com/opensourceways/app-cla-server/models"
 	"github.com/opensourceways/app-cla-server/signing/app"
 	"github.com/opensourceways/app-cla-server/signing/domain/dp"
@@ -115,7 +114,7 @@ func (adapter *corpSigningAdatper) Get(csId string) (
 	}
 
 	return models.CorporationSigning{
-		CorporationSigningBasicInfo: dbmodels.CorporationSigningBasicInfo{
+		CorporationSigningBasicInfo: models.CorporationSigningBasicInfo{
 			Date:            item.Date,
 			AdminName:       item.RepName,
 			AdminEmail:      item.RepEmail,
@@ -141,7 +140,7 @@ func (adapter *corpSigningAdatper) List(linkId string) (
 		item := &v[i]
 
 		r[i] = models.CorporationSigningSummary{
-			CorporationSigningBasicInfo: dbmodels.CorporationSigningBasicInfo{
+			CorporationSigningBasicInfo: models.CorporationSigningBasicInfo{
 				Date:            item.Date,
 				AdminName:       item.RepName,
 				AdminEmail:      item.RepEmail,

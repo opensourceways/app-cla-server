@@ -1,7 +1,5 @@
 package models
 
-import "github.com/opensourceways/app-cla-server/dbmodels"
-
 type AccessToken struct {
 	Id   string
 	CSRF string
@@ -28,7 +26,7 @@ func CLAFile(linkId, claId string) string {
 	return claAdapterInstance.CLALocalFilePath(linkId, claId)
 }
 
-func ListCLAInstances(linkId string) (dbmodels.CLAOfLink, IModelError) {
+func ListCLAInstances(linkId string) (CLAOfLink, IModelError) {
 	return claAdapterInstance.List(linkId)
 }
 
@@ -46,19 +44,19 @@ func RemoveLink(linkId string) IModelError {
 	return linkAdapterInstance.Remove(linkId)
 }
 
-func ListLink(platform string, orgs []string) ([]dbmodels.LinkInfo, IModelError) {
+func ListLink(platform string, orgs []string) ([]LinkInfo, IModelError) {
 	return linkAdapterInstance.List(platform, orgs)
 }
 
-func GetLinkCLA(linkId, claId string) (dbmodels.OrgInfo, dbmodels.CLAInfo, IModelError) {
+func GetLinkCLA(linkId, claId string) (OrgInfo, CLAInfo, IModelError) {
 	return linkAdapterInstance.GetLinkCLA(linkId, claId)
 }
 
-func ListCLAs(linkId, applyTo string) ([]dbmodels.CLADetail, IModelError) {
+func ListCLAs(linkId, applyTo string) ([]CLADetail, IModelError) {
 	return linkAdapterInstance.ListCLAs(linkId, applyTo)
 }
 
-func GetLink(linkId string) (dbmodels.OrgInfo, IModelError) {
+func GetLink(linkId string) (OrgInfo, IModelError) {
 	return linkAdapterInstance.GetLink(linkId)
 }
 
@@ -104,7 +102,7 @@ func VCOfEmployeeSigning(csId, email string) (string, IModelError) {
 	return employeeSigningAdapterInstance.Verify(csId, email)
 }
 
-func SignEmployeeCLA(opt *EmployeeSigning) ([]dbmodels.CorporationManagerListResult, IModelError) {
+func SignEmployeeCLA(opt *EmployeeSigning) ([]CorporationManagerListResult, IModelError) {
 	return employeeSigningAdapterInstance.Sign(opt)
 }
 
@@ -112,7 +110,7 @@ func UpdateEmployeeSigning(csId, esId string, enabled bool) (string, IModelError
 	return employeeSigningAdapterInstance.Update(csId, esId, enabled)
 }
 
-func ListEmployeeSignings(csId string) ([]dbmodels.IndividualSigningBasicInfo, IModelError) {
+func ListEmployeeSignings(csId string) ([]IndividualSigningBasicInfo, IModelError) {
 	return employeeSigningAdapterInstance.List(csId)
 }
 
@@ -122,18 +120,18 @@ func RemoveEmployeeSigning(csId, esId string) (string, IModelError) {
 
 // employee manager
 
-func ListEmployeeManagers(csId string) ([]dbmodels.CorporationManagerListResult, IModelError) {
+func ListEmployeeManagers(csId string) ([]CorporationManagerListResult, IModelError) {
 	return employeeManagerAdapterInstance.List(csId)
 }
 
 func AddEmployeeManager(csId string, opt *EmployeeManagerCreateOption) (
-	[]dbmodels.CorporationManagerCreateOption, IModelError,
+	[]CorporationManagerCreateOption, IModelError,
 ) {
 	return employeeManagerAdapterInstance.Add(csId, opt)
 }
 
-func RemoveEmployeeManager(csId string, opt *EmployeeManagerCreateOption) (
-	[]dbmodels.CorporationManagerCreateOption, IModelError,
+func RemoveEmployeeManager(csId string, opt *EmployeeManagerDeleteOption) (
+	[]CorporationManagerCreateOption, IModelError,
 ) {
 	return employeeManagerAdapterInstance.Remove(csId, opt)
 }
@@ -166,7 +164,7 @@ func ListCorpEmailDomains(csId string) ([]string, IModelError) {
 }
 
 // corp admin
-func CreateCorporationAdministratorByAdapter(csId string) (dbmodels.CorporationManagerCreateOption, IModelError) {
+func CreateCorporationAdministratorByAdapter(csId string) (CorporationManagerCreateOption, IModelError) {
 	return corpAdminAdatperInstance.Add(csId)
 }
 
@@ -180,7 +178,7 @@ func CorpManagerLogout(userId string) {
 	userAdapterInstance.Logout(userId)
 }
 
-func CorpManagerLogin(opt *CorporationManagerAuthentication) (CorpManagerLoginInfo, IModelError) {
+func CorpManagerLogin(opt *CorporationManagerLoginInfo) (CorpManagerLoginInfo, IModelError) {
 	return userAdapterInstance.Login(opt)
 }
 

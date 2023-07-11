@@ -1,26 +1,30 @@
 package models
 
-import (
-	"fmt"
+import "fmt"
 
-	"github.com/opensourceways/app-cla-server/dbmodels"
+const (
+	RoleAdmin   = "admin"
+	RoleManager = "manager"
 )
 
-type CorporationManagerAuthentication struct {
+type CorporationManagerLoginInfo struct {
 	User     string `json:"user"`
-	Password string `json:"password"`
 	LinkID   string `json:"link_id"`
+	Password string `json:"password"`
 }
 
-func (this CorporationManagerAuthentication) Validate() IModelError {
-	if this.LinkID == "" || this.Password == "" || this.User == "" {
+func (info *CorporationManagerLoginInfo) Validate() IModelError {
+	if info.LinkID == "" || info.Password == "" || info.User == "" {
 		return newModelError(ErrEmptyPayload, fmt.Errorf("necessary parameters is empty"))
 	}
 
 	return nil
 }
 
-type CorporationManagerChangePassword dbmodels.CorporationManagerChangePassword
+type CorporationManagerChangePassword struct {
+	OldPassword string `json:"old_password"`
+	NewPassword string `json:"new_password"`
+}
 
 type CorpManagerLoginInfo struct {
 	Role             string
@@ -29,4 +33,19 @@ type CorpManagerLoginInfo struct {
 	CorpName         string
 	SigningId        string
 	InitialPWChanged bool
+}
+
+type CorporationManagerCreateOption struct {
+	ID       string
+	Name     string
+	Role     string
+	Email    string
+	Password string
+}
+
+type CorporationManagerListResult struct {
+	ID    string `json:"id"`
+	Name  string `json:"name"`
+	Email string `json:"email"`
+	Role  string `json:"role"`
 }

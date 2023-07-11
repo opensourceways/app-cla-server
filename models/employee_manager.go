@@ -9,3 +9,11 @@ type EmployeeManager struct {
 	Email string `json:"email"`
 	Name  string `json:"name"`
 }
+
+type EmployeeManagerDeleteOption struct {
+	Managers []EmployeeManagerId `json:"managers"`
+}
+
+type EmployeeManagerId struct {
+	ID string `json:"id"`
+}

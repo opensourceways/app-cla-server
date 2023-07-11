@@ -1,7 +1,6 @@
 package adapter
 
 import (
-	"github.com/opensourceways/app-cla-server/dbmodels"
 	"github.com/opensourceways/app-cla-server/models"
 	"github.com/opensourceways/app-cla-server/signing/app"
 	"github.com/opensourceways/app-cla-server/signing/domain/dp"
@@ -21,7 +20,7 @@ func (adapter *employeeSigningAdatper) Verify(csId, email string) (string, model
 
 // Sign
 func (adapter *employeeSigningAdatper) Sign(opt *models.EmployeeSigning) (
-	[]dbmodels.CorporationManagerListResult, models.IModelError,
+	[]models.CorporationManagerListResult, models.IModelError,
 ) {
 	cmd, err := adapter.cmdToSignEmployeeCLA(opt)
 	if err != nil {
@@ -33,7 +32,7 @@ func (adapter *employeeSigningAdatper) Sign(opt *models.EmployeeSigning) (
 		return nil, toModelError(err)
 	}
 
-	v := make([]dbmodels.CorporationManagerListResult, len(ms))
+	v := make([]models.CorporationManagerListResult, len(ms))
 	for i := range ms {
 		v[i] = toCorporationManagerListResult(&ms[i])
 	}
@@ -95,17 +94,17 @@ func (adapter *employeeSigningAdatper) Update(csId, esId string, enabled bool) (
 
 // List
 func (adapter *employeeSigningAdatper) List(csId string) (
-	[]dbmodels.IndividualSigningBasicInfo, models.IModelError,
+	[]models.IndividualSigningBasicInfo, models.IModelError,
 ) {
 	v, err := adapter.s.List(csId)
 	if err != nil {
 		return nil, toModelError(err)
 	}
 
-	r := make([]dbmodels.IndividualSigningBasicInfo, len(v))
+	r := make([]models.IndividualSigningBasicInfo, len(v))
 	for i := range v {
 		item := &v[i]
-		r[i] = dbmodels.IndividualSigningBasicInfo{
+		r[i] = models.IndividualSigningBasicInfo{
 			ID:      item.ID,
 			Name:    item.Name,
 			Email:   item.Email,

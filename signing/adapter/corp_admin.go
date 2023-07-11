@@ -1,7 +1,6 @@
 package adapter
 
 import (
-	"github.com/opensourceways/app-cla-server/dbmodels"
 	"github.com/opensourceways/app-cla-server/models"
 	"github.com/opensourceways/app-cla-server/signing/app"
 )
@@ -15,11 +14,11 @@ type corpAdminAdatper struct {
 }
 
 func (adapter *corpAdminAdatper) Add(csId string) (
-	dbmodels.CorporationManagerCreateOption, models.IModelError,
+	models.CorporationManagerCreateOption, models.IModelError,
 ) {
 	dto, err := adapter.s.Add(csId)
 	if err != nil {
-		return dbmodels.CorporationManagerCreateOption{}, toModelError(err)
+		return models.CorporationManagerCreateOption{}, toModelError(err)
 	}
 
 	return toCorporationManagerCreateOption(&dto), nil

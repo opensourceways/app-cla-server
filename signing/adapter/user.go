@@ -111,7 +111,7 @@ func (adapter *userAdatper) Logout(userId string) {
 }
 
 // Login
-func (adapter *userAdatper) Login(opt *models.CorporationManagerAuthentication) (
+func (adapter *userAdatper) Login(opt *models.CorporationManagerLoginInfo) (
 	models.CorpManagerLoginInfo, models.IModelError,
 ) {
 	r := models.CorpManagerLoginInfo{}
@@ -145,7 +145,7 @@ func (adapter *userAdatper) Login(opt *models.CorporationManagerAuthentication) 
 	return r, nil
 }
 
-func (adapter *userAdatper) cmdToLogin(opt *models.CorporationManagerAuthentication) (
+func (adapter *userAdatper) cmdToLogin(opt *models.CorporationManagerLoginInfo) (
 	cmd app.CmdToLogin, err error,
 ) {
 	cmd.LinkId = opt.LinkID

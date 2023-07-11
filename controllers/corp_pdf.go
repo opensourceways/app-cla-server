@@ -20,16 +20,16 @@ type CorporationPDFController struct {
 	baseController
 }
 
-func (this *CorporationPDFController) Prepare() {
-	if strings.HasSuffix(this.routerPattern(), "/") {
+func (ctl *CorporationPDFController) Prepare() {
+	if strings.HasSuffix(ctl.routerPattern(), "/") {
 		// admin reviews pdf
-		this.apiPrepare(PermissionCorpAdmin)
+		ctl.apiPrepare(PermissionCorpAdmin)
 	} else {
-		this.apiPrepare(PermissionOwnerOfOrg)
+		ctl.apiPrepare(PermissionOwnerOfOrg)
 	}
 }
 
-func (this *CorporationPDFController) downloadCorpPDF(csId string) *failedApiResult {
+func (ctl *CorporationPDFController) downloadCorpPDF(csId string) *failedApiResult {
 	pdf, merr := models.DownloadCorpPDF(csId)
 	if merr != nil {
 		if merr.IsErrorOf(models.ErrNoLinkOrUnuploaed) {
@@ -48,7 +48,7 @@ func (this *CorporationPDFController) downloadCorpPDF(csId string) *failedApiRes
 		return newFailedApiResult(500, errSystemError, err)
 	}
 
-	this.downloadFile(fn)
+	ctl.downloadFile(fn)
 
 	if err := os.Remove(fn); err != nil {
 		logs.Error("remove temp file failed, err: %s", err.Error())
@@ -63,37 +63,36 @@ func (this *CorporationPDFController) downloadCorpPDF(csId string) *failedApiRes
 // @Accept json
 // @Param  link_id     path  string  true  "link id"
 // @Param  signing_id  path  string  true  "signing id"
-// @Success 204 {int} map
-// @router /:link_id/:signing_id [patch]
-func (this *CorporationPDFController) Upload() {
+// @Success 201 {object} controllers.respData
+// @router /:link_id/:signing_id [post]
+func (ctl *CorporationPDFController) Upload() {
 	action := "upload corp's signing pdf"
-	linkID := this.GetString(":link_id")
+	linkID := ctl.GetString(":link_id")
 
-	pl, fr := this.tokenPayloadBasedOnCodePlatform()
+	pl, fr := ctl.tokenPayloadBasedOnCodePlatform()
 	if fr != nil {
-		this.sendFailedResultAsResp(fr, action)
+		ctl.sendFailedResultAsResp(fr, action)
 		return
 	}
 	if fr := pl.isOwnerOfLink(linkID); fr != nil {
-		this.sendFailedResultAsResp(fr, action)
+		ctl.sendFailedResultAsResp(fr, action)
 		return
 	}
 
-	data, fr := this.readInputFile(
+	data, fr := ctl.readInputFile(
 		fileNameOfUploading, config.MaxSizeOfCorpCLAPDF, corpCLAFileType,
 	)
 	if fr != nil {
-		this.sendFailedResultAsResp(fr, action)
+		ctl.sendFailedResultAsResp(fr, action)
 		return
 	}
 
-	err := models.UploadCorpPDF(this.GetString(":signing_id"), data)
+	err := models.UploadCorpPDF(ctl.GetString(":signing_id"), data)
 	if err != nil {
-		this.sendModelErrorAsResp(err, action)
-		return
+		ctl.sendModelErrorAsResp(err, action)
+	} else {
+		ctl.sendSuccessResp("upload pdf successfully")
 	}
-
-	this.sendSuccessResp("upload pdf of signature page successfully")
 }
 
 // @Title Download
@@ -102,25 +101,25 @@ func (this *CorporationPDFController) Upload() {
 // @Accept json
 // @Param  link_id     path  string  true  "link id"
 // @Param  signing_id  path  string  true  "signing id"
-// @Success 200 {int} map
+// @Success 200
 // @router /:link_id/:signing_id [get]
-func (this *CorporationPDFController) Download() {
+func (ctl *CorporationPDFController) Download() {
 	action := "download corp's signing pdf"
-	linkID := this.GetString(":link_id")
+	linkID := ctl.GetString(":link_id")
 
-	pl, fr := this.tokenPayloadBasedOnCodePlatform()
+	pl, fr := ctl.tokenPayloadBasedOnCodePlatform()
 	if fr != nil {
-		this.sendFailedResultAsResp(fr, action)
+		ctl.sendFailedResultAsResp(fr, action)
 		return
 	}
 	if fr := pl.isOwnerOfLink(linkID); fr != nil {
-		this.sendFailedResultAsResp(fr, action)
+		ctl.sendFailedResultAsResp(fr, action)
 		return
 	}
 
-	fr = this.downloadCorpPDF(this.GetString(":signing_id"))
+	fr = ctl.downloadCorpPDF(ctl.GetString(":signing_id"))
 	if fr != nil {
-		this.sendFailedResultAsResp(fr, action)
+		ctl.sendFailedResultAsResp(fr, action)
 	}
 }
 
@@ -128,18 +127,18 @@ func (this *CorporationPDFController) Download() {
 // @Description corp administrator review pdf of corporation signing
 // @Tags CorpPDF
 // @Accept json
-// @Success 200 {int} map
+// @Success 200
 // @router / [get]
-func (this *CorporationPDFController) Review() {
+func (ctl *CorporationPDFController) Review() {
 	action := "download corp's signing pdf"
 
-	pl, fr := this.tokenPayloadBasedOnCorpManager()
+	pl, fr := ctl.tokenPayloadBasedOnCorpManager()
 	if fr != nil {
-		this.sendFailedResultAsResp(fr, action)
+		ctl.sendFailedResultAsResp(fr, action)
 		return
 	}
 
-	if fr := this.downloadCorpPDF(pl.SigningId); fr != nil {
-		this.sendFailedResultAsResp(fr, action)
+	if fr := ctl.downloadCorpPDF(pl.SigningId); fr != nil {
+		ctl.sendFailedResultAsResp(fr, action)
 	}
 }

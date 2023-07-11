@@ -35,7 +35,7 @@ func (ctl *IndividualSigningController) SendVerificationCode() {
 // @Accept json
 // @Param  link_id  path   string                    true  "link id"
 // @Param  body     body   models.IndividualSigning  true  "body for individual signing"
-// @Success 201 {string} "sign successfully"
+// @Success 201 {object} controllers.respData
 // @Failure 400 missing_url_path_parameter: missing url path parameter
 // @Failure 401 missing_token:              token is missing
 // @Failure 402 unknown_token:              token is unknown
@@ -87,7 +87,7 @@ func (ctl *IndividualSigningController) Post() {
 // @Accept json
 // @Param  link_id  path   string  true  "link id"
 // @Param  email    query  string  true  "email of contributor"
-// @Success 200 {object} map
+// @Success 200 {object} controllers.individualSigned
 // @Failure 400 no_link:      there is not link for org
 // @Failure 500 system_error: system error
 // @router /:link_id [get]
@@ -100,6 +100,12 @@ func (ctl *IndividualSigningController) Check() {
 	if merr != nil {
 		ctl.sendModelErrorAsResp(merr, action)
 	} else {
-		ctl.sendSuccessResp(map[string]bool{"signed": v})
+		ctl.sendSuccessResp(
+			individualSigned{v},
+		)
 	}
+}
+
+type individualSigned struct {
+	Signed bool `json:"signed"`
 }

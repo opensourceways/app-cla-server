@@ -1,7 +1,5 @@
 package models
 
-import "github.com/opensourceways/app-cla-server/dbmodels"
-
 var (
 	claAdapterInstance               claAdapter
 	linkAdapterInstance              linkAdapter
@@ -34,10 +32,10 @@ func RegisterCorpSigningAdapter(a corpSigningAdapter) {
 // employeeSigningAdapter
 type employeeSigningAdapter interface {
 	Verify(csId, email string) (string, IModelError)
-	Sign(opt *EmployeeSigning) ([]dbmodels.CorporationManagerListResult, IModelError)
+	Sign(opt *EmployeeSigning) ([]CorporationManagerListResult, IModelError)
 	Remove(csId, esId string) (string, IModelError)
 	Update(csId, esId string, enabled bool) (string, IModelError)
-	List(csId string) ([]dbmodels.IndividualSigningBasicInfo, IModelError)
+	List(csId string) ([]IndividualSigningBasicInfo, IModelError)
 }
 
 func RegisterEmployeeSigningAdapter(a employeeSigningAdapter) {
@@ -57,7 +55,7 @@ func RegisterIndividualSigningAdapter(a individualSigningAdapter) {
 
 // corpAdminAdatper
 type corpAdminAdatper interface {
-	Add(csId string) (dbmodels.CorporationManagerCreateOption, IModelError)
+	Add(csId string) (CorporationManagerCreateOption, IModelError)
 }
 
 func RegisterCorpAdminAdatper(a corpAdminAdatper) {
@@ -69,7 +67,7 @@ type userAdapter interface {
 	ChangePassword(string, *CorporationManagerChangePassword) IModelError
 	ResetPassword(linkId string, email string, password string) IModelError
 	Logout(userId string)
-	Login(opt *CorporationManagerAuthentication) (CorpManagerLoginInfo, IModelError)
+	Login(opt *CorporationManagerLoginInfo) (CorpManagerLoginInfo, IModelError)
 	GenKeyForPasswordRetrieval(linkId string, email string) (string, IModelError)
 }
 
@@ -79,9 +77,9 @@ func RegisterUserAdapter(a userAdapter) {
 
 // employeeManagerAdapter
 type employeeManagerAdapter interface {
-	Add(string, *EmployeeManagerCreateOption) ([]dbmodels.CorporationManagerCreateOption, IModelError)
-	Remove(string, *EmployeeManagerCreateOption) ([]dbmodels.CorporationManagerCreateOption, IModelError)
-	List(csId string) ([]dbmodels.CorporationManagerListResult, IModelError)
+	Add(string, *EmployeeManagerCreateOption) ([]CorporationManagerCreateOption, IModelError)
+	Remove(string, *EmployeeManagerDeleteOption) ([]CorporationManagerCreateOption, IModelError)
+	List(csId string) ([]CorporationManagerListResult, IModelError)
 }
 
 func RegisterEmployeeManagerAdapter(a employeeManagerAdapter) {
@@ -144,7 +142,7 @@ type claAdapter interface {
 	Add(linkId string, opt *CLACreateOpt) IModelError
 	Remove(linkId, claId string) IModelError
 	CLALocalFilePath(linkId, claId string) string
-	List(linkId string) (dbmodels.CLAOfLink, IModelError)
+	List(linkId string) (CLAOfLink, IModelError)
 }
 
 func RegisterCLAAdapter(a claAdapter) {
@@ -155,10 +153,10 @@ func RegisterCLAAdapter(a claAdapter) {
 type linkAdapter interface {
 	Add(submitter string, opt *LinkCreateOption) IModelError
 	Remove(linkId string) IModelError
-	List(platform string, orgs []string) ([]dbmodels.LinkInfo, IModelError)
-	GetLink(linkId string) (org dbmodels.OrgInfo, merr IModelError)
-	GetLinkCLA(linkId, claId string) (dbmodels.OrgInfo, dbmodels.CLAInfo, IModelError)
-	ListCLAs(linkId, applyTo string) ([]dbmodels.CLADetail, IModelError)
+	List(platform string, orgs []string) ([]LinkInfo, IModelError)
+	GetLink(linkId string) (org OrgInfo, merr IModelError)
+	GetLinkCLA(linkId, claId string) (OrgInfo, CLAInfo, IModelError)
+	ListCLAs(linkId, applyTo string) ([]CLADetail, IModelError)
 }
 
 func RegisterLinkAdapter(a linkAdapter) {

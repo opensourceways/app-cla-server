@@ -12,7 +12,7 @@ func (ctl *OrganizationController) Prepare() {
 // @Description list all organizations
 // @Tags Organization
 // @Accept json
-// @Success 200 {} map
+// @Success 200 {object} controllers.respData
 // @Failure 401 missing_token:              token is missing
 // @Failure 402 unknown_token:              token is unknown
 // @Failure 403 expired_token:              token is expired

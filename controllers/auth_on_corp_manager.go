@@ -1,9 +1,6 @@
 package controllers
 
-import (
-	"github.com/opensourceways/app-cla-server/dbmodels"
-	"github.com/opensourceways/app-cla-server/models"
-)
+import "github.com/opensourceways/app-cla-server/models"
 
 type corpAuthInfo struct {
 	models.OrgRepo
@@ -12,11 +9,11 @@ type corpAuthInfo struct {
 	InitialPWChanged bool   `json:"initial_pw_changed"`
 }
 
-// @Title logout
+// @Title Logout
 // @Description corporation manager logout
 // @Tags CorpManager
 // @Accept json
-// @Success 202 {int} controllers.corpAuthInfo
+// @Success 202 {object} controllers.respData
 // @Failure util.ErrNoCLABindingDoc	"no cla binding applied to corporation"
 // @router /auth [put]
 func (ctl *CorporationManagerController) Logout() {
@@ -36,18 +33,18 @@ func (ctl *CorporationManagerController) Logout() {
 	ctl.sendSuccessResp(action + " successfully")
 }
 
-// @Title authenticate corporation manager
-// @Description authenticate corporation manager
+// @Title Login
+// @Description corporation manager login
 // @Tags CorpManager
 // @Accept json
-// @Param  body  body  models.CorporationManagerAuthentication  true  "body for corporation manager info"
-// @Success 201 {int} controllers.corpAuthInfo
+// @Param  body  body  models.CorporationManagerLoginInfo  true  "body for corporation manager info"
+// @Success 201 {object} controllers.corpAuthInfo
 // @Failure util.ErrNoCLABindingDoc	"no cla binding applied to corporation"
 // @router /auth [post]
-func (ctl *CorporationManagerController) Auth() {
+func (ctl *CorporationManagerController) Login() {
 	action := "authenticate as corp/employee manager"
 
-	var info models.CorporationManagerAuthentication
+	var info models.CorporationManagerLoginInfo
 	if fr := ctl.fetchInputPayload(&info); fr != nil {
 		ctl.sendFailedResultAsResp(fr, action)
 		return
@@ -89,9 +86,9 @@ func (ctl *CorporationManagerController) Auth() {
 func (ctl *CorporationManagerController) genToken(linkID string, info *models.CorpManagerLoginInfo) error {
 	permission := ""
 	switch info.Role {
-	case dbmodels.RoleAdmin:
+	case models.RoleAdmin:
 		permission = PermissionCorpAdmin
-	case dbmodels.RoleManager:
+	case models.RoleManager:
 		permission = PermissionEmployeeManager
 	}
 

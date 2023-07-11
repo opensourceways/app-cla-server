@@ -103,7 +103,7 @@ func (ctl *CLAController) DownloadPDF() {
 // @Tags CLA
 // @Accept json
 // @Param  link_id  path  string  true  "link id"
-// @Success 200 {object} dbmodels.CLAOfLink
+// @Success 200 {object} models.CLAOfLink
 // @router /:link_id [get]
 func (ctl *CLAController) List() {
 	action := "list cla"

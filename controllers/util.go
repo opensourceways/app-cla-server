@@ -6,7 +6,6 @@ import (
 
 	"github.com/beego/beego/v2/core/logs"
 
-	"github.com/opensourceways/app-cla-server/dbmodels"
 	"github.com/opensourceways/app-cla-server/models"
 	"github.com/opensourceways/app-cla-server/signing/domain/emailservice"
 	"github.com/opensourceways/app-cla-server/signing/infrastructure/emailtmpl"
@@ -37,12 +36,12 @@ func sendEmail(to []string, orgInfo *models.OrgInfo, subject string, builder ema
 	worker.GetEmailWorker().SendSimpleMessage(orgInfo.OrgEmailPlatform, msg)
 }
 
-func notifyCorpAdmin(orgInfo *models.OrgInfo, info *dbmodels.CorporationManagerCreateOption) {
-	notifyCorpManagerWhenAdding(orgInfo, []dbmodels.CorporationManagerCreateOption{*info})
+func notifyCorpAdmin(orgInfo *models.OrgInfo, info *models.CorporationManagerCreateOption) {
+	notifyCorpManagerWhenAdding(orgInfo, []models.CorporationManagerCreateOption{*info})
 }
 
-func notifyCorpManagerWhenAdding(orgInfo *models.OrgInfo, info []dbmodels.CorporationManagerCreateOption) {
-	admin := info[0].Role == dbmodels.RoleAdmin
+func notifyCorpManagerWhenAdding(orgInfo *models.OrgInfo, info []models.CorporationManagerCreateOption) {
+	admin := info[0].Role == models.RoleAdmin
 	subject := fmt.Sprintf("Account on project of \"%s\"", orgInfo.OrgAlias)
 
 	for i := range info {
@@ -62,12 +61,12 @@ func notifyCorpManagerWhenAdding(orgInfo *models.OrgInfo, info []dbmodels.Corpor
 	}
 }
 
-func getSingingInfo(info dbmodels.TypeSigningInfo, fields []dbmodels.Field) dbmodels.TypeSigningInfo {
+func getSingingInfo(info models.TypeSigningInfo, fields []models.CLAField) models.TypeSigningInfo {
 	if len(info) == 0 {
 		return info
 	}
 
-	r := dbmodels.TypeSigningInfo{}
+	r := models.TypeSigningInfo{}
 	for i := range fields {
 		fid := fields[i].ID
 		if v, ok := info[fid]; ok {

@@ -33,17 +33,17 @@ func (ctl *CorporationManagerController) Prepare() {
 	)
 }
 
-// @Title Put
+// @Title AddCorpAdmin
 // @Description add corporation administrator
 // @Tags CorpManager
 // @Accept json
 // @Param  link_id     path  string  true  "link id"
 // @Param  signing_id  path  string  true  "signing id"
-// @Success 202 {int} map
+// @Success 202 {object} controllers.respData
 // @Failure util.ErrPDFHasNotUploaded
 // @Failure util.ErrNumOfCorpManagersExceeded
-// @router /:link_id/:signing_id [put]
-func (ctl *CorporationManagerController) Put() {
+// @router /:link_id/:signing_id [post]
+func (ctl *CorporationManagerController) AddCorpAdmin() {
 	action := "add corp administrator"
 	linkID := ctl.GetString(":link_id")
 	csId := ctl.GetString(":signing_id")
@@ -72,6 +72,7 @@ func (ctl *CorporationManagerController) Put() {
 		} else {
 			ctl.sendModelErrorAsResp(merr, action)
 		}
+
 		return
 	}
 
@@ -80,14 +81,14 @@ func (ctl *CorporationManagerController) Put() {
 	notifyCorpAdmin(&orgInfo, &added)
 }
 
-// @Title Patch
-// @Description change password of corporation manager
+// @Title ChangePassword
+// @Description corporation manager changes password
 // @Tags CorpManager
 // @Accept json
-// @Success 204 {int} map
+// @Success 202 {object} controllers.respData
 // @Failure util.ErrInvalidAccountOrPw
-// @router / [patch]
-func (ctl *CorporationManagerController) Patch() {
+// @router / [put]
+func (ctl *CorporationManagerController) ChangePassword() {
 	action := "change password of corp's manager"
 	sendResp := ctl.newFuncForSendingFailedResp(action)
 

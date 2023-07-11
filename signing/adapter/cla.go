@@ -4,7 +4,6 @@ import (
 	"errors"
 	"strconv"
 
-	"github.com/opensourceways/app-cla-server/dbmodels"
 	"github.com/opensourceways/app-cla-server/models"
 	"github.com/opensourceways/app-cla-server/signing/app"
 	"github.com/opensourceways/app-cla-server/signing/domain"
@@ -45,20 +44,20 @@ func (adapter *claAdatper) Remove(linkId, claId string) models.IModelError {
 }
 
 // List
-func (adapter *claAdatper) List(linkId string) (dbmodels.CLAOfLink, models.IModelError) {
+func (adapter *claAdatper) List(linkId string) (models.CLAOfLink, models.IModelError) {
 	individuals, corps, err := adapter.s.List(linkId)
 	if err != nil {
-		return dbmodels.CLAOfLink{}, toModelError(err)
+		return models.CLAOfLink{}, toModelError(err)
 	}
 
-	return dbmodels.CLAOfLink{
+	return models.CLAOfLink{
 		IndividualCLAs: adapter.toCLADetail(individuals),
 		CorpCLAs:       adapter.toCLADetail(corps),
 	}, nil
 }
 
-func (adapter *claAdatper) toCLADetail(v []app.CLADTO) []dbmodels.CLADetail {
-	r := make([]dbmodels.CLADetail, len(v))
+func (adapter *claAdatper) toCLADetail(v []app.CLADTO) []models.CLADetail {
+	r := make([]models.CLADetail, len(v))
 
 	for i := range v {
 		item := &v[1]
@@ -118,7 +117,7 @@ func (adapter *claAdatper) cmdToAddCLA(opt *models.CLACreateOpt) (
 	return
 }
 
-func (adapter *claAdatper) toFields(claType dp.CLAType, fields []dbmodels.Field) (r []domain.Field, err error) {
+func (adapter *claAdatper) toFields(claType dp.CLAType, fields []models.CLAField) (r []domain.Field, err error) {
 	if len(fields) == 0 {
 		err = errors.New("no fields")
 
@@ -151,7 +150,7 @@ func (adapter *claAdatper) toFields(claType dp.CLAType, fields []dbmodels.Field)
 }
 
 func (adapter *claAdatper) toField(
-	opt *dbmodels.Field,
+	opt *models.CLAField,
 	f func(string) (dp.CLAFieldType, error),
 ) (domain.Field, error) {
 	t, err := f(opt.Type)

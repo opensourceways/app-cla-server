@@ -3,7 +3,6 @@ package adapter
 import (
 	"errors"
 
-	"github.com/opensourceways/app-cla-server/dbmodels"
 	"github.com/opensourceways/app-cla-server/models"
 	"github.com/opensourceways/app-cla-server/signing/app"
 	"github.com/opensourceways/app-cla-server/signing/domain"
@@ -27,7 +26,7 @@ type linkAdatper struct {
 }
 
 func (adapter *linkAdatper) GetLink(linkId string) (
-	org dbmodels.OrgInfo, merr models.IModelError,
+	org models.OrgInfo, merr models.IModelError,
 ) {
 	v, err := adapter.s.Find(linkId)
 	if err != nil {
@@ -47,7 +46,7 @@ func (adapter *linkAdatper) GetLink(linkId string) (
 
 // GetLinkCLA
 func (adapter *linkAdatper) GetLinkCLA(linkId, claId string) (
-	org dbmodels.OrgInfo, cla dbmodels.CLAInfo, merr models.IModelError,
+	org models.OrgInfo, cla models.CLAInfo, merr models.IModelError,
 ) {
 	v, err := adapter.s.FindLinkCLA(&domain.CLAIndex{
 		LinkId: linkId,
@@ -74,7 +73,7 @@ func (adapter *linkAdatper) GetLinkCLA(linkId, claId string) (
 }
 
 // ListCLAs
-func (adapter *linkAdatper) ListCLAs(linkId, applyTo string) ([]dbmodels.CLADetail, models.IModelError) {
+func (adapter *linkAdatper) ListCLAs(linkId, applyTo string) ([]models.CLADetail, models.IModelError) {
 	t, err := dp.NewCLAType(applyTo)
 	if err != nil {
 		return nil, toModelError(err)
@@ -88,7 +87,7 @@ func (adapter *linkAdatper) ListCLAs(linkId, applyTo string) ([]dbmodels.CLADeta
 		return nil, toModelError(err)
 	}
 
-	r := make([]dbmodels.CLADetail, len(v))
+	r := make([]models.CLADetail, len(v))
 	for i := range v {
 		item := &v[i]
 
@@ -101,12 +100,12 @@ func (adapter *linkAdatper) ListCLAs(linkId, applyTo string) ([]dbmodels.CLADeta
 	return r, nil
 }
 
-func (adapter *linkAdatper) toFields(fields []domain.Field) []dbmodels.Field {
-	r := make([]dbmodels.Field, len(fields))
+func (adapter *linkAdatper) toFields(fields []domain.Field) []models.CLAField {
+	r := make([]models.CLAField, len(fields))
 
 	for i := range fields {
 		item := fields[i]
-		r[i] = dbmodels.Field{
+		r[i] = models.CLAField{
 			ID:          item.Id,
 			Type:        item.Type.CLAFieldType(),
 			Title:       item.Title,
@@ -119,7 +118,7 @@ func (adapter *linkAdatper) toFields(fields []domain.Field) []dbmodels.Field {
 }
 
 // List
-func (adapter *linkAdatper) List(platform string, orgs []string) ([]dbmodels.LinkInfo, models.IModelError) {
+func (adapter *linkAdatper) List(platform string, orgs []string) ([]models.LinkInfo, models.IModelError) {
 	v, err := adapter.s.List(&app.CmdToListLink{
 		Platform: platform,
 		Orgs:     orgs,
@@ -128,7 +127,7 @@ func (adapter *linkAdatper) List(platform string, orgs []string) ([]dbmodels.Lin
 		return nil, toModelError(err)
 	}
 
-	r := make([]dbmodels.LinkInfo, len(v))
+	r := make([]models.LinkInfo, len(v))
 	for i := range v {
 		item := &v[i]
 
@@ -181,7 +180,7 @@ func (adapter *linkAdatper) cmdToAddLink(submitter string, opt *models.LinkCreat
 	}
 
 	if opt.IndividualCLA != nil {
-		opt.IndividualCLA.Type = dbmodels.ApplyToIndividual
+		opt.IndividualCLA.Type = models.ApplyToIndividual
 
 		v, err1 := adapter.cla.cmdToAddCLA(opt.IndividualCLA)
 		if err1 != nil {
@@ -194,7 +193,7 @@ func (adapter *linkAdatper) cmdToAddLink(submitter string, opt *models.LinkCreat
 	}
 
 	if opt.CorpCLA != nil {
-		opt.CorpCLA.Type = dbmodels.ApplyToCorporation
+		opt.CorpCLA.Type = models.ApplyToCorporation
 
 		v, err1 := adapter.cla.cmdToAddCLA(opt.CorpCLA)
 		if err1 != nil {

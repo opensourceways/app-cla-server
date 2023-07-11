@@ -3,7 +3,6 @@ package adapter
 import (
 	"errors"
 
-	"github.com/opensourceways/app-cla-server/dbmodels"
 	"github.com/opensourceways/app-cla-server/models"
 	"github.com/opensourceways/app-cla-server/signing/app"
 	"github.com/opensourceways/app-cla-server/signing/domain"
@@ -21,7 +20,7 @@ type employeeManagerAdatper struct {
 func (adapter *employeeManagerAdatper) Add(
 	csId string, opt *models.EmployeeManagerCreateOption,
 ) (
-	[]dbmodels.CorporationManagerCreateOption, models.IModelError,
+	[]models.CorporationManagerCreateOption, models.IModelError,
 ) {
 	cmd, me := adapter.cmdToAddEmployeeManager(csId, opt)
 	if me != nil {
@@ -33,7 +32,7 @@ func (adapter *employeeManagerAdatper) Add(
 		return nil, toModelError(err)
 	}
 
-	r := make([]dbmodels.CorporationManagerCreateOption, len(dto))
+	r := make([]models.CorporationManagerCreateOption, len(dto))
 	for i := range dto {
 		r[i] = toCorporationManagerCreateOption(&dto[i])
 	}
@@ -110,8 +109,8 @@ func (adapter *employeeManagerAdatper) toManager(opt *models.EmployeeManager) (m
 	return
 }
 
-func toCorporationManagerCreateOption(dto *app.ManagerDTO) dbmodels.CorporationManagerCreateOption {
-	return dbmodels.CorporationManagerCreateOption{
+func toCorporationManagerCreateOption(dto *app.ManagerDTO) models.CorporationManagerCreateOption {
+	return models.CorporationManagerCreateOption{
 		ID:       dto.Account,
 		Role:     dto.Role,
 		Name:     dto.Name,
@@ -122,9 +121,9 @@ func toCorporationManagerCreateOption(dto *app.ManagerDTO) dbmodels.CorporationM
 
 // Remove
 func (adapter *employeeManagerAdatper) Remove(
-	csId string, opt *models.EmployeeManagerCreateOption,
+	csId string, opt *models.EmployeeManagerDeleteOption,
 ) (
-	[]dbmodels.CorporationManagerCreateOption, models.IModelError,
+	[]models.CorporationManagerCreateOption, models.IModelError,
 ) {
 	cmd, me := adapter.cmdToRemoveEmployeeManager(csId, opt)
 	if me != nil {
@@ -136,11 +135,11 @@ func (adapter *employeeManagerAdatper) Remove(
 		return nil, toModelError(err)
 	}
 
-	r := make([]dbmodels.CorporationManagerCreateOption, len(dto))
+	r := make([]models.CorporationManagerCreateOption, len(dto))
 	for i := range dto {
 		item := &dto[i]
 
-		r[i] = dbmodels.CorporationManagerCreateOption{
+		r[i] = models.CorporationManagerCreateOption{
 			Name:  item.Name,
 			Email: item.Email,
 		}
@@ -150,7 +149,7 @@ func (adapter *employeeManagerAdatper) Remove(
 }
 
 func (adapter *employeeManagerAdatper) cmdToRemoveEmployeeManager(
-	csId string, opt *models.EmployeeManagerCreateOption,
+	csId string, opt *models.EmployeeManagerDeleteOption,
 ) (
 	cmd app.CmdToRemoveEmployeeManager, me models.IModelError,
 ) {
@@ -175,14 +174,14 @@ func (adapter *employeeManagerAdatper) cmdToRemoveEmployeeManager(
 
 // List
 func (adapter *employeeManagerAdatper) List(csId string) (
-	[]dbmodels.CorporationManagerListResult, models.IModelError,
+	[]models.CorporationManagerListResult, models.IModelError,
 ) {
 	ms, err := adapter.s.List(csId)
 	if err != nil {
 		return nil, toModelError(err)
 	}
 
-	v := make([]dbmodels.CorporationManagerListResult, len(ms))
+	v := make([]models.CorporationManagerListResult, len(ms))
 	for i := range ms {
 		v[i] = toCorporationManagerListResult(&ms[i])
 	}
@@ -190,11 +189,11 @@ func (adapter *employeeManagerAdatper) List(csId string) (
 	return v, nil
 }
 
-func toCorporationManagerListResult(m *app.EmployeeManagerDTO) dbmodels.CorporationManagerListResult {
-	return dbmodels.CorporationManagerListResult{
+func toCorporationManagerListResult(m *app.EmployeeManagerDTO) models.CorporationManagerListResult {
+	return models.CorporationManagerListResult{
 		ID:    m.ID,
 		Name:  m.Name,
 		Email: m.Email,
-		Role:  dbmodels.RoleManager,
+		Role:  models.RoleManager,
 	}
 }

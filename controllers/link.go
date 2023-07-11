@@ -51,18 +51,17 @@ func (ctl *LinkController) Link() {
 		return
 	}
 
-	ctl.sendResponse("create org cla successfully", 0)
+	ctl.sendSuccessResp("create org cla successfully")
 }
 
-// @Title Unlink
-// @Description unlink cla
+// @Title Delete
+// @Description delete link
 // @Tags Link
 // @Accept json
-// @Param	uid		path 	string	true		"The uid of binding"
-// @Success 204 {string} delete success!
-// @Failure 403 uid is empty
+// @Param  link_id  path  string  true  "link id"
+// @Success 204 {object} controllers.respData
 // @router /:link_id [delete]
-func (ctl *LinkController) Unlink() {
+func (ctl *LinkController) Delete() {
 	action := "unlink"
 	sendResp := ctl.newFuncForSendingFailedResp(action)
 	linkID := ctl.GetString(":link_id")
@@ -90,7 +89,7 @@ func (ctl *LinkController) Unlink() {
 // @Description list all links
 // @Tags Link
 // @Accept json
-// @Success 200 {object} dbmodels.LinkInfo
+// @Success 200 {object} models.LinkInfo
 // @Failure 401 missing_token:              token is missing
 // @Failure 402 unknown_token:              token is unknown
 // @Failure 403 expired_token:              token is expired
@@ -117,9 +116,9 @@ func (ctl *LinkController) ListLinks() {
 // @Description get signing page info
 // @Tags Link
 // @Accept json
-// @Param	:link_id	path 	string				true		"link id"
-// @Param	:apply_to	path 	string				true		"apply to"
-// @Success 201 {int} map
+// @Param  link_id   path  string  true  "link id"
+// @Param  apply_to  path  string  true  "apply to"
+// @Success 200 {object} models.CLADetail
 // @Failure util.ErrNoCLABindingDoc	"org has not been bound any clas"
 // @Failure util.ErrNotReadyToSign	"the corp signing is not ready"
 // @router /:link_id/:apply_to [get]
@@ -140,8 +139,9 @@ func (ctl *LinkController) GetCLAForSigning() {
 // @Description update link email
 // @Tags Link
 // @Accept json
-// @Param  :link_id  path  string  true	 "link id"
-// @router /update/:link_id [post]
+// @Param  link_id  path  string  true	 "link id"
+// @Success 202 {object} controllers.respData
+// @router /:link_id [put]
 func (ctl *LinkController) UpdateLinkEmail() {
 	ctl.sendSuccessResp("unimplemented")
 	return

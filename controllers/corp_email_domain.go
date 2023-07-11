@@ -24,7 +24,7 @@ func (ctl *CorpEmailDomainController) Prepare() {
 // @Failure 402 expired_token:      token is expired
 // @Failure 403 unauthorized_token: the permission of token is unauthorized
 // @Failure 500 system_error:       system error
-// @router / [put]
+// @router /code [post]
 func (ctl *CorpEmailDomainController) Verify() {
 	action := "create verification code for adding email domain"
 	sendResp := ctl.newFuncForSendingFailedResp(action)

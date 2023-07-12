@@ -37,7 +37,7 @@ func initSigning(cfg *config.Config) error {
 
 	userService := userservice.NewUserService(
 		repositoryimpl.NewUser(
-			mongodb.DAO(cfg.Mongodb.Collections.CorpSigning),
+			mongodb.DAO(cfg.Mongodb.Collections.User),
 		),
 		encryptionimpl.NewEncryptionImpl(),
 		passwordimpl.NewPasswordImpl(&cfg.Password),

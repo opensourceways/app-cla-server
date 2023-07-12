@@ -22,7 +22,7 @@ func (ctl *EmployeeSigningController) Prepare() {
 	}
 }
 
-// @Title Post
+// @Title SendVerificationCode
 // @Description send verification code when signing
 // @Tags EmployeeSigning
 // @Accept json
@@ -40,7 +40,7 @@ func (ctl *EmployeeSigningController) SendVerificationCode() {
 	)
 }
 
-// @Title Post
+// @Title Sign
 // @Description sign employee cla
 // @Tags EmployeeSigning
 // @Accept json
@@ -63,7 +63,7 @@ func (ctl *EmployeeSigningController) SendVerificationCode() {
 // @Failure 413 resigned:                   the signer has signed the cla
 // @Failure 500 system_error:               system error
 // @router /:link_id/ [post]
-func (ctl *EmployeeSigningController) Post() {
+func (ctl *EmployeeSigningController) Sign() {
 	action := "sign employeee cla"
 	linkID := ctl.GetString(":link_id")
 

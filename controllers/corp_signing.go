@@ -210,7 +210,7 @@ func (ctl *CorporationSigningController) GetAll() {
 	}
 }
 
-// @Title GetAll
+// @Title ListDeleted
 // @Description get all the corporations which have been deleted
 // @Tags CorpSigning
 // @Accept json

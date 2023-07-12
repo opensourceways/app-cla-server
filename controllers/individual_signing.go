@@ -10,7 +10,7 @@ func (ctl *IndividualSigningController) Prepare() {
 	ctl.apiPrepare("")
 }
 
-// @Title Post
+// @Title SendVerificationCode
 // @Description send verification code when signing
 // @Tags IndividualSigning
 // @Accept json
@@ -29,7 +29,7 @@ func (ctl *IndividualSigningController) SendVerificationCode() {
 	)
 }
 
-// @Title Post
+// @Title Sign
 // @Description sign individual cla
 // @Tags IndividualSigning
 // @Accept json
@@ -50,7 +50,7 @@ func (ctl *IndividualSigningController) SendVerificationCode() {
 // @Failure 411 go_to_sign_employee_cla:    should sign employee cla instead
 // @Failure 500 system_error:               system error
 // @router /:link_id/ [post]
-func (ctl *IndividualSigningController) Post() {
+func (ctl *IndividualSigningController) Sign() {
 	action := "sign individual cla"
 	linkID := ctl.GetString(":link_id")
 

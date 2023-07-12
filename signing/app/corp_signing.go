@@ -94,7 +94,7 @@ func (s *corpSigningService) Get(csId string) (CorpSigningInfoDTO, error) {
 
 func (s *corpSigningService) List(linkId string) ([]CorpSigningDTO, error) {
 	v, err := s.repo.FindAll(linkId)
-	if err != nil {
+	if err != nil || len(v) == 0 {
 		return nil, err
 	}
 
@@ -102,6 +102,7 @@ func (s *corpSigningService) List(linkId string) ([]CorpSigningDTO, error) {
 
 	for i := range v {
 		item := &v[i]
+
 		dtos[i] = CorpSigningDTO{
 			Id:             item.Id,
 			Date:           item.Date,
@@ -123,7 +124,7 @@ func (s *corpSigningService) FindCorpSummary(cmd *CmdToFindCorpSummary) ([]CorpS
 		return nil, err
 	}
 
-	r := make([]CorpSummaryDTO, 0, len(v))
+	r := make([]CorpSummaryDTO, len(v))
 	for i := range v {
 		r[i] = CorpSummaryDTO{
 			CorpName:      v[i].CorpName.CorpName(),

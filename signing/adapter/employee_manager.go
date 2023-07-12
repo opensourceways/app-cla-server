@@ -88,6 +88,7 @@ func (adapter *employeeManagerAdatper) cmdToAddEmployeeManager(
 		emails[item.Email] = true
 	}
 
+	cmd.Managers = ms
 	cmd.CorpSigningId = csId
 
 	return

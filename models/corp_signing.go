@@ -37,7 +37,7 @@ func (opt *CorporationSigningCreateOption) ToCorporationSigning() CorporationSig
 type CorporationSigningSummary struct {
 	CorporationSigningBasicInfo
 
-	Id          string `json:"string"`
+	Id          string `json:"id"`
 	AdminAdded  bool   `json:"admin_added"`
 	PDFUploaded bool   `json:"pdf_uploaded"`
 }

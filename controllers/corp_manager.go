@@ -73,7 +73,7 @@ func (ctl *CorporationManagerController) AddCorpAdmin() {
 		return
 	}
 
-	ctl.sendSuccessResp(action + " successfully")
+	ctl.sendSuccessResp(action, "successfully")
 
 	notifyCorpAdmin(&orgInfo, &added)
 }
@@ -108,5 +108,5 @@ func (ctl *CorporationManagerController) ChangePassword() {
 
 	ctl.logout()
 
-	ctl.sendSuccessResp("change password successfully")
+	ctl.sendSuccessResp(action, "successfully")
 }

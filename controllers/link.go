@@ -51,7 +51,7 @@ func (ctl *LinkController) Link() {
 		return
 	}
 
-	ctl.sendSuccessResp("create org cla successfully")
+	ctl.sendSuccessResp(action, "successfully")
 }
 
 // @Title Delete
@@ -82,7 +82,7 @@ func (ctl *LinkController) Delete() {
 		return
 	}
 
-	ctl.sendSuccessResp(action + "successfully")
+	ctl.sendSuccessResp(action, "successfully")
 }
 
 // @Title ListLinks
@@ -108,7 +108,7 @@ func (ctl *LinkController) ListLinks() {
 	if r, merr := models.ListLink(pl.Platform, pl.Orgs); merr != nil {
 		ctl.sendModelErrorAsResp(merr, action)
 	} else {
-		ctl.sendSuccessResp(r)
+		ctl.sendSuccessResp(action, r)
 	}
 }
 
@@ -131,7 +131,7 @@ func (ctl *LinkController) GetCLAForSigning() {
 	if err != nil {
 		ctl.sendModelErrorAsResp(err, action)
 	} else {
-		ctl.sendSuccessResp(result)
+		ctl.sendSuccessResp(action, result)
 	}
 }
 
@@ -143,6 +143,6 @@ func (ctl *LinkController) GetCLAForSigning() {
 // @Success 202 {object} controllers.respData
 // @router /:link_id [put]
 func (ctl *LinkController) UpdateLinkEmail() {
-	ctl.sendSuccessResp("unimplemented")
+	ctl.sendSuccessResp("", "unimplemented")
 	return
 }

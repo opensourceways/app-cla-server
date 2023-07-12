@@ -37,7 +37,7 @@ func (ctl *AuthController) Logout() {
 
 	ctl.logout()
 
-	ctl.sendSuccessResp(action + " successfully")
+	ctl.sendSuccessResp(action, "successfully")
 }
 
 // @Title Callback
@@ -165,7 +165,7 @@ func (ctl *AuthController) AuthCodeURL() {
 		return
 	}
 
-	ctl.sendSuccessResp(authCodeURL{
+	ctl.sendSuccessResp(action, authCodeURL{
 		cp.GetAuthCodeURL(authURLState),
 	})
 }

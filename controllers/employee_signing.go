@@ -92,7 +92,7 @@ func (ctl *EmployeeSigningController) Sign() {
 		return
 	}
 
-	ctl.sendSuccessResp("sign successfully")
+	ctl.sendSuccessResp(action, "successfully")
 	ctl.notifyManagers(managers, &info, &orgInfo)
 }
 
@@ -122,7 +122,7 @@ func (ctl *EmployeeSigningController) GetAll() {
 		return
 	}
 
-	ctl.sendSuccessResp(r)
+	ctl.sendSuccessResp(action, r)
 }
 
 // @Title Update
@@ -169,7 +169,7 @@ func (ctl *EmployeeSigningController) Update() {
 		return
 	}
 
-	ctl.sendSuccessResp("enabled employee successfully")
+	ctl.sendSuccessResp(action, "successfully")
 
 	msg := ctl.newEmployeeNotification(employeeEmail, &orgInfo, pl.Email)
 	if info.Enabled {
@@ -213,7 +213,7 @@ func (ctl *EmployeeSigningController) Delete() {
 		return
 	}
 
-	ctl.sendSuccessResp("delete employee successfully")
+	ctl.sendSuccessResp(action, "successfully")
 
 	msg := ctl.newEmployeeNotification(employeeEmail, &orgInfo, pl.Email)
 	msg.Removing = true

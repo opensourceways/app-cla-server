@@ -53,7 +53,7 @@ func (ctl *SMTPController) Verify() {
 	if err = smtpimpl.SMTP().Send(info.Authorize, msg); err != nil {
 		ctl.sendFailedResponse(400, errInvalidEmailAuthCode, err, action)
 	} else {
-		ctl.sendSuccessResp("succss")
+		ctl.sendSuccessResp(action, "successfully")
 	}
 }
 
@@ -76,6 +76,6 @@ func (ctl *SMTPController) Authorize() {
 	if merr := models.AuthorizeSMTPEmail(&info); merr != nil {
 		ctl.sendModelErrorAsResp(merr, action)
 	} else {
-		ctl.sendSuccessResp("Email Authorization Success")
+		ctl.sendSuccessResp(action, "successfully")
 	}
 }

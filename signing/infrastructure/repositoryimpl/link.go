@@ -39,6 +39,7 @@ func (impl *link) Add(v *domain.Link) error {
 		return err
 	}
 	doc[fieldVersion] = 0
+	doc[fieldRemoved] = bson.A{}
 
 	org := &v.Org
 	filter := bson.M{

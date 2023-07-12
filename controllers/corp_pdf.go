@@ -91,7 +91,7 @@ func (ctl *CorporationPDFController) Upload() {
 	if err != nil {
 		ctl.sendModelErrorAsResp(err, action)
 	} else {
-		ctl.sendSuccessResp("upload pdf successfully")
+		ctl.sendSuccessResp(action, "successfully")
 	}
 }
 

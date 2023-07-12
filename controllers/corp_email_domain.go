@@ -62,7 +62,7 @@ func (ctl *CorpEmailDomainController) Verify() {
 		return
 	}
 
-	ctl.sendSuccessResp("create verification code successfully")
+	ctl.sendSuccessResp(action, "successfully")
 
 	sendEmailToIndividual(
 		req.Email, &orgInfo,
@@ -113,7 +113,7 @@ func (ctl *CorpEmailDomainController) Add() {
 	if merr := models.AddCorpEmailDomain(pl.SigningId, info); merr != nil {
 		ctl.sendModelErrorAsResp(merr, action)
 	} else {
-		ctl.sendSuccessResp(action + " successfully")
+		ctl.sendSuccessResp(action, "successfully")
 	}
 }
 
@@ -141,6 +141,6 @@ func (ctl *CorpEmailDomainController) GetAll() {
 	if merr != nil {
 		ctl.sendModelErrorAsResp(merr, action)
 	} else {
-		ctl.sendSuccessResp(r)
+		ctl.sendSuccessResp(action, r)
 	}
 }

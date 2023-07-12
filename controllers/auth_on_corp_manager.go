@@ -30,7 +30,7 @@ func (ctl *CorporationManagerController) Logout() {
 
 	ctl.logout()
 
-	ctl.sendSuccessResp(action + " successfully")
+	ctl.sendSuccessResp(action, "successfully")
 }
 
 // @Title Login
@@ -74,7 +74,7 @@ func (ctl *CorporationManagerController) Login() {
 		return
 	}
 
-	ctl.sendSuccessResp([]corpAuthInfo{
+	ctl.sendSuccessResp(action, []corpAuthInfo{
 		{
 			Role:             v.Role,
 			OrgRepo:          orgInfo.OrgRepo,

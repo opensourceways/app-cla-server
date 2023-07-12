@@ -91,7 +91,7 @@ func (ctl *CorporationSigningController) Sign() {
 		linkID, &orgInfo, &claInfo, &v,
 	)
 
-	ctl.sendSuccessResp("sign successfully")
+	ctl.sendSuccessResp(action, "successfully")
 }
 
 // @Title Delete
@@ -129,7 +129,7 @@ func (ctl *CorporationSigningController) Delete() {
 	if err := models.RemoveCorpSigning(csId); err != nil {
 		ctl.sendModelErrorAsResp(err, action)
 	} else {
-		ctl.sendSuccessResp("delete corp signing successfully")
+		ctl.sendSuccessResp(action, "successfully")
 	}
 }
 
@@ -171,7 +171,7 @@ func (ctl *CorporationSigningController) ResendCorpSigningEmail() {
 		linkID, &orgInfo, &claInfo, &signingInfo,
 	)
 
-	ctl.sendSuccessResp("resend email successfully")
+	ctl.sendSuccessResp(action, "successfully")
 }
 
 // @Title GetAll
@@ -206,7 +206,7 @@ func (ctl *CorporationSigningController) GetAll() {
 	if r, merr := models.ListCorpSigning(linkID); merr != nil {
 		ctl.sendModelErrorAsResp(merr, action)
 	} else {
-		ctl.sendSuccessResp(r)
+		ctl.sendSuccessResp(action, r)
 	}
 }
 
@@ -226,7 +226,7 @@ func (ctl *CorporationSigningController) GetAll() {
 // @Failure 500 system_error:               system error
 // @router /deleted/:link_id [get]
 func (ctl *CorporationSigningController) ListDeleted() {
-	ctl.sendSuccessResp(nil)
+	ctl.sendSuccessResp("", nil)
 }
 
 // @Title GetCorpInfo
@@ -249,6 +249,6 @@ func (ctl *CorporationSigningController) GetCorpInfo() {
 	if merr != nil {
 		ctl.sendModelErrorAsResp(merr, action)
 	} else {
-		ctl.sendSuccessResp(r)
+		ctl.sendSuccessResp(action, r)
 	}
 }

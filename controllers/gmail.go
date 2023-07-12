@@ -61,7 +61,7 @@ func (ctl *GmailController) Callback() {
 // @Success 200 {object} controllers.authCodeURL
 // @router /authcodeurl [get]
 func (ctl *GmailController) AuthCodeURL() {
-	ctl.sendSuccessResp(authCodeURL{
+	ctl.sendSuccessResp("", authCodeURL{
 		gmailimpl.GmailClient().GetOauth2CodeURL(authURLState),
 	})
 }

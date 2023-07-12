@@ -48,7 +48,7 @@ func (ctl *CLAController) Add() {
 	if err := models.AddCLAInstance(linkID, input); err != nil {
 		ctl.sendModelErrorAsResp(err, action)
 	} else {
-		ctl.sendSuccessResp("add cla successfully")
+		ctl.sendSuccessResp(action, "successfully")
 	}
 }
 
@@ -81,7 +81,7 @@ func (ctl *CLAController) Delete() {
 		return
 	}
 
-	ctl.sendSuccessResp("delete cla successfully")
+	ctl.sendSuccessResp(action, "successfully")
 }
 
 // @Title DownloadPDF
@@ -122,6 +122,6 @@ func (ctl *CLAController) List() {
 	if clas, merr := models.ListCLAInstances(linkID); merr != nil {
 		ctl.sendModelErrorAsResp(merr, action)
 	} else {
-		ctl.sendSuccessResp(clas)
+		ctl.sendSuccessResp(action, clas)
 	}
 }

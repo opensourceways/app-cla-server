@@ -39,7 +39,7 @@ func (ctl *baseController) sendVerificationCodeWhenSigning(
 		return
 	}
 
-	ctl.sendSuccessResp("create verification code successfully")
+	ctl.sendSuccessResp(action, "successfully")
 
 	sendEmailToIndividual(
 		req.Email, &orgInfo,

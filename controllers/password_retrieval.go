@@ -59,7 +59,7 @@ func (ctl *PasswordRetrievalController) Post() {
 		return
 	}
 
-	ctl.sendSuccessResp(action + "successfully")
+	ctl.sendSuccessResp(action, "successfully")
 
 	sendEmailToIndividual(
 		info.Email,
@@ -113,7 +113,7 @@ func (ctl *PasswordRetrievalController) Reset() {
 	if mErr != nil {
 		sendResp(parseModelError(mErr))
 	} else {
-		ctl.sendSuccessResp(action + "successfully")
+		ctl.sendSuccessResp(action, "successfully")
 	}
 }
 

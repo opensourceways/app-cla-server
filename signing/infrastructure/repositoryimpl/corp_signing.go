@@ -29,6 +29,9 @@ func (impl *corpSigning) Add(v *domain.CorpSigning) error {
 		return err
 	}
 	doc[fieldVersion] = 0
+	doc[fieldDeleted] = bson.A{}
+	doc[fieldManagers] = bson.A{}
+	doc[fieldEmployees] = bson.A{}
 
 	docFilter := linkIdFilter(v.Link.Id)
 	docFilter[mongodbCmdOr] = bson.A{

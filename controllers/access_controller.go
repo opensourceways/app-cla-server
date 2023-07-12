@@ -19,6 +19,22 @@ type accessController struct {
 	Payload    interface{} `json:"payload"`
 }
 
+func (ctl *accessController) getUser() string {
+	if ctl.Permission == PermissionOwnerOfOrg {
+		if pl, ok := ctl.Payload.(*acForCodePlatformPayload); ok {
+			return pl.User
+		}
+
+		return ""
+	}
+
+	if pl, ok := ctl.Payload.(*acForCorpManagerPayload); ok {
+		return pl.UserId
+	}
+
+	return ""
+}
+
 func (ctl *accessController) verify(permission []string, addr string) error {
 	if ctl.RemoteAddr != addr {
 		return errors.New("unmatched remote address")
@@ -35,10 +51,9 @@ func (ctl *accessController) verify(permission []string, addr string) error {
 
 func (ctl *baseController) apiPrepare(permission string) {
 	if permission != "" {
-		ctl.apiPrepareWithAC(
-			ctl.newAccessController(permission),
-			[]string{permission},
-		)
+		ac := ctl.newAccessController(permission)
+
+		ctl.apiPrepareWithAC(&ac, []string{permission})
 	} else {
 		ctl.apiPrepareWithAC(nil, nil)
 	}
@@ -60,7 +75,7 @@ func (ctl *baseController) apiPrepareWithAC(ac *accessController, permission []s
 	}
 }
 
-func (ctl *baseController) newAccessController(permission string) *accessController {
+func (ctl *baseController) newAccessController(permission string) accessController {
 	var acp interface{}
 
 	switch permission {
@@ -72,7 +87,7 @@ func (ctl *baseController) newAccessController(permission string) *accessControl
 		acp = &acForCorpManagerPayload{}
 	}
 
-	return &accessController{Payload: acp}
+	return accessController{Payload: acp}
 }
 
 func (ctl *baseController) checkApiReqToken(ac *accessController, permission []string) *failedApiResult {

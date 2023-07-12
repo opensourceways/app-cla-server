@@ -45,6 +45,8 @@ func (s *employeeManagerService) Add(cmd *CmdToAddEmployeeManager) ([]ManagerDTO
 
 	if err = s.repo.AddEmployeeManagers(&cs, cmd.Managers); err != nil {
 		s.userService.Remove(ids)
+
+		return nil, err
 	}
 
 	return s.toManageDTOs(pws, cmd.Managers)

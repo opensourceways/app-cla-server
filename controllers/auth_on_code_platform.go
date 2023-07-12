@@ -176,8 +176,8 @@ type authCodeURL struct {
 
 type acForCodePlatformPayload struct {
 	User     string   `json:"user"`
-	Platform string   `json:"platform"`
 	Orgs     []string `json:"orgs"`
+	Platform string   `json:"platform"`
 }
 
 func (pl *acForCodePlatformPayload) isOwnerOfLink(link string) *failedApiResult {

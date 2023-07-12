@@ -42,30 +42,31 @@ type userService struct {
 	password userpassword.UserPassword
 }
 
-func (s *userService) Add(linkId, csId string, managers []domain.Manager) (pws map[string]string, ids []string, err error) {
-	pw := ""
-	index := ""
+func (s *userService) Add(linkId, csId string, managers []domain.Manager) (map[string]string, []string, error) {
+	ids := []string{}
+	pws := map[string]string{}
 
 	for i := range managers {
 		item := &managers[i]
 
-		if pw, index, err = s.add(linkId, csId, item); err != nil {
+		pw, index, err := s.add(linkId, csId, item)
+		if err != nil {
 			if commonRepo.IsErrorDuplicateCreating(err) {
 				err = domain.NewDomainError(domain.ErrorCodeUserExists)
 			}
 
-			break
+			if len(ids) > 0 {
+				s.Remove(ids)
+			}
+
+			return nil, nil, err
 		}
 
 		pws[item.Id] = pw
 		ids = append(ids, index)
 	}
 
-	if err != nil && len(ids) > 0 {
-		s.Remove(ids)
-	}
-
-	return
+	return pws, ids, nil
 }
 
 func (s *userService) Remove(ids []string) {

@@ -36,8 +36,6 @@ func newFailedApiResult(statusCode int, errCode string, err error) *failedApiRes
 
 type baseController struct {
 	beego.Controller
-
-	ac *accessController
 }
 
 func (ctl *baseController) sendResponse(body interface{}, statusCode int) {

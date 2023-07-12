@@ -1,7 +1,6 @@
 package controllers
 
 import (
-	"net/http"
 	"strings"
 
 	"github.com/opensourceways/app-cla-server/models"
@@ -12,17 +11,15 @@ type CorporationManagerController struct {
 }
 
 func (ctl *CorporationManagerController) Prepare() {
-	m := ctl.apiRequestMethod()
-
-	if m == http.MethodPost {
-		// login
-		return
-	}
-
-	if m == http.MethodPut && strings.HasSuffix(ctl.routerPattern(), ":signing_id") {
+	if strings.HasSuffix(ctl.routerPattern(), ":signing_id") {
 		// add administrator
 		ctl.apiPrepare(PermissionOwnerOfOrg)
 
+		return
+	}
+
+	if ctl.isPostRequest() {
+		// login
 		return
 	}
 

@@ -25,9 +25,7 @@ func Load(path string) (cfg Config, err error) {
 
 	cfg.setDefault()
 
-	if err = cfg.validate(); err != nil {
-		return
-	}
+	err = cfg.validate()
 
 	return
 }

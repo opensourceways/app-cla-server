@@ -13,4 +13,6 @@ do
   sed -i "s|{"$k"}|"$v"|"  $f
 done < $sf
 
+rm sf
+
 /opt/app/cla-server

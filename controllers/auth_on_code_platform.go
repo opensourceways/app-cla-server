@@ -114,7 +114,7 @@ func (ctl *AuthController) Callback() {
 }
 
 func (ctl *AuthController) genACPayload(platform, platformToken string) (*acForCodePlatformPayload, string, error) {
-	pt, err := platforms.NewPlatform(platformToken, "", platform)
+	pt, err := platforms.NewPlatform(platformToken, platform)
 	if err != nil {
 		return nil, errSystemError, err
 	}

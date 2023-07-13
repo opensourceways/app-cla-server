@@ -26,7 +26,7 @@ func (ctl *CorpEmailDomainController) Prepare() {
 // @Failure 500 system_error:       system error
 // @router /code [post]
 func (ctl *CorpEmailDomainController) Verify() {
-	action := "create verification code for adding email domain"
+	action := "corp admin verifies another email domain"
 	sendResp := ctl.newFuncForSendingFailedResp(action)
 
 	var req verificationCodeRequest
@@ -62,7 +62,7 @@ func (ctl *CorpEmailDomainController) Verify() {
 		return
 	}
 
-	ctl.sendSuccessResp("create verification code successfully")
+	ctl.sendSuccessResp(action, "successfully")
 
 	sendEmailToIndividual(
 		req.Email, &orgInfo,
@@ -95,7 +95,7 @@ func (ctl *CorpEmailDomainController) Verify() {
 // @Failure 500 system_error:               system error
 // @router / [post]
 func (ctl *CorpEmailDomainController) Add() {
-	action := "add email domain"
+	action := "corp admin adds email domain"
 	sendResp := ctl.newFuncForSendingFailedResp(action)
 
 	pl, fr := ctl.tokenPayloadBasedOnCorpManager()
@@ -113,7 +113,7 @@ func (ctl *CorpEmailDomainController) Add() {
 	if merr := models.AddCorpEmailDomain(pl.SigningId, info); merr != nil {
 		ctl.sendModelErrorAsResp(merr, action)
 	} else {
-		ctl.sendSuccessResp(action + " successfully")
+		ctl.sendSuccessResp(action, "successfully")
 	}
 }
 
@@ -129,7 +129,7 @@ func (ctl *CorpEmailDomainController) Add() {
 // @Failure 500 system_error:       system error
 // @router / [get]
 func (ctl *CorpEmailDomainController) GetAll() {
-	action := "list all domains"
+	action := "corp admin lists all email domains"
 
 	pl, fr := ctl.tokenPayloadBasedOnCorpManager()
 	if fr != nil {
@@ -141,6 +141,6 @@ func (ctl *CorpEmailDomainController) GetAll() {
 	if merr != nil {
 		ctl.sendModelErrorAsResp(merr, action)
 	} else {
-		ctl.sendSuccessResp(r)
+		ctl.sendSuccessResp(action, r)
 	}
 }

@@ -33,11 +33,11 @@ func (ctl *AuthController) Prepare() {
 // @Success 202 {object} controllers.respData
 // @router / [put]
 func (ctl *AuthController) Logout() {
-	action := "community manager logout"
+	action := "community manager logouts"
 
 	ctl.logout()
 
-	ctl.sendSuccessResp(action + " successfully")
+	ctl.sendSuccessResp(action, "successfully")
 }
 
 // @Title Callback
@@ -109,6 +109,8 @@ func (ctl *AuthController) Callback() {
 
 	ctl.setToken(at)
 	ctl.redirect(authHelper.WebRedirectDir(true))
+
+	ctl.addOperationLog(pl.User, "community manager logins", 0)
 }
 
 func (ctl *AuthController) genACPayload(platform, platformToken string) (*acForCodePlatformPayload, string, error) {
@@ -165,7 +167,7 @@ func (ctl *AuthController) AuthCodeURL() {
 		return
 	}
 
-	ctl.sendSuccessResp(authCodeURL{
+	ctl.sendSuccessResp(action, authCodeURL{
 		cp.GetAuthCodeURL(authURLState),
 	})
 }

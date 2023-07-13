@@ -8,7 +8,7 @@ import (
 	"github.com/opensourceways/app-cla-server/models"
 )
 
-func (ctl *baseController) sendResponse(body interface{}, statusCode int) {
+func (ctl *baseController) sendResponse(action string, body interface{}, statusCode int) {
 	if statusCode != 0 {
 		// if success, don't set status code, otherwise the header set in ctl.ServeJSON
 		// will not work. The reason maybe the same as above.
@@ -20,10 +20,12 @@ func (ctl *baseController) sendResponse(body interface{}, statusCode int) {
 	}
 
 	ctl.ServeJSON()
+
+	ctl.operationLog(action, statusCode)
 }
 
-func (ctl *baseController) sendSuccessResp(body interface{}) {
-	ctl.sendResponse(body, 0)
+func (ctl *baseController) sendSuccessResp(action string, body interface{}) {
+	ctl.sendResponse(action, body, 0)
 }
 
 func (ctl *baseController) newFuncForSendingFailedResp(action string) func(fr *failedApiResult) {
@@ -53,5 +55,20 @@ func (ctl *baseController) sendFailedResponse(statusCode int, errCode string, re
 		ErrMsg:  reason.Error(),
 	}
 
-	ctl.sendResponse(d, statusCode)
+	ctl.sendResponse(action, d, statusCode)
+}
+
+func (ctl *baseController) operationLog(action string, statusCode int) {
+	user := ""
+	if ac, err := ctl.getAccessController(); err == nil {
+		user = ac.getUser()
+	}
+
+	if user != "" {
+		logs.Info("%s, %s, %d", user, action, statusCode)
+	}
+}
+
+func (ctl *baseController) addOperationLog(user, action string, statusCode int) {
+	logs.Info("%s, %s, %d", user, action, statusCode)
 }

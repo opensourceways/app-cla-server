@@ -20,9 +20,11 @@ func (ctl *OrganizationController) Prepare() {
 // @Failure 500 system_error:               system error
 // @router / [get]
 func (ctl *OrganizationController) List() {
+	action := "community manager lists organizations"
+
 	if pl, fr := ctl.tokenPayloadBasedOnCodePlatform(); fr != nil {
-		ctl.sendFailedResultAsResp(fr, "list organizations")
+		ctl.sendFailedResultAsResp(fr, action)
 	} else {
-		ctl.sendSuccessResp(pl.Orgs)
+		ctl.sendSuccessResp(action, pl.Orgs)
 	}
 }

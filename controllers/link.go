@@ -26,7 +26,7 @@ func (ctl *LinkController) Prepare() {
 // @Success 201 {object} controllers.respData
 // @router / [post]
 func (ctl *LinkController) Link() {
-	action := "create link"
+	action := "community manager creates link(cla application)"
 	sendResp := ctl.newFuncForSendingFailedResp(action)
 
 	pl, fr := ctl.tokenPayloadBasedOnCodePlatform()
@@ -51,7 +51,7 @@ func (ctl *LinkController) Link() {
 		return
 	}
 
-	ctl.sendSuccessResp("create org cla successfully")
+	ctl.sendSuccessResp(action, "successfully")
 }
 
 // @Title Delete
@@ -62,9 +62,9 @@ func (ctl *LinkController) Link() {
 // @Success 204 {object} controllers.respData
 // @router /:link_id [delete]
 func (ctl *LinkController) Delete() {
-	action := "unlink"
+	linkId := ctl.GetString(":link_id")
+	action := "community manager delete link: " + linkId
 	sendResp := ctl.newFuncForSendingFailedResp(action)
-	linkID := ctl.GetString(":link_id")
 
 	pl, fr := ctl.tokenPayloadBasedOnCodePlatform()
 	if fr != nil {
@@ -72,17 +72,17 @@ func (ctl *LinkController) Delete() {
 		return
 	}
 
-	if fr := pl.isOwnerOfLink(linkID); fr != nil {
+	if fr := pl.isOwnerOfLink(linkId); fr != nil {
 		sendResp(fr)
 		return
 	}
 
-	if err := models.RemoveLink(linkID); err != nil {
+	if err := models.RemoveLink(linkId); err != nil {
 		ctl.sendModelErrorAsResp(err, action)
 		return
 	}
 
-	ctl.sendSuccessResp(action + "successfully")
+	ctl.sendSuccessResp(action, "successfully")
 }
 
 // @Title ListLinks
@@ -97,7 +97,7 @@ func (ctl *LinkController) Delete() {
 // @Failure 500 system_error:               system error
 // @router / [get]
 func (ctl *LinkController) ListLinks() {
-	action := "list links"
+	action := "community manager list links"
 
 	pl, fr := ctl.tokenPayloadBasedOnCodePlatform()
 	if fr != nil {
@@ -108,7 +108,7 @@ func (ctl *LinkController) ListLinks() {
 	if r, merr := models.ListLink(pl.Platform, pl.Orgs); merr != nil {
 		ctl.sendModelErrorAsResp(merr, action)
 	} else {
-		ctl.sendSuccessResp(r)
+		ctl.sendSuccessResp(action, r)
 	}
 }
 
@@ -131,7 +131,7 @@ func (ctl *LinkController) GetCLAForSigning() {
 	if err != nil {
 		ctl.sendModelErrorAsResp(err, action)
 	} else {
-		ctl.sendSuccessResp(result)
+		ctl.sendSuccessResp(action, result)
 	}
 }
 
@@ -143,6 +143,6 @@ func (ctl *LinkController) GetCLAForSigning() {
 // @Success 202 {object} controllers.respData
 // @router /:link_id [put]
 func (ctl *LinkController) UpdateLinkEmail() {
-	ctl.sendSuccessResp("unimplemented")
+	ctl.sendSuccessResp("", "unimplemented")
 	return
 }

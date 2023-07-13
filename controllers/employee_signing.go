@@ -92,7 +92,7 @@ func (ctl *EmployeeSigningController) Sign() {
 		return
 	}
 
-	ctl.sendSuccessResp("sign successfully")
+	ctl.sendSuccessResp(action, "successfully")
 	ctl.notifyManagers(managers, &info, &orgInfo)
 }
 
@@ -108,7 +108,7 @@ func (ctl *EmployeeSigningController) Sign() {
 // @Failure 500 system_error:       system error
 // @router / [get]
 func (ctl *EmployeeSigningController) GetAll() {
-	action := "list employees"
+	action := "empoyee manager lists all employees"
 
 	pl, fr := ctl.tokenPayloadBasedOnCorpManager()
 	if fr != nil {
@@ -122,7 +122,7 @@ func (ctl *EmployeeSigningController) GetAll() {
 		return
 	}
 
-	ctl.sendSuccessResp(r)
+	ctl.sendSuccessResp(action, r)
 }
 
 // @Title Update
@@ -134,9 +134,9 @@ func (ctl *EmployeeSigningController) GetAll() {
 // @Success 202 {object} controllers.respData
 // @router /:signing_id [put]
 func (ctl *EmployeeSigningController) Update() {
-	action := "enable/unable employee signing"
-	sendResp := ctl.newFuncForSendingFailedResp(action)
 	employeeSigningId := ctl.GetString(":signing_id")
+	action := "employee manager enable/unable employee signing, id: " + employeeSigningId
+	sendResp := ctl.newFuncForSendingFailedResp(action)
 
 	pl, fr := ctl.tokenPayloadBasedOnCorpManager()
 	if fr != nil {
@@ -169,7 +169,7 @@ func (ctl *EmployeeSigningController) Update() {
 		return
 	}
 
-	ctl.sendSuccessResp("enabled employee successfully")
+	ctl.sendSuccessResp(action, "successfully")
 
 	msg := ctl.newEmployeeNotification(employeeEmail, &orgInfo, pl.Email)
 	if info.Enabled {
@@ -189,8 +189,8 @@ func (ctl *EmployeeSigningController) Update() {
 // @Success 204 {object} controllers.respData
 // @router /:signing_id [delete]
 func (ctl *EmployeeSigningController) Delete() {
-	action := "delete employee signing"
 	employeeSigningId := ctl.GetString(":signing_id")
+	action := "employee manager deletes employee signing, id: " + employeeSigningId
 
 	pl, fr := ctl.tokenPayloadBasedOnCorpManager()
 	if fr != nil {
@@ -213,7 +213,7 @@ func (ctl *EmployeeSigningController) Delete() {
 		return
 	}
 
-	ctl.sendSuccessResp("delete employee successfully")
+	ctl.sendSuccessResp(action, "successfully")
 
 	msg := ctl.newEmployeeNotification(employeeEmail, &orgInfo, pl.Email)
 	msg.Removing = true

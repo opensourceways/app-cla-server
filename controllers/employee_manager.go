@@ -23,7 +23,7 @@ func (ctl *EmployeeManagerController) Prepare() {
 // @Success 201 {object} controllers.respData
 // @router / [post]
 func (ctl *EmployeeManagerController) Post() {
-	action := "add employee managers"
+	action := "corp admin adds employee managers"
 	sendResp := ctl.newFuncForSendingFailedResp(action)
 
 	pl, fr := ctl.tokenPayloadBasedOnCorpManager()
@@ -51,7 +51,7 @@ func (ctl *EmployeeManagerController) Post() {
 		return
 	}
 
-	ctl.sendSuccessResp(action + " successfully")
+	ctl.sendSuccessResp(action, "successfully")
 
 	notifyCorpManagerWhenAdding(&orgInfo, added)
 }
@@ -64,7 +64,7 @@ func (ctl *EmployeeManagerController) Post() {
 // @Success 204 {object} controllers.respData
 // @router / [delete]
 func (ctl *EmployeeManagerController) Delete() {
-	action := "delete employee managers"
+	action := "corp admin deletes employee managers"
 	sendResp := ctl.newFuncForSendingFailedResp(action)
 
 	pl, fr := ctl.tokenPayloadBasedOnCorpManager()
@@ -92,7 +92,7 @@ func (ctl *EmployeeManagerController) Delete() {
 		return
 	}
 
-	ctl.sendSuccessResp(action + "successfully")
+	ctl.sendSuccessResp(action, "successfully")
 
 	subject := fmt.Sprintf("Revoking the authorization on project of \"%s\"", orgInfo.OrgAlias)
 
@@ -113,7 +113,8 @@ func (ctl *EmployeeManagerController) Delete() {
 // @Success 200 {object} models.CorporationManagerListResult
 // @router / [get]
 func (ctl *EmployeeManagerController) GetAll() {
-	sendResp := ctl.newFuncForSendingFailedResp("list employee managers")
+	action := "corp admin lists employee managers"
+	sendResp := ctl.newFuncForSendingFailedResp(action)
 
 	pl, fr := ctl.tokenPayloadBasedOnCorpManager()
 	if fr != nil {
@@ -123,7 +124,7 @@ func (ctl *EmployeeManagerController) GetAll() {
 
 	r, err := models.ListEmployeeManagers(pl.SigningId)
 	if err == nil {
-		ctl.sendSuccessResp(r)
+		ctl.sendSuccessResp(action, r)
 	} else {
 		sendResp(parseModelError(err))
 	}

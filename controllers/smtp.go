@@ -22,7 +22,7 @@ func (ctl *SMTPController) Prepare() {
 // @Success 201 {object} controllers.respData
 // @router /verify [post]
 func (ctl *SMTPController) Verify() {
-	action := "verify the email"
+	action := "community manager verifies the email"
 
 	var info models.EmailAuthorizationReq
 	if fr := ctl.fetchInputPayloadFromFormData(&info); fr != nil {
@@ -53,7 +53,7 @@ func (ctl *SMTPController) Verify() {
 	if err = smtpimpl.SMTP().Send(info.Authorize, msg); err != nil {
 		ctl.sendFailedResponse(400, errInvalidEmailAuthCode, err, action)
 	} else {
-		ctl.sendSuccessResp("succss")
+		ctl.sendSuccessResp(action, "successfully")
 	}
 }
 
@@ -65,7 +65,7 @@ func (ctl *SMTPController) Verify() {
 // @Success 201 {object} controllers.respData
 // @router /authorize [post]
 func (ctl *SMTPController) Authorize() {
-	action := "Email authorization verification"
+	action := "community manager authorizes the email"
 
 	var info models.EmailAuthorization
 	if fr := ctl.fetchInputPayloadFromFormData(&info); fr != nil {
@@ -76,6 +76,6 @@ func (ctl *SMTPController) Authorize() {
 	if merr := models.AuthorizeSMTPEmail(&info); merr != nil {
 		ctl.sendModelErrorAsResp(merr, action)
 	} else {
-		ctl.sendSuccessResp("Email Authorization Success")
+		ctl.sendSuccessResp(action, "successfully")
 	}
 }

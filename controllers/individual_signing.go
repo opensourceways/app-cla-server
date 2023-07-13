@@ -78,7 +78,7 @@ func (ctl *IndividualSigningController) Sign() {
 		return
 	}
 
-	ctl.sendSuccessResp("sign successfully")
+	ctl.sendSuccessResp(action, "successfully")
 }
 
 // @Title Check
@@ -100,9 +100,7 @@ func (ctl *IndividualSigningController) Check() {
 	if merr != nil {
 		ctl.sendModelErrorAsResp(merr, action)
 	} else {
-		ctl.sendSuccessResp(
-			individualSigned{v},
-		)
+		ctl.sendSuccessResp(action, individualSigned{v})
 	}
 }
 

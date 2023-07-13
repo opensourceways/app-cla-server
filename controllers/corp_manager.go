@@ -41,9 +41,9 @@ func (ctl *CorporationManagerController) Prepare() {
 // @Failure util.ErrNumOfCorpManagersExceeded
 // @router /:link_id/:signing_id [post]
 func (ctl *CorporationManagerController) AddCorpAdmin() {
-	action := "add corp administrator"
 	linkID := ctl.GetString(":link_id")
 	csId := ctl.GetString(":signing_id")
+	action := "community manager adds corp admin of signing: " + csId
 
 	pl, fr := ctl.tokenPayloadBasedOnCodePlatform()
 	if fr != nil {
@@ -73,7 +73,7 @@ func (ctl *CorporationManagerController) AddCorpAdmin() {
 		return
 	}
 
-	ctl.sendSuccessResp(action + " successfully")
+	ctl.sendSuccessResp(action, "successfully")
 
 	notifyCorpAdmin(&orgInfo, &added)
 }
@@ -86,7 +86,7 @@ func (ctl *CorporationManagerController) AddCorpAdmin() {
 // @Failure util.ErrInvalidAccountOrPw
 // @router / [put]
 func (ctl *CorporationManagerController) ChangePassword() {
-	action := "change password of corp's manager"
+	action := "corp admin or employee manager changes password"
 	sendResp := ctl.newFuncForSendingFailedResp(action)
 
 	pl, fr := ctl.tokenPayloadBasedOnCorpManager()
@@ -108,5 +108,5 @@ func (ctl *CorporationManagerController) ChangePassword() {
 
 	ctl.logout()
 
-	ctl.sendSuccessResp("change password successfully")
+	ctl.sendSuccessResp(action, "successfully")
 }

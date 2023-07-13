@@ -10,7 +10,7 @@ api:
   password_retrieval_url: "${PASSWORD_RETRIEVAL_URL}"
 
 gmail:
-  credentials: '${GMAIL_CREDENTIALS}'
+  credentials: '{GMAIL_CREDENTIALS}'
 
 domain:
   invalid_corp_email_domain: "${RESTRICTED_CORP_EMAIL_SUFFIX}"
@@ -23,7 +23,7 @@ domain:
 
 mongodb:
   db:
-    conn: "${MONGODB_CONNECTION}"
+    conn: "{MONGODB_CONNECTION}"
     db: "${MONGODB_NAME}"
   collections: 
     cla: cla
@@ -36,8 +36,8 @@ mongodb:
 
 redisdb:
   db:
-    address: "${REDISDB_IP}"
-    password: "${REDISDB_PASSWORD}"
+    address: "{REDISDB_IP}"
+    password: "{REDISDB_PASSWORD}"
 
 password:
   min_length: 8
@@ -47,7 +47,7 @@ local_cla:
   dir: ./conf/pdfs/local
 
 symmetric:
-  encryption_key: "${SYMMETRIC_ENCRYPTION_KEY}"
+  encryption_key: "{SYMMETRIC_ENCRYPTION_KEY}"
 
 code_platform:
   login:
@@ -55,8 +55,8 @@ code_platform:
     web_redirect_dir_on_failure: /platformSelect
     platforms:
     - platform: gitee
-      client_id: "${GITEE_CLIENT_ID}"
-      client_secret: "${GITEE_CLIENT_SECRET}"
+      client_id: "{GITEE_CLIENT_ID}"
+      client_secret: "{GITEE_CLIENT_SECRET}"
       auth_url: https://gitee.com/oauth/authorize
       token_url: https://gitee.com/oauth/token
       redirect_url: "${CLA_PLATFORM_URL}/api/v1/auth/gitee/login"
@@ -64,8 +64,8 @@ code_platform:
       - user_info
       - groups  
     - platform: github
-      client_id: "${GITHUB_CLIENT_ID}"
-      client_secret: "${GITHUB_CLIENT_SECRET}"
+      client_id: "{GITHUB_CLIENT_ID}"
+      client_secret: "{GITHUB_CLIENT_SECRET}"
       auth_url: https://github.com/login/oauth/authorize
       token_url: https://github.com/login/oauth/access_token
       redirect_url: "${CLA_PLATFORM_URL}/api/v1/auth/github/login"

@@ -33,10 +33,10 @@ func (ctl *PasswordRetrievalController) Prepare() {
 // @Failure 500 system_error:               system error
 // @router /:link_id [post]
 func (ctl *PasswordRetrievalController) Post() {
-	action := "corp admin or employee manager tries to retrieve password"
-	linkID := ctl.GetString(":link_id")
+	linkId := ctl.GetString(":link_id")
+	action := "corp admin or employee manager tries to retrieve password, link id: " + linkId
 
-	orgInfo, mErr := models.GetLink(linkID)
+	orgInfo, mErr := models.GetLink(linkId)
 	if mErr != nil {
 		ctl.sendModelErrorAsResp(mErr, action)
 		return
@@ -53,7 +53,7 @@ func (ctl *PasswordRetrievalController) Post() {
 		return
 	}
 
-	key, mErr := models.GenKeyForPasswordRetrieval(linkID, &info)
+	key, mErr := models.GenKeyForPasswordRetrieval(linkId, &info)
 	if mErr != nil {
 		ctl.sendModelErrorAsResp(mErr, action)
 		return
@@ -68,8 +68,8 @@ func (ctl *PasswordRetrievalController) Post() {
 		emailtmpl.PasswordRetrieval{
 			Org:          orgInfo.OrgAlias,
 			Timeout:      config.PasswordRetrievalExpiry / 60,
-			ResetURL:     genURLToResetPassword(linkID, key),
-			RetrievalURL: genURLToRetrievalPassword(linkID),
+			ResetURL:     genURLToResetPassword(linkId, key),
+			RetrievalURL: genURLToRetrievalPassword(linkId),
 		},
 	)
 
@@ -93,7 +93,8 @@ func (ctl *PasswordRetrievalController) Post() {
 // @Failure 500 system_error:               system error
 // @router /:link_id [put]
 func (ctl *PasswordRetrievalController) Reset() {
-	action := "corp admin or employee manager resets password"
+	linkId := ctl.GetString(":link_id")
+	action := "corp admin or employee manager resets password, link id: " + linkId
 	sendResp := ctl.newFuncForSendingFailedResp(action)
 
 	key := ctl.apiReqHeader(headerPasswordRetrievalKey)
@@ -111,7 +112,7 @@ func (ctl *PasswordRetrievalController) Reset() {
 		return
 	}
 
-	mErr := models.ResetPassword(ctl.GetString(":link_id"), &param, key)
+	mErr := models.ResetPassword(linkId, &param, key)
 	if mErr != nil {
 		sendResp(parseModelError(mErr))
 	} else {
@@ -121,7 +122,7 @@ func (ctl *PasswordRetrievalController) Reset() {
 	}
 }
 
-func genURLToResetPassword(linkID, key string) string {
+func genURLToResetPassword(linkId, key string) string {
 	v, err := url.Parse(config.PasswordResetURL)
 	if err != nil {
 		logs.Error(err)
@@ -131,13 +132,13 @@ func genURLToResetPassword(linkID, key string) string {
 
 	q := v.Query()
 	q.Add("key", key)
-	q.Add("link_id", linkID)
+	q.Add("link_id", linkId)
 	v.RawQuery = q.Encode()
 
 	return v.String()
 }
 
-func genURLToRetrievalPassword(linkID string) string {
+func genURLToRetrievalPassword(linkId string) string {
 	v, err := url.Parse(config.PasswordRetrievalURL)
 	if err != nil {
 		logs.Error(err)
@@ -145,6 +146,6 @@ func genURLToRetrievalPassword(linkID string) string {
 		return ""
 	}
 
-	v.Path = path.Join(v.Path, linkID)
+	v.Path = path.Join(v.Path, linkId)
 	return v.String()
 }

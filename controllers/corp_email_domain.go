@@ -26,7 +26,7 @@ func (ctl *CorpEmailDomainController) Prepare() {
 // @Failure 500 system_error:       system error
 // @router /code [post]
 func (ctl *CorpEmailDomainController) Verify() {
-	action := "corp admin creates verification code to add email domain"
+	action := "corp admin verifies another email domain"
 	sendResp := ctl.newFuncForSendingFailedResp(action)
 
 	var req verificationCodeRequest

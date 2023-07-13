@@ -108,7 +108,6 @@ func (ctl *CorporationPDFController) Upload() {
 func (ctl *CorporationPDFController) Download() {
 	linkID := ctl.GetString(":link_id")
 	signingId := ctl.GetString(":signing_id")
-
 	action := "community manager downloads pdf of corp CLA sign: " + signingId
 
 	pl, fr := ctl.tokenPayloadBasedOnCodePlatform()

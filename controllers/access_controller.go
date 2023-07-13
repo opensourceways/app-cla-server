@@ -22,14 +22,14 @@ type accessController struct {
 func (ctl *accessController) getUser() string {
 	if ctl.Permission == PermissionOwnerOfOrg {
 		if pl, ok := ctl.Payload.(*acForCodePlatformPayload); ok {
-			return pl.User
+			return pl.Platform + "/" + pl.User
 		}
 
 		return ""
 	}
 
 	if pl, ok := ctl.Payload.(*acForCorpManagerPayload); ok {
-		return pl.UserId
+		return pl.LinkID + "/" + pl.UserId
 	}
 
 	return ""

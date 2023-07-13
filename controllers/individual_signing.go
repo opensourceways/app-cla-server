@@ -100,9 +100,7 @@ func (ctl *IndividualSigningController) Check() {
 	if merr != nil {
 		ctl.sendModelErrorAsResp(merr, action)
 	} else {
-		ctl.sendSuccessResp(
-			action, individualSigned{v},
-		)
+		ctl.sendSuccessResp(action, individualSigned{v})
 	}
 }
 

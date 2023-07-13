@@ -33,7 +33,7 @@ func (ctl *PasswordRetrievalController) Prepare() {
 // @Failure 500 system_error:               system error
 // @router /:link_id [post]
 func (ctl *PasswordRetrievalController) Post() {
-	action := "send an email to retrieve password"
+	action := "corp admin or employee manager tries to retrieve password"
 	linkID := ctl.GetString(":link_id")
 
 	orgInfo, mErr := models.GetLink(linkID)
@@ -72,6 +72,8 @@ func (ctl *PasswordRetrievalController) Post() {
 			RetrievalURL: genURLToRetrievalPassword(linkID),
 		},
 	)
+
+	ctl.addOperationLog("", action, 0)
 }
 
 // @Title Reset
@@ -91,7 +93,7 @@ func (ctl *PasswordRetrievalController) Post() {
 // @Failure 500 system_error:               system error
 // @router /:link_id [put]
 func (ctl *PasswordRetrievalController) Reset() {
-	action := "retrieve password of corporation manager"
+	action := "corp admin or employee manager resets password"
 	sendResp := ctl.newFuncForSendingFailedResp(action)
 
 	key := ctl.apiReqHeader(headerPasswordRetrievalKey)
@@ -114,6 +116,8 @@ func (ctl *PasswordRetrievalController) Reset() {
 		sendResp(parseModelError(mErr))
 	} else {
 		ctl.sendSuccessResp(action, "successfully")
+
+		ctl.addOperationLog("", action, 0)
 	}
 }
 

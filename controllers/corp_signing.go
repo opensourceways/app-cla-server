@@ -58,7 +58,7 @@ func (ctl *CorporationSigningController) SendVerificationCode() {
 // @Failure 500 system_error:               system error
 // @router /:link_id/ [post]
 func (ctl *CorporationSigningController) Sign() {
-	action := "sign as corporation"
+	action := "sign corp CLA"
 	linkID := ctl.GetString(":link_id")
 
 	var info models.CorporationSigningCreateOption
@@ -112,8 +112,9 @@ func (ctl *CorporationSigningController) Sign() {
 // @Failure 500 system_error:               system error
 // @router /:link_id/:signing_id [delete]
 func (ctl *CorporationSigningController) Delete() {
-	action := "delete corp signing"
 	linkID := ctl.GetString(":link_id")
+	csId := ctl.GetString(":signing_id")
+	action := "community manager deletes corp signing: " + csId
 
 	pl, fr := ctl.tokenPayloadBasedOnCodePlatform()
 	if fr != nil {
@@ -125,7 +126,6 @@ func (ctl *CorporationSigningController) Delete() {
 		return
 	}
 
-	csId := ctl.GetString(":signing_id")
 	if err := models.RemoveCorpSigning(csId); err != nil {
 		ctl.sendModelErrorAsResp(err, action)
 	} else {
@@ -142,8 +142,9 @@ func (ctl *CorporationSigningController) Delete() {
 // @Success 202 {object} controllers.respData
 // @router /:link_id/:signing_id [put]
 func (ctl *CorporationSigningController) ResendCorpSigningEmail() {
-	action := "resend corp signing email"
 	linkID := ctl.GetString(":link_id")
+	csId := ctl.GetString(":signing_id")
+	action := "community manager resends corp signing email, signing id: " + csId
 
 	pl, fr := ctl.tokenPayloadBasedOnCodePlatform()
 	if fr != nil {
@@ -155,7 +156,7 @@ func (ctl *CorporationSigningController) ResendCorpSigningEmail() {
 		return
 	}
 
-	signingInfo, merr := models.GetCorpSigning(ctl.GetString(":signing_id"))
+	signingInfo, merr := models.GetCorpSigning(csId)
 	if merr != nil {
 		ctl.sendModelErrorAsResp(merr, action)
 		return
@@ -190,7 +191,7 @@ func (ctl *CorporationSigningController) ResendCorpSigningEmail() {
 // @Failure 500 system_error:               system error
 // @router /:link_id [get]
 func (ctl *CorporationSigningController) GetAll() {
-	action := "list corporation"
+	action := "community manager lists corp signings"
 	linkID := ctl.GetString(":link_id")
 
 	pl, fr := ctl.tokenPayloadBasedOnCodePlatform()
@@ -241,7 +242,7 @@ func (ctl *CorporationSigningController) ListDeleted() {
 // @Failure 500 system_error:               system error
 // @router /:link_id/corps/:email [get]
 func (ctl *CorporationSigningController) GetCorpInfo() {
-	action := "list corporation info"
+	action := "get corporation info"
 
 	r, merr := models.FindCorpSummary(
 		ctl.GetString(":link_id"), ctl.GetString(":email"),

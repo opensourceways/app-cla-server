@@ -26,7 +26,7 @@ func (ctl *CorpEmailDomainController) Prepare() {
 // @Failure 500 system_error:       system error
 // @router /code [post]
 func (ctl *CorpEmailDomainController) Verify() {
-	action := "create verification code for adding email domain"
+	action := "corp admin creates verification code to add email domain"
 	sendResp := ctl.newFuncForSendingFailedResp(action)
 
 	var req verificationCodeRequest
@@ -95,7 +95,7 @@ func (ctl *CorpEmailDomainController) Verify() {
 // @Failure 500 system_error:               system error
 // @router / [post]
 func (ctl *CorpEmailDomainController) Add() {
-	action := "add email domain"
+	action := "corp admin adds email domain"
 	sendResp := ctl.newFuncForSendingFailedResp(action)
 
 	pl, fr := ctl.tokenPayloadBasedOnCorpManager()
@@ -129,7 +129,7 @@ func (ctl *CorpEmailDomainController) Add() {
 // @Failure 500 system_error:       system error
 // @router / [get]
 func (ctl *CorpEmailDomainController) GetAll() {
-	action := "list all domains"
+	action := "corp admin lists all email domains"
 
 	pl, fr := ctl.tokenPayloadBasedOnCorpManager()
 	if fr != nil {

@@ -17,7 +17,7 @@ type corpAuthInfo struct {
 // @Failure util.ErrNoCLABindingDoc	"no cla binding applied to corporation"
 // @router /auth [put]
 func (ctl *CorporationManagerController) Logout() {
-	action := "corp manager logout"
+	action := "corp admin or employee manager logouts"
 	sendResp := ctl.newFuncForSendingFailedResp(action)
 
 	pl, fr := ctl.tokenPayloadBasedOnCorpManager()
@@ -42,7 +42,7 @@ func (ctl *CorporationManagerController) Logout() {
 // @Failure util.ErrNoCLABindingDoc	"no cla binding applied to corporation"
 // @router /auth [post]
 func (ctl *CorporationManagerController) Login() {
-	action := "authenticate as corp/employee manager"
+	action := "corp admin or employee manager logins"
 
 	var info models.CorporationManagerLoginInfo
 	if fr := ctl.fetchInputPayload(&info); fr != nil {
@@ -81,6 +81,8 @@ func (ctl *CorporationManagerController) Login() {
 			InitialPWChanged: v.InitialPWChanged,
 		},
 	})
+
+	ctl.addOperationLog(v.UserId+" / "+v.Role, action, 0)
 }
 
 func (ctl *CorporationManagerController) genToken(linkID string, info *models.CorpManagerLoginInfo) error {

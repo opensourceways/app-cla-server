@@ -20,6 +20,8 @@ func (ctl *baseController) sendResponse(action string, body interface{}, statusC
 	}
 
 	ctl.ServeJSON()
+
+	ctl.operationLog(action, statusCode)
 }
 
 func (ctl *baseController) sendSuccessResp(action string, body interface{}) {
@@ -54,4 +56,19 @@ func (ctl *baseController) sendFailedResponse(statusCode int, errCode string, re
 	}
 
 	ctl.sendResponse(action, d, statusCode)
+}
+
+func (ctl *baseController) operationLog(action string, statusCode int) {
+	user := ""
+	if ac, err := ctl.getAccessController(); err == nil {
+		user = ac.getUser()
+	}
+
+	if user != "" {
+		logs.Info("%s, %s, %d", user, action, statusCode)
+	}
+}
+
+func (ctl *baseController) addOperationLog(user, action string, statusCode int) {
+	logs.Info("%s, %s, %d", user, action, statusCode)
 }

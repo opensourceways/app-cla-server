@@ -66,8 +66,10 @@ func (ctl *CorporationPDFController) downloadCorpPDF(csId string) *failedApiResu
 // @Success 201 {object} controllers.respData
 // @router /:link_id/:signing_id [post]
 func (ctl *CorporationPDFController) Upload() {
-	action := "upload corp's signing pdf"
 	linkID := ctl.GetString(":link_id")
+	signingId := ctl.GetString(":signing_id")
+
+	action := "community manager uploads pdf of corp CLA sign: " + signingId
 
 	pl, fr := ctl.tokenPayloadBasedOnCodePlatform()
 	if fr != nil {
@@ -87,7 +89,7 @@ func (ctl *CorporationPDFController) Upload() {
 		return
 	}
 
-	err := models.UploadCorpPDF(ctl.GetString(":signing_id"), data)
+	err := models.UploadCorpPDF(signingId, data)
 	if err != nil {
 		ctl.sendModelErrorAsResp(err, action)
 	} else {
@@ -104,8 +106,10 @@ func (ctl *CorporationPDFController) Upload() {
 // @Success 200
 // @router /:link_id/:signing_id [get]
 func (ctl *CorporationPDFController) Download() {
-	action := "download corp's signing pdf"
 	linkID := ctl.GetString(":link_id")
+	signingId := ctl.GetString(":signing_id")
+
+	action := "community manager downloads pdf of corp CLA sign: " + signingId
 
 	pl, fr := ctl.tokenPayloadBasedOnCodePlatform()
 	if fr != nil {
@@ -130,7 +134,7 @@ func (ctl *CorporationPDFController) Download() {
 // @Success 200
 // @router / [get]
 func (ctl *CorporationPDFController) Review() {
-	action := "download corp's signing pdf"
+	action := "corp admin downloads pdf"
 
 	pl, fr := ctl.tokenPayloadBasedOnCorpManager()
 	if fr != nil {

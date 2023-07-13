@@ -22,7 +22,7 @@ func (ctl *SMTPController) Prepare() {
 // @Success 201 {object} controllers.respData
 // @router /verify [post]
 func (ctl *SMTPController) Verify() {
-	action := "verify the email"
+	action := "community manager verifies the email"
 
 	var info models.EmailAuthorizationReq
 	if fr := ctl.fetchInputPayloadFromFormData(&info); fr != nil {
@@ -65,7 +65,7 @@ func (ctl *SMTPController) Verify() {
 // @Success 201 {object} controllers.respData
 // @router /authorize [post]
 func (ctl *SMTPController) Authorize() {
-	action := "Email authorization verification"
+	action := "community manager authorizes the email"
 
 	var info models.EmailAuthorization
 	if fr := ctl.fetchInputPayloadFromFormData(&info); fr != nil {

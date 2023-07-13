@@ -23,7 +23,7 @@ func (ctl *EmployeeManagerController) Prepare() {
 // @Success 201 {object} controllers.respData
 // @router / [post]
 func (ctl *EmployeeManagerController) Post() {
-	action := "add employee managers"
+	action := "corp admin adds employee managers"
 	sendResp := ctl.newFuncForSendingFailedResp(action)
 
 	pl, fr := ctl.tokenPayloadBasedOnCorpManager()
@@ -64,7 +64,7 @@ func (ctl *EmployeeManagerController) Post() {
 // @Success 204 {object} controllers.respData
 // @router / [delete]
 func (ctl *EmployeeManagerController) Delete() {
-	action := "delete employee managers"
+	action := "corp admin deletes employee managers"
 	sendResp := ctl.newFuncForSendingFailedResp(action)
 
 	pl, fr := ctl.tokenPayloadBasedOnCorpManager()
@@ -113,7 +113,7 @@ func (ctl *EmployeeManagerController) Delete() {
 // @Success 200 {object} models.CorporationManagerListResult
 // @router / [get]
 func (ctl *EmployeeManagerController) GetAll() {
-	action := "list employee managers"
+	action := "corp admin lists employee managers"
 	sendResp := ctl.newFuncForSendingFailedResp(action)
 
 	pl, fr := ctl.tokenPayloadBasedOnCorpManager()

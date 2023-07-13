@@ -36,47 +36,39 @@ func Initialize(cfg *Config) error {
 type AuthInterface interface {
 	GetAuthCodeURL(state string) string
 	GetToken(code, scope string) (string, error)
-	PasswordCredentialsToken(username, password string) (string, error)
 }
 
+// codePlatformAuth
 type codePlatformAuth struct {
 	webRedirectDir webRedirectDirConfig
 	clients        map[string]AuthInterface
 }
 
-func (this *codePlatformAuth) GetAuthInstance(platform string) (AuthInterface, error) {
-	if c, ok := this.clients[platform]; ok {
+func (auth *codePlatformAuth) GetAuthInstance(platform string) (AuthInterface, error) {
+	if c, ok := auth.clients[platform]; ok {
 		return c, nil
 	}
 	return nil, fmt.Errorf("Failed to get oauth instance: unknown platform: %s", platform)
 }
 
-func (this *codePlatformAuth) WebRedirectDir(success bool) string {
+func (auth *codePlatformAuth) WebRedirectDir(success bool) string {
 	if success {
-		return this.webRedirectDir.WebRedirectDirOnSuccess
+		return auth.webRedirectDir.WebRedirectDirOnSuccess
 	}
-	return this.webRedirectDir.WebRedirectDirOnFailure
+	return auth.webRedirectDir.WebRedirectDirOnFailure
 }
 
+// authClient
 type authClient struct {
 	c oauth2.Oauth2Interface
 }
 
-func (this *authClient) GetAuthCodeURL(state string) string {
-	return this.c.GetOauth2CodeURL(state)
+func (cli *authClient) GetAuthCodeURL(state string) string {
+	return cli.c.GetOauth2CodeURL(state)
 }
 
-func (this *authClient) GetToken(code, scope string) (string, error) {
-	token, err := this.c.GetToken(code, scope)
-	if err != nil {
-		return "", fmt.Errorf("Get token failed: %s", err.Error())
-	}
-
-	return token.AccessToken, nil
-}
-
-func (this *authClient) PasswordCredentialsToken(username, password string) (string, error) {
-	token, err := this.c.PasswordCredentialsToken(username, password)
+func (cli *authClient) GetToken(code, scope string) (string, error) {
+	token, err := cli.c.GetToken(code, scope)
 	if err != nil {
 		return "", fmt.Errorf("Get token failed: %s", err.Error())
 	}

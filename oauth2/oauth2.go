@@ -9,7 +9,6 @@ import (
 
 type Oauth2Interface interface {
 	GetToken(code, scope string) (*liboauth2.Token, error)
-	PasswordCredentialsToken(username, password string) (*liboauth2.Token, error)
 	GetOauth2CodeURL(state string) string
 }
 
@@ -17,22 +16,15 @@ type client struct {
 	cfg *liboauth2.Config
 }
 
-func (this *client) GetToken(code, scope string) (*liboauth2.Token, error) {
-	return FetchOauth2Token(this.cfg, code)
+func (cli *client) GetToken(code, scope string) (*liboauth2.Token, error) {
+	return FetchOauth2Token(cli.cfg, code)
 }
 
-func (this *client) PasswordCredentialsToken(username, password string) (*liboauth2.Token, error) {
-	token, err := this.cfg.PasswordCredentialsToken(context.Background(), username, password)
-	if err != nil {
-		return nil, fmt.Errorf("Unable to retrieve token: %v", err)
-	}
-	return token, nil
+func (cli *client) GetOauth2CodeURL(state string) string {
+	return GetOauth2CodeURL(cli.cfg, state)
 }
 
-func (this *client) GetOauth2CodeURL(state string) string {
-	return GetOauth2CodeURL(this.cfg, state)
-}
-
+// Oauth2Config
 type Oauth2Config struct {
 	ClientID     string   `json:"client_id" required:"true"`
 	ClientSecret string   `json:"client_secret" required:"true"`

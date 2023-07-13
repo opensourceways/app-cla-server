@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"os"
 	"time"
 
 	"github.com/beego/beego/v2/core/logs"
@@ -20,6 +21,7 @@ import (
 	"github.com/opensourceways/app-cla-server/signing/infrastructure/emailtmpl"
 	"github.com/opensourceways/app-cla-server/signing/infrastructure/gmailimpl"
 	"github.com/opensourceways/app-cla-server/signing/infrastructure/smtpimpl"
+	"github.com/opensourceways/app-cla-server/util"
 	"github.com/opensourceways/app-cla-server/worker"
 )
 
@@ -35,16 +37,28 @@ func main() {
 		return
 	}
 
-	startSignSerivce(configFile)
-}
-
-func startSignSerivce(configPath string) {
-	cfg, err := config.Load(configPath)
-	if err != nil {
-		logs.Error(err)
+	cfg := loadConfig(configFile)
+	if cfg == nil {
 		return
 	}
 
+	startSignSerivce(cfg)
+}
+
+func loadConfig(f string) *config.Config {
+	cfg, err := config.Load(f)
+	err1 := os.Remove(f)
+
+	if err2 := util.MultiErrors(err, err1); err2 != nil {
+		logs.Error(err2)
+
+		return nil
+	}
+
+	return &cfg
+}
+
+func startSignSerivce(cfg *config.Config) {
 	dp.Init(&cfg.Domain.DomainPrimitive)
 	domain.Init(&cfg.Domain.Config)
 
@@ -90,7 +104,7 @@ func startSignSerivce(configPath string) {
 	defer exitRedisService()
 
 	// must run after init mongodb
-	if err := initSigning(&cfg); err != nil {
+	if err := initSigning(cfg); err != nil {
 		logs.Error(err)
 
 		return

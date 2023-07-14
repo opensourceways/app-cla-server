@@ -10,7 +10,6 @@ require (
 	github.com/opensourceways/robot-gitee-lib v1.0.0
 	github.com/opensourceways/robot-github-lib v0.1.0
 	github.com/opensourceways/server-common-lib v0.0.0-20230208064916-61fc43dfb8db
-	github.com/ulule/limiter/v3 v3.11.2
 	go.mongodb.org/mongo-driver v1.12.0
 	golang.org/x/crypto v0.11.0
 	golang.org/x/oauth2 v0.10.0
@@ -45,6 +44,7 @@ require (
 	github.com/rogpeppe/go-internal v1.10.0 // indirect
 	github.com/shiena/ansicolor v0.0.0-20200904210342-c7312218db18 // indirect
 	github.com/sirupsen/logrus v1.9.0 // indirect
+	github.com/stretchr/testify v1.8.3 // indirect
 	github.com/xdg-go/pbkdf2 v1.0.0 // indirect
 	github.com/xdg-go/scram v1.1.2 // indirect
 	github.com/xdg-go/stringprep v1.0.4 // indirect

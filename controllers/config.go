@@ -10,14 +10,16 @@ import (
 
 var config Config
 
+func Init(cfg *Config) {
+	config = *cfg
+}
+
 type Config struct {
-	LimitedAPIs                     []string `json:"limited_apis"`
-	CookieTimeout                   int      `json:"cookie_timeout"` // seconds
-	MaxRequestPerMinute             int      `json:"max_request_per_minute"`
-	MaxSizeOfCorpCLAPDF             int      `json:"max_size_of_corp_cla_pdf"`
-	PasswordRetrievalExpiry         int64    `json:"password_retrieval_expiry"`
-	WebRedirectDirOnSuccessForEmail string   `json:"web_redirect_dir_on_success_for_email"`
-	WebRedirectDirOnFailureForEmail string   `json:"web_redirect_dir_on_failure_for_email"`
+	CookieTimeout                   int    `json:"cookie_timeout"` // seconds
+	MaxSizeOfCorpCLAPDF             int    `json:"max_size_of_corp_cla_pdf"`
+	PasswordRetrievalExpiry         int64  `json:"password_retrieval_expiry"`
+	WebRedirectDirOnSuccessForEmail string `json:"web_redirect_dir_on_success_for_email"`
+	WebRedirectDirOnFailureForEmail string `json:"web_redirect_dir_on_failure_for_email"`
 
 	PDFOutDir            string `json:"pdf_out_dir"                required:"true"`
 	CookieDomain         string `json:"cookie_domain"              required:"true"`
@@ -27,17 +29,6 @@ type Config struct {
 }
 
 func (cfg *Config) SetDefault() {
-	if cfg.MaxRequestPerMinute <= 0 {
-		cfg.MaxRequestPerMinute = 1
-	}
-
-	if len(cfg.LimitedAPIs) == 0 {
-		cfg.LimitedAPIs = []string{
-			"/v1/verification-code",
-			"/v1/password-retrieval",
-		}
-	}
-
 	if cfg.CookieTimeout <= 0 {
 		cfg.CookieTimeout = 1800
 	}

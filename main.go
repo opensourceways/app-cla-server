@@ -84,10 +84,7 @@ func startSignSerivce(cfg *config.Config) {
 		return
 	}
 
-	if err := controllers.Init(&cfg.API); err != nil {
-		logs.Error(err)
-		return
-	}
+	controllers.Init(&cfg.API)
 
 	if err := commondb.Init(&cfg.Mongodb.DB); err != nil {
 		logs.Error(err)

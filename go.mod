@@ -8,7 +8,7 @@ require (
 	github.com/google/uuid v1.3.0
 	github.com/opensourceways/gofpdf v1.16.4
 	github.com/opensourceways/robot-gitee-lib v1.0.0
-	github.com/opensourceways/robot-github-lib v1.0.0
+	github.com/opensourceways/robot-github-lib v0.1.0
 	github.com/opensourceways/server-common-lib v0.0.0-20230208064916-61fc43dfb8db
 	github.com/ulule/limiter/v3 v3.11.2
 	go.mongodb.org/mongo-driver v1.12.0

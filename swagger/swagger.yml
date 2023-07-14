@@ -1,0 +1,1785 @@
+swagger: "2.0"
+info:
+  title: beego Test API
+  description: |
+    beego has a very cool tools to autogenerate documents for your API
+  version: 1.0.0
+  termsOfService: http://beego.me/
+  contact:
+    email: astaxie@gmail.com
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+basePath: /v1
+paths:
+  /auth/:
+    put:
+      tags:
+      - auth
+      description: |-
+        community manager logout
+        <br>
+      operationId: AuthController.logout
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      responses:
+        "202":
+          description: ""
+          schema:
+            $ref: '#/definitions/controllers.respData'
+  /auth/{platform}/{purpose}:
+    get:
+      tags:
+      - auth
+      description: |-
+        callback of authentication by oauth2
+        <br>
+      operationId: AuthController.Callback
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      parameters:
+      - in: path
+        name: platform
+        description: gitee/github
+        required: true
+        type: string
+      - in: path
+        name: purpose
+        description: 'purpose: login'
+        required: true
+        type: string
+      responses:
+        "400":
+          description: 'auth_failed:               authenticated on code platform
+            failed'
+        "401":
+          description: 'unsupported_code_platform: unsupported code platform'
+        "402":
+          description: 'refuse_to_authorize_email: the user refused to access his/her
+            email'
+        "403":
+          description: 'no_public_email:           no public email'
+        "500":
+          description: 'system_error:              system error'
+  /auth/authcodeurl/{platform}/{purpose}:
+    get:
+      tags:
+      - auth
+      description: |-
+        get authentication code url
+        <br>
+      operationId: AuthController.AuthCodeURL
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      parameters:
+      - in: path
+        name: platform
+        description: gitee/github
+        required: true
+        type: string
+      - in: path
+        name: purpose
+        description: 'purpose: login'
+        required: true
+        type: string
+      responses:
+        "200":
+          description: ""
+          schema:
+            $ref: '#/definitions/controllers.authCodeURL'
+        "400":
+          description: 'missing_url_path_parameter: missing url path parameter'
+        "401":
+          description: 'unsupported_code_platform:  unsupported code platform'
+        "402":
+          description: 'unkown_purpose_for_auth:    unknown purpose parameter'
+  /cla/{link_id}:
+    get:
+      tags:
+      - cla
+      description: |-
+        list clas of link
+        <br>
+      operationId: CLAController.List
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      parameters:
+      - in: path
+        name: link_id
+        description: link id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: ""
+          schema:
+            $ref: '#/definitions/models.CLAOfLink'
+    post:
+      tags:
+      - cla
+      description: |-
+        add cla
+        <br>
+      operationId: CLAController.Add
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      parameters:
+      - in: body
+        name: body
+        description: body for adding cla
+        required: true
+        schema:
+          $ref: '#/definitions/models.CLACreateOpt'
+      responses:
+        "201":
+          description: ""
+          schema:
+            $ref: '#/definitions/controllers.respData'
+  /cla/{link_id}/{id}:
+    get:
+      tags:
+      - cla
+      description: |-
+        get cla pdf
+        <br>
+      operationId: CLAController.DownloadPDF
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      parameters:
+      - in: path
+        name: link_id
+        description: link id
+        required: true
+        type: string
+      - in: path
+        name: id
+        description: cla id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: ""
+    delete:
+      tags:
+      - cla
+      description: |-
+        delete cla
+        <br>
+      operationId: CLAController.Delete
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      parameters:
+      - in: path
+        name: link_id
+        description: link id
+        required: true
+        type: string
+      - in: path
+        name: id
+        description: cla id
+        required: true
+        type: string
+      responses:
+        "204":
+          description: ""
+          schema:
+            $ref: '#/definitions/controllers.respData'
+  /corporation-email-domain/:
+    get:
+      tags:
+      - corporation-email-domain
+      description: |-
+        get all the email domains
+        <br>
+      operationId: CorpEmailDomainController.GetAll
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ""
+          schema:
+            $ref: '#/definitions/controllers.respData'
+        "400":
+          description: 'missing_token:      token is missing'
+        "401":
+          description: 'unknown_token:      token is unknown'
+        "402":
+          description: 'expired_token:      token is expired'
+        "403":
+          description: 'unauthorized_token: the permission of token is unauthorized'
+        "500":
+          description: 'system_error:       system error'
+    post:
+      tags:
+      - corporation-email-domain
+      description: |-
+        add email domain of corporation
+        <br>
+      operationId: CorpEmailDomainController.Add
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      parameters:
+      - in: body
+        name: body
+        description: body for email domain
+        required: true
+        schema:
+          $ref: '#/definitions/models.CorpEmailDomainCreateOption'
+      responses:
+        "201":
+          description: ""
+          schema:
+            $ref: '#/definitions/controllers.respData'
+        "400":
+          description: 'missing_token:              token is missing'
+        "401":
+          description: 'unknown_token:              token is unknown'
+        "402":
+          description: 'expired_token:              token is expired'
+        "403":
+          description: 'unauthorized_token:         the permission of token is unauthorized'
+        "404":
+          description: 'error_parsing_api_body:     fetch payload failed'
+        "405":
+          description: 'not_an_email:               the email field of payload is
+            not an email'
+        "406":
+          description: 'expired_verification_code:  the verification code is expired'
+        "407":
+          description: 'wrong_verification_code:    the verification code is wrong'
+        "408":
+          description: 'unmatched_email_domain:     the email domain is unmatched'
+        "409":
+          description: 'no_link_or_unsigned:        no link or corp has not signed'
+        "500":
+          description: 'system_error:               system error'
+  /corporation-email-domain/code:
+    post:
+      tags:
+      - corporation-email-domain
+      description: |-
+        send verification code when adding email domain
+        <br>
+      operationId: CorpEmailDomainController.Verify
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      parameters:
+      - in: body
+        name: body
+        description: body for verification code
+        required: true
+        schema:
+          $ref: '#/definitions/controllers.verificationCodeRequest'
+      responses:
+        "202":
+          description: ""
+          schema:
+            $ref: '#/definitions/controllers.respData'
+        "400":
+          description: 'missing_token:      token is missing'
+        "401":
+          description: 'unknown_token:      token is unknown'
+        "402":
+          description: 'expired_token:      token is expired'
+        "403":
+          description: 'unauthorized_token: the permission of token is unauthorized'
+        "500":
+          description: 'system_error:       system error'
+  /corporation-manager/:
+    put:
+      tags:
+      - corporation-manager
+      description: |-
+        corporation manager changes password
+        <br>
+      operationId: CorporationManagerController.ChangePassword
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      responses:
+        "202":
+          description: ""
+          schema:
+            $ref: '#/definitions/controllers.respData'
+        util.ErrInvalidAccountOrPw:
+          description: ""
+  /corporation-manager/{link_id}/{signing_id}:
+    post:
+      tags:
+      - corporation-manager
+      description: |-
+        add corporation administrator
+        <br>
+      operationId: CorporationManagerController.AddCorpAdmin
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      parameters:
+      - in: path
+        name: link_id
+        description: link id
+        required: true
+        type: string
+      - in: path
+        name: signing_id
+        description: signing id
+        required: true
+        type: string
+      responses:
+        "202":
+          description: ""
+          schema:
+            $ref: '#/definitions/controllers.respData'
+        util.ErrNumOfCorpManagersExceeded:
+          description: ""
+        util.ErrPDFHasNotUploaded:
+          description: ""
+  /corporation-manager/auth:
+    put:
+      tags:
+      - corporation-manager
+      description: |-
+        corporation manager logout
+        <br>
+      operationId: CorporationManagerController.Logout
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      responses:
+        "202":
+          description: ""
+          schema:
+            $ref: '#/definitions/controllers.respData'
+        util.ErrNoCLABindingDoc:
+          description: '"no cla binding applied to corporation"'
+    post:
+      tags:
+      - corporation-manager
+      description: |-
+        corporation manager login
+        <br>
+      operationId: CorporationManagerController.Login
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      parameters:
+      - in: body
+        name: body
+        description: body for corporation manager info
+        required: true
+        schema:
+          $ref: '#/definitions/models.CorporationManagerLoginInfo'
+      responses:
+        "201":
+          description: ""
+          schema:
+            $ref: '#/definitions/controllers.corpAuthInfo'
+        util.ErrNoCLABindingDoc:
+          description: '"no cla binding applied to corporation"'
+  /corporation-pdf/:
+    get:
+      tags:
+      - corporation-pdf
+      description: |-
+        corp administrator review pdf of corporation signing
+        <br>
+      operationId: CorporationPDFController.Review
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ""
+  /corporation-pdf/{link_id}/{signing_id}:
+    get:
+      tags:
+      - corporation-pdf
+      description: |-
+        download pdf of corporation signing
+        <br>
+      operationId: CorporationPDFController.Download
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      parameters:
+      - in: path
+        name: link_id
+        description: link id
+        required: true
+        type: string
+      - in: path
+        name: signing_id
+        description: signing id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: ""
+    post:
+      tags:
+      - corporation-pdf
+      description: |-
+        upload pdf of corporation signing
+        <br>
+      operationId: CorporationPDFController.Upload
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      parameters:
+      - in: path
+        name: link_id
+        description: link id
+        required: true
+        type: string
+      - in: path
+        name: signing_id
+        description: signing id
+        required: true
+        type: string
+      responses:
+        "201":
+          description: ""
+          schema:
+            $ref: '#/definitions/controllers.respData'
+  /corporation-signing/{link_id}:
+    get:
+      tags:
+      - corporation-signing
+      description: |-
+        get all the corporations
+        <br>
+      operationId: CorporationSigningController.GetAll
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      parameters:
+      - in: path
+        name: link_id
+        description: link id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: ""
+          schema:
+            $ref: '#/definitions/models.CorporationSigningSummary'
+        "400":
+          description: 'missing_url_path_parameter: missing url path parameter'
+        "401":
+          description: 'missing_token:              token is missing'
+        "402":
+          description: 'unknown_token:              token is unknown'
+        "403":
+          description: 'expired_token:              token is expired'
+        "404":
+          description: 'unauthorized_token:         the permission of token is unmatched'
+        "405":
+          description: 'unknown_link:               unkown link id'
+        "406":
+          description: 'not_yours_org:              the link doesn''t belong to your
+            community'
+        "500":
+          description: 'system_error:               system error'
+  /corporation-signing/{link_id}/:
+    post:
+      tags:
+      - corporation-signing
+      description: |-
+        sign corporation cla
+        <br>
+      operationId: CorporationSigningController.Sign
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      parameters:
+      - in: path
+        name: link_id
+        description: link id
+        required: true
+        type: string
+      - in: body
+        name: body
+        description: body for signing corporation cla
+        required: true
+        schema:
+          $ref: '#/definitions/models.CorporationSigningCreateOption'
+      responses:
+        "201":
+          description: ""
+          schema:
+            $ref: '#/definitions/controllers.respData'
+        "400":
+          description: 'missing_url_path_parameter: missing url path parameter'
+        "401":
+          description: 'error_parsing_api_body:     parse input paraemter failed'
+        "402":
+          description: 'expired_verification_code:  the verification code is expired'
+        "403":
+          description: 'wrong_verification_code:    the verification code is wrong'
+        "404":
+          description: 'not_an_email:               the email inputed is wrong'
+        "405":
+          description: 'no_link:                    the link id is not exists'
+        "406":
+          description: 'unmatched_cla:              the cla hash is not equal to the
+            one of backend server'
+        "407":
+          description: 'resigned:                   the signer has signed the cla'
+        "500":
+          description: 'system_error:               system error'
+  /corporation-signing/{link_id}/{signing_id}:
+    put:
+      tags:
+      - corporation-signing
+      description: |-
+        resend corp signing email
+        <br>
+      operationId: CorporationSigningController.ResendCorpSigningEmail
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      parameters:
+      - in: path
+        name: link_id
+        description: link id
+        required: true
+        type: string
+      - in: path
+        name: signing_id
+        description: corp email
+        required: true
+        type: string
+      responses:
+        "202":
+          description: ""
+          schema:
+            $ref: '#/definitions/controllers.respData'
+    delete:
+      tags:
+      - corporation-signing
+      description: |-
+        delete corp signing
+        <br>
+      operationId: CorporationSigningController.Delete
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      parameters:
+      - in: path
+        name: link_id
+        description: link id
+        required: true
+        type: string
+      - in: path
+        name: signing_id
+        description: corp signing id
+        required: true
+        type: string
+      responses:
+        "204":
+          description: ""
+          schema:
+            $ref: '#/definitions/controllers.respData'
+        "400":
+          description: 'missing_url_path_parameter: missing url path parameter'
+        "401":
+          description: 'missing_token:              token is missing'
+        "402":
+          description: 'unknown_token:              token is unknown'
+        "403":
+          description: 'expired_token:              token is expired'
+        "404":
+          description: 'unauthorized_token:         the permission of token is unmatched'
+        "405":
+          description: 'not_yours_org:              the link doesn''t belong to your
+            community'
+        "406":
+          description: 'unknown_link:               unkown link id'
+        "407":
+          description: 'no_link:                    the link id is not exists'
+        "500":
+          description: 'system_error:               system error'
+  /corporation-signing/{link_id}/code:
+    post:
+      tags:
+      - corporation-signing
+      description: |-
+        send verification code when signing
+        <br>
+      operationId: CorporationSigningController.SendVerificationCode
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      parameters:
+      - in: path
+        name: link_id
+        description: link id
+        required: true
+        type: string
+      - in: body
+        name: body
+        description: body for verification code
+        required: true
+        schema:
+          $ref: '#/definitions/controllers.verificationCodeRequest'
+      responses:
+        "201":
+          description: ""
+          schema:
+            $ref: '#/definitions/controllers.respData'
+  /corporation-signing/{link_id}/corps/{email}:
+    get:
+      tags:
+      - corporation-signing
+      description: |-
+        get all the corporations by email
+        <br>
+      operationId: CorporationSigningController.GetCorpInfo
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      parameters:
+      - in: path
+        name: link_id
+        description: link id
+        required: true
+        type: string
+      - in: path
+        name: email
+        description: email
+        required: true
+        type: string
+      responses:
+        "200":
+          description: ""
+          schema:
+            $ref: '#/definitions/app.CorpSummaryDTO'
+        "400":
+          description: 'missing_url_path_parameter: missing url path parameter'
+        "401":
+          description: 'unknown_link:               unkown link id'
+        "500":
+          description: 'system_error:               system error'
+  /corporation-signing/deleted/{link_id}:
+    get:
+      tags:
+      - corporation-signing
+      description: |-
+        get all the corporations which have been deleted
+        <br>
+      operationId: CorporationSigningController.ListDeleted
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      parameters:
+      - in: path
+        name: link_id
+        description: link id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: ""
+          schema:
+            $ref: '#/definitions/models.CorporationSigningBasicInfo'
+        "400":
+          description: 'missing_url_path_parameter: missing url path parameter'
+        "401":
+          description: 'missing_token:              token is missing'
+        "402":
+          description: 'unknown_token:              token is unknown'
+        "403":
+          description: 'expired_token:              token is expired'
+        "404":
+          description: 'unauthorized_token:         the permission of token is unmatched'
+        "405":
+          description: 'unknown_link:               unkown link id'
+        "406":
+          description: 'not_yours_org:              the link doesn''t belong to your
+            community'
+        "500":
+          description: 'system_error:               system error'
+  /employee-manager/:
+    get:
+      tags:
+      - employee-manager
+      description: |-
+        get all employee managers
+        <br>
+      operationId: EmployeeManagerController.GetAll
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ""
+          schema:
+            $ref: '#/definitions/models.CorporationManagerListResult'
+    post:
+      tags:
+      - employee-manager
+      description: |-
+        add employee managers
+        <br>
+      operationId: EmployeeManagerController.Post
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      parameters:
+      - in: body
+        name: body
+        description: body for employee manager
+        required: true
+        schema:
+          $ref: '#/definitions/models.EmployeeManagerCreateOption'
+      responses:
+        "201":
+          description: ""
+          schema:
+            $ref: '#/definitions/controllers.respData'
+    delete:
+      tags:
+      - employee-manager
+      description: |-
+        delete employee manager
+        <br>
+      operationId: EmployeeManagerController.Delete
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      parameters:
+      - in: body
+        name: body
+        description: body for employee manager
+        required: true
+        schema:
+          $ref: '#/definitions/models.EmployeeManagerDeleteOption'
+      responses:
+        "204":
+          description: ""
+          schema:
+            $ref: '#/definitions/controllers.respData'
+  /employee-signing/:
+    get:
+      tags:
+      - employee-signing
+      description: |-
+        get all the employees
+        <br>
+      operationId: EmployeeSigningController.GetAll
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ""
+          schema:
+            $ref: '#/definitions/models.IndividualSigningBasicInfo'
+        "400":
+          description: 'missing_token:      token is missing'
+        "401":
+          description: 'unknown_token:      token is unknown'
+        "402":
+          description: 'expired_token:      token is expired'
+        "403":
+          description: 'unauthorized_token: the permission of token is unmatched'
+        "500":
+          description: 'system_error:       system error'
+  /employee-signing/{link_id}/:
+    post:
+      tags:
+      - employee-signing
+      description: |-
+        sign employee cla
+        <br>
+      operationId: EmployeeSigningController.Sign
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      parameters:
+      - in: path
+        name: link_id
+        description: link id
+        required: true
+        type: string
+      - in: body
+        name: body
+        description: body for employee signing
+        required: true
+        schema:
+          $ref: '#/definitions/models.EmployeeSigning'
+      responses:
+        "201":
+          description: ""
+          schema:
+            $ref: '#/definitions/controllers.respData'
+        "400":
+          description: 'missing_url_path_parameter: missing url path parameter'
+        "401":
+          description: 'missing_token:              token is missing'
+        "402":
+          description: 'unknown_token:              token is unknown'
+        "403":
+          description: 'expired_token:              token is expired'
+        "404":
+          description: 'unauthorized_token:         the permission of token is unmatched'
+        "405":
+          description: 'error_parsing_api_body:     parse payload of request failed'
+        "406":
+          description: 'unmatched_email:            the email is not same as the one
+            which signer sets on the code platform'
+        "407":
+          description: 'unmatched_user_id:          the user id is not same as the
+            one which was fetched from code platform'
+        "408":
+          description: 'expired_verification_code:  the verification code is expired'
+        "409":
+          description: 'wrong_verification_code:    the verification code is wrong'
+        "410":
+          description: 'no_link:                    the link id is not exists'
+        "411":
+          description: 'no_employee_manager:        there is not any employee managers
+            for the corresponding corp'
+        "412":
+          description: 'unmatched_cla:              the cla hash is not equal to the
+            one of backend server'
+        "413":
+          description: 'resigned:                   the signer has signed the cla'
+        "500":
+          description: 'system_error:               system error'
+  /employee-signing/{link_id}/{signing_id}/code:
+    post:
+      tags:
+      - employee-signing
+      description: |-
+        send verification code when signing
+        <br>
+      operationId: EmployeeSigningController.SendVerificationCode
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      parameters:
+      - in: path
+        name: link_id
+        description: link id
+        required: true
+        type: string
+      - in: path
+        name: signing_id
+        description: corp signing id
+        required: true
+        type: string
+      - in: body
+        name: body
+        description: body for verification code
+        required: true
+        schema:
+          $ref: '#/definitions/controllers.verificationCodeRequest'
+      responses:
+        "201":
+          description: ""
+          schema:
+            $ref: '#/definitions/controllers.respData'
+  /employee-signing/{signing_id}:
+    put:
+      tags:
+      - employee-signing
+      description: |-
+        enable/unable employee signing
+        <br>
+      operationId: EmployeeSigningController.Update
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      parameters:
+      - in: path
+        name: signing_id
+        description: employee signing id
+        required: true
+        type: string
+      - in: body
+        name: param
+        description: body of updating employee signing
+        required: true
+        schema:
+          $ref: '#/definitions/models.EmployeeSigningUdateInfo'
+      responses:
+        "202":
+          description: ""
+          schema:
+            $ref: '#/definitions/controllers.respData'
+    delete:
+      tags:
+      - employee-signing
+      description: |-
+        delete employee signing
+        <br>
+      operationId: EmployeeSigningController.Delete
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      parameters:
+      - in: path
+        name: signing_id
+        description: employee signing id
+        required: true
+        type: string
+      responses:
+        "204":
+          description: ""
+          schema:
+            $ref: '#/definitions/controllers.respData'
+  /gmail/auth:
+    get:
+      tags:
+      - gmail
+      description: |-
+        callback of gmail
+        <br>
+      operationId: GmailController.Callback
+      consumes:
+      - application/json
+      produces:
+      - application/json
+  /gmail/authcodeurl:
+    get:
+      tags:
+      - gmail
+      description: |-
+        get auth code url
+        <br>
+      operationId: GmailController.AuthCodeURL
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ""
+          schema:
+            $ref: '#/definitions/controllers.authCodeURL'
+  /individual-signing/{link_id}:
+    get:
+      tags:
+      - individual-signing
+      description: |-
+        check whether contributor has signed cla
+        <br>
+      operationId: IndividualSigningController.Check
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      parameters:
+      - in: path
+        name: link_id
+        description: link id
+        required: true
+        type: string
+      - in: query
+        name: email
+        description: email of contributor
+        required: true
+        type: string
+      responses:
+        "200":
+          description: ""
+          schema:
+            $ref: '#/definitions/controllers.individualSigned'
+        "400":
+          description: 'no_link:      there is not link for org'
+        "500":
+          description: 'system_error: system error'
+  /individual-signing/{link_id}/:
+    post:
+      tags:
+      - individual-signing
+      description: |-
+        sign individual cla
+        <br>
+      operationId: IndividualSigningController.Sign
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      parameters:
+      - in: path
+        name: link_id
+        description: link id
+        required: true
+        type: string
+      - in: body
+        name: body
+        description: body for individual signing
+        required: true
+        schema:
+          $ref: '#/definitions/models.IndividualSigning'
+      responses:
+        "201":
+          description: ""
+          schema:
+            $ref: '#/definitions/controllers.respData'
+        "400":
+          description: 'missing_url_path_parameter: missing url path parameter'
+        "401":
+          description: 'missing_token:              token is missing'
+        "402":
+          description: 'unknown_token:              token is unknown'
+        "403":
+          description: 'expired_token:              token is expired'
+        "404":
+          description: 'unauthorized_token:         the permission of token is unmatched'
+        "405":
+          description: 'error_parsing_api_body:     parse payload of request failed'
+        "406":
+          description: 'unmatched_email:            the email is not same as the one
+            which signer sets on the code platform'
+        "407":
+          description: 'unmatched_user_id:          the user id is not same as the
+            one which was fetched from code platform'
+        "408":
+          description: 'unmatched_cla:              the cla hash is not equal to the
+            one of backend server'
+        "409":
+          description: 'resigned:                   the signer has signed the cla'
+        "410":
+          description: 'no_link:                    the link id is not exists'
+        "411":
+          description: 'go_to_sign_employee_cla:    should sign employee cla instead'
+        "500":
+          description: 'system_error:               system error'
+  /individual-signing/{link_id}/code:
+    post:
+      tags:
+      - individual-signing
+      description: |-
+        send verification code when signing
+        <br>
+      operationId: IndividualSigningController.SendVerificationCode
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      parameters:
+      - in: path
+        name: link_id
+        description: link id
+        required: true
+        type: string
+      - in: body
+        name: body
+        description: body for verification code
+        required: true
+        schema:
+          $ref: '#/definitions/controllers.verificationCodeRequest'
+      responses:
+        "201":
+          description: ""
+          schema:
+            $ref: '#/definitions/controllers.respData'
+  /link/:
+    get:
+      tags:
+      - link
+      description: |-
+        list all links
+        <br>
+      operationId: LinkController.ListLinks
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ""
+          schema:
+            $ref: '#/definitions/models.LinkInfo'
+        "401":
+          description: 'missing_token:              token is missing'
+        "402":
+          description: 'unknown_token:              token is unknown'
+        "403":
+          description: 'expired_token:              token is expired'
+        "404":
+          description: 'unauthorized_token:         the permission of token is unmatched'
+        "500":
+          description: 'system_error:               system error'
+    post:
+      tags:
+      - link
+      description: |-
+        create a link(cla application)
+        <br>
+      operationId: LinkController.Link
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      parameters:
+      - in: body
+        name: body
+        description: body for creating link
+        required: true
+        schema:
+          $ref: '#/definitions/models.LinkCreateOption'
+      responses:
+        "201":
+          description: ""
+          schema:
+            $ref: '#/definitions/controllers.respData'
+  /link/{link_id}:
+    put:
+      tags:
+      - link
+      description: |-
+        update link email
+        <br>
+      operationId: LinkController.UpdateLinkEmail
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      parameters:
+      - in: path
+        name: link_id
+        description: link id
+        required: true
+        type: string
+      responses:
+        "202":
+          description: ""
+          schema:
+            $ref: '#/definitions/controllers.respData'
+    delete:
+      tags:
+      - link
+      description: |-
+        delete link
+        <br>
+      operationId: LinkController.Delete
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      parameters:
+      - in: path
+        name: link_id
+        description: link id
+        required: true
+        type: string
+      responses:
+        "204":
+          description: ""
+          schema:
+            $ref: '#/definitions/controllers.respData'
+  /link/{link_id}/{apply_to}:
+    get:
+      tags:
+      - link
+      description: |-
+        get signing page info
+        <br>
+      operationId: LinkController.GetCLAForSigning
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      parameters:
+      - in: path
+        name: link_id
+        description: link id
+        required: true
+        type: string
+      - in: path
+        name: apply_to
+        description: apply to
+        required: true
+        type: string
+      responses:
+        "200":
+          description: ""
+          schema:
+            $ref: '#/definitions/models.CLADetail'
+        util.ErrNoCLABindingDoc:
+          description: '"org has not been bound any clas"'
+        util.ErrNotReadyToSign:
+          description: '"the corp signing is not ready"'
+  /organization/:
+    get:
+      tags:
+      - organization
+      description: |-
+        list all organizations
+        <br>
+      operationId: OrganizationController.ListOrganizations
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ""
+          schema:
+            $ref: '#/definitions/controllers.respData'
+        "401":
+          description: 'missing_token:              token is missing'
+        "402":
+          description: 'unknown_token:              token is unknown'
+        "403":
+          description: 'expired_token:              token is expired'
+        "404":
+          description: 'unauthorized_token:         the permission of token is unmatched'
+        "500":
+          description: 'system_error:               system error'
+  /password-retrieval/{link_id}:
+    put:
+      tags:
+      - password-retrieval
+      description: |-
+        retrieve password of corporation manager by resetting it
+        <br>
+      operationId: PasswordRetrievalController.Reset
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      parameters:
+      - in: body
+        name: body
+        description: body of retrieving password
+        required: true
+        schema:
+          $ref: '#/definitions/models.PasswordRetrieval'
+      responses:
+        "202":
+          description: ""
+          schema:
+            $ref: '#/definitions/controllers.respData'
+        "400":
+          description: 'missing_url_path_parameter: missing url path parameter'
+        "401":
+          description: 'error_parsing_api_body:     parse payload of request failed'
+        "402":
+          description: 'missing_pw_retrieval_key:   missing password retrieval key
+            in header'
+        "403":
+          description: 'invalid_pw_retrieval_key:   invalid password retrieval key'
+        "404":
+          description: 'expired_verification_code:  the verification code is expired'
+        "405":
+          description: 'wrong_verification_code:    the verification code is wrong'
+        "406":
+          description: 'invalid_password:           invalid new password'
+        "500":
+          description: 'system_error:               system error'
+    post:
+      tags:
+      - password-retrieval
+      description: |-
+        retrieving the password by sending an email to the user
+        <br>
+      operationId: PasswordRetrievalController.Post
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      parameters:
+      - in: path
+        name: link_id
+        description: link id
+        required: true
+        type: string
+      - in: body
+        name: body
+        description: body for retrieving password
+        required: true
+        schema:
+          $ref: '#/definitions/models.PasswordRetrievalKey'
+      responses:
+        "201":
+          description: ""
+          schema:
+            $ref: '#/definitions/controllers.respData'
+        "400":
+          description: 'missing_url_path_parameter: missing url path parameter'
+        "401":
+          description: 'error_parsing_api_body:     parse payload of request failed'
+        "402":
+          description: 'no_link:                    the link id is not exists'
+        "403":
+          description: 'missing_email:              missing email in payload'
+        "500":
+          description: 'system_error:               system error'
+  /smtp/authorize:
+    post:
+      tags:
+      - smtp
+      description: |-
+        authorize the email
+        <br>
+      operationId: SMTPController.Authorize
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      parameters:
+      - in: body
+        name: body
+        description: body for authorizing the email
+        required: true
+        schema:
+          $ref: '#/definitions/models.EmailAuthorization'
+      responses:
+        "201":
+          description: ""
+          schema:
+            $ref: '#/definitions/controllers.respData'
+  /smtp/verify:
+    post:
+      tags:
+      - smtp
+      description: |-
+        verify the email
+        <br>
+      operationId: SMTPController.Verify
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      parameters:
+      - in: body
+        name: body
+        description: body for verifying the email
+        required: true
+        schema:
+          $ref: '#/definitions/models.EmailAuthorizationReq'
+      responses:
+        "201":
+          description: ""
+          schema:
+            $ref: '#/definitions/controllers.respData'
+definitions:
+  app.CorpSummaryDTO:
+    title: CorpSummaryDTO
+    type: object
+    properties:
+      corp_name:
+        type: string
+      corp_signing_id:
+        type: string
+  controllers.authCodeURL:
+    title: authCodeURL
+    type: object
+    properties:
+      url:
+        type: string
+  controllers.corpAuthInfo:
+    title: corpAuthInfo
+    type: object
+    properties:
+      initial_pw_changed:
+        type: boolean
+      org_id:
+        type: string
+      platform:
+        type: string
+      role:
+        type: string
+  controllers.individualSigned:
+    title: individualSigned
+    type: object
+    properties:
+      signed:
+        type: boolean
+  controllers.interface:
+    title: interface
+    type: object
+  controllers.respData:
+    title: respData
+    type: object
+    properties:
+      data:
+        $ref: '#/definitions/controllers.interface'
+  controllers.verificationCodeRequest:
+    title: verificationCodeRequest
+    required:
+    - email
+    type: object
+    properties:
+      email:
+        type: string
+  models.CLACreateOpt:
+    title: CLACreateOpt
+    type: object
+    properties:
+      fields:
+        type: array
+        items:
+          $ref: '#/definitions/models.CLAField'
+      language:
+        type: string
+      type:
+        type: string
+      url:
+        type: string
+  models.CLAData:
+    title: CLAData
+    type: object
+    properties:
+      fields:
+        type: array
+        items:
+          $ref: '#/definitions/models.CLAField'
+      language:
+        type: string
+      url:
+        type: string
+  models.CLADetail:
+    title: CLADetail
+    type: object
+    properties:
+      cla_id:
+        type: string
+      fields:
+        type: array
+        items:
+          $ref: '#/definitions/models.CLAField'
+      language:
+        type: string
+      url:
+        type: string
+  models.CLAField:
+    title: CLAField
+    type: object
+    properties:
+      description:
+        type: string
+      id:
+        type: string
+      required:
+        type: boolean
+      title:
+        type: string
+      type:
+        type: string
+  models.CLAOfLink:
+    title: CLAOfLink
+    type: object
+    properties:
+      corp_clas:
+        type: array
+        items:
+          $ref: '#/definitions/models.CLADetail'
+      individual_clas:
+        type: array
+        items:
+          $ref: '#/definitions/models.CLADetail'
+  models.CorpEmailDomainCreateOption:
+    title: CorpEmailDomainCreateOption
+    type: object
+    properties:
+      sub_email:
+        type: string
+      verification_code:
+        type: string
+  models.CorporationManagerListResult:
+    title: CorporationManagerListResult
+    type: object
+    properties:
+      email:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      role:
+        type: string
+  models.CorporationManagerLoginInfo:
+    title: CorporationManagerLoginInfo
+    type: object
+    properties:
+      link_id:
+        type: string
+      password:
+        type: string
+      user:
+        type: string
+  models.CorporationSigningBasicInfo:
+    title: CorporationSigningBasicInfo
+    type: object
+    properties:
+      admin_email:
+        type: string
+      admin_name:
+        type: string
+      cla_id:
+        type: string
+      cla_language:
+        type: string
+      corporation_name:
+        type: string
+      date:
+        type: string
+  models.CorporationSigningCreateOption:
+    title: CorporationSigningCreateOption
+    type: object
+    properties:
+      admin_email:
+        type: string
+      admin_name:
+        type: string
+      cla_id:
+        type: string
+      cla_language:
+        type: string
+      corporation_name:
+        type: string
+      info:
+        $ref: '#/definitions/models.TypeSigningInfo'
+      verification_code:
+        type: string
+  models.CorporationSigningSummary:
+    title: CorporationSigningSummary
+    type: object
+    properties:
+      admin_added:
+        type: boolean
+      admin_email:
+        type: string
+      admin_name:
+        type: string
+      cla_id:
+        type: string
+      cla_language:
+        type: string
+      corporation_name:
+        type: string
+      date:
+        type: string
+      id:
+        type: string
+      pdf_uploaded:
+        type: boolean
+  models.EmailAuthorization:
+    title: EmailAuthorization
+    type: object
+    properties:
+      authorize:
+        type: string
+      code:
+        type: string
+      email:
+        type: string
+  models.EmailAuthorizationReq:
+    title: EmailAuthorizationReq
+    type: object
+    properties:
+      authorize:
+        type: string
+      email:
+        type: string
+  models.EmployeeManager:
+    title: EmployeeManager
+    type: object
+    properties:
+      email:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+  models.EmployeeManagerCreateOption:
+    title: EmployeeManagerCreateOption
+    type: object
+    properties:
+      managers:
+        type: array
+        items:
+          $ref: '#/definitions/models.EmployeeManager'
+  models.EmployeeManagerDeleteOption:
+    title: EmployeeManagerDeleteOption
+    type: object
+    properties:
+      managers:
+        type: array
+        items:
+          $ref: '#/definitions/models.EmployeeManagerId'
+  models.EmployeeManagerId:
+    title: EmployeeManagerId
+    type: object
+    properties:
+      id:
+        type: string
+  models.EmployeeSigning:
+    title: EmployeeSigning
+    required:
+    - corp_signing_id
+    type: object
+    properties:
+      cla_id:
+        type: string
+      cla_language:
+        type: string
+      corp_signing_id:
+        type: string
+      email:
+        type: string
+      info:
+        $ref: '#/definitions/models.TypeSigningInfo'
+      name:
+        type: string
+      verification_code:
+        type: string
+  models.EmployeeSigningUdateInfo:
+    title: EmployeeSigningUdateInfo
+    type: object
+    properties:
+      enabled:
+        type: boolean
+  models.IndividualSigning:
+    title: IndividualSigning
+    type: object
+    properties:
+      cla_id:
+        type: string
+      cla_language:
+        type: string
+      email:
+        type: string
+      info:
+        $ref: '#/definitions/models.TypeSigningInfo'
+      name:
+        type: string
+      verification_code:
+        type: string
+  models.IndividualSigningBasicInfo:
+    title: IndividualSigningBasicInfo
+    type: object
+    properties:
+      date:
+        type: string
+      email:
+        type: string
+      enabled:
+        type: boolean
+      id:
+        type: string
+      name:
+        type: string
+  models.LinkCreateOption:
+    title: LinkCreateOption
+    type: object
+    properties:
+      corp_cla:
+        $ref: '#/definitions/models.CLACreateOpt'
+      individual_cla:
+        $ref: '#/definitions/models.CLACreateOpt'
+      org_alias:
+        type: string
+      org_email:
+        type: string
+      org_id:
+        type: string
+      platform:
+        type: string
+      repo_id:
+        type: string
+  models.LinkInfo:
+    title: LinkInfo
+    type: object
+    properties:
+      link_id:
+        type: string
+      org_alias:
+        type: string
+      org_email:
+        type: string
+      org_email_platform:
+        type: string
+      org_id:
+        type: string
+      platform:
+        type: string
+      submitter:
+        type: string
+  models.OrgInfo:
+    title: OrgInfo
+    type: object
+    properties:
+      org_alias:
+        type: string
+      org_email:
+        type: string
+      org_email_platform:
+        type: string
+      org_id:
+        type: string
+      platform:
+        type: string
+  models.OrgRepo:
+    title: OrgRepo
+    type: object
+    properties:
+      org_id:
+        type: string
+      platform:
+        type: string
+  models.PasswordRetrieval:
+    title: PasswordRetrieval
+    type: object
+    properties:
+      password:
+        type: string
+  models.PasswordRetrievalKey:
+    title: PasswordRetrievalKey
+    required:
+    - email
+    type: object
+    properties:
+      email:
+        type: string
+  models.TypeSigningInfo:
+    title: TypeSigningInfo
+    type: object

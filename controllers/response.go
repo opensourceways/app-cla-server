@@ -8,6 +8,17 @@ import (
 	"github.com/opensourceways/app-cla-server/models"
 )
 
+// respData
+type respData struct {
+	Data interface{} `json:"data"`
+}
+
+// errMsg
+type errMsg struct {
+	ErrCode string `json:"error_code"`
+	ErrMsg  string `json:"error_message"`
+}
+
 func (ctl *baseController) sendResponse(action string, body interface{}, statusCode int) {
 	if statusCode != 0 {
 		// if success, don't set status code, otherwise the header set in ctl.ServeJSON

@@ -9,9 +9,6 @@ api:
   password_reset_url: "${PASSWORD_RESET_URL}"
   password_retrieval_url: "${PASSWORD_RETRIEVAL_URL}"
 
-gmail:
-  credentials: '{GMAIL_CREDENTIALS}'
-
 domain:
   invalid_corp_email_domain: "${RESTRICTED_CORP_EMAIL_SUFFIX}"
   domain_primitive:

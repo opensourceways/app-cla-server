@@ -19,7 +19,6 @@ import (
 	"github.com/opensourceways/app-cla-server/signing/domain"
 	"github.com/opensourceways/app-cla-server/signing/domain/dp"
 	"github.com/opensourceways/app-cla-server/signing/infrastructure/emailtmpl"
-	"github.com/opensourceways/app-cla-server/signing/infrastructure/gmailimpl"
 	"github.com/opensourceways/app-cla-server/signing/infrastructure/smtpimpl"
 	"github.com/opensourceways/app-cla-server/util"
 	"github.com/opensourceways/app-cla-server/worker"
@@ -63,11 +62,6 @@ func startSignSerivce(cfg *config.Config) {
 	domain.Init(&cfg.Domain.Config)
 
 	if err := emailtmpl.Init(); err != nil {
-		logs.Error(err)
-		return
-	}
-
-	if err := gmailimpl.Init(&cfg.Gmail); err != nil {
 		logs.Error(err)
 		return
 	}

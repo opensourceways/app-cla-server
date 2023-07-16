@@ -14,7 +14,6 @@ import (
 	"github.com/opensourceways/app-cla-server/signing/domain/vcservice"
 	"github.com/opensourceways/app-cla-server/signing/infrastructure/accesstokenimpl"
 	"github.com/opensourceways/app-cla-server/signing/infrastructure/encryptionimpl"
-	"github.com/opensourceways/app-cla-server/signing/infrastructure/gmailimpl"
 	"github.com/opensourceways/app-cla-server/signing/infrastructure/limiterimpl"
 	"github.com/opensourceways/app-cla-server/signing/infrastructure/localclaimpl"
 	"github.com/opensourceways/app-cla-server/signing/infrastructure/passwordimpl"
@@ -111,15 +110,6 @@ func initSigning(cfg *config.Config) error {
 
 	models.RegisterSMTPAdapter(
 		adapter.NewSMTPAdapter(app.NewSMTPService(vcService, echelper)),
-	)
-
-	// gmail
-	gmailimpl.RegisterEmailService(echelper.Find)
-
-	models.RegisterGmailAdapter(
-		adapter.NewGmailAdapter(
-			app.NewGmailService(echelper, ecRepo),
-		),
 	)
 
 	// access token

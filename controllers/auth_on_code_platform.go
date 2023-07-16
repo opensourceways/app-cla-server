@@ -10,6 +10,8 @@ import (
 	"github.com/opensourceways/app-cla-server/models"
 )
 
+const authURLState = "state-token-cla"
+
 type AuthController struct {
 	baseController
 }

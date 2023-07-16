@@ -1350,44 +1350,6 @@
                 }
             }
         },
-        "/gmail/auth": {
-            "get": {
-                "tags": [
-                    "gmail"
-                ],
-                "description": "callback of gmail\n\u003cbr\u003e",
-                "operationId": "GmailController.Callback",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ]
-            }
-        },
-        "/gmail/authcodeurl": {
-            "get": {
-                "tags": [
-                    "gmail"
-                ],
-                "description": "get auth code url\n\u003cbr\u003e",
-                "operationId": "GmailController.AuthCodeURL",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "responses": {
-                    "200": {
-                        "description": "",
-                        "schema": {
-                            "$ref": "#/definitions/controllers.authCodeURL"
-                        }
-                    }
-                }
-            }
-        },
         "/individual-signing/{link_id}": {
             "get": {
                 "tags": [
@@ -1625,36 +1587,6 @@
             }
         },
         "/link/{link_id}": {
-            "put": {
-                "tags": [
-                    "link"
-                ],
-                "description": "update link email\n\u003cbr\u003e",
-                "operationId": "LinkController.UpdateLinkEmail",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "parameters": [
-                    {
-                        "in": "path",
-                        "name": "link_id",
-                        "description": "link id",
-                        "required": true,
-                        "type": "string"
-                    }
-                ],
-                "responses": {
-                    "202": {
-                        "description": "",
-                        "schema": {
-                            "$ref": "#/definitions/controllers.respData"
-                        }
-                    }
-                }
-            },
             "delete": {
                 "tags": [
                     "link"

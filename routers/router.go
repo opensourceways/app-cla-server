@@ -60,11 +60,6 @@ func init() {
 				&controllers.CorporationPDFController{},
 			),
 		),
-		beego.NSNamespace("/gmail",
-			beego.NSInclude(
-				&controllers.GmailController{},
-			),
-		),
 		beego.NSNamespace("/smtp",
 			beego.NSInclude(
 				&controllers.SMTPController{},

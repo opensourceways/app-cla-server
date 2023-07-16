@@ -9,7 +9,6 @@ import (
 	"github.com/opensourceways/app-cla-server/signing/domain"
 	"github.com/opensourceways/app-cla-server/signing/domain/dp"
 	"github.com/opensourceways/app-cla-server/signing/infrastructure/accesstokenimpl"
-	"github.com/opensourceways/app-cla-server/signing/infrastructure/gmailimpl"
 	"github.com/opensourceways/app-cla-server/signing/infrastructure/localclaimpl"
 	"github.com/opensourceways/app-cla-server/signing/infrastructure/passwordimpl"
 	"github.com/opensourceways/app-cla-server/signing/infrastructure/repositoryimpl"
@@ -60,7 +59,6 @@ type Config struct {
 	PDF          pdf.Config                     `json:"pdf"             required:"true"`
 	API          controllers.Config             `json:"api"             required:"true"`
 	SMTP         smtpimpl.Config                `json:"smtp"`
-	Gmail        gmailimpl.Config               `json:"gmail"           required:"true"`
 	Domain       domainConfig                   `json:"domain"          required:"true"`
 	Mongodb      mongodbConfig                  `json:"mongodb"         required:"true"`
 	Redisdb      redisdbConfig                  `json:"redisdb"         required:"true"`
@@ -75,7 +73,6 @@ func (cfg *Config) configItems() []interface{} {
 		&cfg.PDF,
 		&cfg.API,
 		&cfg.SMTP,
-		&cfg.Gmail,
 		&cfg.Domain.Config,
 		&cfg.Domain.DomainPrimitive,
 		&cfg.Mongodb.DB,

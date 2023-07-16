@@ -134,15 +134,3 @@ func (ctl *LinkController) GetCLAForSigning() {
 		ctl.sendSuccessResp(action, result)
 	}
 }
-
-// @Title UpdateLinkEmail
-// @Description update link email
-// @Tags Link
-// @Accept json
-// @Param  link_id  path  string  true	 "link id"
-// @Success 202 {object} controllers.respData
-// @router /:link_id [put]
-func (ctl *LinkController) UpdateLinkEmail() {
-	ctl.sendSuccessResp("", "unimplemented")
-	return
-}

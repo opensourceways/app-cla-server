@@ -5,7 +5,6 @@ var (
 	linkAdapterInstance              linkAdapter
 	userAdapterInstance              userAdapter
 	smtpAdapterInstance              smtpAdapter
-	gmailAdapterInstance             gmailAdapter
 	corpPDFAdapterInstance           corpPDFAdapter
 	corpAdminAdatperInstance         corpAdminAdatper
 	accessTokenAdapterInstance       accessTokenAdapter
@@ -105,15 +104,6 @@ type corpPDFAdapter interface {
 
 func RegisterCorpPDFAdapter(a corpPDFAdapter) {
 	corpPDFAdapterInstance = a
-}
-
-// gmailAdapter
-type gmailAdapter interface {
-	Authorize(code, scope string) (string, IModelError)
-}
-
-func RegisterGmailAdapter(a gmailAdapter) {
-	gmailAdapterInstance = a
 }
 
 // smtpAdapter

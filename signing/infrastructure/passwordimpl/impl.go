@@ -3,6 +3,8 @@ package passwordimpl
 import (
 	"crypto/rand"
 	"regexp"
+
+	"github.com/opensourceways/app-cla-server/signing/domain/dp"
 )
 
 const (
@@ -30,11 +32,11 @@ type passwordImpl struct {
 	cfg Config
 }
 
-func (impl *passwordImpl) New() (string, error) {
+func (impl *passwordImpl) New() (dp.Password, error) {
 	var bytes = make([]byte, impl.cfg.MinLength)
 
 	if _, err := rand.Read(bytes); err != nil {
-		return "", err
+		return nil, err
 	}
 
 	items := make([]byte, len(bytes))
@@ -42,15 +44,15 @@ func (impl *passwordImpl) New() (string, error) {
 		items[k] = firstCharOfPw + v%pwRange
 	}
 
-	if s := string(items); impl.goodFormat(s) {
-		return s, nil
+	if impl.goodFormat(items) {
+		return dp.NewPassword(items)
 	}
 
 	for i := range bytes {
 		items[i] = impl.genChar(i, bytes[i])
 	}
 
-	return string(items), nil
+	return dp.NewPassword(items)
 }
 
 func (impl *passwordImpl) genChar(i int, v byte) byte {
@@ -64,23 +66,25 @@ func (impl *passwordImpl) genChar(i int, v byte) byte {
 	}
 }
 
-func (impl *passwordImpl) IsValid(s string) bool {
+func (impl *passwordImpl) IsValid(p dp.Password) bool {
+	s := p.Password()
+
 	if n := len(s); n < impl.cfg.MinLength || n > impl.cfg.MaxLength {
 		return false
 	}
 
-	if !pwRe.MatchString(s) {
+	if !pwRe.Match(s) {
 		return false
 	}
 
 	return impl.goodFormat(s)
 }
 
-func (impl *passwordImpl) goodFormat(s string) bool {
+func (impl *passwordImpl) goodFormat(s []byte) bool {
 	return impl.hasMultiChars(s) && !impl.hasConsecutive(s)
 }
 
-func (impl *passwordImpl) hasMultiChars(s string) bool {
+func (impl *passwordImpl) hasMultiChars(s []byte) bool {
 	part := make([]bool, 4)
 
 	for _, c := range s {
@@ -105,7 +109,7 @@ func (impl *passwordImpl) hasMultiChars(s string) bool {
 	return i >= impl.cfg.MinNumOfKindOfPasswordChar
 }
 
-func (impl *passwordImpl) hasConsecutive(str string) bool {
+func (impl *passwordImpl) hasConsecutive(str []byte) bool {
 	max := impl.cfg.MaxNumOfConsecutiveChars
 
 	count := 1

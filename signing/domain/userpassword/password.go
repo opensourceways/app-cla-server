@@ -1,6 +1,8 @@
 package userpassword
 
+import "github.com/opensourceways/app-cla-server/signing/domain/dp"
+
 type UserPassword interface {
-	New() (string, error)
-	IsValid(string) bool
+	New() (dp.Password, error)
+	IsValid(dp.Password) bool
 }

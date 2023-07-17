@@ -7,13 +7,13 @@ import (
 
 	"github.com/beego/beego/v2/core/logs"
 	beego "github.com/beego/beego/v2/server/web"
-	"github.com/opensourceways/server-common-lib/interrupts"
 
 	platformAuth "github.com/opensourceways/app-cla-server/code-platform-auth"
 	commondb "github.com/opensourceways/app-cla-server/common/infrastructure/mongodb"
 	"github.com/opensourceways/app-cla-server/common/infrastructure/redisdb"
 	"github.com/opensourceways/app-cla-server/config"
 	"github.com/opensourceways/app-cla-server/controllers"
+	"github.com/opensourceways/app-cla-server/interrupts"
 	"github.com/opensourceways/app-cla-server/pdf"
 	_ "github.com/opensourceways/app-cla-server/routers"
 	"github.com/opensourceways/app-cla-server/signing/domain"

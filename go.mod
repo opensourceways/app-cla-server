@@ -9,7 +9,6 @@ require (
 	github.com/opensourceways/gofpdf v1.16.4
 	github.com/opensourceways/robot-gitee-lib v1.0.0
 	github.com/opensourceways/robot-github-lib v0.1.0
-	github.com/opensourceways/server-common-lib v0.0.0-20230208064916-61fc43dfb8db
 	go.mongodb.org/mongo-driver v1.12.0
 	golang.org/x/crypto v0.11.0
 	golang.org/x/oauth2 v0.10.0
@@ -32,6 +31,7 @@ require (
 	github.com/googleapis/gax-go/v2 v2.0.5 // indirect
 	github.com/hashicorp/golang-lru v0.5.4 // indirect
 	github.com/klauspost/compress v1.16.3 // indirect
+	github.com/kr/pretty v0.3.0 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.1 // indirect
 	github.com/mitchellh/mapstructure v1.4.3 // indirect
 	github.com/montanaflynn/stats v0.0.0-20171201202039-1bf9dbcd8cbe // indirect
@@ -59,6 +59,7 @@ require (
 	google.golang.org/grpc v1.38.0 // indirect
 	google.golang.org/protobuf v1.31.0 // indirect
 	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
+	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	k8s.io/apimachinery v0.26.1 // indirect

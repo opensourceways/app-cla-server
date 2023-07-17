@@ -1,21 +1,46 @@
 package platforms
 
-import "github.com/opensourceways/robot-github-lib/client"
+import "net/http"
 
-type githubClient struct {
-	c client.Client
+const (
+	urlToGetGithubUser = "https://api.github.com/user"
+	urlToGetGithubOrg  = "https://api.github.com/user/orgs?page=1&per_page=100"
+)
+
+func newGithubClient() githubClient {
+	return githubClient{}
 }
 
-func newGithubClient(accessToken string) *githubClient {
-	cli := client.NewClient(func() []byte { return []byte(accessToken) })
+// githubClient
+type githubClient struct{}
 
-	return &githubClient{c: cli}
+func (cli githubClient) GetUser(token string) (string, error) {
+	req, err := cli.newReq(urlToGetGithubUser, token)
+	if err != nil {
+		return "", err
+	}
+
+	return getUser(req)
 }
 
-func (cli *githubClient) GetUser() (string, error) {
-	return cli.c.GetBot()
+func (cli githubClient) ListOrg(token string) ([]string, error) {
+	req, err := cli.newReq(urlToGetGithubOrg, token)
+	if err != nil {
+		return nil, err
+	}
+
+	return listOrg(req)
 }
 
-func (cli *githubClient) ListOrg() ([]string, error) {
-	return cli.c.ListOrg()
+func (cli githubClient) newReq(url, token string) (*http.Request, error) {
+	req, err := http.NewRequest(http.MethodGet, url, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Set("Accept", "application/vnd.github+json")
+	req.Header.Set("Authorization", "Bearer "+token)
+	req.Header.Set("X-GitHub-Api-Version", "2022-11-28")
+
+	return req, nil
 }

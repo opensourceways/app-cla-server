@@ -1,26 +1,33 @@
 package platforms
 
-import "github.com/opensourceways/robot-gitee-lib/client"
+import "net/http"
 
-type giteeClient struct {
-	c client.Client
+const (
+	urlToGetGiteeUser = "https://gitee.com/api/v5/user?access_token="
+	urlToGetGiteeOrg  = "https://gitee.com/api/v5/user/orgs?page=1&per_page=100&admin=true&access_token="
+)
+
+func newGiteeClient() giteeClient {
+	return giteeClient{}
 }
 
-func newGiteeClient(accessToken string) *giteeClient {
-	cli := client.NewClient(func() []byte { return []byte(accessToken) })
+// giteeClient
+type giteeClient struct{}
 
-	return &giteeClient{c: cli}
-}
-
-func (cli *giteeClient) GetUser() (string, error) {
-	v, err := cli.c.GetBot()
+func (cli giteeClient) GetUser(token string) (string, error) {
+	req, err := http.NewRequest(http.MethodGet, urlToGetGiteeUser+token, nil)
 	if err != nil {
 		return "", err
 	}
 
-	return v.Login, err
+	return getUser(req)
 }
 
-func (cli *giteeClient) ListOrg() ([]string, error) {
-	return cli.c.ListOrg()
+func (cli giteeClient) ListOrg(token string) ([]string, error) {
+	req, err := http.NewRequest(http.MethodGet, urlToGetGiteeOrg+token, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return listOrg(req)
 }

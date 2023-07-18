@@ -47,7 +47,7 @@ func (ctl *baseController) sendVerificationCodeWhenSigning(
 			"Verification code for signing CLA on project of \"%s\"",
 			orgInfo.OrgAlias,
 		),
-		emailtmpl.VerificationCode{
+		&emailtmpl.VerificationCode{
 			Email:      req.Email,
 			Org:        orgInfo.OrgAlias,
 			Code:       code,

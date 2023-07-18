@@ -3,7 +3,7 @@ package models
 import "errors"
 
 type PasswordRetrieval struct {
-	Password string `json:"password"`
+	Password []byte `json:"password"`
 }
 
 type PasswordRetrievalKey struct {

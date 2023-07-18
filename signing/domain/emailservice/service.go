@@ -1,6 +1,9 @@
 package emailservice
 
-import "errors"
+import (
+	"bytes"
+	"errors"
+)
 
 var (
 	impl = &emailServiceImpl{
@@ -18,16 +21,26 @@ func Register(platform string, e iEmail) {
 
 type IEmailMessageBulder interface {
 	// msg returned only includes content
-	GenEmailMsg() (*EmailMessage, error)
+	GenEmailMsg() (EmailMessage, error)
 }
 
 type EmailMessage struct {
-	From       string   `json:"from"`
-	To         []string `json:"to"`
-	Subject    string   `json:"subject"`
-	Content    string   `json:"content"`
-	Attachment string   `json:"attachment"`
-	MIME       string   `json:"mime"`
+	From       string
+	To         []string
+	Subject    string
+	Content    bytes.Buffer
+	Attachment string
+	MIME       string
+	HasSecret  bool
+}
+
+func (msg *EmailMessage) ClearContent() {
+	v := msg.Content.Bytes()
+	for i := range v {
+		v[i] = 0
+	}
+
+	msg.Content.Reset()
 }
 
 type iEmail interface {

@@ -46,7 +46,7 @@ func (impl *smtpImpl) createTxMailMessage(msg *EmailMessage) (*gomail.Message, e
 	m.SetHeader("From", msg.From)
 	m.SetHeader("To", msg.To[0])
 	m.SetHeader("Subject", msg.Subject)
-	m.SetBody("text/plain", msg.Content)
+	m.SetBody("text/plain", msg.Content.String())
 	m.Attach(msg.Attachment)
 
 	return m, nil
@@ -70,9 +70,9 @@ func simpleTxmailMessage(msg *EmailMessage) *gomail.Message {
 		}
 	}
 	if v, ok := mime["Content-Type"]; ok {
-		m.SetBody(v, msg.Content)
+		m.SetBody(v, msg.Content.String())
 	} else {
-		m.SetBody("text/plain", msg.Content)
+		m.SetBody("text/plain", msg.Content.String())
 	}
 
 	return m

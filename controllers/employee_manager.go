@@ -102,7 +102,7 @@ func (ctl *EmployeeManagerController) Delete() {
 			Org:        orgInfo.OrgAlias,
 			ProjectURL: orgInfo.ProjectURL(),
 		}
-		sendEmailToIndividual(item.Email, &orgInfo, subject, msg)
+		sendEmailToIndividual(item.Email, &orgInfo, subject, &msg)
 	}
 }
 

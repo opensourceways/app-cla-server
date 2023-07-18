@@ -10,11 +10,11 @@ const (
 type CorporationManagerLoginInfo struct {
 	User     string `json:"user"`
 	LinkID   string `json:"link_id"`
-	Password string `json:"password"`
+	Password []byte `json:"password"`
 }
 
 func (info *CorporationManagerLoginInfo) Validate() IModelError {
-	if info.LinkID == "" || info.Password == "" || info.User == "" {
+	if info.LinkID == "" || len(info.Password) == 0 || info.User == "" {
 		return newModelError(ErrEmptyPayload, fmt.Errorf("necessary parameters is empty"))
 	}
 
@@ -22,8 +22,8 @@ func (info *CorporationManagerLoginInfo) Validate() IModelError {
 }
 
 type CorporationManagerChangePassword struct {
-	OldPassword string `json:"old_password"`
-	NewPassword string `json:"new_password"`
+	OldPassword []byte `json:"old_password"`
+	NewPassword []byte `json:"new_password"`
 }
 
 type CorpManagerLoginInfo struct {
@@ -40,7 +40,7 @@ type CorporationManagerCreateOption struct {
 	Name     string
 	Role     string
 	Email    string
-	Password string
+	Password []byte
 }
 
 type CorporationManagerListResult struct {

@@ -78,7 +78,7 @@ func (adapter *userAdatper) toCmdToGenKeyForPasswordRetrieval(linkId string, ema
 
 // Reset
 func (adapter *userAdatper) ResetPassword(
-	linkId string, key string, password string,
+	linkId string, key string, password []byte,
 ) models.IModelError {
 	cmd, err := adapter.cmdToResetPassword(linkId, key, password)
 	if err != nil {
@@ -93,7 +93,7 @@ func (adapter *userAdatper) ResetPassword(
 }
 
 func (adapter *userAdatper) cmdToResetPassword(
-	linkId string, key string, password string,
+	linkId string, key string, password []byte,
 ) (cmd app.CmdToResetPassword, err error) {
 	if cmd.NewOne, err = dp.NewPassword(password); err != nil {
 		return

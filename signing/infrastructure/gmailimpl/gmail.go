@@ -122,7 +122,7 @@ func (this *gmailClient) createGmailMessage(msg *EmailMessage) (*gmail.Message, 
 	}{
 		To:           msg.To[0],
 		Subject:      msg.Subject,
-		Content:      msg.Content,
+		Content:      msg.Content.String(),
 		Boundary:     util.RandStr(32, "alphanum"),
 		FileData:     base64.StdEncoding.EncodeToString(fileBytes),
 		FileName:     path.Base(attachment),
@@ -142,7 +142,7 @@ func (this *gmailClient) createGmailMessage(msg *EmailMessage) (*gmail.Message, 
 
 func simpleGmailMessage(msg *EmailMessage) *gmail.Message {
 	to := strings.Join(msg.To, "; ")
-	raw := fmt.Sprintf("To: %s\r\nSubject: %s\r\n%s\r\n%s", to, msg.Subject, msg.MIME, msg.Content)
+	raw := fmt.Sprintf("To: %s\r\nSubject: %s\r\n%s\r\n%s", to, msg.Subject, msg.MIME, msg.Content.String())
 
 	return &gmail.Message{
 		Raw: base64.URLEncoding.EncodeToString([]byte(raw)),

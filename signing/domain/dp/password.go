@@ -27,3 +27,20 @@ func (r password) Clear() {
 		r[i] = 0
 	}
 }
+
+func IsSamePassword(p1, p2 Password) bool {
+	v1 := p1.Password()
+	v2 := p2.Password()
+
+	if len(v1) != len(v2) {
+		return false
+	}
+
+	for i := range v1 {
+		if v1[i] != v2[i] {
+			return false
+		}
+	}
+
+	return true
+}

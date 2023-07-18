@@ -170,7 +170,7 @@ func (s *userService) add(linkId, csId string, manager *domain.Manager) (p dp.Pa
 }
 
 func (s *userService) checkPassword(p dp.Password) error {
-	if !s.password.IsValid(p.Password()) {
+	if !s.password.IsValid(p) {
 		return domain.NewDomainError(domain.ErrorCodeUserInvalidPassword)
 	}
 
@@ -208,7 +208,7 @@ func (s *userService) LoginByEmail(linkId string, e dp.EmailAddr, p dp.Password)
 func (s *userService) login(find func() (domain.User, error), p dp.Password) (u domain.User, err error) {
 	loginErr := domain.NewDomainError(domain.ErrorCodeUserWrongAccountOrPassword)
 
-	if !s.password.IsValid(p.Password()) {
+	if !s.password.IsValid(p) {
 		err = loginErr
 
 		return
@@ -237,7 +237,7 @@ func (s *userService) login(find func() (domain.User, error), p dp.Password) (u 
 }
 
 func (s *userService) isSamePassword(p dp.Password, ciphertext []byte) bool {
-	return s.encrypt.IsSame([]byte(p.Password()), ciphertext)
+	return s.encrypt.IsSame(p.Password(), ciphertext)
 }
 
 func (s *userService) encryptPassword(p dp.Password) ([]byte, error) {

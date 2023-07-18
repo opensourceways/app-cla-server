@@ -45,7 +45,10 @@ type userService struct {
 }
 
 func (s *userService) ChangePassword(cmd *CmdToChangePassword) error {
-	return s.us.ChangePassword(cmd.Id, cmd.OldOne, cmd.NewOne)
+	err := s.us.ChangePassword(cmd.Id, cmd.OldOne, cmd.NewOne)
+	cmd.clear()
+
+	return err
 }
 
 func (s *userService) GenKeyForPasswordRetrieval(cmd *CmdToGenKeyForPasswordRetrieval) (string, error) {
@@ -73,6 +76,8 @@ func (s *userService) GenKeyForPasswordRetrieval(cmd *CmdToGenKeyForPasswordRetr
 }
 
 func (s *userService) ResetPassword(cmd *CmdToResetPassword) error {
+	defer cmd.clear()
+
 	v, err := hex.DecodeString(cmd.Key)
 	if err != nil {
 		return err
@@ -113,6 +118,8 @@ func (s *userService) Logout(userId string) {
 }
 
 func (s *userService) Login(cmd *CmdToLogin) (dto UserLoginDTO, err error) {
+	defer cmd.clear()
+
 	var u domain.User
 
 	if cmd.Account != nil {

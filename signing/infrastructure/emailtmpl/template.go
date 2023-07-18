@@ -66,17 +66,17 @@ func findTmpl(name string) *template.Template {
 	return nil
 }
 
-func genEmailMsg(tmplName string, data interface{}) (*EmailMessage, error) {
+func genEmailMsg(tmplName string, data interface{}) (msg EmailMessage, err error) {
 	tmpl := findTmpl(tmplName)
 	if tmpl == nil {
-		return nil, fmt.Errorf("failed to generate email msg: didn't find msg template: %s", tmplName)
+		err = fmt.Errorf("failed to generate email msg: didn't find msg template: %s", tmplName)
+
+		return
 	}
 
-	str, err := util.RenderTemplate(tmpl, data)
-	if err != nil {
-		return nil, err
-	}
-	return &EmailMessage{Content: str}, nil
+	msg.Content, err = util.RenderTemplate(tmpl, data)
+
+	return
 }
 
 type CorporationSigning struct {
@@ -87,16 +87,16 @@ type CorporationSigning struct {
 	SigningInfo string
 }
 
-func (this CorporationSigning) GenEmailMsg() (*EmailMessage, error) {
-	return genEmailMsg(TmplCorporationSigning, this)
+func (data *CorporationSigning) GenEmailMsg() (EmailMessage, error) {
+	return genEmailMsg(TmplCorporationSigning, data)
 }
 
 type IndividualSigning struct {
 	Name string
 }
 
-func (this IndividualSigning) GenEmailMsg() (*EmailMessage, error) {
-	return genEmailMsg(TmplIndividualSigning, this)
+func (data *IndividualSigning) GenEmailMsg() (EmailMessage, error) {
+	return genEmailMsg(TmplIndividualSigning, data)
 }
 
 type VerificationCode struct {
@@ -106,8 +106,8 @@ type VerificationCode struct {
 	ProjectURL string
 }
 
-func (this VerificationCode) GenEmailMsg() (*EmailMessage, error) {
-	return genEmailMsg(TmplVerificationCode, this)
+func (data *VerificationCode) GenEmailMsg() (EmailMessage, error) {
+	return genEmailMsg(TmplVerificationCode, data)
 }
 
 type AddingCorpEmailDomain struct {
@@ -117,7 +117,7 @@ type AddingCorpEmailDomain struct {
 	ProjectURL string
 }
 
-func (cse AddingCorpEmailDomain) GenEmailMsg() (*EmailMessage, error) {
+func (cse AddingCorpEmailDomain) GenEmailMsg() (EmailMessage, error) {
 	return genEmailMsg(TmplAddingCorpEmailDomain, cse)
 }
 
@@ -126,17 +126,22 @@ type AddingCorpManager struct {
 	ID               string
 	User             string
 	Email            string
-	Password         string
+	Password         []byte
 	Org              string
 	ProjectURL       string
 	URLOfCLAPlatform string
 }
 
-func (this AddingCorpManager) GenEmailMsg() (*EmailMessage, error) {
-	if this.Admin {
-		return genEmailMsg(TmplAddingCorpAdmin, this)
+func (data *AddingCorpManager) GenEmailMsg() (msg EmailMessage, err error) {
+	if data.Admin {
+		msg, err = genEmailMsg(TmplAddingCorpAdmin, data)
+	} else {
+		msg, err = genEmailMsg(TmplAddingCorpManager, data)
 	}
-	return genEmailMsg(TmplAddingCorpManager, this)
+
+	msg.HasSecret = true
+
+	return
 }
 
 type RemovingCorpManager struct {
@@ -145,8 +150,8 @@ type RemovingCorpManager struct {
 	ProjectURL string
 }
 
-func (this RemovingCorpManager) GenEmailMsg() (*EmailMessage, error) {
-	return genEmailMsg(TmplRemovingCorpManager, this)
+func (data *RemovingCorpManager) GenEmailMsg() (EmailMessage, error) {
+	return genEmailMsg(TmplRemovingCorpManager, data)
 }
 
 type EmployeeSigning struct {
@@ -156,8 +161,8 @@ type EmployeeSigning struct {
 	Managers   string
 }
 
-func (this EmployeeSigning) GenEmailMsg() (*EmailMessage, error) {
-	return genEmailMsg(TmplEmployeeSigning, this)
+func (data *EmployeeSigning) GenEmailMsg() (EmailMessage, error) {
+	return genEmailMsg(TmplEmployeeSigning, data)
 }
 
 type NotifyingManager struct {
@@ -167,8 +172,8 @@ type NotifyingManager struct {
 	Org              string
 }
 
-func (this NotifyingManager) GenEmailMsg() (*EmailMessage, error) {
-	return genEmailMsg(TmplNotifyingManager, this)
+func (data *NotifyingManager) GenEmailMsg() (EmailMessage, error) {
+	return genEmailMsg(TmplNotifyingManager, data)
 }
 
 type EmployeeNotification struct {
@@ -182,20 +187,20 @@ type EmployeeNotification struct {
 	Org        string
 }
 
-func (this EmployeeNotification) GenEmailMsg() (*EmailMessage, error) {
-	if this.Active {
-		return genEmailMsg(TmplActivatingEmployee, this)
+func (data *EmployeeNotification) GenEmailMsg() (EmailMessage, error) {
+	if data.Active {
+		return genEmailMsg(TmplActivatingEmployee, data)
 	}
 
-	if this.Inactive {
-		return genEmailMsg(TmplInactivaingEmployee, this)
+	if data.Inactive {
+		return genEmailMsg(TmplInactivaingEmployee, data)
 	}
 
-	if this.Removing {
-		return genEmailMsg(TmplRemovingingEmployee, this)
+	if data.Removing {
+		return genEmailMsg(TmplRemovingingEmployee, data)
 	}
 
-	return nil, fmt.Errorf("do nothing")
+	return EmailMessage{}, fmt.Errorf("do nothing")
 }
 
 type PasswordRetrieval struct {
@@ -205,14 +210,15 @@ type PasswordRetrieval struct {
 	RetrievalURL string
 }
 
-func (p PasswordRetrieval) GenEmailMsg() (*EmailMessage, error) {
+func (p PasswordRetrieval) GenEmailMsg() (EmailMessage, error) {
 	msg, err := genEmailMsg(TmplPasswordRetrieval, p)
 	if err != nil {
-		return nil, err
+		return msg, err
 	}
 
 	//adapter send html tmpl content
 	msg.MIME = "MIME-version: 1.0;\nContent-Type: text/html; charset=\"UTF-8\";\n\n"
+
 	return msg, nil
 }
 
@@ -220,6 +226,6 @@ type EmailVerification struct {
 	Code string
 }
 
-func (this EmailVerification) GenEmailMsg() (*EmailMessage, error) {
-	return genEmailMsg(TmplEmailVerification, this)
+func (data *EmailVerification) GenEmailMsg() (EmailMessage, error) {
+	return genEmailMsg(TmplEmailVerification, data)
 }

@@ -2,26 +2,49 @@ package mongodb
 
 import (
 	"context"
+	"crypto/tls"
+	"crypto/x509"
+	"fmt"
+	"io/ioutil"
+	"os"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+
+	"github.com/opensourceways/app-cla-server/util"
 )
 
 var cli *client
 
 func Init(cfg *Config) error {
-	c, err := mongo.NewClient(options.Client().ApplyURI(cfg.Conn))
+	rootPEM, err := ioutil.ReadFile(cfg.CAFile)
+	err1 := os.Remove(cfg.CAFile)
+	if err2 := util.MultiErrors(err, err1); err2 != nil {
+		return err2
+	}
+
+	roots := x509.NewCertPool()
+
+	if ok := roots.AppendCertsFromPEM([]byte(rootPEM)); !ok {
+		return fmt.Errorf("fail to get certs from %s", cfg.CAFile)
+	}
+
+	tlsConfig := &tls.Config{
+		RootCAs:            roots,
+		InsecureSkipVerify: true,
+	}
+
+	clientOpts := options.Client().ApplyURI(cfg.Conn)
+	clientOpts.SetTLSConfig(tlsConfig)
+
+	c, err := mongo.Connect(context.TODO(), clientOpts)
 	if err != nil {
-		return err
+		return fmt.Errorf("connect err: %s", err.Error())
 	}
 
 	timeout := cfg.timeout()
-
-	if err = withContext(c.Connect, timeout); err != nil {
-		return err
-	}
 
 	// verify if database connection is created successfully
 	err = withContext(
@@ -31,7 +54,7 @@ func Init(cfg *Config) error {
 		timeout,
 	)
 	if err != nil {
-		return err
+		return fmt.Errorf("ping err: %s", err.Error())
 	}
 
 	cli = &client{

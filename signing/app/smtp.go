@@ -27,10 +27,13 @@ type smtpService struct {
 }
 
 func (s *smtpService) Verify(cmd *CmdToVerifySMTPEmail) (string, error) {
+	// can't invoke cmd.clear(), because it needs send email later
 	return s.vc.newCode(cmd)
 }
 
 func (s *smtpService) Authorize(cmd *CmdToAuthorizeSMTPEmail) error {
+	defer cmd.clear()
+
 	if err := s.vc.validate(cmd, cmd.VerificationCode); err != nil {
 		return err
 	}

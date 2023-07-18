@@ -46,5 +46,5 @@ func (impl *emailServiceImpl) SendEmail(msg *emailservice.EmailMessage) error {
 		return err
 	}
 
-	return smtp.Send(string(c.Token), msg)
+	return smtp.Send(c.Token, msg)
 }

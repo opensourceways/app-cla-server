@@ -25,13 +25,13 @@ type smtpImpl struct {
 	cfg Config
 }
 
-func (impl *smtpImpl) Send(AuthCode string, msg *EmailMessage) error {
+func (impl *smtpImpl) Send(AuthCode []byte, msg *EmailMessage) error {
 	m, err := impl.createTxMailMessage(msg)
 	if err != nil {
 		return err
 	}
 
-	d := gomail.NewDialer(impl.cfg.Host, impl.cfg.Port, msg.From, AuthCode)
+	d := gomail.NewDialer(impl.cfg.Host, impl.cfg.Port, msg.From, string(AuthCode))
 
 	return d.DialAndSend(m)
 }

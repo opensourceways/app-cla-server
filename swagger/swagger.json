@@ -2161,7 +2161,11 @@
                     "type": "string"
                 },
                 "password": {
-                    "type": "string"
+                    "type": "array",
+                    "items": {
+                        "type": "string",
+                        "format": "byte"
+                    }
                 },
                 "user": {
                     "type": "string"
@@ -2257,7 +2261,11 @@
             "type": "object",
             "properties": {
                 "authorize": {
-                    "type": "string"
+                    "type": "array",
+                    "items": {
+                        "type": "string",
+                        "format": "byte"
+                    }
                 },
                 "code": {
                     "type": "string"
@@ -2272,7 +2280,11 @@
             "type": "object",
             "properties": {
                 "authorize": {
-                    "type": "string"
+                    "type": "array",
+                    "items": {
+                        "type": "string",
+                        "format": "byte"
+                    }
                 },
                 "email": {
                     "type": "string"
@@ -2503,7 +2515,11 @@
             "type": "object",
             "properties": {
                 "password": {
-                    "type": "string"
+                    "type": "array",
+                    "items": {
+                        "type": "string",
+                        "format": "byte"
+                    }
                 }
             }
         },

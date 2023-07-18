@@ -8,7 +8,7 @@ import (
 )
 
 type CmdToVerifySMTPEmail struct {
-	Code      string
+	Code      []byte
 	Platform  string
 	EmailAddr dp.EmailAddr
 }
@@ -25,8 +25,14 @@ func (cmd *CmdToVerifySMTPEmail) purpose() (dp.Purpose, error) {
 func (cmd *CmdToVerifySMTPEmail) emailCredential() domain.EmailCredential {
 	return domain.EmailCredential{
 		Addr:     cmd.EmailAddr,
-		Token:    []byte(cmd.Code),
+		Token:    cmd.Code,
 		Platform: cmd.Platform,
+	}
+}
+
+func (cmd *CmdToVerifySMTPEmail) clear() {
+	for i := range cmd.Code {
+		cmd.Code[i] = 0
 	}
 }
 

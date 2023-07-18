@@ -30,6 +30,8 @@ func (ctl *SMTPController) Verify() {
 		return
 	}
 
+	defer info.Clear()
+
 	code, me := models.VerifySMTPEmail(&info)
 	if me != nil {
 		ctl.sendModelErrorAsResp(me, action)

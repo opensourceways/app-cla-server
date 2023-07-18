@@ -8,7 +8,7 @@ import (
 type User struct {
 	Id             string
 	Account        dp.Account
-	Password       []byte
+	Password       []byte // encrypted
 	EmailAddr      dp.EmailAddr
 	LinkId         string
 	CorpSigningId  string

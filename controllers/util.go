@@ -33,7 +33,7 @@ func sendEmail(to []string, orgInfo *models.OrgInfo, subject string, builder ema
 	msg.To = to
 	msg.Subject = subject
 
-	worker.GetEmailWorker().SendSimpleMessage(orgInfo.OrgEmailPlatform, msg)
+	worker.GetEmailWorker().SendSimpleMessage(orgInfo.OrgEmailPlatform, &msg)
 }
 
 func notifyCorpAdmin(orgInfo *models.OrgInfo, info *models.CorporationManagerCreateOption) {
@@ -57,7 +57,12 @@ func notifyCorpManagerWhenAdding(orgInfo *models.OrgInfo, info []models.Corporat
 			URLOfCLAPlatform: config.CLAPlatformURL,
 		}
 
-		sendEmailToIndividual(item.Email, orgInfo, subject, d)
+		sendEmailToIndividual(item.Email, orgInfo, subject, &d)
+
+		// clear password
+		for i := range item.Password {
+			item.Password[i] = 0
+		}
 	}
 }
 

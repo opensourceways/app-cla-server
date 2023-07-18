@@ -4,7 +4,7 @@ You are authorized by your company to manage the CLA signing of employees who wi
 
 Your Account:
   Username: {{.Email}}{{if .ID}} or {{.ID}}{{end}}
-  Password: {{.Password}}
+  Password: {{printf "%s" .Password}}
 
 The CLA management system login URL is {{.URLOfCLAPlatform}}.
 

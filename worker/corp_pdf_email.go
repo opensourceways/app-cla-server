@@ -134,7 +134,7 @@ func (impl *corpPDFEmail) genMsg() error {
 	msg.From = impl.orgInfo.OrgEmail
 	msg.Attachment = impl.pdfFilePath
 
-	impl.msg = msg
+	impl.msg = &msg
 
 	return nil
 }

@@ -4,6 +4,6 @@ type ManagerDTO struct {
 	Role      string
 	Name      string
 	Account   string
-	Password  string
+	Password  []byte
 	EmailAddr string
 }

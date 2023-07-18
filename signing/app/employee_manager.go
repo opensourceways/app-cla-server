@@ -102,7 +102,7 @@ func (s *employeeManagerService) List(csId string) ([]EmployeeManagerDTO, error)
 	return dtos, nil
 }
 
-func (s *employeeManagerService) toManageDTOs(pws map[string]string, ms []domain.Manager) ([]ManagerDTO, error) {
+func (s *employeeManagerService) toManageDTOs(pws map[string]dp.Password, ms []domain.Manager) ([]ManagerDTO, error) {
 	dtos := make([]ManagerDTO, len(ms))
 
 	for i := range ms {
@@ -117,7 +117,7 @@ func (s *employeeManagerService) toManageDTOs(pws map[string]string, ms []domain
 			Role:      domain.RoleManager,
 			Name:      item.Name.Name(),
 			Account:   account.Account(),
-			Password:  pws[item.Id],
+			Password:  pws[item.Id].Password(),
 			EmailAddr: item.EmailAddr.EmailAddr(),
 		}
 	}

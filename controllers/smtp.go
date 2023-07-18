@@ -50,7 +50,7 @@ func (ctl *SMTPController) Verify() {
 	msg.To = []string{info.Email}
 	msg.Subject = "CLA Email authorization verification code"
 
-	if err = smtpimpl.SMTP().Send(info.Authorize, msg); err != nil {
+	if err = smtpimpl.SMTP().Send(info.Authorize, &msg); err != nil {
 		ctl.sendFailedResponse(400, errInvalidEmailAuthCode, err, action)
 	} else {
 		ctl.sendSuccessResp(action, "successfully")

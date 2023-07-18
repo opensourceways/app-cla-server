@@ -65,7 +65,7 @@ func (s *corpAdminService) Add(csId string) (dto ManagerDTO, err error) {
 		Account:   account.Account(),
 		Role:      domain.RoleAdmin,
 		Name:      admin.Name.Name(),
-		Password:  pws[admin.Id],
+		Password:  pws[admin.Id].Password(),
 		EmailAddr: admin.EmailAddr.EmailAddr(),
 	}
 

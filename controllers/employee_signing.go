@@ -237,7 +237,7 @@ func (ctl *EmployeeSigningController) notifyManagers(managers []models.Corporati
 	sendEmailToIndividual(
 		info.Email, orgInfo,
 		fmt.Sprintf("Signing CLA on project of \"%s\"", msg.Org),
-		msg,
+		&msg,
 	)
 
 	msg1 := emailtmpl.NotifyingManager{
@@ -246,7 +246,7 @@ func (ctl *EmployeeSigningController) notifyManagers(managers []models.Corporati
 		ProjectURL:       orgInfo.ProjectURL(),
 		URLOfCLAPlatform: config.CLAPlatformURL,
 	}
-	sendEmail(to, orgInfo, "An employee has signed CLA", msg1)
+	sendEmail(to, orgInfo, "An employee has signed CLA", &msg1)
 }
 
 func (ctl *EmployeeSigningController) newEmployeeNotification(

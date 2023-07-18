@@ -26,7 +26,7 @@ func NewUserService(
 }
 
 type UserService interface {
-	Add(linkId, csId string, managers []domain.Manager) (map[string]string, []string, error)
+	Add(linkId, csId string, managers []domain.Manager) (map[string]dp.Password, []string, error)
 	Remove([]string)
 	RemoveByAccount(linkId string, accounts []dp.Account)
 	ChangePassword(index string, old, newOne dp.Password) error
@@ -42,9 +42,9 @@ type userService struct {
 	password userpassword.UserPassword
 }
 
-func (s *userService) Add(linkId, csId string, managers []domain.Manager) (map[string]string, []string, error) {
+func (s *userService) Add(linkId, csId string, managers []domain.Manager) (map[string]dp.Password, []string, error) {
 	ids := []string{}
-	pws := map[string]string{}
+	pws := map[string]dp.Password{}
 
 	for i := range managers {
 		item := &managers[i]
@@ -112,7 +112,7 @@ func (s *userService) ChangePassword(index string, old, newOne dp.Password) erro
 		},
 
 		func() ([]byte, error) {
-			return s.encryptPassword(newOne.Password())
+			return s.encryptPassword(newOne)
 		},
 	)
 	if err != nil {
@@ -132,7 +132,7 @@ func (s *userService) ResetPassword(linkId string, email dp.EmailAddr, newOne dp
 		return err
 	}
 
-	v, err := s.encryptPassword(newOne.Password())
+	v, err := s.encryptPassword(newOne)
 	if err != nil {
 		return err
 	}
@@ -142,7 +142,7 @@ func (s *userService) ResetPassword(linkId string, email dp.EmailAddr, newOne dp
 	return s.repo.SavePassword(&u)
 }
 
-func (s *userService) add(linkId, csId string, manager *domain.Manager) (p string, index string, err error) {
+func (s *userService) add(linkId, csId string, manager *domain.Manager) (p dp.Password, index string, err error) {
 	p, err = s.password.New()
 	if err != nil {
 		return
@@ -170,7 +170,7 @@ func (s *userService) add(linkId, csId string, manager *domain.Manager) (p strin
 }
 
 func (s *userService) checkPassword(p dp.Password) error {
-	if !s.password.IsValid(p.Password()) {
+	if !s.password.IsValid(p) {
 		return domain.NewDomainError(domain.ErrorCodeUserInvalidPassword)
 	}
 
@@ -208,7 +208,7 @@ func (s *userService) LoginByEmail(linkId string, e dp.EmailAddr, p dp.Password)
 func (s *userService) login(find func() (domain.User, error), p dp.Password) (u domain.User, err error) {
 	loginErr := domain.NewDomainError(domain.ErrorCodeUserWrongAccountOrPassword)
 
-	if !s.password.IsValid(p.Password()) {
+	if !s.password.IsValid(p) {
 		err = loginErr
 
 		return
@@ -237,9 +237,9 @@ func (s *userService) login(find func() (domain.User, error), p dp.Password) (u 
 }
 
 func (s *userService) isSamePassword(p dp.Password, ciphertext []byte) bool {
-	return s.encrypt.IsSame([]byte(p.Password()), ciphertext)
+	return s.encrypt.IsSame(p.Password(), ciphertext)
 }
 
-func (s *userService) encryptPassword(p string) ([]byte, error) {
-	return s.encrypt.Encrypt([]byte(p))
+func (s *userService) encryptPassword(p dp.Password) ([]byte, error) {
+	return s.encrypt.Encrypt(p.Password())
 }

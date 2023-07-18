@@ -79,13 +79,14 @@ func NewTemplate(name, path string) (*template.Template, error) {
 	return tmpl, nil
 }
 
-func RenderTemplate(tmpl *template.Template, data interface{}) (string, error) {
+func RenderTemplate(tmpl *template.Template, data interface{}) (bytes.Buffer, error) {
 	buf := new(bytes.Buffer)
-	if err := tmpl.Execute(buf, data); err != nil {
-		return "", fmt.Errorf("failed to execute template(%s): %s", tmpl.Name(), err.Error())
+	err := tmpl.Execute(buf, data)
+	if err != nil {
+		err = fmt.Errorf("failed to execute template(%s): %s", tmpl.Name(), err.Error())
 	}
 
-	return buf.String(), nil
+	return *buf, err
 }
 
 func Date() string {

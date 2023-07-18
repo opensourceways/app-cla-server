@@ -13,6 +13,10 @@ type CmdToLogin struct {
 	Password dp.Password
 }
 
+func (cmd *CmdToLogin) clear() {
+	cmd.Password.Clear()
+}
+
 // UserLoginDTO
 type UserLoginDTO struct {
 	Role             string
@@ -31,11 +35,16 @@ type CmdToChangePassword struct {
 }
 
 func (cmd *CmdToChangePassword) Validate() error {
-	if cmd.OldOne.Password() == cmd.NewOne.Password() {
+	if dp.IsSamePassword(cmd.OldOne, cmd.NewOne) {
 		return domain.NewDomainError(domain.ErrorCodeUserSamePassword)
 	}
 
 	return nil
+}
+
+func (cmd *CmdToChangePassword) clear() {
+	cmd.OldOne.Clear()
+	cmd.NewOne.Clear()
 }
 
 // CmdToResetPassword
@@ -43,6 +52,10 @@ type CmdToResetPassword struct {
 	NewOne dp.Password
 	LinkId string
 	Key    string
+}
+
+func (cmd *CmdToResetPassword) clear() {
+	cmd.NewOne.Clear()
 }
 
 // CmdToGenKeyForPasswordRetrieval

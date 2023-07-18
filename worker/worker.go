@@ -88,13 +88,17 @@ func (w *emailWorker) GenCLAPDFForCorporationAndSendIt(
 }
 
 func (w *emailWorker) SendSimpleMessage(emailPlatform string, msg *EmailMessage) {
-	f := func() {
+	f := func(platform string, msg1 EmailMessage) {
 		defer func() {
+			if msg1.HasSecret {
+				msg1.ClearContent()
+			}
+
 			w.wg.Done()
 		}()
 
 		action := func() error {
-			if err := emailservice.SendEmail(emailPlatform, msg); err != nil {
+			if err := emailservice.SendEmail(platform, &msg1); err != nil {
 				return fmt.Errorf("error to send email, err:%s", err.Error())
 			}
 			return nil
@@ -104,7 +108,7 @@ func (w *emailWorker) SendSimpleMessage(emailPlatform string, msg *EmailMessage)
 	}
 
 	w.wg.Add(1)
-	go f()
+	go f(emailPlatform, *msg)
 }
 
 func (w *emailWorker) tryToSendEmail(action func() error) {

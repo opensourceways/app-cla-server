@@ -1,6 +1,8 @@
 package adapter
 
 import (
+	"errors"
+
 	"github.com/opensourceways/app-cla-server/models"
 	"github.com/opensourceways/app-cla-server/signing/app"
 	"github.com/opensourceways/app-cla-server/signing/domain/dp"
@@ -60,6 +62,12 @@ func (adapter *smtpAdapter) cmdToVerifySMTPEmail(opt *models.EmailAuthorizationR
 	cmd app.CmdToVerifySMTPEmail, err error,
 ) {
 	if cmd.EmailAddr, err = dp.NewEmailAddr(opt.Email); err != nil {
+		return
+	}
+
+	if len(opt.Authorize) == 0 {
+		err = errors.New("no authorization code")
+
 		return
 	}
 

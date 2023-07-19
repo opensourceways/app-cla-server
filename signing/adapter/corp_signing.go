@@ -65,6 +65,12 @@ func (adapter *corpSigningAdatper) cmdToSignCorpCLA(
 ) (
 	cmd app.CmdToSignCorpCLA, err error,
 ) {
+	if !opt.PrivacyChecked {
+		err = errors.New("must agree to the privacy statement")
+
+		return
+	}
+
 	cmd.Link.Id = linkId
 	cmd.Link.CLAId = opt.CLAId
 	if cmd.Link.Language, err = dp.NewLanguage(opt.CLALanguage); err != nil {

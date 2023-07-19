@@ -1530,6 +1530,8 @@ definitions:
         type: string
       info:
         $ref: '#/definitions/models.TypeSigningInfo'
+      privacy_checked:
+        type: boolean
       verification_code:
         type: string
   models.CorporationSigningSummary:
@@ -1628,6 +1630,8 @@ definitions:
         $ref: '#/definitions/models.TypeSigningInfo'
       name:
         type: string
+      privacy_checked:
+        type: boolean
       verification_code:
         type: string
   models.EmployeeSigningUdateInfo:
@@ -1650,6 +1654,8 @@ definitions:
         $ref: '#/definitions/models.TypeSigningInfo'
       name:
         type: string
+      privacy_checked:
+        type: boolean
       verification_code:
         type: string
   models.IndividualSigningBasicInfo:

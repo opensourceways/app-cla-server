@@ -7,6 +7,7 @@ type IndividualSigning struct {
 	CLALanguage      string          `json:"cla_language"`
 	VerificationCode string          `json:"verification_code"`
 	Info             TypeSigningInfo `json:"info"`
+	PrivacyChecked   bool            `json:"privacy_checked"`
 }
 
 type IndividualSigningBasicInfo struct {

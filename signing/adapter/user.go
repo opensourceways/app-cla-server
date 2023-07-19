@@ -54,7 +54,7 @@ func (adapter *userAdatper) cmdToChangePassword(
 func (adapter *userAdatper) GenKeyForPasswordRetrieval(linkId string, email string) (
 	string, models.IModelError,
 ) {
-	cmd, err := adapter.toCmdToGenKeyForPasswordRetrieval(linkId, email)
+	cmd, err := adapter.cmdToGenKeyForPasswordRetrieval(linkId, email)
 	if err != nil {
 		return "", errBadRequestParameter(err)
 	}
@@ -67,7 +67,7 @@ func (adapter *userAdatper) GenKeyForPasswordRetrieval(linkId string, email stri
 	return k, nil
 }
 
-func (adapter *userAdatper) toCmdToGenKeyForPasswordRetrieval(linkId string, email string) (
+func (adapter *userAdatper) cmdToGenKeyForPasswordRetrieval(linkId string, email string) (
 	cmd app.CmdToGenKeyForPasswordRetrieval, err error,
 ) {
 	cmd.Id = linkId

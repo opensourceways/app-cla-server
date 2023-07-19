@@ -22,7 +22,7 @@ mongodb:
   db:
     conn: "{MONGODB_CONNECTION}"
     db: "${MONGODB_NAME}"
-    ca_file: ./conf/mongodb_ca.crt
+    ca_file: ./mongodb_ca.crt
   collections: 
     cla: cla
     link: link

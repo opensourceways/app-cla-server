@@ -210,6 +210,7 @@ func (s *userService) login(find func() (domain.User, error), p dp.Password) (u 
 
 	if !s.password.IsValid(p) {
 		err = loginErr
+		logs.Info("login 1")
 
 		return
 	}
@@ -220,6 +221,8 @@ func (s *userService) login(find func() (domain.User, error), p dp.Password) (u 
 			err = loginErr
 		}
 
+		logs.Info("login 2")
+
 		return
 	}
 
@@ -228,10 +231,14 @@ func (s *userService) login(find func() (domain.User, error), p dp.Password) (u 
 	})
 
 	if changed {
+		logs.Info("login 3")
+
 		if err1 := s.repo.SaveLoginInfo(&u); err1 != nil {
 			logs.Error("save login info, err:%s", err1.Error())
 		}
 	}
+
+	logs.Info("login 4")
 
 	return
 }

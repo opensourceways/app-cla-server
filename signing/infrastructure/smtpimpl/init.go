@@ -47,7 +47,7 @@ func (impl *emailServiceImpl) SendEmail(msg *emailservice.EmailMessage) error {
 		return err
 	}
 
-	logs.Info("smtp code = %v, %v, %v", c, c.Addr.EmailAddr(), c.Platform, c.Token)
+	logs.Info("smtp code = %#v, %v, %v, %v", c, c.Addr.EmailAddr(), c.Platform, c.Token)
 
 	return smtp.Send(c.Token, msg)
 }

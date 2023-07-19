@@ -2150,6 +2150,9 @@
                 "info": {
                     "$ref": "#/definitions/models.TypeSigningInfo"
                 },
+                "privacy_checked": {
+                    "type": "boolean"
+                },
                 "verification_code": {
                     "type": "string"
                 }
@@ -2296,6 +2299,9 @@
                 "name": {
                     "type": "string"
                 },
+                "privacy_checked": {
+                    "type": "boolean"
+                },
                 "verification_code": {
                     "type": "string"
                 }
@@ -2328,6 +2334,9 @@
                 },
                 "name": {
                     "type": "string"
+                },
+                "privacy_checked": {
+                    "type": "boolean"
                 },
                 "verification_code": {
                     "type": "string"

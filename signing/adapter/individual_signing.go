@@ -1,6 +1,8 @@
 package adapter
 
 import (
+	"errors"
+
 	"github.com/opensourceways/app-cla-server/models"
 	"github.com/opensourceways/app-cla-server/signing/app"
 	"github.com/opensourceways/app-cla-server/signing/domain/dp"
@@ -35,6 +37,12 @@ func (adapter *individualSigningAdatper) Sign(linkId string, opt *models.Individ
 func (adapter *individualSigningAdatper) cmdToSignIndividualCLA(linkId string, opt *models.IndividualSigning) (
 	cmd app.CmdToSignIndividualCLA, err error,
 ) {
+	if !opt.PrivacyChecked {
+		err = errors.New("must agree to the privacy statement")
+
+		return
+	}
+
 	cmd.Link.Id = linkId
 	cmd.Link.CLAId = opt.CLAId
 	if cmd.Link.Language, err = dp.NewLanguage(opt.CLALanguage); err != nil {

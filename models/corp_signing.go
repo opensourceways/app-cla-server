@@ -18,6 +18,7 @@ type CorporationSigningCreateOption struct {
 	CorporationName  string          `json:"corporation_name"`
 	VerificationCode string          `json:"verification_code"`
 	Info             TypeSigningInfo `json:"info"`
+	PrivacyChecked   bool            `json:"privacy_checked"`
 }
 
 func (opt *CorporationSigningCreateOption) ToCorporationSigning() CorporationSigning {

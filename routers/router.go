@@ -80,6 +80,11 @@ func init() {
 				&controllers.PasswordRetrievalController{},
 			),
 		),
+		beego.NSNamespace("/heartbeat",
+			beego.NSInclude(
+				&controllers.HeartbeatController{},
+			),
+		),
 	)
 	beego.AddNamespace(ns)
 }

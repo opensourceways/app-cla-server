@@ -103,6 +103,9 @@ func codeMap(code string) models.ModelErrCode {
 	case domain.ErrorCodeLinkNotExists:
 		return models.ErrNoLink
 
+	case domain.ErrorCodeLinkExists:
+		return models.ErrLinkExists
+
 	// gmail
 	case domain.ErrorCodeGmailNoRefreshToken:
 		return models.ErrNoRefreshToken

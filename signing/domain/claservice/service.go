@@ -5,6 +5,7 @@ import (
 	"github.com/beego/beego/v2/core/logs"
 	"time"
 
+	commonRepo "github.com/opensourceways/app-cla-server/common/domain/repository"
 	"github.com/opensourceways/app-cla-server/signing/domain"
 	"github.com/opensourceways/app-cla-server/signing/domain/localcla"
 	"github.com/opensourceways/app-cla-server/signing/domain/repository"
@@ -81,6 +82,10 @@ func (s *claService) AddLink(link *domain.Link) error {
 	}
 
 	if err := s.repo.Add(link); err != nil {
+		if commonRepo.IsErrorDuplicateCreating(err) {
+			err = domain.NewDomainError(domain.ErrorCodeLinkExists)
+		}
+
 		clean()
 
 		return err

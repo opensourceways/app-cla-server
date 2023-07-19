@@ -2,7 +2,6 @@ package pdf
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"sort"
@@ -34,17 +33,6 @@ func (this *pdfGenerator) generator(claLang string) *corpSigningPDF {
 		}
 	}
 	return nil
-}
-
-func (this *pdfGenerator) GenPDFForCorporationSigning1(linkID, claFile string, signing *models.CorporationSigning, claFields []models.CLAField) (string, error) {
-	corp := this.generator(signing.CLALanguage)
-	if corp == nil {
-		return "", fmt.Errorf("unknown cla language:%s", signing.CLALanguage)
-	}
-
-	outFile := util.GenFilePath(this.pdfOutDir, genPDFFileName(linkID, signing.AdminEmail, ""))
-	err := genCorporPDF(corp, signing, claFields, claFile, outFile)
-	return outFile, err
 }
 
 func (this *pdfGenerator) GenPDFForCorporationSigning(linkID, claFile string, signing *models.CorporationSigning, claFields []models.CLAField) (string, error) {
@@ -87,35 +75,6 @@ func genSignaturePDF(c *corpSigningPDF, signing *models.CorporationSigning, claF
 	return nil
 }
 
-func genCorporPDF(c *corpSigningPDF, signing *models.CorporationSigning, claFields []models.CLAField, claFile, outFile string) error {
-	text, err := ioutil.ReadFile(claFile)
-	if err != nil {
-		return fmt.Errorf("failed to read cla file(%s): %s", claFile, err.Error())
-	}
-
-	pdf := c.begin()
-
-	// first page
-	pdf.AddPage()
-
-	c.cla(pdf, string(text))
-
-	// second page
-	pdf.AddPage()
-	orders, titles := BuildCorpContact(claFields)
-	c.addSignature(pdf, signing.Info, orders, titles)
-
-	if !util.IsFileNotExist(outFile) {
-		if err = os.Remove(outFile); err != nil {
-			return err
-		}
-	}
-	if err := c.end(pdf, outFile); err != nil {
-		return fmt.Errorf("generate signing pdf of corp failed: %s", err.Error())
-	}
-	return nil
-}
-
 func appendCorpPDFSignaturePage(pythonBin, pdfFile, sigFile, outfile string) error {
 	if util.IsFileNotExist(sigFile) {
 		return fmt.Errorf("org signature file(%s) is not exist", sigFile)
@@ -125,19 +84,6 @@ func appendCorpPDFSignaturePage(pythonBin, pdfFile, sigFile, outfile string) err
 	cmd := exec.Command(pythonBin, "./util/merge_signature.py", "append", pdfFile, sigFile, outfile)
 	if out, err := cmd.Output(); err != nil {
 		return fmt.Errorf("append signature page of pdf failed: %s, %s", out, err.Error())
-	}
-
-	return nil
-}
-func mergeCorpPDFSignaturePage(pythonBin, pdfFile, sigFile, outfile string) error {
-	if util.IsFileNotExist(sigFile) {
-		return fmt.Errorf("org signature file(%s) is not exist", sigFile)
-	}
-
-	// merge file
-	cmd := exec.Command(pythonBin, "./util/merge_signature.py", "merge", pdfFile, sigFile, outfile)
-	if _, err := cmd.Output(); err != nil {
-		return fmt.Errorf("merge signature page of pdf failed: %s", err.Error())
 	}
 
 	return nil

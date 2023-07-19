@@ -7,3 +7,9 @@ type EmailCredential struct {
 	Token    []byte
 	Platform string
 }
+
+func (e *EmailCredential) Clear() {
+	for i := range e.Token {
+		e.Token[i] = 0
+	}
+}

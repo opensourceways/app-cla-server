@@ -50,6 +50,7 @@ const (
 	ErrorCodeCLAExists    = "cla_exists"
 	ErrorCodeCLANotExists = "cla_not_exists"
 
+	ErrorCodeLinkExists    = "link_exists"
 	ErrorCodeLinkNotExists = "link_not_exists"
 )
 

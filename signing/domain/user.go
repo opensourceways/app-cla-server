@@ -1,6 +1,8 @@
 package domain
 
 import (
+	"github.com/beego/beego/v2/core/logs"
+
 	"github.com/opensourceways/app-cla-server/signing/domain/dp"
 	"github.com/opensourceways/app-cla-server/util"
 )
@@ -54,13 +56,20 @@ func (u *User) Login(isCorrect func([]byte) bool) (bool, error) {
 		return false, nil
 	}
 
+	logs.Info("login time:%d, period = %d, now=%d", u.LoginTime, config.PeriodOfLoginChecking, now)
+
 	if u.LoginTime+config.PeriodOfLoginChecking < now {
+		logs.Info("first time")
+
 		u.LoginTime = now
 		u.FailedNum = 1
 	} else {
 		u.FailedNum += 1
 
+		logs.Info("add one")
 		if u.FailedNum >= config.MaxNumOfFailedLogin {
+			logs.Info("frozen")
+
 			u.FrozenTime = now + config.PeriodOfLoginFrozen
 
 			return true, NewDomainError(ErrorCodeUserFrozen)

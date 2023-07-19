@@ -1350,6 +1350,29 @@
                 }
             }
         },
+        "/heartbeat/": {
+            "get": {
+                "tags": [
+                    "heartbeat"
+                ],
+                "description": "heartbeat\n\u003cbr\u003e",
+                "operationId": "HeartbeatController.Heartbeat",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "schema": {
+                            "$ref": "#/definitions/controllers.respData"
+                        }
+                    }
+                }
+            }
+        },
         "/individual-signing/{link_id}": {
             "get": {
                 "tags": [

@@ -160,7 +160,7 @@ func (adapter *linkAdatper) Remove(linkId string) models.IModelError {
 func (adapter *linkAdatper) Add(submitter string, opt *models.LinkCreateOption) models.IModelError {
 	cmd, err := adapter.cmdToAddLink(submitter, opt)
 	if err != nil {
-		return toModelError(err)
+		return errBadRequestParameter(err)
 	}
 
 	if err := adapter.s.Add(&cmd); err != nil {

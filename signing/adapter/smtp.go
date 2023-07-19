@@ -20,7 +20,7 @@ type smtpAdapter struct {
 func (adapter *smtpAdapter) Verify(opt *models.EmailAuthorizationReq) (string, models.IModelError) {
 	cmd, err := adapter.cmdToVerifySMTPEmail(opt)
 	if err != nil {
-		return "", toModelError(err)
+		return "", errBadRequestParameter(err)
 	}
 
 	v, err := adapter.s.Verify(&cmd)
@@ -34,7 +34,7 @@ func (adapter *smtpAdapter) Verify(opt *models.EmailAuthorizationReq) (string, m
 func (adapter *smtpAdapter) Authorize(opt *models.EmailAuthorization) models.IModelError {
 	cmd, err := adapter.cmdToAuthorizeSMTPEmail(opt)
 	if err != nil {
-		return toModelError(err)
+		return errBadRequestParameter(err)
 	}
 
 	if err := adapter.s.Authorize(&cmd); err != nil {

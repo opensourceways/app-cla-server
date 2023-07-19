@@ -19,6 +19,10 @@ func toModelError(err error) models.IModelError {
 
 }
 
+func errBadRequestParameter(err error) models.IModelError {
+	return models.NewModelError(models.ErrBadRequestParameter, err)
+}
+
 func codeMap(code string) models.ModelErrCode {
 	switch code {
 	// corp admin

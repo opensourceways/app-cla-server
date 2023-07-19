@@ -24,7 +24,7 @@ func (adapter *employeeSigningAdatper) Sign(opt *models.EmployeeSigning) (
 ) {
 	cmd, err := adapter.cmdToSignEmployeeCLA(opt)
 	if err != nil {
-		return nil, toModelError(err)
+		return nil, errBadRequestParameter(err)
 	}
 
 	ms, err := adapter.s.Sign(&cmd)

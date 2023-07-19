@@ -81,7 +81,7 @@ func (adapter *claAdatper) CLALocalFilePath(linkId, claId string) string {
 func (adapter *claAdatper) Add(linkId string, opt *models.CLACreateOpt) models.IModelError {
 	cmd, err := adapter.cmdToAddCLA(opt)
 	if err != nil {
-		return toModelError(err)
+		return errBadRequestParameter(err)
 	}
 
 	if err := adapter.s.Add(linkId, &cmd); err != nil {

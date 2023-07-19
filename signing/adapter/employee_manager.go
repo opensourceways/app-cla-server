@@ -62,7 +62,7 @@ func (adapter *employeeManagerAdatper) cmdToAddEmployeeManager(
 		item := &opt.Managers[i]
 
 		if ms[i], err = adapter.toManager(item); err != nil {
-			me = toModelError(err)
+			me = errBadRequestParameter(err)
 
 			return
 		}

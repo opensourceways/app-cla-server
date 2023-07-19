@@ -22,7 +22,7 @@ func (adapter *userAdatper) ChangePassword(
 ) models.IModelError {
 	cmd, err := adapter.cmdToChangePassword(index, opt)
 	if err != nil {
-		return toModelError(err)
+		return errBadRequestParameter(err)
 	}
 
 	if err = adapter.s.ChangePassword(&cmd); err != nil {
@@ -56,7 +56,7 @@ func (adapter *userAdatper) GenKeyForPasswordRetrieval(linkId string, email stri
 ) {
 	cmd, err := adapter.toCmdToGenKeyForPasswordRetrieval(linkId, email)
 	if err != nil {
-		return "", toModelError(err)
+		return "", errBadRequestParameter(err)
 	}
 
 	k, err := adapter.s.GenKeyForPasswordRetrieval(&cmd)
@@ -82,7 +82,7 @@ func (adapter *userAdatper) ResetPassword(
 ) models.IModelError {
 	cmd, err := adapter.cmdToResetPassword(linkId, key, password)
 	if err != nil {
-		return toModelError(err)
+		return errBadRequestParameter(err)
 	}
 
 	if err = adapter.s.ResetPassword(&cmd); err != nil {
@@ -118,7 +118,7 @@ func (adapter *userAdatper) Login(opt *models.CorporationManagerLoginInfo) (
 
 	cmd, err := adapter.cmdToLogin(opt)
 	if err != nil {
-		return r, toModelError(err)
+		return r, errBadRequestParameter(err)
 	}
 
 	v, err := adapter.s.Login(&cmd)

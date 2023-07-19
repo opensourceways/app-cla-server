@@ -19,7 +19,7 @@ func (adapter *corpEmailDomainAdatper) Verify(
 ) (string, models.IModelError) {
 	cmd, err := adapter.cmdToVerifyEmailDomain(csId, email)
 	if err != nil {
-		return "", toModelError(err)
+		return "", errBadRequestParameter(err)
 	}
 
 	v, err := adapter.s.Verify(&cmd)
@@ -35,7 +35,7 @@ func (adapter *corpEmailDomainAdatper) Add(
 ) models.IModelError {
 	v, err := adapter.cmdToVerifyEmailDomain(csId, opt.SubEmail)
 	if err != nil {
-		return toModelError(err)
+		return errBadRequestParameter(err)
 	}
 
 	cmd := app.CmdToAddEmailDomain{CmdToVerifyEmailDomain: v}

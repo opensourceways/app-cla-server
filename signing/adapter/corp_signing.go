@@ -50,7 +50,7 @@ func (adapter *corpSigningAdatper) Sign(
 ) models.IModelError {
 	cmd, err := adapter.cmdToSignCorpCLA(linkId, opt)
 	if err != nil {
-		return toModelError(err)
+		return errBadRequestParameter(err)
 	}
 
 	if err = adapter.s.Sign(&cmd); err != nil {
@@ -166,7 +166,7 @@ func (adapter *corpSigningAdatper) FindCorpSummary(linkId string, email string) 
 
 	var err error
 	if cmd.EmailAddr, err = dp.NewEmailAddr(email); err != nil {
-		return false, toModelError(err)
+		return false, errBadRequestParameter(err)
 	}
 
 	v, err := adapter.s.FindCorpSummary(&cmd)

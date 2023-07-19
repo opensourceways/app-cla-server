@@ -22,7 +22,7 @@ func (adapter *individualSigningAdatper) Verify(linkId, email string) (string, m
 func (adapter *individualSigningAdatper) Sign(linkId string, opt *models.IndividualSigning) models.IModelError {
 	cmd, err := adapter.cmdToSignIndividualCLA(linkId, opt)
 	if err != nil {
-		return toModelError(err)
+		return errBadRequestParameter(err)
 	}
 
 	if err = adapter.s.Sign(&cmd); err != nil {
@@ -63,7 +63,7 @@ func (adapter *individualSigningAdatper) Check(linkId string, email string) (boo
 
 	var err error
 	if cmd.EmailAddr, err = dp.NewEmailAddr(email); err != nil {
-		return false, toModelError(err)
+		return false, errBadRequestParameter(err)
 	}
 
 	v, err := adapter.s.Check(&cmd)
@@ -84,7 +84,7 @@ func createCodeForSigning(
 
 	e, err := dp.NewEmailAddr(email)
 	if err != nil {
-		return "", toModelError(err)
+		return "", errBadRequestParameter(err)
 	}
 
 	code, err := f(&app.CmdToCreateVerificationCode{

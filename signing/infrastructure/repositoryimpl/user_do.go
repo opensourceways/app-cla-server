@@ -47,10 +47,14 @@ func (do *userDO) toUser(u *domain.User) (err error) {
 
 	u.Id = do.Id.Hex()
 	u.LinkId = do.LinkId
-	u.CorpSigningId = do.CorpSigningId
 	u.Password = do.Password
+	u.CorpSigningId = do.CorpSigningId
 	u.PasswordChaged = do.PasswordChaged
 	u.Version = do.Version
+
+	u.FrozenTime = do.FrozenTime
+	u.LoginTime = do.LoginTime
+	u.FailedNum = do.FailedNum
 
 	return
 }

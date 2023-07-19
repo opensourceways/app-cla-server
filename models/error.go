@@ -50,6 +50,7 @@ const (
 	ErrInvalidToken            ModelErrCode = "invalid_token"
 	ErrCLAExists               ModelErrCode = "cla_exists"
 	ErrTooManyRequest          ModelErrCode = "too_many_request"
+	ErrUserLoginFrozen         ModelErrCode = "user_login_frozen"
 )
 
 type IModelError interface {

@@ -61,6 +61,9 @@ func codeMap(code string) models.ModelErrCode {
 	case domain.ErrorCodeUserInvalidAccount:
 		return models.ErrInvalidManagerID
 
+	case domain.ErrorCodeUserFrozen:
+		return models.ErrUserLoginFrozen
+
 	// employee manager
 	case domain.ErrorCodeEmployeeManagerExists:
 		return models.ErrCorpManagerExists

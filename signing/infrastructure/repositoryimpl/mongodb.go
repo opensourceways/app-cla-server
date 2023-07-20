@@ -8,9 +8,10 @@ import (
 )
 
 const (
-	mongodbCmdOr = "$or"
-	mongodbCmdIn = "$in"
-	mongodbCmdLt = "$lt"
+	mongodbCmdOr        = "$or"
+	mongodbCmdIn        = "$in"
+	mongodbCmdLt        = "$lt"
+	mongodbCmdElemMatch = "$elemMatch"
 )
 
 type anyDoc = map[string]string

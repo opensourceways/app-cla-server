@@ -98,7 +98,7 @@ func (impl *corpSigning) FindEmployeesByEmail(linkId string, email dp.EmailAddr)
 	r repository.EmployeeSigningSummary, err error,
 ) {
 	filter := linkIdFilter(linkId)
-	filter[fieldEmployees] = bson.M{"$elemMatch": bson.M{fieldEmail: email.EmailAddr()}}
+	filter[fieldEmployees] = bson.M{mongodbCmdElemMatch: bson.M{fieldEmail: email.EmailAddr()}}
 
 	var do corpSigningDO
 
@@ -128,7 +128,7 @@ func (impl *corpSigning) hasSignedEmployeeCLA(index *domain.CLAIndex) (
 	bool, error,
 ) {
 	filter := linkIdFilter(index.LinkId)
-	filter[fieldEmployees] = bson.M{"$elemMatch": bson.M{fieldCLAId: index.CLAId}}
+	filter[fieldEmployees] = bson.M{mongodbCmdElemMatch: bson.M{fieldCLAId: index.CLAId}}
 
 	var do corpSigningDO
 

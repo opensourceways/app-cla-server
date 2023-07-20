@@ -17,11 +17,13 @@ var (
 )
 
 func NewLoginService(
+	user repository.User,
 	repo repository.Login,
 	encrypt encryption.Encryption,
 	password userpassword.UserPassword,
 ) LoginService {
 	return &loginService{
+		user:     user,
 		repo:     repo,
 		encrypt:  encrypt,
 		password: password,
@@ -94,8 +96,8 @@ func (s *loginService) login(find func() (domain.User, error), p dp.Password, li
 		return
 	}
 
-	if s.isPasswordCorrect(p, u.Password) {
-		if !lv.NoFailure() {
+	if s.isCorrectPassword(p, u.Password) {
+		if lv.HasFailure() {
 			if err1 := s.repo.Delete(lid); err1 != nil {
 				logs.Error("delete login info failed, err:%s", err1.Error())
 			}
@@ -124,6 +126,6 @@ func (s *loginService) failToLogin(l *domain.Login) error {
 	return err
 }
 
-func (s *loginService) isPasswordCorrect(p dp.Password, ciphertext []byte) bool {
+func (s *loginService) isCorrectPassword(p dp.Password, ciphertext []byte) bool {
 	return s.encrypt.IsSame(p.Password(), ciphertext)
 }

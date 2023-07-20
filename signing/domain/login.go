@@ -34,6 +34,6 @@ func (l *Login) RetryNum() int {
 	return config.MaxNumOfFailedLogin - l.FailedNum
 }
 
-func (l *Login) NoFailure() bool {
-	return l.FailedNum == 0
+func (l *Login) HasFailure() bool {
+	return l.FailedNum > 0
 }

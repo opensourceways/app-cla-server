@@ -37,15 +37,17 @@ func initSigning(cfg *config.Config) error {
 	)
 
 	pi := passwordimpl.NewPasswordImpl(&cfg.Password)
+	ur := repositoryimpl.NewUser(
+		mongodb.DAO(cfg.Mongodb.Collections.User),
+	)
 	userService := userservice.NewUserService(
-		repositoryimpl.NewUser(
-			mongodb.DAO(cfg.Mongodb.Collections.User),
-		),
+		ur,
 		encryptionimpl.NewEncryptionImpl(),
 		pi,
 	)
 
 	loginService := loginservice.NewLoginService(
+		ur,
 		loginimpl.NewLoginImpl(redisdb.DAO(), &cfg.Redisdb.Login),
 		encryptionimpl.NewEncryptionImpl(),
 		pi,

@@ -2,6 +2,7 @@ package app
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/opensourceways/app-cla-server/signing/domain/dp"
 )
@@ -28,7 +29,7 @@ type CmdToCreateVerificationCode struct {
 
 func (cmd *CmdToCreateVerificationCode) genPurpose(codeType string) (dp.Purpose, error) {
 	return dp.NewPurpose(
-		fmt.Sprintf("%s, %s, %s", cmd.Id, codeType, cmd.EmailAddr.EmailAddr()),
+		fmt.Sprintf("%s, %s, %s", cmd.Id, codeType, strings.ToLower(cmd.EmailAddr.EmailAddr())),
 	)
 }
 

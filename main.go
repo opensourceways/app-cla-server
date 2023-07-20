@@ -45,7 +45,10 @@ func gatherOptions(fs *flag.FlagSet, args ...string) options {
 		&o.configFile, "config-file", "", "config file path.",
 	)
 
-	fs.Parse(args)
+	if err := fs.Parse(args); err != nil {
+		logs.Error(err)
+	}
+
 	return o
 }
 

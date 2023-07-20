@@ -10,7 +10,6 @@ import (
 	"github.com/opensourceways/app-cla-server/signing/domain/encryption"
 	"github.com/opensourceways/app-cla-server/signing/domain/randombytes"
 	"github.com/opensourceways/app-cla-server/signing/domain/repository"
-	"github.com/opensourceways/app-cla-server/util"
 )
 
 var csrfTokenLen = 24
@@ -25,13 +24,11 @@ type AccessTokenService interface {
 
 func NewAccessTokenService(
 	repo repository.AccessToken,
-	expiry int64,
 	encrypt encryption.Encryption,
 	randomBytes randombytes.RandomBytes,
 ) AccessTokenService {
 	return &accessTokenService{
 		repo:        repo,
-		expiry:      expiry,
 		encrypt:     encrypt,
 		randomBytes: randomBytes,
 	}
@@ -40,7 +37,6 @@ func NewAccessTokenService(
 // accessTokenService
 type accessTokenService struct {
 	repo        repository.AccessToken
-	expiry      int64
 	encrypt     encryption.Encryption
 	randomBytes randombytes.RandomBytes
 }
@@ -62,11 +58,7 @@ func (s *accessTokenService) Add(payload []byte) (k domain.AccessTokenKey, err e
 		return
 	}
 
-	token := domain.AccessToken{
-		Expiry:        s.expiry + util.Now(),
-		Payload:       payload,
-		EncryptedCSRF: csrf,
-	}
+	token := domain.NewAccessToken(payload, csrf)
 
 	index, err := s.repo.Add(&token)
 	if err != nil {

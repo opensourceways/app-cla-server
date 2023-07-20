@@ -24,9 +24,7 @@ type Config struct {
 	MaxNumOfEmployeeManager      int    `json:"max_num_of_employee_manager"`
 	MinNumOfSameEmailDomainParts int    `json:"min_num_of_same_email_domain_parts"`
 
-	MaxNumOfFailedLogin   int   `json:"max_num_of_failed_login"`
-	PeriodOfLoginFrozen   int64 `json:"period_of_login_frozen"`
-	PeriodOfLoginChecking int64 `json:"period_of_login_checking"`
+	MaxNumOfFailedLogin int `json:"max_num_of_failed_login"`
 
 	// interval of creating verification code. seconds.
 	IntervalOfCreatingVC int `json:"interval_of_creating_vc"`
@@ -63,14 +61,6 @@ func (cfg *Config) SetDefault() {
 
 	if cfg.MaxNumOfFailedLogin <= 0 {
 		cfg.MaxNumOfFailedLogin = 5
-	}
-
-	if cfg.PeriodOfLoginChecking <= 0 {
-		cfg.PeriodOfLoginChecking = 300
-	}
-
-	if cfg.PeriodOfLoginFrozen <= 0 {
-		cfg.PeriodOfLoginFrozen = 300
 	}
 
 	if cfg.IntervalOfCreatingVC <= 0 {

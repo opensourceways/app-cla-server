@@ -10,12 +10,14 @@ import (
 	"github.com/opensourceways/app-cla-server/signing/domain/accesstokenservice"
 	"github.com/opensourceways/app-cla-server/signing/domain/claservice"
 	"github.com/opensourceways/app-cla-server/signing/domain/emailcredential"
+	"github.com/opensourceways/app-cla-server/signing/domain/loginservice"
 	"github.com/opensourceways/app-cla-server/signing/domain/userservice"
 	"github.com/opensourceways/app-cla-server/signing/domain/vcservice"
 	"github.com/opensourceways/app-cla-server/signing/infrastructure/accesstokenimpl"
 	"github.com/opensourceways/app-cla-server/signing/infrastructure/encryptionimpl"
 	"github.com/opensourceways/app-cla-server/signing/infrastructure/limiterimpl"
 	"github.com/opensourceways/app-cla-server/signing/infrastructure/localclaimpl"
+	"github.com/opensourceways/app-cla-server/signing/infrastructure/loginimpl"
 	"github.com/opensourceways/app-cla-server/signing/infrastructure/passwordimpl"
 	"github.com/opensourceways/app-cla-server/signing/infrastructure/randombytesimpl"
 	"github.com/opensourceways/app-cla-server/signing/infrastructure/randomcodeimpl"
@@ -34,12 +36,21 @@ func initSigning(cfg *config.Config) error {
 		mongodb.DAO(cfg.Mongodb.Collections.CorpSigning),
 	)
 
+	pi := passwordimpl.NewPasswordImpl(&cfg.Password)
+	ur := repositoryimpl.NewUser(
+		mongodb.DAO(cfg.Mongodb.Collections.User),
+	)
 	userService := userservice.NewUserService(
-		repositoryimpl.NewUser(
-			mongodb.DAO(cfg.Mongodb.Collections.User),
-		),
+		ur,
 		encryptionimpl.NewEncryptionImpl(),
-		passwordimpl.NewPasswordImpl(&cfg.Password),
+		pi,
+	)
+
+	loginService := loginservice.NewLoginService(
+		ur,
+		loginimpl.NewLoginImpl(redisdb.DAO(), &cfg.Redisdb.Login),
+		encryptionimpl.NewEncryptionImpl(),
+		pi,
 	)
 
 	vcService := vcservice.NewVCService(
@@ -83,7 +94,7 @@ func initSigning(cfg *config.Config) error {
 
 	models.RegisterUserAdapter(
 		adapter.NewUserAdapter(
-			app.NewUserService(userService, repo, symmetric, vcService, interval),
+			app.NewUserService(userService, loginService, repo, symmetric, vcService, interval),
 		),
 	)
 
@@ -114,7 +125,7 @@ func initSigning(cfg *config.Config) error {
 
 	// access token
 	at := accesstokenservice.NewAccessTokenService(
-		accesstokenimpl.NewAccessTokenImpl(redisdb.DAO(), &cfg.Redisdb.Config),
+		accesstokenimpl.NewAccessTokenImpl(redisdb.DAO(), &cfg.Redisdb.AccessToken),
 		cfg.Domain.Config.AccessTokenExpiry,
 		encryptionimpl.NewEncryptionImpl(),
 		randombytesimpl.NewRandomBytesImpl(),

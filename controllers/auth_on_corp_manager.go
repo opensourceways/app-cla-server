@@ -9,6 +9,11 @@ type corpAuthInfo struct {
 	InitialPWChanged bool   `json:"initial_pw_changed"`
 }
 
+type corpAuthFailure struct {
+	errMsg
+	RetryNum int `json:"retry_num"`
+}
+
 // @Title Logout
 // @Description corporation manager logout
 // @Tags CorpManager
@@ -18,15 +23,6 @@ type corpAuthInfo struct {
 // @router /auth [put]
 func (ctl *CorporationManagerController) Logout() {
 	action := "corp admin or employee manager logouts"
-	sendResp := ctl.newFuncForSendingFailedResp(action)
-
-	pl, fr := ctl.tokenPayloadBasedOnCorpManager()
-	if fr != nil {
-		sendResp(fr)
-		return
-	}
-
-	models.CorpManagerLogout(pl.UserId)
 
 	ctl.logout()
 
@@ -64,7 +60,17 @@ func (ctl *CorporationManagerController) Login() {
 
 	v, merr := models.CorpManagerLogin(&info)
 	if merr != nil {
-		ctl.sendModelErrorAsResp(merr, action)
+		if merr.IsErrorOf(models.ErrWrongIDOrPassword) {
+			body := corpAuthFailure{
+				RetryNum: v.RetryNum,
+			}
+			body.ErrCode = merr.ErrCode()
+			body.ErrMsg = merr.Error()
+
+			ctl.sendResponse(action, body, 400)
+		} else {
+			ctl.sendModelErrorAsResp(merr, action)
+		}
 		return
 	}
 

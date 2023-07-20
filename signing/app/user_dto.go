@@ -25,6 +25,7 @@ type UserLoginDTO struct {
 	CorpName         string
 	CorpSigningId    string
 	InitialPWChanged bool
+	RetryNum         int
 }
 
 // CmdToChangePassword

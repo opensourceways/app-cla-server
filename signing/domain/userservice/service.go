@@ -31,9 +31,6 @@ type UserService interface {
 	RemoveByAccount(linkId string, accounts []dp.Account)
 	ChangePassword(index string, old, newOne dp.Password) error
 	ResetPassword(linkId string, email dp.EmailAddr, newOne dp.Password) error
-	Logout(userId string)
-	LoginByAccount(linkId string, a dp.Account, p dp.Password) (domain.User, error)
-	LoginByEmail(linkId string, e dp.EmailAddr, p dp.Password) (u domain.User, err error)
 }
 
 type userService struct {
@@ -175,72 +172,6 @@ func (s *userService) checkPassword(p dp.Password) error {
 	}
 
 	return nil
-}
-
-func (s *userService) Logout(userId string) {
-	if u, err := s.repo.Find(userId); err == nil {
-		u.Logout()
-
-		if err := s.repo.SaveLoginInfo(&u); err != nil {
-			logs.Error("save log out info, err:%s", err.Error())
-		}
-	}
-}
-
-func (s *userService) LoginByAccount(linkId string, a dp.Account, p dp.Password) (domain.User, error) {
-	return s.login(
-		func() (domain.User, error) {
-			return s.repo.FindByAccount(linkId, a)
-		},
-		p,
-	)
-}
-
-func (s *userService) LoginByEmail(linkId string, e dp.EmailAddr, p dp.Password) (u domain.User, err error) {
-	return s.login(
-		func() (domain.User, error) {
-			return s.repo.FindByEmail(linkId, e)
-		},
-		p,
-	)
-}
-
-func (s *userService) login(find func() (domain.User, error), p dp.Password) (u domain.User, err error) {
-	loginErr := domain.NewDomainError(domain.ErrorCodeUserWrongAccountOrPassword)
-
-	if !s.password.IsValid(p) {
-		err = loginErr
-		logs.Info("login 1")
-
-		return
-	}
-
-	u, err = find()
-	if err != nil {
-		if commonRepo.IsErrorResourceNotFound(err) {
-			err = loginErr
-		}
-
-		logs.Info("login 2")
-
-		return
-	}
-
-	changed, err := u.Login(func(ciphertext []byte) bool {
-		return s.isSamePassword(p, ciphertext)
-	})
-
-	if changed {
-		logs.Info("login 3")
-
-		if err1 := s.repo.SaveLoginInfo(&u); err1 != nil {
-			logs.Error("save login info, err:%s", err1.Error())
-		}
-	}
-
-	logs.Info("login 4")
-
-	return
 }
 
 func (s *userService) isSamePassword(p dp.Password, ciphertext []byte) bool {

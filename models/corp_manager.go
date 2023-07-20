@@ -33,6 +33,7 @@ type CorpManagerLoginInfo struct {
 	CorpName         string
 	SigningId        string
 	InitialPWChanged bool
+	RetryNum         int
 }
 
 type CorporationManagerCreateOption struct {

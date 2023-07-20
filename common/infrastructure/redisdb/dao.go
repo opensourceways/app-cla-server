@@ -16,6 +16,12 @@ func (cli *client) Set(key string, val interface{}) error {
 	})
 }
 
+func (cli *client) SetWithExpiry(key string, val interface{}, expiry time.Duration) error {
+	return cli.withContext(func(ctx context.Context) error {
+		return cli.redisCli.Set(ctx, key, val, expiry).Err()
+	})
+}
+
 func (cli *client) Get(key string, data interface{}) error {
 	return cli.withContext(func(ctx context.Context) error {
 		err := cli.redisCli.Get(ctx, key).Scan(data)

@@ -126,7 +126,6 @@ func initSigning(cfg *config.Config) error {
 	// access token
 	at := accesstokenservice.NewAccessTokenService(
 		accesstokenimpl.NewAccessTokenImpl(redisdb.DAO(), &cfg.Redisdb.AccessToken),
-		cfg.Domain.Config.AccessTokenExpiry,
 		encryptionimpl.NewEncryptionImpl(),
 		randombytesimpl.NewRandomBytesImpl(),
 	)

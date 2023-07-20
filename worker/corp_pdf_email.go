@@ -5,6 +5,8 @@ import (
 	"os"
 	"strings"
 
+	"github.com/beego/beego/v2/core/logs"
+
 	"github.com/opensourceways/app-cla-server/models"
 	"github.com/opensourceways/app-cla-server/pdf"
 	"github.com/opensourceways/app-cla-server/signing/domain/emailservice"
@@ -70,8 +72,12 @@ func (impl *corpPDFEmail) do() error {
 }
 
 func (impl *corpPDFEmail) clean() {
-	if impl.fileExist() {
-		os.Remove(impl.pdfFilePath)
+	if !impl.fileExist() {
+		return
+	}
+
+	if err := os.Remove(impl.pdfFilePath); err != nil {
+		logs.Error(err)
 	}
 }
 

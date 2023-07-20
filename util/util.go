@@ -2,8 +2,6 @@ package util
 
 import (
 	"bytes"
-	"crypto/md5"
-	"crypto/rand"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -99,50 +97,6 @@ func Now() int64 {
 
 func Expiry(expiry int64) int64 {
 	return time.Now().Add(time.Second * time.Duration(expiry)).Unix()
-}
-
-func RandStr(strSize int, randType string) string {
-	var dictionary string
-
-	switch randType {
-	case "alphanum":
-		dictionary = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
-	case "alpha":
-		dictionary = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
-	case "number":
-		dictionary = "0123456789"
-	}
-
-	var bytes = make([]byte, strSize)
-	rand.Read(bytes)
-
-	n := byte(len(dictionary))
-	for k, v := range bytes {
-		bytes[k] = dictionary[v%n]
-	}
-	return string(bytes)
-}
-
-func Md5sumOfFile(path string) (string, error) {
-	data, err := ioutil.ReadFile(path)
-	if err != nil {
-		return "", err
-	}
-
-	return Md5sumOfBytes(data), nil
-}
-
-func Md5sumOfBytes(data []byte) string {
-	if data == nil {
-		return ""
-	}
-
-	return fmt.Sprintf("%x", md5.Sum(data))
-}
-
-func GenFileName(fileNameParts ...string) string {
-	s := filepath.Join(fileNameParts...)
-	return strings.ReplaceAll(s, string(filepath.Separator), "_")
 }
 
 func CheckContentType(data []byte, t string) bool {

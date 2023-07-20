@@ -9,7 +9,6 @@ type User interface {
 	Add(*domain.User) (string, error)
 	Remove([]string) error
 	RemoveByAccount(linkId string, accounts []dp.Account) error
-	SaveLoginInfo(*domain.User) error
 	SavePassword(*domain.User) error
 	Find(string) (domain.User, error)
 	FindByAccount(linkId string, a dp.Account) (domain.User, error)

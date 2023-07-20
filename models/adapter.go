@@ -174,10 +174,6 @@ func ChangePassword(index string, opt *CorporationManagerChangePassword) IModelE
 	return userAdapterInstance.ChangePassword(index, opt)
 }
 
-func CorpManagerLogout(userId string) {
-	userAdapterInstance.Logout(userId)
-}
-
 func CorpManagerLogin(opt *CorporationManagerLoginInfo) (CorpManagerLoginInfo, IModelError) {
 	return userAdapterInstance.Login(opt)
 }

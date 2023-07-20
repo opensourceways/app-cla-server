@@ -18,15 +18,6 @@ type corpAuthInfo struct {
 // @router /auth [put]
 func (ctl *CorporationManagerController) Logout() {
 	action := "corp admin or employee manager logouts"
-	sendResp := ctl.newFuncForSendingFailedResp(action)
-
-	pl, fr := ctl.tokenPayloadBasedOnCorpManager()
-	if fr != nil {
-		sendResp(fr)
-		return
-	}
-
-	models.CorpManagerLogout(pl.UserId)
 
 	ctl.logout()
 

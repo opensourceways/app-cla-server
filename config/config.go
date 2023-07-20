@@ -10,6 +10,7 @@ import (
 	"github.com/opensourceways/app-cla-server/signing/domain/dp"
 	"github.com/opensourceways/app-cla-server/signing/infrastructure/accesstokenimpl"
 	"github.com/opensourceways/app-cla-server/signing/infrastructure/localclaimpl"
+	"github.com/opensourceways/app-cla-server/signing/infrastructure/loginimpl"
 	"github.com/opensourceways/app-cla-server/signing/infrastructure/passwordimpl"
 	"github.com/opensourceways/app-cla-server/signing/infrastructure/repositoryimpl"
 	"github.com/opensourceways/app-cla-server/signing/infrastructure/smtpimpl"
@@ -50,9 +51,9 @@ type mongodbConfig struct {
 }
 
 type redisdbConfig struct {
-	DB redisdb.Config `json:"db" required:"true"`
-
-	accesstokenimpl.Config
+	DB          redisdb.Config         `json:"db"`
+	Login       loginimpl.Config       `json:"login"`
+	AccessToken accesstokenimpl.Config `json:"access_token"`
 }
 
 type Config struct {
@@ -78,7 +79,8 @@ func (cfg *Config) configItems() []interface{} {
 		&cfg.Mongodb.DB,
 		&cfg.Mongodb.Config,
 		&cfg.Redisdb.DB,
-		&cfg.Redisdb.Config,
+		&cfg.Redisdb.Login,
+		&cfg.Redisdb.AccessToken,
 		&cfg.Password,
 		&cfg.LocalCLA,
 		&cfg.Symmetric,

@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/opensourceways/app-cla-server/signing/domain"
+	"github.com/opensourceways/app-cla-server/signing/domain/loginservice"
 	"github.com/opensourceways/app-cla-server/signing/domain/repository"
 	"github.com/opensourceways/app-cla-server/signing/domain/symmetricencryption"
 	"github.com/opensourceways/app-cla-server/signing/domain/userservice"
@@ -14,6 +15,7 @@ import (
 
 func NewUserService(
 	us userservice.UserService,
+	ls loginservice.LoginService,
 	repo repository.CorpSigning,
 	encrypt symmetricencryption.Encryption,
 	vcService vcservice.VCService,
@@ -21,6 +23,7 @@ func NewUserService(
 ) UserService {
 	return &userService{
 		us:        us,
+		ls:        ls,
 		repo:      repo,
 		encrypt:   encrypt,
 		vcService: verificationCodeService{vcService},
@@ -30,7 +33,6 @@ func NewUserService(
 
 type UserService interface {
 	ChangePassword(cmd *CmdToChangePassword) error
-	Logout(userId string)
 	Login(cmd *CmdToLogin) (dto UserLoginDTO, err error)
 	GenKeyForPasswordRetrieval(*CmdToGenKeyForPasswordRetrieval) (string, error)
 	ResetPassword(cmd *CmdToResetPassword) error
@@ -38,6 +40,7 @@ type UserService interface {
 
 type userService struct {
 	us        userservice.UserService
+	ls        loginservice.LoginService
 	repo      repository.CorpSigning
 	encrypt   symmetricencryption.Encryption
 	interval  time.Duration
@@ -113,19 +116,15 @@ func (s *userService) ResetPassword(cmd *CmdToResetPassword) error {
 	return s.us.ResetPassword(cmd.LinkId, e, cmd.NewOne)
 }
 
-func (s *userService) Logout(userId string) {
-	s.us.Logout(userId)
-}
-
 func (s *userService) Login(cmd *CmdToLogin) (dto UserLoginDTO, err error) {
 	defer cmd.clear()
 
 	var u domain.User
 
 	if cmd.Account != nil {
-		u, err = s.us.LoginByAccount(cmd.LinkId, cmd.Account, cmd.Password)
+		u, err = s.ls.LoginByAccount(cmd.LinkId, cmd.Account, cmd.Password)
 	} else {
-		u, err = s.us.LoginByEmail(cmd.LinkId, cmd.Email, cmd.Password)
+		u, err = s.ls.LoginByEmail(cmd.LinkId, cmd.Email, cmd.Password)
 	}
 
 	if err != nil {

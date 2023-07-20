@@ -26,9 +26,6 @@ type userDO struct {
 	Password       []byte             `bson:"password"      json:"-"`
 	CorpSigningId  string             `bson:"cs_id"         json:"cs_id"     required:"true"`
 	PasswordChaged bool               `bson:"changed"       json:"changed"`
-	FailedNum      int                `bson:"failed_num"    json:"failed_num"`
-	LoginTime      int64              `bson:"login_time"    json:"login_time"`
-	FrozenTime     int64              `bson:"frozen_time"   json:"frozen_time"`
 	Version        int                `bson:"version"       json:"-"`
 }
 
@@ -51,10 +48,6 @@ func (do *userDO) toUser(u *domain.User) (err error) {
 	u.CorpSigningId = do.CorpSigningId
 	u.PasswordChaged = do.PasswordChaged
 	u.Version = do.Version
-
-	u.FrozenTime = do.FrozenTime
-	u.LoginTime = do.LoginTime
-	u.FailedNum = do.FailedNum
 
 	return
 }

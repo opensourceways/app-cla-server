@@ -8,4 +8,7 @@ import (
 type IndividualSigning interface {
 	Add(*domain.IndividualSigning) error
 	Count(linkId string, email dp.EmailAddr) (int, error)
+
+	HasSignedLink(linkId string) (bool, error)
+	HasSignedCLA(*domain.CLAIndex) (bool, error)
 }

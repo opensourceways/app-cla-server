@@ -48,4 +48,7 @@ type CorpSigning interface {
 
 	SaveCorpPDF(*domain.CorpSigning, []byte) error
 	FindCorpPDF(string) ([]byte, error)
+
+	HasSignedLink(linkId string) (bool, error)
+	HasSignedCLA(*domain.CLAIndex, dp.CLAType) (bool, error)
 }

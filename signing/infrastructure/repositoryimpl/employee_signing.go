@@ -125,3 +125,28 @@ func (impl *corpSigning) FindEmployeesByEmail(linkId string, email dp.EmailAddr)
 
 	return r, nil
 }
+
+func (impl *corpSigning) hasSignedEmployeeCLA(index *domain.CLAIndex) (
+	bool, error,
+) {
+	filter := linkIdFilter(index.LinkId)
+
+	var dos []corpSigningDO
+
+	err := impl.dao.GetArrayItem(
+		filter, fieldEmployees,
+		bson.M{fieldCLAId: index.CLAId},
+		bson.M{childField(fieldEmployees, fieldCLAId): 1}, &dos,
+	)
+	if err != nil || len(dos) == 0 {
+		return false, err
+	}
+
+	for i := range dos {
+		if len(dos[i].Employees) > 0 {
+			return true, nil
+		}
+	}
+
+	return false, nil
+}

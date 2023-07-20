@@ -55,7 +55,7 @@ func (ctl *baseController) sendFailedResultAsResp(fr *failedApiResult, action st
 
 func (ctl *baseController) sendFailedResponse(statusCode int, errCode string, reason error, action string) {
 	if statusCode >= 500 {
-		logs.Error(fmt.Sprintf("Failed to %s, errCode: %s, err: %s", action, errCode, reason.Error()))
+		logs.Error("Failed to %s, errCode: %s, err: %s", action, errCode, reason.Error())
 
 		errCode = errSystemError
 		reason = fmt.Errorf("system error")

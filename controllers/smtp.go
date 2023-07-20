@@ -1,7 +1,6 @@
 package controllers
 
 import (
-	"github.com/beego/beego/v2/core/logs"
 	"github.com/opensourceways/app-cla-server/models"
 	"github.com/opensourceways/app-cla-server/signing/infrastructure/emailtmpl"
 	"github.com/opensourceways/app-cla-server/signing/infrastructure/smtpimpl"
@@ -52,8 +51,6 @@ func (ctl *SMTPController) Verify() {
 	msg.From = info.Email
 	msg.To = []string{info.Email}
 	msg.Subject = "CLA Email authorization verification code"
-
-	logs.Info("info = %#v", info)
 
 	if err = smtpimpl.SMTP().Send(info.Authorize, &msg); err != nil {
 		ctl.sendFailedResponse(400, errInvalidEmailAuthCode, err, action)

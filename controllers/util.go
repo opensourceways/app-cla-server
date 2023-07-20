@@ -27,6 +27,7 @@ func sendEmail(to []string, orgInfo *models.OrgInfo, subject string, builder ema
 	msg, err := builder.GenEmailMsg()
 	if err != nil {
 		logs.Error(err)
+
 		return
 	}
 	msg.From = orgInfo.OrgEmail

@@ -1,7 +1,5 @@
 package domain
 
-import "github.com/beego/beego/v2/core/logs"
-
 func NewLogin(lid string) Login {
 	return Login{Id: lid}
 }
@@ -16,8 +14,6 @@ func (l *Login) Fail() bool {
 	l.FailedNum++
 
 	if l.FailedNum >= config.MaxNumOfFailedLogin {
-		logs.Info("frozen")
-
 		l.Frozen = true
 
 		return true

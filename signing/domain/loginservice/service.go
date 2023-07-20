@@ -79,7 +79,6 @@ func (s *loginService) login(find func() (domain.User, error), p dp.Password, li
 	}
 
 	if !s.password.IsValid(p) {
-		logs.Info("login 1")
 		err = s.failToLogin(&lv)
 
 		return
@@ -90,8 +89,6 @@ func (s *loginService) login(find func() (domain.User, error), p dp.Password, li
 		if commonRepo.IsErrorResourceNotFound(err) {
 			err = s.failToLogin(&lv)
 		}
-
-		logs.Info("login 2")
 
 		return
 	}
@@ -107,8 +104,6 @@ func (s *loginService) login(find func() (domain.User, error), p dp.Password, li
 	}
 
 	err = s.failToLogin(&lv)
-
-	logs.Info("login 4")
 
 	return
 }

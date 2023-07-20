@@ -127,6 +127,7 @@ func (w *emailWorker) tryToSendEmail(action func() error) {
 		if err == nil {
 			break
 		}
+
 		logs.Error(err)
 
 		reset(i > 0) // timer must be expired when i > 0

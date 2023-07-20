@@ -1,7 +1,6 @@
 package smtpimpl
 
 import (
-	"github.com/beego/beego/v2/core/logs"
 	"github.com/opensourceways/app-cla-server/signing/domain"
 	"github.com/opensourceways/app-cla-server/signing/domain/dp"
 	"github.com/opensourceways/app-cla-server/signing/domain/emailservice"
@@ -46,8 +45,6 @@ func (impl *emailServiceImpl) SendEmail(msg *emailservice.EmailMessage) error {
 	if err != nil {
 		return err
 	}
-
-	logs.Info("smtp code = %#v, %v, %v, %v", c, c.Addr.EmailAddr(), c.Platform, c.Token)
 
 	err = smtp.Send(c.Token, msg)
 	c.Clear()

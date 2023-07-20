@@ -42,7 +42,7 @@ func gatherOptions(fs *flag.FlagSet, args ...string) options {
 	var o options
 
 	fs.StringVar(
-		&o.configFile, "config_file", "", "config file path.",
+		&o.configFile, "config-file", "", "config file path.",
 	)
 
 	fs.Parse(args)

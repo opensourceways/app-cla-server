@@ -61,12 +61,12 @@ func (s *employeeSigningService) Sign(cmd *CmdToSignEmployeeCLA) ([]EmployeeMana
 	}
 
 	// TODO critical case that a employee signs two corps. A lock will fix it.
-	v, err := s.repo.FindEmployeesByEmail(cs.Link.Id, cmd.Rep.EmailAddr)
-	if err != nil {
-		return nil, err
-	}
-	if len(v) > 0 {
+	_, err = s.repo.FindEmployeesByEmail(cs.Link.Id, cmd.Rep.EmailAddr)
+	if err == nil {
 		return nil, domain.NewNotFoundDomainError(domain.ErrorCodeEmployeeSigningReSigning)
+	}
+	if !commonRepo.IsErrorResourceNotFound(err) {
+		return nil, err
 	}
 
 	if err := s.repo.AddEmployee(&cs, &es); err != nil {

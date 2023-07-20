@@ -9,11 +9,10 @@ RUN cd /go/src/github.com/opensourceways/app-cla-server && GO111MODULE=on CGO_EN
 # copy binary config and utils
 FROM golang:latest
 RUN apt-get update && apt-get install -y python3 && apt-get install -y python3-pip && pip3 install PyPDF2==3.0.0 --break-system-packages && mkdir -p /opt/app/
-COPY ./start.sh /opt/app/start.sh
 COPY ./conf /opt/app/conf
-COPY ./deploy /opt/app/conf
+COPY ./deploy/app.conf /opt/app/conf/app.conf
 COPY ./util/merge_signature.py /opt/app/util/merge_signature.py
 COPY  --from=BUILDER /go/src/github.com/opensourceways/app-cla-server/cla-server /opt/app
 
 WORKDIR /opt/app/
-ENTRYPOINT ["/opt/app/start.sh"]
+ENTRYPOINT ["/opt/app/cla-server"]

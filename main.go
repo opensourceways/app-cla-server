@@ -2,6 +2,8 @@ package main
 
 import (
 	"context"
+	"errors"
+	"flag"
 	"os"
 	"time"
 
@@ -24,19 +26,46 @@ import (
 	"github.com/opensourceways/app-cla-server/worker"
 )
 
+type options struct {
+	configFile string
+}
+
+func (o *options) Validate() error {
+	if o.configFile == "" {
+		return errors.New("missing config file")
+	}
+
+	return nil
+}
+
+func gatherOptions(fs *flag.FlagSet, args ...string) options {
+	var o options
+
+	fs.StringVar(
+		&o.configFile, "config_file", "", "config file path.",
+	)
+
+	fs.Parse(args)
+	return o
+}
+
 func main() {
 	if beego.BConfig.RunMode == "dev" {
 		beego.BConfig.WebConfig.DirectoryIndex = true
 		beego.BConfig.WebConfig.StaticDir["/swagger"] = "swagger"
 	}
 
-	configFile, err := beego.AppConfig.String("appconf")
-	if err != nil {
-		logs.Error(err)
+	o := gatherOptions(
+		flag.NewFlagSet(os.Args[0], flag.ExitOnError),
+		os.Args[1:]...,
+	)
+	if err := o.Validate(); err != nil {
+		logs.Error("Invalid options, err:%s", err.Error())
+
 		return
 	}
 
-	cfg := loadConfig(configFile)
+	cfg := loadConfig(o.configFile)
 	if cfg == nil {
 		return
 	}

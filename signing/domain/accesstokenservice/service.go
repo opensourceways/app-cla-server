@@ -104,8 +104,6 @@ func (s *accessTokenService) ValidateAndRefresh(old domain.AccessTokenKey) (
 		return
 	}
 
-	newOne = old
-	/* TODO revert
 	newOne, err1 := s.Add(p)
 	if err1 == nil {
 		if err1 := s.repo.Delete(old.Id); err1 != nil {
@@ -114,7 +112,6 @@ func (s *accessTokenService) ValidateAndRefresh(old domain.AccessTokenKey) (
 	} else {
 		newOne = old
 	}
-	*/
 
 	return
 }

@@ -35,7 +35,7 @@ type CorpSigning interface {
 	SaveEmployee(*domain.CorpSigning, *domain.EmployeeSigning) error
 	FindEmployees(string) ([]domain.EmployeeSigning, error)
 	RemoveEmployee(*domain.CorpSigning, *domain.EmployeeSigning) error
-	FindEmployeesByEmail(linkId string, email dp.EmailAddr) ([]EmployeeSigningSummary, error)
+	FindEmployeesByEmail(linkId string, email dp.EmailAddr) (EmployeeSigningSummary, error)
 
 	AddAdmin(*domain.CorpSigning) error
 
@@ -48,4 +48,7 @@ type CorpSigning interface {
 
 	SaveCorpPDF(*domain.CorpSigning, []byte) error
 	FindCorpPDF(string) ([]byte, error)
+
+	HasSignedLink(linkId string) (bool, error)
+	HasSignedCLA(*domain.CLAIndex, dp.CLAType) (bool, error)
 }

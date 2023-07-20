@@ -47,11 +47,13 @@ const (
 
 	ErrorCodeAccessTokenInvalid = "access_token_invalid"
 
-	ErrorCodeCLAExists    = "cla_exists"
-	ErrorCodeCLANotExists = "cla_not_exists"
+	ErrorCodeCLAExists       = "cla_exists"
+	ErrorCodeCLANotExists    = "cla_not_exists"
+	ErrorCodeCLACanNotRemove = "cla_can_not_remove"
 
-	ErrorCodeLinkExists    = "link_exists"
-	ErrorCodeLinkNotExists = "link_not_exists"
+	ErrorCodeLinkExists       = "link_exists"
+	ErrorCodeLinkNotExists    = "link_not_exists"
+	ErrorCodeLinkCanNotRemove = "link_can_not_remove"
 )
 
 // domainError

@@ -11,10 +11,14 @@ import (
 func NewCLAService(
 	repo repository.Link,
 	cla claservice.CLAService,
+	cs repository.CorpSigning,
+	individual repository.IndividualSigning,
 ) *claService {
 	return &claService{
-		repo: repo,
-		cla:  cla,
+		repo:       repo,
+		cla:        cla,
+		cs:         cs,
+		individual: individual,
 	}
 }
 
@@ -26,8 +30,10 @@ type CLAService interface {
 }
 
 type claService struct {
-	repo repository.Link
-	cla  claservice.CLAService
+	repo       repository.Link
+	cla        claservice.CLAService
+	cs         repository.CorpSigning
+	individual repository.IndividualSigning
 }
 
 func (s *claService) Add(linkId string, cmd *CmdToAddCLA) error {
@@ -60,9 +66,52 @@ func (s *claService) Remove(cmd domain.CLAIndex) error {
 		return domain.NewDomainError(domain.ErrorCodeCLANotExists)
 	}
 
-	// TODO can't delete if it is being used
+	if err := s.checkIfCanRemove(&cmd, cla.Type); err != nil {
+		return err
+	}
 
 	return s.repo.RemoveCLA(&link, cla)
+}
+
+func (s *claService) checkIfCanRemove(cmd *domain.CLAIndex, t dp.CLAType) error {
+	var v bool
+	var err error
+
+	if dp.IsCLATypeIndividual(t) {
+		v, err = s.checkIfCanRemoveIndividualCLA(cmd)
+	} else {
+		v, err = s.checkIfCanRemoveCorpCLA(cmd)
+	}
+
+	if err != nil {
+		return err
+	}
+
+	if !v {
+		return domain.NewDomainError(domain.ErrorCodeCLACanNotRemove)
+	}
+
+	return nil
+}
+
+func (s *claService) checkIfCanRemoveIndividualCLA(cmd *domain.CLAIndex) (bool, error) {
+	v, err := s.individual.HasSignedCLA(cmd)
+	if err != nil {
+		return v, err
+	}
+	if v {
+		return false, nil
+	}
+
+	v, err = s.cs.HasSignedCLA(cmd, dp.CLATypeIndividual)
+
+	return !v, err
+}
+
+func (s *claService) checkIfCanRemoveCorpCLA(cmd *domain.CLAIndex) (bool, error) {
+	v, err := s.cs.HasSignedCLA(cmd, dp.CLATypeCorp)
+
+	return !v, err
 }
 
 func (s *claService) List(linkId string) (individuals []CLADTO, corps []CLADTO, err error) {

@@ -78,9 +78,13 @@ func (s *individualSigningService) Check(cmd *CmdToCheckSinging) (bool, error) {
 	}
 
 	v, err := s.corpRepo.FindEmployeesByEmail(cmd.LinkId, cmd.EmailAddr)
-	if err != nil || len(v) == 0 {
+	if err != nil {
+		if commonRepo.IsErrorResourceNotFound(err) {
+			return false, nil
+		}
+
 		return false, err
 	}
 
-	return v[0].Enabled, nil
+	return v.Enabled, nil
 }

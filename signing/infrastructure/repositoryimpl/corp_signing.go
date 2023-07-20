@@ -5,6 +5,7 @@ import (
 
 	commonRepo "github.com/opensourceways/app-cla-server/common/domain/repository"
 	"github.com/opensourceways/app-cla-server/signing/domain"
+	"github.com/opensourceways/app-cla-server/signing/domain/dp"
 	"github.com/opensourceways/app-cla-server/signing/domain/repository"
 )
 
@@ -143,4 +144,46 @@ func (impl *corpSigning) FindAll(linkId string) ([]repository.CorpSigningSummary
 	}
 
 	return v, nil
+}
+
+func (impl *corpSigning) HasSignedLink(linkId string) (bool, error) {
+	filter := linkIdFilter(linkId)
+
+	var do corpSigningDO
+
+	if err := impl.dao.GetDoc(filter, bson.M{fieldLinkId: 1}, &do); err != nil {
+		if impl.dao.IsDocNotExists(err) {
+			return false, nil
+		}
+
+		return false, err
+	}
+
+	return true, nil
+
+}
+
+func (impl *corpSigning) HasSignedCLA(index *domain.CLAIndex, t dp.CLAType) (bool, error) {
+	if dp.IsCLATypeIndividual(t) {
+		return impl.hasSignedEmployeeCLA(index)
+	}
+
+	return impl.hasSignedCorpCLA(index)
+}
+
+func (impl *corpSigning) hasSignedCorpCLA(index *domain.CLAIndex) (bool, error) {
+	filter := linkIdFilter(index.LinkId)
+	filter[fieldCLAId] = index.CLAId
+
+	var do corpSigningDO
+
+	if err := impl.dao.GetDoc(filter, bson.M{fieldLinkId: 1}, &do); err != nil {
+		if impl.dao.IsDocNotExists(err) {
+			return false, nil
+		}
+
+		return false, err
+	}
+
+	return true, nil
 }

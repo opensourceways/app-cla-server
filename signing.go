@@ -98,12 +98,14 @@ func initSigning(cfg *config.Config) error {
 		),
 	)
 
+	individual := repositoryimpl.NewIndividualSigning(
+		mongodb.DAO(cfg.Mongodb.Collections.IndividualSigning),
+	)
+
 	models.RegisterIndividualSigningAdapter(
 		adapter.NewIndividualSigningAdapter(app.NewIndividualSigningService(
 			vcService,
-			repositoryimpl.NewIndividualSigning(
-				mongodb.DAO(cfg.Mongodb.Collections.IndividualSigning),
-			),
+			individual,
 			repo,
 			interval,
 		)),
@@ -142,7 +144,7 @@ func initSigning(cfg *config.Config) error {
 	cla := claservice.NewCLAService(linkRepo, localclaimpl.NewLocalCLAImpl(&cfg.LocalCLA))
 
 	claAapter := adapter.NewCLAAdapter(
-		app.NewCLAService(linkRepo, cla),
+		app.NewCLAService(linkRepo, cla, repo, individual),
 		cfg.Domain.MaxSizeOfCLAContent,
 		cfg.Domain.FileTypeOfCLAContent,
 	)
@@ -151,7 +153,7 @@ func initSigning(cfg *config.Config) error {
 
 	models.RegisterLinkAdapter(
 		adapter.NewLinkAdapter(
-			app.NewLinkService(linkRepo, cla, echelper),
+			app.NewLinkService(linkRepo, cla, repo, individual, echelper),
 			claAapter,
 		),
 	)

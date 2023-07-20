@@ -95,33 +95,50 @@ func (impl *corpSigning) FindEmployees(csId string) ([]domain.EmployeeSigning, e
 }
 
 func (impl *corpSigning) FindEmployeesByEmail(linkId string, email dp.EmailAddr) (
-	[]repository.EmployeeSigningSummary, error,
+	r repository.EmployeeSigningSummary, err error,
 ) {
 	filter := linkIdFilter(linkId)
-	filter[childField(fieldCorp, fieldDomains)] = bson.M{mongodbCmdIn: bson.A{email.Domain()}}
+	filter[fieldEmployees] = bson.M{mongodbCmdElemMatch: bson.M{fieldEmail: email.EmailAddr()}}
 
-	var dos []corpSigningDO
+	var do corpSigningDO
 
-	err := impl.dao.GetArrayItem(
-		filter, fieldEmployees,
-		bson.M{fieldEmail: email.EmailAddr()},
-		bson.M{childField(fieldEmployees, fieldEnabled): 1}, &dos,
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	r := make([]repository.EmployeeSigningSummary, 0, len(dos))
-
-	for i := range dos {
-		if len(dos[i].Employees) == 0 {
-			continue
+	if err = impl.dao.GetDoc(filter, bson.M{fieldEmployees: 1}, &do); err != nil {
+		if impl.dao.IsDocNotExists(err) {
+			err = commonRepo.NewErrorResourceNotFound(err)
 		}
 
-		r = append(r, repository.EmployeeSigningSummary{
-			Enabled: dos[i].Employees[0].Enabled,
-		})
+		return
 	}
 
-	return r, nil
+	v := email.EmailAddr()
+	items := do.Employees
+
+	for j := range items {
+		if items[j].Email == v {
+			r.Enabled = items[j].Enabled
+
+			break
+		}
+	}
+
+	return
+}
+
+func (impl *corpSigning) hasSignedEmployeeCLA(index *domain.CLAIndex) (
+	bool, error,
+) {
+	filter := linkIdFilter(index.LinkId)
+	filter[fieldEmployees] = bson.M{mongodbCmdElemMatch: bson.M{fieldCLAId: index.CLAId}}
+
+	var do corpSigningDO
+
+	if err := impl.dao.GetDoc(filter, bson.M{fieldLinkId: 1}, &do); err != nil {
+		if impl.dao.IsDocNotExists(err) {
+			return false, nil
+		}
+
+		return false, err
+	}
+
+	return true, nil
 }

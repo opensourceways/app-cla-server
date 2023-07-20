@@ -10,11 +10,15 @@ import (
 func NewLinkService(
 	repo repository.Link,
 	cla claservice.CLAService,
+	cs repository.CorpSigning,
+	individual repository.IndividualSigning,
 	emailCredential repository.EmailCredential,
 ) *linkService {
 	return &linkService{
 		repo:            repo,
 		cla:             cla,
+		cs:              cs,
+		individual:      individual,
 		emailCredential: emailCredential,
 	}
 }
@@ -31,6 +35,8 @@ type LinkService interface {
 type linkService struct {
 	repo            repository.Link
 	cla             claservice.CLAService
+	cs              repository.CorpSigning
+	individual      repository.IndividualSigning
 	emailCredential repository.EmailCredential
 }
 
@@ -50,7 +56,14 @@ func (s *linkService) Add(cmd *CmdToAddLink) error {
 }
 
 func (s *linkService) Remove(linkId string) error {
-	// TODO can't remove if it is being signed
+	b, err := s.checkIfCanRemove(linkId)
+	if err != nil {
+		return err
+	}
+	if !b {
+		return domain.NewDomainError(domain.ErrorCodeLinkCanNotRemove)
+	}
+
 	v, err := s.repo.Find(linkId)
 	if err != nil {
 		if commonRepo.IsErrorResourceNotFound(err) {
@@ -61,6 +74,20 @@ func (s *linkService) Remove(linkId string) error {
 	}
 
 	return s.repo.Remove(&v)
+}
+
+func (s *linkService) checkIfCanRemove(linkId string) (bool, error) {
+	v, err := s.individual.HasSignedLink(linkId)
+	if err != nil {
+		return v, err
+	}
+	if v {
+		return false, nil
+	}
+
+	v, err = s.cs.HasSignedLink(linkId)
+
+	return !v, err
 }
 
 func (s *linkService) List(cmd *CmdToListLink) ([]repository.LinkSummary, error) {

@@ -26,6 +26,14 @@ func (l *Login) Fail() bool {
 	return false
 }
 
+func (l *Login) RetryNum() int {
+	if l.Frozen {
+		return 0
+	}
+
+	return config.MaxNumOfFailedLogin - l.FailedNum
+}
+
 func (l *Login) NoFailure() bool {
 	return l.FailedNum == 0
 }

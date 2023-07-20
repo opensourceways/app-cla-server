@@ -120,12 +120,15 @@ func (s *userService) Login(cmd *CmdToLogin) (dto UserLoginDTO, err error) {
 	defer cmd.clear()
 
 	var u domain.User
+	var l domain.Login
 
 	if cmd.Account != nil {
-		u, err = s.ls.LoginByAccount(cmd.LinkId, cmd.Account, cmd.Password)
+		u, l, err = s.ls.LoginByAccount(cmd.LinkId, cmd.Account, cmd.Password)
 	} else {
-		u, err = s.ls.LoginByEmail(cmd.LinkId, cmd.Email, cmd.Password)
+		u, l, err = s.ls.LoginByEmail(cmd.LinkId, cmd.Email, cmd.Password)
 	}
+
+	dto.RetryNum = l.RetryNum()
 
 	if err != nil {
 		return

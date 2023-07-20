@@ -29,8 +29,8 @@ func NewLoginService(
 }
 
 type LoginService interface {
-	LoginByAccount(linkId string, a dp.Account, p dp.Password) (domain.User, error)
-	LoginByEmail(linkId string, e dp.EmailAddr, p dp.Password) (u domain.User, err error)
+	LoginByAccount(linkId string, a dp.Account, p dp.Password) (domain.User, domain.Login, error)
+	LoginByEmail(linkId string, e dp.EmailAddr, p dp.Password) (domain.User, domain.Login, error)
 }
 
 type loginService struct {
@@ -40,7 +40,7 @@ type loginService struct {
 	password userpassword.UserPassword
 }
 
-func (s *loginService) LoginByAccount(linkId string, a dp.Account, p dp.Password) (domain.User, error) {
+func (s *loginService) LoginByAccount(linkId string, a dp.Account, p dp.Password) (domain.User, domain.Login, error) {
 	return s.login(
 		func() (domain.User, error) {
 			return s.user.FindByAccount(linkId, a)
@@ -49,7 +49,7 @@ func (s *loginService) LoginByAccount(linkId string, a dp.Account, p dp.Password
 	)
 }
 
-func (s *loginService) LoginByEmail(linkId string, e dp.EmailAddr, p dp.Password) (u domain.User, err error) {
+func (s *loginService) LoginByEmail(linkId string, e dp.EmailAddr, p dp.Password) (domain.User, domain.Login, error) {
 	return s.login(
 		func() (domain.User, error) {
 			return s.user.FindByEmail(linkId, e)
@@ -59,9 +59,9 @@ func (s *loginService) LoginByEmail(linkId string, e dp.EmailAddr, p dp.Password
 }
 
 func (s *loginService) login(find func() (domain.User, error), p dp.Password, lid string) (
-	u domain.User, err error,
+	u domain.User, lv domain.Login, err error,
 ) {
-	lv, err := s.repo.Find(lid)
+	lv, err = s.repo.Find(lid)
 	if err != nil {
 		if !commonRepo.IsErrorResourceNotFound(err) {
 			return

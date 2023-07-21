@@ -62,8 +62,9 @@ func (adapter *claAdatper) toCLADetail(v []app.CLADTO) []models.CLADetail {
 	for i := range v {
 		item := &v[i]
 
-		r[i].Language = item.Language
 		r[i].URL = item.URL
+		r[i].CLAId = item.Id
+		r[i].Language = item.Language
 	}
 
 	return r

@@ -22,7 +22,6 @@ import (
 	"os/signal"
 	"sync"
 	"syscall"
-	"time"
 
 	"github.com/beego/beego/v2/core/logs"
 )
@@ -89,8 +88,6 @@ func wait(cancel func()) {
 	cancel()
 }
 
-var gracePeriod = 1 * time.Minute
-
 // WaitForGracefulShutdown waits until all registered servers and workers
 // have had time to gracefully shut down, or times out. This function is
 // blocking.
@@ -98,17 +95,10 @@ func WaitForGracefulShutdown() {
 	wait(func() {
 		logs.Info("Interrupt received.")
 	})
-	finished := make(chan struct{})
-	go func() {
-		single.wg.Wait()
-		close(finished)
-	}()
-	select {
-	case <-finished:
-		logs.Info("All workers gracefully terminated, exiting.")
-	case <-time.After(gracePeriod):
-		logs.Warn("Timed out waiting for workers to gracefully terminate, exiting.")
-	}
+
+	single.wg.Wait()
+
+	logs.Info("All workers gracefully terminated, exiting.")
 }
 
 // OnInterrupt ensures that work is done when an interrupt is fired

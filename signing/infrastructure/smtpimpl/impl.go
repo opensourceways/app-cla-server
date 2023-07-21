@@ -17,7 +17,7 @@ func (cfg *Config) SetDefault() {
 	if cfg.Host == "" || cfg.Port <= 0 || cfg.Platform == "" {
 		cfg.Port = 465
 		cfg.Host = "smtp.exmail.qq.com"
-		cfg.Platform = "txmail"
+		cfg.Platform = "smtp"
 	}
 }
 

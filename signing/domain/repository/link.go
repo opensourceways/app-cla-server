@@ -1,10 +1,14 @@
 package repository
 
-import "github.com/opensourceways/app-cla-server/signing/domain"
+import (
+	"github.com/opensourceways/app-cla-server/signing/domain"
+	"github.com/opensourceways/app-cla-server/signing/domain/dp"
+)
 
 type FindLinksOpt struct {
-	Platform string
+	Type     dp.LinkType
 	Orgs     []string
+	Platform string
 }
 
 type LinkSummary struct {

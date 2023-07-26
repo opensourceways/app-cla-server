@@ -4,6 +4,7 @@ import (
 	commonRepo "github.com/opensourceways/app-cla-server/common/domain/repository"
 	"github.com/opensourceways/app-cla-server/signing/domain"
 	"github.com/opensourceways/app-cla-server/signing/domain/claservice"
+	"github.com/opensourceways/app-cla-server/signing/domain/dp"
 	"github.com/opensourceways/app-cla-server/signing/domain/repository"
 )
 
@@ -91,7 +92,9 @@ func (s *linkService) checkIfCanRemove(linkId string) (bool, error) {
 }
 
 func (s *linkService) List(cmd *CmdToListLink) ([]repository.LinkSummary, error) {
-	return s.repo.FindAll(cmd)
+	opt := cmd.toOpt(dp.LinkTypeCLA)
+
+	return s.repo.FindAll(&opt)
 }
 
 func (s *linkService) FindCLAs(cmd *CmdToFindCLAs) ([]CLADetailDTO, error) {

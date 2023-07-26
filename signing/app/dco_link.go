@@ -4,6 +4,7 @@ import (
 	commonRepo "github.com/opensourceways/app-cla-server/common/domain/repository"
 	"github.com/opensourceways/app-cla-server/signing/domain"
 	"github.com/opensourceways/app-cla-server/signing/domain/claservice"
+	"github.com/opensourceways/app-cla-server/signing/domain/dp"
 	"github.com/opensourceways/app-cla-server/signing/domain/repository"
 )
 
@@ -24,7 +25,7 @@ func NewDCOLinkService(
 type DCOLinkService interface {
 	Add(cmd *CmdToAddDCOLink) error
 	Remove(linkId string) error
-	List(cmd *CmdToListDCOLink) ([]repository.LinkSummary, error)
+	List(cmd *CmdToListLink) ([]repository.LinkSummary, error)
 	Find(linkId string) (dto LinkDTO, err error)
 	FindDCOs(string) ([]CLADetailDTO, error)
 	FindDCO(cmd *domain.CLAIndex) (dto LinkCLADTO, err error)
@@ -79,8 +80,10 @@ func (s *dcoLinkService) checkIfCanRemove(linkId string) (bool, error) {
 	return !v, err
 }
 
-func (s *dcoLinkService) List(cmd *CmdToListDCOLink) ([]repository.LinkSummary, error) {
-	return s.repo.FindAll(cmd)
+func (s *dcoLinkService) List(cmd *CmdToListLink) ([]repository.LinkSummary, error) {
+	opt := cmd.toOpt(dp.LinkTypeDCO)
+
+	return s.repo.FindAll(&opt)
 }
 
 func (s *dcoLinkService) FindDCOs(linkId string) ([]CLADetailDTO, error) {

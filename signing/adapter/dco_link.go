@@ -94,7 +94,7 @@ func (adapter *dcoLinkAdapter) ListDCOs(linkId string) ([]models.CLADetail, mode
 
 // List
 func (adapter *dcoLinkAdapter) List(platform string, orgs []string) ([]models.LinkInfo, models.IModelError) {
-	v, err := adapter.s.List(&app.CmdToListDCOLink{
+	v, err := adapter.s.List(&app.CmdToListLink{
 		Platform: platform,
 		Orgs:     orgs,
 	})

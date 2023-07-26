@@ -5,7 +5,6 @@ import (
 
 	"github.com/opensourceways/app-cla-server/signing/domain"
 	"github.com/opensourceways/app-cla-server/signing/domain/dp"
-	"github.com/opensourceways/app-cla-server/signing/domain/repository"
 )
 
 type CmdToAddDCOLink struct {
@@ -23,11 +22,10 @@ func (cmd *CmdToAddDCOLink) toDCOLink() domain.Link {
 	}
 
 	return domain.Link{
+		Type:      dp.LinkTypeDCO,
 		Org:       cmd.Org,
 		CLAs:      v,
 		CLANum:    len(cmd.DCOs),
 		Submitter: cmd.Submitter,
 	}
 }
-
-type CmdToListDCOLink = repository.FindLinksOpt

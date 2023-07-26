@@ -27,6 +27,7 @@ type Link struct {
 	Id        string
 	Org       OrgInfo
 	Email     EmailInfo
+	Type      dp.LinkType
 	CLAs      []CLA
 	Submitter string
 	CLANum    int

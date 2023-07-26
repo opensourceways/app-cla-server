@@ -9,23 +9,23 @@ import (
 	"github.com/opensourceways/app-cla-server/signing/domain/dp"
 )
 
-func NewLinkAdapter(
-	s app.LinkService,
-	cla *claAdatper,
-) *linkAdatper {
-	return &linkAdatper{
-		cla: cla,
+func NewDCOLinkAdapter(
+	s app.DCOLinkService,
+	dco *dcoAdapter,
+) *dcoLinkAdapter {
+	return &dcoLinkAdapter{
+		dco: dco,
 		s:   s,
 	}
 }
 
-type linkAdatper struct {
-	cla *claAdatper
+type dcoLinkAdapter struct {
+	dco *dcoAdapter
 
-	s app.LinkService
+	s app.DCOLinkService
 }
 
-func (adapter *linkAdatper) GetLink(linkId string) (
+func (adapter *dcoLinkAdapter) GetLink(linkId string) (
 	org models.OrgInfo, merr models.IModelError,
 ) {
 	v, err := adapter.s.Find(linkId)
@@ -44,11 +44,11 @@ func (adapter *linkAdatper) GetLink(linkId string) (
 	return
 }
 
-// GetLinkCLA
-func (adapter *linkAdatper) GetLinkCLA(linkId, claId string) (
+// GetDCOLinkDCO
+func (adapter *dcoLinkAdapter) GetDCO(linkId, claId string) (
 	org models.OrgInfo, cla models.CLAInfo, merr models.IModelError,
 ) {
-	v, err := adapter.s.FindLinkCLA(&domain.CLAIndex{
+	v, err := adapter.s.FindDCO(&domain.CLAIndex{
 		LinkId: linkId,
 		CLAId:  claId,
 	})
@@ -72,17 +72,9 @@ func (adapter *linkAdatper) GetLinkCLA(linkId, claId string) (
 	return
 }
 
-// ListCLAs
-func (adapter *linkAdatper) ListCLAs(linkId, applyTo string) ([]models.CLADetail, models.IModelError) {
-	t, err := dp.NewCLAType(applyTo)
-	if err != nil {
-		return nil, toModelError(err)
-	}
-
-	v, err := adapter.s.FindCLAs(&app.CmdToFindCLAs{
-		LinkId: linkId,
-		Type:   t,
-	})
+// ListDCOs
+func (adapter *dcoLinkAdapter) ListDCOs(linkId string) ([]models.CLADetail, models.IModelError) {
+	v, err := adapter.s.FindDCOs(linkId)
 	if err != nil {
 		return nil, toModelError(err)
 	}
@@ -100,26 +92,9 @@ func (adapter *linkAdatper) ListCLAs(linkId, applyTo string) ([]models.CLADetail
 	return r, nil
 }
 
-func toFields(fields []domain.Field) []models.CLAField {
-	r := make([]models.CLAField, len(fields))
-
-	for i := range fields {
-		item := fields[i]
-		r[i] = models.CLAField{
-			ID:          item.Id,
-			Type:        item.Type.CLAFieldType(),
-			Title:       item.Title,
-			Required:    item.Required,
-			Description: item.Desc,
-		}
-	}
-
-	return r
-}
-
 // List
-func (adapter *linkAdatper) List(platform string, orgs []string) ([]models.LinkInfo, models.IModelError) {
-	v, err := adapter.s.List(&app.CmdToListLink{
+func (adapter *dcoLinkAdapter) List(platform string, orgs []string) ([]models.LinkInfo, models.IModelError) {
+	v, err := adapter.s.List(&app.CmdToListDCOLink{
 		Platform: platform,
 		Orgs:     orgs,
 	})
@@ -148,7 +123,7 @@ func (adapter *linkAdatper) List(platform string, orgs []string) ([]models.LinkI
 }
 
 // Remove
-func (adapter *linkAdatper) Remove(linkId string) models.IModelError {
+func (adapter *dcoLinkAdapter) Remove(linkId string) models.IModelError {
 	if err := adapter.s.Remove(linkId); err != nil {
 		return toModelError(err)
 	}
@@ -157,7 +132,7 @@ func (adapter *linkAdatper) Remove(linkId string) models.IModelError {
 }
 
 // Add
-func (adapter *linkAdatper) Add(submitter string, opt *models.LinkCreateOption) models.IModelError {
+func (adapter *dcoLinkAdapter) Add(submitter string, opt *models.DCOLinkCreateOption) models.IModelError {
 	cmd, err := adapter.cmdToAddLink(submitter, opt)
 	if err != nil {
 		return errBadRequestParameter(err)
@@ -170,40 +145,20 @@ func (adapter *linkAdatper) Add(submitter string, opt *models.LinkCreateOption) 
 	return nil
 }
 
-func (adapter *linkAdatper) cmdToAddLink(submitter string, opt *models.LinkCreateOption) (
-	cmd app.CmdToAddLink, err error,
+func (adapter *dcoLinkAdapter) cmdToAddLink(submitter string, opt *models.DCOLinkCreateOption) (
+	cmd app.CmdToAddDCOLink, err error,
 ) {
-	if (opt.IndividualCLA == nil) && (opt.CorpCLA == nil) {
-		err = errors.New("no cla instance")
+	if opt.DCO == nil {
+		err = errors.New("no dco instance")
 
 		return
 	}
 
-	if opt.IndividualCLA != nil {
-		opt.IndividualCLA.Type = models.ApplyToIndividual
-
-		v, err1 := adapter.cla.cmdToAddCLA(opt.IndividualCLA)
-		if err1 != nil {
-			err = err1
-
-			return
-		}
-
-		cmd.CLAs = append(cmd.CLAs, v)
+	v, err := adapter.dco.cmdToAddDCO(opt.DCO)
+	if err != nil {
+		return
 	}
-
-	if opt.CorpCLA != nil {
-		opt.CorpCLA.Type = models.ApplyToCorporation
-
-		v, err1 := adapter.cla.cmdToAddCLA(opt.CorpCLA)
-		if err1 != nil {
-			err = err1
-
-			return
-		}
-
-		cmd.CLAs = append(cmd.CLAs, v)
-	}
+	cmd.DCOs = append(cmd.DCOs, v)
 
 	if cmd.Email, err = dp.NewEmailAddr(opt.OrgEmail); err != nil {
 		return

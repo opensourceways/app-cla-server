@@ -2,9 +2,11 @@ package models
 
 var (
 	claAdapterInstance               claAdapter
+	dcoAdapterInstance               dcoAdapter
 	linkAdapterInstance              linkAdapter
 	userAdapterInstance              userAdapter
 	smtpAdapterInstance              smtpAdapter
+	dcoLinkAdapterInstance           dcoLinkAdapter
 	corpPDFAdapterInstance           corpPDFAdapter
 	corpAdminAdatperInstance         corpAdminAdatper
 	accessTokenAdapterInstance       accessTokenAdapter
@@ -150,4 +152,30 @@ type linkAdapter interface {
 
 func RegisterLinkAdapter(a linkAdapter) {
 	linkAdapterInstance = a
+}
+
+// dcoAdapter
+type dcoAdapter interface {
+	Add(linkId string, opt *DCOCreateOpt) IModelError
+	Remove(linkId, dcoId string) IModelError
+	DCOLocalFilePath(linkId, dcoId string) string
+	List(linkId string) ([]CLADetail, IModelError)
+}
+
+func RegisterDCOAdapter(a dcoAdapter) {
+	dcoAdapterInstance = a
+}
+
+// dcoLinkAdapter
+type dcoLinkAdapter interface {
+	Add(submitter string, opt *DCOLinkCreateOption) IModelError
+	Remove(linkId string) IModelError
+	List(platform string, orgs []string) ([]LinkInfo, IModelError)
+	GetLink(linkId string) (org OrgInfo, merr IModelError)
+	GetDCO(linkId, dcoId string) (OrgInfo, CLAInfo, IModelError)
+	ListDCOs(linkId string) ([]CLADetail, IModelError)
+}
+
+func RegisterDCOLinkAdapter(a dcoLinkAdapter) {
+	dcoLinkAdapterInstance = a
 }

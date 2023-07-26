@@ -25,6 +25,17 @@ func init() {
 				&controllers.LinkController{},
 			),
 		),
+
+		beego.NSNamespace("/dco",
+			beego.NSInclude(
+				&controllers.DCOController{},
+			),
+		),
+		beego.NSNamespace("/dco-link",
+			beego.NSInclude(
+				&controllers.DCOLinkController{},
+			),
+		),
 		beego.NSNamespace("/individual-signing",
 			beego.NSInclude(
 				&controllers.IndividualSigningController{},

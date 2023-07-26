@@ -60,6 +60,50 @@ func GetLink(linkId string) (OrgInfo, IModelError) {
 	return linkAdapterInstance.GetLink(linkId)
 }
 
+// dco
+
+func AddDCOInstance(linkId string, opt *DCOCreateOpt) IModelError {
+	return dcoAdapterInstance.Add(linkId, opt)
+}
+
+func DCOFile(linkId, dcoId string) string {
+	return dcoAdapterInstance.DCOLocalFilePath(linkId, dcoId)
+}
+
+func ListDCOInstances(linkId string) ([]CLADetail, IModelError) {
+	return dcoAdapterInstance.List(linkId)
+}
+
+func RemoveDCOInstance(linkId, dcoId string) IModelError {
+	return dcoAdapterInstance.Remove(linkId, dcoId)
+}
+
+// link
+
+func AddDCOLink(submitter string, opt *DCOLinkCreateOption) IModelError {
+	return dcoLinkAdapterInstance.Add(submitter, opt)
+}
+
+func RemoveDCOLink(linkId string) IModelError {
+	return dcoLinkAdapterInstance.Remove(linkId)
+}
+
+func ListDCOLink(platform string, orgs []string) ([]LinkInfo, IModelError) {
+	return dcoLinkAdapterInstance.List(platform, orgs)
+}
+
+func GetLinkDCO(linkId, dcoId string) (OrgInfo, CLAInfo, IModelError) {
+	return dcoLinkAdapterInstance.GetDCO(linkId, dcoId)
+}
+
+func ListDCOs(linkId string) ([]CLADetail, IModelError) {
+	return dcoLinkAdapterInstance.ListDCOs(linkId)
+}
+
+func GetDCOLink(linkId string) (OrgInfo, IModelError) {
+	return dcoLinkAdapterInstance.GetLink(linkId)
+}
+
 // corp signing
 
 func VCOfCorpSigning(linkId, email string) (string, IModelError) {

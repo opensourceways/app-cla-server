@@ -733,6 +733,210 @@ paths:
             community'
         "500":
           description: 'system_error:               system error'
+  /dco-link/:
+    get:
+      tags:
+      - dco-link
+      description: |-
+        list all links
+        <br>
+      operationId: DCOLinkController.List
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ""
+          schema:
+            $ref: '#/definitions/models.LinkInfo'
+        "401":
+          description: 'missing_token:              token is missing'
+        "402":
+          description: 'unknown_token:              token is unknown'
+        "403":
+          description: 'expired_token:              token is expired'
+        "404":
+          description: 'unauthorized_token:         the permission of token is unmatched'
+        "500":
+          description: 'system_error:               system error'
+    post:
+      tags:
+      - dco-link
+      description: |-
+        create a link(dco application)
+        <br>
+      operationId: DCOLinkController.Create
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      parameters:
+      - in: body
+        name: body
+        description: body for creating link
+        required: true
+        schema:
+          $ref: '#/definitions/models.DCOLinkCreateOption'
+      responses:
+        "201":
+          description: ""
+          schema:
+            $ref: '#/definitions/controllers.respData'
+  /dco-link/{link_id}:
+    delete:
+      tags:
+      - dco-link
+      description: |-
+        delete link
+        <br>
+      operationId: DCOLinkController.Delete
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      parameters:
+      - in: path
+        name: link_id
+        description: link id
+        required: true
+        type: string
+      responses:
+        "204":
+          description: ""
+          schema:
+            $ref: '#/definitions/controllers.respData'
+  /dco-link/{link_id}/dcos:
+    get:
+      tags:
+      - dco-link
+      description: |-
+        get signing page info
+        <br>
+      operationId: DCOLinkController.GetDCOForSigning
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      parameters:
+      - in: path
+        name: link_id
+        description: link id
+        required: true
+        type: string
+      - in: path
+        name: apply_to
+        description: apply to
+        required: true
+        type: string
+      responses:
+        "200":
+          description: ""
+          schema:
+            $ref: '#/definitions/models.CLADetail'
+        util.ErrNoCLABindingDoc:
+          description: '"org has not been bound any clas"'
+        util.ErrNotReadyToSign:
+          description: '"the corp signing is not ready"'
+  /dco/{link_id}:
+    get:
+      tags:
+      - dco
+      description: |-
+        list dcos of link
+        <br>
+      operationId: DCOController.List
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      parameters:
+      - in: path
+        name: link_id
+        description: link id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: ""
+          schema:
+            $ref: '#/definitions/models.CLADetail'
+    post:
+      tags:
+      - dco
+      description: |-
+        add dco
+        <br>
+      operationId: DCOController.Add
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      parameters:
+      - in: body
+        name: body
+        description: body for adding dco
+        required: true
+        schema:
+          $ref: '#/definitions/models.DCOCreateOpt'
+      responses:
+        "201":
+          description: ""
+          schema:
+            $ref: '#/definitions/controllers.respData'
+  /dco/{link_id}/{id}:
+    get:
+      tags:
+      - dco
+      description: |-
+        get dco pdf
+        <br>
+      operationId: DCOController.DownloadPDF
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      parameters:
+      - in: path
+        name: link_id
+        description: link id
+        required: true
+        type: string
+      - in: path
+        name: id
+        description: dco id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: ""
+    delete:
+      tags:
+      - dco
+      description: |-
+        delete dco
+        <br>
+      operationId: DCOController.Delete
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      parameters:
+      - in: path
+        name: link_id
+        description: link id
+        required: true
+        type: string
+      - in: path
+        name: id
+        description: dco id
+        required: true
+        type: string
+      responses:
+        "204":
+          description: ""
+          schema:
+            $ref: '#/definitions/controllers.respData'
   /employee-manager/:
     get:
       tags:
@@ -1140,7 +1344,7 @@ paths:
       description: |-
         create a link(cla application)
         <br>
-      operationId: LinkController.Link
+      operationId: LinkController.Create
       consumes:
       - application/json
       produces:
@@ -1573,6 +1777,34 @@ definitions:
         type: string
       pdf_uploaded:
         type: boolean
+  models.DCOCreateOpt:
+    title: DCOCreateOpt
+    type: object
+    properties:
+      fields:
+        type: array
+        items:
+          $ref: '#/definitions/models.CLAField'
+      language:
+        type: string
+      url:
+        type: string
+  models.DCOLinkCreateOption:
+    title: DCOLinkCreateOption
+    type: object
+    properties:
+      dco:
+        $ref: '#/definitions/models.DCOCreateOpt'
+      org_alias:
+        type: string
+      org_email:
+        type: string
+      org_id:
+        type: string
+      platform:
+        type: string
+      repo_id:
+        type: string
   models.EmailAuthorization:
     title: EmailAuthorization
     type: object

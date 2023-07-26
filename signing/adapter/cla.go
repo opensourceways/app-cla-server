@@ -51,12 +51,12 @@ func (adapter *claAdatper) List(linkId string) (models.CLAOfLink, models.IModelE
 	}
 
 	return models.CLAOfLink{
-		IndividualCLAs: adapter.toCLADetail(individuals),
-		CorpCLAs:       adapter.toCLADetail(corps),
+		IndividualCLAs: toCLADetail(individuals),
+		CorpCLAs:       toCLADetail(corps),
 	}, nil
 }
 
-func (adapter *claAdatper) toCLADetail(v []app.CLADTO) []models.CLADetail {
+func toCLADetail(v []app.CLADTO) []models.CLADetail {
 	r := make([]models.CLADetail, len(v))
 
 	for i := range v {
@@ -114,12 +114,12 @@ func (adapter *claAdatper) cmdToAddCLA(opt *models.CLACreateOpt) (
 		return
 	}
 
-	cmd.Fields, err = adapter.toFields(cmd.Type, opt.Fields)
+	cmd.Fields, err = toCLAFields(cmd.Type, opt.Fields)
 
 	return
 }
 
-func (adapter *claAdatper) toFields(claType dp.CLAType, fields []models.CLAField) (r []domain.Field, err error) {
+func toCLAFields(claType dp.CLAType, fields []models.CLAField) (r []domain.Field, err error) {
 	if len(fields) == 0 {
 		err = errors.New("no fields")
 
@@ -139,7 +139,7 @@ func (adapter *claAdatper) toFields(claType dp.CLAType, fields []models.CLAField
 
 		m[item.Type] = true
 
-		if r[i], err = adapter.toField(item, f); err != nil {
+		if r[i], err = toCLAField(item, f); err != nil {
 			return
 		}
 	}
@@ -151,7 +151,7 @@ func (adapter *claAdatper) toFields(claType dp.CLAType, fields []models.CLAField
 	return
 }
 
-func (adapter *claAdatper) toField(
+func toCLAField(
 	opt *models.CLAField,
 	f func(string) (dp.CLAFieldType, error),
 ) (domain.Field, error) {

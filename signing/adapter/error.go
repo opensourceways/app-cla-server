@@ -115,6 +115,23 @@ func codeMap(code string) models.ModelErrCode {
 	case domain.ErrorCodeLinkCanNotRemove:
 		return models.ErrLinkIsUsed
 
+	// cla
+	case domain.ErrorCodeDCOExists:
+		return models.ErrDCOExists
+
+	case domain.ErrorCodeDCOCanNotRemove:
+		return models.ErrDCOIsUsed
+
+	// link
+	case domain.ErrorCodeDCOLinkNotExists:
+		return models.ErrNoDCOLink
+
+	case domain.ErrorCodeDCOLinkExists:
+		return models.ErrDCOLinkExists
+
+	case domain.ErrorCodeDCOLinkCanNotRemove:
+		return models.ErrDCOLinkIsUsed
+
 	// gmail
 	case domain.ErrorCodeGmailNoRefreshToken:
 		return models.ErrNoRefreshToken

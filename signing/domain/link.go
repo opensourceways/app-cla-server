@@ -1,7 +1,9 @@
 package domain
 
 import (
+	"fmt"
 	"strconv"
+	"time"
 
 	"github.com/opensourceways/app-cla-server/signing/domain/dp"
 )
@@ -15,6 +17,10 @@ type OrgInfo struct {
 	Platform string
 	Org      string
 	Alias    string
+}
+
+func (v *OrgInfo) LinkId() string {
+	return fmt.Sprintf("%s_%s-%d", v.Platform, v.Org, time.Now().UnixNano())
 }
 
 type Link struct {

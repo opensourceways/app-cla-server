@@ -78,7 +78,7 @@ func RemoveDCOInstance(linkId, dcoId string) IModelError {
 	return dcoAdapterInstance.Remove(linkId, dcoId)
 }
 
-// link
+// dco link
 
 func AddDCOLink(submitter string, opt *DCOLinkCreateOption) IModelError {
 	return dcoLinkAdapterInstance.Add(submitter, opt)
@@ -92,7 +92,7 @@ func ListDCOLink(platform string, orgs []string) ([]LinkInfo, IModelError) {
 	return dcoLinkAdapterInstance.List(platform, orgs)
 }
 
-func GetLinkDCO(linkId, dcoId string) (OrgInfo, CLAInfo, IModelError) {
+func GetLinkDCO1(linkId, dcoId string) (OrgInfo, CLAInfo, IModelError) {
 	return dcoLinkAdapterInstance.GetDCO(linkId, dcoId)
 }
 
@@ -100,7 +100,7 @@ func ListDCOs(linkId string) ([]CLADetail, IModelError) {
 	return dcoLinkAdapterInstance.ListDCOs(linkId)
 }
 
-func GetDCOLink(linkId string) (OrgInfo, IModelError) {
+func GetDCOLink1(linkId string) (OrgInfo, IModelError) {
 	return dcoLinkAdapterInstance.GetLink(linkId)
 }
 

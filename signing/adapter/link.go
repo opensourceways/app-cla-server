@@ -48,7 +48,7 @@ func (adapter *linkAdatper) GetLink(linkId string) (
 func (adapter *linkAdatper) GetLinkCLA(linkId, claId string) (
 	org models.OrgInfo, cla models.CLAInfo, merr models.IModelError,
 ) {
-	v, err := adapter.s.FindLinkCLA(&domain.CLAIndex{
+	v, err := adapter.s.FindCLA(&domain.CLAIndex{
 		LinkId: linkId,
 		CLAId:  claId,
 	})

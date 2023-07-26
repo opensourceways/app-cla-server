@@ -29,7 +29,7 @@ type LinkService interface {
 	List(cmd *CmdToListLink) ([]repository.LinkSummary, error)
 	Find(linkId string) (dto LinkDTO, err error)
 	FindCLAs(cmd *CmdToFindCLAs) ([]CLADetailDTO, error)
-	FindLinkCLA(cmd *domain.CLAIndex) (dto LinkCLADTO, err error)
+	FindCLA(cmd *domain.CLAIndex) (dto LinkCLADTO, err error)
 }
 
 type linkService struct {
@@ -118,7 +118,7 @@ func (s *linkService) FindCLAs(cmd *CmdToFindCLAs) ([]CLADetailDTO, error) {
 	return r, nil
 }
 
-func (s *linkService) FindLinkCLA(cmd *domain.CLAIndex) (dto LinkCLADTO, err error) {
+func (s *linkService) FindCLA(cmd *domain.CLAIndex) (dto LinkCLADTO, err error) {
 	v, err := s.repo.Find(cmd.LinkId)
 	if err != nil {
 		return

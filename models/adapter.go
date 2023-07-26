@@ -48,6 +48,8 @@ func ListLink(platform string, orgs []string) ([]LinkInfo, IModelError) {
 	return linkAdapterInstance.List(platform, orgs)
 }
 
+// function of signing
+
 func GetLinkCLA(linkId, claId string) (OrgInfo, CLAInfo, IModelError) {
 	return linkAdapterInstance.GetLinkCLA(linkId, claId)
 }
@@ -92,16 +94,8 @@ func ListDCOLink(platform string, orgs []string) ([]LinkInfo, IModelError) {
 	return dcoLinkAdapterInstance.List(platform, orgs)
 }
 
-func GetLinkDCO1(linkId, dcoId string) (OrgInfo, CLAInfo, IModelError) {
-	return dcoLinkAdapterInstance.GetDCO(linkId, dcoId)
-}
-
 func ListDCOs(linkId string) ([]CLADetail, IModelError) {
 	return dcoLinkAdapterInstance.ListDCOs(linkId)
-}
-
-func GetDCOLink1(linkId string) (OrgInfo, IModelError) {
-	return dcoLinkAdapterInstance.GetLink(linkId)
 }
 
 // corp signing

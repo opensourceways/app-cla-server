@@ -4,6 +4,7 @@ import (
 	commonRepo "github.com/opensourceways/app-cla-server/common/domain/repository"
 	"github.com/opensourceways/app-cla-server/signing/domain"
 	"github.com/opensourceways/app-cla-server/signing/domain/claservice"
+	"github.com/opensourceways/app-cla-server/signing/domain/dp"
 	"github.com/opensourceways/app-cla-server/signing/domain/repository"
 )
 
@@ -32,8 +33,25 @@ type dcoService struct {
 	individual repository.IndividualSigning
 }
 
+func (s *dcoService) findLink(linkId string) (domain.Link, error) {
+	v, err := s.repo.Find(linkId)
+	if err != nil {
+		if commonRepo.IsErrorResourceNotFound(err) {
+			err = domain.NewDomainError(domain.ErrorCodeDCOLinkNotExists)
+		}
+
+		return v, err
+	}
+
+	if dp.IsLinkTypeCLA(v.Type) {
+		return v, domain.NewDomainError(domain.ErrorCodeDCOLinkNotExists)
+	}
+
+	return v, nil
+}
+
 func (s *dcoService) Add(linkId string, cmd *CmdToAddDCO) error {
-	link, err := s.repo.Find(linkId)
+	link, err := s.findLink(linkId)
 	if err != nil {
 		if commonRepo.IsErrorResourceNotFound(err) {
 			err = domain.NewDomainError(domain.ErrorCodeDCOLinkNotExists)
@@ -48,7 +66,7 @@ func (s *dcoService) Add(linkId string, cmd *CmdToAddDCO) error {
 }
 
 func (s *dcoService) Remove(cmd domain.CLAIndex) error {
-	link, err := s.repo.Find(cmd.LinkId)
+	link, err := s.findLink(cmd.LinkId)
 	if err != nil {
 		if commonRepo.IsErrorResourceNotFound(err) {
 			err = domain.NewDomainError(domain.ErrorCodeDCOLinkNotExists)
@@ -82,7 +100,7 @@ func (s *dcoService) checkIfCanRemove(cmd *domain.CLAIndex) error {
 }
 
 func (s *dcoService) List(linkId string) (dcos []CLADTO, err error) {
-	v, err := s.repo.Find(linkId)
+	v, err := s.findLink(linkId)
 	if err != nil {
 		return
 	}

@@ -5,7 +5,6 @@ import (
 
 	"github.com/opensourceways/app-cla-server/models"
 	"github.com/opensourceways/app-cla-server/signing/app"
-	"github.com/opensourceways/app-cla-server/signing/domain"
 	"github.com/opensourceways/app-cla-server/signing/domain/dp"
 )
 
@@ -23,53 +22,6 @@ type dcoLinkAdapter struct {
 	dco *dcoAdapter
 
 	s app.DCOLinkService
-}
-
-func (adapter *dcoLinkAdapter) GetLink(linkId string) (
-	org models.OrgInfo, merr models.IModelError,
-) {
-	v, err := adapter.s.Find(linkId)
-	if err != nil {
-		merr = toModelError(err)
-
-		return
-	}
-
-	org.OrgID = v.Org.Org
-	org.Platform = v.Org.Platform
-	org.OrgAlias = v.Org.Alias
-	org.OrgEmail = v.Email.Addr.EmailAddr()
-	org.OrgEmailPlatform = v.Email.Platform
-
-	return
-}
-
-// GetDCOLinkDCO
-func (adapter *dcoLinkAdapter) GetDCO(linkId, claId string) (
-	org models.OrgInfo, cla models.CLAInfo, merr models.IModelError,
-) {
-	v, err := adapter.s.FindDCO(&domain.CLAIndex{
-		LinkId: linkId,
-		CLAId:  claId,
-	})
-	if err != nil {
-		merr = toModelError(err)
-
-		return
-	}
-
-	org.OrgID = v.Org.Org
-	org.Platform = v.Org.Platform
-	org.OrgAlias = v.Org.Alias
-	org.OrgEmail = v.Email.Addr.EmailAddr()
-	org.OrgEmailPlatform = v.Email.Platform
-
-	cla.CLAId = v.CLA.Id
-	cla.CLAFile = v.CLA.LocalFile
-	cla.CLALang = v.CLA.Language
-	cla.Fields = toFields(v.CLA.Fileds)
-
-	return
 }
 
 // ListDCOs

@@ -26,9 +26,7 @@ type DCOLinkService interface {
 	Add(cmd *CmdToAddDCOLink) error
 	Remove(linkId string) error
 	List(cmd *CmdToListLink) ([]repository.LinkSummary, error)
-	Find(linkId string) (dto LinkDTO, err error)
 	FindDCOs(string) ([]CLADetailDTO, error)
-	FindDCO(cmd *domain.CLAIndex) (dto LinkCLADTO, err error)
 }
 
 type dcoLinkService struct {
@@ -71,6 +69,10 @@ func (s *dcoLinkService) Remove(linkId string) error {
 		return err
 	}
 
+	if dp.IsLinkTypeCLA(v.Type) {
+		return nil
+	}
+
 	return s.repo.Remove(&v)
 }
 
@@ -92,6 +94,10 @@ func (s *dcoLinkService) FindDCOs(linkId string) ([]CLADetailDTO, error) {
 		return nil, err
 	}
 
+	if dp.IsLinkTypeCLA(v.Type) {
+		return nil, nil
+	}
+
 	r := make([]CLADetailDTO, 0, len(v.CLAs))
 	for i := range v.CLAs {
 		item := &v.CLAs[i]
@@ -104,41 +110,4 @@ func (s *dcoLinkService) FindDCOs(linkId string) ([]CLADetailDTO, error) {
 	}
 
 	return r, nil
-}
-
-func (s *dcoLinkService) FindDCO(cmd *domain.CLAIndex) (dto LinkCLADTO, err error) {
-	v, err := s.repo.Find(cmd.LinkId)
-	if err != nil {
-		return
-	}
-
-	cla := v.FindCLA(cmd.CLAId)
-	if cla == nil {
-		err = domain.NewDomainError(domain.ErrorCodeDCONotExists)
-
-		return
-	}
-
-	dto.Org = v.Org
-	dto.Email = v.Email
-	dto.CLA = CLADetailDTO{
-		Id:        cla.Id,
-		Fileds:    cla.Fields,
-		Language:  cla.Language.Language(),
-		LocalFile: s.dco.CLALocalFilePath(cmd),
-	}
-
-	return
-}
-
-func (s *dcoLinkService) Find(linkId string) (dto LinkDTO, err error) {
-	v, err := s.repo.Find(linkId)
-	if err != nil {
-		return
-	}
-
-	dto.Org = v.Org
-	dto.Email = v.Email
-
-	return
 }

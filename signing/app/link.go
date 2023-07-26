@@ -74,6 +74,10 @@ func (s *linkService) Remove(linkId string) error {
 		return err
 	}
 
+	if !dp.IsLinkTypeCLA(v.Type) {
+		return nil
+	}
+
 	return s.repo.Remove(&v)
 }
 
@@ -101,6 +105,10 @@ func (s *linkService) FindCLAs(cmd *CmdToFindCLAs) ([]CLADetailDTO, error) {
 	v, err := s.repo.Find(cmd.LinkId)
 	if err != nil {
 		return nil, err
+	}
+
+	if !dp.IsLinkTypeCLA(v.Type) {
+		return nil, nil
 	}
 
 	t := cmd.Type.CLAType()

@@ -171,8 +171,6 @@ type dcoLinkAdapter interface {
 	Add(submitter string, opt *DCOLinkCreateOption) IModelError
 	Remove(linkId string) IModelError
 	List(platform string, orgs []string) ([]LinkInfo, IModelError)
-	GetLink(linkId string) (org OrgInfo, merr IModelError)
-	GetDCO(linkId, dcoId string) (OrgInfo, CLAInfo, IModelError)
 	ListDCOs(linkId string) ([]CLADetail, IModelError)
 }
 

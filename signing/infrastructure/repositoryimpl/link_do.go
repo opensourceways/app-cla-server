@@ -10,6 +10,7 @@ import (
 const (
 	fieldOrg      = "org"
 	fieldCLAs     = "clas"
+	fieldCLANum   = "cla_num"
 	fieldRemoved  = "removed"
 	fieldPlatform = "platform"
 )

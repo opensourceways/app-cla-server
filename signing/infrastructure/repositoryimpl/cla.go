@@ -14,7 +14,11 @@ func (impl *link) AddCLA(link *domain.Link, cla *domain.CLA) error {
 		return err
 	}
 
-	err = impl.dao.PushArraySingleItem(impl.docFilter(link.Id), fieldCLAs, doc, link.Version)
+	err = impl.dao.PushArraySingleItemAndUpdate(
+		impl.docFilter(link.Id), fieldCLAs, doc,
+		bson.M{fieldCLANum: link.CLANum},
+		link.Version,
+	)
 	if err != nil && impl.dao.IsDocNotExists(err) {
 		err = commonRepo.NewErrorConcurrentUpdating(err)
 	}

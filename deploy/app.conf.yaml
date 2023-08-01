@@ -16,7 +16,7 @@ domain:
     max_length_of_title: 50
     max_length_of_email: 100
     max_length_of_account: 100
-    max_length_of_corp_name: 50
+    max_length_of_corp_name: 100
 
 mongodb:
   db:

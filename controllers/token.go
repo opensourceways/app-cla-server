@@ -6,7 +6,6 @@ import (
 	"net"
 	"strings"
 
-	"github.com/beego/beego/v2/core/logs"
 	"github.com/opensourceways/app-cla-server/models"
 )
 
@@ -92,17 +91,12 @@ func (ctl *baseController) setToken(t models.AccessToken) {
 
 func (ctl *baseController) getRemoteAddr() (string, *failedApiResult) {
 	ips := ctl.Ctx.Request.Header.Get("x-forwarded-for")
-	logs.Info("x-forwarded-for value is: %s", ips)
 
 	for _, item := range strings.Split(ips, ", ") {
 		if net.ParseIP(item) != nil {
-			logs.Info("x-forwarded-for value is: %s, remote addr: %s", ips, item)
-
 			return item, nil
 		}
 	}
-
-	logs.Info("x-forwarded-for value is: %s, no remote addr", ips)
 
 	return "", newFailedApiResult(400, errCanNotFetchClientIP, fmt.Errorf("can not fetch client ip"))
 }

@@ -100,6 +100,15 @@ func (impl *daoImpl) InsertDocIfNotExists(filter, doc bson.M) (string, error) {
 	return docId, err
 }
 
+func (impl *daoImpl) PushArraySingleItemAndUpdate(filter bson.M, array string, v interface{}, u bson.M, version int) error {
+	return impl.updateDoc(
+		filter, version, bson.M{
+			mongoCmdPush: bson.M{array: v},
+			mongoCmdSet:  u,
+		},
+	)
+}
+
 func (impl *daoImpl) PushArraySingleItem(filter bson.M, array string, v interface{}, version int) error {
 	return impl.updateDoc(
 		filter, version, bson.M{mongoCmdPush: bson.M{array: v}},

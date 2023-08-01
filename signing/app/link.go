@@ -146,6 +146,10 @@ func (s *linkService) FindLinkCLA(cmd *domain.CLAIndex) (dto LinkCLADTO, err err
 func (s *linkService) Find(linkId string) (dto LinkDTO, err error) {
 	v, err := s.repo.Find(linkId)
 	if err != nil {
+		if commonRepo.IsErrorResourceNotFound(err) {
+			err = domain.NewDomainError(domain.ErrorCodeLinkNotExists)
+		}
+
 		return
 	}
 

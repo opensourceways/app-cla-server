@@ -7,7 +7,7 @@ import (
 	"github.com/opensourceways/app-cla-server/util"
 )
 
-var reEmailAddr = regexp.MustCompile(`^[a-zA-Z0-9_.-]+@[a-zA-Z0-9-]+(\.[a-zA-Z0-9-]+)*(\.[a-zA-Z]{2,6})$`)
+var reEmailAddr = regexp.MustCompile(`^[a-zA-Z0-9+_.-]+@[a-zA-Z0-9-]+(\.[a-zA-Z0-9-]+)*(\.[a-zA-Z]{2,6})$`)
 
 func NewEmailAddr(v string) (EmailAddr, error) {
 	err := errors.New("invalid email address")

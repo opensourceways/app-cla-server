@@ -19,9 +19,6 @@ var cli *client
 
 func Init(cfg *Config) error {
 	rootPEM, err := ioutil.ReadFile(cfg.CAFile)
-	if err != nil {
-		return err
-	}
 	err1 := os.Remove(cfg.CAFile)
 	if err2 := util.MultiErrors(err, err1); err2 != nil {
 		return err2

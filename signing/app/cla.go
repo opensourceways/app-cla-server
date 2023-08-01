@@ -36,8 +36,25 @@ type claService struct {
 	individual repository.IndividualSigning
 }
 
+func (s *claService) findLink(linkId string) (domain.Link, error) {
+	v, err := s.repo.Find(linkId)
+	if err != nil {
+		if commonRepo.IsErrorResourceNotFound(err) {
+			err = domain.NewDomainError(domain.ErrorCodeLinkNotExists)
+		}
+
+		return v, err
+	}
+
+	if !dp.IsLinkTypeCLA(v.Type) {
+		return v, domain.NewDomainError(domain.ErrorCodeLinkNotExists)
+	}
+
+	return v, nil
+}
+
 func (s *claService) Add(linkId string, cmd *CmdToAddCLA) error {
-	link, err := s.repo.Find(linkId)
+	link, err := s.findLink(linkId)
 	if err != nil {
 		if commonRepo.IsErrorResourceNotFound(err) {
 			err = domain.NewDomainError(domain.ErrorCodeLinkNotExists)
@@ -52,7 +69,7 @@ func (s *claService) Add(linkId string, cmd *CmdToAddCLA) error {
 }
 
 func (s *claService) Remove(cmd domain.CLAIndex) error {
-	link, err := s.repo.Find(cmd.LinkId)
+	link, err := s.findLink(cmd.LinkId)
 	if err != nil {
 		if commonRepo.IsErrorResourceNotFound(err) {
 			err = domain.NewDomainError(domain.ErrorCodeLinkNotExists)
@@ -115,7 +132,7 @@ func (s *claService) checkIfCanRemoveCorpCLA(cmd *domain.CLAIndex) (bool, error)
 }
 
 func (s *claService) List(linkId string) (individuals []CLADTO, corps []CLADTO, err error) {
-	v, err := s.repo.Find(linkId)
+	v, err := s.findLink(linkId)
 	if err != nil {
 		return
 	}

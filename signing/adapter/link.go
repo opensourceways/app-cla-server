@@ -48,7 +48,7 @@ func (adapter *linkAdatper) GetLink(linkId string) (
 func (adapter *linkAdatper) GetLinkCLA(linkId, claId string) (
 	org models.OrgInfo, cla models.CLAInfo, merr models.IModelError,
 ) {
-	v, err := adapter.s.FindLinkCLA(&domain.CLAIndex{
+	v, err := adapter.s.FindCLA(&domain.CLAIndex{
 		LinkId: linkId,
 		CLAId:  claId,
 	})
@@ -67,7 +67,7 @@ func (adapter *linkAdatper) GetLinkCLA(linkId, claId string) (
 	cla.CLAId = v.CLA.Id
 	cla.CLAFile = v.CLA.LocalFile
 	cla.CLALang = v.CLA.Language
-	cla.Fields = adapter.toFields(v.CLA.Fileds)
+	cla.Fields = toFields(v.CLA.Fileds)
 
 	return
 }
@@ -94,13 +94,13 @@ func (adapter *linkAdatper) ListCLAs(linkId, applyTo string) ([]models.CLADetail
 		detail := &r[i]
 		detail.CLAId = item.Id
 		detail.Language = item.Language
-		detail.Fields = adapter.toFields(item.Fileds)
+		detail.Fields = toFields(item.Fileds)
 	}
 
 	return r, nil
 }
 
-func (adapter *linkAdatper) toFields(fields []domain.Field) []models.CLAField {
+func toFields(fields []domain.Field) []models.CLAField {
 	r := make([]models.CLAField, len(fields))
 
 	for i := range fields {

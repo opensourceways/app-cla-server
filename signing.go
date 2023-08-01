@@ -158,5 +158,22 @@ func initSigning(cfg *config.Config) error {
 		),
 	)
 
+	//
+
+	dcoAapter := adapter.NewDCOAdapter(
+		app.NewDCOService(linkRepo, cla, individual),
+		cfg.Domain.MaxSizeOfCLAContent,
+		cfg.Domain.FileTypeOfCLAContent,
+	)
+
+	models.RegisterDCOAdapter(dcoAapter)
+
+	models.RegisterDCOLinkAdapter(
+		adapter.NewDCOLinkAdapter(
+			app.NewDCOLinkService(linkRepo, cla, individual, echelper),
+			dcoAapter,
+		),
+	)
+
 	return nil
 }

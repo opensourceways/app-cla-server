@@ -1,9 +1,7 @@
 package claservice
 
 import (
-	"fmt"
 	"github.com/beego/beego/v2/core/logs"
-	"time"
 
 	commonRepo "github.com/opensourceways/app-cla-server/common/domain/repository"
 	"github.com/opensourceways/app-cla-server/signing/domain"
@@ -56,9 +54,6 @@ func (s *claService) CLALocalFilePath(index *domain.CLAIndex) string {
 }
 
 func (s *claService) AddLink(link *domain.Link) error {
-	linkId := genLinkID(link)
-	link.Id = linkId
-
 	tempFiles := []string{}
 	clean := func() {
 		for _, p := range tempFiles {
@@ -68,10 +63,12 @@ func (s *claService) AddLink(link *domain.Link) error {
 		}
 	}
 
+	link.Id = link.Org.LinkId()
+
 	for i := range link.CLAs {
 		item := &link.CLAs[i]
 
-		p, err := s.local.AddCLA(linkId, item)
+		p, err := s.local.AddCLA(link.Id, item)
 		if err != nil {
 			clean()
 
@@ -92,10 +89,4 @@ func (s *claService) AddLink(link *domain.Link) error {
 	}
 
 	return nil
-}
-
-func genLinkID(v *domain.Link) string {
-	org := &v.Org
-
-	return fmt.Sprintf("%s_%s-%d", org.Platform, org.Org, time.Now().UnixNano())
 }

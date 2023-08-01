@@ -89,6 +89,7 @@ func (impl *link) Find(linkId string) (r domain.Link, err error) {
 func (impl *link) FindAll(opt *repository.FindLinksOpt) ([]repository.LinkSummary, error) {
 	filter := bson.M{
 		fieldDeleted:                        false,
+		fieldType:                           opt.Type.LinkType(),
 		childField(fieldOrg, fieldOrg):      bson.M{mongodbCmdIn: opt.Orgs},
 		childField(fieldOrg, fieldPlatform): opt.Platform,
 	}

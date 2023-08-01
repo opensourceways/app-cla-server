@@ -223,6 +223,78 @@ func init() {
 			Filters:          nil,
 			Params:           nil})
 
+	beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:DCOController"] = append(beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:DCOController"],
+		beego.ControllerComments{
+			Method:           "Add",
+			Router:           `/:link_id`,
+			AllowHTTPMethods: []string{"post"},
+			MethodParams:     param.Make(),
+			Filters:          nil,
+			Params:           nil})
+
+	beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:DCOController"] = append(beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:DCOController"],
+		beego.ControllerComments{
+			Method:           "List",
+			Router:           `/:link_id`,
+			AllowHTTPMethods: []string{"get"},
+			MethodParams:     param.Make(),
+			Filters:          nil,
+			Params:           nil})
+
+	beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:DCOController"] = append(beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:DCOController"],
+		beego.ControllerComments{
+			Method:           "Delete",
+			Router:           `/:link_id/:id`,
+			AllowHTTPMethods: []string{"delete"},
+			MethodParams:     param.Make(),
+			Filters:          nil,
+			Params:           nil})
+
+	beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:DCOController"] = append(beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:DCOController"],
+		beego.ControllerComments{
+			Method:           "DownloadPDF",
+			Router:           `/:link_id/:id`,
+			AllowHTTPMethods: []string{"get"},
+			MethodParams:     param.Make(),
+			Filters:          nil,
+			Params:           nil})
+
+	beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:DCOLinkController"] = append(beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:DCOLinkController"],
+		beego.ControllerComments{
+			Method:           "Create",
+			Router:           `/`,
+			AllowHTTPMethods: []string{"post"},
+			MethodParams:     param.Make(),
+			Filters:          nil,
+			Params:           nil})
+
+	beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:DCOLinkController"] = append(beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:DCOLinkController"],
+		beego.ControllerComments{
+			Method:           "List",
+			Router:           `/`,
+			AllowHTTPMethods: []string{"get"},
+			MethodParams:     param.Make(),
+			Filters:          nil,
+			Params:           nil})
+
+	beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:DCOLinkController"] = append(beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:DCOLinkController"],
+		beego.ControllerComments{
+			Method:           "Delete",
+			Router:           `/:link_id`,
+			AllowHTTPMethods: []string{"delete"},
+			MethodParams:     param.Make(),
+			Filters:          nil,
+			Params:           nil})
+
+	beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:DCOLinkController"] = append(beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:DCOLinkController"],
+		beego.ControllerComments{
+			Method:           "GetDCOForSigning",
+			Router:           `/:link_id/dcos`,
+			AllowHTTPMethods: []string{"get"},
+			MethodParams:     param.Make(),
+			Filters:          nil,
+			Params:           nil})
+
 	beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:EmployeeManagerController"] = append(beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:EmployeeManagerController"],
 		beego.ControllerComments{
 			Method:           "Post",
@@ -333,7 +405,7 @@ func init() {
 
 	beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:LinkController"] = append(beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:LinkController"],
 		beego.ControllerComments{
-			Method:           "Link",
+			Method:           "Create",
 			Router:           `/`,
 			AllowHTTPMethods: []string{"post"},
 			MethodParams:     param.Make(),

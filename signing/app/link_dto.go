@@ -23,14 +23,13 @@ func (cmd *CmdToAddLink) toLink() domain.Link {
 	}
 
 	return domain.Link{
+		Type:      dp.LinkTypeCLA,
 		Org:       cmd.Org,
 		CLAs:      v,
 		CLANum:    len(cmd.CLAs),
 		Submitter: cmd.Submitter,
 	}
 }
-
-type CmdToListLink = repository.FindLinksOpt
 
 type CmdToFindCLAs struct {
 	LinkId string
@@ -46,4 +45,17 @@ type LinkCLADTO struct {
 type LinkDTO struct {
 	Org   domain.OrgInfo
 	Email domain.EmailInfo
+}
+
+type CmdToListLink struct {
+	Orgs     []string
+	Platform string
+}
+
+func (cmd *CmdToListLink) toOpt(t dp.LinkType) repository.FindLinksOpt {
+	return repository.FindLinksOpt{
+		Type:     t,
+		Orgs:     cmd.Orgs,
+		Platform: cmd.Platform,
+	}
 }

@@ -4,6 +4,7 @@ import (
 	commonRepo "github.com/opensourceways/app-cla-server/common/domain/repository"
 	"github.com/opensourceways/app-cla-server/signing/domain"
 	"github.com/opensourceways/app-cla-server/signing/domain/claservice"
+	"github.com/opensourceways/app-cla-server/signing/domain/dp"
 	"github.com/opensourceways/app-cla-server/signing/domain/repository"
 )
 
@@ -29,7 +30,7 @@ type LinkService interface {
 	List(cmd *CmdToListLink) ([]repository.LinkSummary, error)
 	Find(linkId string) (dto LinkDTO, err error)
 	FindCLAs(cmd *CmdToFindCLAs) ([]CLADetailDTO, error)
-	FindLinkCLA(cmd *domain.CLAIndex) (dto LinkCLADTO, err error)
+	FindCLA(cmd *domain.CLAIndex) (dto LinkCLADTO, err error)
 }
 
 type linkService struct {
@@ -73,6 +74,10 @@ func (s *linkService) Remove(linkId string) error {
 		return err
 	}
 
+	if !dp.IsLinkTypeCLA(v.Type) {
+		return nil
+	}
+
 	return s.repo.Remove(&v)
 }
 
@@ -91,13 +96,19 @@ func (s *linkService) checkIfCanRemove(linkId string) (bool, error) {
 }
 
 func (s *linkService) List(cmd *CmdToListLink) ([]repository.LinkSummary, error) {
-	return s.repo.FindAll(cmd)
+	opt := cmd.toOpt(dp.LinkTypeCLA)
+
+	return s.repo.FindAll(&opt)
 }
 
 func (s *linkService) FindCLAs(cmd *CmdToFindCLAs) ([]CLADetailDTO, error) {
 	v, err := s.repo.Find(cmd.LinkId)
 	if err != nil {
 		return nil, err
+	}
+
+	if !dp.IsLinkTypeCLA(v.Type) {
+		return nil, nil
 	}
 
 	t := cmd.Type.CLAType()
@@ -118,7 +129,7 @@ func (s *linkService) FindCLAs(cmd *CmdToFindCLAs) ([]CLADetailDTO, error) {
 	return r, nil
 }
 
-func (s *linkService) FindLinkCLA(cmd *domain.CLAIndex) (dto LinkCLADTO, err error) {
+func (s *linkService) FindCLA(cmd *domain.CLAIndex) (dto LinkCLADTO, err error) {
 	v, err := s.repo.Find(cmd.LinkId)
 	if err != nil {
 		return

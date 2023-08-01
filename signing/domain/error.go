@@ -54,6 +54,14 @@ const (
 	ErrorCodeLinkExists       = "link_exists"
 	ErrorCodeLinkNotExists    = "link_not_exists"
 	ErrorCodeLinkCanNotRemove = "link_can_not_remove"
+
+	ErrorCodeDCOExists       = "dco_exists"
+	ErrorCodeDCONotExists    = "dco_not_exists"
+	ErrorCodeDCOCanNotRemove = "dco_can_not_remove"
+
+	ErrorCodeDCOLinkExists       = "dco_link_exists"
+	ErrorCodeDCOLinkNotExists    = "dco_link_not_exists"
+	ErrorCodeDCOLinkCanNotRemove = "dco_link_can_not_remove"
 )
 
 // domainError

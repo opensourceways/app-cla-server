@@ -10,6 +10,7 @@ import (
 const (
 	fieldOrg      = "org"
 	fieldCLAs     = "clas"
+	fieldType     = "type"
 	fieldRemoved  = "removed"
 	fieldPlatform = "platform"
 )
@@ -19,6 +20,7 @@ func toLinkDO(v *domain.Link) linkDO {
 		Id:        v.Id,
 		Org:       toOrgInfoDO(&v.Org),
 		Email:     toEmailInfoDO(&v.Email),
+		Type:      v.Type.LinkType(),
 		Submitter: v.Submitter,
 		CLANum:    v.CLANum,
 	}
@@ -37,6 +39,7 @@ type linkDO struct {
 	Id          string      `bson:"id"         json:"id"          required:"true"`
 	Org         orgInfoDO   `bson:"org"        json:"org"         required:"true"`
 	Email       emailInfoDO `bson:"email"      json:"email"       required:"true"`
+	Type        string      `bson:"type"       json:"type"        required:"true"`
 	Submitter   string      `bson:"submitter"  json:"submitter"   required:"true"`
 	CLAs        []claDO     `bson:"clas"       json:"clas"`
 	CLANum      int         `bson:"cla_num"    json:"cla_num"`
@@ -47,6 +50,11 @@ type linkDO struct {
 
 func (do *linkDO) toLink(link *domain.Link) (err error) {
 	e, err := do.Email.toEmailInfo()
+	if err != nil {
+		return
+	}
+
+	t, err := dp.NewLinkType(do.Type)
 	if err != nil {
 		return
 	}
@@ -62,6 +70,7 @@ func (do *linkDO) toLink(link *domain.Link) (err error) {
 		Id:        do.Id,
 		Org:       do.Org.toOrgInfo(),
 		Email:     e,
+		Type:      t,
 		CLAs:      clas,
 		Submitter: do.Submitter,
 		CLANum:    do.CLANum,

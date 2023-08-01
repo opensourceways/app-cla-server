@@ -49,10 +49,15 @@ const (
 	ErrNoRefreshToken          ModelErrCode = "no_refresh_token"
 	ErrInvalidToken            ModelErrCode = "invalid_token"
 	ErrCLAExists               ModelErrCode = "cla_exists"
+	ErrCLAIsUsed               ModelErrCode = "cla_is_used"
+	ErrDCOExists               ModelErrCode = "dco_exists"
+	ErrDCOIsUsed               ModelErrCode = "dco_is_used"
 	ErrTooManyRequest          ModelErrCode = "too_many_request"
 	ErrUserLoginFrozen         ModelErrCode = "user_login_frozen"
-	ErrCLAIsUsed               ModelErrCode = "cla_is_used"
 	ErrLinkIsUsed              ModelErrCode = "link_is_used"
+	ErrNoDCOLink               ModelErrCode = "no_dco_link"
+	ErrDCOLinkExists           ModelErrCode = "dco_link_exists"
+	ErrDCOLinkIsUsed           ModelErrCode = "dco_link_is_used"
 )
 
 type IModelError interface {

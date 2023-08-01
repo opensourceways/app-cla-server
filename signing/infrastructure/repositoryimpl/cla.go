@@ -8,6 +8,10 @@ import (
 )
 
 func (impl *link) AddCLA(link *domain.Link, cla *domain.CLA) error {
+	if err := impl.claContent.add(link.Id, cla); err != nil {
+		return err
+	}
+
 	do := toCLADO(cla)
 	doc, err := do.toDoc()
 	if err != nil {

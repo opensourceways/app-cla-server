@@ -12,7 +12,7 @@ type loginInfo struct {
 
 func getUser(req *http.Request) (string, error) {
 	var v loginInfo
-	c := util.NewHttpClient(3)
+	c := util.NewHttpClient(3, 2)
 
 	if _, err := c.ForwardTo(req, &v); err != nil {
 		return "", err
@@ -23,7 +23,7 @@ func getUser(req *http.Request) (string, error) {
 
 func listOrg(req *http.Request) ([]string, error) {
 	var v []loginInfo
-	c := util.NewHttpClient(3)
+	c := util.NewHttpClient(3, 2)
 
 	if _, err := c.ForwardTo(req, &v); err != nil {
 		return nil, err

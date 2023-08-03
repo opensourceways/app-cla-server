@@ -3,7 +3,7 @@ module github.com/opensourceways/app-cla-server
 go 1.18
 
 require (
-	github.com/beego/beego/v2 v2.0.3
+	github.com/beego/beego/v2 v2.1.0
 	github.com/go-redis/redis/v8 v8.11.5
 	github.com/google/uuid v1.3.0
 	github.com/opensourceways/gofpdf v1.16.4

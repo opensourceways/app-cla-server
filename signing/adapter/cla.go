@@ -3,6 +3,7 @@ package adapter
 import (
 	"errors"
 	"strconv"
+	"strings"
 
 	"github.com/opensourceways/app-cla-server/models"
 	"github.com/opensourceways/app-cla-server/signing/app"
@@ -15,9 +16,11 @@ func NewCLAAdapter(
 	s app.CLAService,
 	maxSizeOfCLAContent int,
 	fileTypeOfCLAContent string,
+	claPDFSource []string,
 ) *claAdatper {
 	return &claAdatper{
 		s:                    s,
+		claPDFSource:         claPDFSource,
 		maxSizeOfCLAContent:  maxSizeOfCLAContent,
 		fileTypeOfCLAContent: fileTypeOfCLAContent,
 	}
@@ -25,6 +28,7 @@ func NewCLAAdapter(
 
 type claAdatper struct {
 	s                    app.CLAService
+	claPDFSource         []string
 	maxSizeOfCLAContent  int
 	fileTypeOfCLAContent string
 }
@@ -92,9 +96,25 @@ func (adapter *claAdatper) Add(linkId string, opt *models.CLACreateOpt) models.I
 	return nil
 }
 
+func (adapter *claAdatper) isAllowedPDFSource(url string) bool {
+	for _, item := range adapter.claPDFSource {
+		if strings.HasPrefix(url, item) {
+			return true
+		}
+	}
+
+	return false
+}
+
 func (adapter *claAdatper) cmdToAddCLA(opt *models.CLACreateOpt) (
 	cmd app.CmdToAddCLA, err error,
 ) {
+	if !adapter.isAllowedPDFSource(opt.URL) {
+		err = errors.New("not allowed cla pdf source")
+
+		return
+	}
+
 	cmd.Text, err = util.DownloadFile(
 		opt.URL, adapter.fileTypeOfCLAContent, adapter.maxSizeOfCLAContent,
 	)

@@ -44,7 +44,7 @@ func (s *corpAdminService) Add(csId string) (dto ManagerDTO, err error) {
 
 	n := len(v)
 	if n == 0 {
-		err = errors.New("no corp signing, imporssible.")
+		err = errors.New("no corp signing, impossible.")
 
 		return
 	}

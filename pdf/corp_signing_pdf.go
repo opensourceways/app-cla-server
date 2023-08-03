@@ -2,7 +2,6 @@ package pdf
 
 import (
 	"fmt"
-	"text/template"
 
 	"github.com/opensourceways/gofpdf"
 )
@@ -13,32 +12,17 @@ type fontInfo struct {
 }
 
 type corpSigningPDF struct {
-	language string
-
-	welcomeTemp *template.Template
-	declaration *template.Template
+	language    string
 	gh          float64
+	contactFont fontInfo
 
-	footerFont    fontInfo
-	titleFont     fontInfo
-	welcomeFont   fontInfo
-	contactFont   fontInfo
-	declareFont   fontInfo
-	claFont       fontInfo
-	urlFont       fontInfo
-	signatureFont fontInfo
-
-	subtitle     string
-	footerNumber func(int) string
-
-	signatureItems [][]string
-	seal           string
-	signature      string
-	signatureDate  string
-	newPDF         func() *gofpdf.Fpdf
+	seal          string
+	signature     string
+	signatureDate string
+	newPDF        func() *gofpdf.Fpdf
 }
 
-func (this *corpSigningPDF) end(pdf *gofpdf.Fpdf, path string) error {
+func (c *corpSigningPDF) end(pdf *gofpdf.Fpdf, path string) error {
 	if pdf.Err() {
 		return fmt.Errorf("Failed to geneate pdf: %s", pdf.Error().Error())
 	}

@@ -19,14 +19,14 @@ const (
 
 // userDO
 type userDO struct {
-	Id             primitive.ObjectID `bson:"_id"           json:"-"`
-	Email          string             `bson:"email"         json:"email"     required:"true"`
-	LinkId         string             `bson:"link_id"       json:"link_id"   required:"true"`
-	Account        string             `bson:"account"       json:"account"   required:"true"`
-	Password       []byte             `bson:"password"      json:"-"`
-	CorpSigningId  string             `bson:"cs_id"         json:"cs_id"     required:"true"`
-	PasswordChaged bool               `bson:"changed"       json:"changed"`
-	Version        int                `bson:"version"       json:"-"`
+	Id              primitive.ObjectID `bson:"_id"           json:"-"`
+	Email           string             `bson:"email"         json:"email"     required:"true"`
+	LinkId          string             `bson:"link_id"       json:"link_id"   required:"true"`
+	Account         string             `bson:"account"       json:"account"   required:"true"`
+	Password        []byte             `bson:"password"      json:"-"`
+	CorpSigningId   string             `bson:"cs_id"         json:"cs_id"     required:"true"`
+	PasswordChanged bool               `bson:"changed"       json:"changed"`
+	Version         int                `bson:"version"       json:"-"`
 }
 
 func (do *userDO) toDoc() (bson.M, error) {
@@ -46,7 +46,7 @@ func (do *userDO) toUser(u *domain.User) (err error) {
 	u.LinkId = do.LinkId
 	u.Password = do.Password
 	u.CorpSigningId = do.CorpSigningId
-	u.PasswordChaged = do.PasswordChaged
+	u.PasswordChanged = do.PasswordChanged
 	u.Version = do.Version
 
 	return
@@ -54,10 +54,10 @@ func (do *userDO) toUser(u *domain.User) (err error) {
 
 func toUserDO(u *domain.User) userDO {
 	return userDO{
-		Email:          u.EmailAddr.EmailAddr(),
-		LinkId:         u.LinkId,
-		Account:        u.Account.Account(),
-		CorpSigningId:  u.CorpSigningId,
-		PasswordChaged: u.PasswordChaged,
+		Email:           u.EmailAddr.EmailAddr(),
+		LinkId:          u.LinkId,
+		Account:         u.Account.Account(),
+		CorpSigningId:   u.CorpSigningId,
+		PasswordChanged: u.PasswordChanged,
 	}
 }

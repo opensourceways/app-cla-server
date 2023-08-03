@@ -85,7 +85,7 @@ func (impl *user) SavePassword(u *domain.User) error {
 
 	doc := bson.M{
 		fieldPassword: u.Password,
-		fieldChanged:  u.PasswordChaged,
+		fieldChanged:  u.PasswordChanged,
 	}
 
 	err = impl.dao.UpdateDoc(filter, doc, u.Version)

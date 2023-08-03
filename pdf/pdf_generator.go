@@ -18,16 +18,8 @@ type pdfGenerator struct {
 	corp      []*corpSigningPDF
 }
 
-func (this *pdfGenerator) LangSupported() map[string]bool {
-	v := map[string]bool{}
-	for _, item := range this.corp {
-		v[item.language] = true
-	}
-	return v
-}
-
-func (this *pdfGenerator) generator(claLang string) *corpSigningPDF {
-	for _, item := range this.corp {
+func (pg *pdfGenerator) generator(claLang string) *corpSigningPDF {
+	for _, item := range pg.corp {
 		if item.language == strings.ToLower(claLang) {
 			return item
 		}
@@ -35,21 +27,21 @@ func (this *pdfGenerator) generator(claLang string) *corpSigningPDF {
 	return nil
 }
 
-func (this *pdfGenerator) GenPDFForCorporationSigning(linkID, claFile string, signing *models.CorporationSigning, claFields []models.CLAField) (string, error) {
-	corp := this.generator(signing.CLALanguage)
+func (pg *pdfGenerator) GenPDFForCorporationSigning(linkID, claFile string, signing *models.CorporationSigning, claFields []models.CLAField) (string, error) {
+	corp := pg.generator(signing.CLALanguage)
 	if corp == nil {
 		return "", fmt.Errorf("unknown cla language:%s", signing.CLALanguage)
 	}
 
-	tempPdf := util.GenFilePath(this.pdfOutDir, genPDFFileName(linkID, signing.AdminEmail, "_sig"))
+	tempPdf := util.GenFilePath(pg.pdfOutDir, genPDFFileName(linkID, signing.AdminEmail, "_sig"))
 	err := genSignaturePDF(corp, signing, claFields, tempPdf)
 	if err != nil {
 		return "", err
 	}
 	defer os.Remove(tempPdf)
 
-	outfile := util.GenFilePath(this.pdfOutDir, genPDFFileName(linkID, signing.AdminEmail, ""))
-	if err := appendCorpPDFSignaturePage(this.pythonBin, claFile, tempPdf, outfile); err != nil {
+	outfile := util.GenFilePath(pg.pdfOutDir, genPDFFileName(linkID, signing.AdminEmail, ""))
+	if err := appendCorpPDFSignaturePage(pg.pythonBin, claFile, tempPdf, outfile); err != nil {
 		return "", err
 	}
 

@@ -1,6 +1,8 @@
 package app
 
 import (
+	"errors"
+
 	"github.com/opensourceways/app-cla-server/signing/domain"
 	"github.com/opensourceways/app-cla-server/signing/domain/repository"
 	"github.com/opensourceways/app-cla-server/signing/domain/userservice"
@@ -40,7 +42,15 @@ func (s *corpAdminService) Add(csId string) (dto ManagerDTO, err error) {
 		return
 	}
 
-	if err = cs.SetAdmin(len(v)); err != nil {
+	n := len(v)
+	if n == 0 {
+		err = errors.New("no corp signing, impossible.")
+
+		return
+	}
+
+	// subtract itself
+	if err = cs.SetAdmin(n - 1); err != nil {
 		return
 	}
 

@@ -3,19 +3,19 @@ package domain
 import "github.com/opensourceways/app-cla-server/signing/domain/dp"
 
 type User struct {
-	Id             string
-	Account        dp.Account
-	Password       []byte // encrypted
-	EmailAddr      dp.EmailAddr
-	LinkId         string
-	CorpSigningId  string
-	PasswordChaged bool
-	Version        int
+	Id              string
+	Account         dp.Account
+	Password        []byte // encrypted
+	EmailAddr       dp.EmailAddr
+	LinkId          string
+	CorpSigningId   string
+	PasswordChanged bool
+	Version         int
 }
 
 func (u *User) ResetPassword(newOne []byte) {
 	u.Password = newOne
-	u.PasswordChaged = true
+	u.PasswordChanged = true
 }
 
 func (u *User) ChangePassword(

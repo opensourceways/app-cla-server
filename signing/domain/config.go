@@ -12,8 +12,9 @@ func Init(cfg *Config) {
 }
 
 type Config struct {
-	MaxSizeOfCLAContent  int    `json:"max_size_of_cla_content"`
-	FileTypeOfCLAContent string `json:"file_type_of_cla_content"`
+	SourceOfCLAPDF       []string `json:"source_of_cla_pdf"`
+	MaxSizeOfCLAContent  int      `json:"max_size_of_cla_content"`
+	FileTypeOfCLAContent string   `json:"file_type_of_cla_content"`
 
 	// AccessTokenExpiry is the one in seconds
 	AccessTokenExpiry int64 `json:"access_token_expiry"`
@@ -45,6 +46,12 @@ func (cfg *Config) SetDefault() {
 
 	if cfg.MinNumOfSameEmailDomainParts <= 0 {
 		cfg.MinNumOfSameEmailDomainParts = 2
+	}
+
+	if len(cfg.SourceOfCLAPDF) == 0 {
+		cfg.SourceOfCLAPDF = []string{
+			"https://gitee.com", "https://github.com",
+		}
 	}
 
 	if cfg.MaxSizeOfCLAContent <= 0 {

@@ -3,7 +3,6 @@ package util
 import (
 	"errors"
 	"io/ioutil"
-	"net/http"
 	"strings"
 	"time"
 )
@@ -26,7 +25,9 @@ func try(f func() error) (err error) {
 
 func head(url string, fileType string, maxSize int) error {
 	return try(func() error {
-		resp, err := http.Head(url)
+		cli := newClient(2)
+
+		resp, err := cli.Head(url)
 		if err != nil {
 			return err
 		}
@@ -60,7 +61,9 @@ func DownloadFile(url, fileType string, maxSize int) ([]byte, error) {
 	var content []byte
 
 	err := try(func() error {
-		resp, err := http.Get(url)
+		cli := newClient(10)
+
+		resp, err := cli.Get(url)
 		if err != nil {
 			return err
 		}

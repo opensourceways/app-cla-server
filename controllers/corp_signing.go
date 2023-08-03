@@ -137,7 +137,7 @@ func (ctl *CorporationSigningController) Delete() {
 // @Description resend corp signing email
 // @Tags CorpSigning
 // @Accept json
-// @Param  link_id      path  string  true  "link id"
+// @Param  link_id     path  string  true  "link id"
 // @Param  signing_id  path  string  true  "corp email"
 // @Success 202 {object} controllers.respData
 // @router /:link_id/:signing_id [put]

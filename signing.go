@@ -147,6 +147,7 @@ func initSigning(cfg *config.Config) error {
 		app.NewCLAService(linkRepo, cla, repo, individual),
 		cfg.Domain.MaxSizeOfCLAContent,
 		cfg.Domain.FileTypeOfCLAContent,
+		cfg.Domain.SourceOfCLAPDF,
 	)
 
 	models.RegisterCLAAdapter(claAapter)

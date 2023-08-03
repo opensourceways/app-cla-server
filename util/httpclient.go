@@ -9,14 +9,20 @@ import (
 )
 
 type HttpClient struct {
-	Client     *http.Client
-	MaxRetries int
+	client     http.Client
+	maxRetries int
 }
 
-func NewHttpClient(n int) HttpClient {
+func newClient(timeout int) http.Client {
+	return http.Client{
+		Timeout: time.Duration(timeout) * time.Second,
+	}
+}
+
+func NewHttpClient(n, timeout int) HttpClient {
 	return HttpClient{
-		MaxRetries: n,
-		Client:     http.DefaultClient,
+		maxRetries: n,
+		client:     newClient(timeout),
 	}
 }
 
@@ -47,18 +53,18 @@ func (hc *HttpClient) ForwardTo(req *http.Request, jsonResp interface{}) (status
 }
 
 func (hc *HttpClient) do(req *http.Request) (resp *http.Response, err error) {
-	if resp, err = hc.Client.Do(req); err == nil {
+	if resp, err = hc.client.Do(req); err == nil {
 		return
 	}
 
-	maxRetries := hc.MaxRetries
+	maxRetries := hc.maxRetries
 	backoff := 10 * time.Millisecond
 
 	for retries := 1; retries < maxRetries; retries++ {
 		time.Sleep(backoff)
 		backoff *= 2
 
-		if resp, err = hc.Client.Do(req); err == nil {
+		if resp, err = hc.client.Do(req); err == nil {
 			break
 		}
 	}

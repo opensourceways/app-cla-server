@@ -47,6 +47,10 @@ func IsNotDir(dir string) bool {
 	return true
 }
 
+func Mkdir(p string) error {
+	return os.MkdirAll(p, 0770)
+}
+
 func LoadFromYaml(path string, cfg interface{}) error {
 	b, err := ioutil.ReadFile(path)
 	if err != nil {

@@ -34,8 +34,7 @@ func (pg *pdfGenerator) GenPDFForCorporationSigning(linkID, claFile string, sign
 	}
 
 	tempPdf := util.GenFilePath(pg.pdfOutDir, genPDFFileName(linkID, signing.AdminEmail, "_sig"))
-	err := genSignaturePDF(corp, signing, claFields, tempPdf)
-	if err != nil {
+	if err := genSignaturePDF(corp, signing, claFields, tempPdf); err != nil {
 		return "", err
 	}
 	defer os.Remove(tempPdf)

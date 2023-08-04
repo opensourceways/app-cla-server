@@ -16,5 +16,9 @@ func (cfg *Config) Validate() error {
 		return fmt.Errorf("the file:%s is not exist", cfg.PythonBin)
 	}
 
-	return nil
+	if !util.IsNotDir(cfg.PDFOutDir) {
+		return nil
+	}
+
+	return util.Mkdir(cfg.PDFOutDir)
 }

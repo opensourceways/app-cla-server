@@ -17,7 +17,7 @@ func (cfg *Config) Validate() error {
 	}
 
 	if !util.IsNotDir(cfg.PDFOutDir) {
-		return fmt.Errorf("%s exists", cfg.PDFOutDir)
+		return nil
 	}
 
 	return util.Mkdir(cfg.PDFOutDir)

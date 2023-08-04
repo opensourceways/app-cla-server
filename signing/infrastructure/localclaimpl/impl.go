@@ -45,7 +45,7 @@ type Config struct {
 
 func (cfg *Config) Validate() error {
 	if !util.IsNotDir(cfg.Dir) {
-		return fmt.Errorf("%s exists", cfg.Dir)
+		return nil
 	}
 
 	return util.Mkdir(cfg.Dir)

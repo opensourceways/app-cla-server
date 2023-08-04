@@ -1,7 +1,6 @@
 package controllers
 
 import (
-	"fmt"
 	"net/url"
 	"strings"
 
@@ -51,12 +50,10 @@ func (cfg *Config) SetDefault() {
 }
 
 func (cfg *Config) Validate() error {
-	if !util.IsNotDir(cfg.PDFDownloadDir) {
-		return fmt.Errorf("%s exists", cfg.PDFDownloadDir)
-	}
-
-	if err := util.Mkdir(cfg.PDFDownloadDir); err != nil {
-		return err
+	if util.IsNotDir(cfg.PDFDownloadDir) {
+		if err := util.Mkdir(cfg.PDFDownloadDir); err != nil {
+			return err
+		}
 	}
 
 	if _, err := url.Parse(cfg.CLAPlatformURL); err != nil {

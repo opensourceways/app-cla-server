@@ -3,7 +3,7 @@ pdf:
   pdf_out_dir: ./conf/pdfs/output
 
 api:
-  pdf_out_dir: ./conf/pdfs/output
+  pdf_download_dir: ./conf/pdfs/download
   cookie_domain: "${COOKIE_DOMAIN}"
   cla_platform_url: "${CLA_PLATFORM_URL}"
   password_reset_url: "${PASSWORD_RESET_URL}"

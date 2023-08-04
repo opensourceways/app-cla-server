@@ -1,12 +1,9 @@
 package pdf
 
 import (
-	"os"
-
 	"github.com/opensourceways/gofpdf"
 
 	"github.com/opensourceways/app-cla-server/models"
-	"github.com/opensourceways/app-cla-server/util"
 )
 
 type IPDFGenerator interface {
@@ -16,13 +13,6 @@ type IPDFGenerator interface {
 var generator *pdfGenerator
 
 func InitPDFGenerator(cfg *Config) error {
-	path := util.GenFilePath(cfg.PDFOutDir, "tmp")
-	if util.IsNotDir(path) {
-		if err := os.Mkdir(path, 0644); err != nil {
-			return err
-		}
-	}
-
 	generator = &pdfGenerator{
 		pythonBin: cfg.PythonBin,
 		pdfOutDir: cfg.PDFOutDir,

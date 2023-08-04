@@ -21,8 +21,8 @@ type Config struct {
 	WebRedirectDirOnSuccessForEmail string `json:"web_redirect_dir_on_success_for_email"`
 	WebRedirectDirOnFailureForEmail string `json:"web_redirect_dir_on_failure_for_email"`
 
-	PDFOutDir            string `json:"pdf_out_dir"                required:"true"`
 	CookieDomain         string `json:"cookie_domain"              required:"true"`
+	PDFDownloadDir       string `json:"pdf_download_dir"           required:"true"`
 	CLAPlatformURL       string `json:"cla_platform_url"           required:"true"`
 	PasswordResetURL     string `json:"password_reset_url"         required:"true"`
 	PasswordRetrievalURL string `json:"password_retrieval_url"     required:"true"`
@@ -51,8 +51,12 @@ func (cfg *Config) SetDefault() {
 }
 
 func (cfg *Config) Validate() error {
-	if util.IsNotDir(cfg.PDFOutDir) {
-		return fmt.Errorf("the directory:%s is not exist", cfg.PDFOutDir)
+	if !util.IsNotDir(cfg.PDFDownloadDir) {
+		return fmt.Errorf("%s exists", cfg.PDFDownloadDir)
+	}
+
+	if err := util.Mkdir(cfg.PDFDownloadDir); err != nil {
+		return err
 	}
 
 	if _, err := url.Parse(cfg.CLAPlatformURL); err != nil {

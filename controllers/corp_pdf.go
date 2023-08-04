@@ -40,7 +40,7 @@ func (ctl *CorporationPDFController) downloadCorpPDF(csId string) *failedApiResu
 	}
 
 	fn, err := util.WriteToTempFile(
-		util.GenFilePath(config.PDFOutDir, "tmp"),
+		config.PDFDownloadDir,
 		fmt.Sprintf("%s_*.pdf", csId),
 		pdf,
 	)

@@ -9,7 +9,8 @@ RUN cd /go/src/github.com/opensourceways/app-cla-server && GO111MODULE=on CGO_EN
 # copy binary config and utils
 FROM golang:latest
 RUN apt-get update && apt-get install -y python3 && apt-get install -y python3-pip && pip3 install PyPDF2==3.0.0 --break-system-packages
-RUN useradd -ms /bin/bash cla
+RUN groupadd -g 1000 cla
+RUN useradd -u 1000 -g cla -s /bin/bash -m cla
 USER cla
 WORKDIR /home/cla
 COPY --chown=cla ./conf /home/cla/conf

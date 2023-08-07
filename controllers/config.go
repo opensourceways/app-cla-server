@@ -7,10 +7,18 @@ import (
 	"github.com/opensourceways/app-cla-server/util"
 )
 
-var config Config
+var (
+	config       Config
+	orgWhitelist orgHelper
+)
 
-func Init(cfg *Config) {
+type orgHelper interface {
+	Find(string) ([]string, error)
+}
+
+func Init(cfg *Config, h orgHelper) {
 	config = *cfg
+	orgWhitelist = h
 }
 
 type Config struct {

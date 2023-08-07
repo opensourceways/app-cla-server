@@ -136,11 +136,42 @@ func (ctl *AuthController) genACPayload(platform, platformToken string) (*acForC
 		return nil, errNoOrg, errors.New("no org")
 	}
 
+	// white list checking
+	allowedOrgs, err := orgWhitelist.Find(platform)
+	if err != nil {
+		return nil, errSystemError, err
+	}
+
+	v := ctl.filterByWhitelist(orgs, allowedOrgs)
+	if len(v) == 0 {
+		return nil, errNoInWhiteList, errors.New("no org")
+	}
+
 	return &acForCodePlatformPayload{
 		User:     user,
 		Platform: platform,
-		Orgs:     orgs,
+		Orgs:     v,
 	}, "", nil
+}
+
+func (ctl *AuthController) filterByWhitelist(own, allowed []string) []string {
+	if len(allowed) == 0 || len(own) == 0 {
+		return nil
+	}
+
+	m := make(map[string]bool, len(allowed))
+	for _, item := range allowed {
+		m[item] = true
+	}
+
+	r := make([]string, 0, len(own))
+	for _, item := range own {
+		if m[item] {
+			r = append(r, item)
+		}
+	}
+
+	return r
 }
 
 // @Title AuthCodeURL

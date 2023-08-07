@@ -37,11 +37,11 @@ func sendEmail(to []string, orgInfo *models.OrgInfo, subject string, builder ema
 	worker.GetEmailWorker().SendSimpleMessage(orgInfo.OrgEmailPlatform, &msg)
 }
 
-func notifyCorpAdmin(orgInfo *models.OrgInfo, info *models.CorporationManagerCreateOption) {
-	notifyCorpManagerWhenAdding(orgInfo, []models.CorporationManagerCreateOption{*info})
+func notifyCorpAdmin(linkId string, orgInfo *models.OrgInfo, info *models.CorporationManagerCreateOption) {
+	notifyCorpManagerWhenAdding(linkId, orgInfo, []models.CorporationManagerCreateOption{*info})
 }
 
-func notifyCorpManagerWhenAdding(orgInfo *models.OrgInfo, info []models.CorporationManagerCreateOption) {
+func notifyCorpManagerWhenAdding(linkId string, orgInfo *models.OrgInfo, info []models.CorporationManagerCreateOption) {
 	admin := info[0].Role == models.RoleAdmin
 	subject := fmt.Sprintf("Account on project of \"%s\"", orgInfo.OrgAlias)
 
@@ -55,7 +55,7 @@ func notifyCorpManagerWhenAdding(orgInfo *models.OrgInfo, info []models.Corporat
 			Password:         item.Password,
 			Org:              orgInfo.OrgAlias,
 			ProjectURL:       orgInfo.ProjectURL(),
-			URLOfCLAPlatform: config.CLAPlatformURL,
+			URLOfCLAPlatform: config.signingURL(linkId),
 		}
 
 		sendEmailToIndividual(item.Email, orgInfo, subject, &d)

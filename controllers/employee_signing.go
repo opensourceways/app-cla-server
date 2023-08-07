@@ -93,7 +93,7 @@ func (ctl *EmployeeSigningController) Sign() {
 	}
 
 	ctl.sendSuccessResp(action, "successfully")
-	ctl.notifyManagers(managers, &info, &orgInfo)
+	ctl.notifyManagers(linkID, managers, &info, &orgInfo)
 }
 
 // @Title GetAll
@@ -220,7 +220,11 @@ func (ctl *EmployeeSigningController) Delete() {
 	sendEmailToIndividual(employeeEmail, &orgInfo, "Remove employee", msg)
 }
 
-func (ctl *EmployeeSigningController) notifyManagers(managers []models.CorporationManagerListResult, info *models.EmployeeSigning, orgInfo *models.OrgInfo) {
+func (ctl *EmployeeSigningController) notifyManagers(
+	linkId string,
+	managers []models.CorporationManagerListResult,
+	info *models.EmployeeSigning, orgInfo *models.OrgInfo,
+) {
 	ms := make([]string, 0, len(managers))
 	to := make([]string, 0, len(managers))
 	for _, item := range managers {
@@ -244,7 +248,7 @@ func (ctl *EmployeeSigningController) notifyManagers(managers []models.Corporati
 		Org:              orgInfo.OrgAlias,
 		EmployeeEmail:    info.Email,
 		ProjectURL:       orgInfo.ProjectURL(),
-		URLOfCLAPlatform: config.CLAPlatformURL,
+		URLOfCLAPlatform: config.signingURL(linkId),
 	}
 	sendEmail(to, orgInfo, "An employee has signed CLA", &msg1)
 }

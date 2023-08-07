@@ -35,6 +35,10 @@ type Config struct {
 	PasswordRetrievalURL string `json:"password_retrieval_url"     required:"true"`
 }
 
+func (cfg *Config) signingURL(linkId string) string {
+	return cfg.CLAPlatformURL + linkId
+}
+
 func (cfg *Config) SetDefault() {
 	if cfg.CookieTimeout <= 0 {
 		cfg.CookieTimeout = 1800
@@ -66,6 +70,10 @@ func (cfg *Config) Validate() error {
 
 	if _, err := url.Parse(cfg.CLAPlatformURL); err != nil {
 		return err
+	}
+
+	if !strings.HasSuffix(cfg.CLAPlatformURL, "/") {
+		cfg.CLAPlatformURL += "/"
 	}
 
 	if _, err := url.Parse(cfg.PasswordRetrievalURL); err != nil {

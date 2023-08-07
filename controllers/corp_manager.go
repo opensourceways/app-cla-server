@@ -75,7 +75,7 @@ func (ctl *CorporationManagerController) AddCorpAdmin() {
 
 	ctl.sendSuccessResp(action, "successfully")
 
-	notifyCorpAdmin(&orgInfo, &added)
+	notifyCorpAdmin(linkID, &orgInfo, &added)
 }
 
 // @Title ChangePassword

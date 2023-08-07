@@ -8,10 +8,16 @@ type CLAInfo struct {
 }
 
 type CLACreateOpt = struct {
-	URL      string     `json:"url"`
-	Type     string     `json:"type"`
-	Fields   []CLAField `json:"fields"`
-	Language string     `json:"language"`
+	URL      string              `json:"url"`
+	Type     string              `json:"type"`
+	Fields   []CLAFieldCreateOpt `json:"fields"`
+	Language string              `json:"language"`
+}
+
+type CLAFieldCreateOpt struct {
+	ID       string `json:"id"`
+	Type     string `json:"type"`
+	Required bool   `json:"required"`
 }
 
 type CLAField struct {

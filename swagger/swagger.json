@@ -1986,7 +1986,7 @@
                 "fields": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/models.CLAField"
+                        "$ref": "#/definitions/models.CLAFieldCreateOpt"
                     }
                 },
                 "language": {
@@ -2054,6 +2054,21 @@
                 },
                 "title": {
                     "type": "string"
+                },
+                "type": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.CLAFieldCreateOpt": {
+            "title": "CLAFieldCreateOpt",
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "required": {
+                    "type": "boolean"
                 },
                 "type": {
                     "type": "string"

@@ -132,17 +132,8 @@ type fieldDO struct {
 }
 
 func (do *fieldDO) toField(t dp.CLAType) (v domain.Field, err error) {
-	if dp.IsCLATypeIndividual(t) {
-		if v.Type, err = dp.NewIndividualCLAFieldType(do.Type); err != nil {
-			return
-		}
-	} else {
-		if v.Type, err = dp.NewCorpCLAFieldType(do.Type); err != nil {
-			return
-		}
-	}
-
 	v.Id = do.Id
+	v.Type = do.Type
 	v.Desc = do.Desc
 	v.Title = do.Title
 	v.Required = do.Required
@@ -153,7 +144,7 @@ func (do *fieldDO) toField(t dp.CLAType) (v domain.Field, err error) {
 func toFieldDO(v *domain.Field) fieldDO {
 	return fieldDO{
 		Id:       v.Id,
-		Type:     v.Type.CLAFieldType(),
+		Type:     v.Type,
 		Desc:     v.Desc,
 		Title:    v.Title,
 		Required: v.Required,

@@ -17,13 +17,80 @@ domain:
     max_length_of_email: 100
     max_length_of_account: 100
     max_length_of_corp_name: 100
+    cla:
+    - type: corporation
+      fields:
+      - language: "Chinese"
+        fields:
+        - type:  "fax"
+          desc:  "公司的传真"
+          title: "传真"
+        - type:  "title"
+          desc:  "授权代表的职位"
+          title: "职位"
+        - type:  "email"
+          desc:  "签署者所在公司的邮箱"
+          title: "邮箱"
+        - type:  "address"
+          desc:  "公司的地址"
+          title: "地址"
+        - type:  "telephone"
+          desc:  "公司的电话"
+          title: "电话"
+        - type:  "authorized"
+          desc:  "授权代表的姓名"
+          title: "授权代表"
+        - type:  "corporationName"
+          desc:  "签署者所在公司名称"
+          title: "公司名称"
+      - language: "English"
+        fields:
+        - type:  "fax"
+          desc:  "Fax of the corporation"
+          title: "Fax"
+        - type:  "title"
+          desc:  "title of Authorized Representative"
+          title: "Title"
+        - type:  "email"
+          desc:  "corporation email"
+          title: "E-Mail"
+        - type:  "address"
+          desc:  "Address of the corporation"
+          title: "Address"
+        - type:  "telephone"
+          desc:  "Telephone of the corporation"
+          title: "Telephone"
+        - type:  "authorized"
+          desc:  "name of Authorized Representative"
+          title: "Authorized Representative"
+        - type:  "corporationName"
+          desc:  "corporation name"
+          title: "Corporation Name"
+    - type: individual
+      fields:
+      - language: "Chinese"
+        fields:
+        - type:  "name"
+          desc:  "你的姓名"
+          title: "姓名"
+        - type:  "email"
+          desc:  "签署CLA的邮箱"
+          title: "邮箱"
+      - language: "English"
+        fields:
+        - type:  "name"
+          desc:  "Your name"
+          title: "Name"
+        - type:  "email"
+          desc:  "Email for signing CLA"
+          title: "E-Mail"
 
 mongodb:
   db:
     conn: "{MONGODB_CONNECTION}"
     db: "${MONGODB_NAME}"
     ca_file: ./mongodb_ca.crt
-  collections: 
+  collections:
     org: org
     cla: cla
     link: link
@@ -61,7 +128,7 @@ code_platform:
       redirect_url: "${CLA_PLATFORM_URL}/api/v1/auth/gitee/login"
       scope:
       - user_info
-      - groups  
+      - groups
     - platform: github
       client_id: "{GITHUB_CLIENT_ID}"
       client_secret: "{GITHUB_CLIENT_SECRET}"

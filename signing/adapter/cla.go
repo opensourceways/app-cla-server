@@ -134,21 +134,25 @@ func (adapter *claAdatper) cmdToAddCLA(opt *models.CLACreateOpt) (
 		return
 	}
 
-	cmd.Fields, err = adapter.toFields(cmd.Type, opt.Fields)
+	cmd.Fields, err = adapter.toFields(cmd.Type, cmd.Language, opt.Fields)
 
 	return
 }
 
-func (adapter *claAdatper) toFields(claType dp.CLAType, fields []models.CLAField) (r []domain.Field, err error) {
+func (adapter *claAdatper) toFields(claType dp.CLAType, lang dp.Language, fields []models.CLAFieldCreateOpt) (
+	r []domain.Field, err error,
+) {
 	if len(fields) == 0 {
 		err = errors.New("no fields")
 
 		return
 	}
 
-	f := dp.NewCorpCLAFieldType
-	if dp.IsCLATypeIndividual(claType) {
-		f = dp.NewIndividualCLAFieldType
+	all := dp.GetCLAFileds(claType, lang)
+	allMap := make(map[string]*dp.CLAField, len(all))
+	for i := range all {
+		item := &all[i]
+		allMap[item.Type] = item
 	}
 
 	m := map[string]bool{}
@@ -157,27 +161,27 @@ func (adapter *claAdatper) toFields(claType dp.CLAType, fields []models.CLAField
 	for i := range fields {
 		item := &fields[i]
 
-		m[item.Type] = true
+		if m[item.Type] {
+			err = errors.New("duplicate fields")
 
-		if r[i], err = adapter.toField(item, f); err != nil {
 			return
 		}
-	}
+		m[item.Type] = true
 
-	if len(m) != len(fields) {
-		err = errors.New("duplicate fields")
+		if r[i], err = adapter.toField(item, allMap); err != nil {
+			return
+		}
 	}
 
 	return
 }
 
-func (adapter *claAdatper) toField(
-	opt *models.CLAField,
-	f func(string) (dp.CLAFieldType, error),
-) (domain.Field, error) {
-	t, err := f(opt.Type)
-	if err != nil {
-		return domain.Field{}, err
+func (adapter *claAdatper) toField(opt *models.CLAFieldCreateOpt, all map[string]*dp.CLAField) (
+	domain.Field, error,
+) {
+	field, ok := all[opt.Type]
+	if !ok {
+		return domain.Field{}, errors.New("invalid field")
 	}
 
 	if _, err := strconv.Atoi(opt.ID); err != nil {
@@ -186,9 +190,7 @@ func (adapter *claAdatper) toField(
 
 	return domain.Field{
 		Id:       opt.ID,
-		Desc:     opt.Description,
-		Type:     t,
-		Title:    opt.Title,
 		Required: opt.Required,
+		CLAField: *field,
 	}, nil
 }

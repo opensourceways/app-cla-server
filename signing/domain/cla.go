@@ -25,8 +25,7 @@ func (cla *CLA) isMe(cla1 *CLA) bool {
 
 type Field struct {
 	Id       string
-	Type     dp.CLAFieldType
-	Desc     string
-	Title    string
 	Required bool
+
+	dp.CLAField
 }

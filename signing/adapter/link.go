@@ -107,7 +107,7 @@ func (adapter *linkAdatper) toFields(fields []domain.Field) []models.CLAField {
 		item := fields[i]
 		r[i] = models.CLAField{
 			ID:          item.Id,
-			Type:        item.Type.CLAFieldType(),
+			Type:        item.Type,
 			Title:       item.Title,
 			Required:    item.Required,
 			Description: item.Desc,

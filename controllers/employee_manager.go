@@ -53,7 +53,7 @@ func (ctl *EmployeeManagerController) Post() {
 
 	ctl.sendSuccessResp(action, "successfully")
 
-	notifyCorpManagerWhenAdding(&orgInfo, added)
+	notifyCorpManagerWhenAdding(pl.LinkID, &orgInfo, added)
 }
 
 // @Title Delete

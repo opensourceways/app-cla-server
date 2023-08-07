@@ -4,6 +4,7 @@ import (
 	"github.com/opensourceways/app-cla-server/common/infrastructure/mongodb"
 	"github.com/opensourceways/app-cla-server/common/infrastructure/redisdb"
 	"github.com/opensourceways/app-cla-server/config"
+	"github.com/opensourceways/app-cla-server/controllers"
 	"github.com/opensourceways/app-cla-server/models"
 	"github.com/opensourceways/app-cla-server/signing/adapter"
 	"github.com/opensourceways/app-cla-server/signing/app"
@@ -156,6 +157,14 @@ func initSigning(cfg *config.Config) error {
 		adapter.NewLinkAdapter(
 			app.NewLinkService(linkRepo, cla, repo, individual, echelper),
 			claAapter,
+		),
+	)
+
+	//
+	controllers.Init(
+		&cfg.API,
+		repositoryimpl.NewOrg(
+			mongodb.DAO(cfg.Mongodb.Collections.Org),
 		),
 	)
 

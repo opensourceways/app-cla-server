@@ -14,7 +14,6 @@ import (
 	commondb "github.com/opensourceways/app-cla-server/common/infrastructure/mongodb"
 	"github.com/opensourceways/app-cla-server/common/infrastructure/redisdb"
 	"github.com/opensourceways/app-cla-server/config"
-	"github.com/opensourceways/app-cla-server/controllers"
 	"github.com/opensourceways/app-cla-server/interrupts"
 	"github.com/opensourceways/app-cla-server/pdf"
 	_ "github.com/opensourceways/app-cla-server/routers"
@@ -109,8 +108,6 @@ func startSignSerivce(cfg *config.Config) {
 		logs.Error(err)
 		return
 	}
-
-	controllers.Init(&cfg.API)
 
 	if err := commondb.Init(&cfg.Mongodb.DB); err != nil {
 		logs.Error(err)

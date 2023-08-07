@@ -24,6 +24,7 @@ mongodb:
     db: "${MONGODB_NAME}"
     ca_file: ./mongodb_ca.crt
   collections: 
+    org: org
     cla: cla
     link: link
     user: user

@@ -160,7 +160,7 @@ func initSigning(cfg *config.Config) error {
 		),
 	)
 
-	//
+	// controllers
 	controllers.Init(
 		&cfg.API,
 		repositoryimpl.NewOrg(

@@ -8,8 +8,8 @@ import (
 )
 
 var (
-	config  Config
-	listOrg orgHelper
+	config       Config
+	orgWhitelist orgHelper
 )
 
 type orgHelper interface {
@@ -18,7 +18,7 @@ type orgHelper interface {
 
 func Init(cfg *Config, h orgHelper) {
 	config = *cfg
-	listOrg = h
+	orgWhitelist = h
 }
 
 type Config struct {

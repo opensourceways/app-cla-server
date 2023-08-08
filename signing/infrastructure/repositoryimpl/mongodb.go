@@ -25,6 +25,7 @@ type dao interface {
 	DocIdsFilter(ids []string) (bson.M, error)
 
 	UpdateDoc(filter bson.M, doc bson.M, version int) error
+	UpdateDocsWithoutVersion(filter bson.M, doc bson.M) error
 	PushArraySingleItem(filter bson.M, field string, doc interface{}, version int) error
 	PushArrayMultiItems(filter bson.M, array string, value bson.A, version int) error
 	PullArrayMultiItems(filter bson.M, array string, filterOfItem bson.M, version int) error

@@ -6,6 +6,8 @@ import (
 	"github.com/opensourceways/app-cla-server/signing/domain"
 )
 
+const fieldDeletedAt = "deleted_at"
+
 func toIndividualSigningDO(is *domain.IndividualSigning) individualSigningDO {
 	return individualSigningDO{
 		CLAId:    is.Link.CLAId,

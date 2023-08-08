@@ -14,7 +14,7 @@ func (impl *corpSigning) SaveCorpPDF(cs *domain.CorpSigning, pdf []byte) error {
 	}
 
 	err = impl.dao.UpdateDoc(
-		index, bson.M{fieldPDF: pdf, fieldHasPDF: true}, cs.Version,
+		index, bson.M{fieldPDF: pdf, fieldHasPDF: true, fieldTriggered: true}, cs.Version,
 	)
 	if err != nil && impl.dao.IsDocNotExists(err) {
 		err = commonRepo.NewErrorConcurrentUpdating(err)

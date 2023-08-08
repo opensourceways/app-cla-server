@@ -26,6 +26,7 @@ const (
 	fieldVersion   = "version"
 	fieldManagers  = "managers"
 	fieldEmployees = "employees"
+	fieldTriggered = "triggered"
 )
 
 func toCorpSigningDO(v *domain.CorpSigning) corpSigningDO {
@@ -60,6 +61,10 @@ type corpSigningDO struct {
 	Employees []employeeSigningDO `bson:"employees"     json:"employees"`
 	Deleted   []employeeSigningDO `bson:"deleted"       json:"deleted"`
 	Version   int                 `bson:"version"       json:"-"`
+
+	// uploading pdf or adding email domain will trigger individual signing checking
+	// which will delete the one that belongs to a corp.
+	Triggered bool `bson:"triggered" json:"triggered,omitempty"`
 }
 
 func (do *corpSigningDO) toDoc() (bson.M, error) {

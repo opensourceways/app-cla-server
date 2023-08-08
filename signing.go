@@ -25,6 +25,7 @@ import (
 	"github.com/opensourceways/app-cla-server/signing/infrastructure/repositoryimpl"
 	"github.com/opensourceways/app-cla-server/signing/infrastructure/smtpimpl"
 	"github.com/opensourceways/app-cla-server/signing/infrastructure/symmetricencryptionimpl"
+	"github.com/opensourceways/app-cla-server/signing/watch"
 )
 
 func initSigning(cfg *config.Config) error {
@@ -167,6 +168,9 @@ func initSigning(cfg *config.Config) error {
 			mongodb.DAO(cfg.Mongodb.Collections.Org),
 		),
 	)
+
+	// watch
+	watch.Start(&cfg.Watch, repo, individual)
 
 	return nil
 }

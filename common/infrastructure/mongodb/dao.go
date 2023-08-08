@@ -139,6 +139,14 @@ func (impl *daoImpl) MoveArrayItem(filter bson.M, from string, filterOfItem bson
 	)
 }
 
+func (impl *daoImpl) UpdateDocsWithoutVersion(filter bson.M, v bson.M) error {
+	return impl.withContext(func(ctx context.Context) error {
+		_, err := impl.col.UpdateMany(ctx, filter, bson.M{mongoCmdSet: v})
+
+		return err
+	})
+}
+
 func (impl *daoImpl) UpdateDoc(filter bson.M, v bson.M, version int) error {
 	return impl.updateDoc(filter, version, bson.M{mongoCmdSet: v})
 }

@@ -13,8 +13,9 @@ func (impl *corpSigning) AddEmailDomain(cs *domain.CorpSigning, domain string) e
 		return err
 	}
 
-	err = impl.dao.PushArraySingleItem(
-		index, childField(fieldCorp, fieldDomains), domain, cs.Version,
+	err = impl.dao.PushArraySingleItemAndUpdate(
+		index, childField(fieldCorp, fieldDomains), domain,
+		bson.M{fieldTriggered: true}, cs.Version,
 	)
 	if err != nil && impl.dao.IsDocNotExists(err) {
 		err = commonRepo.NewErrorConcurrentUpdating(err)

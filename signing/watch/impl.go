@@ -24,11 +24,15 @@ func Start(
 	}
 
 	impl.start()
+
+	logs.Info("start to watch corp signing")
 }
 
 func Stop() {
 	if impl != nil {
 		impl.exit()
+
+		logs.Info("stop watching corp signing")
 	}
 }
 
@@ -85,7 +89,7 @@ func (impl *watchingImpl) watch() {
 	for {
 		triggered, err := impl.cs.ListTriggered()
 		if err != nil {
-			logs.Error("find to list triggered corp signings, err: %s", err.Error())
+			logs.Error("failed to list triggered corp signings, err: %s", err.Error())
 		}
 
 		for _, pr := range triggered {
@@ -115,7 +119,7 @@ func (impl *watchingImpl) watch() {
 func (impl *watchingImpl) handle(corp repositoryimpl.TriggeredCorp) {
 	if err := impl.ins.RemoveAll(corp.LinkId, corp.Domains); err != nil {
 		logs.Error(
-			"remove individual signings failed, csid:%s, err:%s",
+			"failed to remove individual signings, csid:%s, err:%s",
 			corp.Id, err.Error(),
 		)
 
@@ -123,6 +127,9 @@ func (impl *watchingImpl) handle(corp repositoryimpl.TriggeredCorp) {
 	}
 
 	if err := impl.cs.ResetTriggered(corp.Id, corp.Version); err != nil {
-		logs.Error("reset triggered failed, csid:%s, err:%s", corp.Id, err.Error())
+		logs.Error(
+			"failed to reset triggered corp signing, csid:%s, err:%s",
+			corp.Id, err.Error(),
+		)
 	}
 }

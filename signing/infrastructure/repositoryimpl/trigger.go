@@ -53,19 +53,7 @@ func (impl *corpSigning) ResetTriggered(csId string, version int) error {
 
 	doc := bson.M{fieldTriggered: false}
 
-	if err = impl.dao.UpdateDoc(filter, doc, version); err == nil {
-		return nil
-	}
-	if !impl.dao.IsDocNotExists(err) {
-		return err
-	}
-
-	var do corpSigningDO
-	if err = impl.dao.GetDoc(filter, bson.M{fieldVersion: 1}, &do); err != nil {
-		return err
-	}
-
-	return impl.dao.UpdateDoc(filter, doc, do.Version)
+	return impl.dao.UpdateDoc(filter, doc, version)
 }
 
 func (impl *individualSigning) RemoveAll(linkId string, domains []string) error {

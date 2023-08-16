@@ -6,6 +6,7 @@ import (
 
 	"github.com/opensourceways/app-cla-server/models"
 	"github.com/opensourceways/app-cla-server/signing/app"
+	"github.com/opensourceways/app-cla-server/signing/domain"
 	"github.com/opensourceways/app-cla-server/signing/domain/dp"
 )
 
@@ -46,9 +47,9 @@ func (adapter *corpSigningAdatper) Verify(linkId, email string) (string, models.
 }
 
 func (adapter *corpSigningAdatper) Sign(
-	linkId string, opt *models.CorporationSigningCreateOption,
+	linkId string, opt *models.CorporationSigningCreateOption, claFields []models.CLAField,
 ) models.IModelError {
-	cmd, err := adapter.cmdToSignCorpCLA(linkId, opt)
+	cmd, err := adapter.cmdToSignCorpCLA(linkId, opt, claFields)
 	if err != nil {
 		return errBadRequestParameter(err)
 	}
@@ -61,7 +62,7 @@ func (adapter *corpSigningAdatper) Sign(
 }
 
 func (adapter *corpSigningAdatper) cmdToSignCorpCLA(
-	linkId string, opt *models.CorporationSigningCreateOption,
+	linkId string, opt *models.CorporationSigningCreateOption, claFields []models.CLAField,
 ) (
 	cmd app.CmdToSignCorpCLA, err error,
 ) {
@@ -95,7 +96,13 @@ func (adapter *corpSigningAdatper) cmdToSignCorpCLA(
 		return
 	}
 
-	cmd.AllSingingInfo = opt.Info
+	cmd.AllSingingInfo, err = getAllSigningInfo(
+		opt.Info, claFields, dp.CLATypeCorp, cmd.Link.Language,
+	)
+	if err != nil {
+		return
+	}
+
 	cmd.VerificationCode = opt.VerificationCode
 
 	return
@@ -181,4 +188,34 @@ func (adapter *corpSigningAdatper) FindCorpSummary(linkId string, email string) 
 	}
 
 	return v, nil
+}
+
+func getAllSigningInfo(
+	input models.TypeSigningInfo, fields []models.CLAField, t dp.CLAType, l dp.Language,
+) (domain.AllSingingInfo, error) {
+	m := map[string]*dp.CLAField{}
+	whitelist := dp.GetCLAFileds(t, l)
+	for i := range whitelist {
+		item := &whitelist[i]
+		m[item.Type] = item
+	}
+
+	r := domain.AllSingingInfo{}
+	for i := range fields {
+		field := &fields[i]
+
+		if v, ok := input[field.ID]; !ok {
+			if field.Required {
+				return nil, errors.New("missing field value")
+			}
+		} else {
+			if !m[field.Type].IsValidValue(v) {
+				return nil, errors.New("invalid field value")
+			}
+
+			r[field.ID] = v
+		}
+	}
+
+	return r, nil
 }

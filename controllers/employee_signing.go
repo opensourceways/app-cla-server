@@ -79,9 +79,7 @@ func (ctl *EmployeeSigningController) Sign() {
 		return
 	}
 
-	info.Info = getSingingInfo(info.Info, claInfo.Fields)
-
-	managers, merr := models.SignEmployeeCLA(&info)
+	managers, merr := models.SignEmployeeCLA(&info, claInfo.Fields)
 	if merr != nil {
 		if merr.IsErrorOf(models.ErrNoLinkOrResigned) {
 			ctl.sendFailedResponse(400, errResigned, merr, action)

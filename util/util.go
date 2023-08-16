@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"text/template"
 	"time"
@@ -14,6 +15,12 @@ import (
 
 	"sigs.k8s.io/yaml"
 )
+
+var reXSS = regexp.MustCompile(`[&<>"'/()]`)
+
+func HasXSS(s string) bool {
+	return reXSS.MatchString(s)
+}
 
 func StrLen(s string) int {
 	return utf8.RuneCountInString(s)

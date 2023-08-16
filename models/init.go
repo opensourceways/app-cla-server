@@ -17,7 +17,7 @@ var (
 
 type corpSigningAdapter interface {
 	Verify(linkId, email string) (string, IModelError)
-	Sign(linkId string, opt *CorporationSigningCreateOption) IModelError
+	Sign(linkId string, opt *CorporationSigningCreateOption, claFields []CLAField) IModelError
 	Remove(string) IModelError
 	Get(csId string) (CorporationSigning, IModelError)
 	List(linkId string) ([]CorporationSigningSummary, IModelError)
@@ -31,7 +31,7 @@ func RegisterCorpSigningAdapter(a corpSigningAdapter) {
 // employeeSigningAdapter
 type employeeSigningAdapter interface {
 	Verify(csId, email string) (string, IModelError)
-	Sign(opt *EmployeeSigning) ([]CorporationManagerListResult, IModelError)
+	Sign(opt *EmployeeSigning, claFields []CLAField) ([]CorporationManagerListResult, IModelError)
 	Remove(csId, esId string) (string, IModelError)
 	Update(csId, esId string, enabled bool) (string, IModelError)
 	List(csId string) ([]IndividualSigningBasicInfo, IModelError)
@@ -44,7 +44,7 @@ func RegisterEmployeeSigningAdapter(a employeeSigningAdapter) {
 // individualSigningAdapter
 type individualSigningAdapter interface {
 	Verify(linkId, email string) (string, IModelError)
-	Sign(linkId string, opt *IndividualSigning) IModelError
+	Sign(linkId string, opt *IndividualSigning, claFields []CLAField) IModelError
 	Check(linkId string, email string) (bool, IModelError)
 }
 

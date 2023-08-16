@@ -7,12 +7,18 @@ import (
 )
 
 func NewName(v string) (Name, error) {
+	err := errors.New("invalid name")
+
 	if v == "" {
-		return nil, errors.New("invalid name")
+		return nil, err
 	}
 
 	if util.StrLen(v) > config.MaxLengthOfName {
-		return nil, errors.New("invalid name")
+		return nil, err
+	}
+
+	if util.HasXSS(v) {
+		return nil, err
 	}
 
 	return name(v), nil

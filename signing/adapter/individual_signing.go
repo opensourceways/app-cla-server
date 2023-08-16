@@ -21,8 +21,10 @@ func (adapter *individualSigningAdatper) Verify(linkId, email string) (string, m
 }
 
 // Sign
-func (adapter *individualSigningAdatper) Sign(linkId string, opt *models.IndividualSigning) models.IModelError {
-	cmd, err := adapter.cmdToSignIndividualCLA(linkId, opt)
+func (adapter *individualSigningAdatper) Sign(
+	linkId string, opt *models.IndividualSigning, claFields []models.CLAField,
+) models.IModelError {
+	cmd, err := adapter.cmdToSignIndividualCLA(linkId, opt, claFields)
 	if err != nil {
 		return errBadRequestParameter(err)
 	}
@@ -34,7 +36,9 @@ func (adapter *individualSigningAdatper) Sign(linkId string, opt *models.Individ
 	return nil
 }
 
-func (adapter *individualSigningAdatper) cmdToSignIndividualCLA(linkId string, opt *models.IndividualSigning) (
+func (adapter *individualSigningAdatper) cmdToSignIndividualCLA(
+	linkId string, opt *models.IndividualSigning, claFields []models.CLAField,
+) (
 	cmd app.CmdToSignIndividualCLA, err error,
 ) {
 	if !opt.PrivacyChecked {
@@ -57,7 +61,13 @@ func (adapter *individualSigningAdatper) cmdToSignIndividualCLA(linkId string, o
 		return
 	}
 
-	cmd.AllSingingInfo = opt.Info
+	cmd.AllSingingInfo, err = getAllSigningInfo(
+		opt.Info, claFields, dp.CLATypeIndividual, cmd.Link.Language,
+	)
+	if err != nil {
+		return
+	}
+
 	cmd.VerificationCode = opt.VerificationCode
 
 	return

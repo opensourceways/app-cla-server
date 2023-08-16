@@ -21,10 +21,10 @@ func (adapter *employeeSigningAdatper) Verify(csId, email string) (string, model
 }
 
 // Sign
-func (adapter *employeeSigningAdatper) Sign(opt *models.EmployeeSigning) (
+func (adapter *employeeSigningAdatper) Sign(opt *models.EmployeeSigning, claFields []models.CLAField) (
 	[]models.CorporationManagerListResult, models.IModelError,
 ) {
-	cmd, err := adapter.cmdToSignEmployeeCLA(opt)
+	cmd, err := adapter.cmdToSignEmployeeCLA(opt, claFields)
 	if err != nil {
 		return nil, errBadRequestParameter(err)
 	}
@@ -42,7 +42,7 @@ func (adapter *employeeSigningAdatper) Sign(opt *models.EmployeeSigning) (
 	return v, nil
 }
 
-func (adapter *employeeSigningAdatper) cmdToSignEmployeeCLA(opt *models.EmployeeSigning) (
+func (adapter *employeeSigningAdatper) cmdToSignEmployeeCLA(opt *models.EmployeeSigning, claFields []models.CLAField) (
 	cmd app.CmdToSignEmployeeCLA, err error,
 ) {
 	if !opt.PrivacyChecked {
@@ -64,8 +64,14 @@ func (adapter *employeeSigningAdatper) cmdToSignEmployeeCLA(opt *models.Employee
 		return
 	}
 
+	cmd.AllSingingInfo, err = getAllSigningInfo(
+		opt.Info, claFields, dp.CLATypeIndividual, cmd.CLA.Language,
+	)
+	if err != nil {
+		return
+	}
+
 	cmd.CorpSigningId = opt.CorpSigningId
-	cmd.AllSingingInfo = opt.Info
 	cmd.VerificationCode = opt.VerificationCode
 
 	return

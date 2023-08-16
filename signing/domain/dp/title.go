@@ -7,12 +7,18 @@ import (
 )
 
 func NewTitle(v string) (Title, error) {
+	err := errors.New("invalid title")
+
 	if v == "" {
-		return nil, errors.New("invalid title")
+		return nil, err
 	}
 
 	if util.StrLen(v) > config.MaxLengthOfTitle {
-		return nil, errors.New("invalid title")
+		return nil, err
+	}
+
+	if util.HasXSS(v) {
+		return nil, err
 	}
 
 	return title(v), nil

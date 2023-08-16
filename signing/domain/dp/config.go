@@ -1,6 +1,10 @@
 package dp
 
-import "strings"
+import (
+	"strings"
+
+	"github.com/opensourceways/app-cla-server/util"
+)
 
 var config Config
 
@@ -98,7 +102,17 @@ type claFields struct {
 
 // CLAField
 type CLAField struct {
-	Type  string `json:"type"`
-	Desc  string `json:"desc"`
-	Title string `json:"title"`
+	Type      string `json:"type"`
+	Desc      string `json:"desc"`
+	Title     string `json:"title"`
+	MaxLength int    `json:"max_length"`
+}
+
+func (f *CLAField) IsValidValue(v string) bool {
+	if util.StrLen(v) > f.MaxLength {
+		return false
+	}
+
+	// TODO there is a case that the field can include string of XSS
+	return !util.HasXSS(v)
 }

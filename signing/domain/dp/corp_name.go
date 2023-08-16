@@ -7,12 +7,18 @@ import (
 )
 
 func NewCorpName(v string) (CorpName, error) {
+	err := errors.New("invalid corp name")
+
 	if v == "" {
-		return nil, errors.New("invalid corp name")
+		return nil, err
 	}
 
 	if util.StrLen(v) > config.MaxLengthOfCorpName {
-		return nil, errors.New("invalid corp name")
+		return nil, err
+	}
+
+	if util.HasXSS(v) {
+		return nil, err
 	}
 
 	return corpName(v), nil

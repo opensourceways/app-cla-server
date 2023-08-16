@@ -66,8 +66,8 @@ func VCOfCorpSigning(linkId, email string) (string, IModelError) {
 	return corpSigningAdapterInstance.Verify(linkId, email)
 }
 
-func SignCropCLA(linkId string, opt *CorporationSigningCreateOption) IModelError {
-	return corpSigningAdapterInstance.Sign(linkId, opt)
+func SignCropCLA(linkId string, opt *CorporationSigningCreateOption, claFields []CLAField) IModelError {
+	return corpSigningAdapterInstance.Sign(linkId, opt, claFields)
 }
 
 func RemoveCorpSigning(csId string) IModelError {
@@ -102,8 +102,8 @@ func VCOfEmployeeSigning(csId, email string) (string, IModelError) {
 	return employeeSigningAdapterInstance.Verify(csId, email)
 }
 
-func SignEmployeeCLA(opt *EmployeeSigning) ([]CorporationManagerListResult, IModelError) {
-	return employeeSigningAdapterInstance.Sign(opt)
+func SignEmployeeCLA(opt *EmployeeSigning, claFields []CLAField) ([]CorporationManagerListResult, IModelError) {
+	return employeeSigningAdapterInstance.Sign(opt, claFields)
 }
 
 func UpdateEmployeeSigning(csId, esId string, enabled bool) (string, IModelError) {
@@ -142,8 +142,8 @@ func VCOfIndividualSigning(linkId, email string) (string, IModelError) {
 	return individualSigningAdapterInstance.Verify(linkId, email)
 }
 
-func SignIndividualCLA(linkId string, opt *IndividualSigning) IModelError {
-	return individualSigningAdapterInstance.Sign(linkId, opt)
+func SignIndividualCLA(linkId string, opt *IndividualSigning, claFields []CLAField) IModelError {
+	return individualSigningAdapterInstance.Sign(linkId, opt, claFields)
 }
 
 func CheckSigning(linkId string, email string) (bool, IModelError) {

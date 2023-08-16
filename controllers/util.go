@@ -67,21 +67,6 @@ func notifyCorpManagerWhenAdding(linkId string, orgInfo *models.OrgInfo, info []
 	}
 }
 
-func getSingingInfo(info models.TypeSigningInfo, fields []models.CLAField) models.TypeSigningInfo {
-	if len(info) == 0 {
-		return info
-	}
-
-	r := models.TypeSigningInfo{}
-	for i := range fields {
-		fid := fields[i].ID
-		if v, ok := info[fid]; ok {
-			r[fid] = v
-		}
-	}
-	return r
-}
-
 func fetchInputPayloadData(input []byte, info interface{}) *failedApiResult {
 	if err := json.Unmarshal(input, info); err != nil {
 		return newFailedApiResult(

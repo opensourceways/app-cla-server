@@ -50,7 +50,7 @@ domain:
           desc:       "签署者所在公司名称"
           title:      "公司名称"
           max_length: 100
-      - language:      "English"
+      - language: "English"
         fields:
         - type:       "fax"
           desc:       "Fax of the corporation"
@@ -82,7 +82,7 @@ domain:
           max_length: 100
     - type: individual
       fields:
-      - language:      "Chinese"
+      - language: "Chinese"
         fields:
         - type:       "name"
           desc:       "你的姓名"
@@ -92,7 +92,7 @@ domain:
           desc:       "签署CLA的邮箱"
           title:      "邮箱"
           max_length: 100
-      - language:      "English"
+      - language: "English"
         fields:
         - type:       "name"
           desc:       "Your name"

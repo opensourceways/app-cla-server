@@ -16,7 +16,7 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
-var reXSS = regexp.MustCompile(`[&<>"'/()]`)
+var reXSS = regexp.MustCompile(`[&<>"'/]`)
 
 func HasXSS(s string) bool {
 	return reXSS.MatchString(s)

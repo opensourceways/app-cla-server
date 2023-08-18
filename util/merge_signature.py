@@ -1,7 +1,7 @@
 import sys
 
-from PyPDF2 import PdfReader
-from PyPDF2 import PdfWriter
+from pypdf import PdfReader
+from pypdf import PdfWriter
 from pathlib import Path
 
 

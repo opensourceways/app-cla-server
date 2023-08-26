@@ -2,9 +2,12 @@ package dp
 
 import (
 	"errors"
+	"regexp"
 
 	"github.com/opensourceways/app-cla-server/util"
 )
+
+var reCorpNameXSS = regexp.MustCompile(`[<>"'/]`)
 
 func NewCorpName(v string) (CorpName, error) {
 	err := errors.New("invalid corp name")
@@ -17,7 +20,7 @@ func NewCorpName(v string) (CorpName, error) {
 		return nil, err
 	}
 
-	if util.HasXSS(v) {
+	if reCorpNameXSS.MatchString(v) {
 		return nil, err
 	}
 

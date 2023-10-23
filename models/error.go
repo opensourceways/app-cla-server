@@ -51,6 +51,7 @@ const (
 	ErrCLAExists               ModelErrCode = "cla_exists"
 	ErrTooManyRequest          ModelErrCode = "too_many_request"
 	ErrUserLoginFrozen         ModelErrCode = "user_login_frozen"
+	ErrUserNotExists           ModelErrCode = "user_not_exists"
 	ErrCLAIsUsed               ModelErrCode = "cla_is_used"
 	ErrLinkIsUsed              ModelErrCode = "link_is_used"
 )

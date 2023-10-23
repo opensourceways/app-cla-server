@@ -26,6 +26,7 @@ func NewUserService(
 }
 
 type UserService interface {
+	IsAValidUser(linkId string, email dp.EmailAddr) (bool, error)
 	Add(linkId, csId string, managers []domain.Manager) (map[string]dp.Password, []string, error)
 	Remove([]string)
 	RemoveByAccount(linkId string, accounts []dp.Account)
@@ -137,6 +138,18 @@ func (s *userService) ResetPassword(linkId string, email dp.EmailAddr, newOne dp
 	u.ResetPassword(v)
 
 	return s.repo.SavePassword(&u)
+}
+
+func (s *userService) IsAValidUser(linkId string, email dp.EmailAddr) (bool, error) {
+	if _, err := s.repo.FindByEmail(linkId, email); err != nil {
+		if commonRepo.IsErrorResourceNotFound(err) {
+			return false, nil
+		}
+
+		return false, err
+	}
+
+	return true, nil
 }
 
 func (s *userService) add(linkId, csId string, manager *domain.Manager) (p dp.Password, index string, err error) {

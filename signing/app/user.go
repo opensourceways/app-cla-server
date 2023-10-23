@@ -55,6 +55,14 @@ func (s *userService) ChangePassword(cmd *CmdToChangePassword) error {
 }
 
 func (s *userService) GenKeyForPasswordRetrieval(cmd *CmdToGenKeyForPasswordRetrieval) (string, error) {
+	b, err := s.us.IsAValidUser(cmd.Id, cmd.EmailAddr)
+	if err != nil {
+		return "", err
+	}
+	if !b {
+		return "", domain.NewDomainError(domain.ErrorCodeUserNotExists)
+	}
+
 	code, err := s.vcService.newCodeIfItCan(cmd, s.interval)
 	if err != nil {
 		return "", err

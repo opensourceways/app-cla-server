@@ -106,6 +106,26 @@ func (do *corpSigningDO) toCorpSigningSummary(cs *repository.CorpSigningSummary)
 	return
 }
 
+func (do *corpSigningDO) allManagers() ([]domain.Manager, error) {
+	v, err := do.toManagers()
+	if err != nil {
+		return nil, err
+	}
+
+	if do.Admin.isEmpty() {
+		return v, nil
+	}
+
+	admin, err := do.Admin.toManager()
+	if err != nil {
+		return nil, err
+	}
+
+	v = append(v, admin)
+
+	return v, nil
+}
+
 func (do *corpSigningDO) toCorpSigning(cs *domain.CorpSigning) (err error) {
 	rep, err := do.Rep.toRep()
 	if err != nil {

@@ -1,10 +1,6 @@
 package domain
 
-import (
-	"strconv"
-
-	"github.com/opensourceways/app-cla-server/signing/domain/dp"
-)
+import "github.com/opensourceways/app-cla-server/signing/domain/dp"
 
 const (
 	RoleAdmin   = "admin"
@@ -86,20 +82,9 @@ func (cs *CorpSigning) CanSetAdmin() error {
 	return nil
 }
 
-func (cs *CorpSigning) SetAdmin(n int) error {
-	if err := cs.CanSetAdmin(); err != nil {
-		return err
-	}
-
-	v := RoleAdmin
-	if n > 0 {
-		v += strconv.Itoa(n)
-	}
-
-	cs.Admin.Id = v
+func (cs *CorpSigning) SetAdmin(adminId string) {
+	cs.Admin.Id = adminId
 	cs.Admin.Representative = cs.Rep
-
-	return nil
 }
 
 func (cs *CorpSigning) AddEmailDomain(email dp.EmailAddr) error {

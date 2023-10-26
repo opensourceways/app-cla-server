@@ -86,3 +86,34 @@ func (impl *corpSigning) FindEmployeeManagers(csId string) ([]domain.Manager, er
 
 	return do.toManagers()
 }
+
+func (impl *corpSigning) FindCorpManagers(linkId, emailDomain string) ([]domain.Manager, error) {
+	filter := linkIdFilter(linkId)
+	filter[childField(fieldCorp, fieldDomains)] = bson.M{mongodbCmdIn: bson.A{emailDomain}}
+
+	project := bson.M{
+		fieldAdmin:    1,
+		fieldManagers: 1,
+	}
+
+	var dos []corpSigningDO
+
+	if err := impl.dao.GetDocs(filter, project, &dos); err != nil {
+		return nil, err
+	}
+
+	r := make([]domain.Manager, 0, len(dos))
+
+	for i := range dos {
+		v, err := dos[i].allManagers()
+		if err != nil {
+			return nil, err
+		}
+
+		if len(v) > 0 {
+			r = append(r, v...)
+		}
+	}
+
+	return r, nil
+}

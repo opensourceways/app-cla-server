@@ -79,10 +79,6 @@ func (s *corpAdminService) getAdminId(cs *domain.CorpSigning) (string, error) {
 		return "", err
 	}
 
-	if len(v) == 0 {
-		return "", errors.New("no corp signing, impossible.")
-	}
-
 	m := map[string]bool{}
 	for i := range v {
 		m[v[i].Id] = true

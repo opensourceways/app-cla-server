@@ -2,6 +2,7 @@ package app
 
 import (
 	"errors"
+	"strconv"
 
 	"github.com/opensourceways/app-cla-server/signing/domain"
 	"github.com/opensourceways/app-cla-server/signing/domain/repository"
@@ -37,22 +38,12 @@ func (s *corpAdminService) Add(csId string) (dto ManagerDTO, err error) {
 		return
 	}
 
-	v, err := s.repo.FindCorpSummary(cs.Link.Id, cs.PrimaryEmailDomain())
+	adminId, err := s.getAdminId(&cs)
 	if err != nil {
 		return
 	}
 
-	n := len(v)
-	if n == 0 {
-		err = errors.New("no corp signing, impossible.")
-
-		return
-	}
-
-	// subtract itself
-	if err = cs.SetAdmin(n - 1); err != nil {
-		return
-	}
+	cs.SetAdmin(adminId)
 
 	pws, ids, err := s.userService.Add(cs.Link.Id, csId, []domain.Manager{cs.Admin})
 	if err != nil {
@@ -80,4 +71,25 @@ func (s *corpAdminService) Add(csId string) (dto ManagerDTO, err error) {
 	}
 
 	return
+}
+
+func (s *corpAdminService) getAdminId(cs *domain.CorpSigning) (string, error) {
+	v, err := s.repo.FindCorpManagers(cs.Link.Id, cs.PrimaryEmailDomain())
+	if err != nil {
+		return "", err
+	}
+
+	m := map[string]bool{}
+	for i := range v {
+		m[v[i].Id] = true
+	}
+
+	r := domain.RoleAdmin
+
+	for i := 0; m[r]; {
+		i++
+		r = domain.RoleAdmin + strconv.Itoa(i)
+	}
+
+	return r, nil
 }

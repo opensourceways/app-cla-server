@@ -27,6 +27,7 @@ type CorpSummary struct {
 type CorpSigning interface {
 	Add(*domain.CorpSigning) error
 	FindCorpSummary(linkId, domain string) ([]CorpSummary, error)
+	FindCorpManagers(linkId, domain string) ([]domain.Manager, error)
 	Find(string) (domain.CorpSigning, error)
 	Remove(*domain.CorpSigning) error
 	FindAll(linkId string) ([]CorpSigningSummary, error)

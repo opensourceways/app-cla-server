@@ -1,7 +1,6 @@
 package app
 
 import (
-	"errors"
 	"strconv"
 
 	"github.com/opensourceways/app-cla-server/signing/domain"

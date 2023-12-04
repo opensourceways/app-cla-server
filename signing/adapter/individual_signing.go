@@ -129,7 +129,7 @@ func (ev emailValidator) validate(email string, expect bool) (dp.EmailAddr, mode
 		return nil, models.NewModelError(models.ErrNotAnEmail, err)
 	}
 
-	b := ev[strings.ToLower(v.Domain())]
+	b := ev.has(v)
 
 	if (expect && !b) || (!expect && b) {
 		return nil, models.NewModelError(

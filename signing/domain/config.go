@@ -32,7 +32,7 @@ type Config struct {
 }
 
 func (cfg *Config) InvalidCorpEmailDomains() []string {
-	return strings.Split(cfg.InvalidCorpEmailDomain, ",")
+	return strings.Split(strings.ToLower(cfg.InvalidCorpEmailDomain), ",")
 }
 
 func (cfg *Config) SetDefault() {

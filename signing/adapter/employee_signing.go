@@ -17,7 +17,12 @@ type employeeSigningAdatper struct {
 }
 
 func (adapter *employeeSigningAdatper) Verify(csId, email string) (string, models.IModelError) {
-	return createCodeForSigning(csId, email, adapter.s.Verify)
+	v, err := dp.NewEmailAddr(email)
+	if err != nil {
+		return "", errBadRequestParameter(err)
+	}
+
+	return createCodeForSigning(csId, v, adapter.s.Verify)
 }
 
 // Sign

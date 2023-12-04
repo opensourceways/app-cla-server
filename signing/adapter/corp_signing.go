@@ -2,7 +2,6 @@ package adapter
 
 import (
 	"errors"
-	"strings"
 
 	"github.com/opensourceways/app-cla-server/models"
 	"github.com/opensourceways/app-cla-server/signing/app"
@@ -14,36 +13,29 @@ func NewCorpSigningAdapter(
 	s app.CorpSigningService,
 	invalidCorpEmailDomain []string,
 ) *corpSigningAdatper {
-	v := make([]string, len(invalidCorpEmailDomain))
-	for i, item := range invalidCorpEmailDomain {
-		v[i] = strings.ToLower(item)
-	}
-
 	return &corpSigningAdatper{
-		s:                      s,
-		invalidCorpEmailDomain: v,
+		s:              s,
+		emailValidator: newEmailValidator(invalidCorpEmailDomain),
 	}
 }
 
 type corpSigningAdatper struct {
-	s                      app.CorpSigningService
-	invalidCorpEmailDomain []string
+	s app.CorpSigningService
+
+	emailValidator
 }
 
-func (adapter *corpSigningAdatper) isValidaCorpEmailDomain(v string) bool {
-	v = strings.ToLower(v)
-
-	for _, item := range adapter.invalidCorpEmailDomain {
-		if item == v {
-			return false
-		}
-	}
-
-	return true
+func (adapter *corpSigningAdatper) checkEmail(email string) (dp.EmailAddr, models.IModelError) {
+	return adapter.emailValidator.validate(email, false)
 }
 
 func (adapter *corpSigningAdatper) Verify(linkId, email string) (string, models.IModelError) {
-	return createCodeForSigning(linkId, email, adapter.s.Verify)
+	v, err := adapter.checkEmail(email)
+	if err != nil {
+		return "", err
+	}
+
+	return createCodeForSigning(linkId, v, adapter.s.Verify)
 }
 
 func (adapter *corpSigningAdatper) Sign(
@@ -86,13 +78,7 @@ func (adapter *corpSigningAdatper) cmdToSignCorpCLA(
 		return
 	}
 
-	if cmd.Rep.EmailAddr, err = dp.NewEmailAddr(opt.AdminEmail); err != nil {
-		return
-	}
-
-	if !adapter.isValidaCorpEmailDomain(cmd.Rep.EmailAddr.Domain()) {
-		err = errors.New("invalid email domain")
-
+	if cmd.Rep.EmailAddr, err = adapter.checkEmail(opt.AdminEmail); err != nil {
 		return
 	}
 

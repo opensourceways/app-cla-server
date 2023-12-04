@@ -2,22 +2,40 @@ package adapter
 
 import (
 	"errors"
+	"strings"
 
 	"github.com/opensourceways/app-cla-server/models"
 	"github.com/opensourceways/app-cla-server/signing/app"
 	"github.com/opensourceways/app-cla-server/signing/domain/dp"
 )
 
-func NewIndividualSigningAdapter(s app.IndividualSigningService) *individualSigningAdatper {
-	return &individualSigningAdatper{s}
+func NewIndividualSigningAdapter(
+	s app.IndividualSigningService,
+	allowedEmailDomains []string,
+) *individualSigningAdatper {
+	return &individualSigningAdatper{
+		s:              s,
+		emailValidator: newEmailValidator(allowedEmailDomains),
+	}
 }
 
 type individualSigningAdatper struct {
 	s app.IndividualSigningService
+
+	emailValidator
+}
+
+func (adapter *individualSigningAdatper) checkEmail(email string) (dp.EmailAddr, models.IModelError) {
+	return adapter.emailValidator.validate(email, true)
 }
 
 func (adapter *individualSigningAdatper) Verify(linkId, email string) (string, models.IModelError) {
-	return createCodeForSigning(linkId, email, adapter.s.Verify)
+	v, err := adapter.checkEmail(email)
+	if err != nil {
+		return "", err
+	}
+
+	return createCodeForSigning(linkId, v, adapter.s.Verify)
 }
 
 // Sign
@@ -57,7 +75,7 @@ func (adapter *individualSigningAdatper) cmdToSignIndividualCLA(
 		return
 	}
 
-	if cmd.Rep.EmailAddr, err = dp.NewEmailAddr(opt.Email); err != nil {
+	if cmd.Rep.EmailAddr, err = adapter.checkEmail(opt.Email); err != nil {
 		return
 	}
 
@@ -79,10 +97,11 @@ func (adapter *individualSigningAdatper) Check(linkId string, email string) (boo
 		LinkId: linkId,
 	}
 
-	var err error
-	if cmd.EmailAddr, err = dp.NewEmailAddr(email); err != nil {
-		return false, errBadRequestParameter(err)
+	e, me := adapter.checkEmail(email)
+	if me != nil {
+		return false, me
 	}
+	cmd.EmailAddr = e
 
 	v, err := adapter.s.Check(&cmd)
 	if err != nil {
@@ -90,24 +109,47 @@ func (adapter *individualSigningAdatper) Check(linkId string, email string) (boo
 	}
 
 	return v, nil
+}
 
+// emailValidator
+type emailValidator map[string]bool
+
+func newEmailValidator(v []string) emailValidator {
+	m := map[string]bool{}
+	for _, v := range v {
+		m[v] = true
+	}
+
+	return emailValidator(m)
+}
+
+func (ev emailValidator) validate(email string, expect bool) (dp.EmailAddr, models.IModelError) {
+	v, err := dp.NewEmailAddr(email)
+	if err != nil {
+		return nil, models.NewModelError(models.ErrNotAnEmail, err)
+	}
+
+	b := ev[strings.ToLower(v.Domain())]
+
+	if (expect && !b) || (!expect && b) {
+		return nil, models.NewModelError(
+			models.ErrRestrictedEmailSuffix,
+			errors.New("not allowed email domain"),
+		)
+	}
+
+	return v, nil
 }
 
 func createCodeForSigning(
-	index string, email string,
+	index string, email dp.EmailAddr,
 	f func(*app.CmdToCreateVerificationCode) (string, error),
 ) (
 	string, models.IModelError,
 ) {
-
-	e, err := dp.NewEmailAddr(email)
-	if err != nil {
-		return "", errBadRequestParameter(err)
-	}
-
 	code, err := f(&app.CmdToCreateVerificationCode{
 		Id:        index,
-		EmailAddr: e,
+		EmailAddr: email,
 	})
 	if err != nil {
 		return "", toModelError(err)

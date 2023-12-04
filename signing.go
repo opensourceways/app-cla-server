@@ -69,10 +69,12 @@ func initSigning(cfg *config.Config) error {
 
 	interval := cfg.Domain.Config.GetIntervalOfCreatingVC()
 
+	emailDomains := cfg.Domain.Config.InvalidCorpEmailDomains()
+
 	models.RegisterCorpSigningAdapter(
 		adapter.NewCorpSigningAdapter(
 			app.NewCorpSigningService(repo, vcService, interval),
-			cfg.Domain.Config.InvalidCorpEmailDomains(),
+			emailDomains,
 		),
 	)
 
@@ -105,12 +107,15 @@ func initSigning(cfg *config.Config) error {
 	)
 
 	models.RegisterIndividualSigningAdapter(
-		adapter.NewIndividualSigningAdapter(app.NewIndividualSigningService(
-			vcService,
-			individual,
-			repo,
-			interval,
-		)),
+		adapter.NewIndividualSigningAdapter(
+			app.NewIndividualSigningService(
+				vcService,
+				individual,
+				repo,
+				interval,
+			),
+			emailDomains,
+		),
 	)
 
 	// email credential

@@ -21,7 +21,6 @@ import (
 	"github.com/opensourceways/app-cla-server/signing/domain/dp"
 	"github.com/opensourceways/app-cla-server/signing/infrastructure/emailtmpl"
 	"github.com/opensourceways/app-cla-server/signing/infrastructure/smtpimpl"
-	"github.com/opensourceways/app-cla-server/signing/watch"
 	"github.com/opensourceways/app-cla-server/util"
 	"github.com/opensourceways/app-cla-server/worker"
 )
@@ -130,9 +129,6 @@ func startSignSerivce(cfg *config.Config) {
 
 		return
 	}
-
-	// watch.Start was invoked in initSigning
-	defer watch.Stop()
 
 	worker.Init(pdf.GetPDFGenerator())
 	defer worker.Exit()

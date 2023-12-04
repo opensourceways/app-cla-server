@@ -20,9 +20,8 @@ func NewCorpSigningAdapter(
 }
 
 type corpSigningAdatper struct {
-	s app.CorpSigningService
-
-	emailValidator
+	s              app.CorpSigningService
+	emailValidator emailValidator
 }
 
 func (adapter *corpSigningAdatper) checkEmail(email string) (dp.EmailAddr, models.IModelError) {

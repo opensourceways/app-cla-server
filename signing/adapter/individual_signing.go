@@ -20,9 +20,8 @@ func NewIndividualSigningAdapter(
 }
 
 type individualSigningAdatper struct {
-	s app.IndividualSigningService
-
-	emailValidator
+	s              app.IndividualSigningService
+	emailValidator emailValidator
 }
 
 func (adapter *individualSigningAdatper) checkEmail(email string) (dp.EmailAddr, models.IModelError) {

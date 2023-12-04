@@ -96,11 +96,12 @@ func (adapter *individualSigningAdatper) Check(linkId string, email string) (boo
 		LinkId: linkId,
 	}
 
-	e, me := adapter.checkEmail(email)
-	if me != nil {
-		return false, me
+	var err error
+	if cmd.EmailAddr, err = dp.NewEmailAddr(email); err != nil {
+		return false, errBadRequestParameter(err)
 	}
-	cmd.EmailAddr = e
+
+	cmd.Individual = adapter.emailValidator.has(cmd.EmailAddr)
 
 	v, err := adapter.s.Check(&cmd)
 	if err != nil {
@@ -138,6 +139,10 @@ func (ev emailValidator) validate(email string, expect bool) (dp.EmailAddr, mode
 	}
 
 	return v, nil
+}
+
+func (ev emailValidator) has(email dp.EmailAddr) bool {
+	return ev[strings.ToLower(email.Domain())]
 }
 
 func createCodeForSigning(

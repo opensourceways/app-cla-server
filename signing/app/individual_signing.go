@@ -47,14 +47,6 @@ func (s *individualSigningService) Sign(cmd *CmdToSignIndividualCLA) error {
 		return err
 	}
 
-	v, err := s.corpRepo.FindCorpSummary(cmd.Link.Id, cmd.Rep.EmailAddr.Domain())
-	if err != nil {
-		return err
-	}
-	if len(v) > 0 {
-		return domain.NewDomainError(domain.ErrorCodeIndividualSigningCorpExists)
-	}
-
 	is := cmd.toIndividualSigning()
 	if err := s.repo.Add(&is); err != nil {
 		if commonRepo.IsErrorDuplicateCreating(err) {
@@ -69,12 +61,13 @@ func (s *individualSigningService) Sign(cmd *CmdToSignIndividualCLA) error {
 
 // Check
 func (s *individualSigningService) Check(cmd *CmdToCheckSinging) (bool, error) {
-	n, err := s.repo.Count(cmd.LinkId, cmd.EmailAddr)
-	if err != nil {
-		return false, err
-	}
-	if n > 0 {
-		return true, nil
+	if cmd.Individual {
+		n, err := s.repo.Count(cmd.LinkId, cmd.EmailAddr)
+		if err != nil {
+			return false, err
+		}
+
+		return n > 0, nil
 	}
 
 	v, err := s.corpRepo.FindEmployeesByEmail(cmd.LinkId, cmd.EmailAddr)

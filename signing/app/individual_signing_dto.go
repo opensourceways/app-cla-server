@@ -30,6 +30,7 @@ func (cmd *CmdToSignIndividualCLA) toCmd() cmdToCreateCodeForIndividualSigning {
 }
 
 type CmdToCheckSinging struct {
-	LinkId    string
-	EmailAddr dp.EmailAddr
+	LinkId     string
+	EmailAddr  dp.EmailAddr
+	Individual bool
 }

@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/dgrijalva/jwt-go"
+	"github.com/golang-jwt/jwt/v4"
 	"github.com/huaweicloud/golangsdk"
 	"k8s.io/apimachinery/pkg/util/sets"
 

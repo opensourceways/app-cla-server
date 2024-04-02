@@ -6,7 +6,7 @@ require (
 	gitee.com/openeuler/go-gitee v0.0.0-20210824105152-bda4a7aaee37
 	github.com/antihax/optional v1.0.0
 	github.com/astaxie/beego v1.12.3
-	github.com/dgrijalva/jwt-go v3.2.0+incompatible
+	github.com/golang-jwt/jwt v3.2.2+incompatible
 	github.com/google/go-github/v33 v33.0.0
 	github.com/google/go-github/v36 v36.0.0
 	github.com/huaweicloud/golangsdk v0.0.0-20201228013212-d10065a3dc7f
@@ -66,7 +66,7 @@ require (
 	google.golang.org/appengine v1.6.8 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20240125205218-1f4bbc51befe // indirect
 	google.golang.org/grpc v1.61.0 // indirect
-	google.golang.org/protobuf v1.32.0 // indirect
+	google.golang.org/protobuf v1.33.0 // indirect
 	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 )

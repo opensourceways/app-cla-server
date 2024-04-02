@@ -6,7 +6,7 @@ require (
 	gitee.com/openeuler/go-gitee v0.0.0-20210824105152-bda4a7aaee37
 	github.com/antihax/optional v1.0.0
 	github.com/astaxie/beego v1.12.3
-	github.com/dgrijalva/jwt-go v3.2.0+incompatible
+	github.com/golang-jwt/jwt v3.2.2+incompatible
 	github.com/google/go-github/v33 v33.0.0
 	github.com/google/go-github/v36 v36.0.0
 	github.com/huaweicloud/golangsdk v0.0.0-20201228013212-d10065a3dc7f

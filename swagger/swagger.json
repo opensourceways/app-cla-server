@@ -1610,6 +1610,36 @@
             }
         },
         "/link/{link_id}": {
+            "get": {
+                "tags": [
+                    "link"
+                ],
+                "description": "get link org info\n\u003cbr\u003e",
+                "operationId": "LinkController.Get",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "link_id",
+                        "description": "link id",
+                        "required": true,
+                        "type": "string"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "schema": {
+                            "$ref": "#/definitions/controllers.orgInfo"
+                        }
+                    }
+                }
+            },
             "delete": {
                 "tags": [
                     "link"
@@ -1957,6 +1987,15 @@
         "controllers.interface": {
             "title": "interface",
             "type": "object"
+        },
+        "controllers.orgInfo": {
+            "title": "orgInfo",
+            "type": "object",
+            "properties": {
+                "org_alias": {
+                    "type": "string"
+                }
+            }
         },
         "controllers.respData": {
             "title": "respData",

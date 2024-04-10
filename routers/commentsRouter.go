@@ -360,6 +360,15 @@ func init() {
 
 	beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:LinkController"] = append(beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:LinkController"],
 		beego.ControllerComments{
+			Method:           "Get",
+			Router:           `/:link_id`,
+			AllowHTTPMethods: []string{"get"},
+			MethodParams:     param.Make(),
+			Filters:          nil,
+			Params:           nil})
+
+	beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:LinkController"] = append(beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:LinkController"],
+		beego.ControllerComments{
 			Method:           "GetCLAForSigning",
 			Router:           `/:link_id/:apply_to`,
 			AllowHTTPMethods: []string{"get"},

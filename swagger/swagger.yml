@@ -1158,6 +1158,28 @@ paths:
           schema:
             $ref: '#/definitions/controllers.respData'
   /link/{link_id}:
+    get:
+      tags:
+      - link
+      description: |-
+        get link org info
+        <br>
+      operationId: LinkController.Get
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      parameters:
+      - in: path
+        name: link_id
+        description: link id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: ""
+          schema:
+            $ref: '#/definitions/controllers.orgInfo'
     delete:
       tags:
       - link
@@ -1402,6 +1424,12 @@ definitions:
   controllers.interface:
     title: interface
     type: object
+  controllers.orgInfo:
+    title: orgInfo
+    type: object
+    properties:
+      org_alias:
+        type: string
   controllers.respData:
     title: respData
     type: object

@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"net/http"
 	"strings"
 
 	"github.com/opensourceways/app-cla-server/models"
@@ -11,11 +12,17 @@ type LinkController struct {
 }
 
 func (ctl *LinkController) Prepare() {
-	if strings.HasSuffix(ctl.routerPattern(), ":apply_to") {
-		ctl.apiPrepare("")
-	} else {
-		ctl.apiPrepare(PermissionOwnerOfOrg)
+	if ctl.apiRequestMethod() == http.MethodGet {
+		p := ctl.routerPattern()
+
+		if strings.HasSuffix(p, ":apply_to") || strings.HasSuffix(p, ":link_id") {
+			ctl.apiPrepare("")
+
+			return
+		}
 	}
+
+	ctl.apiPrepare(PermissionOwnerOfOrg)
 }
 
 // @Title Link
@@ -133,4 +140,26 @@ func (ctl *LinkController) GetCLAForSigning() {
 	} else {
 		ctl.sendSuccessResp(action, result)
 	}
+}
+
+// @Title Get
+// @Description get link org info
+// @Tags Link
+// @Accept json
+// @Param  link_id   path  string  true  "link id"
+// @Success 200 {object} controllers.orgInfo
+// @router /:link_id [get]
+func (ctl *LinkController) Get() {
+	action := "fetch link org info"
+
+	result, err := models.GetLink(ctl.GetString(":link_id"))
+	if err != nil {
+		ctl.sendModelErrorAsResp(err, action)
+	} else {
+		ctl.sendSuccessResp(action, orgInfo{result.OrgAlias})
+	}
+}
+
+type orgInfo struct {
+	OrgAlias string `json:"org_alias"`
 }

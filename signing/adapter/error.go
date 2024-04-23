@@ -74,7 +74,7 @@ func codeMap(code string) models.ModelErrCode {
 	case domain.ErrorCodeEmployeeManagerTooMany:
 		return models.ErrManyEmployeeManagers
 
-	case domain.ErrorCodeEmployeeManagerNotSameCorp:
+	case domain.ErrorCodeEmployeeManagerNotSameCorp, domain.ErrorCodeEmployeeNotSameCorp:
 		return models.ErrNotSameCorp
 
 	case domain.ErrorCodeEmployeeManagerAdminAsManager:

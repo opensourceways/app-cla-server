@@ -158,6 +158,10 @@ func (cs *CorpSigning) AddEmployee(es *EmployeeSigning) error {
 		return NewDomainError(ErrorCodeEmployeeSigningNoManager)
 	}
 
+	if !cs.isSameCorp(es.Rep.EmailAddr) {
+		return NewDomainError(ErrorCodeEmployeeNotSameCorp)
+	}
+
 	for i := range cs.Employees {
 		if cs.Employees[i].isMe(es) {
 			return NewDomainError(ErrorCodeEmployeeSigningReSigning)

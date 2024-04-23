@@ -29,6 +29,7 @@ const (
 	ErrorCodeEmployeeManagerNotSameCorp    = "employee_manager_not_same_corp"
 	ErrorCodeEmployeeManagerAdminAsManager = "employee_manager_admin_as_manager"
 
+	ErrorCodeEmployeeNotSameCorp         = "employee_not_same_corp"
 	ErrorCodeEmployeeSigningNotFound     = "employee_signing_not_found"
 	ErrorCodeEmployeeSigningReSigning    = "employee_signing_resigning"
 	ErrorCodeEmployeeSigningNoManager    = "employee_signing_no_manager"

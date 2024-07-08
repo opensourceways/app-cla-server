@@ -12,6 +12,7 @@ const (
 	fieldCLAs     = "clas"
 	fieldCLANum   = "cla_num"
 	fieldRemoved  = "removed"
+	fieldOrgAlias = "org_alias"
 	fieldPlatform = "platform"
 )
 

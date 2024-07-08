@@ -44,8 +44,7 @@ func (impl *link) Add(v *domain.Link) error {
 	org := &v.Org
 	filter := bson.M{
 		fieldDeleted:                        false,
-		childField(fieldOrg, fieldOrg):      org.Org,
-		childField(fieldOrg, fieldPlatform): org.Platform,
+		childField(fieldOrg, fieldOrgAlias): org.Alias,
 	}
 
 	_, err = impl.dao.InsertDocIfNotExists(filter, doc)

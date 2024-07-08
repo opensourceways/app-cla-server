@@ -1,5 +1,6 @@
 FROM openeuler/openeuler:23.03 as BUILDER
 RUN dnf update -y && \
+    dnf install -y wget tar && \
     wget https://mirrors.aliyun.com/golang/go1.21.6.linux-amd64.tar.gz && \
     tar -C /usr/local -xzf go1.21.6.linux-amd64.tar.gz && \
     export PATH=$PATH:/usr/local/go/bin  && \

@@ -1,6 +1,10 @@
 FROM openeuler/openeuler:23.03 as BUILDER
 RUN dnf update -y && \
-    dnf install -y golang && \
+    wget https://mirrors.aliyun.com/golang/go1.21.6.linux-amd64.tar.gz && \
+    tar -C /usr/local -xzf go1.21.6.linux-amd64.tar.gz && \
+    export PATH=$PATH:/usr/local/go/bin  && \
+    echo "PATH=\$PATH:/usr/local/go/bin" >> /etc/profile && \
+    go version && \
     go env -w GOPROXY=https://goproxy.cn,direct
 
 MAINTAINER TommyLike<tommylikehu@gmail.com>

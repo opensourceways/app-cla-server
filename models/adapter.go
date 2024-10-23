@@ -178,6 +178,10 @@ func CorpManagerLogin(opt *CorporationManagerLoginInfo) (CorpManagerLoginInfo, I
 	return userAdapterInstance.Login(opt)
 }
 
+func GetUserInfo(userId string) (CorpManagerUserInfo, IModelError) {
+	return userAdapterInstance.GetUserInfo(userId)
+}
+
 // org email
 
 func VerifySMTPEmail(opt *EmailAuthorizationReq) (string, IModelError) {

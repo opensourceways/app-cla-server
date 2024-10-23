@@ -27,6 +27,7 @@ func NewUserService(
 
 type UserService interface {
 	IsAValidUser(linkId string, email dp.EmailAddr) (bool, error)
+	Get(string) (domain.User, error)
 	Add(linkId, csId string, managers []domain.Manager) (map[string]dp.Password, []string, error)
 	Remove([]string)
 	RemoveByAccount(linkId string, accounts []dp.Account)
@@ -38,6 +39,10 @@ type userService struct {
 	repo     repository.User
 	encrypt  encryption.Encryption
 	password userpassword.UserPassword
+}
+
+func (s *userService) Get(userId string) (domain.User, error) {
+	return s.repo.Find(userId)
 }
 
 func (s *userService) Add(linkId, csId string, managers []domain.Manager) (map[string]dp.Password, []string, error) {

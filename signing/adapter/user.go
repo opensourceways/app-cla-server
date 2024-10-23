@@ -49,7 +49,6 @@ func (adapter *userAdatper) cmdToChangePassword(
 	return
 }
 
-//
 // password retrieval
 func (adapter *userAdatper) GenKeyForPasswordRetrieval(linkId string, email string) (
 	string, models.IModelError,
@@ -137,6 +136,24 @@ func (adapter *userAdatper) Login(opt *models.CorporationManagerLoginInfo) (
 	r.UserId = v.UserId
 	r.CorpName = v.CorpName
 	r.SigningId = v.CorpSigningId
+	r.InitialPWChanged = v.InitialPWChanged
+
+	return r, nil
+}
+
+// GetUserInfo
+func (adapter *userAdatper) GetUserInfo(userId string) (
+	models.CorpManagerUserInfo, models.IModelError,
+) {
+	r := models.CorpManagerUserInfo{}
+
+	v, err := adapter.s.Get(userId)
+	if err != nil {
+		return r, toModelError(err)
+	}
+
+	r.Role = v.Role
+	r.UserId = v.UserId
 	r.InitialPWChanged = v.InitialPWChanged
 
 	return r, nil

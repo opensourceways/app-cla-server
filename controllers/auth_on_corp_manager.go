@@ -66,7 +66,7 @@ func (ctl *CorporationManagerController) Login() {
 		return
 	}
 
-	ctl.sendSuccessResp(action, "success")
+	ctl.sendSuccessResp(action, "successfully")
 
 	ctl.addOperationLog(v.UserId+" / "+v.Role, action, 0)
 }

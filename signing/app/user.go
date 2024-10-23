@@ -3,6 +3,7 @@ package app
 import (
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"time"
 
 	"github.com/opensourceways/app-cla-server/signing/domain"
@@ -32,10 +33,11 @@ func NewUserService(
 }
 
 type UserService interface {
-	ChangePassword(cmd *CmdToChangePassword) error
+	Get(userId string) (dto UserLoginDTO, err error)
 	Login(cmd *CmdToLogin) (dto UserLoginDTO, err error)
-	GenKeyForPasswordRetrieval(*CmdToGenKeyForPasswordRetrieval) (string, error)
 	ResetPassword(cmd *CmdToResetPassword) error
+	ChangePassword(cmd *CmdToChangePassword) error
+	GenKeyForPasswordRetrieval(*CmdToGenKeyForPasswordRetrieval) (string, error)
 }
 
 type userService struct {
@@ -160,6 +162,27 @@ func (s *userService) Login(cmd *CmdToLogin) (dto UserLoginDTO, err error) {
 	dto.CorpName = cs.CorpName().CorpName()
 	dto.CorpSigningId = u.CorpSigningId
 	dto.InitialPWChanged = u.PasswordChanged
+
+	return
+}
+
+func (s *userService) Get(userId string) (dto UserLoginDTO, err error) {
+	u, err := s.us.Get(userId)
+	if err != nil {
+		return
+	}
+
+	dto.UserId = userId
+	dto.InitialPWChanged = u.PasswordChanged
+
+	cs, err := s.repo.Find(u.CorpSigningId)
+	if err != nil {
+		return
+	}
+
+	if dto.Role = cs.GetRole(u.EmailAddr); dto.Role == "" {
+		err = errors.New("no role")
+	}
 
 	return
 }

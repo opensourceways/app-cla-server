@@ -23,7 +23,7 @@ func (ctl *CorporationManagerController) Prepare() {
 		return
 	}
 
-	// change password of manager or logout
+	// change password of manager or logout or get basic info
 	ctl.apiPrepareWithAC(
 		&accessController{Payload: &acForCorpManagerPayload{}},
 		[]string{PermissionCorpAdmin, PermissionEmployeeManager},
@@ -109,4 +109,48 @@ func (ctl *CorporationManagerController) ChangePassword() {
 	ctl.logout()
 
 	ctl.sendSuccessResp(action, "successfully")
+}
+
+// @Title GetBasicInfo
+// @Description get basic info of corporation manager
+// @Tags CorpManager
+// @Accept json
+// @Success 202 {object} controllers.corpManagerInfo
+// @router / [get]
+func (ctl *CorporationManagerController) GetBasicInfo() {
+	action := "get basic info of corp admin or employee manager"
+	sendResp := ctl.newFuncForSendingFailedResp(action)
+
+	pl, fr := ctl.tokenPayloadBasedOnCorpManager()
+	if fr != nil {
+		sendResp(fr)
+		return
+	}
+
+	orgInfo, merr := models.GetLink(pl.LinkID)
+	if merr != nil {
+		ctl.sendModelErrorAsResp(merr, action)
+
+		return
+	}
+
+	v, merr := models.GetUserInfo(pl.UserId)
+	if merr != nil {
+		ctl.sendModelErrorAsResp(merr, action)
+
+		return
+	}
+
+	ctl.sendSuccessResp(action, corpManagerInfo{
+		LinkId:              pl.LinkID,
+		OrgRepo:             orgInfo.OrgRepo,
+		CorpManagerUserInfo: v,
+	})
+
+}
+
+type corpManagerInfo struct {
+	LinkId string `json:"link_id"`
+	models.OrgRepo
+	models.CorpManagerUserInfo
 }

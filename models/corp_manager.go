@@ -26,6 +26,12 @@ type CorporationManagerChangePassword struct {
 	NewPassword []byte `json:"new_password"`
 }
 
+type CorpManagerUserInfo struct {
+	Role             string `json:"role"`
+	UserId           string `json:"user_id"`
+	InitialPWChanged bool   `json:"initial_pw_changed"`
+}
+
 type CorpManagerLoginInfo struct {
 	Role             string
 	Email            string

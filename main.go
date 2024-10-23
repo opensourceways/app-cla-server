@@ -56,24 +56,28 @@ func main() {
 	if beego.BConfig.RunMode == "dev" {
 		beego.BConfig.WebConfig.DirectoryIndex = true
 		beego.BConfig.WebConfig.StaticDir["/swagger"] = "swagger"
+		logs.Error("dev patter")
 	}
 
-	o := gatherOptions(
-		flag.NewFlagSet(os.Args[0], flag.ExitOnError),
-		os.Args[1:]...,
-	)
-	if err := o.Validate(); err != nil {
-		logs.Error("Invalid options, err:%s", err.Error())
+	/*
+		o := gatherOptions(
+			flag.NewFlagSet(os.Args[0], flag.ExitOnError),
+			os.Args[1:]...,
+		)
+		if err := o.Validate(); err != nil {
+			logs.Error("Invalid options, err:%s", err.Error())
 
-		return
-	}
+			return
+		}
 
-	cfg := loadConfig(o.configFile)
-	if cfg == nil {
-		return
-	}
+		cfg := loadConfig(o.configFile)
+		if cfg == nil {
+			return
+		}
 
-	startSignSerivce(cfg)
+		startSignSerivce(cfg)
+	*/
+	run()
 }
 
 func loadConfig(f string) *config.Config {

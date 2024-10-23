@@ -2,13 +2,6 @@ package controllers
 
 import "github.com/opensourceways/app-cla-server/models"
 
-type corpAuthInfo struct {
-	models.OrgRepo
-
-	Role             string `json:"role"`
-	InitialPWChanged bool   `json:"initial_pw_changed"`
-}
-
 type corpAuthFailure struct {
 	errMsg
 	RetryNum int `json:"retry_num"`
@@ -34,7 +27,7 @@ func (ctl *CorporationManagerController) Logout() {
 // @Tags CorpManager
 // @Accept json
 // @Param  body  body  models.CorporationManagerLoginInfo  true  "body for corporation manager info"
-// @Success 201 {object} controllers.corpAuthInfo
+// @Success 201
 // @Failure util.ErrNoCLABindingDoc	"no cla binding applied to corporation"
 // @router /auth [post]
 func (ctl *CorporationManagerController) Login() {
@@ -48,13 +41,6 @@ func (ctl *CorporationManagerController) Login() {
 
 	if merr := info.Validate(); merr != nil {
 		ctl.sendModelErrorAsResp(merr, action)
-		return
-	}
-
-	orgInfo, merr := models.GetLink(info.LinkID)
-	if merr != nil {
-		ctl.sendModelErrorAsResp(merr, action)
-
 		return
 	}
 
@@ -80,13 +66,7 @@ func (ctl *CorporationManagerController) Login() {
 		return
 	}
 
-	ctl.sendSuccessResp(action, []corpAuthInfo{
-		{
-			Role:             v.Role,
-			OrgRepo:          orgInfo.OrgRepo,
-			InitialPWChanged: v.InitialPWChanged,
-		},
-	})
+	ctl.sendSuccessResp(action, "success")
 
 	ctl.addOperationLog(v.UserId+" / "+v.Role, action, 0)
 }

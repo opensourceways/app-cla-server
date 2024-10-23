@@ -16,7 +16,6 @@ func toModelError(err error) models.IModelError {
 	}
 
 	return models.NewModelError(codeMap(code.ErrorCode()), err)
-
 }
 
 func errBadRequestParameter(err error) models.IModelError {

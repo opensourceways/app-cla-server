@@ -63,6 +63,7 @@ func RegisterCorpAdminAdatper(a corpAdminAdatper) {
 
 // userAdapter
 type userAdapter interface {
+	GetUserInfo(string) (CorpManagerUserInfo, IModelError)
 	ChangePassword(string, *CorporationManagerChangePassword) IModelError
 	ResetPassword(linkId string, email string, password []byte) IModelError
 	Login(opt *CorporationManagerLoginInfo) (CorpManagerLoginInfo, IModelError)

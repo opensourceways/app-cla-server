@@ -172,7 +172,7 @@ func (s *userService) Get(userId string) (dto UserLoginDTO, err error) {
 		return
 	}
 
-	dto.UserId = userId
+	dto.UserId = u.Account.Account()
 	dto.InitialPWChanged = u.PasswordChanged
 
 	cs, err := s.repo.Find(u.CorpSigningId)

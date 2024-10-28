@@ -153,7 +153,7 @@ func (adapter *userAdatper) GetUserInfo(userId string) (
 	}
 
 	r.Role = v.Role
-	r.UserId = v.UserId
+	r.Account = v.UserId
 	r.InitialPWChanged = v.InitialPWChanged
 
 	return r, nil

@@ -28,7 +28,7 @@ type CorporationManagerChangePassword struct {
 
 type CorpManagerUserInfo struct {
 	Role             string `json:"role"`
-	UserId           string `json:"user_id"`
+	Account          string `json:"account"`
 	InitialPWChanged bool   `json:"initial_pw_changed"`
 }
 

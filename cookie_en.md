@@ -16,6 +16,7 @@ CLA website sometimes stores cookies on computers or mobile devices. We use cook
             Expiration: 30 minutes 
             <br/>
             Purpose: Maintain user login sessions
+
    - **b)** Account cookie: csrf_token  
             <br/>
             Source: CLA website  
@@ -23,6 +24,7 @@ CLA website sometimes stores cookies on computers or mobile devices. We use cook
             Expiration: 30 minutes  
             <br/>
             Purpose: Prevent cross-site request forgery (CSRF) attacks
+
    - **c)** Web Application Firewall cookies: HWWAFSESID and HWWAFSESTIME
             <br/>
             Source: Huawei Cloud WAF  
@@ -30,6 +32,7 @@ CLA website sometimes stores cookies on computers or mobile devices. We use cook
             Expiration: session  
             <br/>
             Purpose: Prevent malicious attacks
+
    - **d)** oAuth2 login error information cookies: error_code and error_msg
             <br/>
             Source: CLA website

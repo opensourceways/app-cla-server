@@ -20,8 +20,9 @@ type EmployeeSigningSummary struct {
 }
 
 type CorpSummary struct {
-	CorpSigningId string
 	CorpName      dp.CorpName
+	HasManager    bool
+	CorpSigningId string
 }
 
 type CorpSigning interface {

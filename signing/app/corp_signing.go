@@ -124,11 +124,13 @@ func (s *corpSigningService) FindCorpSummary(cmd *CmdToFindCorpSummary) ([]CorpS
 		return nil, err
 	}
 
-	r := make([]CorpSummaryDTO, len(v))
+	r := make([]CorpSummaryDTO, 0, len(v))
 	for i := range v {
-		r[i] = CorpSummaryDTO{
-			CorpName:      v[i].CorpName.CorpName(),
-			CorpSigningId: v[i].CorpSigningId,
+		if item := &v[i]; item.HasManager {
+			r = append(r, CorpSummaryDTO{
+				CorpName:      item.CorpName.CorpName(),
+				CorpSigningId: item.CorpSigningId,
+			})
 		}
 	}
 

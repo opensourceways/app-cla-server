@@ -19,7 +19,7 @@ We may disclose your personal data to third parties in the following circumstanc
 (2) Disclosure necessary to protect the rights or property of us and/or the public. For example, we may disclose your personal data, when we believe disclosure is necessary or appropriate to prevent or defend cyber threat, fraud, physical harm, or financial loss, or when it is in connection with an investigation of suspected or actual illegal activity.  
 (3) Disclosure in the circumstances described in Article 4 of this statement.  
 #### 3. How We Use Cookies
-To ensure our website works properly, we may at times place cookies on your computers or mobile devices. Please refer to <span id="about-cookie"><<About Cookies>></span> for details about how we use cookies and similar technologies and how they process your personal data.
+To ensure our website works properly, we may at times place cookies on your computers or mobile devices. Please refer to <span id="about-cookie"><<About Cookie>></span> for details about how we use cookies and similar technologies and how they process your personal data.
 #### 4. To Which Entities We Will Disclose Your Personal Data
 We may disclose your personal data to the following entities for further processing:  
 (1) Corporations or individuals that use the CLA Sign service in their open source projects. Such corporations or individuals will manage your signed CLA and may contact you.  

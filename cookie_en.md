@@ -1,4 +1,4 @@
-## <center>About Cookies</center>
+## <center>About Cookie</center>
 ### 1. Cookie
 A cookie is a text file stored by a web server on a computer or mobile device, and the content of a cookie can be retrieved or read only by the server that created the cookie. Cookies are unique to the browser or mobile application you are using. The text in a cookie often consists of identifiers, site names, and some numbers and characters.
 CLA website sometimes stores cookies on computers or mobile devices. We use cookies to improve user experience, including:

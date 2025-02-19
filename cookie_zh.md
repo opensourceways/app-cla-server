@@ -1,4 +1,4 @@
-## <center>关于 Cookies</center>
+## <center>关于 Cookie</center>
 ### （一）Cookie
 Cookie 是一种网络服务器存储在计算机或移动设备上的纯文本文件。Cookie 的内容只能由创建它的服务器检索或读取。每个 Cookie 对您的网络浏览器或移动应用程序都是唯一的。Cookie 通常包含标识符、站点名称以及一些号码和字符。
 CLA网站会在计算机或移动设备上存储 Cookie，我们启用 Cookie 的目的在于改善用户体验，包括：

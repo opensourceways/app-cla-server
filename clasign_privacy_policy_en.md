@@ -19,10 +19,7 @@ We may disclose your personal data to third parties in the following circumstanc
 (2) Disclosure necessary to protect the rights or property of us and/or the public. For example, we may disclose your personal data, when we believe disclosure is necessary or appropriate to prevent or defend cyber threat, fraud, physical harm, or financial loss, or when it is in connection with an investigation of suspected or actual illegal activity.  
 (3) Disclosure in the circumstances described in Article 4 of this statement.  
 #### 3. How We Use Cookies
-To ensure our website works properly, we may at times place cookies on your computer or mobile device. A cookie is a text file stored by a web server on a computer or mobile device, and the content of a cookie can be retrieved and read only by the server that created the cookie. Cookies are unique to the browser or mobile application you are using. The text in a cookie often consists of identifiers, site names, and some numbers and characters. Websites can record some information about your activities and preferences. Like many other websites or Internet service providers, we use cookies to improve user experience. Specifically, the purposes are as follows:  
-(1) Preference settings. Cookies enable websites to remember your actions and preferences such as the language, font size, and other browsing preferences on your computer or mobile device. This means that your preferences do not need to be re-configured upon each visit.  
-(2) Statistical analysis. For example, cookies can collect statistics on the number of your visits and your access origins.  
-(3) Security. We use cookies to ensure website security.  
+To ensure our website works properly, we may at times place cookies on your computers or mobile devices. Please refer to <span id="about-cookie"><<About Cookies>></span> for details about how we use cookies and similar technologies and how they process your personal data.
 #### 4. To Which Entities We Will Disclose Your Personal Data
 We may disclose your personal data to the following entities for further processing:  
 (1) Corporations or individuals that use the CLA Sign service in their open source projects. Such corporations or individuals will manage your signed CLA and may contact you.  

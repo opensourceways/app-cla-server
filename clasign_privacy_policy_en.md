@@ -1,13 +1,20 @@
 ## <center>CLA Sign Privacy Statement</center>
 
-We understand the importance of your privacy and fully respect it. If you have any questions about how we process your personal data, please feel free to contact us. Unless otherwise specified, "we" in this statement refers to the provider of the CLA Sign service.
+We understand the importance of your privacy and fully respect it. If you have any questions about how we process your personal data, please feel free to contact us at the email address provided in this statement. Unless otherwise specified, "we" in this statement refers to the provider of the CLA Sign service.
 
 #### 1. How We Collect Your Personal Data
-Personal data refers to the information that relates to an identified or identifiable individual. When you use the Contributor License Agreement Signing and Management ("CLA Sign") service, we will collect your personal data accordingly in the following circumstances:  
-(1) If you sign an individual or employee CLA, we will collect your name and email address to check whether you have signed the CLA when you submit code on the source code hosting platform.  
-(2) If you sign a corporation CLA on behalf of a corporation, we will collect your name, position, corporation name, and email address to verify your identity with the corporation and contact you.  
-(3) You can choose whether to provide the phone number, fax number, and address.  
-(4) When you send the signed CLA in PDF format to any corporations or individuals that use the CLA Sign service in their open source projects, we will archive the CLA containing your personal data as a proof of your grants of rights over your contributions to the open source projects. If you sign a corporation CLA on behalf of a corporation, we will collect your name, position, corporation name, and email address from the CLA you sent to verify your identity with the corporation and contact you.  
+Personal data refers to the information that relates to an identified or identifiable individual. When you use the Contributor License Agreement Signing and Management ("CLA Sign") service, we will collect your personal data accordingly in the following circumstances. You may also obtain a quick understanding of how we collect and use personal data by reviewing the <span id="information-list">Personal Data Collection Overview</span>.
+1. Corporate CLA Signing
+    When you sign a corporate CLA, we collect the name of the authorized representative, position, company name, **email address**, **email verification code**, **phone number** (optional), address (optional), fax number (optional), and signed CLA document.
+2. Corporate Contributor Registration
+    When you register as a corporate contributor, we collect your name, **email address**, corporation, and **email verification code**.
+3. Individual CLA Signing
+    When you sign an individual CLA, we collect your name, **email address**, and **email verification code**
+4. Enterprise Administrator Login
+    When you log in as an enterprise administrator, we collect your account, password, and **email address**.
+5. Community Administrator Login
+    When you log in as a community administrator, we collect your Gitee ID, Gitee organization name, GitHub ID, and GitHub organization name.
+
 #### 2. How We Use Your Personal Data
 We will collect your personal data accordingly in the following circumstances:  
 (1) Providing you with the CLA Sign service, for example, to ensure that you have signed the CLA when you submit code on the source code hosting platform.  
@@ -45,9 +52,11 @@ Generally, we will respond to your request within one month, unless otherwise re
 You can change the scope of your authorization for us to collect your personal data or withdraw your authorization. However, your decision to withdraw your consent or authorization does not affect any previous processing of personal data based on your authorization.  
 #### 8. Where Your Personal Data Is Stored
 Your personal data will be stored on servers in the People's Republic of China. Based on specific scenarios, your data may also be accessed and processed by our affiliates in other countries or regions. This means that your personal data may be transferred to other jurisdictions. In this case, we will ensure that the transfer complies with this statement and applicable data protection laws.  
-#### 9. How This Statement Is Updated
+#### 9. How We Protect Minors
+This website, including its content and services, is primarily intended for adults. Individuals under the age of 14 may not use the services we provide without the consent of a parent or guardian. If personal data of minors is collected with prior consent of their parents or guardians, we will only use or disclose such data if permitted by law, explicitly consented to by their parents or guardians, or necessary for the protection of the minors. If we inadvertently collect personal data of an individual under the age of 14 without verified prior consent from the individual's parent or guardian, we will attempt to delete the data as soon as possible.
+#### 10. How This Statement Is Updated
 We may update this statement from time to time according to changes of our services or data processing methods. If we update this statement, we will publish the latest version of the statement on this website, and it will take effect immediately upon its release. You are advised to review this statement periodically for any changes. If we make any substantial changes to this statement, we will notify you through appropriate channels and obtain your consent.  
-#### 10. How to Contact Us
+#### 11. How to Contact Us
 If you have any questions, comments, or suggestions about your personal data or any matters related to this agreement, or exercise your rights related to personal data, please contact us at cla-contact@osinfra.cn.
 
-Last updated: February 2024
+Last updated: February 2025

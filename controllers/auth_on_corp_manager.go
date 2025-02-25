@@ -1,6 +1,10 @@
 package controllers
 
-import "github.com/opensourceways/app-cla-server/models"
+import (
+	"errors"
+
+	"github.com/opensourceways/app-cla-server/models"
+)
 
 type corpAuthFailure struct {
 	errMsg
@@ -54,6 +58,14 @@ func (ctl *CorporationManagerController) Login() {
 			body.ErrMsg = merr.Error()
 
 			ctl.sendResponse(action, body, 400)
+
+		} else if merr.IsErrorOf(models.ErrPrivacyConsentInvalid) {
+			body := errMsg{
+				ErrCode: merr.ErrCode(),
+				ErrMsg:  merr.Error(),
+			}
+
+			ctl.sendResponse(action, body, 401)
 		} else {
 			ctl.sendModelErrorAsResp(merr, action)
 		}
@@ -83,11 +95,12 @@ func (ctl *CorporationManagerController) genToken(linkID string, info *models.Co
 	token, err := ctl.newApiToken(
 		permission,
 		&acForCorpManagerPayload{
-			Corp:      info.CorpName,
-			Email:     info.Email,
-			UserId:    info.UserId,
-			LinkID:    linkID,
-			SigningId: info.SigningId,
+			Corp:           info.CorpName,
+			Email:          info.Email,
+			UserId:         info.UserId,
+			LinkID:         linkID,
+			SigningId:      info.SigningId,
+			PrivacyVersion: info.PrivacyVersion,
 		},
 	)
 	if err == nil {
@@ -98,9 +111,22 @@ func (ctl *CorporationManagerController) genToken(linkID string, info *models.Co
 }
 
 type acForCorpManagerPayload struct {
-	Corp      string `json:"corp"`
-	Email     string `json:"email"`
-	UserId    string `json:"user_id"`
-	LinkID    string `json:"link_id"`
-	SigningId string `json:"csid"`
+	Corp           string `json:"corp"`
+	Email          string `json:"email"`
+	UserId         string `json:"user_id"`
+	LinkID         string `json:"link_id"`
+	SigningId      string `json:"csid"`
+	PrivacyVersion string `json:"privacy"`
+}
+
+func (pl *acForCorpManagerPayload) checkPrivacyConsent(v string) error {
+	if pl.PrivacyVersion == "" {
+		return errors.New("no privacy info")
+	}
+
+	if pl.PrivacyVersion != v {
+		return errors.New("privacy is not latest")
+	}
+
+	return nil
 }

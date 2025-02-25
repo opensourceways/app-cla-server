@@ -11,11 +11,21 @@ import (
 const (
 	fieldAccount    = "account"
 	fieldChanged    = "changed"
+	fieldPrivacy    = "privacy"
 	fieldPassword   = "password"
 	fieldFailedNum  = "failed_num"
 	fieldLoginTime  = "login_time"
 	fieldFrozenTime = "frozen_time"
 )
+
+type privacyConsentDO struct {
+	Time    string `bson:"time"     json:"time"     required:"true"`
+	Version string `bson:"version"  json:"version"  required:"true"`
+}
+
+func (do *privacyConsentDO) toDoc() (bson.M, error) {
+	return genDoc(do)
+}
 
 // userDO
 type userDO struct {
@@ -25,6 +35,7 @@ type userDO struct {
 	Account         string             `bson:"account"       json:"account"   required:"true"`
 	Password        []byte             `bson:"password"      json:"-"`
 	CorpSigningId   string             `bson:"cs_id"         json:"cs_id"     required:"true"`
+	PrivacyConsent  privacyConsentDO   `bson:"privacy"       json:"privacy"`
 	PasswordChanged bool               `bson:"changed"       json:"changed"`
 	Version         int                `bson:"version"       json:"-"`
 }
@@ -47,6 +58,10 @@ func (do *userDO) toUser(u *domain.User) (err error) {
 	u.Password = do.Password
 	u.CorpSigningId = do.CorpSigningId
 	u.PasswordChanged = do.PasswordChanged
+	u.PrivacyConsent = domain.PrivacyConsent{
+		Time:    do.PrivacyConsent.Time,
+		Version: do.PrivacyConsent.Version,
+	}
 	u.Version = do.Version
 
 	return

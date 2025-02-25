@@ -19,21 +19,24 @@ func NewUserService(
 	ls loginservice.LoginService,
 	repo repository.CorpSigning,
 	encrypt symmetricencryption.Encryption,
-	vcService vcservice.VCService,
+	userRepo repository.User,
 	interval time.Duration,
+	vcService vcservice.VCService,
+	privacyVersion string,
 ) UserService {
 	return &userService{
-		us:        us,
-		ls:        ls,
-		repo:      repo,
-		encrypt:   encrypt,
-		vcService: verificationCodeService{vcService},
-		interval:  interval,
+		us:             us,
+		ls:             ls,
+		repo:           repo,
+		encrypt:        encrypt,
+		interval:       interval,
+		vcService:      verificationCodeService{vcService},
+		privacyVersion: privacyVersion,
 	}
 }
 
 type UserService interface {
-	Get(userId string) (dto UserLoginDTO, err error)
+	Get(userId string) (dto UserBasicInfoDTO, err error)
 	Login(cmd *CmdToLogin) (dto UserLoginDTO, err error)
 	ResetPassword(cmd *CmdToResetPassword) error
 	ChangePassword(cmd *CmdToChangePassword) error
@@ -41,12 +44,14 @@ type UserService interface {
 }
 
 type userService struct {
-	us        userservice.UserService
-	ls        loginservice.LoginService
-	repo      repository.CorpSigning
-	encrypt   symmetricencryption.Encryption
-	interval  time.Duration
-	vcService verificationCodeService
+	us             userservice.UserService
+	ls             loginservice.LoginService
+	repo           repository.CorpSigning
+	encrypt        symmetricencryption.Encryption
+	userRepo       repository.User
+	interval       time.Duration
+	vcService      verificationCodeService
+	privacyVersion string
 }
 
 func (s *userService) ChangePassword(cmd *CmdToChangePassword) error {
@@ -138,9 +143,14 @@ func (s *userService) Login(cmd *CmdToLogin) (dto UserLoginDTO, err error) {
 		u, l, err = s.ls.LoginByEmail(cmd.LinkId, cmd.Email, cmd.Password)
 	}
 
+	// It should record the retry number whatever if it is success or not.
 	dto.RetryNum = l.RetryNum()
 
 	if err != nil {
+		return
+	}
+
+	if err = s.checkPrivacyConsent(cmd.PrivacyConsented, &u); err != nil {
 		return
 	}
 
@@ -161,12 +171,25 @@ func (s *userService) Login(cmd *CmdToLogin) (dto UserLoginDTO, err error) {
 	dto.UserId = u.Id
 	dto.CorpName = cs.CorpName().CorpName()
 	dto.CorpSigningId = u.CorpSigningId
+	dto.PrivacyVersion = u.PrivacyConsent.Version
 	dto.InitialPWChanged = u.PasswordChanged
 
 	return
 }
 
-func (s *userService) Get(userId string) (dto UserLoginDTO, err error) {
+func (s *userService) checkPrivacyConsent(privacyConsented bool, u *domain.User) error {
+	if !u.UpdatePrivacyConsent(s.privacyVersion) {
+		return nil
+	}
+
+	if !privacyConsented {
+		return domain.NewDomainError(domain.ErrorPrivacyConsentInvalid)
+	}
+
+	return s.userRepo.SavePrivacyConsent(u)
+}
+
+func (s *userService) Get(userId string) (dto UserBasicInfoDTO, err error) {
 	u, err := s.us.Get(userId)
 	if err != nil {
 		return

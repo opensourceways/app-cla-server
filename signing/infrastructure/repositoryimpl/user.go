@@ -96,6 +96,29 @@ func (impl *user) SavePassword(u *domain.User) error {
 	return err
 }
 
+func (impl *user) SavePrivacyConsent(u *domain.User) error {
+	index, err := impl.dao.DocIdFilter(u.Id)
+	if err != nil {
+		return err
+	}
+
+	v := privacyConsentDO{
+		Time:    u.PrivacyConsent.Time,
+		Version: u.PrivacyConsent.Version,
+	}
+	doc, err := v.toDoc()
+	if err != nil {
+		return err
+	}
+
+	err = impl.dao.UpdateDoc(index, bson.M{fieldPrivacy: doc}, u.Version)
+	if err != nil && impl.dao.IsDocNotExists(err) {
+		err = commonRepo.NewErrorConcurrentUpdating(err)
+	}
+
+	return err
+}
+
 func (impl *user) Find(index string) (u domain.User, err error) {
 	filter, err := impl.dao.DocIdFilter(index)
 	if err != nil {

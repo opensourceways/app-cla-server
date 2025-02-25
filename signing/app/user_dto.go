@@ -7,14 +7,22 @@ import (
 
 // CmdToLogin
 type CmdToLogin struct {
-	LinkId   string
-	Email    dp.EmailAddr
-	Account  dp.Account
-	Password dp.Password
+	LinkId           string
+	Email            dp.EmailAddr
+	Account          dp.Account
+	Password         dp.Password
+	PrivacyConsented bool
 }
 
 func (cmd *CmdToLogin) clear() {
 	cmd.Password.Clear()
+}
+
+// UserBasicInfoDTO
+type UserBasicInfoDTO struct {
+	Role             string
+	UserId           string
+	InitialPWChanged bool
 }
 
 // UserLoginDTO
@@ -24,6 +32,7 @@ type UserLoginDTO struct {
 	UserId           string
 	CorpName         string
 	CorpSigningId    string
+	PrivacyVersion   string
 	InitialPWChanged bool
 	RetryNum         int
 }

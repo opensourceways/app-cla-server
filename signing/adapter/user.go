@@ -128,6 +128,13 @@ func (adapter *userAdatper) Login(opt *models.CorporationManagerLoginInfo) (
 			)
 		}
 
+		if ok && code.ErrorCode() == domain.ErrorPrivacyConsentInvalid {
+			return r, models.NewModelError(
+				models.ErrPrivacyConsentInvalid,
+				errors.New("privacy consent invalid"),
+			)
+		}
+
 		return r, toModelError(err)
 	}
 
@@ -136,6 +143,7 @@ func (adapter *userAdatper) Login(opt *models.CorporationManagerLoginInfo) (
 	r.UserId = v.UserId
 	r.CorpName = v.CorpName
 	r.SigningId = v.CorpSigningId
+	r.PrivacyVersion = v.PrivacyVersion
 	r.InitialPWChanged = v.InitialPWChanged
 
 	return r, nil
@@ -163,6 +171,8 @@ func (adapter *userAdatper) cmdToLogin(opt *models.CorporationManagerLoginInfo) 
 	cmd app.CmdToLogin, err error,
 ) {
 	cmd.LinkId = opt.LinkID
+	cmd.PrivacyConsented = opt.PrivacyConsented
+
 	if cmd.Password, err = dp.NewPassword(opt.Password); err != nil {
 		return
 	}

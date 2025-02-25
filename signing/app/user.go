@@ -33,7 +33,7 @@ func NewUserService(
 }
 
 type UserService interface {
-	Get(userId string) (dto UserLoginDTO, err error)
+	Get(userId string) (dto UserBasicInfoDTO, err error)
 	Login(cmd *CmdToLogin) (dto UserLoginDTO, err error)
 	ResetPassword(cmd *CmdToResetPassword) error
 	ChangePassword(cmd *CmdToChangePassword) error
@@ -138,9 +138,14 @@ func (s *userService) Login(cmd *CmdToLogin) (dto UserLoginDTO, err error) {
 		u, l, err = s.ls.LoginByEmail(cmd.LinkId, cmd.Email, cmd.Password)
 	}
 
+	// It should record the retry number whatever if it is success or not.
 	dto.RetryNum = l.RetryNum()
 
 	if err != nil {
+		return
+	}
+
+	if err = s.checkPrivacy(false, &u); err != nil {
 		return
 	}
 
@@ -161,12 +166,27 @@ func (s *userService) Login(cmd *CmdToLogin) (dto UserLoginDTO, err error) {
 	dto.UserId = u.Id
 	dto.CorpName = cs.CorpName().CorpName()
 	dto.CorpSigningId = u.CorpSigningId
+	dto.PrivacyConsent = u.PrivacyConsent.Version
 	dto.InitialPWChanged = u.PasswordChanged
 
 	return
 }
 
-func (s *userService) Get(userId string) (dto UserLoginDTO, err error) {
+func (s *userService) checkPrivacy(privacyConsent bool, u *domain.User) error {
+	if !u.UpdatePrivacyConsent(s.privacyVersion) {
+		return nil
+	}
+
+	if !privacyConsent {
+		return nil //TODO
+	}
+
+	// TODO save
+
+	return nil
+}
+
+func (s *userService) Get(userId string) (dto UserBasicInfoDTO, err error) {
 	u, err := s.us.Get(userId)
 	if err != nil {
 		return

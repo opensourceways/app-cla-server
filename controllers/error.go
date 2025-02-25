@@ -8,6 +8,7 @@ const (
 	errUnknownToken             = "unknown_token"
 	errExpiredToken             = "expired_token"
 	errUnauthorizedToken        = "unauthorized_token"
+	errPrivacyUnmatched         = "privacy_unmatched"
 	errMissingURLPathParameter  = "missing_url_path_parameter"
 	errReadingFile              = "error_reading_file"
 	errParsingApiBody           = "error_parsing_api_body"

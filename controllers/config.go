@@ -8,17 +8,25 @@ import (
 )
 
 var (
-	config       Config
-	orgWhitelist orgHelper
+	config         Config
+	orgWhitelist   orgHelper
+	privacyVersion string
 )
 
 type orgHelper interface {
 	Find(string) ([]string, error)
 }
 
-func Init(cfg *Config, h orgHelper) {
+func Init(cfg *Config, h orgHelper) error {
 	config = *cfg
 	orgWhitelist = h
+
+	ver, err := parsePrivacy(cfg.PrivacyENFile)
+	if err == nil {
+		privacyVersion = ver
+	}
+
+	return err
 }
 
 type Config struct {
@@ -29,6 +37,10 @@ type Config struct {
 	WebRedirectDirOnFailureForEmail string `json:"web_redirect_dir_on_failure_for_email"`
 
 	CookieDomain         string `json:"cookie_domain"              required:"true"`
+	CookieENFile         string `json:"cookie_en_file"             required:"true"`
+	CookieZHFile         string `json:"cookie_zh_file"             required:"true"`
+	PrivacyENFile        string `json:"privacy_en_file"            required:"true"`
+	PrivacyZHFile        string `json:"privacy_zh_file"            required:"true"`
 	PDFDownloadDir       string `json:"pdf_download_dir"           required:"true"`
 	CLAPlatformURL       string `json:"cla_platform_url"           required:"true"`
 	PasswordResetURL     string `json:"password_reset_url"         required:"true"`

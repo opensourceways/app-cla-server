@@ -102,6 +102,10 @@ func Date() string {
 	return time.Now().Format("2006-01-02")
 }
 
+func Time() string {
+	return time.Now().Format("2006-01-02 00:00:00")
+}
+
 func Now() int64 {
 	return time.Now().Unix()
 }

@@ -8,9 +8,10 @@ const (
 )
 
 type CorporationManagerLoginInfo struct {
-	User     string `json:"user"`
-	LinkID   string `json:"link_id"`
-	Password []byte `json:"password"`
+	User           string `json:"user"`
+	LinkID         string `json:"link_id"`
+	Password       []byte `json:"password"`
+	PrivacyConsent bool   `json:"privacy_consent"`
 }
 
 func (info *CorporationManagerLoginInfo) Validate() IModelError {
@@ -38,6 +39,7 @@ type CorpManagerLoginInfo struct {
 	UserId           string
 	CorpName         string
 	SigningId        string
+	PrivacyConsent   string
 	InitialPWChanged bool
 	RetryNum         int
 }

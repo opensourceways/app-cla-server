@@ -1,6 +1,10 @@
 package controllers
 
-import "github.com/opensourceways/app-cla-server/models"
+import (
+	"errors"
+
+	"github.com/opensourceways/app-cla-server/models"
+)
 
 type corpAuthFailure struct {
 	errMsg
@@ -60,6 +64,19 @@ func (ctl *CorporationManagerController) Login() {
 		return
 	}
 
+	if v.PrivacyConsent != privacyVersion {
+		if !info.PrivacyConsent {
+			body := errMsg{
+				ErrCode: errPrivacyUnmatched,
+				ErrMsg:  "privacy is unmatched",
+			}
+			ctl.sendResponse(action, body, 401)
+
+			return
+		}
+
+	}
+
 	if err := ctl.genToken(info.LinkID, &v); err != nil {
 		ctl.sendFailedResponse(500, errSystemError, err, action)
 
@@ -98,9 +115,22 @@ func (ctl *CorporationManagerController) genToken(linkID string, info *models.Co
 }
 
 type acForCorpManagerPayload struct {
-	Corp      string `json:"corp"`
-	Email     string `json:"email"`
-	UserId    string `json:"user_id"`
-	LinkID    string `json:"link_id"`
-	SigningId string `json:"csid"`
+	Corp       string `json:"corp"`
+	Email      string `json:"email"`
+	UserId     string `json:"user_id"`
+	LinkID     string `json:"link_id"`
+	SigningId  string `json:"csid"`
+	PrivacyVer string `json:"privacy"`
+}
+
+func (pl *acForCorpManagerPayload) checkPrivacy(v string) error {
+	if pl.PrivacyVer == "" {
+		return errors.New("no privacy info")
+	}
+
+	if pl.PrivacyVer != v {
+		return errors.New("privacy is not latest")
+	}
+
+	return nil
 }

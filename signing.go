@@ -162,12 +162,15 @@ func initSigning(cfg *config.Config) error {
 	)
 
 	// controllers
-	controllers.Init(
+	err = controllers.Init(
 		&cfg.API,
 		repositoryimpl.NewOrg(
 			mongodb.DAO(cfg.Mongodb.Collections.Org),
 		),
 	)
+	if err != nil {
+		return err
+	}
 
 	// watch
 	watch.Start(&cfg.Watch, repo, individual)

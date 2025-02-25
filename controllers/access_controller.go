@@ -13,6 +13,10 @@ const (
 	PermissionEmployeeManager = "employee manager"
 )
 
+type privacyCheck interface {
+	checkPrivacy(string) error
+}
+
 type accessController struct {
 	RemoteAddr string      `json:"remote_addr"`
 	Permission string      `json:"permission"`
@@ -47,6 +51,14 @@ func (ctl *accessController) verify(permission []string, addr string) error {
 	}
 
 	return errors.New("not allowed permission")
+}
+
+func (ctl *accessController) checkPrivacy() error {
+	if v, ok := ctl.Payload.(privacyCheck); ok {
+		return v.checkPrivacy(privacyVersion)
+	}
+
+	return nil
 }
 
 func (ctl *baseController) apiPrepare(permission string) {
@@ -119,6 +131,10 @@ func (ctl *baseController) checkApiReqToken(ac *accessController, permission []s
 
 	if err := ac.verify(permission, addr); err != nil {
 		return newFailedApiResult(403, errUnauthorizedToken, err)
+	}
+
+	if err := ac.checkPrivacy(); err != nil {
+		return newFailedApiResult(401, errPrivacyUnmatched, err)
 	}
 
 	return nil

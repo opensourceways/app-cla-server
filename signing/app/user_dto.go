@@ -17,6 +17,13 @@ func (cmd *CmdToLogin) clear() {
 	cmd.Password.Clear()
 }
 
+// UserBasicInfoDTO
+type UserBasicInfoDTO struct {
+	Role             string
+	UserId           string
+	InitialPWChanged bool
+}
+
 // UserLoginDTO
 type UserLoginDTO struct {
 	Role             string
@@ -24,6 +31,7 @@ type UserLoginDTO struct {
 	UserId           string
 	CorpName         string
 	CorpSigningId    string
+	PrivacyConsent   string
 	InitialPWChanged bool
 	RetryNum         int
 }

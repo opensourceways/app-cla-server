@@ -95,11 +95,12 @@ func (ctl *CorporationManagerController) genToken(linkID string, info *models.Co
 	token, err := ctl.newApiToken(
 		permission,
 		&acForCorpManagerPayload{
-			Corp:      info.CorpName,
-			Email:     info.Email,
-			UserId:    info.UserId,
-			LinkID:    linkID,
-			SigningId: info.SigningId,
+			Corp:           info.CorpName,
+			Email:          info.Email,
+			UserId:         info.UserId,
+			LinkID:         linkID,
+			SigningId:      info.SigningId,
+			PrivacyVersion: info.PrivacyVersion,
 		},
 	)
 	if err == nil {
@@ -110,20 +111,20 @@ func (ctl *CorporationManagerController) genToken(linkID string, info *models.Co
 }
 
 type acForCorpManagerPayload struct {
-	Corp       string `json:"corp"`
-	Email      string `json:"email"`
-	UserId     string `json:"user_id"`
-	LinkID     string `json:"link_id"`
-	SigningId  string `json:"csid"`
-	PrivacyVer string `json:"privacy"`
+	Corp           string `json:"corp"`
+	Email          string `json:"email"`
+	UserId         string `json:"user_id"`
+	LinkID         string `json:"link_id"`
+	SigningId      string `json:"csid"`
+	PrivacyVersion string `json:"privacy"`
 }
 
 func (pl *acForCorpManagerPayload) checkPrivacyConsent(v string) error {
-	if pl.PrivacyVer == "" {
+	if pl.PrivacyVersion == "" {
 		return errors.New("no privacy info")
 	}
 
-	if pl.PrivacyVer != v {
+	if pl.PrivacyVersion != v {
 		return errors.New("privacy is not latest")
 	}
 

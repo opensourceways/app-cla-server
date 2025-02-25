@@ -39,6 +39,7 @@ type CorpManagerLoginInfo struct {
 	UserId           string
 	CorpName         string
 	SigningId        string
+	PrivacyVersion   string
 	InitialPWChanged bool
 	RetryNum         int
 }

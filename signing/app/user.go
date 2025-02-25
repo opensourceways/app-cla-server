@@ -171,6 +171,7 @@ func (s *userService) Login(cmd *CmdToLogin) (dto UserLoginDTO, err error) {
 	dto.UserId = u.Id
 	dto.CorpName = cs.CorpName().CorpName()
 	dto.CorpSigningId = u.CorpSigningId
+	dto.PrivacyVersion = u.PrivacyConsent.Version
 	dto.InitialPWChanged = u.PasswordChanged
 
 	return

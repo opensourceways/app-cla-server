@@ -32,6 +32,7 @@ type UserLoginDTO struct {
 	UserId           string
 	CorpName         string
 	CorpSigningId    string
+	PrivacyVersion   string
 	InitialPWChanged bool
 	RetryNum         int
 }

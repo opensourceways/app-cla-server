@@ -182,7 +182,7 @@ func (s *userService) checkPrivacyConsent(privacyConsented bool, u *domain.User)
 	}
 
 	if !privacyConsented {
-		return domain.NewDomainError(domain.ErrorPirvacyConsentInvalid)
+		return domain.NewDomainError(domain.ErrorPrivacyConsentInvalid)
 	}
 
 	return s.userRepo.SavePrivacyConsent(u)

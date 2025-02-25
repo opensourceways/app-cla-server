@@ -7,7 +7,7 @@ const (
 	ErrorCodeUserExists                 = "user_exists"
 	ErrorCodeUserNotExists              = "user_not_exists"
 	ErrorCodeUserSamePassword           = "user_same_password"
-	ErrorPirvacyConsentInvalid          = "privacy_consent_invalid"
+	ErrorPrivacyConsentInvalid          = "privacy_consent_invalid"
 	ErrorCodeUserInvalidAccount         = "user_invalid_account"
 	ErrorCodeUserInvalidPassword        = "user_invalid_password"
 	ErrorCodeUserUnmatchedPassword      = "user_unmatched_password"

@@ -32,7 +32,6 @@ type UserService interface {
 	Remove([]string)
 	RemoveByAccount(linkId string, accounts []dp.Account)
 	ChangePassword(index string, old, newOne dp.Password) error
-	AddPrivacyConsent(index string, version string) error
 	ResetPassword(linkId string, email dp.EmailAddr, newOne dp.Password) error
 }
 
@@ -144,17 +143,6 @@ func (s *userService) ResetPassword(linkId string, email dp.EmailAddr, newOne dp
 	u.ResetPassword(v)
 
 	return s.repo.SavePassword(&u)
-}
-
-func (s *userService) AddPrivacyConsent(index string, version string) error {
-	u, err := s.repo.Find(index)
-	if err != nil {
-		return err
-	}
-
-	u.UpdatePrivacyConsent(version)
-
-	return s.repo.SavePrivacyConsent(&u)
 }
 
 func (s *userService) IsAValidUser(linkId string, email dp.EmailAddr) (bool, error) {

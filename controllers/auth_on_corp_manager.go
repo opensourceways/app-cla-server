@@ -58,6 +58,7 @@ func (ctl *CorporationManagerController) Login() {
 			body.ErrMsg = merr.Error()
 
 			ctl.sendResponse(action, body, 400)
+
 		} else if merr.IsErrorOf(models.ErrPrivacyConsentInvalid) {
 			body := errMsg{
 				ErrCode: merr.ErrCode(),

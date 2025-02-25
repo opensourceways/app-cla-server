@@ -13,8 +13,8 @@ const (
 	PermissionEmployeeManager = "employee manager"
 )
 
-type privacyCheck interface {
-	checkPrivacy(string) error
+type privacyConsentCheck interface {
+	checkPrivacyConsent(string) error
 }
 
 type accessController struct {
@@ -53,9 +53,9 @@ func (ctl *accessController) verify(permission []string, addr string) error {
 	return errors.New("not allowed permission")
 }
 
-func (ctl *accessController) checkPrivacy() error {
-	if v, ok := ctl.Payload.(privacyCheck); ok {
-		return v.checkPrivacy(privacyVersion)
+func (ctl *accessController) checkPrivacyConsent() error {
+	if v, ok := ctl.Payload.(privacyConsentCheck); ok {
+		return v.checkPrivacyConsent(privacyVersion)
 	}
 
 	return nil
@@ -133,8 +133,8 @@ func (ctl *baseController) checkApiReqToken(ac *accessController, permission []s
 		return newFailedApiResult(403, errUnauthorizedToken, err)
 	}
 
-	if err := ac.checkPrivacy(); err != nil {
-		return newFailedApiResult(401, errPrivacyUnmatched, err)
+	if err := ac.checkPrivacyConsent(); err != nil {
+		return newFailedApiResult(401, models.ErrPrivacyConsentInvalid, err)
 	}
 
 	return nil

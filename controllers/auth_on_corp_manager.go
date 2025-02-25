@@ -58,23 +58,17 @@ func (ctl *CorporationManagerController) Login() {
 			body.ErrMsg = merr.Error()
 
 			ctl.sendResponse(action, body, 400)
+		} else if merr.IsErrorOf(models.ErrPrivacyConsentInvalid) {
+			body := errMsg{
+				ErrCode: merr.ErrCode(),
+				ErrMsg:  merr.Error(),
+			}
+
+			ctl.sendResponse(action, body, 401)
 		} else {
 			ctl.sendModelErrorAsResp(merr, action)
 		}
 		return
-	}
-
-	if v.PrivacyConsent != privacyVersion {
-		if !info.PrivacyConsent {
-			body := errMsg{
-				ErrCode: errPrivacyUnmatched,
-				ErrMsg:  "privacy is unmatched",
-			}
-			ctl.sendResponse(action, body, 401)
-
-			return
-		}
-
 	}
 
 	if err := ctl.genToken(info.LinkID, &v); err != nil {
@@ -123,7 +117,7 @@ type acForCorpManagerPayload struct {
 	PrivacyVer string `json:"privacy"`
 }
 
-func (pl *acForCorpManagerPayload) checkPrivacy(v string) error {
+func (pl *acForCorpManagerPayload) checkPrivacyConsent(v string) error {
 	if pl.PrivacyVer == "" {
 		return errors.New("no privacy info")
 	}

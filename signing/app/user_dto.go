@@ -7,10 +7,11 @@ import (
 
 // CmdToLogin
 type CmdToLogin struct {
-	LinkId   string
-	Email    dp.EmailAddr
-	Account  dp.Account
-	Password dp.Password
+	LinkId           string
+	Email            dp.EmailAddr
+	Account          dp.Account
+	Password         dp.Password
+	PrivacyConsented bool
 }
 
 func (cmd *CmdToLogin) clear() {
@@ -31,7 +32,6 @@ type UserLoginDTO struct {
 	UserId           string
 	CorpName         string
 	CorpSigningId    string
-	PrivacyConsent   string
 	InitialPWChanged bool
 	RetryNum         int
 }

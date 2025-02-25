@@ -17,16 +17,10 @@ type orgHelper interface {
 	Find(string) ([]string, error)
 }
 
-func Init(cfg *Config, h orgHelper) error {
+func Init(cfg *Config, h orgHelper, ver string) {
 	config = *cfg
 	orgWhitelist = h
-
-	ver, err := parsePrivacy(cfg.PrivacyENFile)
-	if err == nil {
-		privacyVersion = ver
-	}
-
-	return err
+	privacyVersion = ver
 }
 
 type Config struct {

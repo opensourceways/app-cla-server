@@ -34,6 +34,11 @@ func initSigning(cfg *config.Config) error {
 		return err
 	}
 
+	privacyVersion, err := parsePrivacyVersion(cfg.API.PrivacyENFile)
+	if err != nil {
+		return err
+	}
+
 	repo := repositoryimpl.NewCorpSigning(
 		mongodb.DAO(cfg.Mongodb.Collections.CorpSigning),
 	)
@@ -96,7 +101,10 @@ func initSigning(cfg *config.Config) error {
 
 	models.RegisterUserAdapter(
 		adapter.NewUserAdapter(
-			app.NewUserService(userService, loginService, repo, symmetric, vcService, interval),
+			app.NewUserService(
+				userService, loginService, repo, symmetric, ur,
+				interval, vcService, privacyVersion,
+			),
 		),
 	)
 
@@ -162,15 +170,13 @@ func initSigning(cfg *config.Config) error {
 	)
 
 	// controllers
-	err = controllers.Init(
+	controllers.Init(
 		&cfg.API,
 		repositoryimpl.NewOrg(
 			mongodb.DAO(cfg.Mongodb.Collections.Org),
 		),
+		privacyVersion,
 	)
-	if err != nil {
-		return err
-	}
 
 	// watch
 	watch.Start(&cfg.Watch, repo, individual)

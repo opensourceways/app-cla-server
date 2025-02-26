@@ -29,6 +29,7 @@ func NewUserService(
 		ls:             ls,
 		repo:           repo,
 		encrypt:        encrypt,
+		userRepo:       userRepo,
 		interval:       interval,
 		vcService:      verificationCodeService{vcService},
 		privacyVersion: privacyVersion,

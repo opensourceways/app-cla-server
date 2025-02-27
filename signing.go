@@ -176,6 +176,9 @@ func initSigning(cfg *config.Config) error {
 			mongodb.DAO(cfg.Mongodb.Collections.Org),
 		),
 		privacyVersion,
+		repositoryimpl.NewPrivacyConsentRecord(
+			mongodb.DAO(cfg.Mongodb.Collections.PrivacyConsent),
+		),
 	)
 
 	// watch

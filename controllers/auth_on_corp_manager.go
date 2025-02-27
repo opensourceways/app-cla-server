@@ -120,11 +120,15 @@ type acForCorpManagerPayload struct {
 }
 
 func (pl *acForCorpManagerPayload) checkPrivacyConsent(v string) error {
-	if pl.PrivacyVersion == "" {
+	return checkPrivacyConsent(pl.PrivacyVersion, v)
+}
+
+func checkPrivacyConsent(current, expect string) error {
+	if current == "" {
 		return errors.New("no privacy info")
 	}
 
-	if pl.PrivacyVersion != v {
+	if current != expect {
 		return errors.New("privacy is not latest")
 	}
 

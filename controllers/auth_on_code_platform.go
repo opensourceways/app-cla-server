@@ -109,6 +109,11 @@ func (ctl *AuthController) Callback() {
 		return
 	}
 
+	if err = privacyConsentRecorder.Add(pl.User, platform, privacyVersion); err != nil {
+		rs(errSystemError, err)
+		return
+	}
+
 	ctl.setToken(at)
 	ctl.redirect(authHelper.WebRedirectDir(true))
 
@@ -148,9 +153,10 @@ func (ctl *AuthController) genACPayload(platform, platformToken string) (*acForC
 	}
 
 	return &acForCodePlatformPayload{
-		User:     user,
-		Platform: platform,
-		Orgs:     v,
+		User:           user,
+		Orgs:           v,
+		Platform:       platform,
+		PrivacyVersion: privacyVersion,
 	}, "", nil
 }
 
@@ -210,9 +216,10 @@ type authCodeURL struct {
 }
 
 type acForCodePlatformPayload struct {
-	User     string   `json:"user"`
-	Orgs     []string `json:"orgs"`
-	Platform string   `json:"platform"`
+	User           string   `json:"user"`
+	Orgs           []string `json:"orgs"`
+	Platform       string   `json:"platform"`
+	PrivacyVersion string   `json:"privacy"`
 }
 
 func (pl *acForCodePlatformPayload) isOwnerOfLink(link string) *failedApiResult {
@@ -238,4 +245,8 @@ func (pl *acForCodePlatformPayload) isOwnerOfOrg(platform, org string) *failedAp
 	}
 
 	return newFailedApiResult(400, errNotYoursOrg, fmt.Errorf("not the org of owner"))
+}
+
+func (pl *acForCodePlatformPayload) checkPrivacyConsent(v string) error {
+	return checkPrivacyConsent(pl.PrivacyVersion, v)
 }

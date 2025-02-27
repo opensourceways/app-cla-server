@@ -8,19 +8,25 @@ import (
 )
 
 var (
-	config         Config
-	orgWhitelist   orgHelper
-	privacyVersion string
+	config                 Config
+	orgWhitelist           orgHelper
+	privacyVersion         string
+	privacyConsentRecorder privacyConsentRecord
 )
 
 type orgHelper interface {
 	Find(string) ([]string, error)
 }
 
-func Init(cfg *Config, h orgHelper, ver string) {
+type privacyConsentRecord interface {
+	Add(account, platform, ver string) error
+}
+
+func Init(cfg *Config, h orgHelper, ver string, p privacyConsentRecord) {
 	config = *cfg
 	orgWhitelist = h
 	privacyVersion = ver
+	privacyConsentRecorder = p
 }
 
 type Config struct {

@@ -13,7 +13,9 @@ Personal data refers to the information that relates to an identified or identif
 4. Enterprise Administrator Login
     When you log in as an enterprise administrator, we collect your account, password, and **email address**.
 5. Community Administrator Login
-    When you log in as a community administrator, we collect your Gitee ID, Gitee organization name, GitHub ID, and GitHub organization name.
+    When you log in as a community administrator, we collect your Gitee ID, Gitee organization name, GitHub ID, GitHub organization name, **email address**, and **email verification code**.
+6. Service Optimization
+    To ensure service quality and operations, we automatically collect and store necessary log data, including access timestamps, IP addresses, request details, access status, resource size, access origin, and user agent information.
 
 #### 2. How We Use Your Personal Data
 We will collect your personal data accordingly in the following circumstances:  
@@ -37,8 +39,9 @@ We may disclose your personal data to the following entities for further process
 We take the security of your personal data seriously. We take appropriate physical, organizational, and technical measures to protect your personal data from unauthorized access, disclosure, use, modification, damage, or loss, and in accordance with applicable laws and regulations.  
 In a word, we are committed to protecting your personal data. Nevertheless, no security measure is perfect and no product, service, website, data transfer, computing system, or network connection is absolutely secure. To deal with possible risks such as leakage, destruction, and loss of personal data, we have established a special emergency response team for security incidents. In accordance with the requirements of security incident handling specifications, the team will initiate security plans for different security incidents, carry out loss reduction, analysis, positioning, and develop remedial measures.  
 #### 6. How Long We Retain Your Personal Data For
-We will retain your personal data for the purpose of providing you with the CLA Sign service. The retention period of your personal data depends on the specific purpose of use and applicable laws or service agreements.  
-If you request us to delete the data (including your name and **email address**) collected for the purpose of signing the CLA, we will no longer be able to provide you with the corresponding services. **<u>You should understand that the CLA is a legally binding document signed by you or the corporation you represent. It serves as a proof of your permanent grants of rights over your contributions. Therefore, we will not delete your personal data upon your request, unless deleting the data does not affect the legal effect of the CLA you have signed**</u>.  
+To provide you with the CLA Sign service, we will retain your personal data. The retention period of such data will depend on the specific purpose for which it is used, as well as the requirements of applicable laws and regulations.
+You acknowledge and understand that the CLA is a legally binding document signed by you or the corporation you represent, serving as evidence of the permanent rights granted over your contributions. Therefore, if you request the deletion of the data collected for the purpose of executing the CLA (including, but not limited to, your name and **email address**), we may not be able to comply with such a request, unless the deletion of such data does not affect the legal validity of the CLA you have signed.
+For service optimization, the access timestamp, IP address, request details, access status, accessed resource size, access source, and request user agent information collected based on the access quantity statistics will be automatically deleted after 10 days.
 #### 7. How We Access or Control Your Personal Data
 In accordance with applicable laws and regulations, you may have the following rights regarding your personal data:  
 (1) Access the personal data we hold about you.  

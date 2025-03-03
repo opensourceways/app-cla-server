@@ -61,4 +61,5 @@ We may update this statement from time to time according to changes of our servi
 #### 11. How to Contact Us
 If you have any questions, comments, or suggestions about your personal data or any matters related to this agreement, or exercise your rights related to personal data, please contact us at cla-contact@osinfra.cn.
 
-Last updated: February 2025
+Last updated: February 28, 2025
+Privacy policy version: v20250228

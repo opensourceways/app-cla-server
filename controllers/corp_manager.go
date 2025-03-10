@@ -142,15 +142,16 @@ func (ctl *CorporationManagerController) GetBasicInfo() {
 	}
 
 	ctl.sendSuccessResp(action, corpManagerInfo{
+		Org:                 orgInfo.OrgAlias,
 		LinkId:              pl.LinkID,
-		OrgRepo:             orgInfo.OrgRepo,
 		CorpManagerUserInfo: v,
 	})
 
 }
 
 type corpManagerInfo struct {
+	Org    string `json:"org"`
 	LinkId string `json:"link_id"`
-	models.OrgRepo
+
 	models.CorpManagerUserInfo
 }

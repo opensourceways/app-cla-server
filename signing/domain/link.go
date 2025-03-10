@@ -12,9 +12,8 @@ type EmailInfo struct {
 }
 
 type OrgInfo struct {
-	Platform string
-	Org      string
-	Alias    string
+	Alias      string // normal community name
+	ProjectURL string
 }
 
 type Link struct {
@@ -22,7 +21,7 @@ type Link struct {
 	Org       OrgInfo
 	Email     EmailInfo
 	CLAs      []CLA
-	Submitter string
+	Submitter string // community name which is in lowcase format.
 	CLANum    int
 	Version   int
 }

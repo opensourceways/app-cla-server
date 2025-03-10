@@ -54,7 +54,7 @@ func notifyCorpManagerWhenAdding(linkId string, orgInfo *models.OrgInfo, info []
 			Email:            item.Email,
 			Password:         item.Password,
 			Org:              orgInfo.OrgAlias,
-			ProjectURL:       orgInfo.ProjectURL(),
+			ProjectURL:       orgInfo.ProjectURL,
 			URLOfCLAPlatform: config.signingURL(linkId),
 		}
 

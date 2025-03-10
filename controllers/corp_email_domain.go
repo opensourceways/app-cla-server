@@ -71,7 +71,7 @@ func (ctl *CorpEmailDomainController) Verify() {
 			Corp:       pl.Corp,
 			Org:        orgInfo.OrgAlias,
 			Code:       code,
-			ProjectURL: orgInfo.ProjectURL(),
+			ProjectURL: orgInfo.ProjectURL,
 		},
 	)
 }

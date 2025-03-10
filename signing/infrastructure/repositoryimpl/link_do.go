@@ -79,24 +79,21 @@ func (do *linkDO) toDoc() (bson.M, error) {
 
 // orgInfoDO
 type orgInfoDO struct {
-	Org      string `bson:"org"        json:"org"         required:"true"`
-	Alias    string `bson:"org_alias"  json:"org_alias"`
-	Platform string `bson:"platform"   json:"platform"    required:"true"`
+	Alias      string `bson:"org_alias" json:"org_alias"`
+	ProjectURL string `bson:"project"   json:"project"    required:"true"`
 }
 
 func (do *orgInfoDO) toOrgInfo() domain.OrgInfo {
 	return domain.OrgInfo{
-		Org:      do.Org,
-		Alias:    do.Alias,
-		Platform: do.Platform,
+		Alias:      do.Alias,
+		ProjectURL: do.ProjectURL,
 	}
 }
 
 func toOrgInfoDO(v *domain.OrgInfo) orgInfoDO {
 	return orgInfoDO{
-		Org:      v.Org,
-		Alias:    v.Alias,
-		Platform: v.Platform,
+		Alias:      v.Alias,
+		ProjectURL: v.ProjectURL,
 	}
 }
 

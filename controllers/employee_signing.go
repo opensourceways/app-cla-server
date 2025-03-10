@@ -233,7 +233,7 @@ func (ctl *EmployeeSigningController) notifyManagers(
 	msg := emailtmpl.EmployeeSigning{
 		Name:       info.Name,
 		Org:        orgInfo.OrgAlias,
-		ProjectURL: orgInfo.ProjectURL(),
+		ProjectURL: orgInfo.ProjectURL,
 		Managers:   "  " + strings.Join(ms, "\n  "),
 	}
 	sendEmailToIndividual(
@@ -245,7 +245,7 @@ func (ctl *EmployeeSigningController) notifyManagers(
 	msg1 := emailtmpl.NotifyingManager{
 		Org:              orgInfo.OrgAlias,
 		EmployeeEmail:    info.Email,
-		ProjectURL:       orgInfo.ProjectURL(),
+		ProjectURL:       orgInfo.ProjectURL,
 		URLOfCLAPlatform: config.signingURL(linkId),
 	}
 	sendEmail(to, orgInfo, "An employee has signed CLA", &msg1)
@@ -258,6 +258,6 @@ func (ctl *EmployeeSigningController) newEmployeeNotification(
 		Name:       employeeName,
 		Manager:    managerEmail,
 		Org:        orgInfo.OrgAlias,
-		ProjectURL: orgInfo.ProjectURL(),
+		ProjectURL: orgInfo.ProjectURL,
 	}
 }

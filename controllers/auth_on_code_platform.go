@@ -7,7 +7,6 @@ import (
 
 	platformAuth "github.com/opensourceways/app-cla-server/code-platform-auth"
 	"github.com/opensourceways/app-cla-server/code-platform-auth/platforms"
-	"github.com/opensourceways/app-cla-server/models"
 )
 
 const authURLState = "state-token-cla"
@@ -223,16 +222,7 @@ type acForCodePlatformPayload struct {
 }
 
 func (pl *acForCodePlatformPayload) isOwnerOfLink(link string) *failedApiResult {
-	v, err := models.GetLink(link)
-	if err != nil {
-		if err.IsErrorOf(models.ErrNoLink) {
-			return newFailedApiResult(400, errUnknownLink, err)
-		}
-
-		return parseModelError(err)
-	}
-
-	return pl.isOwnerOfOrg(v.Platform, v.OrgID)
+	return pl.isOwnerOfOrg("", "") // TODO
 }
 
 func (pl *acForCodePlatformPayload) isOwnerOfOrg(platform, org string) *failedApiResult {

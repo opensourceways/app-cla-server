@@ -35,10 +35,9 @@ func (adapter *linkAdatper) GetLink(linkId string) (
 		return
 	}
 
-	org.OrgID = v.Org.Org
-	org.Platform = v.Org.Platform
 	org.OrgAlias = v.Org.Alias
 	org.OrgEmail = v.Email.Addr.EmailAddr()
+	org.ProjectURL = v.Org.ProjectURL
 	org.OrgEmailPlatform = v.Email.Platform
 
 	return
@@ -58,10 +57,9 @@ func (adapter *linkAdatper) GetLinkCLA(linkId, claId string) (
 		return
 	}
 
-	org.OrgID = v.Org.Org
-	org.Platform = v.Org.Platform
 	org.OrgAlias = v.Org.Alias
 	org.OrgEmail = v.Email.Addr.EmailAddr()
+	org.ProjectURL = v.Org.ProjectURL
 	org.OrgEmailPlatform = v.Email.Platform
 
 	cla.CLAId = v.CLA.Id
@@ -136,11 +134,9 @@ func (adapter *linkAdatper) List(platform string, orgs []string) ([]models.LinkI
 		li.LinkID = item.Id
 		li.Submitter = item.Submitter
 
-		li.OrgID = item.Org.Org
-		li.Platform = item.Org.Platform
-
 		li.OrgAlias = item.Org.Alias
 		li.OrgEmail = item.Email.Addr.EmailAddr()
+		li.ProjectURL = item.Org.ProjectURL
 		li.OrgEmailPlatform = item.Email.Platform
 	}
 
@@ -209,9 +205,9 @@ func (adapter *linkAdatper) cmdToAddLink(submitter string, opt *models.LinkCreat
 		return
 	}
 
-	cmd.Org.Org = opt.OrgID
 	cmd.Org.Alias = opt.OrgAlias
-	cmd.Org.Platform = opt.Platform
+	cmd.Org.ProjectURL = opt.ProjectURL
+
 	cmd.Submitter = submitter
 
 	return

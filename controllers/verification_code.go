@@ -51,7 +51,7 @@ func (ctl *baseController) sendVerificationCodeWhenSigning(
 			Email:      req.Email,
 			Org:        orgInfo.OrgAlias,
 			Code:       code,
-			ProjectURL: orgInfo.ProjectURL(),
+			ProjectURL: orgInfo.ProjectURL,
 		},
 	)
 }

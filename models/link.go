@@ -8,20 +8,18 @@ const (
 )
 
 type LinkCreateOption struct {
-	Platform string `json:"platform"`
-	OrgID    string `json:"org_id"`
-	RepoID   string `json:"repo_id"`
-	OrgAlias string `json:"org_alias"`
-	OrgEmail string `json:"org_email"`
+	OrgAlias   string `json:"org_alias"`
+	OrgEmail   string `json:"org_email"`
+	ProjectURL string `json:"project_url"`
 
 	IndividualCLA *CLACreateOpt `json:"individual_cla"`
 	CorpCLA       *CLACreateOpt `json:"corp_cla"`
 }
 
 type OrgInfo struct {
-	OrgRepo
 	OrgAlias         string `json:"org_alias"`
 	OrgEmail         string `json:"org_email"`
+	ProjectURL       string `json:"project_url"`
 	OrgEmailPlatform string `json:"org_email_platform"`
 }
 

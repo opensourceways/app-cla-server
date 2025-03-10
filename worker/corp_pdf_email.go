@@ -114,7 +114,7 @@ func (impl *corpPDFEmail) genEmailTmpl() {
 		Org:         orgInfo.OrgAlias,
 		Date:        signing.Date,
 		AdminName:   signing.AdminName,
-		ProjectURL:  orgInfo.ProjectURL(),
+		ProjectURL:  orgInfo.ProjectURL,
 		SigningInfo: buildCorpSigningInfo(signing, impl.claInfo.Fields),
 	}
 

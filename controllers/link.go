@@ -48,7 +48,8 @@ func (ctl *LinkController) Link() {
 		return
 	}
 
-	if fr := pl.isOwnerOfOrg(input.Platform, input.OrgID); fr != nil {
+	// TODO
+	if fr := pl.isOwnerOfOrg("", ""); fr != nil {
 		sendResp(fr)
 		return
 	}

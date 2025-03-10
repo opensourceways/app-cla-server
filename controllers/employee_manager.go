@@ -100,7 +100,7 @@ func (ctl *EmployeeManagerController) Delete() {
 		msg := emailtmpl.RemovingCorpManager{
 			User:       item.Name,
 			Org:        orgInfo.OrgAlias,
-			ProjectURL: orgInfo.ProjectURL(),
+			ProjectURL: orgInfo.ProjectURL,
 		}
 		sendEmailToIndividual(item.Email, &orgInfo, subject, &msg)
 	}

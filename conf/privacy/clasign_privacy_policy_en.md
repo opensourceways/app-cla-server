@@ -2,20 +2,26 @@
 
 We understand the importance of your privacy and fully respect it. If you have any questions about how we process your personal data, please feel free to contact us at the email address provided in this statement. Unless otherwise specified, "we" in this statement refers to the provider of the CLA Sign service.
 
+**Version Change Notes**
+
+Please carefully review the following updates to this privacy policy:
+
+1. Optimized the bold formatting style for personal data.
+
 #### 1. How We Collect Your Personal Data
 Personal data refers to the information that relates to an identified or identifiable individual. When you use the Contributor License Agreement Signing and Management ("CLA Sign") service, we will collect your personal data accordingly in the following circumstances. You may also obtain a quick understanding of how we collect and use personal data by reviewing the <span id="information-list">Personal Data Collection Overview</span>.
 1. Corporate CLA Signing
-    When you sign a corporate CLA, we collect the name of the authorized representative, position, company name, **email address**, **email verification code**, **phone number** (optional), address (optional), fax number (optional), and signed CLA document.
+    When you sign a corporate CLA, we collect **name of the authorized representative**, **position**, **company name**, **email address**, **email verification code**, **phone number(optional)**, **address (optional)**, **fax number (optional)**, and **the signed CLA document**.
 2. Corporate Contributor Registration
-    When you register as a corporate contributor, we collect your name, **email address**, corporation, and **email verification code**.
+    When you register as a corporate contributor, we collect your **name**, **email address**, corporation, and **email verification code**.
 3. Individual CLA Signing
-    When you sign an individual CLA, we collect your name, **email address**, and **email verification code**
+    When you sign an individual CLA, we collect your **name**, **email address**, and **email verification code**
 4. Enterprise Administrator Login
-    When you log in as an enterprise administrator, we collect your account, password, and **email address**.
+    When you log in as an enterprise administrator, we collect your **account**, **password**, and **email address**.
 5. Community Administrator Login
-    When you log in as a community administrator, we collect your Gitee ID, Gitee organization name, GitHub ID, GitHub organization name, **email address**, and **email verification code**.
+    When you log in as a community administrator, we collect your **Gitee ID**, Gitee organization name, **GitHub ID**, GitHub organization name, **email address**, and **email verification code**.
 6. Service Optimization
-    To ensure service quality and operations, we automatically collect and store necessary log data, including access timestamps, IP addresses, request details, access status, resource size, access origin, and user agent information.
+    To ensure service quality and operations, we automatically collect and store necessary log data, including access timestamps, **IP address**, request details, access status, resource size, access origin, and user agent information.
 
 #### 2. How We Use Your Personal Data
 We will collect your personal data accordingly in the following circumstances:  
@@ -40,7 +46,8 @@ We take the security of your personal data seriously. We take appropriate physic
 In a word, we are committed to protecting your personal data. Nevertheless, no security measure is perfect and no product, service, website, data transfer, computing system, or network connection is absolutely secure. To deal with possible risks such as leakage, destruction, and loss of personal data, we have established a special emergency response team for security incidents. In accordance with the requirements of security incident handling specifications, the team will initiate security plans for different security incidents, carry out loss reduction, analysis, positioning, and develop remedial measures.  
 #### 6. How Long We Retain Your Personal Data For
 To provide you with the CLA Sign service, we will retain your personal data. The retention period of such data will depend on the specific purpose for which it is used, as well as the requirements of applicable laws and regulations.
-You acknowledge and understand that the CLA is a legally binding document signed by you or the corporation you represent, serving as evidence of the permanent rights granted over your contributions. Therefore, if you request the deletion of the data collected for the purpose of executing the CLA (including, but not limited to, your name and **email address**), we may not be able to comply with such a request, unless the deletion of such data does not affect the legal validity of the CLA you have signed.
+You acknowledge and understand that the CLA is a legally binding document signed by you or the corporation you represent, serving as evidence of the permanent rights granted over your contributions. Therefore, if you request the deletion of the data collected for the purpose of executing the CLA (including, but not limited to, your **name** and **email address**), we may not be able to comply with such a request, unless the deletion of such data does not affect the legal validity of the CLA you have signed.
+
 For service optimization, the access timestamp, IP address, request details, access status, accessed resource size, access source, and request user agent information collected based on the access quantity statistics will be automatically deleted after 10 days.
 #### 7. How We Access or Control Your Personal Data
 In accordance with applicable laws and regulations, you may have the following rights regarding your personal data:  
@@ -61,6 +68,6 @@ We may update this statement from time to time according to changes of our servi
 #### 11. How to Contact Us
 If you have any questions, comments, or suggestions about your personal data or any matters related to this agreement, or exercise your rights related to personal data, please contact us at cla-contact@osinfra.cn.
 
-Last updated: February 28, 2025
+Last updated: March 11, 2025
 
-Privacy policy version: v20250228
+Privacy policy version: v20250311

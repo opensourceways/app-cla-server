@@ -155,22 +155,12 @@ func (s *userService) Login(cmd *CmdToLogin) (dto UserLoginDTO, err error) {
 		return
 	}
 
-	cs, err := s.repo.Find(u.CorpSigningId)
-	if err != nil {
-		return
-	}
-
-	if dto.Role = cs.GetRole(u.EmailAddr); dto.Role == "" {
-		err = domain.NewDomainError(domain.ErrorCodeUserWrongAccountOrPassword)
-
-		s.us.Remove([]string{u.Id})
-
+	if dto.Role, err = s.getRole(&u); err != nil {
 		return
 	}
 
 	dto.Email = u.EmailAddr.EmailAddr()
 	dto.UserId = u.Id
-	dto.CorpName = cs.CorpName().CorpName()
 	dto.CorpSigningId = u.CorpSigningId
 	dto.PrivacyVersion = u.PrivacyConsent.Version
 	dto.InitialPWChanged = u.PasswordChanged
@@ -199,14 +189,24 @@ func (s *userService) Get(userId string) (dto UserBasicInfoDTO, err error) {
 	dto.UserId = u.Account.Account()
 	dto.InitialPWChanged = u.PasswordChanged
 
-	cs, err := s.repo.Find(u.CorpSigningId)
-	if err != nil {
-		return
-	}
-
-	if dto.Role = cs.GetRole(u.EmailAddr); dto.Role == "" {
-		err = errors.New("no role")
-	}
+	dto.Role, err = s.getRole(&u)
 
 	return
+}
+
+func (s *userService) getRole(u *domain.User) (string, error) {
+	if s.repo == nil {
+		return "", nil
+	}
+
+	cs, err := s.repo.Find(u.CorpSigningId)
+	if err != nil {
+		return "", err
+	}
+
+	if role := cs.GetRole(u.EmailAddr); role != "" {
+		return role, nil
+	}
+
+	return "", errors.New("no role")
 }

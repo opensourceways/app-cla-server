@@ -141,7 +141,6 @@ func (adapter *userAdatper) Login(opt *models.CorporationManagerLoginInfo) (
 	r.Role = v.Role
 	r.Email = v.Email
 	r.UserId = v.UserId
-	r.CorpName = v.CorpName
 	r.SigningId = v.CorpSigningId
 	r.PrivacyVersion = v.PrivacyVersion
 	r.InitialPWChanged = v.InitialPWChanged

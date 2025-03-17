@@ -30,7 +30,6 @@ type UserLoginDTO struct {
 	Role             string
 	Email            string
 	UserId           string
-	CorpName         string
 	CorpSigningId    string
 	PrivacyVersion   string
 	InitialPWChanged bool

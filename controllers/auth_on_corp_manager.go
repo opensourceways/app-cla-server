@@ -95,7 +95,6 @@ func (ctl *CorporationManagerController) genToken(linkID string, info *models.Co
 	token, err := ctl.newApiToken(
 		permission,
 		&acForCorpManagerPayload{
-			Corp:           info.CorpName,
 			Email:          info.Email,
 			UserId:         info.UserId,
 			LinkID:         linkID,
@@ -111,7 +110,6 @@ func (ctl *CorporationManagerController) genToken(linkID string, info *models.Co
 }
 
 type acForCorpManagerPayload struct {
-	Corp           string `json:"corp"`
 	Email          string `json:"email"`
 	UserId         string `json:"user_id"`
 	LinkID         string `json:"link_id"`

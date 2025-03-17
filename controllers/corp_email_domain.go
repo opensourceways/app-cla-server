@@ -56,6 +56,13 @@ func (ctl *CorpEmailDomainController) Verify() {
 		return
 	}
 
+	cs, merr := models.GetCorpSigning(pl.SigningId)
+	if merr != nil {
+		ctl.sendModelErrorAsResp(merr, action)
+
+		return
+	}
+
 	code, err := models.VerifyCorpEmailDomain(pl.SigningId, req.Email)
 	if err != nil {
 		ctl.sendModelErrorAsResp(err, action)
@@ -68,7 +75,7 @@ func (ctl *CorpEmailDomainController) Verify() {
 		req.Email, &orgInfo,
 		"Verification code for adding corporation's another email domain",
 		emailtmpl.AddingCorpEmailDomain{
-			Corp:       pl.Corp,
+			Corp:       cs.CorporationName,
 			Org:        orgInfo.OrgAlias,
 			Code:       code,
 			ProjectURL: orgInfo.ProjectURL,

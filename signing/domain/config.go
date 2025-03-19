@@ -11,6 +11,10 @@ func Init(cfg *Config) {
 	config = *cfg
 }
 
+func CommunityManagerLinkId() string {
+	return config.CommunityManagerLinkId
+}
+
 type Config struct {
 	SourceOfCLAPDF       []string `json:"source_of_cla_pdf"`
 	MaxSizeOfCLAContent  int      `json:"max_size_of_cla_content"`
@@ -29,6 +33,8 @@ type Config struct {
 
 	// interval of creating verification code. seconds.
 	IntervalOfCreatingVC int `json:"interval_of_creating_vc"`
+
+	CommunityManagerLinkId string `json:"community_manager_link_id"`
 }
 
 func (cfg *Config) InvalidCorpEmailDomains() []string {
@@ -72,6 +78,10 @@ func (cfg *Config) SetDefault() {
 
 	if cfg.IntervalOfCreatingVC <= 0 {
 		cfg.IntervalOfCreatingVC = 60
+	}
+
+	if cfg.CommunityManagerLinkId == "" {
+		cfg.CommunityManagerLinkId = "fake_link"
 	}
 }
 

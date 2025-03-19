@@ -5,12 +5,6 @@ import (
 	"github.com/opensourceways/app-cla-server/util"
 )
 
-const communityLink = "link_place_holder"
-
-func CommunityManagerLinkId() string {
-	return communityLink
-}
-
 type User struct {
 	LinkId        string
 	CorpSigningId string
@@ -19,7 +13,7 @@ type User struct {
 }
 
 func (u *User) IsCommunityManager() bool {
-	return u.LinkId == communityLink
+	return u.LinkId == config.CommunityManagerLinkId
 }
 
 type PrivacyConsent struct {

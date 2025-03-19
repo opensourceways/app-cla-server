@@ -194,9 +194,9 @@ func AuthorizeSMTPEmail(opt *EmailAuthorization) IModelError {
 
 // password retrivieal
 
-func GenKeyForPasswordRetrieval(linkId string, opt *PasswordRetrievalKey) (string, IModelError) {
+func GenKeyForPasswordRetrieval(opt *PasswordRetrievalKey) (string, IModelError) {
 	return userAdapterInstance.GenKeyForPasswordRetrieval(
-		linkId, opt.Email,
+		opt.LinkId, opt.Email,
 	)
 }
 

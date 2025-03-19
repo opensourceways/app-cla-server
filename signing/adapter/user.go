@@ -170,10 +170,6 @@ func (adapter *userAdatper) cmdToLogin(opt *models.CorporationManagerLoginInfo) 
 	cmd app.CmdToLogin, err error,
 ) {
 	cmd.LinkId = opt.LinkID
-	if opt.LinkID == "" {
-		cmd.LinkId = domain.CommunityManagerLinkId()
-	}
-
 	cmd.PrivacyConsented = opt.PrivacyConsented
 
 	if cmd.Password, err = dp.NewPassword(opt.Password); err != nil {

@@ -1,7 +1,6 @@
 package app
 
 import (
-	commonRepo "github.com/opensourceways/app-cla-server/common/domain/repository"
 	"github.com/opensourceways/app-cla-server/signing/domain"
 	"github.com/opensourceways/app-cla-server/signing/domain/claservice"
 	"github.com/opensourceways/app-cla-server/signing/domain/dp"
@@ -37,34 +36,19 @@ type claService struct {
 }
 
 func (s *claService) Add(cmd *CmdToAddCLA) error {
-	link, err := s.repo.Find(cmd.LinkId)
+	link, err := checkIfCommunityManager(cmd.UserId, cmd.LinkId, s.repo)
 	if err != nil {
-		if commonRepo.IsErrorResourceNotFound(err) {
-			err = domain.NewDomainError(domain.ErrorCodeLinkNotExists)
-		}
-
-		return err
-	}
-
-	if err := link.CanDo(cmd.UserId); err != nil {
 		return err
 	}
 
 	cla := cmd.toCLA()
 
-	return s.cla.Add(&link, &cla)
+	return s.cla.Add(link, &cla)
 }
 
 func (s *claService) Remove(cmd *CmdToRemoveCLA) error {
-	link, err := s.repo.Find(cmd.LinkId)
+	link, err := checkIfCommunityManager(cmd.UserId, cmd.LinkId, s.repo)
 	if err != nil {
-		if commonRepo.IsErrorResourceNotFound(err) {
-			err = domain.NewDomainError(domain.ErrorCodeLinkNotExists)
-		}
-
-		return err
-	}
-	if err := link.CanDo(cmd.UserId); err != nil {
 		return err
 	}
 
@@ -77,7 +61,7 @@ func (s *claService) Remove(cmd *CmdToRemoveCLA) error {
 		return err
 	}
 
-	return s.repo.RemoveCLA(&link, cla)
+	return s.repo.RemoveCLA(link, cla)
 }
 
 func (s *claService) checkIfCanRemove(cmd *domain.CLAIndex, t dp.CLAType) error {
@@ -122,11 +106,8 @@ func (s *claService) checkIfCanRemoveCorpCLA(cmd *domain.CLAIndex) (bool, error)
 }
 
 func (s *claService) List(userId, linkId string) (individuals []CLADTO, corps []CLADTO, err error) {
-	v, err := s.repo.Find(linkId)
+	v, err := checkIfCommunityManager(userId, linkId, s.repo)
 	if err != nil {
-		return
-	}
-	if err = v.CanDo(userId); err != nil {
 		return
 	}
 

@@ -23,10 +23,20 @@ func (ctl *CorporationManagerController) Prepare() {
 		return
 	}
 
-	// change password of manager or logout or get basic info
+	if ctl.isGetRequest() {
+		// get basic info
+		ctl.apiPrepareWithAC(
+			&accessController{Payload: &acForCorpManagerPayload{}},
+			[]string{PermissionCorpAdmin, PermissionEmployeeManager},
+		)
+
+		return
+	}
+
+	// change password of manager or logout
 	ctl.apiPrepareWithAC(
 		&accessController{Payload: &acForCorpManagerPayload{}},
-		[]string{PermissionCorpAdmin, PermissionEmployeeManager},
+		[]string{PermissionCorpAdmin, PermissionEmployeeManager, PermissionOwnerOfOrg},
 	)
 }
 

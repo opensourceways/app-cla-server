@@ -144,7 +144,7 @@ func (ctl *CorporationSigningController) ResendCorpSigningEmail() {
 		return
 	}
 
-	linkId, signingInfo, merr := models.GetCorpSigningByUser(pl.UserId, csId)
+	linkId, signingInfo, merr := models.GetCorpSigning(pl.UserId, csId)
 	if merr != nil {
 		ctl.sendModelErrorAsResp(merr, action)
 		return

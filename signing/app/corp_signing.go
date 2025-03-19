@@ -75,7 +75,7 @@ func (s *corpSigningService) Remove(userId, csId string) error {
 		return err
 	}
 
-	if err := checkIfCommunityManager(userId, cs.Link.Id, s.linkRepo); err != nil {
+	if _, err := checkIfCommunityManager(userId, cs.Link.Id, s.linkRepo); err != nil {
 		return err
 	}
 
@@ -90,8 +90,8 @@ func (s *corpSigningService) Get(userId, csId string) (linkId string, dto CorpSi
 
 	linkId = item.Link.Id
 
-	if userId != "" {
-		if err = checkIfCommunityManager(userId, linkId, s.linkRepo); err != nil {
+	if !item.IsAdmin(userId) {
+		if _, err = checkIfCommunityManager(userId, linkId, s.linkRepo); err != nil {
 			return
 		}
 	}
@@ -110,7 +110,7 @@ func (s *corpSigningService) Get(userId, csId string) (linkId string, dto CorpSi
 }
 
 func (s *corpSigningService) List(userId, linkId string) ([]CorpSigningDTO, error) {
-	if err := checkIfCommunityManager(userId, linkId, s.linkRepo); err != nil {
+	if _, err := checkIfCommunityManager(userId, linkId, s.linkRepo); err != nil {
 		return nil, err
 	}
 

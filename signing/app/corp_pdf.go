@@ -38,7 +38,7 @@ func (s *corpPDFService) Upload(cmd *CmdToUploadCorpSigningPDF) error {
 		return err
 	}
 
-	if err := checkIfCommunityManager(cmd.UserId, cs.Link.Id, s.linkRepo); err != nil {
+	if _, err := checkIfCommunityManager(cmd.UserId, cs.Link.Id, s.linkRepo); err != nil {
 		return err
 	}
 
@@ -55,26 +55,26 @@ func (s *corpPDFService) Download(userId, csId string) ([]byte, error) {
 		return s.repo.FindCorpPDF(csId)
 	}
 
-	if err := checkIfCommunityManager(userId, cs.Link.Id, s.linkRepo); err != nil {
+	if _, err := checkIfCommunityManager(userId, cs.Link.Id, s.linkRepo); err != nil {
 		return nil, err
 	}
 
 	return s.repo.FindCorpPDF(csId)
 }
 
-func checkIfCommunityManager(userId, linkId string, linkRepo repository.Link) error {
+func checkIfCommunityManager(userId, linkId string, linkRepo repository.Link) (*domain.Link, error) {
 	link, err := linkRepo.Find(linkId)
 	if err != nil {
 		if commonRepo.IsErrorResourceNotFound(err) {
 			err = domain.NewDomainError(domain.ErrorCodeLinkNotExists)
 		}
 
-		return err
+		return nil, err
 	}
 
 	if err := link.CanDo(userId); err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	return &link, nil
 }

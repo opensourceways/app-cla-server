@@ -38,7 +38,7 @@ func (s *corpAdminService) Add(userId, csId string) (linkId string, dto ManagerD
 
 	linkId = cs.Link.Id
 
-	if err = checkIfCommunityManager(userId, linkId, s.linkRepo); err != nil {
+	if _, err = checkIfCommunityManager(userId, linkId, s.linkRepo); err != nil {
 		return
 	}
 

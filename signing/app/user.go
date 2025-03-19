@@ -138,10 +138,6 @@ func (s *userService) Login(cmd *CmdToLogin) (dto UserLoginDTO, err error) {
 	var u domain.User
 	var l domain.Login
 
-	if cmd.LinkId == "" {
-		cmd.LinkId = u.CommunityManagerLinkId()
-	}
-
 	if cmd.Account != nil {
 		u, l, err = s.ls.LoginByAccount(cmd.LinkId, cmd.Account, cmd.Password)
 	} else {

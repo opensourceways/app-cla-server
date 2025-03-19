@@ -64,20 +64,16 @@ func (s *linkService) Remove(userId, linkId string) error {
 		return domain.NewDomainError(domain.ErrorCodeLinkCanNotRemove)
 	}
 
-	v, err := s.repo.Find(linkId)
+	v, err := checkIfCommunityManager(userId, linkId, s.repo)
 	if err != nil {
-		if commonRepo.IsErrorResourceNotFound(err) {
+		if domain.IsErrorOf(err, domain.ErrorCodeLinkNotExists) {
 			return nil
 		}
 
 		return err
 	}
 
-	if err := v.CanDo(userId); err != nil {
-		return err
-	}
-
-	return s.repo.Remove(&v)
+	return s.repo.Remove(v)
 }
 
 func (s *linkService) checkIfCanRemove(linkId string) (bool, error) {

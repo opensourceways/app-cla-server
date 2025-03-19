@@ -88,3 +88,11 @@ func NewDomainError(v string) domainError {
 func NewNotFoundDomainError(v string) notfoudError {
 	return notfoudError{domainError(v)}
 }
+
+func IsErrorOf(err error, code string) bool {
+	code1, ok := err.(interface {
+		ErrorCode() string
+	})
+
+	return ok && code1.ErrorCode() == code
+}

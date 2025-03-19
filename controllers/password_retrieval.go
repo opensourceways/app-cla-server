@@ -8,6 +8,7 @@ import (
 	"github.com/beego/beego/v2/core/logs"
 
 	"github.com/opensourceways/app-cla-server/models"
+	"github.com/opensourceways/app-cla-server/signing/domain"
 	"github.com/opensourceways/app-cla-server/signing/infrastructure/emailtmpl"
 )
 
@@ -70,6 +71,58 @@ func (ctl *PasswordRetrievalController) Post() {
 			Timeout:      config.PasswordRetrievalExpiry / 60,
 			ResetURL:     genURLToResetPassword(linkId, key),
 			RetrievalURL: genURLToRetrievalPassword(linkId),
+		},
+	)
+
+	ctl.addOperationLog("", action, 0)
+}
+
+// @Title Post
+// @Description retrieving the password by sending an email to the community manager
+// @Tags PasswordRetrieval
+// @Accept json
+// @Param  body     body  models.PasswordRetrievalKey  true  "body for retrieving password"
+// @Success 201 {object} controllers.respData
+// @Failure 400 missing_url_path_parameter: missing url path parameter
+// @Failure 401 error_parsing_api_body:     parse payload of request failed
+// @Failure 402 no_link:                    the link id is not exists
+// @Failure 403 missing_email:              missing email in payload
+// @Failure 500 system_error:               system error
+// @router / [post]
+func (ctl *PasswordRetrievalController) FindPassword() {
+	action := "community manager tries to retrieve password"
+
+	var info models.PasswordRetrievalKey
+	if fr := ctl.fetchInputPayload(&info); fr != nil {
+		ctl.sendFailedResultAsResp(fr, action)
+		return
+	}
+	if err := (&info).Validate(); err != nil {
+		ctl.sendModelErrorAsResp(err, action)
+		return
+	}
+
+	linkId := domain.CommunityManagerLinkId()
+
+	key, mErr := models.GenKeyForPasswordRetrieval(linkId, &info)
+	if mErr != nil {
+		ctl.sendModelErrorAsResp(mErr, action)
+		return
+	}
+
+	ctl.sendSuccessResp(action, "successfully")
+
+	sendEmailToIndividual(
+		info.Email,
+		&models.OrgInfo{
+			OrgEmail:         config.CLAEmailAddr,
+			OrgEmailPlatform: config.CLAEmailPlatform,
+		},
+		"[CLA Sign] Retrieving Password of Community Manager",
+		emailtmpl.PasswordRetrieval{
+			Timeout:      config.PasswordRetrievalExpiry / 60,
+			ResetURL:     genURLToResetPassword(linkId, key),
+			RetrievalURL: genURLToRetrievalPassword(""),
 		},
 	)
 

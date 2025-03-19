@@ -56,7 +56,7 @@ func (ctl *CorpEmailDomainController) Verify() {
 		return
 	}
 
-	cs, merr := models.GetCorpSigning(pl.SigningId)
+	_, cs, merr := models.GetCorpSigning(pl.UserId, pl.SigningId)
 	if merr != nil {
 		ctl.sendModelErrorAsResp(merr, action)
 

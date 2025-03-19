@@ -45,7 +45,7 @@ func (cs *CorpSigning) CorpName() dp.CorpName {
 }
 
 func (cs *CorpSigning) IsAdmin(userId string) bool {
-	return cs.Admin.Id == userId
+	return cs.Admin.isMe(userId)
 }
 
 func (cs *CorpSigning) GetRole(e dp.EmailAddr) string {

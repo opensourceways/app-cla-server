@@ -7,6 +7,10 @@ import (
 
 const communityLink = "link_place_holder"
 
+func CommunityManagerLinkId() string {
+	return communityLink
+}
+
 type User struct {
 	LinkId        string
 	CorpSigningId string
@@ -16,10 +20,6 @@ type User struct {
 
 func (u *User) IsCommunityManager() bool {
 	return u.LinkId == communityLink
-}
-
-func (u *User) CommunityManagerLinkId() string {
-	return communityLink
 }
 
 type PrivacyConsent struct {

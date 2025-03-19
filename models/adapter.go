@@ -78,13 +78,7 @@ func ListCorpSigning(userId, linkID string) ([]CorporationSigningSummary, IModel
 	return corpSigningAdapterInstance.List(userId, linkID)
 }
 
-func GetCorpSigning(csId string) (CorporationSigning, IModelError) {
-	_, v, err := corpSigningAdapterInstance.Get("", csId)
-
-	return v, err
-}
-
-func GetCorpSigningByUser(userId, csId string) (string, CorporationSigning, IModelError) {
+func GetCorpSigning(userId, csId string) (string, CorporationSigning, IModelError) {
 	return corpSigningAdapterInstance.Get(userId, csId)
 }
 

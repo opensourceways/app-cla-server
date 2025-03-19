@@ -110,21 +110,16 @@ func (ctl *CorporationSigningController) Sign() {
 // @Failure 500 system_error:               system error
 // @router /:link_id/:signing_id [delete]
 func (ctl *CorporationSigningController) Delete() {
-	linkID := ctl.GetString(":link_id")
 	csId := ctl.GetString(":signing_id")
 	action := "community manager deletes corp signing: " + csId
 
-	pl, fr := ctl.tokenPayloadBasedOnCodePlatform()
+	pl, fr := ctl.tokenPayloadBasedOnCorpManager()
 	if fr != nil {
 		ctl.sendFailedResultAsResp(fr, action)
 		return
 	}
-	if fr := pl.isOwnerOfLink(linkID); fr != nil {
-		ctl.sendFailedResultAsResp(fr, action)
-		return
-	}
 
-	if err := models.RemoveCorpSigning(csId); err != nil {
+	if err := models.RemoveCorpSigning(pl.UserId, csId); err != nil {
 		ctl.sendModelErrorAsResp(err, action)
 	} else {
 		ctl.sendSuccessResp(action, "successfully")
@@ -140,34 +135,29 @@ func (ctl *CorporationSigningController) Delete() {
 // @Success 202 {object} controllers.respData
 // @router /:link_id/:signing_id [put]
 func (ctl *CorporationSigningController) ResendCorpSigningEmail() {
-	linkID := ctl.GetString(":link_id")
 	csId := ctl.GetString(":signing_id")
 	action := "community manager resends corp signing email, signing id: " + csId
 
-	pl, fr := ctl.tokenPayloadBasedOnCodePlatform()
+	pl, fr := ctl.tokenPayloadBasedOnCorpManager()
 	if fr != nil {
 		ctl.sendFailedResultAsResp(fr, action)
 		return
 	}
-	if fr := pl.isOwnerOfLink(linkID); fr != nil {
-		ctl.sendFailedResultAsResp(fr, action)
-		return
-	}
 
-	signingInfo, merr := models.GetCorpSigning(csId)
+	linkId, signingInfo, merr := models.GetCorpSigningByUser(pl.UserId, csId)
 	if merr != nil {
 		ctl.sendModelErrorAsResp(merr, action)
 		return
 	}
 
-	orgInfo, claInfo, merr := models.GetLinkCLA(linkID, signingInfo.CLAId)
+	orgInfo, claInfo, merr := models.GetLinkCLA(linkId, signingInfo.CLAId)
 	if merr != nil {
 		ctl.sendModelErrorAsResp(merr, action)
 		return
 	}
 
 	worker.GetEmailWorker().GenCLAPDFForCorporationAndSendIt(
-		linkID, &orgInfo, &claInfo, &signingInfo,
+		linkId, &orgInfo, &claInfo, &signingInfo,
 	)
 
 	ctl.sendSuccessResp(action, "successfully")
@@ -192,17 +182,13 @@ func (ctl *CorporationSigningController) GetAll() {
 	action := "community manager lists corp signings"
 	linkID := ctl.GetString(":link_id")
 
-	pl, fr := ctl.tokenPayloadBasedOnCodePlatform()
+	pl, fr := ctl.tokenPayloadBasedOnCorpManager()
 	if fr != nil {
 		ctl.sendFailedResultAsResp(fr, action)
 		return
 	}
-	if fr := pl.isOwnerOfLink(linkID); fr != nil {
-		ctl.sendFailedResultAsResp(fr, action)
-		return
-	}
 
-	if r, merr := models.ListCorpSigning(linkID); merr != nil {
+	if r, merr := models.ListCorpSigning(pl.UserId, linkID); merr != nil {
 		ctl.sendModelErrorAsResp(merr, action)
 	} else {
 		ctl.sendSuccessResp(action, r)

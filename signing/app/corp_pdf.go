@@ -1,33 +1,80 @@
 package app
 
-import "github.com/opensourceways/app-cla-server/signing/domain/repository"
+import (
+	commonRepo "github.com/opensourceways/app-cla-server/common/domain/repository"
+	"github.com/opensourceways/app-cla-server/signing/domain"
+	"github.com/opensourceways/app-cla-server/signing/domain/repository"
+)
 
 func NewCorpPDFService(
 	repo repository.CorpSigning,
+	linkRepo repository.Link,
 ) CorpPDFService {
 	return &corpPDFService{
-		repo: repo,
+		repo:     repo,
+		linkRepo: linkRepo,
 	}
 }
 
+type CmdToUploadCorpSigningPDF struct {
+	UserId string
+	CSId   string
+	PDF    []byte
+}
+
 type CorpPDFService interface {
-	Upload(csId string, pdf []byte) error
-	Download(csId string) ([]byte, error)
+	Upload(cmd *CmdToUploadCorpSigningPDF) error
+	Download(userId, csId string) ([]byte, error)
 }
 
 type corpPDFService struct {
-	repo repository.CorpSigning
+	repo     repository.CorpSigning
+	linkRepo repository.Link
 }
 
-func (s *corpPDFService) Upload(csId string, pdf []byte) error {
-	cs, err := s.repo.Find(csId)
+func (s *corpPDFService) Upload(cmd *CmdToUploadCorpSigningPDF) error {
+	cs, err := s.repo.Find(cmd.CSId)
 	if err != nil {
 		return err
 	}
 
-	return s.repo.SaveCorpPDF(&cs, pdf)
+	if err := checkIfCommunityManager(cmd.UserId, cs.Link.Id, s.linkRepo); err != nil {
+		return err
+	}
+
+	return s.repo.SaveCorpPDF(&cs, cmd.PDF)
 }
 
-func (s *corpPDFService) Download(csId string) ([]byte, error) {
+func (s *corpPDFService) Download(userId, csId string) ([]byte, error) {
+	cs, err := s.repo.Find(csId)
+	if err != nil {
+		return nil, err
+	}
+
+	if cs.IsAdmin(userId) {
+		return s.repo.FindCorpPDF(csId)
+	}
+
+	if err := checkIfCommunityManager(userId, cs.Link.Id, s.linkRepo); err != nil {
+		return nil, err
+	}
+
 	return s.repo.FindCorpPDF(csId)
+}
+
+func checkIfCommunityManager(userId, linkId string, linkRepo repository.Link) error {
+	link, err := linkRepo.Find(linkId)
+	if err != nil {
+		if commonRepo.IsErrorResourceNotFound(err) {
+			err = domain.NewDomainError(domain.ErrorCodeLinkNotExists)
+		}
+
+		return err
+	}
+
+	if err := link.CanDo(userId); err != nil {
+		return err
+	}
+
+	return nil
 }

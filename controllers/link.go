@@ -36,7 +36,7 @@ func (ctl *LinkController) Link() {
 	action := "community manager creates link(cla application)"
 	sendResp := ctl.newFuncForSendingFailedResp(action)
 
-	pl, fr := ctl.tokenPayloadBasedOnCodePlatform()
+	pl, fr := ctl.tokenPayloadBasedOnCorpManager()
 	if fr != nil {
 		sendResp(fr)
 		return
@@ -48,13 +48,7 @@ func (ctl *LinkController) Link() {
 		return
 	}
 
-	// TODO
-	if fr := pl.isOwnerOfOrg("", ""); fr != nil {
-		sendResp(fr)
-		return
-	}
-
-	if merr := models.AddLink(pl.User, input); merr != nil {
+	if merr := models.AddLink(pl.UserId, input); merr != nil {
 		ctl.sendModelErrorAsResp(merr, action)
 		return
 	}
@@ -74,18 +68,13 @@ func (ctl *LinkController) Delete() {
 	action := "community manager delete link: " + linkId
 	sendResp := ctl.newFuncForSendingFailedResp(action)
 
-	pl, fr := ctl.tokenPayloadBasedOnCodePlatform()
+	pl, fr := ctl.tokenPayloadBasedOnCorpManager()
 	if fr != nil {
 		sendResp(fr)
 		return
 	}
 
-	if fr := pl.isOwnerOfLink(linkId); fr != nil {
-		sendResp(fr)
-		return
-	}
-
-	if err := models.RemoveLink(linkId); err != nil {
+	if err := models.RemoveLink(pl.UserId, linkId); err != nil {
 		ctl.sendModelErrorAsResp(err, action)
 		return
 	}
@@ -107,13 +96,13 @@ func (ctl *LinkController) Delete() {
 func (ctl *LinkController) ListLinks() {
 	action := "community manager list links"
 
-	pl, fr := ctl.tokenPayloadBasedOnCodePlatform()
+	pl, fr := ctl.tokenPayloadBasedOnCorpManager()
 	if fr != nil {
 		ctl.sendFailedResultAsResp(fr, action)
 		return
 	}
 
-	if r, merr := models.ListLink(pl.Platform, pl.Orgs); merr != nil {
+	if r, merr := models.ListLink(pl.UserId); merr != nil {
 		ctl.sendModelErrorAsResp(merr, action)
 	} else {
 		ctl.sendSuccessResp(action, r)

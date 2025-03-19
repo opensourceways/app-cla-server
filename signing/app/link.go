@@ -25,8 +25,8 @@ func NewLinkService(
 
 type LinkService interface {
 	Add(cmd *CmdToAddLink) error
-	Remove(linkId string) error
-	List(cmd *CmdToListLink) ([]repository.LinkSummary, error)
+	Remove(userId, linkId string) error
+	List(userId string) ([]repository.LinkSummary, error)
 	Find(linkId string) (dto LinkDTO, err error)
 	FindCLAs(cmd *CmdToFindCLAs) ([]CLADetailDTO, error)
 	FindLinkCLA(cmd *domain.CLAIndex) (dto LinkCLADTO, err error)
@@ -55,7 +55,7 @@ func (s *linkService) Add(cmd *CmdToAddLink) error {
 	return s.cla.AddLink(&link)
 }
 
-func (s *linkService) Remove(linkId string) error {
+func (s *linkService) Remove(userId, linkId string) error {
 	b, err := s.checkIfCanRemove(linkId)
 	if err != nil {
 		return err
@@ -70,6 +70,10 @@ func (s *linkService) Remove(linkId string) error {
 			return nil
 		}
 
+		return err
+	}
+
+	if err := v.CanDo(userId); err != nil {
 		return err
 	}
 
@@ -90,8 +94,8 @@ func (s *linkService) checkIfCanRemove(linkId string) (bool, error) {
 	return !v, err
 }
 
-func (s *linkService) List(cmd *CmdToListLink) ([]repository.LinkSummary, error) {
-	return s.repo.FindAll(cmd)
+func (s *linkService) List(userId string) ([]repository.LinkSummary, error) {
+	return s.repo.FindAll(userId)
 }
 
 func (s *linkService) FindCLAs(cmd *CmdToFindCLAs) ([]CLADetailDTO, error) {

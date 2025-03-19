@@ -18,9 +18,9 @@ var (
 type corpSigningAdapter interface {
 	Verify(linkId, email string) (string, IModelError)
 	Sign(linkId string, opt *CorporationSigningCreateOption, claFields []CLAField) IModelError
-	Remove(string) IModelError
-	Get(csId string) (CorporationSigning, IModelError)
-	List(linkId string) ([]CorporationSigningSummary, IModelError)
+	Remove(string, string) IModelError
+	Get(userId, csId string) (string, CorporationSigning, IModelError)
+	List(userId, linkId string) ([]CorporationSigningSummary, IModelError)
 	FindCorpSummary(linkId string, email string) (interface{}, IModelError)
 }
 
@@ -54,7 +54,7 @@ func RegisterIndividualSigningAdapter(a individualSigningAdapter) {
 
 // corpAdminAdatper
 type corpAdminAdatper interface {
-	Add(csId string) (CorporationManagerCreateOption, IModelError)
+	Add(userId, csId string) (string, CorporationManagerCreateOption, IModelError)
 }
 
 func RegisterCorpAdminAdatper(a corpAdminAdatper) {
@@ -98,8 +98,8 @@ func RegisterCorpEmailDomainAdapter(a corpEmailDomainAdapter) {
 
 // corpPDFAdapter
 type corpPDFAdapter interface {
-	Upload(csId string, pdf []byte) IModelError
-	Download(csId string) ([]byte, IModelError)
+	Upload(userId, csId string, pdf []byte) IModelError
+	Download(userId, csId string) ([]byte, IModelError)
 }
 
 func RegisterCorpPDFAdapter(a corpPDFAdapter) {
@@ -129,10 +129,10 @@ func RegisterAccessTokenAdapter(at accessTokenAdapter) {
 
 // claAdapter
 type claAdapter interface {
-	Add(linkId string, opt *CLACreateOpt) IModelError
-	Remove(linkId, claId string) IModelError
+	Add(userId, linkId string, opt *CLACreateOpt) IModelError
+	Remove(userId, linkId, claId string) IModelError
 	CLALocalFilePath(linkId, claId string) string
-	List(linkId string) (CLAOfLink, IModelError)
+	List(userId, linkId string) (CLAOfLink, IModelError)
 }
 
 func RegisterCLAAdapter(a claAdapter) {
@@ -142,8 +142,8 @@ func RegisterCLAAdapter(a claAdapter) {
 // linkAdapter
 type linkAdapter interface {
 	Add(submitter string, opt *LinkCreateOption) IModelError
-	Remove(linkId string) IModelError
-	List(platform string, orgs []string) ([]LinkInfo, IModelError)
+	Remove(userId, linkId string) IModelError
+	List(userId string) ([]LinkInfo, IModelError)
 	GetLink(linkId string) (org OrgInfo, merr IModelError)
 	GetLinkCLA(linkId, claId string) (OrgInfo, CLAInfo, IModelError)
 	ListCLAs(linkId, applyTo string) ([]CLADetail, IModelError)

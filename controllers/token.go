@@ -34,18 +34,6 @@ func (ctl *baseController) newApiToken(permission string, pl interface{}) (model
 	return models.NewAccessToken(v)
 }
 
-func (ctl *baseController) tokenPayloadBasedOnCodePlatform() (*acForCodePlatformPayload, *failedApiResult) {
-	ac, fr := ctl.getAccessController()
-	if fr != nil {
-		return nil, fr
-	}
-
-	if pl, ok := ac.Payload.(*acForCodePlatformPayload); ok {
-		return pl, nil
-	}
-	return nil, newFailedApiResult(500, errSystemError, fmt.Errorf("invalid token payload"))
-}
-
 func (ctl *baseController) tokenPayloadBasedOnCorpManager() (*acForCorpManagerPayload, *failedApiResult) {
 	ac, fr := ctl.getAccessController()
 	if fr != nil {

@@ -57,6 +57,8 @@ const (
 	ErrorCodeLinkExists       = "link_exists"
 	ErrorCodeLinkNotExists    = "link_not_exists"
 	ErrorCodeLinkCanNotRemove = "link_can_not_remove"
+
+	ErrorCodeNoPermission = "no_permission"
 )
 
 // domainError

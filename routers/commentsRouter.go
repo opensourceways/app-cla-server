@@ -385,15 +385,6 @@ func init() {
 			Filters:          nil,
 			Params:           nil})
 
-	beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:OrganizationController"] = append(beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:OrganizationController"],
-		beego.ControllerComments{
-			Method:           "List",
-			Router:           `/`,
-			AllowHTTPMethods: []string{"get"},
-			MethodParams:     param.Make(),
-			Filters:          nil,
-			Params:           nil})
-
 	beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:PasswordRetrievalController"] = append(beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:PasswordRetrievalController"],
 		beego.ControllerComments{
 			Method:           "Post",

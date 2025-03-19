@@ -29,8 +29,8 @@ func (ctl *CorporationPDFController) Prepare() {
 	}
 }
 
-func (ctl *CorporationPDFController) downloadCorpPDF(csId string) *failedApiResult {
-	pdf, merr := models.DownloadCorpPDF(csId)
+func (ctl *CorporationPDFController) downloadCorpPDF(userId, csId string) *failedApiResult {
+	pdf, merr := models.DownloadCorpPDF(userId, csId)
 	if merr != nil {
 		if merr.IsErrorOf(models.ErrNoLinkOrUnuploaed) {
 			return newFailedApiResult(400, errUnuploaded, merr)
@@ -66,17 +66,12 @@ func (ctl *CorporationPDFController) downloadCorpPDF(csId string) *failedApiResu
 // @Success 201 {object} controllers.respData
 // @router /:link_id/:signing_id [post]
 func (ctl *CorporationPDFController) Upload() {
-	linkID := ctl.GetString(":link_id")
 	signingId := ctl.GetString(":signing_id")
 
 	action := "community manager uploads pdf of corp CLA sign: " + signingId
 
-	pl, fr := ctl.tokenPayloadBasedOnCodePlatform()
+	pl, fr := ctl.tokenPayloadBasedOnCorpManager()
 	if fr != nil {
-		ctl.sendFailedResultAsResp(fr, action)
-		return
-	}
-	if fr := pl.isOwnerOfLink(linkID); fr != nil {
 		ctl.sendFailedResultAsResp(fr, action)
 		return
 	}
@@ -89,7 +84,7 @@ func (ctl *CorporationPDFController) Upload() {
 		return
 	}
 
-	err := models.UploadCorpPDF(signingId, data)
+	err := models.UploadCorpPDF(pl.UserId, signingId, data)
 	if err != nil {
 		ctl.sendModelErrorAsResp(err, action)
 	} else {
@@ -106,21 +101,16 @@ func (ctl *CorporationPDFController) Upload() {
 // @Success 200
 // @router /:link_id/:signing_id [get]
 func (ctl *CorporationPDFController) Download() {
-	linkID := ctl.GetString(":link_id")
 	signingId := ctl.GetString(":signing_id")
 	action := "community manager downloads pdf of corp CLA sign: " + signingId
 
-	pl, fr := ctl.tokenPayloadBasedOnCodePlatform()
+	pl, fr := ctl.tokenPayloadBasedOnCorpManager()
 	if fr != nil {
 		ctl.sendFailedResultAsResp(fr, action)
 		return
 	}
-	if fr := pl.isOwnerOfLink(linkID); fr != nil {
-		ctl.sendFailedResultAsResp(fr, action)
-		return
-	}
 
-	fr = ctl.downloadCorpPDF(ctl.GetString(":signing_id"))
+	fr = ctl.downloadCorpPDF(pl.UserId, ctl.GetString(":signing_id"))
 	if fr != nil {
 		ctl.sendFailedResultAsResp(fr, action)
 	}
@@ -141,7 +131,7 @@ func (ctl *CorporationPDFController) Review() {
 		return
 	}
 
-	if fr := ctl.downloadCorpPDF(pl.SigningId); fr != nil {
+	if fr := ctl.downloadCorpPDF(pl.UserId, pl.SigningId); fr != nil {
 		ctl.sendFailedResultAsResp(fr, action)
 	}
 }

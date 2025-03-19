@@ -90,6 +90,8 @@ func (ctl *CorporationManagerController) genToken(linkID string, info *models.Co
 		permission = PermissionCorpAdmin
 	case models.RoleManager:
 		permission = PermissionEmployeeManager
+	case "":
+		permission = PermissionOwnerOfOrg
 	}
 
 	token, err := ctl.newApiToken(

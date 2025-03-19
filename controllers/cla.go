@@ -29,12 +29,8 @@ func (ctl *CLAController) Add() {
 	action := "add cla"
 	linkID := ctl.GetString(":link_id")
 
-	pl, fr := ctl.tokenPayloadBasedOnCodePlatform()
+	pl, fr := ctl.tokenPayloadBasedOnCorpManager()
 	if fr != nil {
-		ctl.sendFailedResultAsResp(fr, action)
-		return
-	}
-	if fr := pl.isOwnerOfLink(linkID); fr != nil {
 		ctl.sendFailedResultAsResp(fr, action)
 		return
 	}
@@ -45,7 +41,7 @@ func (ctl *CLAController) Add() {
 		return
 	}
 
-	if err := models.AddCLAInstance(linkID, input); err != nil {
+	if err := models.AddCLAInstance(pl.UserId, linkID, input); err != nil {
 		ctl.sendModelErrorAsResp(err, action)
 	} else {
 		ctl.sendSuccessResp(action, "successfully")
@@ -65,17 +61,13 @@ func (ctl *CLAController) Delete() {
 	linkID := ctl.GetString(":link_id")
 	claId := ctl.GetString(":id")
 
-	pl, fr := ctl.tokenPayloadBasedOnCodePlatform()
+	pl, fr := ctl.tokenPayloadBasedOnCorpManager()
 	if fr != nil {
 		ctl.sendFailedResultAsResp(fr, action)
 		return
 	}
-	if fr := pl.isOwnerOfLink(linkID); fr != nil {
-		ctl.sendFailedResultAsResp(fr, action)
-		return
-	}
 
-	if err := models.RemoveCLAInstance(linkID, claId); err != nil {
+	if err := models.RemoveCLAInstance(pl.UserId, linkID, claId); err != nil {
 		ctl.sendModelErrorAsResp(err, action)
 
 		return
@@ -109,17 +101,13 @@ func (ctl *CLAController) List() {
 	action := "list cla"
 	linkID := ctl.GetString(":link_id")
 
-	pl, fr := ctl.tokenPayloadBasedOnCodePlatform()
+	pl, fr := ctl.tokenPayloadBasedOnCorpManager()
 	if fr != nil {
 		ctl.sendFailedResultAsResp(fr, action)
 		return
 	}
-	if fr := pl.isOwnerOfLink(linkID); fr != nil {
-		ctl.sendFailedResultAsResp(fr, action)
-		return
-	}
 
-	if clas, merr := models.ListCLAInstances(linkID); merr != nil {
+	if clas, merr := models.ListCLAInstances(pl.UserId, linkID); merr != nil {
 		ctl.sendModelErrorAsResp(merr, action)
 	} else {
 		ctl.sendSuccessResp(action, clas)

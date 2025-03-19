@@ -138,6 +138,10 @@ func (s *userService) Login(cmd *CmdToLogin) (dto UserLoginDTO, err error) {
 	var u domain.User
 	var l domain.Login
 
+	if cmd.LinkId == "" {
+		cmd.LinkId = u.CommunityManagerLinkId()
+	}
+
 	if cmd.Account != nil {
 		u, l, err = s.ls.LoginByAccount(cmd.LinkId, cmd.Account, cmd.Password)
 	} else {
@@ -195,7 +199,7 @@ func (s *userService) Get(userId string) (dto UserBasicInfoDTO, err error) {
 }
 
 func (s *userService) getRole(u *domain.User) (string, error) {
-	if s.repo == nil {
+	if u.IsCommunityManager() {
 		return "", nil
 	}
 

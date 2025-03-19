@@ -125,6 +125,9 @@ func codeMap(code string) models.ModelErrCode {
 	case domain.ErrorCodeVerificationCodeBusy:
 		return models.ErrTooManyRequest
 
+	case domain.ErrorCodeNoPermission:
+		return models.ErrNoPermission
+
 	default:
 		return models.ErrBadRequestParameter
 	}

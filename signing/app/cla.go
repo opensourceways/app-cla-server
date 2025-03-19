@@ -23,10 +23,10 @@ func NewCLAService(
 }
 
 type CLAService interface {
-	Add(linkId string, cmd *CmdToAddCLA) error
-	Remove(cmd domain.CLAIndex) error
+	Add(cmd *CmdToAddCLA) error
+	Remove(cmd *CmdToRemoveCLA) error
 	CLALocalFilePath(domain.CLAIndex) string
-	List(linkId string) ([]CLADTO, []CLADTO, error)
+	List(userId, linkId string) ([]CLADTO, []CLADTO, error)
 }
 
 type claService struct {
@@ -36,22 +36,7 @@ type claService struct {
 	individual repository.IndividualSigning
 }
 
-func (s *claService) Add(linkId string, cmd *CmdToAddCLA) error {
-	link, err := s.repo.Find(linkId)
-	if err != nil {
-		if commonRepo.IsErrorResourceNotFound(err) {
-			err = domain.NewDomainError(domain.ErrorCodeLinkNotExists)
-		}
-
-		return err
-	}
-
-	cla := cmd.toCLA()
-
-	return s.cla.Add(&link, &cla)
-}
-
-func (s *claService) Remove(cmd domain.CLAIndex) error {
+func (s *claService) Add(cmd *CmdToAddCLA) error {
 	link, err := s.repo.Find(cmd.LinkId)
 	if err != nil {
 		if commonRepo.IsErrorResourceNotFound(err) {
@@ -61,12 +46,34 @@ func (s *claService) Remove(cmd domain.CLAIndex) error {
 		return err
 	}
 
+	if err := link.CanDo(cmd.UserId); err != nil {
+		return err
+	}
+
+	cla := cmd.toCLA()
+
+	return s.cla.Add(&link, &cla)
+}
+
+func (s *claService) Remove(cmd *CmdToRemoveCLA) error {
+	link, err := s.repo.Find(cmd.LinkId)
+	if err != nil {
+		if commonRepo.IsErrorResourceNotFound(err) {
+			err = domain.NewDomainError(domain.ErrorCodeLinkNotExists)
+		}
+
+		return err
+	}
+	if err := link.CanDo(cmd.UserId); err != nil {
+		return err
+	}
+
 	cla := link.FindCLA(cmd.CLAId)
 	if cla == nil {
 		return domain.NewDomainError(domain.ErrorCodeCLANotExists)
 	}
 
-	if err := s.checkIfCanRemove(&cmd, cla.Type); err != nil {
+	if err := s.checkIfCanRemove(&cmd.CLAIndex, cla.Type); err != nil {
 		return err
 	}
 
@@ -114,9 +121,12 @@ func (s *claService) checkIfCanRemoveCorpCLA(cmd *domain.CLAIndex) (bool, error)
 	return !v, err
 }
 
-func (s *claService) List(linkId string) (individuals []CLADTO, corps []CLADTO, err error) {
+func (s *claService) List(userId, linkId string) (individuals []CLADTO, corps []CLADTO, err error) {
 	v, err := s.repo.Find(linkId)
 	if err != nil {
+		return
+	}
+	if err = v.CanDo(userId); err != nil {
 		return
 	}
 

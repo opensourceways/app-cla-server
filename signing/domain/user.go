@@ -5,16 +5,21 @@ import (
 	"github.com/opensourceways/app-cla-server/util"
 )
 
+const communityLink = "link_place_holder"
+
 type User struct {
-	Id              string
-	LinkId          string
-	Account         dp.Account
-	Password        []byte // encrypted
-	EmailAddr       dp.EmailAddr
-	CorpSigningId   string
-	PrivacyConsent  PrivacyConsent
-	PasswordChanged bool
-	Version         int
+	LinkId        string
+	CorpSigningId string
+
+	UserBasicInfo
+}
+
+func (u *User) IsCommunityManager() bool {
+	return u.LinkId == communityLink
+}
+
+func (u *User) CommunityManagerLinkId() string {
+	return communityLink
 }
 
 type PrivacyConsent struct {
@@ -22,12 +27,22 @@ type PrivacyConsent struct {
 	Version string
 }
 
-func (u *User) ResetPassword(newOne []byte) {
+type UserBasicInfo struct {
+	Id              string
+	Account         dp.Account
+	Password        []byte // encrypted
+	EmailAddr       dp.EmailAddr
+	PrivacyConsent  PrivacyConsent
+	PasswordChanged bool
+	Version         int
+}
+
+func (u *UserBasicInfo) ResetPassword(newOne []byte) {
 	u.Password = newOne
 	u.PasswordChanged = true
 }
 
-func (u *User) ChangePassword(
+func (u *UserBasicInfo) ChangePassword(
 	isCorrect func([]byte) bool,
 	genNewPassword func() ([]byte, error),
 ) error {
@@ -45,7 +60,7 @@ func (u *User) ChangePassword(
 	return nil
 }
 
-func (u *User) UpdatePrivacyConsent(version string) bool {
+func (u *UserBasicInfo) UpdatePrivacyConsent(version string) bool {
 	if u.PrivacyConsent.Version == version {
 		return false
 	}

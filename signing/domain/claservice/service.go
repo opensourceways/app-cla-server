@@ -1,6 +1,8 @@
 package claservice
 
 import (
+	"sync"
+
 	"github.com/beego/beego/v2/core/logs"
 
 	commonRepo "github.com/opensourceways/app-cla-server/common/domain/repository"
@@ -26,6 +28,7 @@ type CLAService interface {
 }
 
 type claService struct {
+	lock  sync.Mutex
 	repo  repository.Link
 	local localcla.LocalCLA
 }
@@ -54,7 +57,10 @@ func (s *claService) CLALocalFilePath(index *domain.CLAIndex) string {
 }
 
 func (s *claService) AddLink(link *domain.Link) error {
-	linkId := genLinkID(link)
+	s.lock.Lock()
+	linkId := s.repo.NewLinkId()
+	s.lock.Unlock()
+
 	link.Id = linkId
 
 	tempFiles := []string{}
@@ -90,8 +96,4 @@ func (s *claService) AddLink(link *domain.Link) error {
 	}
 
 	return nil
-}
-
-func genLinkID(v *domain.Link) string {
-	return v.Submitter
 }

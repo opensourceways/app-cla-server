@@ -18,20 +18,20 @@ func ValidateAndRefreshAccessToken(token AccessToken) (AccessToken, []byte, IMod
 }
 
 // cla
-func AddCLAInstance(linkId string, opt *CLACreateOpt) IModelError {
-	return claAdapterInstance.Add(linkId, opt)
+func AddCLAInstance(userId, linkId string, opt *CLACreateOpt) IModelError {
+	return claAdapterInstance.Add(userId, linkId, opt)
 }
 
 func CLAFile(linkId, claId string) string {
 	return claAdapterInstance.CLALocalFilePath(linkId, claId)
 }
 
-func ListCLAInstances(linkId string) (CLAOfLink, IModelError) {
-	return claAdapterInstance.List(linkId)
+func ListCLAInstances(userId, linkId string) (CLAOfLink, IModelError) {
+	return claAdapterInstance.List(userId, linkId)
 }
 
-func RemoveCLAInstance(linkId, claId string) IModelError {
-	return claAdapterInstance.Remove(linkId, claId)
+func RemoveCLAInstance(userId, linkId, claId string) IModelError {
+	return claAdapterInstance.Remove(userId, linkId, claId)
 }
 
 // link
@@ -40,12 +40,12 @@ func AddLink(submitter string, opt *LinkCreateOption) IModelError {
 	return linkAdapterInstance.Add(submitter, opt)
 }
 
-func RemoveLink(linkId string) IModelError {
-	return linkAdapterInstance.Remove(linkId)
+func RemoveLink(userId, linkId string) IModelError {
+	return linkAdapterInstance.Remove(userId, linkId)
 }
 
-func ListLink(platform string, orgs []string) ([]LinkInfo, IModelError) {
-	return linkAdapterInstance.List(platform, orgs)
+func ListLink(userId string) ([]LinkInfo, IModelError) {
+	return linkAdapterInstance.List(userId)
 }
 
 func GetLinkCLA(linkId, claId string) (OrgInfo, CLAInfo, IModelError) {
@@ -70,16 +70,22 @@ func SignCropCLA(linkId string, opt *CorporationSigningCreateOption, claFields [
 	return corpSigningAdapterInstance.Sign(linkId, opt, claFields)
 }
 
-func RemoveCorpSigning(csId string) IModelError {
-	return corpSigningAdapterInstance.Remove(csId)
+func RemoveCorpSigning(userId, csId string) IModelError {
+	return corpSigningAdapterInstance.Remove(userId, csId)
 }
 
-func ListCorpSigning(linkID string) ([]CorporationSigningSummary, IModelError) {
-	return corpSigningAdapterInstance.List(linkID)
+func ListCorpSigning(userId, linkID string) ([]CorporationSigningSummary, IModelError) {
+	return corpSigningAdapterInstance.List(userId, linkID)
 }
 
 func GetCorpSigning(csId string) (CorporationSigning, IModelError) {
-	return corpSigningAdapterInstance.Get(csId)
+	_, v, err := corpSigningAdapterInstance.Get("", csId)
+
+	return v, err
+}
+
+func GetCorpSigningByUser(userId, csId string) (string, CorporationSigning, IModelError) {
+	return corpSigningAdapterInstance.Get(userId, csId)
 }
 
 func FindCorpSummary(linkId string, email string) (interface{}, IModelError) {
@@ -88,12 +94,12 @@ func FindCorpSummary(linkId string, email string) (interface{}, IModelError) {
 
 // corp pdf
 
-func UploadCorpPDF(csId string, pdf []byte) IModelError {
-	return corpPDFAdapterInstance.Upload(csId, pdf)
+func UploadCorpPDF(userId, csId string, pdf []byte) IModelError {
+	return corpPDFAdapterInstance.Upload(userId, csId, pdf)
 }
 
-func DownloadCorpPDF(csId string) ([]byte, IModelError) {
-	return corpPDFAdapterInstance.Download(csId)
+func DownloadCorpPDF(userId, csId string) ([]byte, IModelError) {
+	return corpPDFAdapterInstance.Download(userId, csId)
 }
 
 // employee signing
@@ -164,8 +170,8 @@ func ListCorpEmailDomains(csId string) ([]string, IModelError) {
 }
 
 // corp admin
-func CreateCorporationAdministratorByAdapter(csId string) (CorporationManagerCreateOption, IModelError) {
-	return corpAdminAdatperInstance.Add(csId)
+func CreateCorporationAdministratorByAdapter(userId, csId string) (string, CorporationManagerCreateOption, IModelError) {
+	return corpAdminAdatperInstance.Add(userId, csId)
 }
 
 // user

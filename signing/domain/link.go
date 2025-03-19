@@ -26,6 +26,14 @@ type Link struct {
 	Version   int
 }
 
+func (link *Link) CanDo(userId string) error {
+	if userId != link.Submitter {
+		return NewDomainError(ErrorCodeNoPermission)
+	}
+
+	return nil
+}
+
 func (link *Link) AddCLA(cla *CLA) error {
 	if _, ok := link.posOfCLA(cla); ok {
 		return NewDomainError(ErrorCodeCLAExists)

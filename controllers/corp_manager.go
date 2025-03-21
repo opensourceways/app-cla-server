@@ -23,10 +23,20 @@ func (ctl *CorporationManagerController) Prepare() {
 		return
 	}
 
-	// change password of manager or logout or get basic info
+	if ctl.isGetRequest() {
+		// get basic info
+		ctl.apiPrepareWithAC(
+			&accessController{Payload: &acForCorpManagerPayload{}},
+			[]string{PermissionCorpAdmin, PermissionEmployeeManager},
+		)
+
+		return
+	}
+
+	// change password of manager or logout
 	ctl.apiPrepareWithAC(
 		&accessController{Payload: &acForCorpManagerPayload{}},
-		[]string{PermissionCorpAdmin, PermissionEmployeeManager},
+		[]string{PermissionCorpAdmin, PermissionEmployeeManager, PermissionOwnerOfOrg},
 	)
 }
 
@@ -41,28 +51,16 @@ func (ctl *CorporationManagerController) Prepare() {
 // @Failure util.ErrNumOfCorpManagersExceeded
 // @router /:link_id/:signing_id [post]
 func (ctl *CorporationManagerController) AddCorpAdmin() {
-	linkID := ctl.GetString(":link_id")
 	csId := ctl.GetString(":signing_id")
 	action := "community manager adds corp admin of signing: " + csId
 
-	pl, fr := ctl.tokenPayloadBasedOnCodePlatform()
+	pl, fr := ctl.tokenPayloadBasedOnCorpManager()
 	if fr != nil {
 		ctl.sendFailedResultAsResp(fr, action)
 		return
 	}
-	if fr := pl.isOwnerOfLink(linkID); fr != nil {
-		ctl.sendFailedResultAsResp(fr, action)
-		return
-	}
 
-	orgInfo, merr := models.GetLink(linkID)
-	if merr != nil {
-		ctl.sendModelErrorAsResp(merr, action)
-
-		return
-	}
-
-	added, merr := models.CreateCorporationAdministratorByAdapter(csId)
+	linkId, added, merr := models.CreateCorporationAdministratorByAdapter(pl.UserId, csId)
 	if merr != nil {
 		if merr.IsErrorOf(models.ErrNoLinkOrManagerExists) {
 			ctl.sendFailedResponse(400, errCorpManagerExists, merr, action)
@@ -73,9 +71,16 @@ func (ctl *CorporationManagerController) AddCorpAdmin() {
 		return
 	}
 
+	orgInfo, merr := models.GetLink(linkId)
+	if merr != nil {
+		ctl.sendModelErrorAsResp(merr, action)
+
+		return
+	}
+
 	ctl.sendSuccessResp(action, "successfully")
 
-	notifyCorpAdmin(linkID, &orgInfo, &added)
+	notifyCorpAdmin(linkId, &orgInfo, &added)
 }
 
 // @Title ChangePassword

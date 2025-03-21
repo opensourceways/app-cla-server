@@ -13,13 +13,13 @@ type corpAdminAdatper struct {
 	s app.CorpAdminService
 }
 
-func (adapter *corpAdminAdatper) Add(csId string) (
-	models.CorporationManagerCreateOption, models.IModelError,
+func (adapter *corpAdminAdatper) Add(userId, csId string) (
+	string, models.CorporationManagerCreateOption, models.IModelError,
 ) {
-	dto, err := adapter.s.Add(csId)
+	linkId, dto, err := adapter.s.Add(userId, csId)
 	if err != nil {
-		return models.CorporationManagerCreateOption{}, toModelError(err)
+		return "", models.CorporationManagerCreateOption{}, toModelError(err)
 	}
 
-	return toCorporationManagerCreateOption(&dto), nil
+	return linkId, toCorporationManagerCreateOption(&dto), nil
 }

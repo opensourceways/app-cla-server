@@ -15,10 +15,11 @@ type LinkSummary struct {
 }
 
 type Link interface {
+	NewLinkId() string
 	Add(*domain.Link) error
 	Remove(*domain.Link) error
 	Find(string) (domain.Link, error)
-	FindAll(*FindLinksOpt) ([]LinkSummary, error)
+	FindAll(userId string) ([]LinkSummary, error)
 
 	AddCLA(*domain.Link, *domain.CLA) error
 	RemoveCLA(*domain.Link, *domain.CLA) error

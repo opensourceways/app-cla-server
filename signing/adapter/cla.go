@@ -34,10 +34,13 @@ type claAdatper struct {
 }
 
 // Remove
-func (adapter *claAdatper) Remove(linkId, claId string) models.IModelError {
-	err := adapter.s.Remove(domain.CLAIndex{
-		LinkId: linkId,
-		CLAId:  claId,
+func (adapter *claAdatper) Remove(userId, linkId, claId string) models.IModelError {
+	err := adapter.s.Remove(&app.CmdToRemoveCLA{
+		UserId: userId,
+		CLAIndex: domain.CLAIndex{
+			LinkId: linkId,
+			CLAId:  claId,
+		},
 	})
 
 	if err != nil {
@@ -48,8 +51,8 @@ func (adapter *claAdatper) Remove(linkId, claId string) models.IModelError {
 }
 
 // List
-func (adapter *claAdatper) List(linkId string) (models.CLAOfLink, models.IModelError) {
-	individuals, corps, err := adapter.s.List(linkId)
+func (adapter *claAdatper) List(userId, linkId string) (models.CLAOfLink, models.IModelError) {
+	individuals, corps, err := adapter.s.List(userId, linkId)
 	if err != nil {
 		return models.CLAOfLink{}, toModelError(err)
 	}
@@ -83,13 +86,13 @@ func (adapter *claAdatper) CLALocalFilePath(linkId, claId string) string {
 }
 
 // Add
-func (adapter *claAdatper) Add(linkId string, opt *models.CLACreateOpt) models.IModelError {
-	cmd, err := adapter.cmdToAddCLA(opt)
+func (adapter *claAdatper) Add(userId, linkId string, opt *models.CLACreateOpt) models.IModelError {
+	cmd, err := adapter.cmdToAddCLA(userId, linkId, opt)
 	if err != nil {
 		return errBadRequestParameter(err)
 	}
 
-	if err := adapter.s.Add(linkId, &cmd); err != nil {
+	if err := adapter.s.Add(&cmd); err != nil {
 		return toModelError(err)
 	}
 
@@ -106,9 +109,12 @@ func (adapter *claAdatper) isAllowedPDFSource(url string) bool {
 	return false
 }
 
-func (adapter *claAdatper) cmdToAddCLA(opt *models.CLACreateOpt) (
+func (adapter *claAdatper) cmdToAddCLA(userId, linkId string, opt *models.CLACreateOpt) (
 	cmd app.CmdToAddCLA, err error,
 ) {
+	cmd.UserId = userId
+	cmd.LinkId = linkId
+
 	if !adapter.isAllowedPDFSource(opt.URL) {
 		err = errors.New("not allowed cla pdf source")
 

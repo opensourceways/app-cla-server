@@ -65,8 +65,12 @@ func parseModelError(err models.IModelError) *failedApiResult {
 		sc = 500
 		code = errSystemError
 
+	case models.ErrNoPermission:
+		sc = 401
+		code = err.ErrCode()
+
 	default:
-		code = string(err.ErrCode())
+		code = err.ErrCode()
 	}
 
 	return newFailedApiResult(sc, code, err)

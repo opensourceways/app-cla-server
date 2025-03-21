@@ -1,7 +1,6 @@
 package app
 
 import (
-	commonRepo "github.com/opensourceways/app-cla-server/common/domain/repository"
 	"github.com/opensourceways/app-cla-server/signing/domain"
 	"github.com/opensourceways/app-cla-server/signing/domain/claservice"
 	"github.com/opensourceways/app-cla-server/signing/domain/dp"
@@ -23,10 +22,10 @@ func NewCLAService(
 }
 
 type CLAService interface {
-	Add(linkId string, cmd *CmdToAddCLA) error
-	Remove(cmd domain.CLAIndex) error
+	Add(cmd *CmdToAddCLA) error
+	Remove(cmd *CmdToRemoveCLA) error
 	CLALocalFilePath(domain.CLAIndex) string
-	List(linkId string) ([]CLADTO, []CLADTO, error)
+	List(userId, linkId string) ([]CLADTO, []CLADTO, error)
 }
 
 type claService struct {
@@ -36,28 +35,20 @@ type claService struct {
 	individual repository.IndividualSigning
 }
 
-func (s *claService) Add(linkId string, cmd *CmdToAddCLA) error {
-	link, err := s.repo.Find(linkId)
+func (s *claService) Add(cmd *CmdToAddCLA) error {
+	link, err := checkIfCommunityManager(cmd.UserId, cmd.LinkId, s.repo)
 	if err != nil {
-		if commonRepo.IsErrorResourceNotFound(err) {
-			err = domain.NewDomainError(domain.ErrorCodeLinkNotExists)
-		}
-
 		return err
 	}
 
 	cla := cmd.toCLA()
 
-	return s.cla.Add(&link, &cla)
+	return s.cla.Add(link, &cla)
 }
 
-func (s *claService) Remove(cmd domain.CLAIndex) error {
-	link, err := s.repo.Find(cmd.LinkId)
+func (s *claService) Remove(cmd *CmdToRemoveCLA) error {
+	link, err := checkIfCommunityManager(cmd.UserId, cmd.LinkId, s.repo)
 	if err != nil {
-		if commonRepo.IsErrorResourceNotFound(err) {
-			err = domain.NewDomainError(domain.ErrorCodeLinkNotExists)
-		}
-
 		return err
 	}
 
@@ -66,11 +57,11 @@ func (s *claService) Remove(cmd domain.CLAIndex) error {
 		return domain.NewDomainError(domain.ErrorCodeCLANotExists)
 	}
 
-	if err := s.checkIfCanRemove(&cmd, cla.Type); err != nil {
+	if err := s.checkIfCanRemove(&cmd.CLAIndex, cla.Type); err != nil {
 		return err
 	}
 
-	return s.repo.RemoveCLA(&link, cla)
+	return s.repo.RemoveCLA(link, cla)
 }
 
 func (s *claService) checkIfCanRemove(cmd *domain.CLAIndex, t dp.CLAType) error {
@@ -114,8 +105,8 @@ func (s *claService) checkIfCanRemoveCorpCLA(cmd *domain.CLAIndex) (bool, error)
 	return !v, err
 }
 
-func (s *claService) List(linkId string) (individuals []CLADTO, corps []CLADTO, err error) {
-	v, err := s.repo.Find(linkId)
+func (s *claService) List(userId, linkId string) (individuals []CLADTO, corps []CLADTO, err error) {
+	v, err := checkIfCommunityManager(userId, linkId, s.repo)
 	if err != nil {
 		return
 	}

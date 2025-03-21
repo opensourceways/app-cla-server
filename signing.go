@@ -43,6 +43,11 @@ func initSigning(cfg *config.Config) error {
 		mongodb.DAO(cfg.Mongodb.Collections.CorpSigning),
 	)
 
+	linkRepo := repositoryimpl.NewLink(
+		mongodb.DAO(cfg.Mongodb.Collections.Link),
+		mongodb.DAO(cfg.Mongodb.Collections.CLA),
+	)
+
 	pi := passwordimpl.NewPasswordImpl(&cfg.Password)
 	ur := repositoryimpl.NewUser(
 		mongodb.DAO(cfg.Mongodb.Collections.User),
@@ -69,14 +74,14 @@ func initSigning(cfg *config.Config) error {
 	)
 
 	models.RegisterCorpAdminAdatper(
-		adapter.NewCorpAdminAdapter(app.NewCorpAdminService(repo, userService)),
+		adapter.NewCorpAdminAdapter(app.NewCorpAdminService(repo, linkRepo, userService)),
 	)
 
 	interval := cfg.Domain.Config.GetIntervalOfCreatingVC()
 
 	models.RegisterCorpSigningAdapter(
 		adapter.NewCorpSigningAdapter(
-			app.NewCorpSigningService(repo, vcService, interval),
+			app.NewCorpSigningService(repo, vcService, interval, linkRepo),
 			cfg.Domain.Config.InvalidCorpEmailDomains(),
 		),
 	)
@@ -96,7 +101,7 @@ func initSigning(cfg *config.Config) error {
 	)
 
 	models.RegisterCorpPDFAdapter(
-		adapter.NewCorpPDFAdapter(app.NewCorpPDFService(repo)),
+		adapter.NewCorpPDFAdapter(app.NewCorpPDFService(repo, linkRepo)),
 	)
 
 	models.RegisterUserAdapter(
@@ -147,10 +152,6 @@ func initSigning(cfg *config.Config) error {
 	)
 
 	// link
-	linkRepo := repositoryimpl.NewLink(
-		mongodb.DAO(cfg.Mongodb.Collections.Link),
-		mongodb.DAO(cfg.Mongodb.Collections.CLA),
-	)
 	cla := claservice.NewCLAService(linkRepo, localclaimpl.NewLocalCLAImpl(&cfg.LocalCLA))
 
 	claAapter := adapter.NewCLAAdapter(

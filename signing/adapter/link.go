@@ -116,11 +116,8 @@ func (adapter *linkAdatper) toFields(fields []domain.Field) []models.CLAField {
 }
 
 // List
-func (adapter *linkAdatper) List(platform string, orgs []string) ([]models.LinkInfo, models.IModelError) {
-	v, err := adapter.s.List(&app.CmdToListLink{
-		Platform: platform,
-		Orgs:     orgs,
-	})
+func (adapter *linkAdatper) List(userId string) ([]models.LinkInfo, models.IModelError) {
+	v, err := adapter.s.List(userId)
 	if err != nil {
 		return nil, toModelError(err)
 	}
@@ -144,8 +141,8 @@ func (adapter *linkAdatper) List(platform string, orgs []string) ([]models.LinkI
 }
 
 // Remove
-func (adapter *linkAdatper) Remove(linkId string) models.IModelError {
-	if err := adapter.s.Remove(linkId); err != nil {
+func (adapter *linkAdatper) Remove(userId, linkId string) models.IModelError {
+	if err := adapter.s.Remove(userId, linkId); err != nil {
 		return toModelError(err)
 	}
 
@@ -153,8 +150,8 @@ func (adapter *linkAdatper) Remove(linkId string) models.IModelError {
 }
 
 // Add
-func (adapter *linkAdatper) Add(submitter string, opt *models.LinkCreateOption) models.IModelError {
-	cmd, err := adapter.cmdToAddLink(submitter, opt)
+func (adapter *linkAdatper) Add(userId string, opt *models.LinkCreateOption) models.IModelError {
+	cmd, err := adapter.cmdToAddLink(userId, opt)
 	if err != nil {
 		return errBadRequestParameter(err)
 	}
@@ -166,7 +163,7 @@ func (adapter *linkAdatper) Add(submitter string, opt *models.LinkCreateOption) 
 	return nil
 }
 
-func (adapter *linkAdatper) cmdToAddLink(submitter string, opt *models.LinkCreateOption) (
+func (adapter *linkAdatper) cmdToAddLink(userId string, opt *models.LinkCreateOption) (
 	cmd app.CmdToAddLink, err error,
 ) {
 	if (opt.IndividualCLA == nil) && (opt.CorpCLA == nil) {
@@ -178,27 +175,27 @@ func (adapter *linkAdatper) cmdToAddLink(submitter string, opt *models.LinkCreat
 	if opt.IndividualCLA != nil {
 		opt.IndividualCLA.Type = models.ApplyToIndividual
 
-		v, err1 := adapter.cla.cmdToAddCLA(opt.IndividualCLA)
+		v, err1 := adapter.cla.cmdToAddCLA("", "", opt.IndividualCLA)
 		if err1 != nil {
 			err = err1
 
 			return
 		}
 
-		cmd.CLAs = append(cmd.CLAs, v)
+		cmd.CLAs = append(cmd.CLAs, v.CLAInfo)
 	}
 
 	if opt.CorpCLA != nil {
 		opt.CorpCLA.Type = models.ApplyToCorporation
 
-		v, err1 := adapter.cla.cmdToAddCLA(opt.CorpCLA)
+		v, err1 := adapter.cla.cmdToAddCLA("", "", opt.CorpCLA)
 		if err1 != nil {
 			err = err1
 
 			return
 		}
 
-		cmd.CLAs = append(cmd.CLAs, v)
+		cmd.CLAs = append(cmd.CLAs, v.CLAInfo)
 	}
 
 	if cmd.Email, err = dp.NewEmailAddr(opt.OrgEmail); err != nil {
@@ -208,7 +205,7 @@ func (adapter *linkAdatper) cmdToAddLink(submitter string, opt *models.LinkCreat
 	cmd.Org.Alias = opt.OrgAlias
 	cmd.Org.ProjectURL = opt.ProjectURL
 
-	cmd.Submitter = submitter
+	cmd.Submitter = userId
 
 	return
 }

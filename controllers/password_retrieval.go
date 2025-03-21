@@ -23,7 +23,6 @@ func (ctl *PasswordRetrievalController) Prepare() {
 // @Description retrieving the password by sending an email to the user
 // @Tags PasswordRetrieval
 // @Accept json
-// @Param  link_id  path  string                       true  "link id"
 // @Param  body     body  models.PasswordRetrievalKey  true  "body for retrieving password"
 // @Success 201 {object} controllers.respData
 // @Failure 400 missing_url_path_parameter: missing url path parameter
@@ -31,16 +30,9 @@ func (ctl *PasswordRetrievalController) Prepare() {
 // @Failure 402 no_link:                    the link id is not exists
 // @Failure 403 missing_email:              missing email in payload
 // @Failure 500 system_error:               system error
-// @router /:link_id [post]
+// @router / [post]
 func (ctl *PasswordRetrievalController) Post() {
-	linkId := ctl.GetString(":link_id")
-	action := "corp admin or employee manager tries to retrieve password, link id: " + linkId
-
-	orgInfo, mErr := models.GetLink(linkId)
-	if mErr != nil {
-		ctl.sendModelErrorAsResp(mErr, action)
-		return
-	}
+	action := "manager tries to retrieve password"
 
 	var info models.PasswordRetrievalKey
 	if fr := ctl.fetchInputPayload(&info); fr != nil {
@@ -53,10 +45,27 @@ func (ctl *PasswordRetrievalController) Post() {
 		return
 	}
 
-	key, mErr := models.GenKeyForPasswordRetrieval(linkId, &info)
+	key, mErr := models.GenKeyForPasswordRetrieval(&info)
 	if mErr != nil {
 		ctl.sendModelErrorAsResp(mErr, action)
 		return
+	}
+
+	var linkId string
+	var orgInfo models.OrgInfo
+
+	if info.IsCommunityManager() {
+		orgInfo = models.OrgInfo{
+			OrgEmail:         config.CLAEmailAddr,
+			OrgEmailPlatform: config.CLAEmailPlatform,
+		}
+	} else {
+		linkId = info.LinkId
+
+		if orgInfo, mErr = models.GetLink(info.LinkId); mErr != nil {
+			ctl.sendModelErrorAsResp(mErr, action)
+			return
+		}
 	}
 
 	ctl.sendSuccessResp(action, "successfully")
@@ -64,16 +73,16 @@ func (ctl *PasswordRetrievalController) Post() {
 	sendEmailToIndividual(
 		info.Email,
 		&orgInfo,
-		"[CLA Sign] Retrieving Password of Corporation Manager",
+		"[CLA Sign] Retrieving Password",
 		emailtmpl.PasswordRetrieval{
 			Org:          orgInfo.OrgAlias,
 			Timeout:      config.PasswordRetrievalExpiry / 60,
-			ResetURL:     genURLToResetPassword(linkId, key),
+			ResetURL:     genURLToResetPassword(info.LinkId, key),
 			RetrievalURL: genURLToRetrievalPassword(linkId),
 		},
 	)
 
-	ctl.addOperationLog("", action, 0)
+	ctl.addOperationLog("", action+", link id: "+info.LinkId, 0)
 }
 
 // @Title Reset
@@ -94,7 +103,7 @@ func (ctl *PasswordRetrievalController) Post() {
 // @router /:link_id [put]
 func (ctl *PasswordRetrievalController) Reset() {
 	linkId := ctl.GetString(":link_id")
-	action := "corp admin or employee manager resets password, link id: " + linkId
+	action := "manager resets password, link id: " + linkId
 	sendResp := ctl.newFuncForSendingFailedResp(action)
 
 	key := ctl.apiReqHeader(headerPasswordRetrievalKey)

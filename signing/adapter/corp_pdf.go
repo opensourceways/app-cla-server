@@ -13,16 +13,22 @@ type corpPDFAdatper struct {
 	s app.CorpPDFService
 }
 
-func (adapter *corpPDFAdatper) Upload(csId string, pdf []byte) models.IModelError {
-	if err := adapter.s.Upload(csId, pdf); err != nil {
+func (adapter *corpPDFAdatper) Upload(userId, csId string, pdf []byte) models.IModelError {
+	cmd := app.CmdToUploadCorpSigningPDF{
+		UserId: userId,
+		CSId:   csId,
+		PDF:    pdf,
+	}
+
+	if err := adapter.s.Upload(&cmd); err != nil {
 		return toModelError(err)
 	}
 
 	return nil
 }
 
-func (adapter *corpPDFAdatper) Download(csId string) ([]byte, models.IModelError) {
-	v, err := adapter.s.Download(csId)
+func (adapter *corpPDFAdatper) Download(userId, csId string) ([]byte, models.IModelError) {
+	v, err := adapter.s.Download(userId, csId)
 	if err != nil {
 		return nil, toModelError(err)
 	}

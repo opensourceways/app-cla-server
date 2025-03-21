@@ -11,7 +11,7 @@ import (
 type CmdToAddLink struct {
 	Org       domain.OrgInfo
 	Email     dp.EmailAddr
-	CLAs      []CmdToAddCLA
+	CLAs      []CLAInfo
 	Submitter string
 }
 

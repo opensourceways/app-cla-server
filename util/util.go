@@ -66,12 +66,7 @@ func LoadFromYaml(path string, cfg interface{}) error {
 
 	content := []byte(os.ExpandEnv(string(b)))
 
-	if err := yaml.Unmarshal(content, cfg); err != nil {
-		return err
-	}
-
-	_, err = BuildRequestBody(cfg, "")
-	return err
+	return yaml.Unmarshal(content, cfg)
 }
 
 func NewTemplate(name, path string) (*template.Template, error) {

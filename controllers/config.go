@@ -4,7 +4,6 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/opensourceways/app-cla-server/signing/domain/dp"
 	"github.com/opensourceways/app-cla-server/util"
 )
 
@@ -101,7 +100,7 @@ func (cfg *Config) Validate() error {
 	}
 	cfg.PasswordResetURL = strings.TrimSuffix(s, "/")
 
-	if _, err := dp.NewEmailAddr(cfg.CLAEmailAddr); err != nil {
+	if err := util.CheckEmail(cfg.CLAEmailAddr); err != nil {
 		return err
 	}
 

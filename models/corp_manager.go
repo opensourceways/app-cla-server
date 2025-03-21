@@ -1,6 +1,10 @@
 package models
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/opensourceways/app-cla-server/signing/domain"
+)
 
 const (
 	RoleAdmin   = "admin"
@@ -15,8 +19,12 @@ type CorporationManagerLoginInfo struct {
 }
 
 func (info *CorporationManagerLoginInfo) Validate() IModelError {
-	if info.LinkID == "" || len(info.Password) == 0 || info.User == "" {
+	if len(info.Password) == 0 || info.User == "" {
 		return newModelError(ErrEmptyPayload, fmt.Errorf("necessary parameters is empty"))
+	}
+
+	if info.LinkID == "" {
+		info.LinkID = domain.CommunityManagerLinkId()
 	}
 
 	return nil

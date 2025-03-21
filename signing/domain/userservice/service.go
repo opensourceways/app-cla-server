@@ -175,10 +175,12 @@ func (s *userService) add(linkId, csId string, manager *domain.Manager) (p dp.Pa
 
 	index, err = s.repo.Add(&domain.User{
 		LinkId:        linkId,
-		Account:       a,
-		Password:      v,
-		EmailAddr:     manager.EmailAddr,
 		CorpSigningId: csId,
+		UserBasicInfo: domain.UserBasicInfo{
+			Account:   a,
+			Password:  v,
+			EmailAddr: manager.EmailAddr,
+		},
 	})
 
 	return

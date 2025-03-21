@@ -57,6 +57,8 @@ const (
 	ErrorCodeLinkExists       = "link_exists"
 	ErrorCodeLinkNotExists    = "link_not_exists"
 	ErrorCodeLinkCanNotRemove = "link_can_not_remove"
+
+	ErrorCodeNoPermission = "no_permission"
 )
 
 // domainError
@@ -85,4 +87,12 @@ func NewDomainError(v string) domainError {
 // NewNotFoundDomainError
 func NewNotFoundDomainError(v string) notfoudError {
 	return notfoudError{domainError(v)}
+}
+
+func IsErrorOf(err error, code string) bool {
+	code1, ok := err.(interface {
+		ErrorCode() string
+	})
+
+	return ok && code1.ErrorCode() == code
 }

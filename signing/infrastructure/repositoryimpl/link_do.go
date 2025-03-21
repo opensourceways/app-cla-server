@@ -8,12 +8,13 @@ import (
 )
 
 const (
-	fieldOrg      = "org"
-	fieldCLAs     = "clas"
-	fieldCLANum   = "cla_num"
-	fieldRemoved  = "removed"
-	fieldOrgAlias = "org_alias"
-	fieldPlatform = "platform"
+	fieldOrg       = "org"
+	fieldCLAs      = "clas"
+	fieldCLANum    = "cla_num"
+	fieldRemoved   = "removed"
+	fieldOrgAlias  = "org_alias"
+	fieldPlatform  = "platform"
+	fieldSubmitter = "submitter"
 )
 
 func toLinkDO(v *domain.Link) linkDO {
@@ -79,7 +80,7 @@ func (do *linkDO) toDoc() (bson.M, error) {
 
 // orgInfoDO
 type orgInfoDO struct {
-	Alias      string `bson:"org_alias" json:"org_alias"`
+	Alias      string `bson:"org_alias" json:"org_alias"  required:"true"`
 	ProjectURL string `bson:"project"   json:"project"    required:"true"`
 }
 

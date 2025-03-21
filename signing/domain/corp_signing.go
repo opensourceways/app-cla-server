@@ -44,6 +44,10 @@ func (cs *CorpSigning) CorpName() dp.CorpName {
 	return cs.Corp.Name
 }
 
+func (cs *CorpSigning) IsAdmin(userId string) bool {
+	return cs.Admin.isMe(userId)
+}
+
 func (cs *CorpSigning) GetRole(e dp.EmailAddr) string {
 	if cs.Admin.hasEmail(e) {
 		return RoleAdmin

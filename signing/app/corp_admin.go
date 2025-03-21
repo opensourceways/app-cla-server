@@ -10,26 +10,35 @@ import (
 
 func NewCorpAdminService(
 	repo repository.CorpSigning,
+	linkRepo repository.Link,
 	userService userservice.UserService,
 ) CorpAdminService {
 	return &corpAdminService{
 		repo:        repo,
+		linkRepo:    linkRepo,
 		userService: userService,
 	}
 }
 
 type CorpAdminService interface {
-	Add(string) (ManagerDTO, error)
+	Add(userId, csId string) (string, ManagerDTO, error)
 }
 
 type corpAdminService struct {
 	repo        repository.CorpSigning
+	linkRepo    repository.Link
 	userService userservice.UserService
 }
 
-func (s *corpAdminService) Add(csId string) (dto ManagerDTO, err error) {
+func (s *corpAdminService) Add(userId, csId string) (linkId string, dto ManagerDTO, err error) {
 	cs, err := s.repo.Find(csId)
 	if err != nil {
+		return
+	}
+
+	linkId = cs.Link.Id
+
+	if _, err = checkIfCommunityManager(userId, linkId, s.linkRepo); err != nil {
 		return
 	}
 
@@ -62,9 +71,9 @@ func (s *corpAdminService) Add(csId string) (dto ManagerDTO, err error) {
 
 	admin := &cs.Admin
 	dto = ManagerDTO{
-		Account:   account.Account(),
 		Role:      domain.RoleAdmin,
 		Name:      admin.Name.Name(),
+		Account:   account.Account(),
 		Password:  pws[admin.Id].Password(),
 		EmailAddr: admin.EmailAddr.EmailAddr(),
 	}

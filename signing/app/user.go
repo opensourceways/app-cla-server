@@ -195,7 +195,7 @@ func (s *userService) Get(userId string) (dto UserBasicInfoDTO, err error) {
 }
 
 func (s *userService) getRole(u *domain.User) (string, error) {
-	if s.repo == nil {
+	if u.IsCommunityManager() {
 		return "", nil
 	}
 

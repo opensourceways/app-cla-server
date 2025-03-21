@@ -4,6 +4,7 @@ import (
 	"net/url"
 	"strings"
 
+	"github.com/opensourceways/app-cla-server/signing/domain/dp"
 	"github.com/opensourceways/app-cla-server/util"
 )
 
@@ -43,6 +44,8 @@ type Config struct {
 	PrivacyZHFile        string `json:"privacy_zh_file"            required:"true"`
 	PDFDownloadDir       string `json:"pdf_download_dir"           required:"true"`
 	CLAPlatformURL       string `json:"cla_platform_url"           required:"true"`
+	CLAEmailAddr         string `json:"cla_email_addr"             required:"true"`
+	CLAEmailPlatform     string `json:"cla_email_platform"         required:"true"`
 	PasswordResetURL     string `json:"password_reset_url"         required:"true"`
 	PasswordRetrievalURL string `json:"password_retrieval_url"     required:"true"`
 }
@@ -97,6 +100,10 @@ func (cfg *Config) Validate() error {
 		return err
 	}
 	cfg.PasswordResetURL = strings.TrimSuffix(s, "/")
+
+	if _, err := dp.NewEmailAddr(cfg.CLAEmailAddr); err != nil {
+		return err
+	}
 
 	return nil
 }

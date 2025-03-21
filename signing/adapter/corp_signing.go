@@ -109,8 +109,8 @@ func (adapter *corpSigningAdatper) cmdToSignCorpCLA(
 }
 
 // Remove
-func (adapter *corpSigningAdatper) Remove(csId string) models.IModelError {
-	if err := adapter.s.Remove(csId); err != nil {
+func (adapter *corpSigningAdatper) Remove(userId, csId string) models.IModelError {
+	if err := adapter.s.Remove(userId, csId); err != nil {
 		return toModelError(err)
 	}
 
@@ -118,15 +118,15 @@ func (adapter *corpSigningAdatper) Remove(csId string) models.IModelError {
 }
 
 // Get
-func (adapter *corpSigningAdatper) Get(csId string) (
-	models.CorporationSigning, models.IModelError,
+func (adapter *corpSigningAdatper) Get(userId, csId string) (
+	string, models.CorporationSigning, models.IModelError,
 ) {
-	item, err := adapter.s.Get(csId)
+	linkId, item, err := adapter.s.Get(userId, csId)
 	if err != nil {
-		return models.CorporationSigning{}, toModelError(err)
+		return linkId, models.CorporationSigning{}, toModelError(err)
 	}
 
-	return models.CorporationSigning{
+	return linkId, models.CorporationSigning{
 		CorporationSigningBasicInfo: models.CorporationSigningBasicInfo{
 			Date:            item.Date,
 			AdminName:       item.RepName,
@@ -140,10 +140,10 @@ func (adapter *corpSigningAdatper) Get(csId string) (
 }
 
 // List
-func (adapter *corpSigningAdatper) List(linkId string) (
+func (adapter *corpSigningAdatper) List(userId, linkId string) (
 	[]models.CorporationSigningSummary, models.IModelError,
 ) {
-	v, err := adapter.s.List(linkId)
+	v, err := adapter.s.List(userId, linkId)
 	if err != nil {
 		return nil, toModelError(err)
 	}

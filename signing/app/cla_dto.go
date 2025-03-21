@@ -5,7 +5,7 @@ import (
 	"github.com/opensourceways/app-cla-server/signing/domain/dp"
 )
 
-type CmdToAddCLA struct {
+type CLAInfo struct {
 	URL      dp.URL
 	Text     []byte
 	Type     dp.CLAType
@@ -13,7 +13,7 @@ type CmdToAddCLA struct {
 	Language dp.Language
 }
 
-func (cmd *CmdToAddCLA) toCLA() domain.CLA {
+func (cmd *CLAInfo) toCLA() domain.CLA {
 	return domain.CLA{
 		URL:      cmd.URL,
 		Text:     cmd.Text,
@@ -21,6 +21,19 @@ func (cmd *CmdToAddCLA) toCLA() domain.CLA {
 		Fields:   cmd.Fields,
 		Language: cmd.Language,
 	}
+}
+
+type CmdToAddCLA struct {
+	UserId string
+	LinkId string
+
+	CLAInfo
+}
+
+type CmdToRemoveCLA struct {
+	UserId string
+
+	domain.CLAIndex
 }
 
 type CLADTO struct {

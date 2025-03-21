@@ -13,20 +13,22 @@ func NewCorpSigningService(
 	repo repository.CorpSigning,
 	vc vcservice.VCService,
 	interval time.Duration,
+	linkRepo repository.Link,
 ) *corpSigningService {
 	return &corpSigningService{
 		repo:     repo,
 		vc:       verificationCodeService{vc},
 		interval: interval,
+		linkRepo: linkRepo,
 	}
 }
 
 type CorpSigningService interface {
 	Verify(cmd *CmdToCreateVerificationCode) (string, error)
 	Sign(cmd *CmdToSignCorpCLA) error
-	Remove(csId string) error
-	Get(csId string) (CorpSigningInfoDTO, error)
-	List(linkId string) ([]CorpSigningDTO, error)
+	Remove(userId, csId string) error
+	Get(userId, csId string) (string, CorpSigningInfoDTO, error)
+	List(userId, linkId string) ([]CorpSigningDTO, error)
 	FindCorpSummary(cmd *CmdToFindCorpSummary) ([]CorpSummaryDTO, error)
 }
 
@@ -34,6 +36,7 @@ type corpSigningService struct {
 	vc       verificationCodeService
 	repo     repository.CorpSigning
 	interval time.Duration
+	linkRepo repository.Link
 }
 
 func (s *corpSigningService) Verify(cmd *CmdToCreateVerificationCode) (string, error) {
@@ -58,7 +61,7 @@ func (s *corpSigningService) Sign(cmd *CmdToSignCorpCLA) error {
 	return err
 }
 
-func (s *corpSigningService) Remove(csId string) error {
+func (s *corpSigningService) Remove(userId, csId string) error {
 	cs, err := s.repo.Find(csId)
 	if err != nil {
 		if commonRepo.IsErrorResourceNotFound(err) {
@@ -72,16 +75,28 @@ func (s *corpSigningService) Remove(csId string) error {
 		return err
 	}
 
+	if _, err := checkIfCommunityManager(userId, cs.Link.Id, s.linkRepo); err != nil {
+		return err
+	}
+
 	return s.repo.Remove(&cs)
 }
 
-func (s *corpSigningService) Get(csId string) (CorpSigningInfoDTO, error) {
+func (s *corpSigningService) Get(userId, csId string) (linkId string, dto CorpSigningInfoDTO, err error) {
 	item, err := s.repo.Find(csId)
 	if err != nil {
-		return CorpSigningInfoDTO{}, err
+		return
 	}
 
-	return CorpSigningInfoDTO{
+	linkId = item.Link.Id
+
+	if !item.IsAdmin(userId) {
+		if _, err = checkIfCommunityManager(userId, linkId, s.linkRepo); err != nil {
+			return
+		}
+	}
+
+	dto = CorpSigningInfoDTO{
 		Date:     item.Date,
 		CLAId:    item.Link.CLAId,
 		Language: item.Link.Language.Language(),
@@ -89,10 +104,16 @@ func (s *corpSigningService) Get(csId string) (CorpSigningInfoDTO, error) {
 		RepName:  item.Rep.Name.Name(),
 		RepEmail: item.Rep.EmailAddr.EmailAddr(),
 		AllInfo:  item.AllInfo,
-	}, nil
+	}
+
+	return
 }
 
-func (s *corpSigningService) List(linkId string) ([]CorpSigningDTO, error) {
+func (s *corpSigningService) List(userId, linkId string) ([]CorpSigningDTO, error) {
+	if _, err := checkIfCommunityManager(userId, linkId, s.linkRepo); err != nil {
+		return nil, err
+	}
+
 	v, err := s.repo.FindAll(linkId)
 	if err != nil || len(v) == 0 {
 		return nil, err

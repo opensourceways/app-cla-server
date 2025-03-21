@@ -26,6 +26,10 @@ func (impl *link) docFilter(linkId string) bson.M {
 	}
 }
 
+func (impl *link) NewLinkId() string {
+	return impl.dao.NewDocId()
+}
+
 func (impl *link) Add(v *domain.Link) error {
 	for i := range v.CLAs {
 		if err := impl.claContent.add(v.Id, &v.CLAs[i]); err != nil {
@@ -85,11 +89,10 @@ func (impl *link) Find(linkId string) (r domain.Link, err error) {
 	return
 }
 
-func (impl *link) FindAll(opt *repository.FindLinksOpt) ([]repository.LinkSummary, error) {
+func (impl *link) FindAll(userId string) ([]repository.LinkSummary, error) {
 	filter := bson.M{
-		fieldDeleted:                        false,
-		childField(fieldOrg, fieldOrg):      bson.M{mongodbCmdIn: opt.Orgs},
-		childField(fieldOrg, fieldPlatform): opt.Platform,
+		fieldDeleted:   false,
+		fieldSubmitter: userId,
 	}
 
 	var dos []linkDO

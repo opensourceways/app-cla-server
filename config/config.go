@@ -101,6 +101,10 @@ func (cfg *Config) setDefault() {
 }
 
 func (cfg *Config) validate() error {
+	if err := util.CheckConfig(cfg, ""); err != nil {
+		return err
+	}
+
 	items := cfg.configItems()
 	for _, i := range items {
 		if f, ok := i.(configValidate); ok {

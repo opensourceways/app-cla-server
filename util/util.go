@@ -2,6 +2,7 @@ package util
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -16,10 +17,21 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
-var reXSS = regexp.MustCompile(`[&<>"'/]`)
+var (
+	reXSS       = regexp.MustCompile(`[&<>"'/]`)
+	reEmailAddr = regexp.MustCompile(`^[a-zA-Z0-9+_.-]+@[a-zA-Z0-9-]+(\.[a-zA-Z0-9-]+)*(\.[a-zA-Z]{2,6})$`)
+)
 
 func HasXSS(s string) bool {
 	return reXSS.MatchString(s)
+}
+
+func CheckEmail(v string) error {
+	if v == "" || !reEmailAddr.MatchString(v) {
+		return errors.New("invalid email address")
+	}
+
+	return nil
 }
 
 func StrLen(s string) int {

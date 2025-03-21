@@ -2,21 +2,16 @@ package dp
 
 import (
 	"errors"
-	"regexp"
 
 	"github.com/opensourceways/app-cla-server/util"
 )
 
-var reEmailAddr = regexp.MustCompile(`^[a-zA-Z0-9+_.-]+@[a-zA-Z0-9-]+(\.[a-zA-Z0-9-]+)*(\.[a-zA-Z]{2,6})$`)
-
 func NewEmailAddr(v string) (EmailAddr, error) {
-	err := errors.New("invalid email address")
-
 	if util.StrLen(v) > config.MaxLengthOfEmail {
-		return nil, err
+		return nil, errors.New("invalid email address")
 	}
 
-	if v == "" || !reEmailAddr.MatchString(v) {
+	if err := util.CheckEmail(v); err != nil {
 		return nil, err
 	}
 

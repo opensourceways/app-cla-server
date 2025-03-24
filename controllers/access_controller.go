@@ -24,19 +24,16 @@ type accessController struct {
 }
 
 func (ctl *accessController) getUser() string {
-	if ctl.Permission == PermissionOwnerOfOrg {
-		if pl, ok := ctl.Payload.(*acForCodePlatformPayload); ok {
-			return pl.Platform + "/" + pl.User
-		}
-
+	pl, ok := ctl.Payload.(*acForCorpManagerPayload)
+	if !ok {
 		return ""
 	}
 
-	if pl, ok := ctl.Payload.(*acForCorpManagerPayload); ok {
-		return pl.LinkID + "/" + pl.UserId
+	if ctl.Permission == PermissionOwnerOfOrg {
+		return pl.UserId
 	}
 
-	return ""
+	return pl.LinkID + "/" + pl.UserId
 }
 
 func (ctl *accessController) verify(permission []string, addr string) error {
@@ -92,7 +89,7 @@ func (ctl *baseController) newAccessController(permission string) accessControll
 
 	switch permission {
 	case PermissionOwnerOfOrg:
-		acp = &acForCodePlatformPayload{}
+		acp = &acForCorpManagerPayload{}
 	case PermissionCorpAdmin:
 		acp = &acForCorpManagerPayload{}
 	case PermissionEmployeeManager:

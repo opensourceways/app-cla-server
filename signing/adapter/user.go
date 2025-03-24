@@ -2,6 +2,7 @@ package adapter
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/opensourceways/app-cla-server/models"
 	"github.com/opensourceways/app-cla-server/signing/app"
@@ -58,8 +59,10 @@ func (adapter *userAdatper) GenKeyForPasswordRetrieval(linkId string, email stri
 		return "", errBadRequestParameter(err)
 	}
 
-	k, err := adapter.s.GenKeyForPasswordRetrieval(&cmd)
+	k, err, num := adapter.s.GenKeyForPasswordRetrieval(&cmd)
 	if err != nil {
+		fmt.Printf("GenKeyForPasswordRetrieval, num=%v\n", num)
+
 		return "", toModelError(err)
 	}
 

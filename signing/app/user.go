@@ -41,7 +41,7 @@ type UserService interface {
 	Login(cmd *CmdToLogin) (dto UserLoginDTO, err error)
 	ResetPassword(cmd *CmdToResetPassword) error
 	ChangePassword(cmd *CmdToChangePassword) error
-	GenKeyForPasswordRetrieval(*CmdToGenKeyForPasswordRetrieval) (string, error)
+	GenKeyForPasswordRetrieval(*CmdToGenKeyForPasswordRetrieval) (string, error, int)
 }
 
 type userService struct {
@@ -62,18 +62,18 @@ func (s *userService) ChangePassword(cmd *CmdToChangePassword) error {
 	return err
 }
 
-func (s *userService) GenKeyForPasswordRetrieval(cmd *CmdToGenKeyForPasswordRetrieval) (string, error) {
+func (s *userService) GenKeyForPasswordRetrieval(cmd *CmdToGenKeyForPasswordRetrieval) (string, error, int) {
 	b, err := s.us.IsAValidUser(cmd.Id, cmd.EmailAddr)
 	if err != nil {
-		return "", err
+		return "", err, 1
 	}
 	if !b {
-		return "", domain.NewDomainError(domain.ErrorCodeUserNotExists)
+		return "", domain.NewDomainError(domain.ErrorCodeUserNotExists), 2
 	}
 
 	code, err := s.vcService.newCodeIfItCan(cmd, s.interval)
 	if err != nil {
-		return "", err
+		return "", err, 3
 	}
 
 	k := resettingPasswordKey{
@@ -83,15 +83,15 @@ func (s *userService) GenKeyForPasswordRetrieval(cmd *CmdToGenKeyForPasswordRetr
 
 	v, err := json.Marshal(k)
 	if err != nil {
-		return "", err
+		return "", err, 4
 	}
 
 	v, err = s.encrypt.Encrypt(v)
 	if err != nil {
-		return "", err
+		return "", err, 5
 	}
 
-	return hex.EncodeToString(v), nil
+	return hex.EncodeToString(v), nil, 6
 }
 
 func (s *userService) ResetPassword(cmd *CmdToResetPassword) error {

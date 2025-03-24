@@ -36,18 +36,18 @@ func (ctl *PasswordRetrievalController) Post() {
 
 	var info models.PasswordRetrievalKey
 	if fr := ctl.fetchInputPayload(&info); fr != nil {
-		ctl.sendFailedResultAsResp(fr, action)
+		ctl.sendFailedResultAsResp(fr, action+"1")
 		return
 	}
 
 	if err := (&info).Validate(); err != nil {
-		ctl.sendModelErrorAsResp(err, action)
+		ctl.sendModelErrorAsResp(err, action+"2")
 		return
 	}
 
 	key, mErr := models.GenKeyForPasswordRetrieval(&info)
 	if mErr != nil {
-		ctl.sendModelErrorAsResp(mErr, action)
+		ctl.sendModelErrorAsResp(mErr, action+"3")
 		return
 	}
 
@@ -63,7 +63,7 @@ func (ctl *PasswordRetrievalController) Post() {
 		linkId = info.LinkId
 
 		if orgInfo, mErr = models.GetLink(info.LinkId); mErr != nil {
-			ctl.sendModelErrorAsResp(mErr, action)
+			ctl.sendModelErrorAsResp(mErr, action+"4")
 			return
 		}
 	}

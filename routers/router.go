@@ -65,11 +65,6 @@ func init() {
 				&controllers.SMTPController{},
 			),
 		),
-		beego.NSNamespace("/auth",
-			beego.NSInclude(
-				&controllers.AuthController{},
-			),
-		),
 		beego.NSNamespace("/password-retrieval",
 			beego.NSInclude(
 				&controllers.PasswordRetrievalController{},

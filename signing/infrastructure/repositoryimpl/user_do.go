@@ -49,12 +49,9 @@ func (do *userDO) toUser(u *domain.User) (err error) {
 		return
 	}
 
-	if u.Account, err = dp.NewAccount(do.Account); err != nil {
-		return
-	}
-
 	u.Id = do.Id.Hex()
 	u.LinkId = do.LinkId
+	u.Account = dp.CreateAccount(do.Account)
 	u.Password = do.Password
 	u.CorpSigningId = do.CorpSigningId
 	u.PasswordChanged = do.PasswordChanged

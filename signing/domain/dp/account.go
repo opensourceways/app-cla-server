@@ -23,6 +23,10 @@ func NewAccount(v string) (Account, error) {
 	return account(v), nil
 }
 
+func CreateAccount(v string) Account {
+	return account(v)
+}
+
 // Account
 type Account interface {
 	Account() string

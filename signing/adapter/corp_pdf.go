@@ -3,6 +3,7 @@ package adapter
 import (
 	"github.com/opensourceways/app-cla-server/models"
 	"github.com/opensourceways/app-cla-server/signing/app"
+	"github.com/opensourceways/app-cla-server/signing/domain/dp"
 )
 
 func NewCorpPDFAdapter(s app.CorpPDFService) *corpPDFAdatper {
@@ -27,8 +28,8 @@ func (adapter *corpPDFAdatper) Upload(userId, csId string, pdf []byte) models.IM
 	return nil
 }
 
-func (adapter *corpPDFAdatper) Download(userId, csId string) ([]byte, models.IModelError) {
-	v, err := adapter.s.Download(userId, csId)
+func (adapter *corpPDFAdatper) Download(userId, csId string, email dp.EmailAddr) ([]byte, models.IModelError) {
+	v, err := adapter.s.Download(userId, csId, email)
 	if err != nil {
 		return nil, toModelError(err)
 	}

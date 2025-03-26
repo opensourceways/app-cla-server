@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"github.com/opensourceways/app-cla-server/models"
+	"github.com/opensourceways/app-cla-server/signing/domain/dp"
 	"github.com/opensourceways/app-cla-server/signing/infrastructure/emailtmpl"
 )
 
@@ -56,7 +57,7 @@ func (ctl *CorpEmailDomainController) Verify() {
 		return
 	}
 
-	_, cs, merr := models.GetCorpSigning(pl.UserId, pl.SigningId)
+	_, cs, merr := models.GetCorpSigning(pl.UserId, pl.SigningId, dp.CreateEmailAddr(pl.Email))
 	if merr != nil {
 		ctl.sendModelErrorAsResp(merr, action)
 

@@ -3,6 +3,7 @@ package app
 import (
 	commonRepo "github.com/opensourceways/app-cla-server/common/domain/repository"
 	"github.com/opensourceways/app-cla-server/signing/domain"
+	"github.com/opensourceways/app-cla-server/signing/domain/dp"
 	"github.com/opensourceways/app-cla-server/signing/domain/repository"
 )
 
@@ -24,7 +25,7 @@ type CmdToUploadCorpSigningPDF struct {
 
 type CorpPDFService interface {
 	Upload(cmd *CmdToUploadCorpSigningPDF) error
-	Download(userId, csId string) ([]byte, error)
+	Download(userId, csId string, userEmail dp.EmailAddr) ([]byte, error)
 }
 
 type corpPDFService struct {
@@ -45,13 +46,13 @@ func (s *corpPDFService) Upload(cmd *CmdToUploadCorpSigningPDF) error {
 	return s.repo.SaveCorpPDF(&cs, cmd.PDF)
 }
 
-func (s *corpPDFService) Download(userId, csId string) ([]byte, error) {
+func (s *corpPDFService) Download(userId, csId string, userEmail dp.EmailAddr) ([]byte, error) {
 	cs, err := s.repo.Find(csId)
 	if err != nil {
 		return nil, err
 	}
 
-	if cs.IsAdmin(userId) {
+	if cs.IsAdmin(userEmail) {
 		return s.repo.FindCorpPDF(csId)
 	}
 

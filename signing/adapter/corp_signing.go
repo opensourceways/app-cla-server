@@ -118,10 +118,10 @@ func (adapter *corpSigningAdatper) Remove(userId, csId string) models.IModelErro
 }
 
 // Get
-func (adapter *corpSigningAdatper) Get(userId, csId string) (
+func (adapter *corpSigningAdatper) Get(userId, csId string, email dp.EmailAddr) (
 	string, models.CorporationSigning, models.IModelError,
 ) {
-	linkId, item, err := adapter.s.Get(userId, csId)
+	linkId, item, err := adapter.s.Get(userId, csId, email)
 	if err != nil {
 		return linkId, models.CorporationSigning{}, toModelError(err)
 	}

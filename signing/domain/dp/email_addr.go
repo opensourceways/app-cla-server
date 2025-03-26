@@ -18,6 +18,10 @@ func NewEmailAddr(v string) (EmailAddr, error) {
 	return emailAddr(v), nil
 }
 
+func CreateEmailAddr(v string) EmailAddr {
+	return emailAddr(v)
+}
+
 // EmailAddr
 type EmailAddr interface {
 	EmailAddr() string

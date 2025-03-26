@@ -4,6 +4,7 @@ import (
 	"strings"
 
 	"github.com/opensourceways/app-cla-server/models"
+	"github.com/opensourceways/app-cla-server/signing/domain/dp"
 	"github.com/opensourceways/app-cla-server/worker"
 )
 
@@ -144,7 +145,7 @@ func (ctl *CorporationSigningController) ResendCorpSigningEmail() {
 		return
 	}
 
-	linkId, signingInfo, merr := models.GetCorpSigning(pl.UserId, csId)
+	linkId, signingInfo, merr := models.GetCorpSigning(pl.UserId, csId, dp.CreateEmailAddr(pl.Email))
 	if merr != nil {
 		ctl.sendModelErrorAsResp(merr, action)
 		return

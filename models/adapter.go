@@ -1,5 +1,7 @@
 package models
 
+import "github.com/opensourceways/app-cla-server/signing/domain/dp"
+
 type AccessToken struct {
 	Id   string
 	CSRF string
@@ -78,8 +80,8 @@ func ListCorpSigning(userId, linkID string) ([]CorporationSigningSummary, IModel
 	return corpSigningAdapterInstance.List(userId, linkID)
 }
 
-func GetCorpSigning(userId, csId string) (string, CorporationSigning, IModelError) {
-	return corpSigningAdapterInstance.Get(userId, csId)
+func GetCorpSigning(userId, csId string, email dp.EmailAddr) (string, CorporationSigning, IModelError) {
+	return corpSigningAdapterInstance.Get(userId, csId, email)
 }
 
 func FindCorpSummary(linkId string, email string) (interface{}, IModelError) {
@@ -92,8 +94,8 @@ func UploadCorpPDF(userId, csId string, pdf []byte) IModelError {
 	return corpPDFAdapterInstance.Upload(userId, csId, pdf)
 }
 
-func DownloadCorpPDF(userId, csId string) ([]byte, IModelError) {
-	return corpPDFAdapterInstance.Download(userId, csId)
+func DownloadCorpPDF(userId, csId string, email dp.EmailAddr) ([]byte, IModelError) {
+	return corpPDFAdapterInstance.Download(userId, csId, email)
 }
 
 // employee signing

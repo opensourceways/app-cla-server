@@ -5,6 +5,7 @@ import (
 
 	commonRepo "github.com/opensourceways/app-cla-server/common/domain/repository"
 	"github.com/opensourceways/app-cla-server/signing/domain"
+	"github.com/opensourceways/app-cla-server/signing/domain/dp"
 	"github.com/opensourceways/app-cla-server/signing/domain/repository"
 	"github.com/opensourceways/app-cla-server/signing/domain/vcservice"
 )
@@ -27,7 +28,7 @@ type CorpSigningService interface {
 	Verify(cmd *CmdToCreateVerificationCode) (string, error)
 	Sign(cmd *CmdToSignCorpCLA) error
 	Remove(userId, csId string) error
-	Get(userId, csId string) (string, CorpSigningInfoDTO, error)
+	Get(userId, csId string, email dp.EmailAddr) (string, CorpSigningInfoDTO, error)
 	List(userId, linkId string) ([]CorpSigningDTO, error)
 	FindCorpSummary(cmd *CmdToFindCorpSummary) ([]CorpSummaryDTO, error)
 }
@@ -82,7 +83,7 @@ func (s *corpSigningService) Remove(userId, csId string) error {
 	return s.repo.Remove(&cs)
 }
 
-func (s *corpSigningService) Get(userId, csId string) (linkId string, dto CorpSigningInfoDTO, err error) {
+func (s *corpSigningService) Get(userId, csId string, email dp.EmailAddr) (linkId string, dto CorpSigningInfoDTO, err error) {
 	item, err := s.repo.Find(csId)
 	if err != nil {
 		return
@@ -90,7 +91,7 @@ func (s *corpSigningService) Get(userId, csId string) (linkId string, dto CorpSi
 
 	linkId = item.Link.Id
 
-	if !item.IsAdmin(userId) {
+	if !item.IsAdmin(email) {
 		if _, err = checkIfCommunityManager(userId, linkId, s.linkRepo); err != nil {
 			return
 		}

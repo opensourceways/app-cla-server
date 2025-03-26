@@ -8,6 +8,7 @@ import (
 	"github.com/beego/beego/v2/core/logs"
 
 	"github.com/opensourceways/app-cla-server/models"
+	"github.com/opensourceways/app-cla-server/signing/domain/dp"
 	"github.com/opensourceways/app-cla-server/util"
 )
 
@@ -29,8 +30,8 @@ func (ctl *CorporationPDFController) Prepare() {
 	}
 }
 
-func (ctl *CorporationPDFController) downloadCorpPDF(userId, csId string) *failedApiResult {
-	pdf, merr := models.DownloadCorpPDF(userId, csId)
+func (ctl *CorporationPDFController) downloadCorpPDF(userId, csId, email string) *failedApiResult {
+	pdf, merr := models.DownloadCorpPDF(userId, csId, dp.CreateEmailAddr(email))
 	if merr != nil {
 		if merr.IsErrorOf(models.ErrNoLinkOrUnuploaed) {
 			return newFailedApiResult(400, errUnuploaded, merr)
@@ -110,7 +111,7 @@ func (ctl *CorporationPDFController) Download() {
 		return
 	}
 
-	fr = ctl.downloadCorpPDF(pl.UserId, ctl.GetString(":signing_id"))
+	fr = ctl.downloadCorpPDF(pl.UserId, ctl.GetString(":signing_id"), pl.Email)
 	if fr != nil {
 		ctl.sendFailedResultAsResp(fr, action)
 	}
@@ -131,7 +132,7 @@ func (ctl *CorporationPDFController) Review() {
 		return
 	}
 
-	if fr := ctl.downloadCorpPDF(pl.UserId, pl.SigningId); fr != nil {
+	if fr := ctl.downloadCorpPDF(pl.UserId, pl.SigningId, pl.Email); fr != nil {
 		ctl.sendFailedResultAsResp(fr, action)
 	}
 }

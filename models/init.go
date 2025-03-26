@@ -1,5 +1,7 @@
 package models
 
+import "github.com/opensourceways/app-cla-server/signing/domain/dp"
+
 var (
 	claAdapterInstance               claAdapter
 	linkAdapterInstance              linkAdapter
@@ -19,7 +21,7 @@ type corpSigningAdapter interface {
 	Verify(linkId, email string) (string, IModelError)
 	Sign(linkId string, opt *CorporationSigningCreateOption, claFields []CLAField) IModelError
 	Remove(string, string) IModelError
-	Get(userId, csId string) (string, CorporationSigning, IModelError)
+	Get(userId, csId string, email dp.EmailAddr) (string, CorporationSigning, IModelError)
 	List(userId, linkId string) ([]CorporationSigningSummary, IModelError)
 	FindCorpSummary(linkId string, email string) (interface{}, IModelError)
 }
@@ -99,7 +101,7 @@ func RegisterCorpEmailDomainAdapter(a corpEmailDomainAdapter) {
 // corpPDFAdapter
 type corpPDFAdapter interface {
 	Upload(userId, csId string, pdf []byte) IModelError
-	Download(userId, csId string) ([]byte, IModelError)
+	Download(userId, csId string, email dp.EmailAddr) ([]byte, IModelError)
 }
 
 func RegisterCorpPDFAdapter(a corpPDFAdapter) {

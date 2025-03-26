@@ -19,8 +19,8 @@ func (m *Manager) IsEmpty() bool {
 	return m.Id == ""
 }
 
-func (m *Manager) isMe(userId string) bool {
-	return m.Id != "" && m.Id == userId
+func (m *Manager) isMe(userEmail dp.EmailAddr) bool {
+	return m.Id != "" && m.EmailAddr.EmailAddr() == userEmail.EmailAddr()
 }
 
 func (m *Manager) IsSame(m1 *Manager) bool {

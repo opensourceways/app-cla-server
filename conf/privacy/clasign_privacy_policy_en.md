@@ -1,14 +1,15 @@
-## <center>CLA Sign Privacy Statement</center>
+## <center>CLA Sign Privacy Policy</center>
 
-We understand the importance of your privacy and fully respect it. If you have any questions about how we process your personal data, please feel free to contact us at the email address provided in this statement. Unless otherwise specified, "we" in this statement refers to the provider of the CLA Sign service.
+We understand the importance of your privacy and fully respect it. If you have any questions about how we process your personal data, please feel free to contact us at the email address provided in this policy. Unless otherwise specified, "we" in this policy refers to the provider of the CLA Sign service.
 
 **Version Change Notes**
 
 Please carefully review the following updates to this privacy policy:
 
-1. Optimized the bold formatting style for personal data.
+1. Updated the description of community administrator login in the "How We Collect and Process Your Personal Data" section.
+2. Updated the description in the "How This Policy Is Updated" section.
 
-#### 1. How We Collect Your Personal Data
+#### 1. How We Collect and Process Your Personal Data
 Personal data refers to the information that relates to an identified or identifiable individual. When you use the Contributor License Agreement Signing and Management ("CLA Sign") service, we will collect your personal data accordingly in the following circumstances. You may also obtain a quick understanding of how we collect and use personal data by reviewing the <span id="information-list">Personal Data Collection Overview</span>.
 1. Corporate CLA Signing
     When you sign a corporate CLA, we collect **name of the authorized representative**, **position**, **company name**, **email address**, **email verification code**, **phone number(optional)**, **address (optional)**, **fax number (optional)**, and **the signed CLA document**.
@@ -19,7 +20,7 @@ Personal data refers to the information that relates to an identified or identif
 4. Enterprise Administrator Login
     When you log in as an enterprise administrator, we collect your **account**, **password**, and **email address**.
 5. Community Administrator Login
-    When you log in as a community administrator, we collect your **Gitee ID**, Gitee organization name, **GitHub ID**, GitHub organization name, **email address**, and **email verification code**.
+    When you log in as a community administrator, we collect your **account**, **password**, **email address** and **email authorization code**.
 6. Service Optimization
     To ensure service quality and operations, we automatically collect and store necessary log data, including access timestamps, **IP address**, request details, access status, resource size, access origin, and user agent information.
 
@@ -32,7 +33,7 @@ We will collect your personal data accordingly in the following circumstances:
 We may disclose your personal data to third parties in the following circumstances:  
 (1) Disclosure pursuant to applicable laws and regulations.  
 (2) Disclosure necessary to protect the rights or property of us and/or the public. For example, we may disclose your personal data, when we believe disclosure is necessary or appropriate to prevent or defend cyber threat, fraud, physical harm, or financial loss, or when it is in connection with an investigation of suspected or actual illegal activity.  
-(3) Disclosure in the circumstances described in Article 4 of this statement.  
+(3) Disclosure in the circumstances described in Article 4 of this policy.  
 #### 3. How We Use Cookies
 To ensure our website works properly, we may at times place cookies on your computers or mobile devices. Please refer to <span id="about-cookie">About Cookies</span> for details about how we use cookies and similar technologies and how they process your personal data.
 #### 4. To Which Entities We Will Disclose Your Personal Data
@@ -63,11 +64,11 @@ You can change the scope of your authorization for us to collect your personal d
 Your personal data is stored in the People's Republic of China. None of our service scenarios involve the cross-border transfer of personal data.  
 #### 9. How We Protect Minors
 This website, including its content and services, is primarily intended for adults. Individuals under the age of 14 may not use the services we provide without the consent of a parent or guardian. If we inadvertently collect personal data of an individual under the age of 14 without verified prior consent from the individual's parent or guardian, we will attempt to delete the data as soon as possible.
-#### 10. How This Statement Is Updated
-We may update this statement from time to time according to changes of our services or data processing methods. If we update this statement, we will publish the latest version of the statement on this website, and it will take effect immediately upon its release. You are advised to review this statement periodically for any changes. If we make any substantial changes to this statement, we will notify you through appropriate channels and obtain your consent.  
+#### 10. How This Policy Is Updated
+We may update this policy from time to time according to changes of our services or data processing methods. If we update this policy, we will publish the latest version of the policy on this website, and it will take effect immediately upon its release. You are advised to review this policy periodically for any changes. If we make any substantial changes to this policy, we will notify you through appropriate channels (bulletins and pop-ups) and obtain your consent.  
 #### 11. How to Contact Us
 If you have any questions, comments, or suggestions about your personal data or any matters related to this agreement, or exercise your rights related to personal data, please contact us at cla-contact@osinfra.cn.
 
-Last updated: March 11, 2025
+Last updated: March 29, 2025
 
-Privacy policy version: v20250311
+Privacy policy version: v20250329

@@ -7,7 +7,10 @@ import (
 	"github.com/opensourceways/app-cla-server/util"
 )
 
-var reAccount = regexp.MustCompile("^[a-zA-Z0-9_.-]+_[a-zA-Z0-9-]+(\\.[a-zA-Z0-9-]+)*\\.[a-zA-Z]{2,6}$")
+var (
+	reCommunityAccount   = regexp.MustCompile("^[a-zA-Z0-9_.-]+$")
+	reCorpManagerAccount = regexp.MustCompile("^[a-zA-Z0-9_.-]+_[a-zA-Z0-9-]+(\\.[a-zA-Z0-9-]+)*\\.[a-zA-Z]{2,6}$")
+)
 
 func NewAccount(v string) (Account, error) {
 	err := errors.New("invalid account")
@@ -16,7 +19,7 @@ func NewAccount(v string) (Account, error) {
 		return nil, err
 	}
 
-	if v == "" || !reAccount.MatchString(v) {
+	if v == "" || (!reCorpManagerAccount.MatchString(v) && !reCommunityAccount.MatchString(v)) {
 		return nil, err
 	}
 

@@ -19,7 +19,7 @@ Personal data type: data you voluntarily submit
 Collection method: user input
 Personal data fields: We collect personal data based on the scenario:
     - For enterprise administrator login: **account**, **password**, and **email address**
-    - For community administrator login: **Gitee ID**, Gitee organization name, **GitHub ID**, GitHub organization name, **email address**, and **email verification code**
+    - For community administrator login: **account**, **password**, **email address** and **email authorization code**
 
 3. Service Optimization
 

@@ -126,9 +126,8 @@ func (do *corpSigningDO) toCorpSigning() domain.CorpSigning {
 
 func (do *corpSigningDO) toEmployeeSignings() []domain.EmployeeSigning {
 	es := make([]domain.EmployeeSigning, len(do.Employees))
-
 	for i := range do.Employees {
-		do.Employees[i].toEmployeeSigning(&es[i])
+		es[i] = do.Employees[i].toEmployeeSigning()
 	}
 
 	return es

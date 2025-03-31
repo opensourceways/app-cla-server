@@ -40,10 +40,10 @@ func (do *verificationCodeDO) toDoc() (bson.M, error) {
 
 func (do *verificationCodeDO) toVerificationCode() domain.VerificationCode {
 	return domain.VerificationCode{
+		Expiry: do.Expiry,
 		VerificationCodeKey: domain.VerificationCodeKey{
 			Code:    do.Code,
 			Purpose: dp.CreatePurpose(do.Purpose),
 		},
-		Expiry: do.Expiry,
 	}
 }

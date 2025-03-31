@@ -67,18 +67,19 @@ func (do *employeeSigningDO) toDoc() (bson.M, error) {
 	return genDoc(do)
 }
 
-func (do *employeeSigningDO) toEmployeeSigning(es *domain.EmployeeSigning) {
-	*es = domain.EmployeeSigning{
-		Id:      do.Id,
-		Rep:     do.RepDO.toRep(),
+func (do *employeeSigningDO) toEmployeeSigning() domain.EmployeeSigning {
+	return domain.EmployeeSigning{
+		Id:  do.Id,
+		Rep: do.RepDO.toRep(),
+		CLA: domain.CLAInfo{
+			CLAId:    do.CLAId,
+			Language: dp.CreateLanguage(do.Language),
+		},
 		Date:    do.Date,
+		Logs:    do.toEmployeeSigningLogs(),
 		Enabled: do.Enabled,
 		AllInfo: do.AllInfo,
-		Logs:    do.toEmployeeSigningLogs(),
 	}
-
-	es.CLA.CLAId = do.CLAId
-	es.CLA.Language = dp.CreateLanguage(do.Language)
 }
 
 func (do *employeeSigningDO) toEmployeeSigningLogs() []domain.EmployeeSigningLog {

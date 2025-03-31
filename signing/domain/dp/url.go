@@ -22,6 +22,10 @@ func NewURL(v string) (URL, error) {
 	return dpURL(v), nil
 }
 
+func CreateURL(v string) URL {
+	return dpURL(v)
+}
+
 type dpURL string
 
 func (v dpURL) URL() string {

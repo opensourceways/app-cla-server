@@ -10,6 +10,10 @@ func NewLanguage(v string) (Language, error) {
 	return language(v), nil
 }
 
+func CreateLanguage(v string) Language {
+	return language(v)
+}
+
 type Language interface {
 	Language() string
 }

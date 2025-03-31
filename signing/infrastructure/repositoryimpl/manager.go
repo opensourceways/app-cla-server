@@ -84,7 +84,7 @@ func (impl *corpSigning) FindEmployeeManagers(csId string) ([]domain.Manager, er
 		return nil, err
 	}
 
-	return do.toManagers()
+	return do.toManagers(), nil
 }
 
 func (impl *corpSigning) FindCorpManagers(linkId, emailDomain string) ([]domain.Manager, error) {
@@ -97,20 +97,13 @@ func (impl *corpSigning) FindCorpManagers(linkId, emailDomain string) ([]domain.
 	}
 
 	var dos []corpSigningDO
-
 	if err := impl.dao.GetDocs(filter, project, &dos); err != nil {
 		return nil, err
 	}
 
 	r := make([]domain.Manager, 0, len(dos))
-
 	for i := range dos {
-		v, err := dos[i].allManagers()
-		if err != nil {
-			return nil, err
-		}
-
-		if len(v) > 0 {
+		if v := dos[i].allManagers(); len(v) > 0 {
 			r = append(r, v...)
 		}
 	}

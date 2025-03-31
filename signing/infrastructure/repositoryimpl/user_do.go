@@ -44,24 +44,23 @@ func (do *userDO) toDoc() (bson.M, error) {
 	return genDoc(do)
 }
 
-func (do *userDO) toUser(u *domain.User) (err error) {
-	if u.EmailAddr, err = dp.NewEmailAddr(do.Email); err != nil {
-		return
+func (do *userDO) toUser() domain.User {
+	return domain.User{
+		LinkId:        do.LinkId,
+		CorpSigningId: do.CorpSigningId,
+		UserBasicInfo: domain.UserBasicInfo{
+			Id:              do.Id.Hex(),
+			Account:         dp.CreateAccount(do.Account),
+			Password:        do.Password,
+			EmailAddr:       dp.CreateEmailAddr(do.Email),
+			PasswordChanged: do.PasswordChanged,
+			PrivacyConsent: domain.PrivacyConsent{
+				Time:    do.PrivacyConsent.Time,
+				Version: do.PrivacyConsent.Version,
+			},
+			Version: do.Version,
+		},
 	}
-
-	u.Id = do.Id.Hex()
-	u.LinkId = do.LinkId
-	u.Account = dp.CreateAccount(do.Account)
-	u.Password = do.Password
-	u.CorpSigningId = do.CorpSigningId
-	u.PasswordChanged = do.PasswordChanged
-	u.PrivacyConsent = domain.PrivacyConsent{
-		Time:    do.PrivacyConsent.Time,
-		Version: do.PrivacyConsent.Version,
-	}
-	u.Version = do.Version
-
-	return
 }
 
 func toUserDO(u *domain.User) userDO {

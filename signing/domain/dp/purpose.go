@@ -19,3 +19,7 @@ func NewPurpose(v string) (Purpose, error) {
 
 	return purpose(v), nil
 }
+
+func CreatePurpose(v string) Purpose {
+	return purpose(v)
+}

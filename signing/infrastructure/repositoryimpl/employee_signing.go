@@ -91,7 +91,7 @@ func (impl *corpSigning) FindEmployees(csId string) ([]domain.EmployeeSigning, e
 		return nil, err
 	}
 
-	return do.toEmployeeSignings()
+	return do.toEmployeeSignings(), nil
 }
 
 func (impl *corpSigning) FindEmployeesByEmail(linkId string, email dp.EmailAddr) (

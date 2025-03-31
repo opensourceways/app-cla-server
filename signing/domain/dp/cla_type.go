@@ -29,6 +29,10 @@ func NewCLAType(v string) (CLAType, error) {
 	return nil, errors.New("invalid cla type")
 }
 
+func CreateCLAType(v string) CLAType {
+	return claType(v)
+}
+
 func IsCLATypeIndividual(v CLAType) bool {
 	return v != nil && v.CLAType() == CLATypeIndividual.CLAType()
 }

@@ -46,5 +46,5 @@ func (impl *emailCredential) Find(addr dp.EmailAddr) (domain.EmailCredential, er
 		return domain.EmailCredential{}, err
 	}
 
-	return do.toEmailCredential()
+	return do.toEmailCredential(), nil
 }

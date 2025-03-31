@@ -75,119 +75,72 @@ func (do *corpSigningDO) index() string {
 	return do.Id.Hex()
 }
 
-func (do *corpSigningDO) toCorpSigningSummary(cs *repository.CorpSigningSummary) (err error) {
-	rep, err := do.Rep.toRep()
-	if err != nil {
-		return
-	}
-
-	corp, err := do.Corp.toCorp()
-	if err != nil {
-		return
-	}
-
-	admin, err := do.Admin.toManager()
-	if err != nil {
-		return
-	}
-
-	*cs = repository.CorpSigningSummary{
-		Id:     do.index(),
-		Date:   do.Date,
+func (do *corpSigningDO) toCorpSigningSummary() repository.CorpSigningSummary {
+	return repository.CorpSigningSummary{
+		Id:   do.index(),
+		Rep:  do.Rep.toRep(),
+		Date: do.Date,
+		Corp: do.Corp.toCorp(),
+		Link: domain.LinkInfo{
+			Id: do.LinkId,
+			CLAInfo: domain.CLAInfo{
+				CLAId:    do.CLAId,
+				Language: dp.CreateLanguage(do.Language),
+			},
+		},
+		Admin:  do.Admin.toManager(),
 		HasPDF: do.HasPDF,
-		Rep:    rep,
-		Corp:   corp,
-		Admin:  admin,
 	}
-
-	cs.Link.Id = do.LinkId
-	cs.Link.Language, err = dp.NewLanguage(do.Language)
-
-	return
 }
 
-func (do *corpSigningDO) allManagers() ([]domain.Manager, error) {
-	v, err := do.toManagers()
-	if err != nil || do.Admin.isEmpty() {
-		return v, err
+func (do *corpSigningDO) allManagers() []domain.Manager {
+	v := do.toManagers()
+	if do.Admin.isEmpty() {
+		return v
 	}
 
-	admin, err := do.Admin.toManager()
-	if err != nil {
-		return nil, err
-	}
-
-	return append(v, admin), nil
+	return append(v, do.Admin.toManager())
 }
 
-func (do *corpSigningDO) toCorpSigning(cs *domain.CorpSigning) (err error) {
-	rep, err := do.Rep.toRep()
-	if err != nil {
-		return
-	}
-
-	corp, err := do.Corp.toCorp()
-	if err != nil {
-		return
-	}
-
-	es, err := do.toEmployeeSignings()
-	if err != nil {
-		return
-	}
-
-	admin, err := do.Admin.toManager()
-	if err != nil {
-		return
-	}
-
-	managers, err := do.toManagers()
-	if err != nil {
-		return
-	}
-
-	*cs = domain.CorpSigning{
-		Id:        do.index(),
-		Date:      do.Date,
-		Rep:       rep,
-		Corp:      corp,
-		AllInfo:   do.AllInfo,
+func (do *corpSigningDO) toCorpSigning() domain.CorpSigning {
+	return domain.CorpSigning{
+		Id:   do.index(),
+		Rep:  do.Rep.toRep(),
+		Corp: do.Corp.toCorp(),
+		Date: do.Date,
+		Link: domain.LinkInfo{
+			Id: do.LinkId,
+			CLAInfo: domain.CLAInfo{
+				CLAId:    do.CLAId,
+				Language: dp.CreateLanguage(do.Language),
+			},
+		},
+		Admin:     do.Admin.toManager(),
 		HasPDF:    do.HasPDF,
-		Admin:     admin,
-		Managers:  managers,
-		Employees: es,
+		AllInfo:   do.AllInfo,
+		Managers:  do.toManagers(),
+		Employees: do.toEmployeeSignings(),
 		Version:   do.Version,
 	}
-
-	cs.Link.Id = do.LinkId
-	cs.Link.CLAId = do.CLAId
-	cs.Link.Language, err = dp.NewLanguage(do.Language)
-
-	return
 }
 
-func (do *corpSigningDO) toEmployeeSignings() (es []domain.EmployeeSigning, err error) {
-	es = make([]domain.EmployeeSigning, len(do.Employees))
+func (do *corpSigningDO) toEmployeeSignings() []domain.EmployeeSigning {
+	es := make([]domain.EmployeeSigning, len(do.Employees))
 
 	for i := range do.Employees {
-		if err = do.Employees[i].toEmployeeSigning(&es[i]); err != nil {
-			return
-		}
+		do.Employees[i].toEmployeeSigning(&es[i])
 	}
 
-	return
+	return es
 }
 
-func (do *corpSigningDO) toManagers() (ms []domain.Manager, err error) {
-	ms = make([]domain.Manager, len(do.Managers))
-
+func (do *corpSigningDO) toManagers() []domain.Manager {
+	ms := make([]domain.Manager, len(do.Managers))
 	for i := range do.Managers {
-		if ms[i], err = do.Managers[i].toManager(); err != nil {
-			return
-		}
+		ms[i] = do.Managers[i].toManager()
 	}
 
-	return
+	return ms
 }
 
 // representative DO
@@ -196,14 +149,11 @@ type RepDO struct {
 	Email string `bson:"email" json:"email" required:"true"`
 }
 
-func (do *RepDO) toRep() (rep domain.Representative, err error) {
-	if rep.Name, err = dp.NewName(do.Name); err != nil {
-		return
+func (do *RepDO) toRep() domain.Representative {
+	return domain.Representative{
+		Name:      dp.CreateName(do.Name),
+		EmailAddr: dp.CreateEmailAddr(do.Email),
 	}
-
-	rep.EmailAddr, err = dp.NewEmailAddr(do.Email)
-
-	return
 }
 
 func toRepDO(v *domain.Representative) RepDO {
@@ -220,15 +170,12 @@ type corpDO struct {
 	Domains []string `bson:"domains"  json:"domains"   required:"true"`
 }
 
-func (do *corpDO) toCorp() (c domain.Corporation, err error) {
-	if c.Name, err = dp.NewCorpName(do.Name); err != nil {
-		return
+func (do *corpDO) toCorp() domain.Corporation {
+	return domain.Corporation{
+		Name:               dp.CreateCorpName(do.Name),
+		AllEmailDomains:    do.Domains,
+		PrimaryEmailDomain: do.Domain,
 	}
-
-	c.PrimaryEmailDomain = do.Domain
-	c.AllEmailDomains = do.Domains
-
-	return
 }
 
 func toCorpDO(v *domain.Corporation) corpDO {

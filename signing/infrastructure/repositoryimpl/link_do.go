@@ -48,30 +48,21 @@ type linkDO struct {
 	RemovedCLAs []claDO     `bson:"removed"    json:"removed"`
 }
 
-func (do *linkDO) toLink(link *domain.Link) (err error) {
-	e, err := do.Email.toEmailInfo()
-	if err != nil {
-		return
-	}
-
+func (do *linkDO) toLink() domain.Link {
 	clas := make([]domain.CLA, len(do.CLAs))
 	for i := range do.CLAs {
-		if clas[i], err = do.CLAs[i].toCLA(); err != nil {
-			return
-		}
+		clas[i] = do.CLAs[i].toCLA()
 	}
 
-	*link = domain.Link{
+	return domain.Link{
 		Id:        do.Id,
 		Org:       do.Org.toOrgInfo(),
-		Email:     e,
+		Email:     do.Email.toEmailInfo(),
 		CLAs:      clas,
 		Submitter: do.Submitter,
 		CLANum:    do.CLANum,
 		Version:   do.Version,
 	}
-
-	return
 }
 
 func (do *linkDO) toDoc() (bson.M, error) {
@@ -104,14 +95,11 @@ type emailInfoDO struct {
 	Platform string `bson:"platform" json:"platform"  required:"true"`
 }
 
-func (do *emailInfoDO) toEmailInfo() (v domain.EmailInfo, err error) {
-	if v.Addr, err = dp.NewEmailAddr(do.Addr); err != nil {
-		return
+func (do *emailInfoDO) toEmailInfo() domain.EmailInfo {
+	return domain.EmailInfo{
+		Addr:     dp.CreateEmailAddr(do.Addr),
+		Platform: do.Platform,
 	}
-
-	v.Platform = do.Platform
-
-	return
 }
 
 func toEmailInfoDO(v *domain.EmailInfo) emailInfoDO {
@@ -130,14 +118,16 @@ type fieldDO struct {
 	Required bool   `bson:"required" json:"required"`
 }
 
-func (do *fieldDO) toField(t dp.CLAType) (v domain.Field, err error) {
-	v.Id = do.Id
-	v.Type = do.Type
-	v.Desc = do.Desc
-	v.Title = do.Title
-	v.Required = do.Required
-
-	return
+func (do *fieldDO) toField() domain.Field {
+	return domain.Field{
+		Id:       do.Id,
+		Required: do.Required,
+		CLAField: dp.CLAField{
+			Type:  do.Type,
+			Desc:  do.Desc,
+			Title: do.Title,
+		},
+	}
 }
 
 func toFieldDO(v *domain.Field) fieldDO {
@@ -159,32 +149,19 @@ type claDO struct {
 	Language string    `bson:"lang"    json:"lang"   required:"true"`
 }
 
-func (do *claDO) toCLA() (cla domain.CLA, err error) {
-	if cla.URL, err = dp.NewURL(do.URL); err != nil {
-		return
-	}
-
-	if cla.Type, err = dp.NewCLAType(do.Type); err != nil {
-		return
-	}
-
-	if cla.Language, err = dp.NewLanguage(do.Language); err != nil {
-		return
-	}
-
-	cla.Id = do.Id
-
+func (do *claDO) toCLA() domain.CLA {
 	fields := make([]domain.Field, len(do.Fields))
-
 	for i := range do.Fields {
-		if fields[i], err = do.Fields[i].toField(cla.Type); err != nil {
-			return
-		}
+		fields[i] = do.Fields[i].toField()
 	}
 
-	cla.Fields = fields
-
-	return
+	return domain.CLA{
+		Id:       do.Id,
+		URL:      dp.CreateURL(do.URL),
+		Type:     dp.CreateCLAType(do.Type),
+		Fields:   fields,
+		Language: dp.CreateLanguage(do.Language),
+	}
 }
 
 func (do *claDO) toDoc() (bson.M, error) {

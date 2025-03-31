@@ -132,7 +132,7 @@ func (impl *user) Find(index string) (u domain.User, err error) {
 			err = commonRepo.NewErrorResourceNotFound(err)
 		}
 	} else {
-		err = do.toUser(&u)
+		u = do.toUser()
 	}
 
 	return
@@ -149,7 +149,7 @@ func (impl *user) FindByAccount(linkId string, a dp.Account) (u domain.User, err
 			err = commonRepo.NewErrorResourceNotFound(err)
 		}
 	} else {
-		err = do.toUser(&u)
+		u = do.toUser()
 	}
 
 	return
@@ -166,7 +166,7 @@ func (impl *user) FindByEmail(linkId string, e dp.EmailAddr) (u domain.User, err
 			err = commonRepo.NewErrorResourceNotFound(err)
 		}
 	} else {
-		err = do.toUser(&u)
+		u = do.toUser()
 	}
 
 	return

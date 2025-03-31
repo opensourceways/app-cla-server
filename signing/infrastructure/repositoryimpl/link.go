@@ -84,9 +84,7 @@ func (impl *link) Find(linkId string) (r domain.Link, err error) {
 		return
 	}
 
-	err = do.toLink(&r)
-
-	return
+	return do.toLink(), nil
 }
 
 func (impl *link) FindAll(userId string) ([]repository.LinkSummary, error) {
@@ -111,14 +109,12 @@ func (impl *link) FindAll(userId string) ([]repository.LinkSummary, error) {
 	for i := range dos {
 		item := &dos[i]
 
-		v := &r[i]
-		if v.Email, err = item.Email.toEmailInfo(); err != nil {
-			return nil, err
+		r[i] = repository.LinkSummary{
+			Id:        item.Id,
+			Org:       item.Org.toOrgInfo(),
+			Email:     item.Email.toEmailInfo(),
+			Submitter: item.Submitter,
 		}
-
-		v.Id = item.Id
-		v.Org = item.Org.toOrgInfo()
-		v.Submitter = item.Submitter
 	}
 
 	return r, nil

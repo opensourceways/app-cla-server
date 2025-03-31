@@ -28,13 +28,10 @@ func (do *emailCredentialDO) toDoc() (bson.M, error) {
 	return genDoc(do)
 }
 
-func (do *emailCredentialDO) toEmailCredential() (r domain.EmailCredential, err error) {
-	if r.Addr, err = dp.NewEmailAddr(do.Email); err != nil {
-		return
+func (do *emailCredentialDO) toEmailCredential() domain.EmailCredential {
+	return domain.EmailCredential{
+		Addr:     dp.CreateEmailAddr(do.Email),
+		Token:    do.Token,
+		Platform: do.Platform,
 	}
-
-	r.Platform = do.Platform
-	r.Token = do.Token
-
-	return
 }

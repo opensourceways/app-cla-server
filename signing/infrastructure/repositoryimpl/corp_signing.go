@@ -83,7 +83,7 @@ func (impl *corpSigning) Find(index string) (cs domain.CorpSigning, err error) {
 			err = commonRepo.NewErrorResourceNotFound(err)
 		}
 	} else {
-		err = do.toCorpSigning(&cs)
+		cs = do.toCorpSigning()
 	}
 
 	return
@@ -102,11 +102,7 @@ func (impl *corpSigning) FindCorpSummary(linkId, domain string) ([]repository.Co
 	v := make([]repository.CorpSummary, len(dos))
 	for i := range dos {
 		item := &dos[i]
-
-		corp, err := item.Corp.toCorp()
-		if err != nil {
-			return nil, err
-		}
+		corp := item.Corp.toCorp()
 
 		v[i] = repository.CorpSummary{
 			CorpName:      corp.Name,
@@ -139,9 +135,7 @@ func (impl *corpSigning) FindAll(linkId string) ([]repository.CorpSigningSummary
 
 	v := make([]repository.CorpSigningSummary, len(dos))
 	for i := range dos {
-		if err := dos[i].toCorpSigningSummary(&v[i]); err != nil {
-			return nil, err
-		}
+		v[i] = dos[i].toCorpSigningSummary()
 	}
 
 	return v, nil

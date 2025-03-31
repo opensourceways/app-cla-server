@@ -51,5 +51,5 @@ func (impl *verificationCode) Find(key *domain.VerificationCodeKey) (domain.Veri
 		return domain.VerificationCode{}, err
 	}
 
-	return do.toVerificationCode()
+	return do.toVerificationCode(), nil
 }

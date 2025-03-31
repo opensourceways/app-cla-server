@@ -26,18 +26,15 @@ func (do *managerDO) isEmpty() bool {
 	return do.Id == ""
 }
 
-func (do *managerDO) toManager() (m domain.Manager, err error) {
+func (do *managerDO) toManager() domain.Manager {
 	if do.isEmpty() {
-		return
+		return domain.Manager{}
 	}
 
-	if m.Representative, err = do.RepDO.toRep(); err != nil {
-		return
+	return domain.Manager{
+		Id:             do.Id,
+		Representative: do.RepDO.toRep(),
 	}
-
-	m.Id = do.Id
-
-	return
 }
 
 func (do *managerDO) toDoc() (bson.M, error) {

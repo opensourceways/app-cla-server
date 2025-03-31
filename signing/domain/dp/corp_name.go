@@ -27,6 +27,10 @@ func NewCorpName(v string) (CorpName, error) {
 	return corpName(v), nil
 }
 
+func CreateCorpName(v string) CorpName {
+	return corpName(v)
+}
+
 // CorpName
 type CorpName interface {
 	CorpName() string

@@ -38,13 +38,12 @@ func (do *verificationCodeDO) toDoc() (bson.M, error) {
 	return genDoc(do)
 }
 
-func (do *verificationCodeDO) toVerificationCode() (r domain.VerificationCode, err error) {
-	if r.Purpose, err = dp.NewPurpose(do.Purpose); err != nil {
-		return
+func (do *verificationCodeDO) toVerificationCode() domain.VerificationCode {
+	return domain.VerificationCode{
+		Expiry: do.Expiry,
+		VerificationCodeKey: domain.VerificationCodeKey{
+			Code:    do.Code,
+			Purpose: dp.CreatePurpose(do.Purpose),
+		},
 	}
-
-	r.Code = do.Code
-	r.Expiry = do.Expiry
-
-	return
 }

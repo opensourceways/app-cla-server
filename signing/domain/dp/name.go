@@ -24,6 +24,10 @@ func NewName(v string) (Name, error) {
 	return name(v), nil
 }
 
+func CreateName(v string) Name {
+	return name(v)
+}
+
 // Name
 type Name interface {
 	Name() string

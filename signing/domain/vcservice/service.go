@@ -1,9 +1,11 @@
 package vcservice
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/beego/beego/v2/core/logs"
+
 	commonRepo "github.com/opensourceways/app-cla-server/common/domain/repository"
 	"github.com/opensourceways/app-cla-server/signing/domain"
 	"github.com/opensourceways/app-cla-server/signing/domain/dp"
@@ -39,11 +41,13 @@ type vcService struct {
 }
 
 func (s *vcService) Verify(key *domain.VerificationCodeKey) error {
+	fmt.Println(key.Code)
 	if !s.randomCode.IsValid(key.Code) {
 		return invalidCode
 	}
 
 	v, err := s.repo.Find(key)
+	fmt.Println(v, err)
 	if err != nil {
 		if commonRepo.IsErrorResourceNotFound(err) {
 			err = invalidCode

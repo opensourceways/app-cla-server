@@ -41,11 +41,11 @@ type vcService struct {
 }
 
 func (s *vcService) Verify(key *domain.VerificationCodeKey) error {
-	fmt.Println(key.Code)
 	if !s.randomCode.IsValid(key.Code) {
 		return invalidCode
 	}
 
+	fmt.Println(key)
 	v, err := s.repo.Find(key)
 	fmt.Println(v, err)
 	if err != nil {

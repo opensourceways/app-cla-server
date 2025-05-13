@@ -103,9 +103,9 @@ func (cs *CorpSigning) AddManagers(managers []Manager) error {
 	for i := range managers {
 		item := &managers[i]
 
-		if !cs.isSameCorp(item.EmailAddr) {
-			return NewDomainError(ErrorCodeEmployeeManagerNotSameCorp)
-		}
+		//if !cs.isSameCorp(item.EmailAddr) {
+		//	return NewDomainError(ErrorCodeEmployeeManagerNotSameCorp)
+		//}
 
 		if cs.hasManager(item) {
 			return NewDomainError(ErrorCodeEmployeeManagerExists)
@@ -162,9 +162,9 @@ func (cs *CorpSigning) AddEmployee(es *EmployeeSigning) error {
 		return NewDomainError(ErrorCodeEmployeeSigningNoManager)
 	}
 
-	if !cs.isSameCorp(es.Rep.EmailAddr) {
-		return NewDomainError(ErrorCodeEmployeeNotSameCorp)
-	}
+	//if !cs.isSameCorp(es.Rep.EmailAddr) {
+	//	return NewDomainError(ErrorCodeEmployeeNotSameCorp)
+	//}
 
 	for i := range cs.Employees {
 		if cs.Employees[i].isMe(es) {

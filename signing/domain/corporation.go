@@ -39,9 +39,9 @@ func (c *Corporation) addEmailDomain(ed string) error {
 		}
 	}
 
-	if err := c.isValidEmailDomain(ed); err != nil {
-		return err
-	}
+	//if err := c.isValidEmailDomain(ed); err != nil {
+	//	return err
+	//}
 
 	c.AllEmailDomains = append(c.AllEmailDomains, ed)
 

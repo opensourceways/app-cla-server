@@ -19,7 +19,7 @@ func (ctl *CLAController) Prepare() {
 }
 
 // @Title Add
-// @Description add cla
+// @Description add cla.
 // @Tags CLA
 // @Accept json
 // @Param  body  body  models.CLACreateOpt  true  "body for adding cla"

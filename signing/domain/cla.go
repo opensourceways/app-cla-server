@@ -8,12 +8,13 @@ type CLAIndex struct {
 }
 
 type CLA struct {
-	Id       string
-	URL      dp.URL
-	Text     []byte
-	Type     dp.CLAType
-	Fields   []Field
-	Language dp.Language
+	Id               string
+	URL              dp.URL
+	Text             []byte
+	Type             dp.CLAType
+	Fields           []Field
+	Language         dp.Language
+	AgreementVersion int
 }
 
 func (cla *CLA) isMe(cla1 *CLA) bool {

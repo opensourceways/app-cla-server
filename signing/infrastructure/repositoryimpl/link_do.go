@@ -142,11 +142,12 @@ func toFieldDO(v *domain.Field) fieldDO {
 
 // claDO
 type claDO struct {
-	Id       string    `bson:"id"      json:"id"     required:"true"`
-	URL      string    `bson:"url"     json:"url"    required:"true"`
-	Type     string    `bson:"type"    json:"type"   required:"true"`
-	Fields   []fieldDO `bson:"fields"  json:"fields,omitempty"`
-	Language string    `bson:"lang"    json:"lang"   required:"true"`
+	Id               string    `bson:"id"      json:"id"     required:"true"`
+	URL              string    `bson:"url"     json:"url"    required:"true"`
+	Type             string    `bson:"type"    json:"type"   required:"true"`
+	Fields           []fieldDO `bson:"fields"  json:"fields,omitempty"`
+	Language         string    `bson:"lang"    json:"lang"   required:"true"`
+	AgreementVersion int       `bson:"agreement_version" json:"agreement_version" `
 }
 
 func (do *claDO) toCLA() domain.CLA {
@@ -156,11 +157,12 @@ func (do *claDO) toCLA() domain.CLA {
 	}
 
 	return domain.CLA{
-		Id:       do.Id,
-		URL:      dp.CreateURL(do.URL),
-		Type:     dp.CreateCLAType(do.Type),
-		Fields:   fields,
-		Language: dp.CreateLanguage(do.Language),
+		Id:               do.Id,
+		URL:              dp.CreateURL(do.URL),
+		Type:             dp.CreateCLAType(do.Type),
+		Fields:           fields,
+		Language:         dp.CreateLanguage(do.Language),
+		AgreementVersion: do.AgreementVersion,
 	}
 }
 

@@ -44,8 +44,9 @@ type CLADTO struct {
 }
 
 type CLADetailDTO struct {
-	Id        string
-	Fileds    []domain.Field
-	Language  string
-	LocalFile string
+	Id               string
+	Fileds           []domain.Field
+	Language         string
+	LocalFile        string
+	AgreementVersion int
 }

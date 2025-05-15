@@ -74,7 +74,7 @@ func (ctl *CorporationSigningController) Sign() {
 		return
 	}
 
-	if err := models.SignCropCLA(linkID, &info, claInfo.Fields); err != nil {
+	if err := models.SignCropCLA(linkID, &info, &claInfo); err != nil {
 		if err.IsErrorOf(models.ErrNoLinkOrResigned) {
 			ctl.sendFailedResponse(400, errResigned, err, action)
 		} else {

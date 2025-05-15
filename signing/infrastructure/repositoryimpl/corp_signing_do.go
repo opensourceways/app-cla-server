@@ -33,13 +33,14 @@ func toCorpSigningDO(v *domain.CorpSigning) corpSigningDO {
 	link := &v.Link
 
 	return corpSigningDO{
-		Date:     v.Date,
-		CLAId:    link.CLAId,
-		LinkId:   link.Id,
-		Language: link.Language.Language(),
-		Rep:      toRepDO(&v.Rep),
-		Corp:     toCorpDO(&v.Corp),
-		AllInfo:  v.AllInfo,
+		Date:             v.Date,
+		CLAId:            link.CLAId,
+		LinkId:           link.Id,
+		Language:         link.Language.Language(),
+		Rep:              toRepDO(&v.Rep),
+		Corp:             toCorpDO(&v.Corp),
+		AllInfo:          v.AllInfo,
+		AgreementVersion: v.Link.AgreementVersion,
 	}
 }
 
@@ -64,7 +65,8 @@ type corpSigningDO struct {
 
 	// uploading pdf or adding email domain will trigger individual signing checking
 	// which will delete the one that belongs to a corp.
-	Triggered bool `bson:"triggered" json:"triggered,omitempty"`
+	Triggered        bool `bson:"triggered" json:"triggered,omitempty"`
+	AgreementVersion int  `bson:"agreement_version" json:"agreementVersion"`
 }
 
 func (do *corpSigningDO) toDoc() (bson.M, error) {

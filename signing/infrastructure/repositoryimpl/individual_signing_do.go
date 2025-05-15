@@ -10,13 +10,14 @@ const fieldDeletedAt = "deleted_at"
 
 func toIndividualSigningDO(is *domain.IndividualSigning) individualSigningDO {
 	return individualSigningDO{
-		CLAId:    is.Link.CLAId,
-		LinkId:   is.Link.Id,
-		Language: is.Link.Language.Language(),
-		Date:     is.Date,
-		AllInfo:  is.AllInfo,
-		RepDO:    toRepDO(&is.Rep),
-		Domain:   is.Rep.EmailAddr.Domain(),
+		CLAId:            is.Link.CLAId,
+		LinkId:           is.Link.Id,
+		Language:         is.Link.Language.Language(),
+		Date:             is.Date,
+		AllInfo:          is.AllInfo,
+		RepDO:            toRepDO(&is.Rep),
+		Domain:           is.Rep.EmailAddr.Domain(),
+		AgreementVersion: is.Link.AgreementVersion,
 	}
 }
 
@@ -29,9 +30,10 @@ type individualSigningDO struct {
 	AllInfo  anyDoc `bson:"info"        json:"info,omitempty"`
 	RepDO    `bson:",inline"`
 
-	Domain    string `bson:"domain"      json:"domain"  required:"true"`
-	Deleted   bool   `bson:"deleted"     json:"deleted"`
-	DeletedAt int64  `bson:"deleted_at"  json:"deleted_at,omitempty"`
+	Domain           string `bson:"domain"      json:"domain"  required:"true"`
+	Deleted          bool   `bson:"deleted"     json:"deleted"`
+	DeletedAt        int64  `bson:"deleted_at"  json:"deleted_at,omitempty"`
+	AgreementVersion int    `bson:"agreement_version" json:"agreement_version"`
 }
 
 func (do *individualSigningDO) toDoc() (bson.M, error) {

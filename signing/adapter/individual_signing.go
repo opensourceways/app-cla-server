@@ -22,9 +22,9 @@ func (adapter *individualSigningAdatper) Verify(linkId, email string) (string, m
 
 // Sign
 func (adapter *individualSigningAdatper) Sign(
-	linkId string, opt *models.IndividualSigning, claFields []models.CLAField,
+	linkId string, opt *models.IndividualSigning, claInfo *models.CLAInfo,
 ) models.IModelError {
-	cmd, err := adapter.cmdToSignIndividualCLA(linkId, opt, claFields)
+	cmd, err := adapter.cmdToSignIndividualCLA(linkId, opt, claInfo)
 	if err != nil {
 		return errBadRequestParameter(err)
 	}
@@ -37,7 +37,7 @@ func (adapter *individualSigningAdatper) Sign(
 }
 
 func (adapter *individualSigningAdatper) cmdToSignIndividualCLA(
-	linkId string, opt *models.IndividualSigning, claFields []models.CLAField,
+	linkId string, opt *models.IndividualSigning, claInfo *models.CLAInfo,
 ) (
 	cmd app.CmdToSignIndividualCLA, err error,
 ) {
@@ -49,6 +49,7 @@ func (adapter *individualSigningAdatper) cmdToSignIndividualCLA(
 
 	cmd.Link.Id = linkId
 	cmd.Link.CLAId = opt.CLAId
+	cmd.Link.AgreementVersion = claInfo.AgreementVersion
 	if cmd.Link.Language, err = dp.NewLanguage(opt.CLALanguage); err != nil {
 		return
 	}
@@ -62,7 +63,7 @@ func (adapter *individualSigningAdatper) cmdToSignIndividualCLA(
 	}
 
 	cmd.AllSingingInfo, err = getAllSigningInfo(
-		opt.Info, claFields, dp.CLATypeIndividual, cmd.Link.Language,
+		opt.Info, claInfo.Fields, dp.CLATypeIndividual, cmd.Link.Language,
 	)
 	if err != nil {
 		return

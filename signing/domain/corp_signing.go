@@ -15,8 +15,9 @@ type Representative struct {
 }
 
 type CLAInfo struct {
-	CLAId    string
-	Language dp.Language
+	CLAId            string
+	Language         dp.Language
+	AgreementVersion int
 }
 
 type LinkInfo struct {

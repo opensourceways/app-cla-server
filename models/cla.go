@@ -1,10 +1,11 @@
 package models
 
 type CLAInfo struct {
-	CLAId   string
-	CLAFile string
-	CLALang string
-	Fields  []CLAField
+	CLAId            string
+	CLAFile          string
+	CLALang          string
+	Fields           []CLAField
+	AgreementVersion int
 }
 
 type CLACreateOpt = struct {

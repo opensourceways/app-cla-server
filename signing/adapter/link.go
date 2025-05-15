@@ -66,6 +66,7 @@ func (adapter *linkAdatper) GetLinkCLA(linkId, claId string) (
 	cla.CLAFile = v.CLA.LocalFile
 	cla.CLALang = v.CLA.Language
 	cla.Fields = adapter.toFields(v.CLA.Fileds)
+	cla.AgreementVersion = v.CLA.AgreementVersion
 
 	return
 }

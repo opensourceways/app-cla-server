@@ -134,10 +134,11 @@ func (s *linkService) FindLinkCLA(cmd *domain.CLAIndex) (dto LinkCLADTO, err err
 	dto.Org = v.Org
 	dto.Email = v.Email
 	dto.CLA = CLADetailDTO{
-		Id:        cla.Id,
-		Fileds:    cla.Fields,
-		Language:  cla.Language.Language(),
-		LocalFile: s.cla.CLALocalFilePath(cmd),
+		Id:               cla.Id,
+		Fileds:           cla.Fields,
+		Language:         cla.Language.Language(),
+		LocalFile:        s.cla.CLALocalFilePath(cmd),
+		AgreementVersion: cla.AgreementVersion,
 	}
 
 	return

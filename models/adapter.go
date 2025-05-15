@@ -68,8 +68,8 @@ func VCOfCorpSigning(linkId, email string) (string, IModelError) {
 	return corpSigningAdapterInstance.Verify(linkId, email)
 }
 
-func SignCropCLA(linkId string, opt *CorporationSigningCreateOption, claFields []CLAField) IModelError {
-	return corpSigningAdapterInstance.Sign(linkId, opt, claFields)
+func SignCropCLA(linkId string, opt *CorporationSigningCreateOption, claInfo *CLAInfo) IModelError {
+	return corpSigningAdapterInstance.Sign(linkId, opt, claInfo)
 }
 
 func RemoveCorpSigning(userId, csId string) IModelError {
@@ -144,8 +144,8 @@ func VCOfIndividualSigning(linkId, email string) (string, IModelError) {
 	return individualSigningAdapterInstance.Verify(linkId, email)
 }
 
-func SignIndividualCLA(linkId string, opt *IndividualSigning, claFields []CLAField) IModelError {
-	return individualSigningAdapterInstance.Sign(linkId, opt, claFields)
+func SignIndividualCLA(linkId string, opt *IndividualSigning, claInfo *CLAInfo) IModelError {
+	return individualSigningAdapterInstance.Sign(linkId, opt, claInfo)
 }
 
 func CheckSigning(linkId string, email string) (bool, IModelError) {

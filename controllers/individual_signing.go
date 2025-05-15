@@ -66,7 +66,7 @@ func (ctl *IndividualSigningController) Sign() {
 		return
 	}
 
-	if err := models.SignIndividualCLA(linkID, &info, claInfo.Fields); err != nil {
+	if err := models.SignIndividualCLA(linkID, &info, &claInfo); err != nil {
 		if err.IsErrorOf(models.ErrNoLinkOrResigned) {
 			ctl.sendFailedResponse(400, errResigned, err, action)
 		} else {

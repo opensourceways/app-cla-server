@@ -47,9 +47,9 @@ func (adapter *corpSigningAdatper) Verify(linkId, email string) (string, models.
 }
 
 func (adapter *corpSigningAdatper) Sign(
-	linkId string, opt *models.CorporationSigningCreateOption, claFields []models.CLAField,
+	linkId string, opt *models.CorporationSigningCreateOption, claInfo *models.CLAInfo,
 ) models.IModelError {
-	cmd, err := adapter.cmdToSignCorpCLA(linkId, opt, claFields)
+	cmd, err := adapter.cmdToSignCorpCLA(linkId, opt, claInfo)
 	if err != nil {
 		return errBadRequestParameter(err)
 	}
@@ -62,7 +62,7 @@ func (adapter *corpSigningAdatper) Sign(
 }
 
 func (adapter *corpSigningAdatper) cmdToSignCorpCLA(
-	linkId string, opt *models.CorporationSigningCreateOption, claFields []models.CLAField,
+	linkId string, opt *models.CorporationSigningCreateOption, claInfo *models.CLAInfo,
 ) (
 	cmd app.CmdToSignCorpCLA, err error,
 ) {
@@ -74,6 +74,7 @@ func (adapter *corpSigningAdatper) cmdToSignCorpCLA(
 
 	cmd.Link.Id = linkId
 	cmd.Link.CLAId = opt.CLAId
+	cmd.Link.AgreementVersion = claInfo.AgreementVersion
 	if cmd.Link.Language, err = dp.NewLanguage(opt.CLALanguage); err != nil {
 		return
 	}
@@ -97,7 +98,7 @@ func (adapter *corpSigningAdatper) cmdToSignCorpCLA(
 	}
 
 	cmd.AllSingingInfo, err = getAllSigningInfo(
-		opt.Info, claFields, dp.CLATypeCorp, cmd.Link.Language,
+		opt.Info, claInfo.Fields, dp.CLATypeCorp, cmd.Link.Language,
 	)
 	if err != nil {
 		return

@@ -91,11 +91,11 @@ func (adapter *corpSigningAdatper) cmdToSignCorpCLA(
 		return
 	}
 
-	if !adapter.isValidaCorpEmailDomain(cmd.Rep.EmailAddr.Domain()) {
-		err = errors.New("invalid email domain")
-
-		return
-	}
+	//if !adapter.isValidaCorpEmailDomain(cmd.Rep.EmailAddr.Domain()) {
+	//	err = errors.New("invalid email domain")
+	//
+	//	return
+	//}
 
 	cmd.AllSingingInfo, err = getAllSigningInfo(
 		opt.Info, claInfo.Fields, dp.CLATypeCorp, cmd.Link.Language,

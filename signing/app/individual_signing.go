@@ -3,6 +3,8 @@ package app
 import (
 	"time"
 
+	"github.com/beego/beego/v2/core/logs"
+
 	commonRepo "github.com/opensourceways/app-cla-server/common/domain/repository"
 	"github.com/opensourceways/app-cla-server/signing/domain"
 	"github.com/opensourceways/app-cla-server/signing/domain/repository"
@@ -13,12 +15,14 @@ func NewIndividualSigningService(
 	vc vcservice.VCService,
 	repo repository.IndividualSigning,
 	corpRepo repository.CorpSigning,
+	linkRepo repository.Link,
 	interval time.Duration,
 ) *individualSigningService {
 	return &individualSigningService{
 		vc:       verificationCodeService{vc},
 		repo:     repo,
 		corpRepo: corpRepo,
+		linkRepo: linkRepo,
 		interval: interval,
 	}
 }
@@ -26,13 +30,14 @@ func NewIndividualSigningService(
 type IndividualSigningService interface {
 	Verify(cmd *CmdToCreateVerificationCode) (string, error)
 	Sign(cmd *CmdToSignIndividualCLA) error
-	Check(cmd *CmdToCheckSinging) (bool, error)
+	Check(cmd *CmdToCheckSinging) (IndividualSignedDTO, error)
 }
 
 type individualSigningService struct {
 	vc       verificationCodeService
 	repo     repository.IndividualSigning
 	corpRepo repository.CorpSigning
+	linkRepo repository.Link
 	interval time.Duration
 }
 
@@ -68,23 +73,48 @@ func (s *individualSigningService) Sign(cmd *CmdToSignIndividualCLA) error {
 }
 
 // Check
-func (s *individualSigningService) Check(cmd *CmdToCheckSinging) (bool, error) {
-	n, err := s.repo.Count(cmd.LinkId, cmd.EmailAddr)
-	if err != nil {
-		return false, err
+func (s *individualSigningService) Check(cmd *CmdToCheckSinging) (dto IndividualSignedDTO, err error) {
+	claInfo, signed, err := s.SignCheck(cmd)
+	if err != nil && !commonRepo.IsErrorResourceNotFound(err) {
+		return
 	}
-	if n > 0 {
-		return true, nil
+
+	if !signed {
+		err = nil
+		return
+	}
+
+	link, err := s.linkRepo.Find(cmd.LinkId)
+	if err != nil {
+		return
+	}
+
+	isMatch, err := link.AgreementVersionMatch(claInfo)
+	if err != nil {
+		return
+	}
+
+	if isMatch {
+		return IndividualSignedDTO{Signed: true}, nil
+	} else {
+		return IndividualSignedDTO{Signed: false, Reason: "agreement_not_match"}, nil
+	}
+}
+
+func (s *individualSigningService) SignCheck(cmd *CmdToCheckSinging) (domain.CLAInfo, bool, error) {
+	is, err := s.repo.Find(cmd.LinkId, cmd.EmailAddr)
+	if err != nil {
+		logs.Error("find individual sign for %v failed: %v", cmd.EmailAddr.EmailAddr(), err)
+	} else {
+		return is.Link.CLAInfo, true, nil
 	}
 
 	v, err := s.corpRepo.FindEmployeesByEmail(cmd.LinkId, cmd.EmailAddr)
 	if err != nil {
-		if commonRepo.IsErrorResourceNotFound(err) {
-			return false, nil
-		}
+		return domain.CLAInfo{}, false, err
+	} else {
+		info := domain.CLAInfo{CLAId: v.CLAId, AgreementVersion: v.AgreementVersion}
 
-		return false, err
+		return info, v.Enabled, nil
 	}
-
-	return v.Enabled, nil
 }

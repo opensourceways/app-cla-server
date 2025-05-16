@@ -89,6 +89,8 @@ func (s *individualSigningService) Check(cmd *CmdToCheckSinging) (dto Individual
 		return
 	}
 
+	logs.Error("link_id is %v,cla info is %v", cmd.LinkId, claInfo)
+
 	isMatch, err := link.AgreementVersionMatch(claInfo)
 	if err != nil {
 		return
@@ -110,6 +112,7 @@ func (s *individualSigningService) SignCheck(cmd *CmdToCheckSinging) (domain.CLA
 	}
 
 	v, err := s.corpRepo.FindEmployeesByEmail(cmd.LinkId, cmd.EmailAddr)
+	logs.Error("find employee %v %v", v, err)
 	if err != nil {
 		return domain.CLAInfo{}, false, err
 	} else {

@@ -112,7 +112,7 @@ func (s *individualSigningService) SignCheck(cmd *CmdToCheckSinging) (domain.CLA
 	}
 
 	v, err := s.corpRepo.FindEmployeesByEmail(cmd.LinkId, cmd.EmailAddr)
-	logs.Error("find employee %v %v", v, err)
+	logs.Error("find employee %v, %v", v, err)
 	if err != nil {
 		return domain.CLAInfo{}, false, err
 	} else {

@@ -64,3 +64,12 @@ func (link *Link) posOfCLA(cla *CLA) (int, bool) {
 
 	return 0, false
 }
+
+func (link *Link) AgreementVersionMatch(claInfo CLAInfo) (bool, error) {
+	cla := link.FindCLA(claInfo.CLAId)
+	if cla == nil {
+		return false, NewDomainError(ErrorCodeCLANotExists)
+	}
+
+	return cla.AgreementVersion == claInfo.AgreementVersion, nil
+}

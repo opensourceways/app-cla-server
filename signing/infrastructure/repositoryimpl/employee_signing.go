@@ -121,6 +121,9 @@ func (impl *corpSigning) FindEmployeesByEmail(linkId string, email dp.EmailAddr)
 		}
 	}
 
+	r.CLAId = do.CLAId
+	r.AgreementVersion = do.AgreementVersion
+
 	return
 }
 

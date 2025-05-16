@@ -122,6 +122,7 @@ func initSigning(cfg *config.Config) error {
 			vcService,
 			individual,
 			repo,
+			linkRepo,
 			interval,
 		)),
 	)

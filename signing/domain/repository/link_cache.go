@@ -1,6 +1,10 @@
 package repository
 
-import "github.com/opensourceways/app-cla-server/signing/domain"
+import (
+	"fmt"
+
+	"github.com/opensourceways/app-cla-server/signing/domain"
+)
 
 var linkCache map[string]map[string]map[string]string
 
@@ -14,6 +18,8 @@ func InitLink(linkRepo Link) error {
 	for _, link := range links {
 		linkCache[link.Id] = getTypeCache(link.CLAs)
 	}
+
+	fmt.Println(linkCache)
 
 	return nil
 }

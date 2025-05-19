@@ -8,11 +8,11 @@ import (
 	"github.com/opensourceways/app-cla-server/models"
 	"github.com/opensourceways/app-cla-server/signing/adapter"
 	"github.com/opensourceways/app-cla-server/signing/app"
-	"github.com/opensourceways/app-cla-server/signing/domain"
 	"github.com/opensourceways/app-cla-server/signing/domain/accesstokenservice"
 	"github.com/opensourceways/app-cla-server/signing/domain/claservice"
 	"github.com/opensourceways/app-cla-server/signing/domain/emailcredential"
 	"github.com/opensourceways/app-cla-server/signing/domain/loginservice"
+	"github.com/opensourceways/app-cla-server/signing/domain/repository"
 	"github.com/opensourceways/app-cla-server/signing/domain/userservice"
 	"github.com/opensourceways/app-cla-server/signing/domain/vcservice"
 	"github.com/opensourceways/app-cla-server/signing/infrastructure/accesstokenimpl"
@@ -49,7 +49,7 @@ func initSigning(cfg *config.Config) error {
 		mongodb.DAO(cfg.Mongodb.Collections.CLA),
 	)
 
-	if err = domain.InitLink(linkRepo); err != nil {
+	if err = repository.InitLink(linkRepo); err != nil {
 		return err
 	}
 

@@ -12,21 +12,21 @@ func InitLink(linkRepo Link) error {
 	}
 
 	for _, link := range links {
-		linkCache[link.Id] = getTypeCache(link.CLAs)
+		linkCache[link.Id] = claCache(link.CLAs)
 	}
 
 	return nil
 }
 
-func getTypeCache(clas []domain.CLA) map[string]map[string]string {
-	typeCache := make(map[string]map[string]string)
+func claCache(clas []domain.CLA) map[string]map[string]string {
+	cache := make(map[string]map[string]string)
 	for _, cla := range clas {
-		if _, ok := typeCache[cla.Type.CLAType()]; !ok {
-			typeCache[cla.Type.CLAType()] = make(map[string]string)
+		if _, ok := cache[cla.Type.CLAType()]; !ok {
+			cache[cla.Type.CLAType()] = make(map[string]string)
 		}
 
-		typeCache[cla.Type.CLAType()][cla.Language.Language()] = cla.Id
+		cache[cla.Type.CLAType()][cla.Language.Language()] = cla.Id
 	}
 
-	return typeCache
+	return cache
 }

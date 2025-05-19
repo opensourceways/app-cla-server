@@ -12,6 +12,7 @@ import (
 	"github.com/opensourceways/app-cla-server/signing/domain/claservice"
 	"github.com/opensourceways/app-cla-server/signing/domain/emailcredential"
 	"github.com/opensourceways/app-cla-server/signing/domain/loginservice"
+	"github.com/opensourceways/app-cla-server/signing/domain/repository"
 	"github.com/opensourceways/app-cla-server/signing/domain/userservice"
 	"github.com/opensourceways/app-cla-server/signing/domain/vcservice"
 	"github.com/opensourceways/app-cla-server/signing/infrastructure/accesstokenimpl"
@@ -47,6 +48,10 @@ func initSigning(cfg *config.Config) error {
 		mongodb.DAO(cfg.Mongodb.Collections.Link),
 		mongodb.DAO(cfg.Mongodb.Collections.CLA),
 	)
+
+	if err = repository.InitLink(linkRepo); err != nil {
+		return err
+	}
 
 	pi := passwordimpl.NewPasswordImpl(&cfg.Password)
 	ur := repositoryimpl.NewUser(

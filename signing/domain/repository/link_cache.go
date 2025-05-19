@@ -11,6 +11,8 @@ var linkCache map[string]map[string]map[string]string
 func InitLink(linkRepo Link) error {
 	linkCache = make(map[string]map[string]map[string]string)
 	links, err := linkRepo.FindAll("")
+
+	fmt.Println("link count", len(links))
 	if err != nil {
 		return err
 	}

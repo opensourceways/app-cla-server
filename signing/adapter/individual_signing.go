@@ -74,22 +74,23 @@ func (adapter *individualSigningAdatper) cmdToSignIndividualCLA(
 }
 
 // Check
-func (adapter *individualSigningAdatper) Check(linkId string, email string) (bool, models.IModelError) {
+func (adapter *individualSigningAdatper) Check(linkId string, email string,
+) (models.IndividualSigned, models.IModelError) {
 	cmd := app.CmdToCheckSinging{
 		LinkId: linkId,
 	}
 
 	var err error
 	if cmd.EmailAddr, err = dp.NewEmailAddr(email); err != nil {
-		return false, errBadRequestParameter(err)
+		return models.IndividualSigned{}, errBadRequestParameter(err)
 	}
 
 	v, err := adapter.s.Check(&cmd)
 	if err != nil {
-		return v, toModelError(err)
+		return models.IndividualSigned{}, toModelError(err)
 	}
 
-	return v, nil
+	return models.IndividualSigned{Signed: v.Signed, Reason: v.Reason}, nil
 
 }
 

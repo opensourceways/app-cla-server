@@ -1,6 +1,9 @@
 package repository
 
-import "github.com/opensourceways/app-cla-server/signing/domain"
+import (
+	"github.com/opensourceways/app-cla-server/signing/domain"
+	"github.com/opensourceways/app-cla-server/signing/domain/dp"
+)
 
 var linkCache map[string]map[string]map[string]string
 
@@ -29,4 +32,13 @@ func claCache(clas []domain.CLA) map[string]map[string]string {
 	}
 
 	return cache
+}
+
+func ClaIdMatchCheck(info domain.LinkInfo, claType dp.CLAType) bool {
+	claId, ok := linkCache[info.Id][claType.CLAType()][info.Language.Language()]
+	if !ok {
+		return false
+	}
+
+	return info.CLAId == claId
 }

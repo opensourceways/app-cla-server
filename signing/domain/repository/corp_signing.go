@@ -17,6 +17,7 @@ type CorpSigningSummary struct {
 
 type EmployeeSigningSummary struct {
 	Enabled bool
+	Link    domain.LinkInfo
 }
 
 type CorpSummary struct {

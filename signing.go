@@ -117,15 +117,6 @@ func initSigning(cfg *config.Config) error {
 		mongodb.DAO(cfg.Mongodb.Collections.IndividualSigning),
 	)
 
-	models.RegisterIndividualSigningAdapter(
-		adapter.NewIndividualSigningAdapter(app.NewIndividualSigningService(
-			vcService,
-			individual,
-			repo,
-			interval,
-		)),
-	)
-
 	// email credential
 	ecRepo := repositoryimpl.NewEmailCredential(
 		mongodb.DAO(cfg.Mongodb.Collections.EmailCredential),
@@ -156,6 +147,16 @@ func initSigning(cfg *config.Config) error {
 	if err != nil {
 		return err
 	}
+
+	models.RegisterIndividualSigningAdapter(
+		adapter.NewIndividualSigningAdapter(app.NewIndividualSigningService(
+			vcService,
+			cla,
+			individual,
+			repo,
+			interval,
+		)),
+	)
 
 	claAapter := adapter.NewCLAAdapter(
 		app.NewCLAService(linkRepo, cla, repo, individual),

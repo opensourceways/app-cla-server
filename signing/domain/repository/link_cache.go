@@ -1,6 +1,8 @@
 package repository
 
 import (
+	"fmt"
+
 	"github.com/opensourceways/app-cla-server/signing/domain"
 	"github.com/opensourceways/app-cla-server/signing/domain/dp"
 )
@@ -17,6 +19,8 @@ func InitLink(linkRepo Link) error {
 	for _, link := range links {
 		linkCache[link.Id] = claCache(link.CLAs)
 	}
+
+	fmt.Println(linkCache)
 
 	return nil
 }
@@ -35,6 +39,7 @@ func claCache(clas []domain.CLA) map[string]map[string]string {
 }
 
 func ClaIdMatchCheck(info domain.LinkInfo, claType dp.CLAType) bool {
+	fmt.Println(info, claType.CLAType())
 	claId, ok := linkCache[info.Id][claType.CLAType()][info.Language.Language()]
 	if !ok {
 		return false

@@ -81,7 +81,7 @@ func (impl *daoImpl) InsertDocIfNotExists(filter, doc bson.M) (string, error) {
 		upsert := true
 
 		r, err := impl.col.UpdateOne(
-			ctx, filter, bson.M{"$setOnInsert": doc},
+			ctx, filter, bson.M{"$set": doc},
 			&options.UpdateOptions{Upsert: &upsert},
 		)
 		if err != nil {

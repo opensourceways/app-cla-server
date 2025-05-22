@@ -6,14 +6,7 @@ import (
 	"github.com/opensourceways/app-cla-server/signing/domain/repository"
 )
 
-type linkCache struct {
-	mutex sync.RWMutex
-	cache map[string]claIdMap
-}
-
-type claIdMap map[string]bool
-
-func InitLink(linkRepo repository.Link) (*linkCache, error) {
+func initLink(linkRepo repository.Link) (*linkCache, error) {
 	links, err := linkRepo.ListAll()
 	if err != nil {
 		return &linkCache{}, err
@@ -34,11 +27,17 @@ func InitLink(linkRepo repository.Link) (*linkCache, error) {
 	}, nil
 }
 
-func (lc *linkCache) isSameVersion(linkId, claId string) bool {
-	lc.mutex.RLock()
-	defer lc.mutex.RUnlock()
+type linkCache struct {
+	mutex sync.RWMutex
+	cache map[string]claIdMap
+}
 
+type claIdMap map[string]bool
+
+func (lc *linkCache) contains(linkId, claId string) bool {
+	lc.mutex.RLock()
 	_, ok := lc.cache[linkId][claId]
+	lc.mutex.RUnlock()
 
 	return ok
 }

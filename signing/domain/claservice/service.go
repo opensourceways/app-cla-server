@@ -15,7 +15,7 @@ func NewCLAService(
 	repo repository.Link,
 	local localcla.LocalCLA,
 ) (CLAService, error) {
-	repoCache, err := InitLink(repo)
+	cache, err := initLink(repo)
 	if err != nil {
 		return nil, err
 	}
@@ -23,7 +23,7 @@ func NewCLAService(
 	return &claService{
 		repo:      repo,
 		local:     local,
-		repoCache: repoCache,
+		linkCache: cache,
 	}, nil
 }
 
@@ -34,10 +34,10 @@ type CLAService interface {
 }
 
 type claService struct {
+	linkCache *linkCache
 	lock      sync.Mutex
 	repo      repository.Link
 	local     localcla.LocalCLA
-	repoCache *linkCache
 }
 
 func (s *claService) Add(link *domain.Link, cla *domain.CLA) error {

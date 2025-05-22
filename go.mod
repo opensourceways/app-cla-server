@@ -1,14 +1,14 @@
 module github.com/opensourceways/app-cla-server
 
-go 1.21
+go 1.24.1
 
 require (
-	github.com/beego/beego/v2 v2.2.2
+	github.com/beego/beego/v2 v2.3.6
 	github.com/go-redis/redis/v8 v8.11.5
 	github.com/google/uuid v1.6.0
 	github.com/opensourceways/gofpdf v1.16.4
 	go.mongodb.org/mongo-driver v1.12.0
-	golang.org/x/crypto v0.24.0
+	golang.org/x/crypto v0.35.0
 	golang.org/x/oauth2 v0.16.0
 	gopkg.in/gomail.v2 v2.0.0-20160411212932-81ebce5c23df
 	sigs.k8s.io/yaml v1.3.0
@@ -35,9 +35,9 @@ require (
 	github.com/xdg-go/stringprep v1.0.4 // indirect
 	github.com/youmark/pkcs8 v0.0.0-20181117223130-1be2e3e5546d // indirect
 	golang.org/x/net v0.23.0 // indirect
-	golang.org/x/sync v0.7.0 // indirect
-	golang.org/x/sys v0.21.0 // indirect
-	golang.org/x/text v0.16.0 // indirect
+	golang.org/x/sync v0.11.0 // indirect
+	golang.org/x/sys v0.30.0 // indirect
+	golang.org/x/text v0.22.0 // indirect
 	google.golang.org/appengine v1.6.8 // indirect
 	google.golang.org/protobuf v1.34.2 // indirect
 	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect

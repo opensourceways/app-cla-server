@@ -11,8 +11,12 @@ type LinkSummary struct {
 	Id        string
 	Org       domain.OrgInfo
 	Email     domain.EmailInfo
-	CLAs      []domain.CLA
 	Submitter string
+}
+
+type LinkCLA struct {
+	Id   string
+	Clas []string
 }
 
 type Link interface {
@@ -21,6 +25,7 @@ type Link interface {
 	Remove(*domain.Link) error
 	Find(string) (domain.Link, error)
 	FindAll(userId string) ([]LinkSummary, error)
+	ListAll() ([]LinkCLA, error)
 
 	AddCLA(*domain.Link, *domain.CLA) error
 	RemoveCLA(*domain.Link, *domain.CLA) error

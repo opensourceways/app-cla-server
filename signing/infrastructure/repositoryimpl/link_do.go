@@ -10,12 +10,12 @@ import (
 const (
 	fieldOrg        = "org"
 	fieldCLAs       = "clas"
-	fieldCLASFields = "clas.fields"
 	fieldCLANum     = "cla_num"
 	fieldRemoved    = "removed"
 	fieldOrgAlias   = "org_alias"
 	fieldPlatform   = "platform"
 	fieldSubmitter  = "submitter"
+	fieldCLASFields = "clas.fields"
 )
 
 func toLinkDO(v *domain.Link) linkDO {

@@ -14,11 +14,17 @@ import (
 func NewCLAService(
 	repo repository.Link,
 	local localcla.LocalCLA,
-) CLAService {
-	return &claService{
-		repo:  repo,
-		local: local,
+) (CLAService, error) {
+	cache, err := initLink(repo)
+	if err != nil {
+		return nil, err
 	}
+
+	return &claService{
+		repo:      repo,
+		local:     local,
+		linkCache: cache,
+	}, nil
 }
 
 type CLAService interface {
@@ -28,9 +34,10 @@ type CLAService interface {
 }
 
 type claService struct {
-	lock  sync.Mutex
-	repo  repository.Link
-	local localcla.LocalCLA
+	linkCache *linkCache
+	lock      sync.Mutex
+	repo      repository.Link
+	local     localcla.LocalCLA
 }
 
 func (s *claService) Add(link *domain.Link, cla *domain.CLA) error {

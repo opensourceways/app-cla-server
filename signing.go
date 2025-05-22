@@ -152,7 +152,10 @@ func initSigning(cfg *config.Config) error {
 	)
 
 	// link
-	cla := claservice.NewCLAService(linkRepo, localclaimpl.NewLocalCLAImpl(&cfg.LocalCLA))
+	cla, err := claservice.NewCLAService(linkRepo, localclaimpl.NewLocalCLAImpl(&cfg.LocalCLA))
+	if err != nil {
+		return err
+	}
 
 	claAapter := adapter.NewCLAAdapter(
 		app.NewCLAService(linkRepo, cla, repo, individual),

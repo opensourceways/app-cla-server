@@ -14,12 +14,18 @@ type LinkSummary struct {
 	Submitter string
 }
 
+type LinkCLA struct {
+	Id   string
+	Clas []string
+}
+
 type Link interface {
 	NewLinkId() string
 	Add(*domain.Link) error
 	Remove(*domain.Link) error
 	Find(string) (domain.Link, error)
 	FindAll(userId string) ([]LinkSummary, error)
+	ListAll() ([]LinkCLA, error)
 
 	AddCLA(*domain.Link, *domain.CLA) error
 	RemoveCLA(*domain.Link, *domain.CLA) error

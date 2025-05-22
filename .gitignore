@@ -2,3 +2,4 @@ app-cla-server
 lastupdate.tmp
 .idea
 *.b*
+config.yaml

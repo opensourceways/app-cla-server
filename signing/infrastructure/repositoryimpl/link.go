@@ -119,3 +119,37 @@ func (impl *link) FindAll(userId string) ([]repository.LinkSummary, error) {
 
 	return r, nil
 }
+
+func (impl *link) ListAll() ([]repository.LinkCLA, error) {
+	filter := bson.M{
+		fieldDeleted: false,
+	}
+
+	var dos []linkDO
+	project := bson.M{
+		fieldRemoved:    0,
+		fieldCLASFields: 0,
+	}
+
+	err := impl.dao.GetDocs(filter, project, &dos)
+	if err != nil || len(dos) == 0 {
+		return nil, err
+	}
+
+	r := make([]repository.LinkCLA, len(dos))
+	for i := range dos {
+		item := &dos[i]
+
+		clas := make([]string, len(item.CLAs))
+		for j := range item.CLAs {
+			clas[j] = item.CLAs[j].Id
+		}
+
+		r[i] = repository.LinkCLA{
+			Id:   item.Id,
+			Clas: clas,
+		}
+	}
+
+	return r, nil
+}

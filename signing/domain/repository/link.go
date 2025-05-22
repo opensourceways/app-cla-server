@@ -11,7 +11,6 @@ type LinkSummary struct {
 	Id        string
 	Org       domain.OrgInfo
 	Email     domain.EmailInfo
-	CLAs      []domain.CLA
 	Submitter string
 }
 

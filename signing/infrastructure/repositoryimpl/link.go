@@ -89,18 +89,15 @@ func (impl *link) Find(linkId string) (r domain.Link, err error) {
 
 func (impl *link) FindAll(userId string) ([]repository.LinkSummary, error) {
 	filter := bson.M{
-		fieldDeleted: false,
-	}
-
-	if userId != "" {
-		filter[fieldSubmitter] = userId
+		fieldDeleted:   false,
+		fieldSubmitter: userId,
 	}
 
 	var dos []linkDO
 
 	project := bson.M{
-		fieldRemoved:    0,
-		fieldCLASFields: 0,
+		fieldCLAs:    0,
+		fieldRemoved: 0,
 	}
 
 	err := impl.dao.GetDocs(filter, project, &dos)
@@ -112,16 +109,10 @@ func (impl *link) FindAll(userId string) ([]repository.LinkSummary, error) {
 	for i := range dos {
 		item := &dos[i]
 
-		clas := make([]domain.CLA, len(item.CLAs))
-		for j := range item.CLAs {
-			clas[j] = item.CLAs[j].toCLA()
-		}
-
 		r[i] = repository.LinkSummary{
 			Id:        item.Id,
 			Org:       item.Org.toOrgInfo(),
 			Email:     item.Email.toEmailInfo(),
-			CLAs:      clas,
 			Submitter: item.Submitter,
 		}
 	}

@@ -90,7 +90,7 @@ func (adapter *individualSigningAdatper) Check(linkId string, email string,
 		return models.IndividualSigned{}, toModelError(err)
 	}
 
-	return models.IndividualSigned{Signed: v.Signed, Reason: v.Reason}, nil
+	return models.IndividualSigned{Signed: v.Signed, VersionMatched: v.VersionMatched}, nil
 
 }
 

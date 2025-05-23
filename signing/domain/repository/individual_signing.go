@@ -7,8 +7,7 @@ import (
 
 type IndividualSigning interface {
 	Add(*domain.IndividualSigning) error
-	Count(linkId string, email dp.EmailAddr) (int, error)
-	Find(linkId string, email dp.EmailAddr) (domain.IndividualSigning, error)
+	FindSignedCLA(linkId string, email dp.EmailAddr) (string, error)
 
 	HasSignedLink(linkId string) (bool, error)
 	HasSignedCLA(*domain.CLAIndex) (bool, error)

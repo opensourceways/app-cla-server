@@ -37,39 +37,22 @@ func (impl *individualSigning) Add(is *domain.IndividualSigning) error {
 	return err
 }
 
-func (impl *individualSigning) Count(linkId string, email dp.EmailAddr) (int, error) {
+func (impl *individualSigning) FindSignedCLA(linkId string, email dp.EmailAddr) (string, error) {
 	filter := linkIdFilter(linkId)
 	filter[fieldEmail] = email.EmailAddr()
 	filter[fieldDeleted] = false
 
 	var do individualSigningDO
 
-	if err := impl.dao.GetDoc(filter, nil, &do); err != nil {
-		if impl.dao.IsDocNotExists(err) {
-			return 0, nil
-		}
-
-		return 0, err
-	}
-
-	return 1, nil
-}
-
-func (impl *individualSigning) Find(linkId string, email dp.EmailAddr) (domain.IndividualSigning, error) {
-	filter := linkIdFilter(linkId)
-	filter[fieldEmail] = email.EmailAddr()
-	filter[fieldDeleted] = false
-
-	var do individualSigningDO
 	if err := impl.dao.GetDoc(filter, nil, &do); err != nil {
 		if impl.dao.IsDocNotExists(err) {
 			err = commonRepo.NewErrorResourceNotFound(err)
 		}
 
-		return domain.IndividualSigning{}, err
+		return "", err
 	}
 
-	return do.toIndividualSigning(), nil
+	return do.CLAId, nil
 }
 
 func (impl *individualSigning) HasSignedLink(linkId string) (bool, error) {

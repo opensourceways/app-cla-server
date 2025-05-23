@@ -75,22 +75,20 @@ func (s *individualSigningService) Sign(cmd *CmdToSignIndividualCLA) error {
 
 // Check
 func (s *individualSigningService) Check(cmd *CmdToCheckSinging) (dto IndividualSignedDTO, err error) {
-	f := func(info domain.LinkInfo) (dto IndividualSignedDTO, err error) {
-		isValid := s.cla.CheckCla(info)
-		if isValid {
-			return IndividualSignedDTO{Signed: true}, nil
-		} else {
-			return IndividualSignedDTO{Signed: false, Reason: "agreement_is_outdated"}, nil
-		}
+	f := func(linkId, claId string) (dto IndividualSignedDTO, err error) {
+		dto.Signed = true
+		dto.VersionMatched = s.cla.CheckCla(linkId, claId)
+
+		return dto, nil
 	}
 
-	is, err := s.repo.Find(cmd.LinkId, cmd.EmailAddr)
+	claId, err := s.repo.FindSignedCLA(cmd.LinkId, cmd.EmailAddr)
 	if err != nil {
 		if !commonRepo.IsErrorResourceNotFound(err) {
 			logs.Error("find individual sign for %v failed: %v", cmd.EmailAddr.EmailAddr(), err)
 		}
 	} else {
-		return f(is.Link)
+		return f(cmd.LinkId, claId)
 	}
 
 	v, err := s.corpRepo.FindEmployeesByEmail(cmd.LinkId, cmd.EmailAddr)
@@ -106,5 +104,5 @@ func (s *individualSigningService) Check(cmd *CmdToCheckSinging) (dto Individual
 		return dto, nil
 	}
 
-	return f(v.Link)
+	return f(cmd.LinkId, v.Link.CLAId)
 }

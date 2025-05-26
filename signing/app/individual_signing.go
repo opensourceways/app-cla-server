@@ -29,6 +29,7 @@ func NewIndividualSigningService(
 type IndividualSigningService interface {
 	Verify(cmd *CmdToCreateVerificationCode) (string, error)
 	Sign(cmd *CmdToSignIndividualCLA) error
+	Confirm(cmd *CmdToSignIndividualCLA) error
 	Check(cmd *CmdToCheckSinging) (IndividualSignedDTO, error)
 }
 
@@ -69,6 +70,16 @@ func (s *individualSigningService) Sign(cmd *CmdToSignIndividualCLA) error {
 	}
 
 	return nil
+}
+
+func (s *individualSigningService) Confirm(cmd *CmdToSignIndividualCLA) error {
+	cmd1 := cmd.toCmd()
+	if err := s.vc.validate(&cmd1, cmd.VerificationCode); err != nil {
+		return err
+	}
+
+	index := domain.CLAIndex{LinkId: cmd.Link.Id, CLAId: cmd.Link.CLAId}
+	return s.repo.UpdateCLAId(&index, cmd.Rep.EmailAddr)
 }
 
 // Check

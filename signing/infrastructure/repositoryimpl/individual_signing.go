@@ -87,3 +87,10 @@ func (impl *individualSigning) HasSignedCLA(index *domain.CLAIndex) (bool, error
 
 	return true, nil
 }
+
+func (impl *individualSigning) UpdateCLAId(index *domain.CLAIndex, email dp.EmailAddr) error {
+	filter := linkIdFilter(index.LinkId)
+	filter[fieldEmail] = email.EmailAddr()
+
+	return impl.dao.UpdateDocsWithoutVersion(filter, bson.M{fieldCLAId: index.CLAId})
+}

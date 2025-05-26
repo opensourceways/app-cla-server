@@ -47,6 +47,7 @@ func RegisterEmployeeSigningAdapter(a employeeSigningAdapter) {
 type individualSigningAdapter interface {
 	Verify(linkId, email string) (string, IModelError)
 	Sign(linkId string, opt *IndividualSigning, claFields []CLAField) IModelError
+	Confirm(linkId string, opt *IndividualSigning) IModelError
 	Check(linkId string, email string) (IndividualSigned, IModelError)
 }
 

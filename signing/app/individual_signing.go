@@ -3,8 +3,6 @@ package app
 import (
 	"time"
 
-	"github.com/beego/beego/v2/core/logs"
-
 	commonRepo "github.com/opensourceways/app-cla-server/common/domain/repository"
 	"github.com/opensourceways/app-cla-server/signing/domain"
 	"github.com/opensourceways/app-cla-server/signing/domain/claservice"
@@ -75,20 +73,20 @@ func (s *individualSigningService) Sign(cmd *CmdToSignIndividualCLA) error {
 
 // Check
 func (s *individualSigningService) Check(cmd *CmdToCheckSinging) (dto IndividualSignedDTO, err error) {
-	f := func(linkId, claId string) (dto IndividualSignedDTO, err error) {
+	f := func(linkId, claId string) {
 		dto.Signed = true
-		dto.VersionMatched = s.cla.CheckCla(linkId, claId)
-
-		return dto, nil
+		dto.VersionMatched = s.cla.ContainsCla(linkId, claId)
 	}
 
 	claId, err := s.repo.FindSignedCLA(cmd.LinkId, cmd.EmailAddr)
 	if err != nil {
-		if !commonRepo.IsErrorResourceNotFound(err) {
-			logs.Error("find individual sign for %v failed: %v", cmd.EmailAddr.EmailAddr(), err)
-		}
-	} else {
-		return f(cmd.LinkId, claId)
+		return
+	}
+
+	if claId != "" {
+		f(cmd.LinkId, claId)
+
+		return
 	}
 
 	v, err := s.corpRepo.FindEmployeesByEmail(cmd.LinkId, cmd.EmailAddr)
@@ -104,5 +102,7 @@ func (s *individualSigningService) Check(cmd *CmdToCheckSinging) (dto Individual
 		return dto, nil
 	}
 
-	return f(cmd.LinkId, v.Link.CLAId)
+	f(cmd.LinkId, v.ClaId)
+
+	return
 }

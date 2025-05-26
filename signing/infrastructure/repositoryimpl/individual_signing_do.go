@@ -4,7 +4,6 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 
 	"github.com/opensourceways/app-cla-server/signing/domain"
-	"github.com/opensourceways/app-cla-server/signing/domain/dp"
 )
 
 const fieldDeletedAt = "deleted_at"
@@ -37,19 +36,4 @@ type individualSigningDO struct {
 
 func (do *individualSigningDO) toDoc() (bson.M, error) {
 	return genDoc(do)
-}
-
-func (do *individualSigningDO) toIndividualSigning() domain.IndividualSigning {
-	return domain.IndividualSigning{
-		Link: domain.LinkInfo{
-			Id: do.LinkId,
-			CLAInfo: domain.CLAInfo{
-				CLAId:    do.CLAId,
-				Language: dp.CreateLanguage(do.Language),
-			},
-		},
-		Rep:     do.toRep(),
-		Date:    do.Date,
-		AllInfo: do.AllInfo,
-	}
 }

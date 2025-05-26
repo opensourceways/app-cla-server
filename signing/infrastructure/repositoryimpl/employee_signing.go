@@ -121,11 +121,7 @@ func (impl *corpSigning) FindEmployeesByEmail(linkId string, email dp.EmailAddr)
 		}
 	}
 
-	r.Link = domain.LinkInfo{
-		CLAInfo: domain.CLAInfo{
-			CLAId: do.CLAId,
-		},
-	}
+	r.ClaId = do.CLAId
 
 	return
 }

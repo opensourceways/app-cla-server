@@ -46,7 +46,7 @@ func (impl *individualSigning) FindSignedCLA(linkId string, email dp.EmailAddr) 
 
 	if err := impl.dao.GetDoc(filter, nil, &do); err != nil {
 		if impl.dao.IsDocNotExists(err) {
-			err = commonRepo.NewErrorResourceNotFound(err)
+			return "", nil
 		}
 
 		return "", err

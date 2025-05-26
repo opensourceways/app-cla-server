@@ -31,6 +31,7 @@ type CLAService interface {
 	Add(link *domain.Link, cla *domain.CLA) error
 	CLALocalFilePath(*domain.CLAIndex) string
 	AddLink(link *domain.Link) error
+	ContainsCla(linkId, claId string) bool
 }
 
 type claService struct {
@@ -103,4 +104,8 @@ func (s *claService) AddLink(link *domain.Link) error {
 	}
 
 	return nil
+}
+
+func (s *claService) ContainsCla(linkId, claId string) bool {
+	return s.linkCache.contains(linkId, claId)
 }

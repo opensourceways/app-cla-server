@@ -5,18 +5,21 @@ import (
 
 	commonRepo "github.com/opensourceways/app-cla-server/common/domain/repository"
 	"github.com/opensourceways/app-cla-server/signing/domain"
+	"github.com/opensourceways/app-cla-server/signing/domain/claservice"
 	"github.com/opensourceways/app-cla-server/signing/domain/repository"
 	"github.com/opensourceways/app-cla-server/signing/domain/vcservice"
 )
 
 func NewIndividualSigningService(
 	vc vcservice.VCService,
+	cla claservice.CLAService,
 	repo repository.IndividualSigning,
 	corpRepo repository.CorpSigning,
 	interval time.Duration,
 ) *individualSigningService {
 	return &individualSigningService{
 		vc:       verificationCodeService{vc},
+		cla:      cla,
 		repo:     repo,
 		corpRepo: corpRepo,
 		interval: interval,
@@ -26,11 +29,12 @@ func NewIndividualSigningService(
 type IndividualSigningService interface {
 	Verify(cmd *CmdToCreateVerificationCode) (string, error)
 	Sign(cmd *CmdToSignIndividualCLA) error
-	Check(cmd *CmdToCheckSinging) (bool, error)
+	Check(cmd *CmdToCheckSinging) (IndividualSignedDTO, error)
 }
 
 type individualSigningService struct {
 	vc       verificationCodeService
+	cla      claservice.CLAService
 	repo     repository.IndividualSigning
 	corpRepo repository.CorpSigning
 	interval time.Duration
@@ -68,23 +72,37 @@ func (s *individualSigningService) Sign(cmd *CmdToSignIndividualCLA) error {
 }
 
 // Check
-func (s *individualSigningService) Check(cmd *CmdToCheckSinging) (bool, error) {
-	n, err := s.repo.Count(cmd.LinkId, cmd.EmailAddr)
-	if err != nil {
-		return false, err
+func (s *individualSigningService) Check(cmd *CmdToCheckSinging) (dto IndividualSignedDTO, err error) {
+	f := func(claId string) {
+		dto.Signed = true
+		dto.VersionMatched = s.cla.ContainsCla(cmd.LinkId, claId)
 	}
-	if n > 0 {
-		return true, nil
+
+	claId, err := s.repo.FindSignedCLA(cmd.LinkId, cmd.EmailAddr)
+	if err != nil {
+		return
+	}
+
+	if claId != "" {
+		f(claId)
+
+		return
 	}
 
 	v, err := s.corpRepo.FindEmployeesByEmail(cmd.LinkId, cmd.EmailAddr)
 	if err != nil {
 		if commonRepo.IsErrorResourceNotFound(err) {
-			return false, nil
+			err = nil
 		}
 
-		return false, err
+		return dto, err
 	}
 
-	return v.Enabled, nil
+	if !v.Enabled {
+		return dto, nil
+	}
+
+	f(v.ClaId)
+
+	return
 }

@@ -25,3 +25,8 @@ type IndividualSigningInfo struct {
 	CLALanguage string          `json:"cla_language"`
 	Info        TypeSigningInfo `json:"info"`
 }
+
+type IndividualSigned struct {
+	Signed         bool `json:"signed"`
+	VersionMatched bool `json:"version_matched"`
+}

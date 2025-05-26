@@ -148,7 +148,7 @@ func SignIndividualCLA(linkId string, opt *IndividualSigning, claFields []CLAFie
 	return individualSigningAdapterInstance.Sign(linkId, opt, claFields)
 }
 
-func CheckSigning(linkId string, email string) (bool, IModelError) {
+func CheckSigning(linkId string, email string) (IndividualSigned, IModelError) {
 	return individualSigningAdapterInstance.Check(linkId, email)
 }
 

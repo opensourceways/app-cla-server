@@ -17,6 +17,7 @@ type CorpSigningSummary struct {
 
 type EmployeeSigningSummary struct {
 	Enabled bool
+	ClaId   string
 }
 
 type CorpSummary struct {

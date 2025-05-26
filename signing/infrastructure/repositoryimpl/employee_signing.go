@@ -102,7 +102,7 @@ func (impl *corpSigning) FindEmployeesByEmail(linkId string, email dp.EmailAddr)
 
 	var do corpSigningDO
 
-	if err = impl.dao.GetDoc(filter, bson.M{fieldEmployees: 1}, &do); err != nil {
+	if err = impl.dao.GetDoc(filter, bson.M{fieldEmployees: 1, fieldCLAId: 1}, &do); err != nil {
 		if impl.dao.IsDocNotExists(err) {
 			err = commonRepo.NewErrorResourceNotFound(err)
 		}
@@ -120,6 +120,8 @@ func (impl *corpSigning) FindEmployeesByEmail(linkId string, email dp.EmailAddr)
 			break
 		}
 	}
+
+	r.ClaId = do.CLAId
 
 	return
 }

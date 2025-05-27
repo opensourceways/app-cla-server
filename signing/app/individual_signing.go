@@ -6,6 +6,7 @@ import (
 	commonRepo "github.com/opensourceways/app-cla-server/common/domain/repository"
 	"github.com/opensourceways/app-cla-server/signing/domain"
 	"github.com/opensourceways/app-cla-server/signing/domain/claservice"
+	"github.com/opensourceways/app-cla-server/signing/domain/dp"
 	"github.com/opensourceways/app-cla-server/signing/domain/repository"
 	"github.com/opensourceways/app-cla-server/signing/domain/vcservice"
 )
@@ -73,9 +74,12 @@ func (s *individualSigningService) Sign(cmd *CmdToSignIndividualCLA) error {
 
 // Check
 func (s *individualSigningService) Check(cmd *CmdToCheckSinging) (dto IndividualSignedDTO, err error) {
-	f := func(claId string) {
+	f := func(claId string, t dp.CLAType) {
 		dto.Signed = true
 		dto.VersionMatched = s.cla.ContainsCla(cmd.LinkId, claId)
+		if !dto.VersionMatched {
+			dto.Type = t.CLAType()
+		}
 	}
 
 	claId, err := s.repo.FindSignedCLA(cmd.LinkId, cmd.EmailAddr)
@@ -84,7 +88,7 @@ func (s *individualSigningService) Check(cmd *CmdToCheckSinging) (dto Individual
 	}
 
 	if claId != "" {
-		f(claId)
+		f(claId, dp.CLATypeIndividual)
 
 		return
 	}
@@ -102,7 +106,7 @@ func (s *individualSigningService) Check(cmd *CmdToCheckSinging) (dto Individual
 		return dto, nil
 	}
 
-	f(v.ClaId)
+	f(v.ClaId, dp.CLATypeCorp)
 
 	return
 }

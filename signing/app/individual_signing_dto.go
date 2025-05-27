@@ -35,6 +35,7 @@ type CmdToCheckSinging struct {
 }
 
 type IndividualSignedDTO struct {
-	Signed         bool `json:"signed"`
-	VersionMatched bool `json:"version_matched"`
+	Type           string `json:"type"`
+	Signed         bool   `json:"signed"`
+	VersionMatched bool   `json:"version_matched"`
 }

@@ -67,8 +67,9 @@ func (s *userService) GenKeyForPasswordRetrieval(cmd *CmdToGenKeyForPasswordRetr
 	if err != nil {
 		return "", err
 	}
+	// return nil is for security
 	if !b {
-		return "", domain.NewDomainError(domain.ErrorCodeUserNotExists)
+		return "", nil
 	}
 
 	code, err := s.vcService.newCodeIfItCan(cmd, s.interval)

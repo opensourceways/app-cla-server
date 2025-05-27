@@ -27,6 +27,7 @@ type IndividualSigningInfo struct {
 }
 
 type IndividualSigned struct {
-	Signed         bool `json:"signed"`
-	VersionMatched bool `json:"version_matched"`
+	Type           string `json:"type"`
+	Signed         bool   `json:"signed"`
+	VersionMatched bool   `json:"version_matched"`
 }

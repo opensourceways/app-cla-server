@@ -47,7 +47,12 @@ func (ctl *PasswordRetrievalController) Post() {
 
 	key, mErr := models.GenKeyForPasswordRetrieval(&info)
 	if mErr != nil {
-		ctl.sendModelErrorAsResp(mErr, action)
+		if mErr.IsErrorOf(models.ErrUserNotExists) {
+			ctl.sendSuccessResp(action, "successfully")
+		} else {
+			ctl.sendModelErrorAsResp(mErr, action)
+		}
+
 		return
 	}
 

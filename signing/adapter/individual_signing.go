@@ -90,12 +90,16 @@ func (adapter *individualSigningAdatper) Check(linkId string, email string,
 		return models.IndividualSigned{}, toModelError(err)
 	}
 
-	return models.IndividualSigned{
-		Type:           v.Type,
+	data := models.IndividualSigned{
 		Signed:         v.Signed,
 		VersionMatched: v.VersionMatched,
-	}, nil
+	}
 
+	if !data.VersionMatched {
+		data.Type = v.Type
+	}
+
+	return data, nil
 }
 
 func createCodeForSigning(

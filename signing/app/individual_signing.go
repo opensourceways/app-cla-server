@@ -75,9 +75,11 @@ func (s *individualSigningService) Sign(cmd *CmdToSignIndividualCLA) error {
 // Check
 func (s *individualSigningService) Check(cmd *CmdToCheckSinging) (dto IndividualSignedDTO, err error) {
 	f := func(claId string, t dp.CLAType) {
-		dto.Type = t.CLAType()
 		dto.Signed = true
 		dto.VersionMatched = s.cla.ContainsCla(cmd.LinkId, claId)
+		if !dto.VersionMatched {
+			dto.Type = t.CLAType()
+		}
 	}
 
 	claId, err := s.repo.FindSignedCLA(cmd.LinkId, cmd.EmailAddr)

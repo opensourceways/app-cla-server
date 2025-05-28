@@ -8,6 +8,7 @@ import (
 	"github.com/opensourceways/app-cla-server/signing/domain/claservice"
 	"github.com/opensourceways/app-cla-server/signing/domain/repository"
 	"github.com/opensourceways/app-cla-server/signing/domain/vcservice"
+	"github.com/opensourceways/app-cla-server/util"
 )
 
 func NewIndividualSigningService(
@@ -61,6 +62,7 @@ func (s *individualSigningService) Sign(cmd *CmdToSignIndividualCLA) error {
 	}
 
 	is := cmd.toIndividualSigning()
+	is.AddSignLog(util.Date(), cmd.Link.CLAId)
 	if err := s.repo.Add(&is); err != nil {
 		if commonRepo.IsErrorDuplicateCreating(err) {
 			return domain.NewDomainError(domain.ErrorCodeIndividualSigningReSigning)
@@ -78,13 +80,18 @@ func (s *individualSigningService) Confirm(cmd *CmdToSignIndividualCLA) error {
 		return err
 	}
 
-	version, err := s.repo.FindSingedCLAVersion(cmd.Link.Id, cmd.Rep.EmailAddr)
+	if !s.cla.ContainsCla(cmd.Link.Id, cmd.Link.CLAId) {
+		return domain.NewDomainError(domain.ErrorCodeCLANotExists)
+	}
+
+	sign, err := s.repo.FindSignedCLADetail(cmd.Link.Id, cmd.Rep.EmailAddr)
 	if err != nil {
 		return err
 	}
 
-	index := domain.CLAIndex{LinkId: cmd.Link.Id, CLAId: cmd.Link.CLAId}
-	return s.repo.UpdateCLAId(&index, cmd.Rep.EmailAddr, version)
+	sign.UpdateClaId(cmd.Link.CLAId)
+
+	return s.repo.UpdateCLAId(&sign)
 }
 
 // Check

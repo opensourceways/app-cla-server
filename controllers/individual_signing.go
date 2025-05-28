@@ -1,8 +1,6 @@
 package controllers
 
 import (
-	"fmt"
-
 	"github.com/opensourceways/app-cla-server/models"
 )
 
@@ -115,7 +113,6 @@ func (ctl *IndividualSigningController) Confirm() {
 		ctl.sendModelErrorAsResp(err, action)
 	} else {
 		ctl.sendSuccessResp(action, "successfully")
-		ctl.addOperationLog(info.Email, fmt.Sprintf("%s link_id:%s, cla_id:%s", action, linkID, info.CLAId), 0)
 	}
 }
 

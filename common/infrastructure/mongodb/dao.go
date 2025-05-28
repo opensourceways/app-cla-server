@@ -109,6 +109,16 @@ func (impl *daoImpl) PushArraySingleItemAndUpdate(filter bson.M, array string, v
 	)
 }
 
+func (impl *daoImpl) PushArrayMultiItemsAndUpdate(filter bson.M, array string, value bson.A, u bson.M, version int) error {
+	return impl.updateDoc(
+		filter, version,
+		bson.M{
+			mongoCmdPush: bson.M{array: bson.M{mongoCmdEach: value}},
+			mongoCmdSet:  u,
+		},
+	)
+}
+
 func (impl *daoImpl) PushArraySingleItem(filter bson.M, array string, v interface{}, version int) error {
 	return impl.updateDoc(
 		filter, version, bson.M{mongoCmdPush: bson.M{array: v}},

@@ -1,6 +1,10 @@
 package controllers
 
-import "github.com/opensourceways/app-cla-server/models"
+import (
+	"fmt"
+
+	"github.com/opensourceways/app-cla-server/models"
+)
 
 type IndividualSigningController struct {
 	baseController
@@ -111,6 +115,7 @@ func (ctl *IndividualSigningController) Confirm() {
 		ctl.sendModelErrorAsResp(err, action)
 	} else {
 		ctl.sendSuccessResp(action, "successfully")
+		ctl.addOperationLog(info.Email, fmt.Sprintf("%s link_id:%s, cla_id:%s", action, linkID, info.CLAId), 0)
 	}
 }
 

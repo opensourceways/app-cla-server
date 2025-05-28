@@ -78,8 +78,13 @@ func (s *individualSigningService) Confirm(cmd *CmdToSignIndividualCLA) error {
 		return err
 	}
 
+	version, err := s.repo.FindSingedCLAVersion(cmd.Link.Id, cmd.Rep.EmailAddr)
+	if err != nil {
+		return err
+	}
+
 	index := domain.CLAIndex{LinkId: cmd.Link.Id, CLAId: cmd.Link.CLAId}
-	return s.repo.UpdateCLAId(&index, cmd.Rep.EmailAddr)
+	return s.repo.UpdateCLAId(&index, cmd.Rep.EmailAddr, version)
 }
 
 // Check

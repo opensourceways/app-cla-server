@@ -24,6 +24,7 @@ func (impl *individualSigning) Add(is *domain.IndividualSigning) error {
 	if err != nil {
 		return err
 	}
+	doc[fieldVersion] = 0
 
 	filter := linkIdFilter(is.Link.Id)
 	filter[fieldEmail] = is.Rep.EmailAddr.EmailAddr()
@@ -53,6 +54,20 @@ func (impl *individualSigning) FindSignedCLA(linkId string, email dp.EmailAddr) 
 	}
 
 	return do.CLAId, nil
+}
+
+func (impl *individualSigning) FindSingedCLAVersion(linkId string, email dp.EmailAddr) (int, error) {
+	filter := linkIdFilter(linkId)
+	filter[fieldEmail] = email.EmailAddr()
+	filter[fieldDeleted] = false
+
+	var do individualSigningDO
+
+	if err := impl.dao.GetDoc(filter, nil, &do); err != nil {
+		return 0, err
+	}
+
+	return do.Version, nil
 }
 
 func (impl *individualSigning) HasSignedLink(linkId string) (bool, error) {
@@ -88,9 +103,10 @@ func (impl *individualSigning) HasSignedCLA(index *domain.CLAIndex) (bool, error
 	return true, nil
 }
 
-func (impl *individualSigning) UpdateCLAId(index *domain.CLAIndex, email dp.EmailAddr) error {
+func (impl *individualSigning) UpdateCLAId(index *domain.CLAIndex, email dp.EmailAddr, version int) error {
 	filter := linkIdFilter(index.LinkId)
 	filter[fieldEmail] = email.EmailAddr()
+	filter[fieldDeleted] = false
 
-	return impl.dao.UpdateDocsWithoutVersion(filter, bson.M{fieldCLAId: index.CLAId})
+	return impl.dao.UpdateDoc(filter, bson.M{fieldCLAId: index.CLAId}, version)
 }

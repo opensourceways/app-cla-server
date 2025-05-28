@@ -30,6 +30,7 @@ type individualSigningDO struct {
 	RepDO    `bson:",inline"`
 
 	Domain    string `bson:"domain"      json:"domain"  required:"true"`
+	Version   int    `bson:"version"    json:"-"`
 	Deleted   bool   `bson:"deleted"     json:"deleted"`
 	DeletedAt int64  `bson:"deleted_at"  json:"deleted_at,omitempty"`
 }

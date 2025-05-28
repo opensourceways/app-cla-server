@@ -48,6 +48,7 @@ func (ctl *PasswordRetrievalController) Post() {
 	key, mErr := models.GenKeyForPasswordRetrieval(&info)
 	if mErr != nil {
 		if mErr.IsErrorOf(models.ErrUserNotExists) {
+			// to avoid reveal that user has not signed yet
 			ctl.sendSuccessResp(action, "successfully")
 		} else {
 			ctl.sendModelErrorAsResp(mErr, action)

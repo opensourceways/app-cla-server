@@ -8,6 +8,10 @@ import (
 	"github.com/opensourceways/app-cla-server/signing/domain/dp"
 )
 
+const (
+	fieldLogs = "logs"
+)
+
 func NewIndividualSigning(dao dao) *individualSigning {
 	return &individualSigning{
 		dao: dao,
@@ -24,6 +28,7 @@ func (impl *individualSigning) Add(is *domain.IndividualSigning) error {
 	if err != nil {
 		return err
 	}
+	doc[fieldVersion] = 0
 
 	filter := linkIdFilter(is.Link.Id)
 	filter[fieldEmail] = is.Rep.EmailAddr.EmailAddr()
@@ -53,6 +58,20 @@ func (impl *individualSigning) FindSignedCLA(linkId string, email dp.EmailAddr) 
 	}
 
 	return do.CLAId, nil
+}
+
+func (impl *individualSigning) Find(linkId string, email dp.EmailAddr) (domain.IndividualSigning, error) {
+	filter := linkIdFilter(linkId)
+	filter[fieldEmail] = email.EmailAddr()
+	filter[fieldDeleted] = false
+
+	var do individualSigningDO
+
+	if err := impl.dao.GetDoc(filter, nil, &do); err != nil {
+		return domain.IndividualSigning{}, err
+	}
+
+	return do.toIndividualSigning(), nil
 }
 
 func (impl *individualSigning) HasSignedLink(linkId string) (bool, error) {
@@ -86,4 +105,22 @@ func (impl *individualSigning) HasSignedCLA(index *domain.CLAIndex) (bool, error
 	}
 
 	return true, nil
+}
+
+func (impl *individualSigning) SaveNewCLA(is *domain.IndividualSigning) error {
+	filter := linkIdFilter(is.Link.Id)
+	filter[fieldEmail] = is.Rep.EmailAddr.EmailAddr()
+	filter[fieldDeleted] = false
+
+	logs := make([]individualSigningLogDO, len(is.Logs))
+	for i := range is.Logs {
+		logs[i] = toIndividualSigningLogDO(is.Logs[i])
+	}
+
+	logDocs, err := genDoc(logs)
+	if err != nil {
+		return err
+	}
+
+	return impl.dao.UpdateDoc(filter, bson.M{fieldCLAId: is.Link.Id, fieldLogs: logDocs}, is.Version)
 }

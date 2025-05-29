@@ -8,7 +8,9 @@ import (
 type IndividualSigning interface {
 	Add(*domain.IndividualSigning) error
 	FindSignedCLA(linkId string, email dp.EmailAddr) (string, error)
+	Find(linkId string, email dp.EmailAddr) (domain.IndividualSigning, error)
 
 	HasSignedLink(linkId string) (bool, error)
 	HasSignedCLA(*domain.CLAIndex) (bool, error)
+	SaveNewCLA(is *domain.IndividualSigning) error
 }

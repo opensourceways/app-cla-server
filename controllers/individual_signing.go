@@ -1,6 +1,8 @@
 package controllers
 
-import "github.com/opensourceways/app-cla-server/models"
+import (
+	"github.com/opensourceways/app-cla-server/models"
+)
 
 type IndividualSigningController struct {
 	baseController
@@ -77,6 +79,47 @@ func (ctl *IndividualSigningController) Sign() {
 	}
 
 	ctl.sendSuccessResp(action, "successfully")
+}
+
+// @Title Agree
+// @Description agree individual cla
+// @Tags IndividualSigning
+// @Accept json
+// @Param  link_id  path   string                    true  "link id"
+// @Param  body     body   models.IndividualSigning  true  "body for individual signing"
+// @Success 201 {object} controllers.respData
+// @Failure 400 missing_url_path_parameter: missing url path parameter
+// @Failure 401 missing_token:              token is missing
+// @Failure 402 unknown_token:              token is unknown
+// @Failure 403 expired_token:              token is expired
+// @Failure 404 unauthorized_token:         the permission of token is unmatched
+// @Failure 405 error_parsing_api_body:     parse payload of request failed
+// @Failure 406 unmatched_email:            the email is not same as the one which signer sets on the code platform
+// @Failure 407 unmatched_user_id:          the user id is not same as the one which was fetched from code platform
+// @Failure 410 no_link:                    the link id is not exists
+// @Failure 500 system_error:               system error
+// @router /:link_id/ [put]
+func (ctl *IndividualSigningController) Agree() {
+	action := "agree individual cla"
+	linkID := ctl.GetString(":link_id")
+
+	var info models.IndividualSigning
+	if fr := ctl.fetchInputPayload(&info); fr != nil {
+		ctl.sendFailedResultAsResp(fr, action)
+		return
+	}
+
+	_, _, err := models.GetLinkCLA(linkID, info.CLAId)
+	if err != nil {
+		ctl.sendModelErrorAsResp(err, action)
+		return
+	}
+
+	if err = models.AgreeIndividualCLA(linkID, &info); err != nil {
+		ctl.sendModelErrorAsResp(err, action)
+	} else {
+		ctl.sendSuccessResp(action, "successfully")
+	}
 }
 
 // @Title Check

@@ -306,6 +306,15 @@ func init() {
 
 	beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:IndividualSigningController"] = append(beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:IndividualSigningController"],
 		beego.ControllerComments{
+			Method:           "Agree",
+			Router:           `/:link_id/`,
+			AllowHTTPMethods: []string{"put"},
+			MethodParams:     param.Make(),
+			Filters:          nil,
+			Params:           nil})
+
+	beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:IndividualSigningController"] = append(beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:IndividualSigningController"],
+		beego.ControllerComments{
 			Method:           "SendVerificationCode",
 			Router:           `/:link_id/code`,
 			AllowHTTPMethods: []string{"post"},

@@ -148,6 +148,10 @@ func SignIndividualCLA(linkId string, opt *IndividualSigning, claFields []CLAFie
 	return individualSigningAdapterInstance.Sign(linkId, opt, claFields)
 }
 
+func AgreeIndividualCLA(linkId string, opt *IndividualSigning) IModelError {
+	return individualSigningAdapterInstance.Agree(linkId, opt)
+}
+
 func CheckSigning(linkId string, email string) (IndividualSigned, IModelError) {
 	return individualSigningAdapterInstance.Check(linkId, email)
 }

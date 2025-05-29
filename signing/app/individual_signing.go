@@ -30,6 +30,7 @@ func NewIndividualSigningService(
 type IndividualSigningService interface {
 	Verify(cmd *CmdToCreateVerificationCode) (string, error)
 	Sign(cmd *CmdToSignIndividualCLA) error
+	AgreeNewCLA(cmd *CmdToSignIndividualCLA) error
 	Check(cmd *CmdToCheckSinging) (IndividualSignedDTO, error)
 }
 
@@ -60,8 +61,8 @@ func (s *individualSigningService) Sign(cmd *CmdToSignIndividualCLA) error {
 		return domain.NewDomainError(domain.ErrorCodeIndividualSigningCorpExists)
 	}
 
-	is := cmd.toIndividualSigning()
-	if err := s.repo.Add(&is); err != nil {
+	is := domain.NewIndividualSigning(cmd.Link, cmd.Rep, cmd.AllSingingInfo)
+	if err = s.repo.Add(&is); err != nil {
 		if commonRepo.IsErrorDuplicateCreating(err) {
 			return domain.NewDomainError(domain.ErrorCodeIndividualSigningReSigning)
 		}
@@ -70,6 +71,26 @@ func (s *individualSigningService) Sign(cmd *CmdToSignIndividualCLA) error {
 	}
 
 	return nil
+}
+
+func (s *individualSigningService) AgreeNewCLA(cmd *CmdToSignIndividualCLA) error {
+	cmd1 := cmd.toCmd()
+	if err := s.vc.validate(&cmd1, cmd.VerificationCode); err != nil {
+		return err
+	}
+
+	if !s.cla.ContainsCla(cmd.Link.Id, cmd.Link.CLAId) {
+		return domain.NewDomainError(domain.ErrorCodeCLANotExists)
+	}
+
+	sign, err := s.repo.Find(cmd.Link.Id, cmd.Rep.EmailAddr)
+	if err != nil {
+		return err
+	}
+
+	sign.AgreeNewCLA(cmd.Link.CLAId)
+
+	return s.repo.SaveNewCLA(&sign)
 }
 
 // Check

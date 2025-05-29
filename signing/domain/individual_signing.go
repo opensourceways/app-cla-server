@@ -3,18 +3,18 @@ package domain
 import "github.com/opensourceways/app-cla-server/util"
 
 const (
-	individualSigningActionSign    = "sign"
-	individualSigningActionConfirm = "confirm"
+	individualSigningActionSign  = "sign"
+	individualSigningActionAgree = "agree"
 )
 
 type IndividualSigning struct {
 	Id      string
 	Link    LinkInfo
 	Rep     Representative
+	Logs    []IndividualSigningLog
 	Date    string
 	AllInfo AllSingingInfo
 	Version int
-	Logs    []IndividualSigningLog
 }
 
 type IndividualSigningLog struct {
@@ -23,29 +23,42 @@ type IndividualSigningLog struct {
 	Action string
 }
 
-func (i *IndividualSigning) UpdateClaId(claId string) {
-	i.Link.CLAId = claId
-	i.AddConfirmLog(util.Date(), claId)
+func NewIndividualSigning(link LinkInfo, rep Representative, all AllSingingInfo) IndividualSigning {
+	is := IndividualSigning{
+		Link:    link,
+		Rep:     rep,
+		Date:    util.Date(),
+		AllInfo: all,
+	}
+
+	is.addLogOfSigning()
+
+	return is
 }
 
-func (i *IndividualSigning) AddSignLog(date, claId string) {
+func (i *IndividualSigning) AgreeNewCLA(claId string) {
+	i.Link.CLAId = claId
+	i.addLogOfAgreeingNewCLA(util.Date(), claId)
+}
+
+func (i *IndividualSigning) addLogOfSigning() {
 	i.Logs = []IndividualSigningLog{
 		{
-			Date:   date,
-			ClaId:  claId,
+			Date:   i.Date,
+			ClaId:  i.Link.CLAId,
 			Action: individualSigningActionSign,
 		},
 	}
 }
 
-func (i *IndividualSigning) AddConfirmLog(date, claId string) {
+func (i *IndividualSigning) addLogOfAgreeingNewCLA(date, claId string) {
 	if len(i.Logs) == 0 {
-		i.AddSignLog(i.Date, i.Link.CLAId)
+		i.addLogOfSigning()
 	}
 
 	i.Logs = append(i.Logs, IndividualSigningLog{
 		Date:   date,
 		ClaId:  claId,
-		Action: individualSigningActionConfirm,
+		Action: individualSigningActionAgree,
 	})
 }

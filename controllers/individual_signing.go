@@ -81,8 +81,8 @@ func (ctl *IndividualSigningController) Sign() {
 	ctl.sendSuccessResp(action, "successfully")
 }
 
-// @Title Confirm
-// @Description confirm individual cla
+// @Title Agree
+// @Description agree individual cla
 // @Tags IndividualSigning
 // @Accept json
 // @Param  link_id  path   string                    true  "link id"
@@ -99,8 +99,8 @@ func (ctl *IndividualSigningController) Sign() {
 // @Failure 410 no_link:                    the link id is not exists
 // @Failure 500 system_error:               system error
 // @router /:link_id/ [put]
-func (ctl *IndividualSigningController) Confirm() {
-	action := "confirm individual cla"
+func (ctl *IndividualSigningController) Agree() {
+	action := "agree individual cla"
 	linkID := ctl.GetString(":link_id")
 
 	var info models.IndividualSigning
@@ -109,7 +109,13 @@ func (ctl *IndividualSigningController) Confirm() {
 		return
 	}
 
-	if err := models.ConfirmIndividualCLA(linkID, &info); err != nil {
+	_, _, err := models.GetLinkCLA(linkID, info.CLAId)
+	if err != nil {
+		ctl.sendModelErrorAsResp(err, action)
+		return
+	}
+
+	if err = models.AgreeIndividualCLA(linkID, &info); err != nil {
 		ctl.sendModelErrorAsResp(err, action)
 	} else {
 		ctl.sendSuccessResp(action, "successfully")

@@ -306,7 +306,7 @@ func init() {
 
 	beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:IndividualSigningController"] = append(beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:IndividualSigningController"],
 		beego.ControllerComments{
-			Method:           "Confirm",
+			Method:           "Agree",
 			Router:           `/:link_id/`,
 			AllowHTTPMethods: []string{"put"},
 			MethodParams:     param.Make(),

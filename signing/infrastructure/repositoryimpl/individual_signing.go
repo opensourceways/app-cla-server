@@ -60,7 +60,7 @@ func (impl *individualSigning) FindSignedCLA(linkId string, email dp.EmailAddr) 
 	return do.CLAId, nil
 }
 
-func (impl *individualSigning) FindSignedCLADetail(linkId string, email dp.EmailAddr) (domain.IndividualSigning, error) {
+func (impl *individualSigning) Find(linkId string, email dp.EmailAddr) (domain.IndividualSigning, error) {
 	filter := linkIdFilter(linkId)
 	filter[fieldEmail] = email.EmailAddr()
 	filter[fieldDeleted] = false
@@ -72,20 +72,6 @@ func (impl *individualSigning) FindSignedCLADetail(linkId string, email dp.Email
 	}
 
 	return do.toIndividualSigning(), nil
-}
-
-func (impl *individualSigning) FindSingedCLAVersion(linkId string, email dp.EmailAddr) (int, error) {
-	filter := linkIdFilter(linkId)
-	filter[fieldEmail] = email.EmailAddr()
-	filter[fieldDeleted] = false
-
-	var do individualSigningDO
-
-	if err := impl.dao.GetDoc(filter, nil, &do); err != nil {
-		return 0, err
-	}
-
-	return do.Version, nil
 }
 
 func (impl *individualSigning) HasSignedLink(linkId string) (bool, error) {
@@ -121,7 +107,7 @@ func (impl *individualSigning) HasSignedCLA(index *domain.CLAIndex) (bool, error
 	return true, nil
 }
 
-func (impl *individualSigning) UpdateCLAId(is *domain.IndividualSigning) error {
+func (impl *individualSigning) SaveNewCLA(is *domain.IndividualSigning) error {
 	filter := linkIdFilter(is.Link.Id)
 	filter[fieldEmail] = is.Rep.EmailAddr.EmailAddr()
 	filter[fieldDeleted] = false
@@ -129,11 +115,11 @@ func (impl *individualSigning) UpdateCLAId(is *domain.IndividualSigning) error {
 	docs := make(bson.A, len(is.Logs))
 	var err error
 	for i := range is.Logs {
-		v := toIndividualLogDO(is.Logs[i])
+		v := toIndividualSigningLogDO(is.Logs[i])
 		if docs[i], err = genDoc(v); err != nil {
 			return err
 		}
 	}
 
-	return impl.dao.PushArrayMultiItemsAndUpdate(filter, fieldLogs, docs, bson.M{fieldCLAId: is.Link.Id}, is.Version)
+	return impl.dao.UpdateDoc(filter, bson.M{fieldCLAId: is.Link.Id, fieldLogs: docs}, is.Version)
 }

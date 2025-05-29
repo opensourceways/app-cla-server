@@ -73,13 +73,13 @@ func (adapter *individualSigningAdatper) cmdToSignIndividualCLA(
 	return
 }
 
-func (adapter *individualSigningAdatper) Confirm(linkId string, opt *models.IndividualSigning) models.IModelError {
+func (adapter *individualSigningAdatper) Agree(linkId string, opt *models.IndividualSigning) models.IModelError {
 	cmd, err := adapter.cmdToSignIndividualCLA(linkId, opt, nil)
 	if err != nil {
 		return errBadRequestParameter(err)
 	}
 
-	if err = adapter.s.Confirm(&cmd); err != nil {
+	if err = adapter.s.AgreeNewCLA(&cmd); err != nil {
 		return toModelError(err)
 	}
 

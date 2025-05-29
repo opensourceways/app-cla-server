@@ -12,7 +12,7 @@ const fieldDeletedAt = "deleted_at"
 func toIndividualSigningDO(is *domain.IndividualSigning) individualSigningDO {
 	var logs []IndividualSigningLogDO
 	for _, v := range is.Logs {
-		logs = append(logs, toIndividualLogDO(v))
+		logs = append(logs, toIndividualSigningLogDO(v))
 	}
 
 	return individualSigningDO{
@@ -66,12 +66,12 @@ func (do *individualSigningDO) toIndividualSigning() domain.IndividualSigning {
 }
 
 type IndividualSigningLogDO struct {
-	Date   string `bson:"date" json:"time" required:"true"`
+	Date   string `bson:"date"   json:"time"   required:"true"`
 	ClaId  string `bson:"cla_id" json:"cla_id" required:"true"`
 	Action string `bson:"action" json:"action" required:"true"`
 }
 
-func toIndividualLogDO(log domain.IndividualSigningLog) IndividualSigningLogDO {
+func toIndividualSigningLogDO(log domain.IndividualSigningLog) IndividualSigningLogDO {
 	return IndividualSigningLogDO{
 		Date:   log.Date,
 		ClaId:  log.ClaId,

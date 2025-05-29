@@ -8,7 +8,6 @@ import (
 	"github.com/opensourceways/app-cla-server/signing/domain/claservice"
 	"github.com/opensourceways/app-cla-server/signing/domain/repository"
 	"github.com/opensourceways/app-cla-server/signing/domain/vcservice"
-	"github.com/opensourceways/app-cla-server/util"
 )
 
 func NewIndividualSigningService(
@@ -30,7 +29,7 @@ func NewIndividualSigningService(
 type IndividualSigningService interface {
 	Verify(cmd *CmdToCreateVerificationCode) (string, error)
 	Sign(cmd *CmdToSignIndividualCLA) error
-	Confirm(cmd *CmdToSignIndividualCLA) error
+	AgreeNewCLA(cmd *CmdToSignIndividualCLA) error
 	Check(cmd *CmdToCheckSinging) (IndividualSignedDTO, error)
 }
 
@@ -61,9 +60,8 @@ func (s *individualSigningService) Sign(cmd *CmdToSignIndividualCLA) error {
 		return domain.NewDomainError(domain.ErrorCodeIndividualSigningCorpExists)
 	}
 
-	is := cmd.toIndividualSigning()
-	is.AddSignLog(util.Date(), cmd.Link.CLAId)
-	if err := s.repo.Add(&is); err != nil {
+	is := domain.NewIndividualSigning(cmd.Link, cmd.Rep, cmd.AllSingingInfo)
+	if err = s.repo.Add(&is); err != nil {
 		if commonRepo.IsErrorDuplicateCreating(err) {
 			return domain.NewDomainError(domain.ErrorCodeIndividualSigningReSigning)
 		}
@@ -74,7 +72,7 @@ func (s *individualSigningService) Sign(cmd *CmdToSignIndividualCLA) error {
 	return nil
 }
 
-func (s *individualSigningService) Confirm(cmd *CmdToSignIndividualCLA) error {
+func (s *individualSigningService) AgreeNewCLA(cmd *CmdToSignIndividualCLA) error {
 	cmd1 := cmd.toCmd()
 	if err := s.vc.validate(&cmd1, cmd.VerificationCode); err != nil {
 		return err
@@ -84,14 +82,14 @@ func (s *individualSigningService) Confirm(cmd *CmdToSignIndividualCLA) error {
 		return domain.NewDomainError(domain.ErrorCodeCLANotExists)
 	}
 
-	sign, err := s.repo.FindSignedCLADetail(cmd.Link.Id, cmd.Rep.EmailAddr)
+	sign, err := s.repo.Find(cmd.Link.Id, cmd.Rep.EmailAddr)
 	if err != nil {
 		return err
 	}
 
-	sign.UpdateClaId(cmd.Link.CLAId)
+	sign.AgreeNewCLA(cmd.Link.CLAId)
 
-	return s.repo.UpdateCLAId(&sign)
+	return s.repo.SaveNewCLA(&sign)
 }
 
 // Check

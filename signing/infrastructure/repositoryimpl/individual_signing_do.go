@@ -10,7 +10,7 @@ import (
 const fieldDeletedAt = "deleted_at"
 
 func toIndividualSigningDO(is *domain.IndividualSigning) individualSigningDO {
-	var logs []IndividualSigningLogDO
+	var logs []individualSigningLogDO
 	for _, v := range is.Logs {
 		logs = append(logs, toIndividualSigningLogDO(v))
 	}
@@ -35,7 +35,7 @@ type individualSigningDO struct {
 	Date     string `bson:"date"        json:"date"     required:"true"`
 	AllInfo  anyDoc `bson:"info"        json:"info,omitempty"`
 	RepDO    `bson:",inline"`
-	Logs     []IndividualSigningLogDO `bson:"logs"     json:"logs"`
+	Logs     []individualSigningLogDO `bson:"logs"     json:"logs"`
 
 	Domain    string `bson:"domain"      json:"domain"  required:"true"`
 	Version   int    `bson:"version"     json:"-"`
@@ -65,21 +65,21 @@ func (do *individualSigningDO) toIndividualSigning() domain.IndividualSigning {
 	}
 }
 
-type IndividualSigningLogDO struct {
+type individualSigningLogDO struct {
 	Date   string `bson:"date"   json:"time"   required:"true"`
 	ClaId  string `bson:"cla_id" json:"cla_id" required:"true"`
 	Action string `bson:"action" json:"action" required:"true"`
 }
 
-func toIndividualSigningLogDO(log domain.IndividualSigningLog) IndividualSigningLogDO {
-	return IndividualSigningLogDO{
+func toIndividualSigningLogDO(log domain.IndividualSigningLog) individualSigningLogDO {
+	return individualSigningLogDO{
 		Date:   log.Date,
 		ClaId:  log.ClaId,
 		Action: log.Action,
 	}
 }
 
-func (do *IndividualSigningLogDO) toIndividualSigningLog() domain.IndividualSigningLog {
+func (do *individualSigningLogDO) toIndividualSigningLog() domain.IndividualSigningLog {
 	return domain.IndividualSigningLog{
 		Date:   do.Date,
 		ClaId:  do.ClaId,

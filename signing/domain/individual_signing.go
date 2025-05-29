@@ -37,8 +37,13 @@ func NewIndividualSigning(link LinkInfo, rep Representative, all AllSingingInfo)
 }
 
 func (i *IndividualSigning) AgreeNewCLA(claId string) {
+	if len(i.Logs) == 0 {
+		i.addLogOfSigning()
+	}
+
 	i.Link.CLAId = claId
-	i.addLogOfAgreeingNewCLA(claId)
+
+	i.addLogOfAgreeingNewCLA()
 }
 
 func (i *IndividualSigning) addLogOfSigning() {
@@ -51,14 +56,10 @@ func (i *IndividualSigning) addLogOfSigning() {
 	}
 }
 
-func (i *IndividualSigning) addLogOfAgreeingNewCLA(claId string) {
-	if len(i.Logs) == 0 {
-		i.addLogOfSigning()
-	}
-
+func (i *IndividualSigning) addLogOfAgreeingNewCLA() {
 	i.Logs = append(i.Logs, IndividualSigningLog{
 		Date:   util.Date(),
-		ClaId:  claId,
+		ClaId:  i.Link.CLAId,
 		Action: individualSigningActionAgree,
 	})
 }

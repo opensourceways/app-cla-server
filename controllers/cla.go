@@ -90,6 +90,31 @@ func (ctl *CLAController) DownloadPDF() {
 	))
 }
 
+// @Title DownloadSignedIndividualCLA
+// @Description download signed individual cla
+// @Tags CLA
+// @Accept json
+// @Param  link_id  path  string  true  "link id"
+// @Param  email    query string  true  "email"
+// @Success 200
+// @router /individual/:link_id/:email [get]
+func (ctl *CLAController) DownloadSignedIndividualCLA() {
+	action := "action download signed individual cla"
+
+	linkId := ctl.GetString(":link_id")
+	claInfo, err := models.FindIndividualSignedCLAInfo(
+		linkId, ctl.GetString(":email"),
+	)
+	if err != nil {
+		ctl.sendModelErrorAsResp(err, action)
+		return
+	}
+
+	ctl.downloadFile(models.CLAFile(
+		linkId, claInfo.CLAId,
+	))
+}
+
 // @Title List
 // @Description list clas of link
 // @Tags CLA

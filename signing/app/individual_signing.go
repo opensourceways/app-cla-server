@@ -31,6 +31,7 @@ type IndividualSigningService interface {
 	Verify(cmd *CmdToCreateVerificationCode) (string, error)
 	Sign(cmd *CmdToSignIndividualCLA) error
 	AgreeNewCLA(cmd *CmdToSignIndividualCLA) error
+	FindSignedCLAInfo(cmd *CmdToFindSignedCLAInfo) (CLAInfoDTO, error)
 	Check(cmd *CmdToCheckSinging) (IndividualSignedDTO, error)
 }
 
@@ -91,6 +92,18 @@ func (s *individualSigningService) AgreeNewCLA(cmd *CmdToSignIndividualCLA) erro
 	sign.AgreeNewCLA(cmd.Link.CLAId)
 
 	return s.repo.SaveNewCLA(&sign)
+}
+
+func (s *individualSigningService) FindSignedCLAInfo(cmd *CmdToFindSignedCLAInfo) (dto CLAInfoDTO, err error) {
+	sign, err := s.repo.Find(cmd.LinkId, cmd.EmailAddr)
+	if err != nil {
+		return
+	}
+
+	return CLAInfoDTO{
+		CLAId:    sign.Link.CLAId,
+		Language: sign.Link.Language.Language(),
+	}, nil
 }
 
 // Check

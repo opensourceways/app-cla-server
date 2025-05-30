@@ -45,7 +45,7 @@ func init() {
 
 	beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:CLAController"] = append(beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:CLAController"],
 		beego.ControllerComments{
-			Method:           "DownloadPreviousPDF",
+			Method:           "DownloadSignedIndividualCLA",
 			Router:           `/:link_id/previous`,
 			AllowHTTPMethods: []string{"get"},
 			MethodParams:     param.Make(),

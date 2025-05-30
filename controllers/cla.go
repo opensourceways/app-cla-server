@@ -90,18 +90,18 @@ func (ctl *CLAController) DownloadPDF() {
 	))
 }
 
-// @Title DownloadPreviousPDF
-// @Description get previous cla pdf
+// @Title DownloadSignedIndividualCLA
+// @Description download singed individual cla
 // @Tags CLA
 // @Accept json
 // @Param  link_id  path  string  true  "link id"
 // @Param  email    query string  true  "email"
 // @Success 200
 // @router /:link_id/previous [get]
-func (ctl *CLAController) DownloadPreviousPDF() {
-	action := "action download previous cla pdf"
+func (ctl *CLAController) DownloadSignedIndividualCLA() {
+	action := "action download signed individual cla"
 
-	claInfo, err := models.FindIndividualCLAInfo(
+	claInfo, err := models.FindIndividualSignedCLAInfo(
 		ctl.GetString(":link_id"), ctl.GetString("email"),
 	)
 	if err != nil {

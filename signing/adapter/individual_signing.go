@@ -86,8 +86,8 @@ func (adapter *individualSigningAdatper) Agree(linkId string, opt *models.Indivi
 	return nil
 }
 
-func (adapter *individualSigningAdatper) FindCLAInfo(linkId, email string) (models.CLAInfo, models.IModelError) {
-	cmd := app.CmdToFindCLAInfo{
+func (adapter *individualSigningAdatper) FindSignedCLAInfo(linkId, email string) (models.CLAInfo, models.IModelError) {
+	cmd := app.CmdToFindSignedCLAInfo{
 		LinkId: linkId,
 	}
 
@@ -96,7 +96,7 @@ func (adapter *individualSigningAdatper) FindCLAInfo(linkId, email string) (mode
 		return models.CLAInfo{}, errBadRequestParameter(err)
 	}
 
-	claInfo, err := adapter.s.FindCLAInfo(&cmd)
+	claInfo, err := adapter.s.FindSignedCLAInfo(&cmd)
 	if err != nil {
 		return models.CLAInfo{}, toModelError(err)
 	}

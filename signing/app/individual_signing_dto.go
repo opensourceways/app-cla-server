@@ -40,7 +40,7 @@ type IndividualSignedDTO struct {
 	VersionMatched bool   `json:"version_matched"`
 }
 
-type CmdToFindCLAInfo = CmdToCheckSinging
+type CmdToFindSignedCLAInfo = CmdToCheckSinging
 
 type CLAInfoDTO struct {
 	CLAId    string `json:"cla_id"`

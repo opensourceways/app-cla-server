@@ -91,13 +91,13 @@ func (ctl *CLAController) DownloadPDF() {
 }
 
 // @Title DownloadSignedIndividualCLA
-// @Description download singed individual cla
+// @Description download signed individual cla
 // @Tags CLA
 // @Accept json
 // @Param  link_id  path  string  true  "link id"
 // @Param  email    query string  true  "email"
 // @Success 200
-// @router /:link_id/previous [get]
+// @router /individual/:link_id/:email [get]
 func (ctl *CLAController) DownloadSignedIndividualCLA() {
 	action := "action download signed individual cla"
 

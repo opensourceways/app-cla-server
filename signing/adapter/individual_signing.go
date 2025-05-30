@@ -86,6 +86,27 @@ func (adapter *individualSigningAdatper) Agree(linkId string, opt *models.Indivi
 	return nil
 }
 
+func (adapter *individualSigningAdatper) FindCLAInfo(linkId, email string) (models.CLAInfo, models.IModelError) {
+	cmd := app.CmdToFindCLAInfo{
+		LinkId: linkId,
+	}
+
+	var err error
+	if cmd.EmailAddr, err = dp.NewEmailAddr(email); err != nil {
+		return models.CLAInfo{}, errBadRequestParameter(err)
+	}
+
+	claInfo, err := adapter.s.FindCLAInfo(&cmd)
+	if err != nil {
+		return models.CLAInfo{}, toModelError(err)
+	}
+
+	return models.CLAInfo{
+		CLAId:   claInfo.CLAId,
+		CLALang: claInfo.Language,
+	}, nil
+}
+
 // Check
 func (adapter *individualSigningAdatper) Check(linkId string, email string,
 ) (models.IndividualSigned, models.IModelError) {

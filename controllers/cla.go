@@ -101,8 +101,9 @@ func (ctl *CLAController) DownloadPDF() {
 func (ctl *CLAController) DownloadSignedIndividualCLA() {
 	action := "action download signed individual cla"
 
+	linkId := ctl.GetString(":link_id")
 	claInfo, err := models.FindIndividualSignedCLAInfo(
-		ctl.GetString(":link_id"), ctl.GetString("email"),
+		linkId, ctl.GetString(":email"),
 	)
 	if err != nil {
 		ctl.sendModelErrorAsResp(err, action)
@@ -110,7 +111,7 @@ func (ctl *CLAController) DownloadSignedIndividualCLA() {
 	}
 
 	ctl.downloadFile(models.CLAFile(
-		ctl.GetString(":link_id"), claInfo.CLAId,
+		linkId, claInfo.CLAId,
 	))
 }
 

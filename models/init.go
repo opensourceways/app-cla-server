@@ -48,7 +48,8 @@ type individualSigningAdapter interface {
 	Verify(linkId, email string) (string, IModelError)
 	Sign(linkId string, opt *IndividualSigning, claFields []CLAField) IModelError
 	Agree(linkId string, opt *IndividualSigning) IModelError
-	FindSignedCLAInfo(linkId, email string) (CLAInfo, IModelError)
+	FindSignedCLAFile(linkId, email string) (string, IModelError)
+	FindDiffCLAFile(linkId, email string) (string, IModelError)
 	Check(linkId string, email string) (IndividualSigned, IModelError)
 }
 
@@ -136,7 +137,6 @@ type claAdapter interface {
 	Add(userId, linkId string, opt *CLACreateOpt) IModelError
 	Remove(userId, linkId, claId string) IModelError
 	CLALocalFilePath(linkId, claId string) string
-	DiffCLALocalFilePath(linkId, newClaId, signedClaId string) string
 	List(userId, linkId string) (CLAOfLink, IModelError)
 }
 

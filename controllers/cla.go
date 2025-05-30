@@ -101,18 +101,14 @@ func (ctl *CLAController) DownloadPDF() {
 func (ctl *CLAController) DownloadSignedIndividualCLA() {
 	action := "action download signed individual cla"
 
-	linkId := ctl.GetString(":link_id")
-	claInfo, err := models.FindIndividualSignedCLAInfo(
-		linkId, ctl.GetString(":email"),
-	)
+	file, err := models.FindSignedCLAFile(ctl.GetString(":link_id"), ctl.GetString(":email"))
 	if err != nil {
 		ctl.sendModelErrorAsResp(err, action)
+
 		return
 	}
 
-	ctl.downloadFile(models.CLAFile(
-		linkId, claInfo.CLAId,
-	))
+	ctl.downloadFile(file)
 }
 
 // @Title DownloadDiffPDF
@@ -122,31 +118,18 @@ func (ctl *CLAController) DownloadSignedIndividualCLA() {
 // @Param  link_id  path  string  true  "link id"
 // @Param  email    path  string  true  "email"
 // @Success 200
-// @router /individual/:link_id/diff/:email [get]
+// @router /individual/diff/:link_id/:email [get]
 func (ctl *CLAController) DownloadDiffPDF() {
 	action := "action download diff pdf"
 
-	linkId := ctl.GetString(":link_id")
-	signedClaInfo, err := models.FindIndividualSignedCLAInfo(linkId, ctl.GetString(":email"))
+	file, err := models.FindDiffCLAFile(ctl.GetString(":link_id"), ctl.GetString(":email"))
 	if err != nil {
 		ctl.sendModelErrorAsResp(err, action)
+
 		return
 	}
 
-	newClas, err := models.ListCLAs(linkId, "individual")
-	if err != nil {
-		ctl.sendModelErrorAsResp(err, action)
-		return
-	}
-
-	var newClaId string
-	for _, v := range newClas {
-		if v.Language == signedClaInfo.CLALang {
-			newClaId = v.CLAId
-		}
-	}
-
-	ctl.downloadFile(models.DiffCLAFile(linkId, newClaId, signedClaInfo.CLAId))
+	ctl.downloadFile(file)
 }
 
 // @Title List

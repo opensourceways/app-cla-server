@@ -31,7 +31,8 @@ type IndividualSigningService interface {
 	Verify(cmd *CmdToCreateVerificationCode) (string, error)
 	Sign(cmd *CmdToSignIndividualCLA) error
 	AgreeNewCLA(cmd *CmdToSignIndividualCLA) error
-	FindSignedCLAInfo(cmd *CmdToFindSignedCLAInfo) (CLAInfoDTO, error)
+	FindSignedCLAFile(cmd *CmdToFindSignedCLAInfo) (string, error)
+	FindDiffCLAFile(cmd *CmdToFindSignedCLAInfo) (string, error)
 	Check(cmd *CmdToCheckSinging) (IndividualSignedDTO, error)
 }
 
@@ -94,16 +95,32 @@ func (s *individualSigningService) AgreeNewCLA(cmd *CmdToSignIndividualCLA) erro
 	return s.repo.SaveNewCLA(&sign)
 }
 
-func (s *individualSigningService) FindSignedCLAInfo(cmd *CmdToFindSignedCLAInfo) (dto CLAInfoDTO, err error) {
+func (s *individualSigningService) FindSignedCLAFile(cmd *CmdToFindSignedCLAInfo) (string, error) {
 	sign, err := s.repo.Find(cmd.LinkId, cmd.EmailAddr)
 	if err != nil {
-		return
+		return "", err
 	}
 
-	return CLAInfoDTO{
-		CLAId:    sign.Link.CLAId,
-		Language: sign.Link.Language.Language(),
-	}, nil
+	return s.cla.CLALocalFilePath(&domain.CLAIndex{
+		LinkId: cmd.LinkId,
+		CLAId:  sign.Link.CLAId,
+	}), nil
+}
+
+func (s *individualSigningService) FindDiffCLAFile(cmd *CmdToFindSignedCLAInfo) (string, error) {
+	signed, err := s.repo.Find(cmd.LinkId, cmd.EmailAddr)
+	if err != nil {
+		return "", err
+	}
+
+	newClaId := ""
+
+	index := domain.CLAIndex{
+		LinkId: cmd.LinkId,
+		CLAId:  newClaId,
+	}
+
+	return s.cla.DiffCLALocalFilePath(&index, signed.Link.CLAId), nil
 }
 
 // Check

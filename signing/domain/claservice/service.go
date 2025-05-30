@@ -30,6 +30,7 @@ func NewCLAService(
 type CLAService interface {
 	Add(link *domain.Link, cla *domain.CLA) error
 	CLALocalFilePath(*domain.CLAIndex) string
+	DiffCLALocalFilePath(index *domain.CLAIndex, signedClaId string) string
 	AddLink(link *domain.Link) error
 	ContainsCla(linkId, claId string) bool
 }
@@ -62,6 +63,10 @@ func (s *claService) Add(link *domain.Link, cla *domain.CLA) error {
 
 func (s *claService) CLALocalFilePath(index *domain.CLAIndex) string {
 	return s.local.LocalPath(index)
+}
+
+func (s *claService) DiffCLALocalFilePath(index *domain.CLAIndex, signedClaId string) string {
+	return s.local.LocalPathOfDiff(index, signedClaId)
 }
 
 func (s *claService) AddLink(link *domain.Link) error {

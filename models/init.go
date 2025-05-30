@@ -136,6 +136,7 @@ type claAdapter interface {
 	Add(userId, linkId string, opt *CLACreateOpt) IModelError
 	Remove(userId, linkId, claId string) IModelError
 	CLALocalFilePath(linkId, claId string) string
+	DiffCLALocalFilePath(linkId, newClaId, signedClaId string) string
 	List(userId, linkId string) (CLAOfLink, IModelError)
 }
 

@@ -115,6 +115,45 @@ func (ctl *CLAController) DownloadSignedIndividualCLA() {
 	))
 }
 
+// @Title DownloadDiffPDF
+// @Description get diff pdf
+// @Tags CLA
+// @Accept json
+// @Param  link_id  path  string  true  "link id"
+// @Param  email    query string  true  "email"
+// @Success 200
+// @router /:link_id/diff [get]
+func (ctl *CLAController) DownloadDiffPDF() {
+	action := "action download diff pdf"
+
+	previousClaInfo, err := models.FindIndividualCLAInfo(
+		ctl.GetString(":link_id"), ctl.GetString("email"),
+	)
+	if err != nil {
+		ctl.sendModelErrorAsResp(err, action)
+		return
+	}
+
+	newClas, err := models.ListCLAs(
+		ctl.GetString(":link_id"), "individual",
+	)
+	if err != nil {
+		ctl.sendModelErrorAsResp(err, action)
+		return
+	}
+
+	var newClaId string
+	for _, v := range newClas {
+		if v.Language == previousClaInfo.CLALang {
+			newClaId = v.CLAId
+		}
+	}
+
+	ctl.downloadFile(models.DiffCLAFile(
+		ctl.GetString(":link_id"), newClaId, previousClaInfo.CLAId,
+	))
+}
+
 // @Title List
 // @Description list clas of link
 // @Tags CLA

@@ -25,6 +25,7 @@ type CLAService interface {
 	Add(cmd *CmdToAddCLA) error
 	Remove(cmd *CmdToRemoveCLA) error
 	CLALocalFilePath(domain.CLAIndex) string
+	DiffCLALocalFilePath(index domain.CLAIndex, previousClaId string) string
 	List(userId, linkId string) ([]CLADTO, []CLADTO, error)
 }
 
@@ -136,4 +137,8 @@ func (s *claService) List(userId, linkId string) (individuals []CLADTO, corps []
 
 func (s *claService) CLALocalFilePath(index domain.CLAIndex) string {
 	return s.cla.CLALocalFilePath(&index)
+}
+
+func (s *claService) DiffCLALocalFilePath(index domain.CLAIndex, previousClaId string) string {
+	return s.cla.DiffCLALocalFilePath(&index, previousClaId)
 }

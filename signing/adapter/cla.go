@@ -85,6 +85,14 @@ func (adapter *claAdatper) CLALocalFilePath(linkId, claId string) string {
 	})
 }
 
+func (adapter *claAdatper) DiffCLALocalFilePath(linkId, newClaId, previousClaId string) string {
+	return adapter.s.DiffCLALocalFilePath(domain.CLAIndex{
+		LinkId: linkId,
+		CLAId:  newClaId,
+	}, previousClaId,
+	)
+}
+
 // Add
 func (adapter *claAdatper) Add(userId, linkId string, opt *models.CLACreateOpt) models.IModelError {
 	cmd, err := adapter.cmdToAddCLA(userId, linkId, opt)

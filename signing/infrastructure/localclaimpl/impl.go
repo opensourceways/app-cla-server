@@ -34,6 +34,10 @@ func (impl *localCLAImpl) LocalPath(index *domain.CLAIndex) string {
 	return impl.localPath(index.LinkId, index.CLAId)
 }
 
+func (impl *localCLAImpl) LocalPathOfDiff(index *domain.CLAIndex, previousCLaId string) string {
+	return filepath.Join(impl.dir, fmt.Sprintf("%s_%s_%s.pdf", index.LinkId, index.CLAId, previousCLaId))
+}
+
 func (impl *localCLAImpl) localPath(linkId, claId string) string {
 	return filepath.Join(impl.dir, fmt.Sprintf("%s_%s.pdf", linkId, claId))
 }

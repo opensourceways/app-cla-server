@@ -3,6 +3,8 @@ package claservice
 import (
 	"sync"
 
+	"github.com/opensourceways/app-cla-server/signing/domain"
+	"github.com/opensourceways/app-cla-server/signing/domain/dp"
 	"github.com/opensourceways/app-cla-server/signing/domain/repository"
 )
 
@@ -12,14 +14,11 @@ func initLink(linkRepo repository.Link) (*linkCache, error) {
 		return &linkCache{}, err
 	}
 
-	cache := make(map[string]claIdMap)
+	cache := make(map[string][]domain.CLA)
 	for _, v := range links {
-		idMap := make(map[string]bool)
-		for _, id := range v.Clas {
-			idMap[id] = true
+		for _, c := range v.Clas {
+			cache[v.Id] = append(cache[v.Id], c)
 		}
-
-		cache[v.Id] = idMap
 	}
 
 	return &linkCache{
@@ -29,17 +28,43 @@ func initLink(linkRepo repository.Link) (*linkCache, error) {
 
 type linkCache struct {
 	mutex sync.RWMutex
-	cache map[string]claIdMap
+	cache map[string][]domain.CLA
 }
-
-type claIdMap map[string]bool
 
 func (lc *linkCache) contains(linkId, claId string) bool {
 	lc.mutex.RLock()
-	_, ok := lc.cache[linkId][claId]
+	clas, ok := lc.cache[linkId]
 	lc.mutex.RUnlock()
 
-	return ok
+	if !ok {
+		return false
+	}
+
+	for _, v := range clas {
+		if v.Id == claId {
+			return true
+		}
+	}
+
+	return false
+}
+
+func (lc *linkCache) getClaId(linkId string, claType dp.CLAType, language dp.Language) string {
+	lc.mutex.RLock()
+	clas, ok := lc.cache[linkId]
+	lc.mutex.RUnlock()
+
+	if !ok {
+		return ""
+	}
+
+	for _, v := range clas {
+		if v.Type == claType && v.Language == language {
+			return v.Id
+		}
+	}
+
+	return ""
 }
 
 func (lc *linkCache) update(linkId, claId string) bool {

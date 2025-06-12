@@ -140,9 +140,9 @@ func (impl *link) ListAll() ([]repository.LinkCLA, error) {
 	for i := range dos {
 		item := &dos[i]
 
-		clas := make([]string, len(item.CLAs))
+		clas := make([]domain.CLA, len(item.CLAs))
 		for j := range item.CLAs {
-			clas[j] = item.CLAs[j].Id
+			clas[j] = item.CLAs[j].toCLA()
 		}
 
 		r[i] = repository.LinkCLA{

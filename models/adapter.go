@@ -152,8 +152,12 @@ func AgreeIndividualCLA(linkId string, opt *IndividualSigning) IModelError {
 	return individualSigningAdapterInstance.Agree(linkId, opt)
 }
 
-func FindIndividualSignedCLAInfo(linkId, email string) (CLAInfo, IModelError) {
-	return individualSigningAdapterInstance.FindSignedCLAInfo(linkId, email)
+func FindSignedCLAFile(linkId, email string) (string, IModelError) {
+	return individualSigningAdapterInstance.FindSignedCLAFile(linkId, email)
+}
+
+func FindDiffCLAFile(linkId, email string) (string, IModelError) {
+	return individualSigningAdapterInstance.FindDiffCLAFile(linkId, email)
 }
 
 func CheckSigning(linkId string, email string) (IndividualSigned, IModelError) {

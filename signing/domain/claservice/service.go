@@ -7,6 +7,7 @@ import (
 
 	commonRepo "github.com/opensourceways/app-cla-server/common/domain/repository"
 	"github.com/opensourceways/app-cla-server/signing/domain"
+	"github.com/opensourceways/app-cla-server/signing/domain/dp"
 	"github.com/opensourceways/app-cla-server/signing/domain/localcla"
 	"github.com/opensourceways/app-cla-server/signing/domain/repository"
 )
@@ -30,8 +31,10 @@ func NewCLAService(
 type CLAService interface {
 	Add(link *domain.Link, cla *domain.CLA) error
 	CLALocalFilePath(*domain.CLAIndex) string
+	DiffCLALocalFilePath(index *domain.CLAIndex, signedClaId string) string
 	AddLink(link *domain.Link) error
 	ContainsCla(linkId, claId string) bool
+	GetClaId(linkId string, claType dp.CLAType, language dp.Language) string
 }
 
 type claService struct {
@@ -62,6 +65,10 @@ func (s *claService) Add(link *domain.Link, cla *domain.CLA) error {
 
 func (s *claService) CLALocalFilePath(index *domain.CLAIndex) string {
 	return s.local.LocalPath(index)
+}
+
+func (s *claService) DiffCLALocalFilePath(index *domain.CLAIndex, signedClaId string) string {
+	return s.local.LocalPathOfDiff(index, signedClaId)
 }
 
 func (s *claService) AddLink(link *domain.Link) error {
@@ -108,4 +115,8 @@ func (s *claService) AddLink(link *domain.Link) error {
 
 func (s *claService) ContainsCla(linkId, claId string) bool {
 	return s.linkCache.contains(linkId, claId)
+}
+
+func (s *claService) GetClaId(linkId string, claType dp.CLAType, language dp.Language) string {
+	return s.linkCache.getClaId(linkId, claType, language)
 }

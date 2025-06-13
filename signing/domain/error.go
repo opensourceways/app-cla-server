@@ -20,6 +20,7 @@ const (
 	ErrorCodeCorpSigningNotFound     = "corp_signing_not_found"
 	ErrorCodeCorpSigningReSigning    = "corp_signing_resigning"
 	ErrorCodeCorpSigningCanNotDelete = "corp_signing_can_not_delete"
+	ErrorCodeCorpSigningUnchanged    = "corp_signing_unchanged"
 
 	ErrorCodeCorpEmailDomainExists   = "corp_email_domain_exists"
 	ErrorCodeCorpEmailDomainNotMatch = "corp_email_domain_not_match"

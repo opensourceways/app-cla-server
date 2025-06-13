@@ -151,7 +151,32 @@ func (ctl *CorporationManagerController) GetBasicInfo() {
 		LinkId:              pl.LinkID,
 		CorpManagerUserInfo: v,
 	})
+}
 
+// @Title DownloadDiffPDF
+// @Description get diff pdf
+// @Tags CLA
+// @Accept json
+// @Success 200
+// @router /diff [get]
+func (ctl *CorporationManagerController) DownloadDiffPDF() {
+	action := "corp admin download diff pdf"
+	sendResp := ctl.newFuncForSendingFailedResp(action)
+
+	pl, fr := ctl.tokenPayloadBasedOnCorpManager()
+	if fr != nil {
+		sendResp(fr)
+		return
+	}
+
+	file, err := models.FindDiffCLAFileOfCorp(pl.SigningId)
+	if err != nil {
+		ctl.sendModelErrorAsResp(err, action)
+
+		return
+	}
+
+	ctl.downloadFile(file)
 }
 
 type corpManagerInfo struct {

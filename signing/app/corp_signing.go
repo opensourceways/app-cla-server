@@ -5,6 +5,7 @@ import (
 
 	commonRepo "github.com/opensourceways/app-cla-server/common/domain/repository"
 	"github.com/opensourceways/app-cla-server/signing/domain"
+	"github.com/opensourceways/app-cla-server/signing/domain/claservice"
 	"github.com/opensourceways/app-cla-server/signing/domain/dp"
 	"github.com/opensourceways/app-cla-server/signing/domain/repository"
 	"github.com/opensourceways/app-cla-server/signing/domain/vcservice"
@@ -15,12 +16,14 @@ func NewCorpSigningService(
 	vc vcservice.VCService,
 	interval time.Duration,
 	linkRepo repository.Link,
+	cla claservice.CLAService,
 ) *corpSigningService {
 	return &corpSigningService{
 		repo:     repo,
 		vc:       verificationCodeService{vc},
 		interval: interval,
 		linkRepo: linkRepo,
+		cla:      cla,
 	}
 }
 
@@ -31,10 +34,12 @@ type CorpSigningService interface {
 	Get(userId, csId string, email dp.EmailAddr) (string, CorpSigningInfoDTO, error)
 	List(userId, linkId string) ([]CorpSigningDTO, error)
 	FindCorpSummary(cmd *CmdToFindCorpSummary) ([]CorpSummaryDTO, error)
+	FindDiffCLAFile(signingId string) (string, error)
 }
 
 type corpSigningService struct {
 	vc       verificationCodeService
+	cla      claservice.CLAService
 	repo     repository.CorpSigning
 	interval time.Duration
 	linkRepo repository.Link
@@ -157,4 +162,27 @@ func (s *corpSigningService) FindCorpSummary(cmd *CmdToFindCorpSummary) ([]CorpS
 	}
 
 	return r, nil
+}
+
+func (s *corpSigningService) FindDiffCLAFile(signingId string) (string, error) {
+	signed, err := s.repo.Find(signingId)
+	if err != nil {
+		return "", err
+	}
+
+	newClaId := s.cla.GetClaId(signed.Link.Id, dp.CLATypeCorp, signed.Link.Language)
+	if newClaId == "" {
+		return "", domain.NewNotFoundDomainError(domain.ErrorCodeCLANotExists)
+	}
+
+	if signed.Link.Id == newClaId {
+		return "", domain.NewDomainError(domain.ErrorCodeCorpSigningUnchanged)
+	}
+
+	index := domain.CLAIndex{
+		LinkId: signed.Link.Id,
+		CLAId:  newClaId,
+	}
+
+	return s.cla.DiffCLALocalFilePath(&index, signed.Link.CLAId), nil
 }

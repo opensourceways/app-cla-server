@@ -1,6 +1,8 @@
 package controllers
 
 import (
+	"fmt"
+
 	"github.com/opensourceways/app-cla-server/models"
 )
 
@@ -138,6 +140,8 @@ func (ctl *CLAController) DownloadDiffPDF() {
 
 		return
 	}
+
+	fmt.Println(file)
 
 	ctl.downloadFile(file)
 }

@@ -48,7 +48,6 @@ type individualSigningAdapter interface {
 	Verify(linkId, email string) (string, IModelError)
 	Sign(linkId string, opt *IndividualSigning, claFields []CLAField) IModelError
 	Agree(linkId string, opt *IndividualSigning) IModelError
-	FindSignedCLAFile(linkId, email string) (string, IModelError)
 	FindDiffCLAFile(linkId, email string) (string, IModelError)
 	Check(linkId string, email string) (IndividualSigned, IModelError)
 }

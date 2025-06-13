@@ -86,24 +86,6 @@ func (adapter *individualSigningAdatper) Agree(linkId string, opt *models.Indivi
 	return nil
 }
 
-func (adapter *individualSigningAdatper) FindSignedCLAFile(linkId, email string) (string, models.IModelError) {
-	cmd := app.CmdToFindSignedCLAInfo{
-		LinkId: linkId,
-	}
-
-	var err error
-	if cmd.EmailAddr, err = dp.NewEmailAddr(email); err != nil {
-		return "", errBadRequestParameter(err)
-	}
-
-	file, err := adapter.s.FindSignedCLAFile(&cmd)
-	if err != nil {
-		return "", toModelError(err)
-	}
-
-	return file, nil
-}
-
 func (adapter *individualSigningAdatper) FindDiffCLAFile(linkId, email string) (string, models.IModelError) {
 	cmd := app.CmdToFindSignedCLAInfo{
 		LinkId: linkId,

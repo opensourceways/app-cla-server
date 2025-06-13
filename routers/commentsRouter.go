@@ -45,15 +45,6 @@ func init() {
 
 	beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:CLAController"] = append(beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:CLAController"],
 		beego.ControllerComments{
-			Method:           "DownloadSignedIndividualCLA",
-			Router:           `/individual/:link_id/:email`,
-			AllowHTTPMethods: []string{"get"},
-			MethodParams:     param.Make(),
-			Filters:          nil,
-			Params:           nil})
-
-	beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:CLAController"] = append(beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:CLAController"],
-		beego.ControllerComments{
 			Method:           "DownloadDiffPDF",
 			Router:           `/individual/diff/:link_id/:email`,
 			AllowHTTPMethods: []string{"get"},

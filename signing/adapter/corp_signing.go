@@ -192,8 +192,19 @@ func (adapter *corpSigningAdatper) FindCorpSummary(linkId string, email string) 
 
 func (adapter *corpSigningAdatper) FindDiffCLAFile(signingId string) (string, models.IModelError) {
 	file, err := adapter.s.FindDiffCLAFile(signingId)
+	if err != nil {
+		return "", toModelError(err)
+	}
 
-	return file, toModelError(err)
+	return file, nil
+}
+
+func (adapter *corpSigningAdatper) Agree(signingId string) models.IModelError {
+	if err := adapter.s.Agree(signingId); err != nil {
+		return toModelError(err)
+	}
+
+	return nil
 }
 
 func getAllSigningInfo(

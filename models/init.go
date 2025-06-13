@@ -25,6 +25,7 @@ type corpSigningAdapter interface {
 	List(userId, linkId string) ([]CorporationSigningSummary, IModelError)
 	FindCorpSummary(linkId string, email string) (interface{}, IModelError)
 	FindDiffCLAFile(signingId string) (string, IModelError)
+	Agree(signingId string) IModelError
 }
 
 func RegisterCorpSigningAdapter(a corpSigningAdapter) {

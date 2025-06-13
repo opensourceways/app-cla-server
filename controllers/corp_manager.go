@@ -155,10 +155,10 @@ func (ctl *CorporationManagerController) GetBasicInfo() {
 
 // @Title DownloadDiffPDF
 // @Description get diff pdf
-// @Tags CLA
+// @Tags CorpManager
 // @Accept json
 // @Success 200
-// @router /diff [get]
+// @router /cla/diff [get]
 func (ctl *CorporationManagerController) DownloadDiffPDF() {
 	action := "corp admin download diff pdf"
 	sendResp := ctl.newFuncForSendingFailedResp(action)
@@ -177,6 +177,29 @@ func (ctl *CorporationManagerController) DownloadDiffPDF() {
 	}
 
 	ctl.downloadFile(file)
+}
+
+// @Title Agree
+// @Description agree new cla
+// @Tags CorpManager
+// @Accept json
+// @Success 200
+// @router /agree [get]
+func (ctl *CorporationManagerController) Agree() {
+	action := "agree new cla"
+	sendResp := ctl.newFuncForSendingFailedResp(action)
+
+	pl, fr := ctl.tokenPayloadBasedOnCorpManager()
+	if fr != nil {
+		sendResp(fr)
+		return
+	}
+
+	if err := models.AgreeCorpCLA(pl.SigningId); err != nil {
+		ctl.sendModelErrorAsResp(err, action)
+	} else {
+		ctl.sendSuccessResp(action, "successfully")
+	}
 }
 
 type corpManagerInfo struct {

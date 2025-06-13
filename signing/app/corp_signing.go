@@ -35,6 +35,7 @@ type CorpSigningService interface {
 	List(userId, linkId string) ([]CorpSigningDTO, error)
 	FindCorpSummary(cmd *CmdToFindCorpSummary) ([]CorpSummaryDTO, error)
 	FindDiffCLAFile(signingId string) (string, error)
+	Agree(signingId string) error
 }
 
 type corpSigningService struct {
@@ -170,19 +171,37 @@ func (s *corpSigningService) FindDiffCLAFile(signingId string) (string, error) {
 		return "", err
 	}
 
-	newClaId := s.cla.GetClaId(signed.Link.Id, dp.CLATypeCorp, signed.Link.Language)
-	if newClaId == "" {
+	latestClaId := s.cla.GetClaId(signed.Link.Id, dp.CLATypeCorp, signed.Link.Language)
+	if latestClaId == "" {
 		return "", domain.NewNotFoundDomainError(domain.ErrorCodeCLANotExists)
 	}
 
-	if signed.Link.Id == newClaId {
+	if !signed.IsClaChanged(latestClaId) {
 		return "", domain.NewDomainError(domain.ErrorCodeCorpSigningUnchanged)
 	}
 
 	index := domain.CLAIndex{
 		LinkId: signed.Link.Id,
-		CLAId:  newClaId,
+		CLAId:  latestClaId,
 	}
 
 	return s.cla.DiffCLALocalFilePath(&index, signed.Link.CLAId), nil
+}
+
+func (s *corpSigningService) Agree(signingId string) error {
+	signed, err := s.repo.Find(signingId)
+	if err != nil {
+		return err
+	}
+
+	latestClaId := s.cla.GetClaId(signed.Link.Id, dp.CLATypeCorp, signed.Link.Language)
+	if latestClaId == "" {
+		return domain.NewNotFoundDomainError(domain.ErrorCodeCLANotExists)
+	}
+
+	if err = signed.SetLatestClaId(latestClaId); err != nil {
+		return err
+	}
+
+	return s.repo.UpdateClaId(&signed)
 }

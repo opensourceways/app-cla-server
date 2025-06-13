@@ -92,6 +92,10 @@ func FindDiffCLAFileOfCorp(signingId string) (string, IModelError) {
 	return corpSigningAdapterInstance.FindDiffCLAFile(signingId)
 }
 
+func AgreeCorpCLA(signingId string) IModelError {
+	return corpSigningAdapterInstance.Agree(signingId)
+}
+
 // corp pdf
 
 func UploadCorpPDF(userId, csId string, pdf []byte) IModelError {

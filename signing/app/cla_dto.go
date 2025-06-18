@@ -36,6 +36,14 @@ type CmdToRemoveCLA struct {
 	domain.CLAIndex
 }
 
+type CmdToUpdateCLA struct {
+	URL    dp.URL
+	Text   []byte
+	UserId string
+
+	domain.CLAIndex
+}
+
 type CLADTO struct {
 	Id       string
 	Type     string

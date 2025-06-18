@@ -39,3 +39,7 @@ type CLADetail struct {
 
 	CLAId string `json:"cla_id"`
 }
+
+type CLAUpdateOpt struct {
+	URL string `json:"url"`
+}

@@ -64,3 +64,14 @@ func (link *Link) posOfCLA(cla *CLA) (int, bool) {
 
 	return 0, false
 }
+
+func (link *Link) MaxClaId() (int, error) {
+	var maxId string
+	for _, v := range link.CLAs {
+		if v.Id > maxId {
+			maxId = v.Id
+		}
+	}
+
+	return strconv.Atoi(maxId)
+}

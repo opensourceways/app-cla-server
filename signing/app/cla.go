@@ -23,6 +23,7 @@ func NewCLAService(
 
 type CLAService interface {
 	Add(cmd *CmdToAddCLA) error
+	Update(cmd *CmdToUpdateCLA) error
 	Remove(cmd *CmdToRemoveCLA) error
 	CLALocalFilePath(domain.CLAIndex) string
 	List(userId, linkId string) ([]CLADTO, []CLADTO, error)
@@ -44,6 +45,15 @@ func (s *claService) Add(cmd *CmdToAddCLA) error {
 	cla := cmd.toCLA()
 
 	return s.cla.Add(link, &cla)
+}
+
+func (s *claService) Update(cmd *CmdToUpdateCLA) error {
+	link, err := checkIfCommunityManager(cmd.UserId, cmd.LinkId, s.repo)
+	if err != nil {
+		return err
+	}
+
+	return s.cla.Update(link, cmd.CLAId, cmd.URL, cmd.Text)
 }
 
 func (s *claService) Remove(cmd *CmdToRemoveCLA) error {

@@ -1,6 +1,7 @@
 package claservice
 
 import (
+	"strconv"
 	"sync"
 
 	"github.com/beego/beego/v2/core/logs"
@@ -30,6 +31,7 @@ func NewCLAService(
 
 type CLAService interface {
 	Add(link *domain.Link, cla *domain.CLA) error
+	Update(link *domain.Link, claId string, url dp.URL, text []byte) error
 	CLALocalFilePath(*domain.CLAIndex) string
 	DiffCLALocalFilePath(index *domain.CLAIndex, signedClaId string) string
 	AddLink(link *domain.Link) error
@@ -55,6 +57,34 @@ func (s *claService) Add(link *domain.Link, cla *domain.CLA) error {
 	}
 
 	if err = s.repo.AddCLA(link, cla); err != nil {
+		if err1 := s.local.Remove(p); err1 != nil {
+			logs.Error("remove local file, err:%s", err1.Error())
+		}
+	}
+
+	return err
+}
+
+func (s *claService) Update(link *domain.Link, claId string, url dp.URL, text []byte) error {
+	maxId, err := link.MaxClaId()
+	if err != nil {
+		return err
+	}
+
+	newClaId := strconv.Itoa(maxId + 1)
+
+	newCla := &domain.CLA{
+		Id:   newClaId,
+		URL:  url,
+		Text: text,
+	}
+
+	p, err := s.local.AddCLA(link.Id, newCla)
+	if err != nil {
+		return err
+	}
+
+	if err = s.repo.UpdateCLA(link, claId, newCla); err != nil {
 		if err1 := s.local.Remove(p); err1 != nil {
 			logs.Error("remove local file, err:%s", err1.Error())
 		}

@@ -99,6 +99,19 @@ func (adapter *claAdatper) Add(userId, linkId string, opt *models.CLACreateOpt) 
 	return nil
 }
 
+func (adapter *claAdatper) Update(userId, linkId, claId string, opt *models.CLAUpdateOpt) models.IModelError {
+	cmd, err := adapter.cmdToUpdateCLA(userId, linkId, claId, opt)
+	if err != nil {
+		return errBadRequestParameter(err)
+	}
+
+	if err = adapter.s.Update(&cmd); err != nil {
+		return toModelError(err)
+	}
+
+	return nil
+}
+
 func (adapter *claAdatper) isAllowedPDFSource(url string) bool {
 	for _, item := range adapter.claPDFSource {
 		if strings.HasPrefix(url, item) {
@@ -141,6 +154,32 @@ func (adapter *claAdatper) cmdToAddCLA(userId, linkId string, opt *models.CLACre
 	}
 
 	cmd.Fields, err = adapter.toFields(cmd.Type, cmd.Language, opt.Fields)
+
+	return
+}
+
+func (adapter *claAdatper) cmdToUpdateCLA(userId, linkId, claId string, opt *models.CLAUpdateOpt,
+) (cmd app.CmdToUpdateCLA, err error) {
+	cmd.UserId = userId
+	cmd.LinkId = linkId
+	cmd.CLAId = claId
+
+	if !adapter.isAllowedPDFSource(opt.URL) {
+		err = errors.New("not allowed cla pdf source")
+
+		return
+	}
+
+	cmd.Text, err = util.DownloadFile(
+		opt.URL, adapter.fileTypeOfCLAContent, adapter.maxSizeOfCLAContent,
+	)
+	if err != nil {
+		return
+	}
+
+	if cmd.URL, err = dp.NewURL(opt.URL); err != nil {
+		return
+	}
 
 	return
 }

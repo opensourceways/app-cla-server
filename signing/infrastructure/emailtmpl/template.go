@@ -23,6 +23,7 @@ const (
 	TmplRemovingingEmployee   = "removing employee"
 	TmplPasswordRetrieval     = "password retrieval"
 	TmplEmailVerification     = "email verification"
+	TmplCLAUpdated            = "cla updated"
 )
 
 var msgTmpl = map[string]*template.Template{}
@@ -45,6 +46,7 @@ func Init() error {
 		TmplRemovingingEmployee:   "./conf/email-template/removing-employee.tmpl",
 		TmplPasswordRetrieval:     "./conf/email-template/password-retrieval.tmpl",
 		TmplEmailVerification:     "./conf/email-template/email_verification.tmpl",
+		TmplCLAUpdated:            "./conf/email-template/cla-updated.tmpl",
 	}
 
 	for name, path := range items {
@@ -228,4 +230,15 @@ type EmailVerification struct {
 
 func (data *EmailVerification) GenEmailMsg() (EmailMessage, error) {
 	return genEmailMsg(TmplEmailVerification, data)
+}
+
+type CLAUpdate struct {
+	Org              string
+	AdminName        string
+	ProjectURL       string
+	URLOfCLAPlatform string
+}
+
+func (data *CLAUpdate) GenEmailMsg() (EmailMessage, error) {
+	return genEmailMsg(TmplCLAUpdated, data)
 }

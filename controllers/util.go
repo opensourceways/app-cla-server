@@ -67,6 +67,33 @@ func notifyCorpManagerWhenAdding(linkId string, orgInfo *models.OrgInfo, info []
 	}
 }
 
+func notifyCorpManagerWhenCLAUpdated(userId, linkId string) {
+	summary, err := models.ListCorpSigning(userId, linkId)
+	if err != nil {
+		logs.Error("list corp signing failed when cla updated:", err)
+
+		return
+	}
+
+	org, err := models.GetLink(linkId)
+	if err != nil {
+		logs.Error("get org info failed when cla updated:", err)
+
+		return
+	}
+
+	for _, v := range summary {
+		b := emailtmpl.CLAUpdate{
+			Org:              org.OrgAlias,
+			AdminName:        v.AdminName,
+			ProjectURL:       org.ProjectURL,
+			URLOfCLAPlatform: config.signingURL(linkId),
+		}
+
+		sendEmail([]string{v.AdminEmail}, &org, "CLA has been updated", &b)
+	}
+}
+
 func fetchInputPayloadData(input []byte, info interface{}) *failedApiResult {
 	if err := json.Unmarshal(input, info); err != nil {
 		return newFailedApiResult(

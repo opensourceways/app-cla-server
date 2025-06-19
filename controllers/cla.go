@@ -80,6 +80,8 @@ func (ctl *CLAController) Update() {
 	}
 
 	ctl.sendSuccessResp(action, "successfully")
+
+	notifyCorpManagerWhenCLAUpdated(pl.UserId, linkID)
 }
 
 // @Title Delete

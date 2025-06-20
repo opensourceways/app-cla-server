@@ -180,11 +180,11 @@ func (ctl *CorporationManagerController) DownloadDiffPDF() {
 }
 
 // @Title Agree
-// @Description agree new cla
+// @Description agree with latest cla
 // @Tags CorpManager
 // @Accept json
 // @Success 200
-// @router /agree [get]
+// @router /cla/agree [get]
 func (ctl *CorporationManagerController) Agree() {
 	action := "agree new cla"
 	sendResp := ctl.newFuncForSendingFailedResp(action)

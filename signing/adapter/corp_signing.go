@@ -200,7 +200,7 @@ func (adapter *corpSigningAdatper) FindDiffCLAFile(signingId string) (string, mo
 }
 
 func (adapter *corpSigningAdatper) Agree(signingId string) models.IModelError {
-	if err := adapter.s.Agree(signingId); err != nil {
+	if err := adapter.s.AgreeWithLatestCLA(signingId); err != nil {
 		return toModelError(err)
 	}
 

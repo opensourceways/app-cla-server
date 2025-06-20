@@ -35,7 +35,7 @@ type CorpSigningService interface {
 	List(userId, linkId string) ([]CorpSigningDTO, error)
 	FindCorpSummary(cmd *CmdToFindCorpSummary) ([]CorpSummaryDTO, error)
 	FindDiffCLAFile(signingId string) (string, error)
-	Agree(signingId string) error
+	AgreeWithLatestCLA(signingId string) error
 }
 
 type corpSigningService struct {
@@ -176,8 +176,8 @@ func (s *corpSigningService) FindDiffCLAFile(signingId string) (string, error) {
 		return "", domain.NewNotFoundDomainError(domain.ErrorCodeCLANotExists)
 	}
 
-	if !signed.IsClaChanged(latestClaId) {
-		return "", domain.NewDomainError(domain.ErrorCodeCorpSigningUnchanged)
+	if !signed.HasSignedCLA(latestClaId) {
+		return "", domain.NewDomainError(domain.ErrorCodeCorpSigningCLAIsLatest)
 	}
 
 	index := domain.CLAIndex{
@@ -188,7 +188,7 @@ func (s *corpSigningService) FindDiffCLAFile(signingId string) (string, error) {
 	return s.cla.DiffCLALocalFilePath(&index, signed.Link.CLAId), nil
 }
 
-func (s *corpSigningService) Agree(signingId string) error {
+func (s *corpSigningService) AgreeWithLatestCLA(signingId string) error {
 	signed, err := s.repo.Find(signingId)
 	if err != nil {
 		return err

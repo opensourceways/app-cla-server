@@ -182,3 +182,12 @@ func (impl *corpSigning) hasSignedCorpCLA(index *domain.CLAIndex) (bool, error) 
 
 	return true, nil
 }
+
+func (impl *corpSigning) UpdateClaId(cs *domain.CorpSigning) error {
+	filter, err := impl.toCorpSigningIndex(cs.Id)
+	if err != nil {
+		return err
+	}
+
+	return impl.dao.UpdateDoc(filter, bson.M{fieldCLAId: cs.Link.CLAId}, cs.Version)
+}

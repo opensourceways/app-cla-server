@@ -244,3 +244,17 @@ func (cs *CorpSigning) posOfEmployee(index string) (int, bool) {
 
 	return 0, false
 }
+
+func (cs *CorpSigning) HasSignedCLA(latestClaId string) bool {
+	return cs.Link.CLAId != latestClaId
+}
+
+func (cs *CorpSigning) SetLatestClaId(latestClaId string) error {
+	if !cs.HasSignedCLA(latestClaId) {
+		return NewDomainError(ErrorCodeCorpSigningCLAIsLatest)
+	}
+
+	cs.Link.CLAId = latestClaId
+
+	return nil
+}

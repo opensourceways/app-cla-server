@@ -190,6 +190,23 @@ func (adapter *corpSigningAdatper) FindCorpSummary(linkId string, email string) 
 	return v, nil
 }
 
+func (adapter *corpSigningAdatper) FindDiffCLAFile(signingId string) (string, models.IModelError) {
+	file, err := adapter.s.FindDiffCLAFile(signingId)
+	if err != nil {
+		return "", toModelError(err)
+	}
+
+	return file, nil
+}
+
+func (adapter *corpSigningAdatper) Agree(signingId string) models.IModelError {
+	if err := adapter.s.AgreeWithLatestCLA(signingId); err != nil {
+		return toModelError(err)
+	}
+
+	return nil
+}
+
 func getAllSigningInfo(
 	input models.TypeSigningInfo, fields []models.CLAField, t dp.CLAType, l dp.Language,
 ) (domain.AllSingingInfo, error) {

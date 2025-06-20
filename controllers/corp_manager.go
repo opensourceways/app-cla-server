@@ -151,7 +151,6 @@ func (ctl *CorporationManagerController) GetBasicInfo() {
 		LinkId:              pl.LinkID,
 		CorpManagerUserInfo: v,
 	})
-
 }
 
 type corpManagerInfo struct {

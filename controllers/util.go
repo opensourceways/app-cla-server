@@ -3,10 +3,14 @@ package controllers
 import (
 	"encoding/json"
 	"fmt"
+	"os"
+	"path/filepath"
+	"strings"
 
 	"github.com/beego/beego/v2/core/logs"
 
 	"github.com/opensourceways/app-cla-server/models"
+	"github.com/opensourceways/app-cla-server/pdf"
 	"github.com/opensourceways/app-cla-server/signing/domain/emailservice"
 	"github.com/opensourceways/app-cla-server/signing/infrastructure/emailtmpl"
 	"github.com/opensourceways/app-cla-server/worker"
@@ -101,4 +105,32 @@ func fetchInputPayloadData(input []byte, info interface{}) *failedApiResult {
 		)
 	}
 	return nil
+}
+
+func genCLADiff(diffFile string) {
+	_, err := os.Stat(diffFile)
+	if err == nil {
+		// diff pdf is exists
+		return
+	}
+
+	fileName := filepath.Base(diffFile)
+	split := strings.Split(strings.TrimSuffix(fileName, ".txt"), "_")
+	if len(split) != 3 {
+		logs.Error("generate diff pdf failed, file path is invalid")
+
+		return
+	}
+
+	linkId := split[0]
+	oldClaId := split[1]
+	newClaId := split[2]
+
+	oldPDFPath := models.CLAFile(linkId, oldClaId)
+	newPDFPath := models.CLAFile(linkId, newClaId)
+
+	err = pdf.GetPDFGenerator().GenPDFDiff(oldPDFPath, newPDFPath, diffFile)
+	if err != nil {
+		logs.Error("generate diff pdf failed:", diffFile, err)
+	}
 }

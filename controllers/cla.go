@@ -165,6 +165,8 @@ func (ctl *CLAController) DownloadDiffPDF() {
 		return
 	}
 
+	genCLADiff(file)
+
 	ctl.downloadFile(file)
 }
 

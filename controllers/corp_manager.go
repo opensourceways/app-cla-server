@@ -153,55 +153,6 @@ func (ctl *CorporationManagerController) GetBasicInfo() {
 	})
 }
 
-// @Title DownloadDiffPDF
-// @Description get diff pdf
-// @Tags CorpManager
-// @Accept json
-// @Success 200
-// @router /cla/diff [get]
-func (ctl *CorporationManagerController) DownloadDiffPDF() {
-	action := "corp admin download diff pdf"
-	sendResp := ctl.newFuncForSendingFailedResp(action)
-
-	pl, fr := ctl.tokenPayloadBasedOnCorpManager()
-	if fr != nil {
-		sendResp(fr)
-		return
-	}
-
-	file, err := models.FindDiffCLAFileOfCorp(pl.SigningId)
-	if err != nil {
-		ctl.sendModelErrorAsResp(err, action)
-
-		return
-	}
-
-	ctl.downloadFile(file)
-}
-
-// @Title Agree
-// @Description agree with latest cla
-// @Tags CorpManager
-// @Accept json
-// @Success 200
-// @router /cla/agree [get]
-func (ctl *CorporationManagerController) Agree() {
-	action := "agree new cla"
-	sendResp := ctl.newFuncForSendingFailedResp(action)
-
-	pl, fr := ctl.tokenPayloadBasedOnCorpManager()
-	if fr != nil {
-		sendResp(fr)
-		return
-	}
-
-	if err := models.AgreeCorpCLA(pl.SigningId); err != nil {
-		ctl.sendModelErrorAsResp(err, action)
-	} else {
-		ctl.sendSuccessResp(action, "successfully")
-	}
-}
-
 type corpManagerInfo struct {
 	Org    string `json:"org"`
 	LinkId string `json:"link_id"`

@@ -17,8 +17,12 @@ func (ctl *CorporationSigningController) Prepare() {
 	if strings.HasSuffix(v, ":link_id/corps/:email") || ctl.isPostRequest() {
 		ctl.apiPrepare("")
 	} else {
-		// not signing
-		ctl.apiPrepare(PermissionOwnerOfOrg)
+		if strings.HasSuffix(v, "/cla/diff") || strings.HasSuffix(v, "/cla/agree") {
+			ctl.apiPrepare(PermissionCorpAdmin)
+		} else {
+			// not signing
+			ctl.apiPrepare(PermissionOwnerOfOrg)
+		}
 	}
 }
 
@@ -270,7 +274,7 @@ func (ctl *CorporationSigningController) DownloadDiffPDF() {
 // @Tags CorpSigning
 // @Accept json
 // @Success 200
-// @router /cla/agree [get]
+// @router /cla/agree [put]
 func (ctl *CorporationSigningController) Agree() {
 	action := "agree with latest cla"
 	sendResp := ctl.newFuncForSendingFailedResp(action)

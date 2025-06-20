@@ -112,8 +112,11 @@ func genPDFFileName(linkID, email, other string) string {
 }
 
 func (pg *pdfGenerator) GenPDFDiff(inputFile1, inputFile2, outputFile string) error {
+	fmt.Println(inputFile1, inputFile2, outputFile)
+	fmt.Println(pg.pythonBin)
 	cmd := exec.Command(pg.pythonBin, "./util/generate_diff.py", inputFile1, inputFile2, outputFile)
 	if out, err := cmd.Output(); err != nil {
+		fmt.Println(string(out))
 		return fmt.Errorf("gen pdf diff of failed: %s, %s", out, err.Error())
 	}
 

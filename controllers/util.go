@@ -115,7 +115,7 @@ func genCLADiff(diffFile string) {
 	}
 
 	fileName := filepath.Base(diffFile)
-	split := strings.Split(strings.TrimSuffix(fileName, ".txt"), "_")
+	split := strings.Split(strings.TrimSuffix(fileName, ".pdf"), "_")
 	if len(split) != 3 {
 		logs.Error("generate diff pdf failed, file path is invalid")
 

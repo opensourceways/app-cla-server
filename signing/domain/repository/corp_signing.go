@@ -54,4 +54,5 @@ type CorpSigning interface {
 
 	HasSignedLink(linkId string) (bool, error)
 	HasSignedCLA(*domain.CLAIndex, dp.CLAType) (bool, error)
+	UpdateClaId(cs *domain.CorpSigning) error
 }

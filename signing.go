@@ -79,9 +79,15 @@ func initSigning(cfg *config.Config) error {
 
 	interval := cfg.Domain.Config.GetIntervalOfCreatingVC()
 
+	// link
+	cla, err := claservice.NewCLAService(linkRepo, localclaimpl.NewLocalCLAImpl(&cfg.LocalCLA))
+	if err != nil {
+		return err
+	}
+
 	models.RegisterCorpSigningAdapter(
 		adapter.NewCorpSigningAdapter(
-			app.NewCorpSigningService(repo, vcService, interval, linkRepo),
+			app.NewCorpSigningService(repo, vcService, interval, linkRepo, cla),
 			cfg.Domain.Config.InvalidCorpEmailDomains(),
 		),
 	)
@@ -141,12 +147,6 @@ func initSigning(cfg *config.Config) error {
 	models.RegisterAccessTokenAdapter(
 		adapter.NewAccessTokenAdapter(app.NewAccessTokenService(at)),
 	)
-
-	// link
-	cla, err := claservice.NewCLAService(linkRepo, localclaimpl.NewLocalCLAImpl(&cfg.LocalCLA))
-	if err != nil {
-		return err
-	}
 
 	models.RegisterIndividualSigningAdapter(
 		adapter.NewIndividualSigningAdapter(app.NewIndividualSigningService(

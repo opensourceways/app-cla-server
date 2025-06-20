@@ -17,8 +17,12 @@ func (ctl *CorporationSigningController) Prepare() {
 	if strings.HasSuffix(v, ":link_id/corps/:email") || ctl.isPostRequest() {
 		ctl.apiPrepare("")
 	} else {
-		// not signing
-		ctl.apiPrepare(PermissionOwnerOfOrg)
+		if strings.HasSuffix(v, "/cla/diff") || strings.HasSuffix(v, "/cla/agree") {
+			ctl.apiPrepare(PermissionCorpAdmin)
+		} else {
+			// not signing
+			ctl.apiPrepare(PermissionOwnerOfOrg)
+		}
 	}
 }
 
@@ -236,5 +240,54 @@ func (ctl *CorporationSigningController) GetCorpInfo() {
 		ctl.sendModelErrorAsResp(merr, action)
 	} else {
 		ctl.sendSuccessResp(action, r)
+	}
+}
+
+// @Title DownloadDiffPDF
+// @Description get diff pdf
+// @Tags CorpSigning
+// @Accept json
+// @Success 200
+// @router /cla/diff [get]
+func (ctl *CorporationSigningController) DownloadDiffPDF() {
+	action := "corp admin download diff pdf"
+	sendResp := ctl.newFuncForSendingFailedResp(action)
+
+	pl, fr := ctl.tokenPayloadBasedOnCorpManager()
+	if fr != nil {
+		sendResp(fr)
+		return
+	}
+
+	file, err := models.FindDiffCLAFileOfCorp(pl.SigningId)
+	if err != nil {
+		ctl.sendModelErrorAsResp(err, action)
+
+		return
+	}
+
+	ctl.downloadFile(file)
+}
+
+// @Title Agree
+// @Description agree with latest cla
+// @Tags CorpSigning
+// @Accept json
+// @Success 200
+// @router /cla/agree [put]
+func (ctl *CorporationSigningController) Agree() {
+	action := "agree with latest cla"
+	sendResp := ctl.newFuncForSendingFailedResp(action)
+
+	pl, fr := ctl.tokenPayloadBasedOnCorpManager()
+	if fr != nil {
+		sendResp(fr)
+		return
+	}
+
+	if err := models.AgreeCorpCLA(pl.SigningId); err != nil {
+		ctl.sendModelErrorAsResp(err, action)
+	} else {
+		ctl.sendSuccessResp(action, "successfully")
 	}
 }

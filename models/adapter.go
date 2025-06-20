@@ -88,6 +88,14 @@ func FindCorpSummary(linkId string, email string) (interface{}, IModelError) {
 	return corpSigningAdapterInstance.FindCorpSummary(linkId, email)
 }
 
+func FindDiffCLAFileOfCorp(signingId string) (string, IModelError) {
+	return corpSigningAdapterInstance.FindDiffCLAFile(signingId)
+}
+
+func AgreeCorpCLA(signingId string) IModelError {
+	return corpSigningAdapterInstance.Agree(signingId)
+}
+
 // corp pdf
 
 func UploadCorpPDF(userId, csId string, pdf []byte) IModelError {

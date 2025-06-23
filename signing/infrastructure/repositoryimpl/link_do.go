@@ -56,11 +56,17 @@ func (do *linkDO) toLink() domain.Link {
 		clas[i] = do.CLAs[i].toCLA()
 	}
 
+	removedClas := make([]domain.CLA, len(do.RemovedCLAs))
+	for i := range do.RemovedCLAs {
+		removedClas[i] = do.RemovedCLAs[i].toCLA()
+	}
+
 	return domain.Link{
 		Id:        do.Id,
 		Org:       do.Org.toOrgInfo(),
 		Email:     do.Email.toEmailInfo(),
 		CLAs:      clas,
+		Removed:   removedClas,
 		Submitter: do.Submitter,
 		CLANum:    do.CLANum,
 		Version:   do.Version,

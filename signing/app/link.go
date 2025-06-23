@@ -30,6 +30,7 @@ type LinkService interface {
 	Find(linkId string) (dto LinkDTO, err error)
 	FindCLAs(cmd *CmdToFindCLAs) ([]CLADetailDTO, error)
 	FindLinkCLA(cmd *domain.CLAIndex) (dto LinkCLADTO, err error)
+	FindAllCLAs(linkId string) ([]CLADTO, []CLADTO, error)
 }
 
 type linkService struct {
@@ -155,6 +156,36 @@ func (s *linkService) Find(linkId string) (dto LinkDTO, err error) {
 
 	dto.Org = v.Org
 	dto.Email = v.Email
+
+	return
+}
+
+func (s *linkService) FindAllCLAs(linkId string) (clas []CLADTO, removedClas []CLADTO, err error) {
+	link, err := s.repo.Find(linkId)
+	if err != nil {
+		if commonRepo.IsErrorResourceNotFound(err) {
+			err = domain.NewDomainError(domain.ErrorCodeLinkNotExists)
+		}
+
+		return
+	}
+
+	toDTO := func(v domain.CLA) CLADTO {
+		return CLADTO{
+			Id:       v.Id,
+			Type:     v.Type.CLAType(),
+			URL:      v.URL.URL(),
+			Language: v.Language.Language(),
+		}
+	}
+
+	for _, v := range link.CLAs {
+		clas = append(clas, toDTO(v))
+	}
+
+	for _, v := range link.Removed {
+		removedClas = append(removedClas, toDTO(v))
+	}
 
 	return
 }

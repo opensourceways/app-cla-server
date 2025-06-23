@@ -21,6 +21,7 @@ type Link struct {
 	Org       OrgInfo
 	Email     EmailInfo
 	CLAs      []CLA
+	Removed   []CLA
 	Submitter string // community name which is in lowcase format.
 	CLANum    int
 	Version   int

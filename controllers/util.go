@@ -134,3 +134,55 @@ func genCLADiff(diffFile string) {
 		logs.Error("generate diff pdf failed:", diffFile, err)
 	}
 }
+
+func genAllCLADiff(linkId, claId string) {
+	clas, removedCLAS, err := models.ListAllCLAs(linkId)
+	if err != nil {
+		logs.Error("gen all cla diff failed: ", err)
+		return
+	}
+
+	var claType, claLang string
+	for _, v := range removedCLAS {
+		if claId == v.CLAId {
+			claType = v.Type
+			claLang = v.Language
+			break
+		}
+	}
+
+	if claType == "" || claLang == "" {
+		logs.Error("get cla type and lang failed")
+		return
+	}
+
+	var latestClaId string
+	for _, v := range clas {
+		if claType == v.Type && claLang == v.Language {
+			latestClaId = v.CLAId
+		}
+	}
+
+	if latestClaId == "" {
+		logs.Error("get latest cla id failed")
+		return
+	}
+
+	var historyClaId []string
+	for _, v := range removedCLAS {
+		if claType != v.Type && claLang == v.Language {
+			historyClaId = append(historyClaId, v.CLAId)
+		}
+	}
+
+	for _, oldClaId := range historyClaId {
+		oldPDFPath := models.CLAFile(linkId, oldClaId)
+		newPDFPath := models.CLAFile(linkId, latestClaId)
+		diffFile := models.DiffCLAFile(linkId, oldClaId, latestClaId)
+
+		err1 := pdf.GetPDFGenerator().GenPDFDiff(oldPDFPath, newPDFPath, diffFile)
+		if err1 != nil {
+			logs.Error("generate diff pdf failed:", diffFile, err1)
+		}
+	}
+}

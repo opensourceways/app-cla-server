@@ -75,7 +75,7 @@ func (impl *link) Remove(link *domain.Link) error {
 func (impl *link) Find(linkId string) (r domain.Link, err error) {
 	var do linkDO
 
-	err = impl.dao.GetDoc(impl.docFilter(linkId), bson.M{fieldRemoved: 0}, &do)
+	err = impl.dao.GetDoc(impl.docFilter(linkId), nil, &do)
 	if err != nil {
 		if impl.dao.IsDocNotExists(err) {
 			err = commonRepo.NewErrorResourceNotFound(err)

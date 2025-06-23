@@ -139,6 +139,7 @@ type claAdapter interface {
 	Update(userId, linkId, claId string, opt *CLAUpdateOpt) IModelError
 	Remove(userId, linkId, claId string) IModelError
 	CLALocalFilePath(linkId, claId string) string
+	DiffCLALocalFilePath(linkId, latestCLAId, oldCLAId string) string
 	List(userId, linkId string) (CLAOfLink, IModelError)
 }
 
@@ -154,6 +155,7 @@ type linkAdapter interface {
 	GetLink(linkId string) (org OrgInfo, merr IModelError)
 	GetLinkCLA(linkId, claId string) (OrgInfo, CLAInfo, IModelError)
 	ListCLAs(linkId, applyTo string) ([]CLADetail, IModelError)
+	ListAllCLAs(linkId string) ([]CLASummary, []CLASummary, IModelError)
 }
 
 func RegisterLinkAdapter(a linkAdapter) {

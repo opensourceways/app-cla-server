@@ -209,3 +209,31 @@ func (adapter *linkAdatper) cmdToAddLink(userId string, opt *models.LinkCreateOp
 
 	return
 }
+
+func (adapter *linkAdatper) ListAllCLAs(linkId string,
+) (cs []models.CLASummary, rcs []models.CLASummary, errI models.IModelError) {
+	clas, removedClas, err := adapter.s.FindAllCLAs(linkId)
+	if err != nil {
+		errI = toModelError(err)
+
+		return
+	}
+
+	toSummary := func(v app.CLADTO) models.CLASummary {
+		return models.CLASummary{
+			CLAId:    v.Id,
+			Type:     v.Type,
+			Language: v.Language,
+		}
+	}
+
+	for _, v := range clas {
+		cs = append(cs, toSummary(v))
+	}
+
+	for _, v := range removedClas {
+		rcs = append(rcs, toSummary(v))
+	}
+
+	return
+}

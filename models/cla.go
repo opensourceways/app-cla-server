@@ -43,3 +43,9 @@ type CLADetail struct {
 type CLAUpdateOpt struct {
 	URL string `json:"url"`
 }
+
+type CLASummary struct {
+	CLAId    string
+	Type     string
+	Language string
+}

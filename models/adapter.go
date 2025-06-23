@@ -32,6 +32,10 @@ func CLAFile(linkId, claId string) string {
 	return claAdapterInstance.CLALocalFilePath(linkId, claId)
 }
 
+func DiffCLAFile(linkId, latestCLAId, oldCLAId string) string {
+	return claAdapterInstance.DiffCLALocalFilePath(linkId, latestCLAId, oldCLAId)
+}
+
 func ListCLAInstances(userId, linkId string) (CLAOfLink, IModelError) {
 	return claAdapterInstance.List(userId, linkId)
 }
@@ -60,6 +64,10 @@ func GetLinkCLA(linkId, claId string) (OrgInfo, CLAInfo, IModelError) {
 
 func ListCLAs(linkId, applyTo string) ([]CLADetail, IModelError) {
 	return linkAdapterInstance.ListCLAs(linkId, applyTo)
+}
+
+func ListAllCLAs(linkId string) ([]CLASummary, []CLASummary, IModelError) {
+	return linkAdapterInstance.ListAllCLAs(linkId)
 }
 
 func GetLink(linkId string) (OrgInfo, IModelError) {

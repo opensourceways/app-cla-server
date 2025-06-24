@@ -67,9 +67,25 @@ func (lc *linkCache) getClaId(linkId string, claType dp.CLAType, language dp.Lan
 	return ""
 }
 
-func (lc *linkCache) update(linkId, claId string) bool {
+func (lc *linkCache) update(linkId, claId, newClaId string, newUrl dp.URL) error {
 	lc.mutex.Lock()
+	clas, ok := lc.cache[linkId]
+	if !ok {
+		return domain.NewDomainError(domain.ErrorCodeLinkNotExists)
+	}
+
+	for k, v := range clas {
+		if v.Id == claId {
+			v.Id = newClaId
+			v.URL = newUrl
+			clas[k] = v
+			break
+		}
+	}
+
+	lc.cache[linkId] = clas
+
 	lc.mutex.Unlock()
 
-	return false
+	return nil
 }

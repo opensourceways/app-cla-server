@@ -81,6 +81,10 @@ func (s *claService) Update(link *domain.Link, cla *domain.CLA, url dp.URL, text
 		if err1 := s.local.Remove(p); err1 != nil {
 			logs.Error("remove local file, err:%s", err1.Error())
 		}
+	} else {
+		if err1 := s.linkCache.update(link.Id, cla.Id, newCla.Id, url); err1 != nil {
+			logs.Error("update link cache, err:%s", err1.Error())
+		}
 	}
 
 	return err

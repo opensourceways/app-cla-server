@@ -55,11 +55,10 @@ func (ctl *CLAController) Add() {
 // @Param  link_id  path  string  true  "link id"
 // @Param  id       path  string  true  "cla id"
 // @Success 202 {object} controllers.respData
-// @router /:link_id/:id [put]
+// @router /:link_id [put]
 func (ctl *CLAController) Update() {
 	action := "update cla"
 	linkID := ctl.GetString(":link_id")
-	claId := ctl.GetString(":id")
 
 	pl, fr := ctl.tokenPayloadBasedOnCorpManager()
 	if fr != nil {
@@ -73,7 +72,7 @@ func (ctl *CLAController) Update() {
 		return
 	}
 
-	if err := models.UpdateCLAInstance(pl.UserId, linkID, claId, input); err != nil {
+	if err := models.UpdateCLAInstance(pl.UserId, linkID, input); err != nil {
 		ctl.sendModelErrorAsResp(err, action)
 
 		return

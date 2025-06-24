@@ -37,11 +37,12 @@ type CmdToRemoveCLA struct {
 }
 
 type CmdToUpdateCLA struct {
-	URL    dp.URL
-	Text   []byte
-	UserId string
-
-	domain.CLAIndex
+	URL      dp.URL
+	Text     []byte
+	UserId   string
+	LinkId   string
+	Type     dp.CLAType
+	Language dp.Language
 }
 
 type CLADTO struct {

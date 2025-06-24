@@ -41,5 +41,7 @@ type CLADetail struct {
 }
 
 type CLAUpdateOpt struct {
-	URL string `json:"url"`
+	URL      string `json:"url"`
+	Type     string `json:"type"`
+	Language string `json:"language"`
 }

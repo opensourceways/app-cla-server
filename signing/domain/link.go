@@ -45,10 +45,26 @@ func (link *Link) AddCLA(cla *CLA) error {
 	return nil
 }
 
+func (link *Link) UpdateCLA(cla *CLA) {
+	cla.Id = strconv.Itoa(link.CLANum)
+
+	link.CLANum += 1
+}
+
 func (link *Link) FindCLA(index string) *CLA {
 	for i := range link.CLAs {
 		if link.CLAs[i].Id == index {
 			return &link.CLAs[i]
+		}
+	}
+
+	return nil
+}
+
+func (link *Link) FindCLAWithTypeAndLang(t dp.CLAType, l dp.Language) *CLA {
+	for _, v := range link.CLAs {
+		if v.Type == t && v.Language == l {
+			return &v
 		}
 	}
 
@@ -63,15 +79,4 @@ func (link *Link) posOfCLA(cla *CLA) (int, bool) {
 	}
 
 	return 0, false
-}
-
-func (link *Link) MaxClaId() (int, error) {
-	var maxId string
-	for _, v := range link.CLAs {
-		if v.Id > maxId {
-			maxId = v.Id
-		}
-	}
-
-	return strconv.Atoi(maxId)
 }

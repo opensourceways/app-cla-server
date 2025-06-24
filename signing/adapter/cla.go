@@ -99,8 +99,8 @@ func (adapter *claAdatper) Add(userId, linkId string, opt *models.CLACreateOpt) 
 	return nil
 }
 
-func (adapter *claAdatper) Update(userId, linkId, claId string, opt *models.CLAUpdateOpt) models.IModelError {
-	cmd, err := adapter.cmdToUpdateCLA(userId, linkId, claId, opt)
+func (adapter *claAdatper) Update(userId, linkId string, opt *models.CLAUpdateOpt) models.IModelError {
+	cmd, err := adapter.cmdToUpdateCLA(userId, linkId, opt)
 	if err != nil {
 		return errBadRequestParameter(err)
 	}
@@ -158,11 +158,10 @@ func (adapter *claAdatper) cmdToAddCLA(userId, linkId string, opt *models.CLACre
 	return
 }
 
-func (adapter *claAdatper) cmdToUpdateCLA(userId, linkId, claId string, opt *models.CLAUpdateOpt,
+func (adapter *claAdatper) cmdToUpdateCLA(userId, linkId string, opt *models.CLAUpdateOpt,
 ) (cmd app.CmdToUpdateCLA, err error) {
 	cmd.UserId = userId
 	cmd.LinkId = linkId
-	cmd.CLAId = claId
 
 	if !adapter.isAllowedPDFSource(opt.URL) {
 		err = errors.New("not allowed cla pdf source")
@@ -180,6 +179,12 @@ func (adapter *claAdatper) cmdToUpdateCLA(userId, linkId, claId string, opt *mod
 	if cmd.URL, err = dp.NewURL(opt.URL); err != nil {
 		return
 	}
+
+	if cmd.Type, err = dp.NewCLAType(opt.Type); err != nil {
+		return
+	}
+
+	cmd.Language, err = dp.NewLanguage(opt.Language)
 
 	return
 }

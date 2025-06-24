@@ -24,8 +24,8 @@ func AddCLAInstance(userId, linkId string, opt *CLACreateOpt) IModelError {
 	return claAdapterInstance.Add(userId, linkId, opt)
 }
 
-func UpdateCLAInstance(userId, linkId, claId string, opt *CLAUpdateOpt) IModelError {
-	return claAdapterInstance.Update(userId, linkId, claId, opt)
+func UpdateCLAInstance(userId, linkId string, opt *CLAUpdateOpt) IModelError {
+	return claAdapterInstance.Update(userId, linkId, opt)
 }
 
 func CLAFile(linkId, claId string) string {

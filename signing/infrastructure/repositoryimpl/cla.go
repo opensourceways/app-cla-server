@@ -1,6 +1,8 @@
 package repositoryimpl
 
 import (
+	"fmt"
+
 	"go.mongodb.org/mongo-driver/bson"
 
 	commonRepo "github.com/opensourceways/app-cla-server/common/domain/repository"
@@ -30,20 +32,29 @@ func (impl *link) AddCLA(link *domain.Link, cla *domain.CLA) error {
 	return err
 }
 
-func (impl *link) UpdateCLA(link *domain.Link, oldClaId string, newCla *domain.CLA) error {
+func (impl *link) UpdateCLA(link *domain.Link, oldCla, newCla *domain.CLA) error {
 	if err := impl.claContent.add(link.Id, newCla); err != nil {
 		return err
 	}
 
-	filter := linkIdFilter(link.Id)
-	filter[childField(fieldCLAs, fieldId)] = oldClaId
-
-	doc := bson.M{
-		childField(fieldCLAs, fieldId):  newCla.Id,
-		childField(fieldCLAs, fieldUrl): newCla.URL,
+	filter := bson.M{
+		fieldId:                        link.Id,
+		childField(fieldCLAs, fieldId): oldCla.Id,
 	}
 
-	return impl.dao.UpdateDoc(filter, doc, link.Version)
+	do := toCLADO(oldCla)
+	doc, err := do.toDoc()
+	if err != nil {
+		return err
+	}
+
+	update := bson.M{
+		fieldCLANum: link.CLANum,
+		fmt.Sprintf("%s.$.%s", fieldCLAs, fieldId):  newCla.Id,
+		fmt.Sprintf("%s.$.%s", fieldCLAs, fieldUrl): newCla.URL,
+	}
+
+	return impl.dao.PushArraySingleItemAndUpdate(filter, fieldRemoved, doc, update, link.Version)
 }
 
 func (impl *link) RemoveCLA(link *domain.Link, cla *domain.CLA) error {

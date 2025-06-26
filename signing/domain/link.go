@@ -66,16 +66,6 @@ func (link *Link) FindCLA(index string) *CLA {
 	return nil
 }
 
-func (link *Link) FindCLAWithTypeAndLang(t dp.CLAType, l dp.Language) *CLA {
-	for _, v := range link.CLAs {
-		if v.Type == t && v.Language == l {
-			return &v
-		}
-	}
-
-	return nil
-}
-
 func (link *Link) posOfCLA(cla *CLA) (int, bool) {
 	for i := range link.CLAs {
 		if link.CLAs[i].isMe(cla) {

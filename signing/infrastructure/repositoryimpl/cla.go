@@ -34,13 +34,13 @@ func (impl *link) AddCLA(link *domain.Link, cla *domain.CLA) error {
 }
 
 func (impl *link) UpdateCLA(link *domain.Link, newCla *domain.CLA) error {
+	if err := impl.claContent.add(link.Id, newCla); err != nil {
+		return err
+	}
+
 	oldCla := impl.findOldCLA(link, newCla.Type, newCla.Language)
 	if oldCla == nil {
 		return commonRepo.NewErrorResourceNotFound(errors.New("can not find old cla"))
-	}
-
-	if err := impl.claContent.add(link.Id, newCla); err != nil {
-		return err
 	}
 
 	oldDo := toCLADO(oldCla)
@@ -62,9 +62,9 @@ func (impl *link) UpdateCLA(link *domain.Link, newCla *domain.CLA) error {
 }
 
 func (impl *link) findOldCLA(link *domain.Link, t dp.CLAType, l dp.Language) *domain.CLA {
-	for _, v := range link.CLAs {
+	for i, v := range link.CLAs {
 		if v.Type == t && v.Language == l {
-			return &v
+			return &link.CLAs[i]
 		}
 	}
 

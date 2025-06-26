@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/opensourceways/app-cla-server/models"
 )
@@ -11,7 +12,7 @@ type CLAController struct {
 }
 
 func (ctl *CLAController) Prepare() {
-	if ctl.isGetRequest() {
+	if ctl.isGetRequest() && !strings.HasSuffix(ctl.routerPattern(), "/:link_id") {
 		ctl.apiPrepare("")
 	} else {
 		ctl.apiPrepare(PermissionOwnerOfOrg)

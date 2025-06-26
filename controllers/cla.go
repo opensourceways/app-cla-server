@@ -48,6 +48,39 @@ func (ctl *CLAController) Add() {
 	}
 }
 
+// @Title Update
+// @Description update cla
+// @Tags CLA
+// @Accept json
+// @Param  link_id  path  string  true  "link id"
+// @Param  id       path  string  true  "cla id"
+// @Success 202 {object} controllers.respData
+// @router /:link_id [put]
+func (ctl *CLAController) Update() {
+	action := "update cla"
+	linkID := ctl.GetString(":link_id")
+
+	pl, fr := ctl.tokenPayloadBasedOnCorpManager()
+	if fr != nil {
+		ctl.sendFailedResultAsResp(fr, action)
+		return
+	}
+
+	input := &models.CLAUpdateOpt{}
+	if fr := ctl.fetchInputPayloadFromFormData(input); fr != nil {
+		ctl.sendFailedResultAsResp(fr, action)
+		return
+	}
+
+	if err := models.UpdateCLAInstance(pl.UserId, linkID, input); err != nil {
+		ctl.sendModelErrorAsResp(err, action)
+
+		return
+	}
+
+	ctl.sendSuccessResp(action, "successfully")
+}
+
 // @Title Delete
 // @Description delete cla
 // @Tags CLA

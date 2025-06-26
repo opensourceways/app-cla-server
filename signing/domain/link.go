@@ -45,6 +45,17 @@ func (link *Link) AddCLA(cla *CLA) error {
 	return nil
 }
 
+func (link *Link) UpdateCLA(cla *CLA) error {
+	if _, ok := link.posOfCLA(cla); !ok {
+		return NewDomainError(ErrorCodeCLANotExists)
+	}
+
+	cla.Id = strconv.Itoa(link.CLANum)
+	link.CLANum += 1
+
+	return nil
+}
+
 func (link *Link) FindCLA(index string) *CLA {
 	for i := range link.CLAs {
 		if link.CLAs[i].Id == index {

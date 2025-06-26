@@ -10,6 +10,7 @@ import (
 	"github.com/opensourceways/app-cla-server/signing/domain/dp"
 	"github.com/opensourceways/app-cla-server/signing/domain/localcla"
 	"github.com/opensourceways/app-cla-server/signing/domain/repository"
+	"github.com/opensourceways/app-cla-server/signing/watch"
 )
 
 func NewCLAService(
@@ -68,6 +69,9 @@ func (s *claService) Update(link *domain.Link, newCla *domain.CLA) error {
 	if err := link.UpdateCLA(newCla); err != nil {
 		return err
 	}
+
+	oldCLAId := "old cla在基础层去了？"
+	watch.Instance().GenCLADiff(link.Id, oldCLAId, newCla.Id)
 
 	p, err := s.local.AddCLA(link.Id, newCla)
 	if err != nil {

@@ -30,6 +30,7 @@ func NewCLAService(
 
 type CLAService interface {
 	Add(link *domain.Link, cla *domain.CLA) error
+	Update(link *domain.Link, newCla *domain.CLA) error
 	CLALocalFilePath(*domain.CLAIndex) string
 	DiffCLALocalFilePath(index *domain.CLAIndex, signedClaId string) string
 	AddLink(link *domain.Link) error
@@ -58,6 +59,27 @@ func (s *claService) Add(link *domain.Link, cla *domain.CLA) error {
 		if err1 := s.local.Remove(p); err1 != nil {
 			logs.Error("remove local file, err:%s", err1.Error())
 		}
+	}
+
+	return err
+}
+
+func (s *claService) Update(link *domain.Link, newCla *domain.CLA) error {
+	if err := link.UpdateCLA(newCla); err != nil {
+		return err
+	}
+
+	p, err := s.local.AddCLA(link.Id, newCla)
+	if err != nil {
+		return err
+	}
+
+	if err = s.repo.UpdateCLA(link, newCla); err != nil {
+		if err1 := s.local.Remove(p); err1 != nil {
+			logs.Error("remove local file, err:%s", err1.Error())
+		}
+	} else {
+		s.linkCache.update(link.Id, newCla)
 	}
 
 	return err

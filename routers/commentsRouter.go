@@ -18,6 +18,15 @@ func init() {
 
     beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:CLAController"] = append(beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:CLAController"],
         beego.ControllerComments{
+            Method: "Update",
+            Router: `/:link_id`,
+            AllowHTTPMethods: []string{"put"},
+            MethodParams: param.Make(),
+            Filters: nil,
+            Params: nil})
+
+    beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:CLAController"] = append(beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:CLAController"],
+        beego.ControllerComments{
             Method: "List",
             Router: `/:link_id`,
             AllowHTTPMethods: []string{"get"},

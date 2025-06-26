@@ -28,6 +28,6 @@ type Link interface {
 	ListAll() ([]LinkCLA, error)
 
 	AddCLA(*domain.Link, *domain.CLA) error
-	UpdateCLA(link *domain.Link, oldCla, newCla *domain.CLA) error
+	UpdateCLA(link *domain.Link, newCla *domain.CLA) error
 	RemoveCLA(*domain.Link, *domain.CLA) error
 }

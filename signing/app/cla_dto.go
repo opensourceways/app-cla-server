@@ -45,6 +45,15 @@ type CmdToUpdateCLA struct {
 	Language dp.Language
 }
 
+func (cmd *CmdToUpdateCLA) newCLA() domain.CLA {
+	return domain.CLA{
+		URL:      cmd.URL,
+		Text:     cmd.Text,
+		Type:     cmd.Type,
+		Language: cmd.Language,
+	}
+}
+
 type CLADTO struct {
 	Id       string
 	Type     string

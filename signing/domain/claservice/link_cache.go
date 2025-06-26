@@ -14,11 +14,10 @@ func initLink(linkRepo repository.Link) (*linkCache, error) {
 		return &linkCache{}, err
 	}
 
-	cache := make(map[string][]domain.CLA)
-	for _, v := range links {
-		for _, c := range v.Clas {
-			cache[v.Id] = append(cache[v.Id], c)
-		}
+	cache := make(map[string][]domain.CLA, len(links))
+	for i := range links {
+		v := &links[i]
+		cache[v.Id] = v.Clas
 	}
 
 	return &linkCache{
@@ -67,25 +66,25 @@ func (lc *linkCache) getClaId(linkId string, claType dp.CLAType, language dp.Lan
 	return ""
 }
 
-func (lc *linkCache) update(linkId, claId, newClaId string, newUrl dp.URL) error {
+func (lc *linkCache) update(linkId string, newCLA *domain.CLA) {
 	lc.mutex.Lock()
-	clas, ok := lc.cache[linkId]
-	if !ok {
-		return domain.NewDomainError(domain.ErrorCodeLinkNotExists)
-	}
 
-	for k, v := range clas {
-		if v.Id == claId {
-			v.Id = newClaId
-			v.URL = newUrl
-			clas[k] = v
-			break
+	if clas, ok := lc.cache[linkId]; !ok {
+		lc.cache[linkId] = []domain.CLA{*newCLA}
+	} else {
+		bingo := false
+		for i := range clas {
+			if v := &clas[i]; v.Type == newCLA.Type && v.Language == newCLA.Language {
+				*v = *newCLA
+				bingo = true
+				break
+			}
+		}
+
+		if !bingo {
+			lc.cache[linkId] = append(clas, *newCLA)
 		}
 	}
 
-	lc.cache[linkId] = clas
-
 	lc.mutex.Unlock()
-
-	return nil
 }

@@ -30,7 +30,7 @@ func NewCLAService(
 
 type CLAService interface {
 	Add(link *domain.Link, cla *domain.CLA) error
-	Update(link *domain.Link, cla *domain.CLA, url dp.URL, text []byte) error
+	Update(link *domain.Link, newCla *domain.CLA) error
 	CLALocalFilePath(*domain.CLAIndex) string
 	DiffCLALocalFilePath(index *domain.CLAIndex, signedClaId string) string
 	AddLink(link *domain.Link) error
@@ -64,27 +64,22 @@ func (s *claService) Add(link *domain.Link, cla *domain.CLA) error {
 	return err
 }
 
-func (s *claService) Update(link *domain.Link, cla *domain.CLA, url dp.URL, text []byte) error {
-	newCla := &domain.CLA{
-		URL:  url,
-		Text: text,
+func (s *claService) Update(link *domain.Link, newCla *domain.CLA) error {
+	if err := link.UpdateCLA(newCla); err != nil {
+		return err
 	}
-
-	link.UpdateCLA(newCla)
 
 	p, err := s.local.AddCLA(link.Id, newCla)
 	if err != nil {
 		return err
 	}
 
-	if err = s.repo.UpdateCLA(link, cla, newCla); err != nil {
+	if err = s.repo.UpdateCLA(link, newCla); err != nil {
 		if err1 := s.local.Remove(p); err1 != nil {
 			logs.Error("remove local file, err:%s", err1.Error())
 		}
 	} else {
-		if err1 := s.linkCache.update(link.Id, cla.Id, newCla.Id, url); err1 != nil {
-			logs.Error("update link cache, err:%s", err1.Error())
-		}
+		s.linkCache.update(link.Id, newCla)
 	}
 
 	return err

@@ -53,12 +53,9 @@ func (s *claService) Update(cmd *CmdToUpdateCLA) error {
 		return err
 	}
 
-	cla := link.FindCLAWithTypeAndLang(cmd.Type, cmd.Language)
-	if cla == nil {
-		return domain.NewDomainError(domain.ErrorCodeCLANotExists)
-	}
+	cla := cmd.newCLA()
 
-	return s.cla.Update(link, cla, cmd.URL, cmd.Text)
+	return s.cla.Update(link, &cla)
 }
 
 func (s *claService) Remove(cmd *CmdToRemoveCLA) error {

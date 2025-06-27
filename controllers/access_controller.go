@@ -37,9 +37,9 @@ func (ctl *accessController) getUser() string {
 }
 
 func (ctl *accessController) verify(permission []string, addr string) error {
-	if ctl.RemoteAddr != addr {
-		return errors.New("unmatched remote address")
-	}
+	//if ctl.RemoteAddr != addr {
+	//	return errors.New("unmatched remote address")
+	//}
 
 	for _, p := range permission {
 		if p == ctl.Permission {

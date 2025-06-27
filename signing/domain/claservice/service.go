@@ -9,13 +9,14 @@ import (
 	"github.com/opensourceways/app-cla-server/signing/domain"
 	"github.com/opensourceways/app-cla-server/signing/domain/dp"
 	"github.com/opensourceways/app-cla-server/signing/domain/localcla"
+	"github.com/opensourceways/app-cla-server/signing/domain/message"
 	"github.com/opensourceways/app-cla-server/signing/domain/repository"
-	"github.com/opensourceways/app-cla-server/signing/watch"
 )
 
 func NewCLAService(
 	repo repository.Link,
 	local localcla.LocalCLA,
+	message message.Message,
 ) (CLAService, error) {
 	cache, err := initLink(repo)
 	if err != nil {
@@ -25,6 +26,7 @@ func NewCLAService(
 	return &claService{
 		repo:      repo,
 		local:     local,
+		message:   message,
 		linkCache: cache,
 	}, nil
 }
@@ -44,6 +46,7 @@ type claService struct {
 	lock      sync.Mutex
 	repo      repository.Link
 	local     localcla.LocalCLA
+	message   message.Message
 }
 
 func (s *claService) Add(link *domain.Link, cla *domain.CLA) error {
@@ -70,8 +73,10 @@ func (s *claService) Update(link *domain.Link, newCla *domain.CLA) error {
 		return err
 	}
 
-	oldCLAId := "old cla在基础层去了？"
-	watch.Instance().GenCLADiff(link.Id, oldCLAId, newCla.Id)
+	oldCLA := link.FindCLAWithTypeAndLang(newCla.Type, newCla.Language)
+	if oldCLA == nil {
+		return domain.NewNotFoundDomainError(domain.ErrorCodeCLANotExists)
+	}
 
 	p, err := s.local.AddCLA(link.Id, newCla)
 	if err != nil {
@@ -84,6 +89,12 @@ func (s *claService) Update(link *domain.Link, newCla *domain.CLA) error {
 		}
 	} else {
 		s.linkCache.update(link.Id, newCla)
+
+		s.message.CLAUpdated(message.CLAUpdatedMsg{
+			LinkId:   link.Id,
+			OldCLAId: oldCLA.Id,
+			NewCLAId: newCla.Id,
+		})
 	}
 
 	return err

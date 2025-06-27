@@ -110,12 +110,3 @@ func genPDFFileName(linkID, email, other string) string {
 	s := strings.ReplaceAll(util.EmailSuffix(email), ".", "_")
 	return fmt.Sprintf("%s_%s%s.pdf", linkID, s, other)
 }
-
-func (pg *pdfGenerator) GenPDFDiff(inputFile1, inputFile2, outputFile string) error {
-	cmd := exec.Command(pg.pythonBin, "./util/generate_diff.py", inputFile1, inputFile2, outputFile)
-	if out, err := cmd.Output(); err != nil {
-		return fmt.Errorf("gen pdf diff of failed: %s, %s", out, err.Error())
-	}
-
-	return nil
-}

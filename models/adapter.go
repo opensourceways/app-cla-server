@@ -32,10 +32,6 @@ func CLAFile(linkId, claId string) string {
 	return claAdapterInstance.CLALocalFilePath(linkId, claId)
 }
 
-func DiffCLAFile(linkId, oldCLAId, newCLAId string) string {
-	return claAdapterInstance.DiffCLALocalFilePath(linkId, oldCLAId, newCLAId)
-}
-
 func ListCLAInstances(userId, linkId string) (CLAOfLink, IModelError) {
 	return claAdapterInstance.List(userId, linkId)
 }

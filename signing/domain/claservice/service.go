@@ -73,7 +73,7 @@ func (s *claService) Update(link *domain.Link, newCla *domain.CLA) error {
 		return err
 	}
 
-	oldCLA := link.FindCLAWithTypeAndLang(newCla.Type, newCla.Language)
+	oldCLA := link.GetCLA(newCla.Type, newCla.Language)
 	if oldCLA == nil {
 		return domain.NewNotFoundDomainError(domain.ErrorCodeCLANotExists)
 	}
@@ -90,7 +90,7 @@ func (s *claService) Update(link *domain.Link, newCla *domain.CLA) error {
 	} else {
 		s.linkCache.update(link.Id, newCla)
 
-		s.message.CLAUpdated(message.CLAUpdatedMsg{
+		s.message.SendCLAUpdatedEvent(message.CLAUpdatedMsg{
 			LinkId:   link.Id,
 			OldCLAId: oldCLA.Id,
 			NewCLAId: newCla.Id,

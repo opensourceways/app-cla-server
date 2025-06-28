@@ -12,6 +12,6 @@ func NewMessageImpl() *messageImpl {
 type messageImpl struct {
 }
 
-func (impl *messageImpl) CLAUpdated(msg message.CLAUpdatedMsg) {
-	watch.ClaUpdatedWatchInstance().Send(msg)
+func (impl *messageImpl) SendCLAUpdatedEvent(msg message.CLAUpdatedMsg) {
+	watch.SendCLAUpdatedEvent(msg)
 }

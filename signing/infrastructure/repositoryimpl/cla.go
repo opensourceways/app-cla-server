@@ -37,7 +37,7 @@ func (impl *link) UpdateCLA(link *domain.Link, newCla *domain.CLA) error {
 		return err
 	}
 
-	oldCla := link.FindCLAWithTypeAndLang(newCla.Type, newCla.Language)
+	oldCla := link.GetCLA(newCla.Type, newCla.Language)
 	if oldCla == nil {
 		return commonRepo.NewErrorResourceNotFound(errors.New("can not find old cla"))
 	}

@@ -76,7 +76,7 @@ func (link *Link) posOfCLA(cla *CLA) (int, bool) {
 	return 0, false
 }
 
-func (link *Link) FindCLAWithTypeAndLang(t dp.CLAType, l dp.Language) *CLA {
+func (link *Link) GetCLA(t dp.CLAType, l dp.Language) *CLA {
 	for i, v := range link.CLAs {
 		if v.Type == t && v.Language == l {
 			return &link.CLAs[i]

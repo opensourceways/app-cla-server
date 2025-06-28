@@ -7,5 +7,5 @@ type CLAUpdatedMsg struct {
 }
 
 type Message interface {
-	CLAUpdated(CLAUpdatedMsg)
+	SendCLAUpdatedEvent(CLAUpdatedMsg)
 }

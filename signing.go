@@ -190,7 +190,7 @@ func initSigning(cfg *config.Config) error {
 
 	// watch
 	watch.Start(&cfg.Watch, repo, individual)
-	watch.CLAUpdatedWatchStart(localCLA, cfg.PDF.PythonBin)
+	watch.CLAUpdatedWatchStart(localCLA, linkRepo, repo, cfg.PDF.PythonBin, cfg.API.CLAEmailPlatform)
 
 	return nil
 }

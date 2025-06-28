@@ -42,6 +42,8 @@ func (impl *link) UpdateCLA(link *domain.Link, newCla *domain.CLA) error {
 		return commonRepo.NewErrorResourceNotFound(errors.New("can not find old cla"))
 	}
 
+	newCla.Fields = oldCla.Fields
+
 	oldDo := toCLADO(oldCla)
 	oldDoc, err := oldDo.toDoc()
 	if err != nil {
@@ -54,10 +56,14 @@ func (impl *link) UpdateCLA(link *domain.Link, newCla *domain.CLA) error {
 		return err
 	}
 
-	return impl.dao.MoveAndAppendArrayItem(
-		impl.docFilter(link.Id), fieldCLAs, bson.M{fieldId: oldCla.Id},
-		fieldRemoved, oldDoc, newDoc, link.Version,
-	)
+	if err = impl.dao.MoveArrayItem(impl.docFilter(link.Id), fieldCLAs,
+		bson.M{fieldId: oldCla.Id}, fieldRemoved, oldDoc, link.Version,
+	); err != nil {
+		return err
+	}
+
+	update := bson.M{fieldCLANum: link.CLANum}
+	return impl.dao.PushArraySingleItemAndUpdate(impl.docFilter(link.Id), fieldCLAs, newDoc, update, link.Version+1)
 }
 
 func (impl *link) RemoveCLA(link *domain.Link, cla *domain.CLA) error {

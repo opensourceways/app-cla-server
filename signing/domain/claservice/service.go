@@ -59,6 +59,8 @@ func (s *claService) Add(link *domain.Link, cla *domain.CLA) error {
 		if err1 := s.local.Remove(p); err1 != nil {
 			logs.Error("remove local file, err:%s", err1.Error())
 		}
+	} else {
+		s.linkCache.add(link.Id, cla)
 	}
 
 	return err

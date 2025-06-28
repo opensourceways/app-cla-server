@@ -66,6 +66,17 @@ func (lc *linkCache) getClaId(linkId string, claType dp.CLAType, language dp.Lan
 	return ""
 }
 
+func (lc *linkCache) add(linkId string, cla *domain.CLA) {
+	lc.mutex.Lock()
+	if clas, ok := lc.cache[linkId]; !ok {
+		lc.cache[linkId] = []domain.CLA{*cla}
+	} else {
+		lc.cache[linkId] = append(clas, *cla)
+	}
+
+	lc.mutex.Unlock()
+}
+
 func (lc *linkCache) update(linkId string, newCLA *domain.CLA) {
 	lc.mutex.Lock()
 

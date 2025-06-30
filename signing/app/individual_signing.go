@@ -110,7 +110,7 @@ func (s *individualSigningService) FindDiffCLAFile(cmd *CmdToFindSignedCLAInfo) 
 		CLAId:  newClaId,
 	}
 
-	return s.cla.DiffCLALocalFilePath(&index, signed.Link.CLAId), nil
+	return s.cla.DiffCLALocalFilePath(&index, signed.Link.CLAId)
 }
 
 // Check

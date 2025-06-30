@@ -8,17 +8,20 @@ import (
 
 	"github.com/opensourceways/app-cla-server/signing/domain"
 	"github.com/opensourceways/app-cla-server/signing/domain/message"
+	"github.com/opensourceways/app-cla-server/util"
 )
 
 var claUpdatedWatchInstance *claUpdatedWatchImpl
 
-func CLAUpdatedWatchStart(lc localCLA, cfg *Config, py string) {
+func CLAUpdatedWatchStart(lk link, lc localCLA, cfg *Config, py string) {
 	claUpdatedWatchInstance = &claUpdatedWatchImpl{
-		config:     cfg,
-		localCLA:   lc,
-		pythonBin:  py,
-		genCLADiff: make(chan message.CLAUpdatedMsg, cfg.MsgChannelSize),
-		sendEmail:  make(chan message.CLAUpdatedMsg, cfg.MsgChannelSize),
+		config:           cfg,
+		link:             lk,
+		localCLA:         lc,
+		pythonBin:        py,
+		stop:             make(chan struct{}),
+		genCLADiff:       make(chan message.CLAUpdatedMsg, cfg.MsgChannelSize),
+		genCLADiffByCron: make(chan message.CLAUpdatedMsg, cfg.MsgChannelSize),
 	}
 
 	claUpdatedWatchInstance.start()
@@ -33,12 +36,11 @@ func CLAUpdateWatchStop() {
 }
 
 func SendCLAUpdatedEvent(msg message.CLAUpdatedMsg) {
-	if claUpdatedWatchInstance.needStop {
-		return
+	select {
+	case claUpdatedWatchInstance.genCLADiff <- msg:
+	default:
+		logs.Error("send cla updated event failed: ", msg)
 	}
-
-	claUpdatedWatchInstance.genCLADiff <- msg
-	claUpdatedWatchInstance.sendEmail <- msg
 }
 
 type localCLA interface {
@@ -47,49 +49,67 @@ type localCLA interface {
 }
 
 type claUpdatedWatchImpl struct {
-	wg       sync.WaitGroup
-	needStop bool
+	wg sync.WaitGroup
 
-	config     *Config
-	localCLA   localCLA
-	pythonBin  string
-	genCLADiff chan message.CLAUpdatedMsg
-	sendEmail  chan message.CLAUpdatedMsg
+	config           *Config
+	link             link
+	localCLA         localCLA
+	pythonBin        string
+	stop             chan struct{}
+	genCLADiff       chan message.CLAUpdatedMsg
+	genCLADiffByCron chan message.CLAUpdatedMsg
 }
 
 func (impl *claUpdatedWatchImpl) start() {
+	impl.wg.Add(1)
 	go impl.subscribeGenCLADiff()
-	go impl.subscribeSendEmail()
+
+	impl.wg.Add(1)
+	go impl.genAllDiffFile()
 }
 
 func (impl *claUpdatedWatchImpl) exit() {
-	impl.needStop = true
-
-	close(impl.genCLADiff)
-	close(impl.sendEmail)
+	close(impl.stop)
 
 	impl.wg.Wait()
 }
 
 func (impl *claUpdatedWatchImpl) subscribeGenCLADiff() {
-	impl.wg.Add(1)
+	for {
+		select {
+		case <-impl.stop:
+			impl.wg.Done()
+			return
+		case msgPrimary := <-impl.genCLADiff:
+			impl.handleGenCLADiff(msgPrimary)
+		case msgSecondary := <-impl.genCLADiffByCron:
+		priority:
+			for {
+				select {
+				case msgPrimary := <-impl.genCLADiff:
+					impl.handleGenCLADiff(msgPrimary)
+				default:
+					break priority
+				}
+			}
 
-	for v := range impl.genCLADiff {
-		impl.handleGenCLADiff(v)
+			impl.handleGenCLADiff(msgSecondary)
+		}
 	}
-
-	impl.wg.Done()
-}
-
-func (impl *claUpdatedWatchImpl) subscribeSendEmail() {
-	impl.wg.Add(1)
-
-	// handle
-
-	impl.wg.Done()
 }
 
 func (impl *claUpdatedWatchImpl) handleGenCLADiff(msg message.CLAUpdatedMsg) {
+	diffFile := impl.localCLA.LocalPathOfDiff(&domain.CLAIndex{
+		LinkId: msg.LinkId,
+		CLAId:  msg.NewCLAId,
+	},
+		msg.OldCLAId,
+	)
+
+	if !util.IsFileNotExist(diffFile) {
+		return
+	}
+
 	oldPDFPath := impl.localCLA.LocalPath(&domain.CLAIndex{
 		LinkId: msg.LinkId,
 		CLAId:  msg.OldCLAId,
@@ -99,13 +119,6 @@ func (impl *claUpdatedWatchImpl) handleGenCLADiff(msg message.CLAUpdatedMsg) {
 		LinkId: msg.LinkId,
 		CLAId:  msg.NewCLAId,
 	})
-
-	diffFile := impl.localCLA.LocalPathOfDiff(&domain.CLAIndex{
-		LinkId: msg.LinkId,
-		CLAId:  msg.NewCLAId,
-	},
-		msg.OldCLAId,
-	)
 
 	for i := 0; i < impl.config.PythonRetryTimes; i++ {
 		cmd := exec.Command(impl.pythonBin, "./util/generate_diff.py", oldPDFPath, newPDFPath, diffFile)

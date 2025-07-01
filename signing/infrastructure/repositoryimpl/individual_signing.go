@@ -1,6 +1,8 @@
 package repositoryimpl
 
 import (
+	"fmt"
+
 	"go.mongodb.org/mongo-driver/bson"
 
 	commonRepo "github.com/opensourceways/app-cla-server/common/domain/repository"
@@ -122,6 +124,8 @@ func (impl *individualSigning) SaveNewCLA(is *domain.IndividualSigning) error {
 	//	return err
 	//}
 
+	fmt.Println(filter)
+	fmt.Println(is)
 	//return impl.dao.PushArraySingleItemAndUpdate(filter, fieldLogs, logs, bson.M{fieldCLAId: is.Link.CLAId}, is.Version)
 	return impl.dao.UpdateDoc(filter, bson.M{fieldCLAId: is.Link.CLAId, fieldLogs: logs}, is.Version)
 }

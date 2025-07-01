@@ -123,9 +123,9 @@ func (s *claService) DiffCLALocalFilePath(index *domain.CLAIndex, signedClaId st
 
 	if util.IsFileNotExist(file) {
 		return "", domain.NewDomainError(domain.ErrorCodeCLANotExists)
-	} else {
-		return file, nil
 	}
+
+	return file, nil
 }
 
 func (s *claService) AddLink(link *domain.Link) error {

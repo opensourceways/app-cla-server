@@ -1,6 +1,8 @@
 package watch
 
 import (
+	"fmt"
+	"sort"
 	"time"
 
 	"github.com/beego/beego/v2/core/logs"
@@ -11,18 +13,22 @@ import (
 	"github.com/opensourceways/app-cla-server/util"
 )
 
-type link interface {
+type repoLink interface {
 	ListAll() ([]repository.LinkCLA, error)
 }
 
 func (impl *claUpdatedWatchImpl) genAllDiffFile() {
+	interval := impl.config.genAllDiffInterval()
+	timer := time.NewTimer(interval)
 	for {
 		select {
 		case <-impl.stop:
+			timer.Stop()
 			impl.wg.Done()
 			return
-		case <-time.After(impl.config.genAllDiffInterval()):
+		case <-timer.C:
 			impl.handleJob()
+			timer.Reset(interval)
 		}
 	}
 }
@@ -34,34 +40,55 @@ func (impl *claUpdatedWatchImpl) handleJob() {
 		return
 	}
 
-	for _, v := range links {
-		impl.handleLink(&v)
+	for i := range links {
+		classifyCLA := impl.classifyCLA(&links[i])
+		for j := range classifyCLA {
+			impl.handleClassifiedCLAs(links[i].Id, classifyCLA[j])
+		}
 	}
 }
 
-func (impl *claUpdatedWatchImpl) handleLink(link *repository.LinkCLA) {
-	for _, newCLA := range link.Clas {
-		for _, oldCLA := range link.RemovedCLAs {
-			if newCLA.Language != oldCLA.Language || newCLA.Type != oldCLA.Type {
-				continue
-			}
+func (impl *claUpdatedWatchImpl) classifyCLA(link *repository.LinkCLA) map[string][]domain.CLA {
+	classify := make(map[string][]domain.CLA)
 
-			diffFile := impl.localCLA.LocalPathOfDiff(&domain.CLAIndex{
-				LinkId: link.Id,
-				CLAId:  newCLA.Id,
-			},
-				oldCLA.Id,
-			)
+	allCLA := append(link.Clas, link.RemovedCLAs...)
+	for i := range allCLA {
+		item := allCLA[i]
+		key := fmt.Sprintf("%s_%s", item.Type.CLAType(), item.Language.Language())
+		classify[key] = append(classify[key], item)
+	}
 
-			if !util.IsFileNotExist(diffFile) {
-				continue
-			}
+	return classify
+}
 
-			impl.genCLADiffByCron <- message.CLAUpdatedMsg{
-				LinkId:   link.Id,
-				OldCLAId: oldCLA.Id,
-				NewCLAId: newCLA.Id,
-			}
+func (impl *claUpdatedWatchImpl) handleClassifiedCLAs(linkId string, clas []domain.CLA) {
+	sort.Slice(clas, func(i, j int) bool {
+		return clas[i].Id > clas[j].Id
+	})
+
+	for i := 0; i < len(clas); i++ {
+		others := clas[i+1:]
+		for j := range others {
+			impl.sendGenDiffEvent(linkId, others[j].Id, clas[i].Id)
 		}
+	}
+}
+
+func (impl *claUpdatedWatchImpl) sendGenDiffEvent(linkId, oldCLAId, newCLAId string) {
+	diffFile := impl.localCLA.LocalPathOfDiff(&domain.CLAIndex{
+		LinkId: linkId,
+		CLAId:  newCLAId,
+	},
+		oldCLAId,
+	)
+
+	if !util.IsFileNotExist(diffFile) {
+		return
+	}
+
+	impl.genCLADiffByCron <- message.CLAUpdatedMsg{
+		LinkId:   linkId,
+		OldCLAId: oldCLAId,
+		NewCLAId: newCLAId,
 	}
 }

@@ -13,7 +13,7 @@ import (
 
 var claUpdatedWatchInstance *claUpdatedWatchImpl
 
-func CLAUpdatedWatchStart(lk link, lc localCLA, cfg *Config, py string) {
+func CLAUpdatedWatchStart(lk repoLink, lc localCLA, cfg *CLAUpdateConfig, py string) {
 	claUpdatedWatchInstance = &claUpdatedWatchImpl{
 		config:           cfg,
 		link:             lk,
@@ -49,12 +49,13 @@ type localCLA interface {
 }
 
 type claUpdatedWatchImpl struct {
-	wg sync.WaitGroup
+	config *CLAUpdateConfig
 
-	config           *Config
-	link             link
-	localCLA         localCLA
-	pythonBin        string
+	link      repoLink
+	localCLA  localCLA
+	pythonBin string
+
+	wg               sync.WaitGroup
 	stop             chan struct{}
 	genCLADiff       chan message.CLAUpdatedMsg
 	genCLADiffByCron chan message.CLAUpdatedMsg
@@ -83,26 +84,31 @@ func (impl *claUpdatedWatchImpl) subscribeGenCLADiff() {
 		case msgPrimary := <-impl.genCLADiff:
 			impl.handleGenCLADiff(msgPrimary)
 		case msgSecondary := <-impl.genCLADiffByCron:
-		priority:
-			for {
-				select {
-				case msgPrimary := <-impl.genCLADiff:
-					impl.handleGenCLADiff(msgPrimary)
-				default:
-					break priority
-				}
-			}
-
+			impl.handlePrimaryAgain()
 			impl.handleGenCLADiff(msgSecondary)
 		}
 	}
 }
 
+// handlePrimaryAgain This is done to prioritize the processing of genCLADiff.
+// Using a for loop is to prevent genCLADiffByCron tasks from being inserted into consecutive genCLADiff tasks.
+// Only after genCLADiff is completed can genCLADiffByCron be executed.
+func (impl *claUpdatedWatchImpl) handlePrimaryAgain() {
+	for {
+		select {
+		case msgPrimary := <-impl.genCLADiff:
+			impl.handleGenCLADiff(msgPrimary)
+		default:
+		}
+	}
+}
+
 func (impl *claUpdatedWatchImpl) handleGenCLADiff(msg message.CLAUpdatedMsg) {
-	diffFile := impl.localCLA.LocalPathOfDiff(&domain.CLAIndex{
-		LinkId: msg.LinkId,
-		CLAId:  msg.NewCLAId,
-	},
+	diffFile := impl.localCLA.LocalPathOfDiff(
+		&domain.CLAIndex{
+			LinkId: msg.LinkId,
+			CLAId:  msg.NewCLAId,
+		},
 		msg.OldCLAId,
 	)
 
@@ -120,12 +126,13 @@ func (impl *claUpdatedWatchImpl) handleGenCLADiff(msg message.CLAUpdatedMsg) {
 		CLAId:  msg.NewCLAId,
 	})
 
+	cmd := exec.Command(impl.pythonBin, "./util/generate_diff.py", oldPDFPath, newPDFPath, diffFile)
 	for i := 0; i < impl.config.PythonRetryTimes; i++ {
-		cmd := exec.Command(impl.pythonBin, "./util/generate_diff.py", oldPDFPath, newPDFPath, diffFile)
-		if out, err := cmd.Output(); err != nil {
-			logs.Error("gen pdf diff failed: ", diffFile, string(out), err)
+		out, err := cmd.Output()
+		if err == nil {
+			break
 		} else {
-			return
+			logs.Error("gen pdf diff failed: ", diffFile, string(out), err)
 		}
 	}
 }

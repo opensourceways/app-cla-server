@@ -90,7 +90,7 @@ func (impl *claUpdatedWatchImpl) subscribeGenCLADiff() {
 	}
 }
 
-// handlePrimaryAgain This is done to prioritize the processing of genCLADiff.
+// handlePrimaryAgain This is done to prioritize the processing of genCLADiff .
 // Using a for loop is to prevent genCLADiffByCron tasks from being inserted into consecutive genCLADiff tasks.
 // Only after genCLADiff is completed can genCLADiffByCron be executed.
 func (impl *claUpdatedWatchImpl) handlePrimaryAgain() {

@@ -105,6 +105,10 @@ func (s *individualSigningService) FindDiffCLAFile(cmd *CmdToFindSignedCLAInfo) 
 		return "", domain.NewNotFoundDomainError(domain.ErrorCodeCLANotExists)
 	}
 
+	if signed.HasSignedCLA(newClaId) {
+		return "", domain.NewDomainError(domain.ErrorCodeIndividualSigningCLAIsLatest)
+	}
+
 	index := domain.CLAIndex{
 		LinkId: cmd.LinkId,
 		CLAId:  newClaId,

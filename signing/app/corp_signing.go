@@ -185,7 +185,7 @@ func (s *corpSigningService) FindDiffCLAFile(signingId string) (string, error) {
 		CLAId:  latestClaId,
 	}
 
-	return s.cla.DiffCLALocalFilePath(&index, signed.Link.CLAId), nil
+	return s.cla.DiffCLALocalFilePath(&index, signed.Link.CLAId)
 }
 
 func (s *corpSigningService) AgreeWithLatestCLA(signingId string) error {

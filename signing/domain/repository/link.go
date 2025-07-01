@@ -15,8 +15,9 @@ type LinkSummary struct {
 }
 
 type LinkCLA struct {
-	Id   string
-	Clas []domain.CLA
+	Id          string
+	Clas        []domain.CLA
+	RemovedCLAs []domain.CLA
 }
 
 type Link interface {

@@ -133,6 +133,7 @@ func startSignSerivce(cfg *config.Config) {
 
 	// watch.Start was invoked in initSigning
 	defer watch.Stop()
+	defer watch.CLAUpdateWatchStop()
 
 	worker.Init(pdf.GetPDFGenerator())
 	defer worker.Exit()

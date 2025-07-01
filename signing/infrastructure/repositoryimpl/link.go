@@ -127,7 +127,6 @@ func (impl *link) ListAll() ([]repository.LinkCLA, error) {
 
 	var dos []linkDO
 	project := bson.M{
-		fieldRemoved:    0,
 		fieldCLASFields: 0,
 	}
 
@@ -145,9 +144,15 @@ func (impl *link) ListAll() ([]repository.LinkCLA, error) {
 			clas[j] = item.CLAs[j].toCLA()
 		}
 
+		removedClas := make([]domain.CLA, len(item.RemovedCLAs))
+		for j := range item.RemovedCLAs {
+			removedClas[j] = item.CLAs[j].toCLA()
+		}
+
 		r[i] = repository.LinkCLA{
-			Id:   item.Id,
-			Clas: clas,
+			Id:          item.Id,
+			Clas:        clas,
+			RemovedCLAs: removedClas,
 		}
 	}
 

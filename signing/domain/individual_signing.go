@@ -65,5 +65,5 @@ func (i *IndividualSigning) addLogOfAgreeingNewCLA() {
 }
 
 func (i *IndividualSigning) HasSignedCLA(latestClaId string) bool {
-	return i.Link.CLAId != latestClaId
+	return i.Link.CLAId == latestClaId
 }

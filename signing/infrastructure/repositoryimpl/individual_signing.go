@@ -117,10 +117,11 @@ func (impl *individualSigning) SaveNewCLA(is *domain.IndividualSigning) error {
 		logs[i] = toIndividualSigningLogDO(is.Logs[i])
 	}
 
-	logDocs, err := genDoc(logs)
-	if err != nil {
-		return err
-	}
+	//logDocs, err := genDoc(logs)
+	//if err != nil {
+	//	return err
+	//}
 
-	return impl.dao.UpdateDoc(filter, bson.M{fieldCLAId: is.Link.Id, fieldLogs: logDocs}, is.Version)
+	//return impl.dao.PushArraySingleItemAndUpdate(filter, fieldLogs, logs, bson.M{fieldCLAId: is.Link.CLAId}, is.Version)
+	return impl.dao.UpdateDoc(filter, bson.M{fieldCLAId: is.Link.CLAId, fieldLogs: logs}, is.Version)
 }

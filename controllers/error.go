@@ -47,6 +47,7 @@ const (
 	errInvalidEmailAuthCode     = "invalid_email_auth_code"
 	errWrongFileType            = "wrong_file_type"
 	errNoInWhiteList            = "not_in_white_list"
+	errInvalidFileName          = "invalid_file_name"
 )
 
 func parseModelError(err models.IModelError) *failedApiResult {

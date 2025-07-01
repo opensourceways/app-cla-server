@@ -19,6 +19,7 @@ import (
 	"github.com/opensourceways/app-cla-server/signing/infrastructure/limiterimpl"
 	"github.com/opensourceways/app-cla-server/signing/infrastructure/localclaimpl"
 	"github.com/opensourceways/app-cla-server/signing/infrastructure/loginimpl"
+	"github.com/opensourceways/app-cla-server/signing/infrastructure/messageimpl"
 	"github.com/opensourceways/app-cla-server/signing/infrastructure/passwordimpl"
 	"github.com/opensourceways/app-cla-server/signing/infrastructure/randombytesimpl"
 	"github.com/opensourceways/app-cla-server/signing/infrastructure/randomcodeimpl"
@@ -80,7 +81,8 @@ func initSigning(cfg *config.Config) error {
 	interval := cfg.Domain.Config.GetIntervalOfCreatingVC()
 
 	// link
-	cla, err := claservice.NewCLAService(linkRepo, localclaimpl.NewLocalCLAImpl(&cfg.LocalCLA))
+	localCLA := localclaimpl.NewLocalCLAImpl(&cfg.LocalCLA)
+	cla, err := claservice.NewCLAService(linkRepo, localCLA, messageimpl.NewMessageImpl())
 	if err != nil {
 		return err
 	}
@@ -188,6 +190,7 @@ func initSigning(cfg *config.Config) error {
 
 	// watch
 	watch.Start(&cfg.Watch, repo, individual)
+	watch.CLAUpdatedWatchStart(linkRepo, localCLA, &cfg.Watch.CLAUpdateConfig, cfg.PDF.PythonBin)
 
 	return nil
 }

@@ -7,7 +7,6 @@ import (
 
 	commonRepo "github.com/opensourceways/app-cla-server/common/domain/repository"
 	"github.com/opensourceways/app-cla-server/signing/domain"
-	"github.com/opensourceways/app-cla-server/signing/domain/dp"
 )
 
 func (impl *link) AddCLA(link *domain.Link, cla *domain.CLA) error {
@@ -38,7 +37,7 @@ func (impl *link) UpdateCLA(link *domain.Link, newCla *domain.CLA) error {
 		return err
 	}
 
-	oldCla := impl.findOldCLA(link, newCla.Type, newCla.Language)
+	oldCla := link.GetCLA(newCla.Type, newCla.Language)
 	if oldCla == nil {
 		return commonRepo.NewErrorResourceNotFound(errors.New("can not find old cla"))
 	}
@@ -59,16 +58,6 @@ func (impl *link) UpdateCLA(link *domain.Link, newCla *domain.CLA) error {
 		impl.docFilter(link.Id), fieldCLAs, bson.M{fieldId: oldCla.Id},
 		fieldRemoved, oldDoc, newDoc, link.Version,
 	)
-}
-
-func (impl *link) findOldCLA(link *domain.Link, t dp.CLAType, l dp.Language) *domain.CLA {
-	for i, v := range link.CLAs {
-		if v.Type == t && v.Language == l {
-			return &link.CLAs[i]
-		}
-	}
-
-	return nil
 }
 
 func (impl *link) RemoveCLA(link *domain.Link, cla *domain.CLA) error {

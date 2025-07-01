@@ -38,11 +38,13 @@ WORKDIR /home/cla
 COPY --chown=cla ./conf /home/cla/conf
 COPY --chown=cla ./deploy/app.conf /home/cla/conf/app.conf
 COPY --chown=cla ./util/merge_signature.py /home/cla/util/merge_signature.py
+COPY --chown=cla ./util/generate_diff.py /home/cla/util/generate_diff.py
 COPY --chown=cla --from=BUILDER /go/src/github.com/opensourceways/app-cla-server/cla-server /home/cla
 
 RUN chmod 750 /home/cla/conf
 RUN chmod 640 /home/cla/conf/app.conf
 RUN chmod 550 /home/cla/util/merge_signature.py
+RUN chmod 550 /home/cla/util/generate_diff.py
 RUN chmod 550 /home/cla/cla-server
 
 RUN echo "umask 027" >> /home/cla/.bashrc

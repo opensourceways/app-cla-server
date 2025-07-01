@@ -99,6 +99,7 @@ func (impl *claUpdatedWatchImpl) handlePrimaryAgain() {
 		case msgPrimary := <-impl.genCLADiff:
 			impl.handleGenCLADiff(msgPrimary)
 		default:
+			return
 		}
 	}
 }
@@ -128,10 +129,7 @@ func (impl *claUpdatedWatchImpl) handleGenCLADiff(msg message.CLAUpdatedMsg) {
 
 	cmd := exec.Command(impl.pythonBin, "./util/generate_diff.py", oldPDFPath, newPDFPath, diffFile)
 	for i := 0; i < impl.config.PythonRetryTimes; i++ {
-		out, err := cmd.Output()
-		if err == nil {
-			break
-		} else {
+		if out, err := cmd.Output(); err != nil {
 			logs.Error("gen pdf diff failed: ", diffFile, string(out), err)
 		}
 	}

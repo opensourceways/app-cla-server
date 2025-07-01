@@ -2,7 +2,6 @@ package watch
 
 import (
 	"fmt"
-	"sort"
 	"time"
 
 	"github.com/beego/beego/v2/core/logs"
@@ -51,22 +50,24 @@ func (impl *claUpdatedWatchImpl) handleJob() {
 func (impl *claUpdatedWatchImpl) classifyCLA(link *repository.LinkCLA) map[string][]domain.CLA {
 	classify := make(map[string][]domain.CLA)
 
-	allCLA := append(link.Clas, link.RemovedCLAs...)
-	for i := range allCLA {
-		item := allCLA[i]
-		key := fmt.Sprintf("%s_%s", item.Type.CLAType(), item.Language.Language())
-		classify[key] = append(classify[key], item)
+	f := func(cla *domain.CLA) {
+		key := fmt.Sprintf("%s_%s", cla.Type.CLAType(), cla.Language.Language())
+		classify[key] = append(classify[key], *cla)
+	}
+
+	for i := range link.Clas {
+		f(&link.Clas[i])
+	}
+
+	for i := range link.RemovedCLAs {
+		f(&link.RemovedCLAs[i])
 	}
 
 	return classify
 }
 
 func (impl *claUpdatedWatchImpl) handleClassifiedCLAs(linkId string, clas []domain.CLA) {
-	sort.Slice(clas, func(i, j int) bool {
-		return clas[i].Id > clas[j].Id
-	})
-
-	for i := 0; i < len(clas); i++ {
+	for i := 0; i < len(clas)-1; i++ {
 		others := clas[i+1:]
 		for j := range others {
 			impl.sendGenDiffEvent(linkId, others[j].Id, clas[i].Id)
@@ -75,10 +76,11 @@ func (impl *claUpdatedWatchImpl) handleClassifiedCLAs(linkId string, clas []doma
 }
 
 func (impl *claUpdatedWatchImpl) sendGenDiffEvent(linkId, oldCLAId, newCLAId string) {
-	diffFile := impl.localCLA.LocalPathOfDiff(&domain.CLAIndex{
-		LinkId: linkId,
-		CLAId:  newCLAId,
-	},
+	diffFile := impl.localCLA.LocalPathOfDiff(
+		&domain.CLAIndex{
+			LinkId: linkId,
+			CLAId:  newCLAId,
+		},
 		oldCLAId,
 	)
 

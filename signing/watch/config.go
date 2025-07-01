@@ -16,6 +16,12 @@ func (cfg *Config) SetDefault() {
 	cfg.CLAUpdateConfig.SetDefault()
 }
 
+func (cfg *Config) configItems() []interface{} {
+	return []interface{}{
+		&cfg.CLAUpdateConfig,
+	}
+}
+
 func (cfg *Config) intervalDuration() time.Duration {
 	return time.Second * time.Duration(cfg.Interval)
 }

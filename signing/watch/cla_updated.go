@@ -129,8 +129,11 @@ func (impl *claUpdatedWatchImpl) handleGenCLADiff(msg message.CLAUpdatedMsg) {
 
 	cmd := exec.Command(impl.pythonBin, "./util/generate_diff.py", oldPDFPath, newPDFPath, diffFile)
 	for i := 0; i < impl.config.PythonRetryTimes; i++ {
-		if out, err := cmd.Output(); err != nil {
-			logs.Error("gen pdf diff failed: ", diffFile, string(out), err)
+		out, err := cmd.Output()
+		if err == nil {
+			break
 		}
+
+		logs.Error("gen pdf diff failed: ", diffFile, string(out), err)
 	}
 }

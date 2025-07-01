@@ -2,6 +2,7 @@ package watch
 
 import (
 	"fmt"
+	"sort"
 	"time"
 
 	"github.com/beego/beego/v2/core/logs"
@@ -47,12 +48,12 @@ func (impl *claUpdatedWatchImpl) handleJob() {
 	}
 }
 
-func (impl *claUpdatedWatchImpl) classifyCLA(link *repository.LinkCLA) map[string][]domain.CLA {
-	classify := make(map[string][]domain.CLA)
+func (impl *claUpdatedWatchImpl) classifyCLA(link *repository.LinkCLA) map[string][]*domain.CLA {
+	classify := make(map[string][]*domain.CLA)
 
 	f := func(cla *domain.CLA) {
 		key := fmt.Sprintf("%s_%s", cla.Type.CLAType(), cla.Language.Language())
-		classify[key] = append(classify[key], *cla)
+		classify[key] = append(classify[key], cla)
 	}
 
 	for i := range link.Clas {
@@ -66,7 +67,11 @@ func (impl *claUpdatedWatchImpl) classifyCLA(link *repository.LinkCLA) map[strin
 	return classify
 }
 
-func (impl *claUpdatedWatchImpl) handleClassifiedCLAs(linkId string, clas []domain.CLA) {
+func (impl *claUpdatedWatchImpl) handleClassifiedCLAs(linkId string, clas []*domain.CLA) {
+	sort.Slice(clas, func(i, j int) bool {
+		return clas[i].Id > clas[j].Id
+	})
+
 	for i := 0; i < len(clas)-1; i++ {
 		others := clas[i+1:]
 		for j := range others {

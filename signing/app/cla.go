@@ -73,7 +73,12 @@ func (s *claService) Remove(cmd *CmdToRemoveCLA) error {
 		return err
 	}
 
-	return s.repo.RemoveCLA(link, cla)
+	err = s.repo.RemoveCLA(link, cla)
+	if err == nil {
+		s.cla.RemoveCLA(link.Id, cla.Id)
+	}
+
+	return err
 }
 
 func (s *claService) checkIfCanRemove(cmd *domain.CLAIndex, t dp.CLAType) error {

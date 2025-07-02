@@ -66,17 +66,6 @@ func (lc *linkCache) getClaId(linkId string, claType dp.CLAType, language dp.Lan
 	return ""
 }
 
-func (lc *linkCache) add(linkId string, cla *domain.CLA) {
-	lc.mutex.Lock()
-	if clas, ok := lc.cache[linkId]; !ok {
-		lc.cache[linkId] = []domain.CLA{*cla}
-	} else {
-		lc.cache[linkId] = append(clas, *cla)
-	}
-
-	lc.mutex.Unlock()
-}
-
 func (lc *linkCache) update(linkId string, newCLA *domain.CLA) {
 	lc.mutex.Lock()
 
@@ -95,6 +84,33 @@ func (lc *linkCache) update(linkId string, newCLA *domain.CLA) {
 		if !bingo {
 			lc.cache[linkId] = append(clas, *newCLA)
 		}
+	}
+
+	lc.mutex.Unlock()
+}
+
+func (lc *linkCache) removeAllCLAsOfLink(linkId string) {
+	lc.mutex.Lock()
+	delete(lc.cache, linkId)
+	lc.mutex.Unlock()
+}
+
+func (lc *linkCache) removeCLA(linkId, claId string) {
+	lc.mutex.Lock()
+	clas, ok := lc.cache[linkId]
+	if !ok {
+		return
+	}
+
+	newCLAs := make([]domain.CLA, len(clas))
+
+	j := 0
+	for i := range clas {
+		if clas[i].Id == claId {
+			continue
+		}
+		newCLAs[j] = clas[i]
+		j++
 	}
 
 	lc.mutex.Unlock()

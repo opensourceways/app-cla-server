@@ -14,7 +14,6 @@ type IndividualSigning struct {
 	Logs    []IndividualSigningLog
 	Date    string
 	AllInfo AllSingingInfo
-	Version int
 }
 
 type IndividualSigningLog struct {

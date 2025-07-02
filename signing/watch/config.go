@@ -25,9 +25,10 @@ func (cfg *Config) intervalDuration() time.Duration {
 }
 
 type CLAUpdateConfig struct {
-	MsgChannelSize     int `json:"msg_channel_size"`
-	PythonRetryTimes   int `json:"python_retry_times"`
-	GenAllDiffInterval int `json:"gen_all_diff_interval"`
+	MsgChannelSize          int `json:"msg_channel_size"`
+	PythonRetryTimes        int `json:"python_retry_times"`
+	GenAllDiffInterval      int `json:"gen_all_diff_interval"`
+	NotifyCorpAdminInterval int `json:"notify_corp_admin_interval"`
 }
 
 func (cfg *CLAUpdateConfig) SetDefault() {
@@ -42,8 +43,16 @@ func (cfg *CLAUpdateConfig) SetDefault() {
 	if cfg.GenAllDiffInterval <= 0 {
 		cfg.GenAllDiffInterval = 600
 	}
+
+	if cfg.NotifyCorpAdminInterval <= 0 {
+		cfg.NotifyCorpAdminInterval = 1200
+	}
 }
 
 func (cfg *CLAUpdateConfig) genAllDiffInterval() time.Duration {
 	return time.Second * time.Duration(cfg.GenAllDiffInterval)
+}
+
+func (cfg *CLAUpdateConfig) genNotifyCorpAdminInterval() time.Duration {
+	return time.Second * time.Duration(cfg.NotifyCorpAdminInterval)
 }

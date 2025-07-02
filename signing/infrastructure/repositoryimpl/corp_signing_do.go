@@ -27,6 +27,7 @@ const (
 	fieldManagers  = "managers"
 	fieldEmployees = "employees"
 	fieldTriggered = "triggered"
+	fieldCLANotify = "cla_notify"
 )
 
 func toCorpSigningDO(v *domain.CorpSigning) corpSigningDO {
@@ -61,6 +62,7 @@ type corpSigningDO struct {
 	Employees []employeeSigningDO `bson:"employees"     json:"employees"`
 	Deleted   []employeeSigningDO `bson:"deleted"       json:"deleted"`
 	Version   int                 `bson:"version"       json:"-"`
+	ClaNotify string              `bson:"cla_notify"    json:"cla_notify"`
 
 	// uploading pdf or adding email domain will trigger individual signing checking
 	// which will delete the one that belongs to a corp.
@@ -88,8 +90,10 @@ func (do *corpSigningDO) toCorpSigningSummary() repository.CorpSigningSummary {
 				Language: dp.CreateLanguage(do.Language),
 			},
 		},
-		Admin:  do.Admin.toManager(),
-		HasPDF: do.HasPDF,
+		Admin:     do.Admin.toManager(),
+		HasPDF:    do.HasPDF,
+		Version:   do.Version,
+		CLANotify: do.ClaNotify,
 	}
 }
 

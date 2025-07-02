@@ -13,12 +13,14 @@ import (
 
 var claUpdatedWatchInstance *claUpdatedWatchImpl
 
-func CLAUpdatedWatchStart(lk repoLink, lc localCLA, cfg *CLAUpdateConfig, py string) {
+func CLAUpdatedWatchStart(lk repoLink, lc localCLA, corp corpSigningRepo, cfg *CLAUpdateConfig, py, claPlatformURL string) {
 	claUpdatedWatchInstance = &claUpdatedWatchImpl{
 		config:           cfg,
 		link:             lk,
 		localCLA:         lc,
+		corpSigningRepo:  corp,
 		pythonBin:        py,
+		claPlatformURL:   claPlatformURL,
 		stop:             make(chan struct{}),
 		genCLADiff:       make(chan message.CLAUpdatedMsg, cfg.MsgChannelSize),
 		genCLADiffByCron: make(chan message.CLAUpdatedMsg, cfg.MsgChannelSize),
@@ -51,9 +53,11 @@ type localCLA interface {
 type claUpdatedWatchImpl struct {
 	config *CLAUpdateConfig
 
-	link      repoLink
-	localCLA  localCLA
-	pythonBin string
+	link            repoLink
+	localCLA        localCLA
+	corpSigningRepo corpSigningRepo
+	pythonBin       string
+	claPlatformURL  string
 
 	wg               sync.WaitGroup
 	stop             chan struct{}
@@ -67,6 +71,9 @@ func (impl *claUpdatedWatchImpl) start() {
 
 	impl.wg.Add(1)
 	go impl.genAllDiffFile()
+
+	impl.wg.Add(1)
+	go impl.notifyCorpAdmin()
 }
 
 func (impl *claUpdatedWatchImpl) exit() {

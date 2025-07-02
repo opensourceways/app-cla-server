@@ -30,7 +30,6 @@ func (impl *individualSigning) Add(is *domain.IndividualSigning) error {
 	if err != nil {
 		return err
 	}
-	doc[fieldVersion] = 0
 
 	filter := linkIdFilter(is.Link.Id)
 	filter[fieldEmail] = is.Rep.EmailAddr.EmailAddr()
@@ -127,5 +126,5 @@ func (impl *individualSigning) SaveNewCLA(is *domain.IndividualSigning) error {
 	fmt.Println(filter)
 	fmt.Println(is)
 	//return impl.dao.PushArraySingleItemAndUpdate(filter, fieldLogs, logs, bson.M{fieldCLAId: is.Link.CLAId}, is.Version)
-	return impl.dao.UpdateDoc(filter, bson.M{fieldCLAId: is.Link.CLAId, fieldLogs: logs}, is.Version)
+	return impl.dao.UpdateDocsWithoutVersion(filter, bson.M{fieldCLAId: is.Link.CLAId, fieldLogs: logs})
 }

@@ -36,7 +36,7 @@ type CLAService interface {
 	AddLink(link *domain.Link) error
 	ContainsCla(linkId, claId string) bool
 	GetClaId(linkId string, claType dp.CLAType, language dp.Language) string
-	RemoveAllCLAsOfLink(linkId string)
+	RemoveLink(linkId string)
 	RemoveCLA(linkId, claId string)
 }
 
@@ -147,8 +147,8 @@ func (s *claService) GetClaId(linkId string, claType dp.CLAType, language dp.Lan
 	return s.linkCache.getClaId(linkId, claType, language)
 }
 
-func (s *claService) RemoveAllCLAsOfLink(linkId string) {
-	s.linkCache.removeAllCLAsOfLink(linkId)
+func (s *claService) RemoveLink(linkId string) {
+	s.linkCache.removeLink(linkId)
 }
 
 func (s *claService) RemoveCLA(linkId, claId string) {

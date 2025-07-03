@@ -89,7 +89,7 @@ func (lc *linkCache) update(linkId string, newCLA *domain.CLA) {
 	lc.mutex.Unlock()
 }
 
-func (lc *linkCache) removeAllCLAsOfLink(linkId string) {
+func (lc *linkCache) removeLink(linkId string) {
 	lc.mutex.Lock()
 	delete(lc.cache, linkId)
 	lc.mutex.Unlock()
@@ -102,16 +102,14 @@ func (lc *linkCache) removeCLA(linkId, claId string) {
 		return
 	}
 
-	newCLAs := make([]domain.CLA, len(clas))
-
-	j := 0
 	for i := range clas {
 		if clas[i].Id == claId {
-			continue
+			clas[i] = clas[len(clas)-1]
+			break
 		}
-		newCLAs[j] = clas[i]
-		j++
 	}
+
+	lc.cache[linkId] = clas[:len(clas)-1]
 
 	lc.mutex.Unlock()
 }

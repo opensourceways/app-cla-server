@@ -73,7 +73,12 @@ func (s *linkService) Remove(userId, linkId string) error {
 		return err
 	}
 
-	return s.repo.Remove(v)
+	err = s.repo.Remove(v)
+	if err == nil {
+		s.cla.RemoveLink(linkId)
+	}
+
+	return err
 }
 
 func (s *linkService) checkIfCanRemove(linkId string) (bool, error) {

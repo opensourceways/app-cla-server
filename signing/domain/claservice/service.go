@@ -42,6 +42,8 @@ type CLAService interface {
 	AddLink(link *domain.Link) error
 	ContainsCla(linkId, claId string) bool
 	GetClaId(linkId string, claType dp.CLAType, language dp.Language) string
+	RemoveLink(linkId string)
+	RemoveCLA(linkId, claId string)
 }
 
 type claService struct {
@@ -66,6 +68,8 @@ func (s *claService) Add(link *domain.Link, cla *domain.CLA) error {
 		if err1 := s.local.Remove(p); err1 != nil {
 			logs.Error("remove local file, err:%s", err1.Error())
 		}
+	} else {
+		s.linkCache.update(link.Id, cla)
 	}
 
 	return err
@@ -176,4 +180,12 @@ func (s *claService) ContainsCla(linkId, claId string) bool {
 
 func (s *claService) GetClaId(linkId string, claType dp.CLAType, language dp.Language) string {
 	return s.linkCache.getClaId(linkId, claType, language)
+}
+
+func (s *claService) RemoveLink(linkId string) {
+	s.linkCache.removeLink(linkId)
+}
+
+func (s *claService) RemoveCLA(linkId, claId string) {
+	s.linkCache.removeCLA(linkId, claId)
 }

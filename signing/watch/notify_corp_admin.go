@@ -1,6 +1,7 @@
 package watch
 
 import (
+	"sync"
 	"time"
 
 	"github.com/beego/beego/v2/core/logs"
@@ -12,12 +13,55 @@ import (
 	"github.com/opensourceways/app-cla-server/worker"
 )
 
+var notifyAdminWatchInstance *notifyAdminWatchImpl
+
+func NotifyAdminWatchStart(cfg *NotifyAdminConfig, lk repoLink, corp corpSigningRepo, claPlatformURL string) {
+	notifyAdminWatchInstance = &notifyAdminWatchImpl{
+		config:          cfg,
+		link:            lk,
+		corpSigningRepo: corp,
+		claPlatformURL:  claPlatformURL,
+	}
+
+	notifyAdminWatchInstance.start()
+}
+
+func NotifyAdminWatchStop() {
+	if notifyAdminWatchInstance != nil {
+		notifyAdminWatchInstance.exit()
+
+		logs.Info("stop watching send email")
+	}
+}
+
 type corpSigningRepo interface {
 	FindAll(linkId string) ([]repository.CorpSigningSummary, error)
 	UpdateCLANotify(summary *repository.CorpSigningSummary) error
 }
 
-func (impl *claUpdatedWatchImpl) notifyCorpAdmin() {
+type notifyAdminWatchImpl struct {
+	config *NotifyAdminConfig
+
+	link            repoLink
+	corpSigningRepo corpSigningRepo
+	claPlatformURL  string
+
+	wg   sync.WaitGroup
+	stop chan struct{}
+}
+
+func (impl *notifyAdminWatchImpl) start() {
+	impl.wg.Add(1)
+	go impl.notifyCorpAdmin()
+}
+
+func (impl *notifyAdminWatchImpl) exit() {
+	close(impl.stop)
+
+	impl.wg.Wait()
+}
+
+func (impl *notifyAdminWatchImpl) notifyCorpAdmin() {
 	interval := impl.config.genNotifyCorpAdminInterval()
 	timer := time.NewTimer(interval)
 	for {
@@ -33,7 +77,7 @@ func (impl *claUpdatedWatchImpl) notifyCorpAdmin() {
 	}
 }
 
-func (impl *claUpdatedWatchImpl) handleNotifyJob() {
+func (impl *notifyAdminWatchImpl) handleNotifyJob() {
 	links, err := impl.link.ListAll()
 	if err != nil {
 		logs.Error("list all link failed in notify job: ", err)
@@ -54,7 +98,7 @@ func (impl *claUpdatedWatchImpl) handleNotifyJob() {
 	}
 }
 
-func (impl *claUpdatedWatchImpl) handleCorpSigning(link *repository.LinkCLA, corp *repository.CorpSigningSummary) {
+func (impl *notifyAdminWatchImpl) handleCorpSigning(link *repository.LinkCLA, corp *repository.CorpSigningSummary) {
 	if impl.isCorpSigningLatest(link.Clas, corp.Link.CLAInfo) {
 		return
 	}
@@ -75,7 +119,7 @@ func (impl *claUpdatedWatchImpl) handleCorpSigning(link *repository.LinkCLA, cor
 	}
 }
 
-func (impl *claUpdatedWatchImpl) isCorpSigningLatest(latestCLAs []domain.CLA, signedInfo domain.CLAInfo) bool {
+func (impl *notifyAdminWatchImpl) isCorpSigningLatest(latestCLAs []domain.CLA, signedInfo domain.CLAInfo) bool {
 	for i := range latestCLAs {
 		if latestCLAs[i].Type == dp.CLATypeCorp &&
 			latestCLAs[i].Language == signedInfo.Language &&
@@ -88,7 +132,7 @@ func (impl *claUpdatedWatchImpl) isCorpSigningLatest(latestCLAs []domain.CLA, si
 	return false
 }
 
-func (impl *claUpdatedWatchImpl) handleSendEmail(link *repository.LinkCLA, corp *repository.CorpSigningSummary) error {
+func (impl *notifyAdminWatchImpl) handleSendEmail(link *repository.LinkCLA, corp *repository.CorpSigningSummary) error {
 	builder := emailtmpl.CLAUpdated{
 		Org:              link.Org.Alias,
 		AdminName:        corp.Admin.Name.Name(),

@@ -102,14 +102,16 @@ func (lc *linkCache) removeCLA(linkId, claId string) {
 		return
 	}
 
+	n := len(clas) - 1
 	for i := range clas {
 		if clas[i].Id == claId {
-			clas[i] = clas[len(clas)-1]
+			if i != n {
+				clas[i] = clas[n]
+			}
+			lc.cache[linkId] = clas[:n]
 			break
 		}
 	}
-
-	lc.cache[linkId] = clas[:len(clas)-1]
 
 	lc.mutex.Unlock()
 }

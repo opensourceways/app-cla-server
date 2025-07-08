@@ -9,7 +9,6 @@ type CorpSigningSummary struct {
 	Id        string
 	Date      string
 	HasPDF    bool
-	Version   int
 	CLANotify string
 	Link      domain.LinkInfo
 	Rep       domain.Representative

@@ -92,7 +92,6 @@ func (do *corpSigningDO) toCorpSigningSummary() repository.CorpSigningSummary {
 		},
 		Admin:     do.Admin.toManager(),
 		HasPDF:    do.HasPDF,
-		Version:   do.Version,
 		CLANotify: do.ClaNotify,
 	}
 }

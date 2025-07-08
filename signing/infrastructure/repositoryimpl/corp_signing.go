@@ -125,7 +125,6 @@ func (impl *corpSigning) FindAll(linkId string) ([]repository.CorpSigningSummary
 		fieldAdmin:     1,
 		fieldLinkId:    1,
 		fieldHasPDF:    1,
-		fieldVersion:   1,
 		fieldCLANotify: 1,
 	}
 
@@ -200,5 +199,5 @@ func (impl *corpSigning) UpdateCLANotify(summary *repository.CorpSigningSummary)
 		return err
 	}
 
-	return impl.dao.UpdateDoc(filter, bson.M{fieldCLANotify: summary.CLANotify}, summary.Version)
+	return impl.dao.UpdateDocsWithoutVersion(filter, bson.M{fieldCLANotify: summary.CLANotify})
 }

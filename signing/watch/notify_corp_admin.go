@@ -85,7 +85,7 @@ func (impl *notifyAdminWatchImpl) handleNotifyJob() {
 	}
 
 	for i := range links {
-		link := links[i]
+		link := &links[i]
 		corpsSummary, err := impl.corpSigningRepo.FindAll(link.Id)
 		if err != nil {
 			logs.Error("list corp signing failed in notify job:", link.Id, err)
@@ -93,7 +93,7 @@ func (impl *notifyAdminWatchImpl) handleNotifyJob() {
 		}
 
 		for j := range corpsSummary {
-			impl.handleCorpSigning(&link, &corpsSummary[j])
+			impl.handleCorpSigning(link, &corpsSummary[j])
 		}
 	}
 }
@@ -120,16 +120,17 @@ func (impl *notifyAdminWatchImpl) handleCorpSigning(link *repository.LinkCLA, co
 }
 
 func (impl *notifyAdminWatchImpl) isCorpSigningLatest(latestCLAs []domain.CLA, signedInfo domain.CLAInfo) bool {
+	var matchedCLA domain.CLA
+
 	for i := range latestCLAs {
 		if latestCLAs[i].Type == dp.CLATypeCorp &&
-			latestCLAs[i].Language == signedInfo.Language &&
-			latestCLAs[i].Id == signedInfo.CLAId {
-
-			return true
+			latestCLAs[i].Language == signedInfo.Language {
+			matchedCLA = latestCLAs[i]
+			break
 		}
 	}
 
-	return false
+	return matchedCLA.Id == signedInfo.CLAId
 }
 
 func (impl *notifyAdminWatchImpl) handleSendEmail(link *repository.LinkCLA, corp *repository.CorpSigningSummary) error {
@@ -153,7 +154,7 @@ func (impl *notifyAdminWatchImpl) handleSendEmail(link *repository.LinkCLA, corp
 
 	// Sending email is done in goroutine.
 	// Prevent the concurrency from being too high, which would cause the email server refused to serve.
-	time.Sleep(time.Second)
+	time.Sleep(impl.config.genSendEmailInterval())
 
 	return nil
 }

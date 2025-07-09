@@ -2,6 +2,7 @@ package config
 
 import (
 	platformAuth "github.com/opensourceways/app-cla-server/code-platform-auth"
+	common "github.com/opensourceways/app-cla-server/common/config"
 	"github.com/opensourceways/app-cla-server/common/infrastructure/mongodb"
 	"github.com/opensourceways/app-cla-server/common/infrastructure/redisdb"
 	"github.com/opensourceways/app-cla-server/controllers"
@@ -24,19 +25,11 @@ func Load(path string) (cfg Config, err error) {
 		return
 	}
 
-	cfg.setDefault()
+	common.SetDefault(&cfg)
 
-	err = cfg.validate()
+	err = common.Validate(&cfg)
 
 	return
-}
-
-type configValidate interface {
-	Validate() error
-}
-
-type configSetDefault interface {
-	SetDefault()
 }
 
 type domainConfig struct {
@@ -91,28 +84,6 @@ func (cfg *Config) configItems() []interface{} {
 	}
 }
 
-func (cfg *Config) setDefault() {
-	items := cfg.configItems()
-	for _, i := range items {
-		if f, ok := i.(configSetDefault); ok {
-			f.SetDefault()
-		}
-	}
-}
-
-func (cfg *Config) validate() error {
-	if err := util.CheckConfig(cfg, ""); err != nil {
-		return err
-	}
-
-	items := cfg.configItems()
-	for _, i := range items {
-		if f, ok := i.(configValidate); ok {
-			if err := f.Validate(); err != nil {
-				return err
-			}
-		}
-	}
-
-	return nil
+func (cfg *Config) Validate() error {
+	return util.CheckConfig(cfg, "")
 }

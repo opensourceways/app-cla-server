@@ -4,8 +4,9 @@ import "time"
 
 type Config struct {
 	// unit second
-	Interval        int             `json:"interval"`
-	CLAUpdateConfig CLAUpdateConfig `json:"cla_update_config"`
+	Interval        int               `json:"interval"`
+	CLAUpdateConfig CLAUpdateConfig   `json:"cla_update_config"`
+	SendEmailConfig NotifyAdminConfig `json:"send_email_config"`
 }
 
 func (cfg *Config) SetDefault() {
@@ -17,6 +18,7 @@ func (cfg *Config) SetDefault() {
 func (cfg *Config) ConfigItems() []interface{} {
 	return []interface{}{
 		&cfg.CLAUpdateConfig,
+		&cfg.SendEmailConfig,
 	}
 }
 
@@ -46,4 +48,23 @@ func (cfg *CLAUpdateConfig) SetDefault() {
 
 func (cfg *CLAUpdateConfig) genAllDiffInterval() time.Duration {
 	return time.Second * time.Duration(cfg.GenAllDiffInterval)
+}
+
+type NotifyAdminConfig struct {
+	SendEmailInterval       int `json:"send_email_interval"`
+	NotifyCorpAdminInterval int `json:"notify_corp_admin_interval"`
+}
+
+func (cfg *NotifyAdminConfig) SetDefault() {
+	if cfg.NotifyCorpAdminInterval <= 0 {
+		cfg.NotifyCorpAdminInterval = 1200
+	}
+}
+
+func (cfg *NotifyAdminConfig) genSendEmailInterval() time.Duration {
+	return time.Second * time.Duration(cfg.SendEmailInterval)
+}
+
+func (cfg *NotifyAdminConfig) genNotifyCorpAdminInterval() time.Duration {
+	return time.Second * time.Duration(cfg.NotifyCorpAdminInterval)
 }

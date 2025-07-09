@@ -151,6 +151,8 @@ func (impl *link) ListAll() ([]repository.LinkCLA, error) {
 
 		r[i] = repository.LinkCLA{
 			Id:          item.Id,
+			Org:         item.Org.toOrgInfo(),
+			Email:       item.Email.toEmailInfo(),
 			Clas:        clas,
 			RemovedCLAs: removedClas,
 		}

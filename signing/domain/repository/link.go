@@ -16,6 +16,8 @@ type LinkSummary struct {
 
 type LinkCLA struct {
 	Id          string
+	Org         domain.OrgInfo
+	Email       domain.EmailInfo
 	Clas        []domain.CLA
 	RemovedCLAs []domain.CLA
 }

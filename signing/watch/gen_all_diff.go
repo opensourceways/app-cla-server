@@ -27,13 +27,13 @@ func (impl *claUpdatedWatchImpl) genAllDiffFile() {
 			impl.wg.Done()
 			return
 		case <-timer.C:
-			impl.handleJob()
+			impl.handleGenJob()
 			timer.Reset(interval)
 		}
 	}
 }
 
-func (impl *claUpdatedWatchImpl) handleJob() {
+func (impl *claUpdatedWatchImpl) handleGenJob() {
 	links, err := impl.link.ListAll()
 	if err != nil {
 		logs.Error("list all link failed: ", err)

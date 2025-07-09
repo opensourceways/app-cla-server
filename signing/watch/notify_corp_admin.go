@@ -46,8 +46,9 @@ type notifyAdminWatchImpl struct {
 	corpSigningRepo corpSigningRepo
 	claPlatformURL  string
 
-	wg   sync.WaitGroup
-	stop chan struct{}
+	wg       sync.WaitGroup
+	stop     chan struct{}
+	needStop bool
 }
 
 func (impl *notifyAdminWatchImpl) start() {
@@ -57,6 +58,8 @@ func (impl *notifyAdminWatchImpl) start() {
 
 func (impl *notifyAdminWatchImpl) exit() {
 	close(impl.stop)
+
+	impl.needStop = true
 
 	impl.wg.Wait()
 }
@@ -93,6 +96,10 @@ func (impl *notifyAdminWatchImpl) handleNotifyJob() {
 		}
 
 		for j := range corpsSummary {
+			if impl.needStop {
+				return
+			}
+
 			impl.handleCorpSigning(link, &corpsSummary[j])
 		}
 	}

@@ -139,13 +139,7 @@ func isZero(v reflect.Value) bool {
 			return ok && value.IsZero()
 		}
 
-		for i := 0; i < v.NumField(); i++ {
-			if !isZero(v.Field(i)) {
-				return false
-			}
-		}
-
-		return true
+		return false
 
 	default:
 		// Compare other types directly:

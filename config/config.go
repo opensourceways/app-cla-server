@@ -64,7 +64,7 @@ type Config struct {
 	CodePlatform platformAuth.Config            `json:"code_platform"   required:"true"`
 }
 
-func (cfg *Config) configItems() []interface{} {
+func (cfg *Config) ConfigItems() []interface{} {
 	return []interface{}{
 		&cfg.PDF,
 		&cfg.API,

@@ -16,7 +16,7 @@ func (cfg *Config) SetDefault() {
 	cfg.CLAUpdateConfig.SetDefault()
 }
 
-func (cfg *Config) configItems() []interface{} {
+func (cfg *Config) ConfigItems() []interface{} {
 	return []interface{}{
 		&cfg.CLAUpdateConfig,
 	}

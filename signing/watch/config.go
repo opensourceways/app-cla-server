@@ -12,11 +12,9 @@ func (cfg *Config) SetDefault() {
 	if cfg.Interval <= 0 {
 		cfg.Interval = 3600
 	}
-
-	cfg.CLAUpdateConfig.SetDefault()
 }
 
-func (cfg *Config) configItems() []interface{} {
+func (cfg *Config) ConfigItems() []interface{} {
 	return []interface{}{
 		&cfg.CLAUpdateConfig,
 	}

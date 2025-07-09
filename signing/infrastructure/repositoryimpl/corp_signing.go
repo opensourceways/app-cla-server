@@ -118,13 +118,14 @@ func (impl *corpSigning) FindAll(linkId string) ([]repository.CorpSigningSummary
 	filter := linkIdFilter(linkId)
 
 	project := bson.M{
-		fieldDate:   1,
-		fieldLang:   1,
-		fieldRep:    1,
-		fieldCorp:   1,
-		fieldAdmin:  1,
-		fieldLinkId: 1,
-		fieldHasPDF: 1,
+		fieldDate:      1,
+		fieldLang:      1,
+		fieldRep:       1,
+		fieldCorp:      1,
+		fieldAdmin:     1,
+		fieldLinkId:    1,
+		fieldHasPDF:    1,
+		fieldCLANotify: 1,
 	}
 
 	var dos []corpSigningDO
@@ -190,4 +191,13 @@ func (impl *corpSigning) UpdateClaId(cs *domain.CorpSigning) error {
 	}
 
 	return impl.dao.UpdateDoc(filter, bson.M{fieldCLAId: cs.Link.CLAId}, cs.Version)
+}
+
+func (impl *corpSigning) UpdateCLANotify(summary *repository.CorpSigningSummary) error {
+	filter, err := impl.toCorpSigningIndex(summary.Id)
+	if err != nil {
+		return err
+	}
+
+	return impl.dao.UpdateDocsWithoutVersion(filter, bson.M{fieldCLANotify: summary.CLANotify})
 }

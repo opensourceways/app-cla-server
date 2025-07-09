@@ -124,12 +124,12 @@ func isZero(v reflect.Value) bool {
 
 	case reflect.Array:
 		for i := 0; i < v.Len(); i++ {
-			if isZero(v.Index(i)) {
-				return true
+			if !isZero(v.Index(i)) {
+				return false
 			}
 		}
 
-		return false
+		return true
 
 	case reflect.Struct:
 		var t time.Time
@@ -137,12 +137,6 @@ func isZero(v reflect.Value) bool {
 			value, ok := v.Interface().(time.Time)
 
 			return ok && value.IsZero()
-		}
-
-		for i := 0; i < v.NumField(); i++ {
-			if isZero(v.Field(i)) {
-				return true
-			}
 		}
 
 		return false

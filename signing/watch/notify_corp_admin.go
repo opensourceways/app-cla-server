@@ -46,9 +46,8 @@ type notifyAdminWatchImpl struct {
 	corpSigningRepo corpSigningRepo
 	claPlatformURL  string
 
-	wg       sync.WaitGroup
-	stop     chan struct{}
-	needStop bool
+	wg   sync.WaitGroup
+	stop chan struct{}
 }
 
 func (impl *notifyAdminWatchImpl) start() {
@@ -58,8 +57,6 @@ func (impl *notifyAdminWatchImpl) start() {
 
 func (impl *notifyAdminWatchImpl) exit() {
 	close(impl.stop)
-
-	impl.needStop = true
 
 	impl.wg.Wait()
 }
@@ -81,6 +78,15 @@ func (impl *notifyAdminWatchImpl) notifyCorpAdmin() {
 }
 
 func (impl *notifyAdminWatchImpl) handleNotifyJob() {
+	needStop := func() bool {
+		select {
+		case <-impl.stop:
+			return true
+		default:
+			return false
+		}
+	}
+
 	links, err := impl.link.ListAll()
 	if err != nil {
 		logs.Error("list all link failed in notify job: ", err)
@@ -88,6 +94,10 @@ func (impl *notifyAdminWatchImpl) handleNotifyJob() {
 	}
 
 	for i := range links {
+		if needStop() {
+			return
+		}
+
 		link := &links[i]
 		corpsSummary, err := impl.corpSigningRepo.FindAll(link.Id)
 		if err != nil {
@@ -96,7 +106,7 @@ func (impl *notifyAdminWatchImpl) handleNotifyJob() {
 		}
 
 		for j := range corpsSummary {
-			if impl.needStop {
+			if needStop() {
 				return
 			}
 

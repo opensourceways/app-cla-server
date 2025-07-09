@@ -123,11 +123,13 @@ func isZero(v reflect.Value) bool {
 		return v.IsNil()
 
 	case reflect.Array:
-		z := true
 		for i := 0; i < v.Len(); i++ {
-			z = z && isZero(v.Index(i))
+			if isZero(v.Index(i)) {
+				return true
+			}
 		}
-		return z
+
+		return false
 
 	case reflect.Struct:
 		var t time.Time
@@ -136,11 +138,14 @@ func isZero(v reflect.Value) bool {
 
 			return ok && value.IsZero()
 		}
-		z := true
+
 		for i := 0; i < v.NumField(); i++ {
-			z = z && isZero(v.Field(i))
+			if isZero(v.Field(i)) {
+				return true
+			}
 		}
-		return z
+
+		return false
 
 	default:
 		// Compare other types directly:

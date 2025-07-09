@@ -120,17 +120,17 @@ func (impl *notifyAdminWatchImpl) handleCorpSigning(link *repository.LinkCLA, co
 }
 
 func (impl *notifyAdminWatchImpl) isCorpSigningLatest(latestCLAs []domain.CLA, signedInfo domain.CLAInfo) bool {
-	var matchedCLA domain.CLA
+	var matchedCLA *domain.CLA
 
 	for i := range latestCLAs {
 		if latestCLAs[i].Type == dp.CLATypeCorp &&
 			latestCLAs[i].Language == signedInfo.Language {
-			matchedCLA = latestCLAs[i]
+			matchedCLA = &latestCLAs[i]
 			break
 		}
 	}
 
-	return matchedCLA.Id == signedInfo.CLAId
+	return matchedCLA != nil && matchedCLA.Id == signedInfo.CLAId
 }
 
 func (impl *notifyAdminWatchImpl) handleSendEmail(link *repository.LinkCLA, corp *repository.CorpSigningSummary) error {

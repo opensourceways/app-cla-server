@@ -51,6 +51,7 @@ func (cfg *CLAUpdateConfig) genAllDiffInterval() time.Duration {
 }
 
 type NotifyAdminConfig struct {
+	SendEmailInterval       int `json:"send_email_interval"`
 	NotifyCorpAdminInterval int `json:"notify_corp_admin_interval"`
 }
 
@@ -58,6 +59,10 @@ func (cfg *NotifyAdminConfig) SetDefault() {
 	if cfg.NotifyCorpAdminInterval <= 0 {
 		cfg.NotifyCorpAdminInterval = 1200
 	}
+}
+
+func (cfg *NotifyAdminConfig) genSendEmailInterval() time.Duration {
+	return time.Second * time.Duration(cfg.SendEmailInterval)
 }
 
 func (cfg *NotifyAdminConfig) genNotifyCorpAdminInterval() time.Duration {

@@ -87,6 +87,8 @@ func (impl *notifyAdminWatchImpl) handleNotifyJob() {
 		}
 	}
 
+	logs.Info("start notify job")
+
 	links, err := impl.link.ListAll()
 	if err != nil {
 		logs.Error("list all link failed in notify job: ", err)
@@ -105,6 +107,11 @@ func (impl *notifyAdminWatchImpl) handleNotifyJob() {
 			continue
 		}
 
+		if link.Id == "681d9d1b2e91e0b596754a7e" {
+			logs.Info(corpsSummary)
+			logs.Info(link)
+		}
+
 		for j := range corpsSummary {
 			if needStop() {
 				return
@@ -113,6 +120,8 @@ func (impl *notifyAdminWatchImpl) handleNotifyJob() {
 			impl.handleCorpSigning(link, &corpsSummary[j])
 		}
 	}
+
+	logs.Info("end notify job")
 }
 
 func (impl *notifyAdminWatchImpl) handleCorpSigning(link *repository.LinkCLA, corp *repository.CorpSigningSummary) {
@@ -120,20 +129,28 @@ func (impl *notifyAdminWatchImpl) handleCorpSigning(link *repository.LinkCLA, co
 		return
 	}
 
+	logs.Info("step 1")
+
 	// Notification email has been sent.
 	if corp.CLANotify == corp.Link.CLAId {
 		return
 	}
+
+	logs.Info("step 2")
 
 	if err := impl.handleSendEmail(link, corp); err != nil {
 		logs.Error("send cla notify email failed:", corp.Id, err)
 		return
 	}
 
+	logs.Info("step 3")
+
 	corp.CLANotify = corp.Link.CLAId
 	if err := impl.corpSigningRepo.UpdateCLANotify(corp); err != nil {
 		logs.Error("update cla notify failed: ", corp.Id, err)
 	}
+
+	logs.Info("step 4")
 }
 
 func (impl *notifyAdminWatchImpl) isCorpSigningLatest(latestCLAs []domain.CLA, signedInfo domain.CLAInfo) bool {

@@ -11,7 +11,7 @@ type CLAController struct {
 }
 
 func (ctl *CLAController) Prepare() {
-	if ctl.isGetRequest() && strings.HasSuffix(ctl.routerPattern(), "/:link_id/:id") {
+	if ctl.isGetRequest() && !strings.HasSuffix(ctl.routerPattern(), "/:link_id") {
 		ctl.apiPrepare("")
 	} else {
 		ctl.apiPrepare(PermissionOwnerOfOrg)

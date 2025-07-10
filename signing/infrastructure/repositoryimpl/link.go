@@ -146,7 +146,7 @@ func (impl *link) ListAll() ([]repository.LinkCLA, error) {
 
 		removedClas := make([]domain.CLA, len(item.RemovedCLAs))
 		for j := range item.RemovedCLAs {
-			removedClas[j] = item.CLAs[j].toCLA()
+			removedClas[j] = item.RemovedCLAs[j].toCLA()
 		}
 
 		r[i] = repository.LinkCLA{

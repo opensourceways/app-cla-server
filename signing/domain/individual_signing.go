@@ -14,7 +14,6 @@ type IndividualSigning struct {
 	Logs    []IndividualSigningLog
 	Date    string
 	AllInfo AllSingingInfo
-	Version int
 }
 
 type IndividualSigningLog struct {
@@ -62,4 +61,8 @@ func (i *IndividualSigning) addLogOfAgreeingNewCLA() {
 		ClaId:  i.Link.CLAId,
 		Action: individualSigningActionAgree,
 	})
+}
+
+func (i *IndividualSigning) HasSignedCLA(latestClaId string) bool {
+	return i.Link.CLAId == latestClaId
 }

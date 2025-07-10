@@ -56,6 +56,10 @@ type NotifyAdminConfig struct {
 }
 
 func (cfg *NotifyAdminConfig) SetDefault() {
+	if cfg.SendEmailInterval <= 0 {
+		cfg.SendEmailInterval = 10
+	}
+
 	if cfg.NotifyCorpAdminInterval <= 0 {
 		cfg.NotifyCorpAdminInterval = 1200
 	}

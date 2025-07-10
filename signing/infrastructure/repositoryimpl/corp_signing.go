@@ -119,6 +119,7 @@ func (impl *corpSigning) FindAll(linkId string) ([]repository.CorpSigningSummary
 
 	project := bson.M{
 		fieldDate:      1,
+		fieldCLAId:     1,
 		fieldLang:      1,
 		fieldRep:       1,
 		fieldCorp:      1,

@@ -38,6 +38,7 @@ type individualSigningDO struct {
 	Logs     []individualSigningLogDO `bson:"logs"     json:"logs"`
 
 	Domain    string `bson:"domain"      json:"domain"  required:"true"`
+	Version   int    `bson:"version"     json:"-"`
 	Deleted   bool   `bson:"deleted"     json:"deleted"`
 	DeletedAt int64  `bson:"deleted_at"  json:"deleted_at,omitempty"`
 }
@@ -59,6 +60,7 @@ func (do *individualSigningDO) toIndividualSigning() domain.IndividualSigning {
 		Rep:     do.toRep(),
 		Date:    do.Date,
 		AllInfo: do.AllInfo,
+		Version: do.Version,
 		Logs:    logs,
 	}
 }

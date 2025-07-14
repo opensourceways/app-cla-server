@@ -50,20 +50,17 @@ func (impl *link) UpdateCLA(link *domain.Link, newCla *domain.CLA) error {
 		return err
 	}
 
-	newDo := toCLADO(newCla)
-	newDoc, err := newDo.toDoc()
-	if err != nil {
-		return err
+	filter := bson.M{
+		fieldId:                        link.Id,
+		childField(fieldCLAs, fieldId): oldCla.Id,
 	}
 
-	if err = impl.dao.MoveArrayItem(impl.docFilter(link.Id), fieldCLAs,
-		bson.M{fieldId: oldCla.Id}, fieldRemoved, oldDoc, link.Version,
-	); err != nil {
-		return err
+	update := bson.M{
+		fieldCLANum:  link.CLANum,
+		"clas.$.id":  newCla.Id,
+		"clas.$.url": newCla.URL,
 	}
-
-	update := bson.M{fieldCLANum: link.CLANum}
-	return impl.dao.PushArraySingleItemAndUpdate(impl.docFilter(link.Id), fieldCLAs, newDoc, update, link.Version+1)
+	return impl.dao.PushArraySingleItemAndUpdate(filter, fieldRemoved, oldDoc, update, link.Version)
 }
 
 func (impl *link) RemoveCLA(link *domain.Link, cla *domain.CLA) error {

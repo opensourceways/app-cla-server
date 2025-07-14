@@ -244,6 +244,55 @@ func (impl *daoImpl) UpdateArraySingleItem(filter bson.M, array string, filterOf
 	})
 }
 
+func (impl *daoImpl) PullAndUpdateArrayItem(
+	filter bson.M,
+	arrayToRemove string, removeFilter bson.M,
+	array string, filterOfArray, doc bson.M, version int,
+	otherSet bson.M,
+) error {
+	return impl.withContext(func(ctx context.Context) error {
+		filter[fieldVersion] = version
+
+		cmd := otherSet
+		if cmd == nil {
+			cmd = bson.M{}
+		}
+		for k, v := range doc {
+			cmd[fmt.Sprintf("%s.$[i].%s", array, k)] = v
+		}
+
+		arrayFilter := bson.M{}
+		for k, v := range filterOfArray {
+			arrayFilter["i."+k] = v
+		}
+
+		r, err := impl.col.UpdateOne(
+			ctx, filter,
+			bson.M{
+				mongoCmdPull: bson.M{arrayToRemove: removeFilter},
+				mongoCmdSet:  cmd,
+				mongoCmdInc:  bson.M{fieldVersion: 1},
+			},
+			&options.UpdateOptions{
+				ArrayFilters: &options.ArrayFilters{
+					Filters: bson.A{
+						arrayFilter,
+					},
+				},
+			},
+		)
+		if err != nil {
+			return err
+		}
+
+		if r.MatchedCount == 0 {
+			return errDocNotExists
+		}
+
+		return nil
+	})
+}
+
 func (impl *daoImpl) GetDoc(filter, project bson.M, result interface{}) error {
 	return impl.withContext(func(ctx context.Context) error {
 		var sr *mongo.SingleResult

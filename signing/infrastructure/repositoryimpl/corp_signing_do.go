@@ -12,6 +12,7 @@ import (
 const (
 	fieldPDF       = "pdf"
 	fieldRep       = "rep"
+	fieldType      = "type"
 	fieldDate      = "date"
 	fieldCorp      = "corp"
 	fieldName      = "name"

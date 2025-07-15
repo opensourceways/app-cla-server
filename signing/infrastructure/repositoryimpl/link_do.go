@@ -9,6 +9,7 @@ import (
 
 const (
 	fieldOrg        = "org"
+	fieldUrl        = "url"
 	fieldCLAs       = "clas"
 	fieldCLANum     = "cla_num"
 	fieldRemoved    = "removed"

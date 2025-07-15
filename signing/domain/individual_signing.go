@@ -36,7 +36,11 @@ func NewIndividualSigning(link LinkInfo, rep Representative, all AllSingingInfo)
 	return is
 }
 
-func (i *IndividualSigning) AgreeNewCLA(claId string) {
+func (i *IndividualSigning) AgreeNewCLA(claId string) error {
+	if i.Link.CLAId == claId {
+		return NewDomainError(ErrorCodeIndividualSigningCLAIsLatest)
+	}
+
 	if len(i.Logs) == 0 {
 		i.addLogOfSigning()
 	}
@@ -44,6 +48,8 @@ func (i *IndividualSigning) AgreeNewCLA(claId string) {
 	i.Link.CLAId = claId
 
 	i.addLogOfAgreeingNewCLA()
+
+	return nil
 }
 
 func (i *IndividualSigning) addLogOfSigning() {

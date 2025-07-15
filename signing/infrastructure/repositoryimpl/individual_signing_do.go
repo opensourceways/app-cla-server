@@ -66,7 +66,7 @@ func (do *individualSigningDO) toIndividualSigning() domain.IndividualSigning {
 }
 
 type individualSigningLogDO struct {
-	Date   string `bson:"date"   json:"time"   required:"true"`
+	Date   string `bson:"date"   json:"date"   required:"true"`
 	ClaId  string `bson:"cla_id" json:"cla_id" required:"true"`
 	Action string `bson:"action" json:"action" required:"true"`
 }

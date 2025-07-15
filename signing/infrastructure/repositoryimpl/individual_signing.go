@@ -112,10 +112,11 @@ func (impl *individualSigning) SaveNewCLA(is *domain.IndividualSigning) error {
 	filter[fieldEmail] = is.Rep.EmailAddr.EmailAddr()
 	filter[fieldDeleted] = false
 
-	logs := make([]individualSigningLogDO, len(is.Logs))
-	for i := range is.Logs {
-		logs[i] = toIndividualSigningLogDO(is.Logs[i])
+	do := toIndividualSigningDO(is)
+	doc, err := genDoc(do)
+	if err != nil {
+		return err
 	}
 
-	return impl.dao.UpdateDoc(filter, bson.M{fieldCLAId: is.Link.CLAId, fieldLogs: logs}, is.Version)
+	return impl.dao.UpdateDoc(filter, doc, is.Version)
 }

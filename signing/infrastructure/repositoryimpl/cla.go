@@ -42,8 +42,6 @@ func (impl *link) UpdateCLA(link *domain.Link, newCla *domain.CLA) error {
 		return commonRepo.NewErrorResourceNotFound(errors.New("can not find old cla"))
 	}
 
-	newCla.Fields = oldCla.Fields
-
 	oldDo := toCLADO(oldCla)
 	oldDoc, err := oldDo.toDoc()
 	if err != nil {
@@ -55,7 +53,8 @@ func (impl *link) UpdateCLA(link *domain.Link, newCla *domain.CLA) error {
 	}
 
 	filterOfArray := bson.M{
-		fieldId: oldCla.Id,
+		fieldLang: oldCla.Language.Language(),
+		fieldType: oldCla.Type.CLAType(),
 	}
 
 	update := bson.M{

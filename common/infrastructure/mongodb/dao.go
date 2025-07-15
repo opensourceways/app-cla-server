@@ -244,10 +244,10 @@ func (impl *daoImpl) UpdateArraySingleItem(filter bson.M, array string, filterOf
 	})
 }
 
-func (impl *daoImpl) PullAndUpdateArrayItem(
+func (impl *daoImpl) PushAndUpdateArrayItem(
 	filter bson.M,
-	arrayToRemove string, removeFilter bson.M,
-	array string, filterOfArray, doc bson.M, version int,
+	arrayToPush string, docToPush bson.M,
+	arrayToUpdate string, filterOfArray, docToUpdate bson.M, version int,
 	otherSet bson.M,
 ) error {
 	return impl.withContext(func(ctx context.Context) error {
@@ -257,8 +257,8 @@ func (impl *daoImpl) PullAndUpdateArrayItem(
 		if cmd == nil {
 			cmd = bson.M{}
 		}
-		for k, v := range doc {
-			cmd[fmt.Sprintf("%s.$[i].%s", array, k)] = v
+		for k, v := range docToUpdate {
+			cmd[fmt.Sprintf("%s.$[i].%s", arrayToUpdate, k)] = v
 		}
 
 		arrayFilter := bson.M{}
@@ -269,7 +269,7 @@ func (impl *daoImpl) PullAndUpdateArrayItem(
 		r, err := impl.col.UpdateOne(
 			ctx, filter,
 			bson.M{
-				mongoCmdPull: bson.M{arrayToRemove: removeFilter},
+				mongoCmdPush: bson.M{arrayToPush: docToPush},
 				mongoCmdSet:  cmd,
 				mongoCmdInc:  bson.M{fieldVersion: 1},
 			},

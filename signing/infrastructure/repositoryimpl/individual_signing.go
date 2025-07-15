@@ -112,11 +112,12 @@ func (impl *individualSigning) SaveNewCLA(is *domain.IndividualSigning) error {
 	filter[fieldEmail] = is.Rep.EmailAddr.EmailAddr()
 	filter[fieldDeleted] = false
 
-	do := toIndividualSigningDO(is)
+	do := toIndividualSigningLogsDO(is.Logs)
 	doc, err := genDoc(do)
 	if err != nil {
 		return err
 	}
+	doc[fieldCLAId] = is.Link.CLAId
 
 	return impl.dao.UpdateDoc(filter, doc, is.Version)
 }

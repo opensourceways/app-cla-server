@@ -8,7 +8,6 @@ const (
 )
 
 type IndividualSigning struct {
-	Id      string
 	Link    LinkInfo
 	Rep     Representative
 	Logs    []IndividualSigningLog

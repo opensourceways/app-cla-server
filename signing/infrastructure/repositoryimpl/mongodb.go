@@ -33,6 +33,7 @@ type dao interface {
 	PushArraySingleItemAndUpdate(filter bson.M, array string, v interface{}, u bson.M, version int) error
 	MoveArrayItem(filter bson.M, from string, filterOfItem bson.M, to string, value bson.M, version int) error
 	MoveAndAppendArrayItem(filter bson.M, from string, filterOfItem bson.M, to string, value bson.M, append bson.M, version int) error
+	PushAndUpdateArrayItem(filter bson.M, arrayToPush string, docToPush bson.M, arrayToUpdate string, filterOfArray, docToUpdate bson.M, version int, otherSet bson.M) error
 
 	InsertDoc(doc bson.M) (string, error)
 	ReplaceDoc(filter, doc bson.M) (string, error)

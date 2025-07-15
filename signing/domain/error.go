@@ -39,8 +39,9 @@ const (
 	ErrorCodeEmployeeSigningDisableAgain = "employee_signing_disable_again"
 	ErrorCodeEmployeeSigningCanNotDelete = "employee_signing_can_not_delete"
 
-	ErrorCodeIndividualSigningReSigning  = "individual_signing_resigning"
-	ErrorCodeIndividualSigningCorpExists = "individual_signing_corp_exists"
+	ErrorCodeIndividualSigningReSigning   = "individual_signing_resigning"
+	ErrorCodeIndividualSigningCorpExists  = "individual_signing_corp_exists"
+	ErrorCodeIndividualSigningCLAIsLatest = "individual_signing_cla_is_latest"
 
 	ErrorCodeVerificationCodeBusy  = "verification_code_busy"
 	ErrorCodeVerificationCodeWrong = "verification_code_wrong"

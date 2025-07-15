@@ -8,7 +8,6 @@ const (
 )
 
 type IndividualSigning struct {
-	Id      string
 	Link    LinkInfo
 	Rep     Representative
 	Logs    []IndividualSigningLog
@@ -36,7 +35,11 @@ func NewIndividualSigning(link LinkInfo, rep Representative, all AllSingingInfo)
 	return is
 }
 
-func (i *IndividualSigning) AgreeNewCLA(claId string) {
+func (i *IndividualSigning) AgreeNewCLA(claId string) error {
+	if i.Link.CLAId == claId {
+		return NewDomainError(ErrorCodeIndividualSigningCLAIsLatest)
+	}
+
 	if len(i.Logs) == 0 {
 		i.addLogOfSigning()
 	}
@@ -44,6 +47,8 @@ func (i *IndividualSigning) AgreeNewCLA(claId string) {
 	i.Link.CLAId = claId
 
 	i.addLogOfAgreeingNewCLA()
+
+	return nil
 }
 
 func (i *IndividualSigning) addLogOfSigning() {
@@ -62,4 +67,8 @@ func (i *IndividualSigning) addLogOfAgreeingNewCLA() {
 		ClaId:  i.Link.CLAId,
 		Action: individualSigningActionAgree,
 	})
+}
+
+func (i *IndividualSigning) HasSignedCLA(latestClaId string) bool {
+	return i.Link.CLAId == latestClaId
 }

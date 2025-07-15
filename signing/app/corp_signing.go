@@ -176,7 +176,7 @@ func (s *corpSigningService) FindDiffCLAFile(signingId string) (string, error) {
 		return "", domain.NewNotFoundDomainError(domain.ErrorCodeCLANotExists)
 	}
 
-	if !signed.HasSignedCLA(latestClaId) {
+	if signed.HasSignedCLA(latestClaId) {
 		return "", domain.NewDomainError(domain.ErrorCodeCorpSigningCLAIsLatest)
 	}
 

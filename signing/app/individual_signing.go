@@ -89,7 +89,9 @@ func (s *individualSigningService) AgreeNewCLA(cmd *CmdToSignIndividualCLA) erro
 		return err
 	}
 
-	sign.AgreeNewCLA(cmd.Link.CLAId)
+	if err = sign.AgreeNewCLA(cmd.Link.CLAId); err != nil {
+		return err
+	}
 
 	return s.repo.SaveNewCLA(&sign)
 }
@@ -103,6 +105,10 @@ func (s *individualSigningService) FindDiffCLAFile(cmd *CmdToFindSignedCLAInfo) 
 	newClaId := s.cla.GetClaId(signed.Link.Id, dp.CLATypeIndividual, signed.Link.Language)
 	if newClaId == "" {
 		return "", domain.NewNotFoundDomainError(domain.ErrorCodeCLANotExists)
+	}
+
+	if signed.HasSignedCLA(newClaId) {
+		return "", domain.NewDomainError(domain.ErrorCodeIndividualSigningCLAIsLatest)
 	}
 
 	index := domain.CLAIndex{

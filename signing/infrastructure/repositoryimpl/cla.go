@@ -48,15 +48,26 @@ func (impl *link) UpdateCLA(link *domain.Link, newCla *domain.CLA) error {
 		return err
 	}
 
-	newDo := toCLADO(newCla)
-	newDoc, err := newDo.toDoc()
-	if err != nil {
-		return err
+	filter := bson.M{
+		fieldId: link.Id,
 	}
 
-	return impl.dao.MoveAndAppendArrayItem(
-		impl.docFilter(link.Id), fieldCLAs, bson.M{fieldId: oldCla.Id},
-		fieldRemoved, oldDoc, newDoc, link.Version,
+	filterOfArray := bson.M{
+		fieldLang: oldCla.Language.Language(),
+		fieldType: oldCla.Type.CLAType(),
+	}
+
+	update := bson.M{
+		fieldId:  newCla.Id,
+		fieldUrl: newCla.URL,
+	}
+
+	otherSet := bson.M{
+		fieldCLANum: link.CLANum,
+	}
+
+	return impl.dao.PushAndUpdateArrayItem(
+		filter, fieldRemoved, oldDoc, fieldCLAs, filterOfArray, update, link.Version, otherSet,
 	)
 }
 

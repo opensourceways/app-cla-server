@@ -51,16 +51,25 @@ func (impl *link) UpdateCLA(link *domain.Link, newCla *domain.CLA) error {
 	}
 
 	filter := bson.M{
-		fieldId:                        link.Id,
-		childField(fieldCLAs, fieldId): oldCla.Id,
+		fieldId: link.Id,
+	}
+
+	filterOfArray := bson.M{
+		fieldId: oldCla.Id,
 	}
 
 	update := bson.M{
-		fieldCLANum:  link.CLANum,
-		"clas.$.id":  newCla.Id,
-		"clas.$.url": newCla.URL,
+		fieldId:  newCla.Id,
+		fieldUrl: newCla.URL,
 	}
-	return impl.dao.PushArraySingleItemAndUpdate(filter, fieldRemoved, oldDoc, update, link.Version)
+
+	otherSet := bson.M{
+		fieldCLANum: link.CLANum,
+	}
+
+	return impl.dao.PushAndUpdateArrayItem(
+		filter, fieldRemoved, oldDoc, fieldCLAs, filterOfArray, update, link.Version, otherSet,
+	)
 }
 
 func (impl *link) RemoveCLA(link *domain.Link, cla *domain.CLA) error {

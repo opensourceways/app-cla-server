@@ -55,7 +55,7 @@ func (impl *link) UpdateCLA(link *domain.Link, newCla *domain.CLA) error {
 	}
 
 	filterOfArray := bson.M{
-		childField(fieldCLAs, fieldId): oldCla.Id,
+		fieldId: oldCla.Id,
 	}
 
 	update := bson.M{

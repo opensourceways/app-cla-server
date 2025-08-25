@@ -1,6 +1,7 @@
 package claservice
 
 import (
+	"fmt"
 	"sync"
 
 	"github.com/opensourceways/app-cla-server/signing/domain"
@@ -31,6 +32,8 @@ type linkCache struct {
 }
 
 func (lc *linkCache) contains(linkId, claId string) bool {
+	fmt.Println("contain", linkId, claId)
+
 	lc.mutex.RLock()
 	clas, ok := lc.cache[linkId]
 	lc.mutex.RUnlock()
@@ -38,6 +41,8 @@ func (lc *linkCache) contains(linkId, claId string) bool {
 	if !ok {
 		return false
 	}
+
+	fmt.Println("find linkid ", clas)
 
 	for _, v := range clas {
 		if v.Id == claId {
@@ -67,9 +72,11 @@ func (lc *linkCache) getClaId(linkId string, claType dp.CLAType, language dp.Lan
 }
 
 func (lc *linkCache) update(linkId string, newCLA *domain.CLA) {
+	fmt.Println("update cache:", linkId, *newCLA)
 	lc.mutex.Lock()
 
 	if clas, ok := lc.cache[linkId]; !ok {
+		fmt.Println("update not found")
 		lc.cache[linkId] = []domain.CLA{*newCLA}
 	} else {
 		bingo := false
@@ -81,9 +88,13 @@ func (lc *linkCache) update(linkId string, newCLA *domain.CLA) {
 			}
 		}
 
+		fmt.Println("update bingo", bingo)
+
 		if !bingo {
 			lc.cache[linkId] = append(clas, *newCLA)
 		}
+
+		fmt.Println("update ok ", lc.cache[linkId])
 	}
 
 	lc.mutex.Unlock()

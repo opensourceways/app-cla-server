@@ -1,6 +1,7 @@
 package claservice
 
 import (
+	"fmt"
 	"sync"
 	"time"
 
@@ -59,19 +60,25 @@ func (s *claService) Add(link *domain.Link, cla *domain.CLA) error {
 		return err
 	}
 
+	fmt.Println("add cla 1")
+
 	p, err := s.local.AddCLA(link.Id, cla)
 	if err != nil {
 		return err
 	}
 
+	fmt.Println("add cla 2")
 	if err = s.repo.AddCLA(link, cla); err != nil {
+		fmt.Println("add cla 3")
 		if err1 := s.local.Remove(p); err1 != nil {
 			logs.Error("remove local file, err:%s", err1.Error())
 		}
 	} else {
+		fmt.Println("add cla 4")
 		s.linkCache.update(link.Id, cla)
 	}
 
+	fmt.Println("add cla 5")
 	return err
 }
 

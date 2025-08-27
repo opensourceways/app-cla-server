@@ -169,6 +169,11 @@ func (s *claService) AddLink(link *domain.Link) error {
 		clean()
 
 		return err
+	} else {
+		for i := range link.CLAs {
+			item := &link.CLAs[i]
+			s.linkCache.update(link.Id, item)
+		}
 	}
 
 	return nil

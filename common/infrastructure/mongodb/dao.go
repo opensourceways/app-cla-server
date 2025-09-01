@@ -335,6 +335,34 @@ func (impl *daoImpl) GetDocs(filter, project bson.M, result interface{}) error {
 	})
 }
 
+func (impl *daoImpl) GetDocsPage(filter, project bson.M, intPage, intPageSize int, result interface{}) error {
+	return impl.withContext(func(ctx context.Context) error {
+		// 构建查询选项
+		opts := options.Find()
+		if len(project) > 0 {
+			opts.SetProjection(project)
+		}
+		opts.SetSkip(int64((intPage - 1) * intPageSize))
+		opts.SetLimit(int64(intPageSize))
+		// 执行查询
+		cursor, err := impl.col.Find(ctx, filter, opts)
+		if err != nil {
+			return err
+		}
+		return cursor.All(ctx, result)
+	})
+}
+
+func (impl *daoImpl) GetDocsCount(filter bson.M) (int64, error) {
+	var count int64
+	err := impl.withContext(func(ctx context.Context) error {
+		var err error
+		count, err = impl.col.CountDocuments(ctx, filter)
+		return err
+	})
+	return count, err
+}
+
 func (impl *daoImpl) GetDocAndDelete(filter, project bson.M, result interface{}) error {
 	return impl.withContext(func(ctx context.Context) error {
 		var sr *mongo.SingleResult

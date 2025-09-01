@@ -169,6 +169,41 @@ func (adapter *corpSigningAdatper) List(userId, linkId string) (
 	return r, nil
 }
 
+func (adapter *corpSigningAdatper) ListPage(userId, linkId string, page, pageSize int) (
+	models.CorporationSigningPageSummary, models.IModelError,
+) {
+	var pageData models.CorporationSigningPageSummary
+	pageData.Total = 0
+	if page <= 0 || pageSize <= 0 {
+		return pageData, toModelError(errors.New("invalid param"))
+	}
+	v, err := adapter.s.ListPage(userId, linkId, page, pageSize)
+	if err != nil {
+		return pageData, toModelError(err)
+	}
+
+	r := make([]models.CorporationSigningSummary, len(v.Data))
+	for i := range v.Data {
+		item := &v.Data[i]
+
+		r[i] = models.CorporationSigningSummary{
+			CorporationSigningBasicInfo: models.CorporationSigningBasicInfo{
+				Date:            item.Date,
+				AdminName:       item.RepName,
+				AdminEmail:      item.RepEmail,
+				CLALanguage:     item.Language,
+				CorporationName: item.CorpName,
+			},
+			Id:          item.Id,
+			AdminAdded:  item.HasAdminAdded,
+			PDFUploaded: item.HasPDFUploaded,
+		}
+	}
+	pageData.Total = v.Total
+	pageData.Data = r
+	return pageData, nil
+}
+
 // FindCorpSigningId
 func (adapter *corpSigningAdatper) FindCorpSummary(linkId string, email string) (
 	interface{}, models.IModelError,

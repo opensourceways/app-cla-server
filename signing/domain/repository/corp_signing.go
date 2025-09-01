@@ -16,6 +16,11 @@ type CorpSigningSummary struct {
 	Admin     domain.Manager
 }
 
+type CorpSigningSummaryPage struct {
+	Total int64
+	Data  []CorpSigningSummary
+}
+
 type EmployeeSigningSummary struct {
 	Enabled bool
 	ClaId   string
@@ -34,6 +39,7 @@ type CorpSigning interface {
 	Find(string) (domain.CorpSigning, error)
 	Remove(*domain.CorpSigning) error
 	FindAll(linkId string) ([]CorpSigningSummary, error)
+	FindPage(linkId string, intPage, intPageSize int) (CorpSigningSummaryPage, error)
 
 	AddEmployee(*domain.CorpSigning, *domain.EmployeeSigning) error
 	SaveEmployee(*domain.CorpSigning, *domain.EmployeeSigning) error

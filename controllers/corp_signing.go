@@ -205,8 +205,6 @@ func (ctl *CorporationSigningController) GetAll() {
 // @Tags CorpSigning
 // @Accept json
 // @Param  link_id  path  string  true  "link id"
-// @Param  page     query int     false  "page number"
-// @Param  page_size query int     false  "page size"
 // @Success 200 {object} models.CorporationSigningSummary
 // @Failure 400 missing_url_path_parameter: missing url path parameter
 // @Failure 401 missing_token:              token is missing
@@ -216,7 +214,7 @@ func (ctl *CorporationSigningController) GetAll() {
 // @Failure 405 unknown_link:               unkown link id
 // @Failure 406 not_yours_org:              the link doesn't belong to your community
 // @Failure 500 system_error:               system error
-// @router /:link_id [get]
+// @router /page/:link_id [get]
 func (ctl *CorporationSigningController) GetPage() {
 	action := "community manager lists page corp signings"
 	linkID := ctl.GetString(":link_id")

@@ -37,7 +37,7 @@ func (opt *CorporationSigningCreateOption) ToCorporationSigning() CorporationSig
 
 type CorporationSigningPageSummary struct {
 	Total int64                       `json:"total"`
-	Data  []CorporationSigningSummary `json:"data"`
+	Data  []CorporationSigningSummary `json:"page_data"`
 }
 
 type CorporationSigningSummary struct {

@@ -228,12 +228,13 @@ func (ctl *CorporationSigningController) GetPage() {
 		ctl.sendModelErrorAsResp(models.NewModelError(models.ErrSystemError, sizeErr), action)
 		return
 	}
+	adminAdded, sizeErr := ctl.GetBool("admin_added", false)
 	pl, fr := ctl.tokenPayloadBasedOnCorpManager()
 	if fr != nil {
 		ctl.sendFailedResultAsResp(fr, action)
 		return
 	}
-	if r, merr := models.ListPageCorpSigning(pl.UserId, linkID, page, pageSize); merr != nil {
+	if r, merr := models.ListPageCorpSigning(pl.UserId, linkID, page, pageSize, adminAdded); merr != nil {
 		ctl.sendModelErrorAsResp(merr, action)
 	} else {
 		ctl.sendSuccessResp(action, r)

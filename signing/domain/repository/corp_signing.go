@@ -39,7 +39,7 @@ type CorpSigning interface {
 	Find(string) (domain.CorpSigning, error)
 	Remove(*domain.CorpSigning) error
 	FindAll(linkId string) ([]CorpSigningSummary, error)
-	FindPage(linkId string, intPage, intPageSize int) (CorpSigningSummaryPage, error)
+	FindPage(linkId string, intPage, intPageSize int, adminAdded bool) (CorpSigningSummaryPage, error)
 
 	AddEmployee(*domain.CorpSigning, *domain.EmployeeSigning) error
 	SaveEmployee(*domain.CorpSigning, *domain.EmployeeSigning) error

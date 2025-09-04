@@ -143,9 +143,16 @@ func (impl *corpSigning) FindAll(linkId string) ([]repository.CorpSigningSummary
 	return v, nil
 }
 
-func (impl *corpSigning) FindPage(linkId string, intPage, intPageSize int) (repository.CorpSigningSummaryPage, error) {
+func (impl *corpSigning) FindPage(linkId string, intPage, intPageSize int, adminAdded bool) (repository.CorpSigningSummaryPage, error) {
 	filter := linkIdFilter(linkId)
-
+	if adminAdded {
+		filter["admin.id"] = bson.M{"$ne": ""}
+	} else {
+		filter["$or"] = []bson.M{
+			{"admin.id": ""},
+			{"admin": nil},
+		}
+	}
 	project := bson.M{
 		fieldDate:      1,
 		fieldCLAId:     1,

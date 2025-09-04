@@ -33,7 +33,7 @@ type CorpSigningService interface {
 	Remove(userId, csId string) error
 	Get(userId, csId string, email dp.EmailAddr) (string, CorpSigningInfoDTO, error)
 	List(userId, linkId string) ([]CorpSigningDTO, error)
-	ListPage(userId, linkId string, page, pageSize int) (CorpSigningPageDTO, error)
+	ListPage(userId, linkId string, page, pageSize int, adminAdded bool) (CorpSigningPageDTO, error)
 	FindCorpSummary(cmd *CmdToFindCorpSummary) ([]CorpSummaryDTO, error)
 	FindDiffCLAFile(signingId string) (string, error)
 	AgreeWithLatestCLA(signingId string) error
@@ -147,14 +147,14 @@ func (s *corpSigningService) List(userId, linkId string) ([]CorpSigningDTO, erro
 	return dtos, nil
 }
 
-func (s *corpSigningService) ListPage(userId, linkId string, page, pageSize int) (CorpSigningPageDTO, error) {
+func (s *corpSigningService) ListPage(userId, linkId string, page, pageSize int, adminAdded bool) (CorpSigningPageDTO, error) {
 	var pageData CorpSigningPageDTO
 	pageData.Total = 0
 	if _, err := checkIfCommunityManager(userId, linkId, s.linkRepo); err != nil {
 		return pageData, err
 	}
 
-	v, err := s.repo.FindPage(linkId, page, pageSize)
+	v, err := s.repo.FindPage(linkId, page, pageSize, adminAdded)
 	if err != nil || v.Total == 0 {
 		return pageData, err
 	}

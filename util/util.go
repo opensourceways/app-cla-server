@@ -126,3 +126,22 @@ func CheckContentType(data []byte, t string) bool {
 
 	return strings.Contains(strings.ToLower(s), t)
 }
+
+// 掩盖邮箱函数
+func MaskEmail(email string) string {
+	parts := strings.Split(email, "@")
+	if len(parts) != 2 {
+		return "***@***" // 无效邮箱格式
+	}
+
+	username := parts[0]
+	domain := parts[1]
+
+	// 掩盖用户名部分：显示前2个字符，其余用*代替
+	if len(username) <= 2 {
+		return "***@" + domain
+	}
+	maskedUsername := username[:2] + strings.Repeat("*", len(username)-2)
+
+	return maskedUsername + "@" + domain
+}

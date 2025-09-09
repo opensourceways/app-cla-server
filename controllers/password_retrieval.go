@@ -4,19 +4,56 @@ import (
 	"fmt"
 	"net/url"
 	"path"
+	"strings"
+	"time"
 
 	"github.com/beego/beego/v2/core/logs"
 
+	"github.com/opensourceways/app-cla-server/common/infrastructure/redisdb"
 	"github.com/opensourceways/app-cla-server/models"
 	"github.com/opensourceways/app-cla-server/signing/infrastructure/emailtmpl"
+	"github.com/opensourceways/app-cla-server/util"
 )
 
 type PasswordRetrievalController struct {
 	baseController
+	rateLimiter redisdb.IRateLimiter
 }
 
 func (ctl *PasswordRetrievalController) Prepare() {
 	ctl.apiPrepare("")
+}
+
+func (ctl *PasswordRetrievalController) initRateLimit() {
+	config := redisdb.RateLimiterConfig{
+		KeyPrefix:  "pw_retrieval",
+		LimitCount: 5,
+		TimeWindow: time.Hour, // 1 hour
+	}
+	ctl.rateLimiter = redisdb.NewRedisRateLimiter(config)
+}
+
+func (ctl *PasswordRetrievalController) checkRateLimit(clientIP, email string) bool {
+	if ctl.rateLimiter == nil {
+		ctl.initRateLimit()
+	}
+
+	// 生成组合key: clientIP:email
+	key := fmt.Sprintf("%s:%s", clientIP, email)
+
+	// 检查频率限制（原子操作）
+	allowed, err := ctl.rateLimiter.CheckAndRecordRateLimit(key)
+	if err != nil {
+		logs.Error("Failed to check rate limit: %s", err.Error())
+		return false
+	}
+
+	if !allowed {
+		logs.Info("Rate limit exceeded for email: %s, IP: %s", util.MaskEmail(email), clientIP)
+		return false
+	}
+
+	return true
 }
 
 // @Title Post
@@ -39,9 +76,18 @@ func (ctl *PasswordRetrievalController) Post() {
 		ctl.sendFailedResultAsResp(fr, action)
 		return
 	}
+	// 邮箱不区分大小写，为了防止重复发送，统一转为小写
+	info.Email = strings.ToLower(strings.TrimSpace(info.Email))
 
 	if err := (&info).Validate(); err != nil {
 		ctl.sendModelErrorAsResp(err, action)
+		return
+	}
+
+	// 检查频率限制
+	clientIP := ctl.Ctx.Input.IP()
+	if !ctl.checkRateLimit(clientIP, info.Email) {
+		ctl.sendModelErrorAsResp(models.NewModelError(models.ErrTooManyRequest, nil), action)
 		return
 	}
 

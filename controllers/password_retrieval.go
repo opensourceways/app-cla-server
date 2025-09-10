@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/url"
 	"path"
+	"strings"
 
 	"github.com/beego/beego/v2/core/logs"
 
@@ -39,6 +40,8 @@ func (ctl *PasswordRetrievalController) Post() {
 		ctl.sendFailedResultAsResp(fr, action)
 		return
 	}
+	// 邮箱不区分大小写，为了防止重复发送，统一转为小写
+	info.Email = strings.ToLower(strings.TrimSpace(info.Email))
 
 	if err := (&info).Validate(); err != nil {
 		ctl.sendModelErrorAsResp(err, action)

@@ -41,14 +41,16 @@ func head(url string, fileType string, maxSize int) error {
 			return errors.New("unknown file type")
 		}
 
-		if resp.ContentLength == -1 {
-			return errors.New("unknown file size")
-		}
+		// gitcode cannot get length
+		if !strings.HasPrefix(url, "https://raw.gitcode.com/") {
+			if resp.ContentLength == -1 {
+				return errors.New("unknown file size")
+			}
 
-		if resp.ContentLength > int64(maxSize) {
-			return errors.New("big file")
+			if resp.ContentLength > int64(maxSize) {
+				return errors.New("big file")
+			}
 		}
-
 		return nil
 	})
 }
@@ -72,6 +74,18 @@ func DownloadFile(url, fileType string, maxSize int) ([]byte, error) {
 			err := resp.Body.Close()
 
 			return MultiErrors(errors.New("can't dowload"), err)
+		}
+
+		if strings.HasPrefix(url, "https://raw.gitcode.com/") {
+			if resp.ContentLength == -1 {
+				err := resp.Body.Close()
+				return MultiErrors(errors.New("unknown file size"), err)
+			}
+
+			if resp.ContentLength > int64(maxSize) {
+				err := resp.Body.Close()
+				return MultiErrors(errors.New("big file"), err)
+			}
 		}
 
 		content, err = ioutil.ReadAll(resp.Body)

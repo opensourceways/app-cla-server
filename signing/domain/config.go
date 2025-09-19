@@ -56,7 +56,7 @@ func (cfg *Config) SetDefault() {
 
 	if len(cfg.SourceOfCLAPDF) == 0 {
 		cfg.SourceOfCLAPDF = []string{
-			"https://gitee.com", "https://github.com",
+			"https://gitee.com", "https://github.com", "https://raw.gitcode.com",
 		}
 	}
 

@@ -75,6 +75,11 @@ func init() {
 				&controllers.HeartbeatController{},
 			),
 		),
+		beego.NSNamespace("/migrate",
+			beego.NSInclude(
+				&controllers.MigrationController{},
+			),
+		),
 	)
 	beego.AddNamespace(ns)
 }

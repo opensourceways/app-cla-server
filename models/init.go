@@ -15,6 +15,7 @@ var (
 	employeeManagerAdapterInstance   employeeManagerAdapter
 	corpEmailDomainAdapterInstance   corpEmailDomainAdapter
 	individualSigningAdapterInstance individualSigningAdapter
+	migrationAdapterInstance         migrationAdapter
 )
 
 type corpSigningAdapter interface {
@@ -144,6 +145,15 @@ type claAdapter interface {
 
 func RegisterCLAAdapter(a claAdapter) {
 	claAdapterInstance = a
+}
+
+// migrationAdapter
+type migrationAdapter interface {
+	MigrateCommunityData(userId string, opt *CommunityMigrationOpt) IModelError
+}
+
+func RegisterMigrationAdapter(a migrationAdapter) {
+	migrationAdapterInstance = a
 }
 
 // linkAdapter

@@ -44,6 +44,9 @@ type dao interface {
 
 	GetDoc(filter, project bson.M, result interface{}) error
 	GetDocs(filter, project bson.M, result interface{}) error
+	// 添加分页查询方法
+	GetDocsWithPagination(filter, project bson.M, skip, limit int, result interface{}) error
+	CountDocs(filter bson.M) (int64, error)
 	GetDocAndDelete(filter, project bson.M, result interface{}) error
 	GetArrayItem(filter bson.M, array string, filterOfArray, project bson.M, result interface{}) error
 }

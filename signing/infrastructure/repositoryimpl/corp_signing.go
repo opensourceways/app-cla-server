@@ -43,11 +43,11 @@ func (impl *corpSigning) Add(v *domain.CorpSigning) error {
 		},
 	}
 
-	_, err = impl.dao.InsertDocIfNotExists(docFilter, doc)
+	id, err := impl.dao.InsertDocIfNotExists(docFilter, doc)
 	if err != nil && impl.dao.IsDocExists(err) {
 		err = commonRepo.NewErrorDuplicateCreating(err)
 	}
-
+	v.Id = id
 	return err
 }
 
@@ -141,6 +141,49 @@ func (impl *corpSigning) FindAll(linkId string) ([]repository.CorpSigningSummary
 	}
 
 	return v, nil
+}
+
+func (impl *corpSigning) FindAllWithPagination(linkId string, offset, limit int) ([]repository.CorpSigningSummary, error) {
+	// 参数校验
+	if offset < 0 {
+		offset = 0
+	}
+	if limit <= 0 || limit > 1000 { // 限制最大查询数量
+		limit = 50
+	}
+	filter := linkIdFilter(linkId)
+
+	project := bson.M{
+		fieldDate:      1,
+		fieldCLAId:     1,
+		fieldLang:      1,
+		fieldRep:       1,
+		fieldCorp:      1,
+		fieldAdmin:     1,
+		fieldLinkId:    1,
+		fieldHasPDF:    1,
+		fieldCLANotify: 1,
+	}
+
+	var dos []corpSigningDO
+
+	// 使用分页查询
+	if err := impl.dao.GetDocsWithPagination(filter, project, offset, limit, &dos); err != nil {
+		return nil, err
+	}
+
+	result := make([]repository.CorpSigningSummary, len(dos))
+	for i := range dos {
+		result[i] = dos[i].toCorpSigningSummary()
+	}
+
+	return result, nil
+}
+
+func (impl *corpSigning) CountByLinkId(linkId string) (int64, error) {
+	filter := linkIdFilter(linkId)
+	filter[fieldDeleted] = bson.M{"$size": 0}
+	return impl.dao.CountDocs(filter)
 }
 
 func (impl *corpSigning) HasSignedLink(linkId string) (bool, error) {

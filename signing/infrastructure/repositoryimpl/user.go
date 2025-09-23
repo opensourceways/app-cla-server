@@ -171,3 +171,20 @@ func (impl *user) FindByEmail(linkId string, e dp.EmailAddr) (u domain.User, err
 
 	return
 }
+
+func (impl *user) FindAllByLinkId(linkId string) ([]domain.User, error) {
+	filter := linkIdFilter(linkId)
+
+	var dos []userDO
+
+	if err := impl.dao.GetDocs(filter, nil, &dos); err != nil {
+		return nil, err
+	}
+
+	result := make([]domain.User, len(dos))
+	for i := range dos {
+		result[i] = dos[i].toUser()
+	}
+
+	return result, nil
+}

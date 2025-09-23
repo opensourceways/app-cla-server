@@ -143,6 +143,53 @@ func (impl *corpSigning) FindAll(linkId string) ([]repository.CorpSigningSummary
 	return v, nil
 }
 
+func (impl *corpSigning) FindPage(linkId string, intPage, intPageSize int, adminAdded bool) (repository.CorpSigningSummaryPage, error) {
+	filter := linkIdFilter(linkId)
+	if adminAdded {
+		filter["admin.id"] = bson.M{"$ne": ""}
+	} else {
+		filter["$or"] = []bson.M{
+			{"admin.id": ""},
+			{"admin": nil},
+		}
+	}
+	project := bson.M{
+		fieldDate:      1,
+		fieldCLAId:     1,
+		fieldLang:      1,
+		fieldRep:       1,
+		fieldCorp:      1,
+		fieldAdmin:     1,
+		fieldLinkId:    1,
+		fieldHasPDF:    1,
+		fieldCLANotify: 1,
+	}
+
+	var docsPage repository.CorpSigningSummaryPage
+	docsPage.Total = 0
+	total, err := impl.dao.GetDocsCount(filter)
+	if err != nil {
+		return docsPage, err
+	}
+	if total == 0 {
+		return docsPage, nil
+	}
+
+	var dos []corpSigningDO
+
+	if err := impl.dao.GetDocsPage(filter, project, intPage, intPageSize, &dos); err != nil {
+		return docsPage, err
+	}
+
+	v := make([]repository.CorpSigningSummary, len(dos))
+	for i := range dos {
+		v[i] = dos[i].toCorpSigningSummary()
+	}
+	docsPage.Data = v
+	docsPage.Total = total
+	return docsPage, nil
+}
+
 func (impl *corpSigning) HasSignedLink(linkId string) (bool, error) {
 	filter := linkIdFilter(linkId)
 

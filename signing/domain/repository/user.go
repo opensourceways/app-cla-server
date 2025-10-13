@@ -16,4 +16,6 @@ type User interface {
 	Find(string) (domain.User, error)
 	FindByAccount(linkId string, a dp.Account) (domain.User, error)
 	FindByEmail(linkId string, e dp.EmailAddr) (domain.User, error)
+	// migration user
+	FindAllByLinkId(linkId string) ([]domain.User, error)
 }

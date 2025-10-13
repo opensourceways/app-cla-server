@@ -335,6 +335,43 @@ func (impl *daoImpl) GetDocs(filter, project bson.M, result interface{}) error {
 	})
 }
 
+func (impl *daoImpl) GetDocsWithPagination(filter, project bson.M, skip, limit int, result interface{}) error {
+	return impl.withContext(func(ctx context.Context) error {
+		var cursor *mongo.Cursor
+		var err error
+
+		findOptions := &options.FindOptions{}
+		if skip > 0 {
+			findOptions.SetSkip(int64(skip))
+		}
+		if limit > 0 {
+			findOptions.SetLimit(int64(limit))
+		}
+
+		if len(project) > 0 {
+			findOptions.SetProjection(project)
+		}
+
+		cursor, err = impl.col.Find(ctx, filter, findOptions)
+		if err != nil {
+			return err
+		}
+
+		return cursor.All(ctx, result)
+	})
+}
+func (impl *daoImpl) CountDocs(filter bson.M) (int64, error) {
+	var count int64
+
+	err := impl.withContext(func(ctx context.Context) error {
+		var err error
+		count, err = impl.col.CountDocuments(ctx, filter)
+		return err
+	})
+
+	return count, err
+}
+
 func (impl *daoImpl) GetDocAndDelete(filter, project bson.M, result interface{}) error {
 	return impl.withContext(func(ctx context.Context) error {
 		var sr *mongo.SingleResult

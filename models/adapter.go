@@ -225,3 +225,8 @@ func GenKeyForPasswordRetrieval(opt *PasswordRetrievalKey) (string, IModelError)
 func ResetPassword(linkId string, opt *PasswordRetrieval, key string) IModelError {
 	return userAdapterInstance.ResetPassword(linkId, key, opt.Password)
 }
+
+// migration
+func MigrateCommunityData(userId string, opt *CommunityMigrationOpt) IModelError {
+	return migrationAdapterInstance.MigrateCommunityData(userId, opt)
+}

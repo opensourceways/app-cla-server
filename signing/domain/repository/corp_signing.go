@@ -34,6 +34,8 @@ type CorpSigning interface {
 	Find(string) (domain.CorpSigning, error)
 	Remove(*domain.CorpSigning) error
 	FindAll(linkId string) ([]CorpSigningSummary, error)
+	FindAllWithPagination(linkId string, offset, limit int) ([]CorpSigningSummary, error)
+	CountByLinkId(linkId string) (int64, error)
 
 	AddEmployee(*domain.CorpSigning, *domain.EmployeeSigning) error
 	SaveEmployee(*domain.CorpSigning, *domain.EmployeeSigning) error

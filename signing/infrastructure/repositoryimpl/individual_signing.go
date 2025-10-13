@@ -74,6 +74,46 @@ func (impl *individualSigning) Find(linkId string, email dp.EmailAddr) (domain.I
 	return do.toIndividualSigning(), nil
 }
 
+func (impl *individualSigning) FindAll(linkId string) ([]domain.IndividualSigning, error) {
+	filter := linkIdFilter(linkId)
+	filter[fieldDeleted] = false
+
+	var dos []individualSigningDO
+
+	if err := impl.dao.GetDocs(filter, nil, &dos); err != nil {
+		return nil, err
+	}
+
+	var result []domain.IndividualSigning
+	for _, do := range dos {
+		result = append(result, do.toIndividualSigning())
+	}
+
+	return result, nil
+}
+
+func (impl *individualSigning) FindAllWithPagination(linkId string, offset, limit int) ([]domain.IndividualSigning, error) {
+	filter := linkIdFilter(linkId)
+	filter[fieldDeleted] = false
+
+	var dos []individualSigningDO
+	if err := impl.dao.GetDocsWithPagination(filter, nil, offset, limit, &dos); err != nil {
+		return nil, err
+	}
+	result := make([]domain.IndividualSigning, len(dos))
+	for i := range dos {
+		result[i] = dos[i].toIndividualSigning()
+	}
+
+	return result, nil
+}
+
+func (impl *individualSigning) CountByLinkId(linkId string) (int64, error) {
+	filter := linkIdFilter(linkId)
+	filter[fieldDeleted] = false
+	return impl.dao.CountDocs(filter)
+}
+
 func (impl *individualSigning) HasSignedLink(linkId string) (bool, error) {
 	filter := linkIdFilter(linkId)
 

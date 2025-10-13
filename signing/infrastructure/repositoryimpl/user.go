@@ -41,6 +41,29 @@ func (impl *user) Add(v *domain.User) (string, error) {
 	return index, err
 }
 
+func (impl *user) AddForMigrate(v *domain.User) (string, error) {
+	do := toUserDOForMigrate(v)
+	doc, err := do.toDoc()
+	if err != nil {
+		return "", err
+	}
+	doc[fieldVersion] = 0
+	doc[fieldPassword] = v.Password
+
+	docFilter := linkIdFilter(v.LinkId)
+	docFilter[mongodbCmdOr] = bson.A{
+		bson.M{fieldEmail: v.EmailAddr.EmailAddr()},
+		bson.M{fieldAccount: v.Account.Account()},
+	}
+
+	index, err := impl.dao.InsertDocIfNotExists(docFilter, doc)
+	if err != nil && impl.dao.IsDocExists(err) {
+		err = commonRepo.NewErrorDuplicateCreating(err)
+	}
+
+	return index, err
+}
+
 func (impl *user) Remove(ids []string) error {
 	if len(ids) == 1 {
 		filter, err := impl.dao.DocIdFilter(ids[0])

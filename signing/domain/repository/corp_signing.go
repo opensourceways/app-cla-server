@@ -29,6 +29,7 @@ type CorpSummary struct {
 
 type CorpSigning interface {
 	Add(*domain.CorpSigning) error
+	AddForMigrate(*domain.CorpSigning) error
 	FindCorpSummary(linkId, domain string) ([]CorpSummary, error)
 	FindCorpManagers(linkId, domain string) ([]domain.Manager, error)
 	Find(string) (domain.CorpSigning, error)

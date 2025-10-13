@@ -157,7 +157,6 @@ func (impl *notifyAdminWatchImpl) handleSendEmail(link *repository.LinkCLA, corp
 		ProjectURL:       link.Org.ProjectURL,
 		URLOfCLAPlatform: impl.claPlatformURL + link.Id,
 	}
-
 	emailMsg, err := builder.GenEmailMsg()
 	if err != nil {
 		return err

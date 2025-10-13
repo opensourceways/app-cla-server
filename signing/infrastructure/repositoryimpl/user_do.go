@@ -72,3 +72,25 @@ func toUserDO(u *domain.User) userDO {
 		PasswordChanged: u.PasswordChanged,
 	}
 }
+
+func toUserDOForMigrate(u *domain.User) userDO {
+	if u == nil {
+		return userDO{}
+	}
+
+	return userDO{
+		Email:           u.EmailAddr.EmailAddr(),
+		LinkId:          u.LinkId,
+		Account:         u.Account.Account(),
+		CorpSigningId:   u.CorpSigningId,
+		PrivacyConsent:  toPrivacyConsentDO(u.PrivacyConsent),
+		PasswordChanged: u.PasswordChanged,
+	}
+}
+
+func toPrivacyConsentDO(p domain.PrivacyConsent) privacyConsentDO {
+	return privacyConsentDO{
+		Time:    p.Time,
+		Version: p.Version,
+	}
+}

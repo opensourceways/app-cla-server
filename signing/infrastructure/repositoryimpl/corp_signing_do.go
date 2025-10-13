@@ -45,6 +45,23 @@ func toCorpSigningDO(v *domain.CorpSigning) corpSigningDO {
 	}
 }
 
+func toCorpSigningDOForMigrate(v *domain.CorpSigning) corpSigningDO {
+	link := &v.Link
+
+	return corpSigningDO{
+		Date:      v.Date,
+		CLAId:     link.CLAId,
+		LinkId:    link.Id,
+		Language:  link.Language.Language(),
+		Rep:       toRepDO(&v.Rep),
+		Corp:      toCorpDO(&v.Corp),
+		AllInfo:   v.AllInfo,
+		Admin:     toManagerDO(&v.Admin),
+		Managers:  toManagerDOs(v.Managers),
+		Employees: toEmployeeSigningDOs(v.Employees),
+	}
+}
+
 // corpSigningDO
 type corpSigningDO struct {
 	Id       primitive.ObjectID `bson:"_id"      json:"-"`
@@ -137,6 +154,18 @@ func (do *corpSigningDO) toEmployeeSignings() []domain.EmployeeSigning {
 	return es
 }
 
+func toEmployeeSigningDOs(employees []domain.EmployeeSigning) []employeeSigningDO {
+	if employees == nil {
+		return nil
+	}
+
+	result := make([]employeeSigningDO, len(employees))
+	for i := range employees {
+		result[i] = toEmployeeSigningDO(&employees[i])
+	}
+	return result
+}
+
 func (do *corpSigningDO) toManagers() []domain.Manager {
 	ms := make([]domain.Manager, len(do.Managers))
 	for i := range do.Managers {
@@ -144,6 +173,18 @@ func (do *corpSigningDO) toManagers() []domain.Manager {
 	}
 
 	return ms
+}
+
+func toManagerDOs(managers []domain.Manager) []managerDO {
+	if managers == nil {
+		return nil
+	}
+
+	result := make([]managerDO, len(managers))
+	for i := range managers {
+		result[i] = toManagerDO(&managers[i])
+	}
+	return result
 }
 
 // representative DO

@@ -105,7 +105,7 @@ func (s *migrationService) migrateCorpSigningData(sourceLinkId, targetLinkId str
 			// 克隆并修改LinkId
 			newCorpSigning := s.cloneCorpSigning(&fullCorpSigning, targetLinkId)
 			// 添加到新社区并修改CorpSigning.Id
-			if err := s.corpRepo.Add(&newCorpSigning); err != nil {
+			if err := s.corpRepo.AddForMigrate(&newCorpSigning); err != nil {
 				// 特别检查是否是文档已存在的错误
 				if strings.Contains(err.Error(), "doc exists") || strings.Contains(err.Error(), "document exists") {
 					logs.Error("文档已存在错误: 可能重复迁移或ID冲突, oldId=%s, newId=%s", oldId, newCorpSigning.Id)
@@ -164,7 +164,7 @@ func (s *migrationService) migrateUserData(sourceLinkId, targetLinkId string, co
 	// 为每个用户创建新的账号记录
 	for _, user := range users {
 		newUser := s.cloneUser(&user, targetLinkId, corpSigningIdMap)
-		if _, err := s.userRepo.Add(&newUser); err != nil {
+		if _, err := s.userRepo.AddForMigrate(&newUser); err != nil {
 			return err
 		}
 	}

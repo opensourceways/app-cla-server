@@ -7,6 +7,7 @@ import (
 
 type User interface {
 	Add(*domain.User) (string, error)
+	AddForMigrate(*domain.User) (string, error)
 	Remove([]string) error
 	RemoveByAccount(linkId string, accounts []dp.Account) error
 

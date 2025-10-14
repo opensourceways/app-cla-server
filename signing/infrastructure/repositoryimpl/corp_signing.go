@@ -51,6 +51,32 @@ func (impl *corpSigning) Add(v *domain.CorpSigning) error {
 	return err
 }
 
+func (impl *corpSigning) AddForMigrate(v *domain.CorpSigning) error {
+	do := toCorpSigningDOForMigrate(v)
+	doc, err := do.toDoc()
+	if err != nil {
+		return err
+	}
+	doc[fieldVersion] = 0
+	doc[fieldDeleted] = bson.A{}
+
+	docFilter := linkIdFilter(v.Link.Id)
+	docFilter[mongodbCmdOr] = bson.A{
+		bson.M{childField(fieldRep, fieldEmail): v.Rep.EmailAddr.EmailAddr()},
+		bson.M{
+			childField(fieldCorp, fieldName):   v.Corp.Name.CorpName(),
+			childField(fieldCorp, fieldDomain): v.Corp.PrimaryEmailDomain,
+		},
+	}
+
+	id, err := impl.dao.InsertDocIfNotExists(docFilter, doc)
+	if err != nil && impl.dao.IsDocExists(err) {
+		err = commonRepo.NewErrorDuplicateCreating(err)
+	}
+	v.Id = id
+	return err
+}
+
 func (impl *corpSigning) Remove(cs *domain.CorpSigning) error {
 	filter, err := impl.toCorpSigningIndex(cs.Id)
 	if err != nil {

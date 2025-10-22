@@ -42,6 +42,26 @@ func (impl *individualSigning) Add(is *domain.IndividualSigning) error {
 	return err
 }
 
+func (impl *individualSigning) AddForMigrate(is *domain.IndividualSigning) error {
+	do := toIndividualSigningDO(is)
+	doc, err := do.toDoc()
+	if err != nil {
+		return err
+	}
+	doc[fieldVersion] = 0
+
+	filter := linkIdFilter(is.Link.Id)
+	filter[fieldEmail] = is.Rep.EmailAddr.EmailAddr()
+	filter[fieldDeleted] = false
+
+	_, err = impl.dao.InsertDocIfNotExists(filter, doc)
+	if err != nil && impl.dao.IsDocExists(err) {
+		err = commonRepo.NewErrorDuplicateCreating(err)
+	}
+
+	return err
+}
+
 func (impl *individualSigning) FindSignedCLA(linkId string, email dp.EmailAddr) (string, error) {
 	filter := linkIdFilter(linkId)
 	filter[fieldEmail] = email.EmailAddr()

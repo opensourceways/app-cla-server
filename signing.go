@@ -178,7 +178,7 @@ func initSigning(cfg *config.Config) error {
 	// migration
 	models.RegisterMigrationAdapter(
 		adapter.NewMigrationAdapter(
-			app.NewMigrationService(linkRepo, repo, individual, ur)),
+			app.NewMigrationService(linkRepo, repo, individual, ur, cla, localCLA)),
 	)
 	// controllers
 	controllers.Init(

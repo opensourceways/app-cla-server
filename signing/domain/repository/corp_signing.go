@@ -21,6 +21,11 @@ type EmployeeSigningSummary struct {
 	ClaId   string
 }
 
+type CorpSigningSummaryPage struct {
+	Total int64
+	Data  []CorpSigningSummary
+}
+
 type CorpSummary struct {
 	CorpName      dp.CorpName
 	HasManager    bool
@@ -35,6 +40,7 @@ type CorpSigning interface {
 	Find(string) (domain.CorpSigning, error)
 	Remove(*domain.CorpSigning) error
 	FindAll(linkId string) ([]CorpSigningSummary, error)
+	FindPage(linkId string, intPage, intPageSize int, adminAdded bool) (CorpSigningSummaryPage, error)
 	FindAllWithPagination(linkId string, offset, limit int) ([]CorpSigningSummary, error)
 	CountByLinkId(linkId string) (int64, error)
 

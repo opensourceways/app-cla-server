@@ -200,6 +200,47 @@ func (ctl *CorporationSigningController) GetAll() {
 	}
 }
 
+// @Title GetPage
+// @Description get all the corporations by page
+// @Tags CorpSigning
+// @Accept json
+// @Param  link_id  path  string  true  "link id"
+// @Success 200 {object} models.CorporationSigningSummary
+// @Failure 400 missing_url_path_parameter: missing url path parameter
+// @Failure 401 missing_token:              token is missing
+// @Failure 402 unknown_token:              token is unknown
+// @Failure 403 expired_token:              token is expired
+// @Failure 404 unauthorized_token:         the permission of token is unmatched
+// @Failure 405 unknown_link:               unkown link id
+// @Failure 406 not_yours_org:              the link doesn't belong to your community
+// @Failure 500 system_error:               system error
+// @router /page/:link_id [get]
+func (ctl *CorporationSigningController) GetPage() {
+	action := "community manager lists page corp signings"
+	linkID := ctl.GetString(":link_id")
+	page, pageErr := ctl.GetInt("page", 1)
+	if pageErr != nil {
+		ctl.sendModelErrorAsResp(models.NewModelError(models.ErrSystemError, pageErr), action)
+		return
+	}
+	pageSize, sizeErr := ctl.GetInt("page_size", 10)
+	if sizeErr != nil {
+		ctl.sendModelErrorAsResp(models.NewModelError(models.ErrSystemError, sizeErr), action)
+		return
+	}
+	adminAdded, sizeErr := ctl.GetBool("admin_added", false)
+	pl, fr := ctl.tokenPayloadBasedOnCorpManager()
+	if fr != nil {
+		ctl.sendFailedResultAsResp(fr, action)
+		return
+	}
+	if r, merr := models.ListPageCorpSigning(pl.UserId, linkID, page, pageSize, adminAdded); merr != nil {
+		ctl.sendModelErrorAsResp(merr, action)
+	} else {
+		ctl.sendSuccessResp(action, r)
+	}
+}
+
 // @Title ListDeleted
 // @Description get all the corporations which have been deleted
 // @Tags CorpSigning

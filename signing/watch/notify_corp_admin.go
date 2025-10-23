@@ -1,6 +1,7 @@
 package watch
 
 import (
+	"fmt"
 	"sync"
 	"time"
 
@@ -151,6 +152,9 @@ func (impl *notifyAdminWatchImpl) isCorpSigningLatest(latestCLAs []domain.CLA, s
 }
 
 func (impl *notifyAdminWatchImpl) handleSendEmail(link *repository.LinkCLA, corp *repository.CorpSigningSummary) error {
+	if corp.Admin.Name == nil {
+		return fmt.Errorf("failed to send email msg: admin name is null: %s", link.Id)
+	}
 	builder := emailtmpl.CLAUpdated{
 		Org:              link.Org.Alias,
 		AdminName:        corp.Admin.Name.Name(),

@@ -24,10 +24,9 @@ type Config struct {
 	AccessTokenExpiry int64 `json:"access_token_expiry"`
 
 	// VerificationCodeExpiry is the one in seconds
-	VerificationCodeExpiry       int64  `json:"verification_code_expiry"`
-	InvalidCorpEmailDomain       string `json:"invalid_corp_email_domain"`
-	MaxNumOfEmployeeManager      int    `json:"max_num_of_employee_manager"`
-	MinNumOfSameEmailDomainParts int    `json:"min_num_of_same_email_domain_parts"`
+	VerificationCodeExpiry  int64  `json:"verification_code_expiry"`
+	InvalidCorpEmailDomain  string `json:"invalid_corp_email_domain"`
+	MaxNumOfEmployeeManager int    `json:"max_num_of_employee_manager"`
 
 	MaxNumOfFailedLogin int `json:"max_num_of_failed_login"`
 
@@ -48,10 +47,6 @@ func (cfg *Config) SetDefault() {
 
 	if cfg.MaxNumOfEmployeeManager <= 0 {
 		cfg.MaxNumOfEmployeeManager = 5
-	}
-
-	if cfg.MinNumOfSameEmailDomainParts <= 0 {
-		cfg.MinNumOfSameEmailDomainParts = 2
 	}
 
 	if len(cfg.SourceOfCLAPDF) == 0 {

@@ -119,9 +119,9 @@ func (adapter *linkAdatper) toFields(fields []domain.Field) []models.CLAField {
 func (adapter *linkAdatper) List(userId string) ([]models.LinkInfo, models.IModelError) {
 	v, err := adapter.s.List(userId)
 	if err != nil {
+
 		return nil, toModelError(err)
 	}
-
 	r := make([]models.LinkInfo, len(v))
 	for i := range v {
 		item := &v[i]
@@ -136,7 +136,6 @@ func (adapter *linkAdatper) List(userId string) ([]models.LinkInfo, models.IMode
 		li.ProjectURL = item.Org.ProjectURL
 		li.OrgEmailPlatform = item.Email.Platform
 	}
-
 	return r, nil
 }
 

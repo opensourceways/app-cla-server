@@ -1,7 +1,6 @@
 package app
 
 import (
-	"os"
 	"strings"
 
 	"github.com/beego/beego/v2/core/logs"
@@ -98,54 +97,84 @@ func (s *migrationService) MigrateCommunityData(cmd *CmdToMigrateCommunity) erro
 }
 
 func (s *migrationService) migrateCLADocuments(sourceLink, targetLink *domain.Link, claIdMap map[string]string) error {
-	logs.Info("开始迁移 CLA 文档，源社区有 %d 个 CLA", len(sourceLink.CLAs))
+	logs.Info("开始迁移 CLA 文档,源社区有 %d 个 CLA,目标社区有 %d 个 CLA",
+		len(sourceLink.CLAs), len(targetLink.CLAs))
+
 	if len(sourceLink.CLAs) == 0 {
 		logs.Warning("源社区没有 CLA 文档")
 		return nil
 	}
+
 	// 遍历源社区的所有 CLA
 	for _, sourceCLA := range sourceLink.CLAs {
-		// 读取源 CLA 文件内容
-		sourcePath := s.localCLA.LocalPath(&domain.CLAIndex{
-			LinkId: sourceLink.Id,
-			CLAId:  sourceCLA.Id,
-		})
+		// 在目标社区中查找匹配的 CLA (Type 和 Language 都相同)
+		targetCLA := targetLink.GetCLA(sourceCLA.Type, sourceCLA.Language)
 
-		claText, err := os.ReadFile(sourcePath)
-		if err != nil {
-			logs.Error("Failed to read CLA file: %s, err: %v", sourcePath, err)
-			return err
+		if targetCLA == nil {
+			logs.Warning("目标社区中未找到匹配的 CLA: type=%s, language=%s",
+				sourceCLA.Type.CLAType(), sourceCLA.Language.Language())
+			continue
 		}
 
-		// 创建新的 CLA 对象
-		newCLA := domain.CLA{
-			URL:      sourceCLA.URL,
-			Text:     claText,
-			Type:     sourceCLA.Type,
-			Language: sourceCLA.Language,
-			Fields:   sourceCLA.Fields,
-		}
-		// *** 关键修改：每次添加 CLA 前重新获取最新的 targetLink *** 在 MongoDB 更新操作中，系统使用 Version 字段实现乐观锁
-		freshTargetLink, err := s.linkRepo.Find(targetLink.Id)
-		if err != nil {
-			logs.Error("Failed to refresh target link, err: %v", err)
-			return err
-		}
-		// 添加到目标 Link
-		if err := s.claService.Add(&freshTargetLink, &newCLA); err != nil {
-			logs.Error("Failed to add CLA to target link, err: %v", err)
-			return err
-		}
+		// 建立映射关系
+		claIdMap[sourceCLA.Id] = targetCLA.Id
 
-		// 记录 CLA ID 映射关系
-		claIdMap[sourceCLA.Id] = newCLA.Id
-
-		logs.Info("Migrated CLA: %s -> %s (type: %s, lang: %s)",
-			sourceCLA.Id, newCLA.Id, sourceCLA.Type.CLAType(), sourceCLA.Language.Language())
+		logs.Info("建立 CLA 映射: %s -> %s (type: %s, lang: %s)",
+			sourceCLA.Id, targetCLA.Id, sourceCLA.Type.CLAType(), sourceCLA.Language.Language())
 	}
 
 	return nil
 }
+
+// func (s *migrationService) migrateCLADocuments(sourceLink, targetLink *domain.Link, claIdMap map[string]string) error {
+// 	logs.Info("开始迁移 CLA 文档，源社区有 %d 个 CLA", len(sourceLink.CLAs))
+// 	if len(sourceLink.CLAs) == 0 {
+// 		logs.Warning("源社区没有 CLA 文档")
+// 		return nil
+// 	}
+// 	// 遍历源社区的所有 CLA
+// 	for _, sourceCLA := range sourceLink.CLAs {
+// 		// 读取源 CLA 文件内容
+// 		sourcePath := s.localCLA.LocalPath(&domain.CLAIndex{
+// 			LinkId: sourceLink.Id,
+// 			CLAId:  sourceCLA.Id,
+// 		})
+
+// 		claText, err := os.ReadFile(sourcePath)
+// 		if err != nil {
+// 			logs.Error("Failed to read CLA file: %s, err: %v", sourcePath, err)
+// 			return err
+// 		}
+
+// 		// 创建新的 CLA 对象
+// 		newCLA := domain.CLA{
+// 			URL:      sourceCLA.URL,
+// 			Text:     claText,
+// 			Type:     sourceCLA.Type,
+// 			Language: sourceCLA.Language,
+// 			Fields:   sourceCLA.Fields,
+// 		}
+// 		// *** 关键修改：每次添加 CLA 前重新获取最新的 targetLink *** 在 MongoDB 更新操作中，系统使用 Version 字段实现乐观锁
+// 		freshTargetLink, err := s.linkRepo.Find(targetLink.Id)
+// 		if err != nil {
+// 			logs.Error("Failed to refresh target link, err: %v", err)
+// 			return err
+// 		}
+// 		// 添加到目标 Link
+// 		if err := s.claService.Add(&freshTargetLink, &newCLA); err != nil {
+// 			logs.Error("Failed to add CLA to target link, err: %v", err)
+// 			return err
+// 		}
+
+// 		// 记录 CLA ID 映射关系
+// 		claIdMap[sourceCLA.Id] = newCLA.Id
+
+// 		logs.Info("Migrated CLA: %s -> %s (type: %s, lang: %s)",
+// 			sourceCLA.Id, newCLA.Id, sourceCLA.Type.CLAType(), sourceCLA.Language.Language())
+// 	}
+
+// 	return nil
+// }
 
 func (s *migrationService) migrateCorpSigningData(sourceLinkId, targetLinkId string, corpSigningIdMap, claIdMap map[string]string) error {
 	totalCount, err := s.corpRepo.CountByLinkId(sourceLinkId)

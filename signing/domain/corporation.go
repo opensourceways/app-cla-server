@@ -67,7 +67,7 @@ func (c *Corporation) isValidEmailDomain(ed string) error {
 		j--
 	}
 
-	if i < 0 || n1-i >= config.MinNumOfSameEmailDomainParts {
+	if i < 0 {
 		return nil
 	}
 

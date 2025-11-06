@@ -31,6 +31,11 @@ func (cmd *CmdToSignCorpCLA) toCmd() cmdToCreateCodeForCorpSigning {
 	}
 }
 
+type CorpSigningPageDTO struct {
+	Total int64
+	Data  []CorpSigningDTO
+}
+
 type CorpSigningDTO struct {
 	Id             string `json:"id"`
 	Date           string `json:"date"`

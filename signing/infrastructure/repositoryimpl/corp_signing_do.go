@@ -201,10 +201,18 @@ func (do *RepDO) toRep() domain.Representative {
 }
 
 func toRepDO(v *domain.Representative) RepDO {
-	return RepDO{
-		Name:  v.Name.Name(),
-		Email: v.EmailAddr.EmailAddr(),
+	repDO := RepDO{}
+
+	if v != nil {
+		if v.Name != nil {
+			repDO.Name = v.Name.Name()
+		}
+		if v.EmailAddr != nil {
+			repDO.Email = v.EmailAddr.EmailAddr()
+		}
 	}
+
+	return repDO
 }
 
 // corporation DO
@@ -223,9 +231,28 @@ func (do *corpDO) toCorp() domain.Corporation {
 }
 
 func toCorpDO(v *domain.Corporation) corpDO {
+	if v == nil {
+		return corpDO{}
+	}
+
+	name := ""
+	if v.Name != nil {
+		name = v.Name.CorpName()
+	}
+
+	domain := ""
+	if v.PrimaryEmailDomain != "" { // 如果PrimaryEmailDomain是string，零值就是空字符串
+		domain = v.PrimaryEmailDomain
+	}
+
+	domains := []string{}
+	if v.AllEmailDomains != nil {
+		domains = v.AllEmailDomains
+	}
+
 	return corpDO{
-		Name:    v.Name.CorpName(),
-		Domain:  v.PrimaryEmailDomain,
-		Domains: v.AllEmailDomains,
+		Name:    name,
+		Domain:  domain,
+		Domains: domains,
 	}
 }

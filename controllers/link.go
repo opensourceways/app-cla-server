@@ -146,10 +146,11 @@ func (ctl *LinkController) Get() {
 	if err != nil {
 		ctl.sendModelErrorAsResp(err, action)
 	} else {
-		ctl.sendSuccessResp(action, orgInfo{result.OrgAlias})
+		ctl.sendSuccessResp(action, orgInfo{result.OrgAlias, result.OrgLogo})
 	}
 }
 
 type orgInfo struct {
 	OrgAlias string `json:"org_alias"`
+	OrgLogo  string `json:"org_logo"`
 }

@@ -9,6 +9,7 @@ const (
 
 type LinkCreateOption struct {
 	OrgAlias   string `json:"org_alias"`
+	OrgLogo    string `json:"org_logo"`
 	OrgEmail   string `json:"org_email"`
 	ProjectURL string `json:"project_url"`
 
@@ -18,6 +19,7 @@ type LinkCreateOption struct {
 
 type OrgInfo struct {
 	OrgAlias         string `json:"org_alias"`
+	OrgLogo          string `json:"org_logo"`
 	OrgEmail         string `json:"org_email"`
 	ProjectURL       string `json:"project_url"`
 	OrgEmailPlatform string `json:"org_email_platform"`

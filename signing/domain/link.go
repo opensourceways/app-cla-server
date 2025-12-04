@@ -13,6 +13,7 @@ type EmailInfo struct {
 
 type OrgInfo struct {
 	Alias      string // normal community name
+	Logo       string
 	ProjectURL string
 }
 

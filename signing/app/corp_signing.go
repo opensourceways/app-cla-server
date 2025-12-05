@@ -1,6 +1,7 @@
 package app
 
 import (
+	"errors"
 	"time"
 
 	commonRepo "github.com/opensourceways/app-cla-server/common/domain/repository"
@@ -33,10 +34,11 @@ type CorpSigningService interface {
 	Remove(userId, csId string) error
 	Get(userId, csId string, email dp.EmailAddr) (string, CorpSigningInfoDTO, error)
 	List(userId, linkId string) ([]CorpSigningDTO, error)
-	ListPage(userId, linkId string, page, pageSize int, adminAdded bool) (CorpSigningPageDTO, error)
+	ListPage(userId, linkId string, page, pageSize int, adminAdded bool, searchQuery string) (CorpSigningPageDTO, error)
 	FindCorpSummary(cmd *CmdToFindCorpSummary) ([]CorpSummaryDTO, error)
 	FindDiffCLAFile(signingId string) (string, error)
 	AgreeWithLatestCLA(signingId string) error
+	UpdateRepresentative(userId, linkID, signingID, repName, repEmail string) error
 }
 
 type corpSigningService struct {
@@ -147,14 +149,14 @@ func (s *corpSigningService) List(userId, linkId string) ([]CorpSigningDTO, erro
 	return dtos, nil
 }
 
-func (s *corpSigningService) ListPage(userId, linkId string, page, pageSize int, adminAdded bool) (CorpSigningPageDTO, error) {
+func (s *corpSigningService) ListPage(userId, linkId string, page, pageSize int, adminAdded bool, searchQuery string) (CorpSigningPageDTO, error) {
 	var pageData CorpSigningPageDTO
 	pageData.Total = 0
 	if _, err := checkIfCommunityManager(userId, linkId, s.linkRepo); err != nil {
 		return pageData, err
 	}
 
-	v, err := s.repo.FindPage(linkId, page, pageSize, adminAdded)
+	v, err := s.repo.FindPage(linkId, page, pageSize, adminAdded, searchQuery)
 	if err != nil || v.Total == 0 {
 		return pageData, err
 	}
@@ -239,4 +241,34 @@ func (s *corpSigningService) AgreeWithLatestCLA(signingId string) error {
 	}
 
 	return s.repo.UpdateClaId(&signed)
+}
+
+func (s *corpSigningService) UpdateRepresentative(userId, linkID, signingID, repName, repEmail string) error {
+	// 权限验证 - 只有社区管理员可以操作
+	if _, err := checkIfCommunityManager(userId, linkID, s.linkRepo); err != nil {
+		return err
+	}
+
+	// 查找企业签名
+	cs, err := s.repo.Find(signingID)
+	if err != nil {
+		return err
+	}
+
+	// 验证link_id匹配
+	if cs.Link.Id != linkID {
+		return commonRepo.NewErrorResourceNotFound(errors.New("signing not found"))
+	}
+
+	// 创建新的代表信息
+	newRep, err := domain.NewRepresentative(repName, repEmail)
+	if err != nil {
+		return err
+	}
+
+	// 更新代表信息
+	cs.Rep = newRep
+
+	// 保存到数据库
+	return s.repo.Update(&cs)
 }

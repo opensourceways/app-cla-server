@@ -212,8 +212,26 @@ func (impl *corpSigning) CountByLinkId(linkId string) (int64, error) {
 	return impl.dao.CountDocs(filter)
 }
 
-func (impl *corpSigning) FindPage(linkId string, intPage, intPageSize int, adminAdded bool) (repository.CorpSigningSummaryPage, error) {
+// 邮箱验证辅助函数
+func isEmail(query string) bool {
+	// 使用现有的邮箱验证逻辑
+	_, err := dp.NewEmailAddr(query)
+	return err == nil
+}
+
+func (impl *corpSigning) FindPage(linkId string, intPage, intPageSize int, adminAdded bool, searchQuery string) (repository.CorpSigningSummaryPage, error) {
 	filter := linkIdFilter(linkId)
+	// 添加搜索过滤条件
+	if searchQuery != "" {
+		if isEmail(searchQuery) {
+			// 按邮箱搜索
+			filter[childField(fieldRep, fieldEmail)] = searchQuery
+		} else {
+			// 按企业名称搜索（模糊匹配）
+			filter[childField(fieldCorp, fieldName)] = bson.M{"$regex": searchQuery, "$options": "i"}
+		}
+	}
+
 	if adminAdded {
 		filter["admin.id"] = bson.M{"$ne": ""}
 	} else {
@@ -317,4 +335,19 @@ func (impl *corpSigning) UpdateCLANotify(summary *repository.CorpSigningSummary)
 	}
 
 	return impl.dao.UpdateDocsWithoutVersion(filter, bson.M{fieldCLANotify: summary.CLANotify})
+}
+
+func (impl *corpSigning) Update(cs *domain.CorpSigning) error {
+	filter, err := impl.toCorpSigningIndex(cs.Id)
+	if err != nil {
+		return err
+	}
+
+	// 构建更新文档
+	updateDoc := bson.M{
+		childField(fieldRep, fieldName):  cs.Rep.Name.Name(),
+		childField(fieldRep, fieldEmail): cs.Rep.EmailAddr.EmailAddr(),
+	}
+
+	return impl.dao.UpdateDoc(filter, updateDoc, cs.Version)
 }

@@ -169,7 +169,7 @@ func (adapter *corpSigningAdatper) List(userId, linkId string) (
 	return r, nil
 }
 
-func (adapter *corpSigningAdatper) ListPage(userId, linkId string, page, pageSize int, adminAdded bool) (
+func (adapter *corpSigningAdatper) ListPage(userId, linkId string, page, pageSize int, adminAdded bool, searchQuery string) (
 	models.CorporationSigningPageSummary, models.IModelError,
 ) {
 	var pageData models.CorporationSigningPageSummary
@@ -177,7 +177,7 @@ func (adapter *corpSigningAdatper) ListPage(userId, linkId string, page, pageSiz
 	if page <= 0 || pageSize <= 0 {
 		return pageData, toModelError(errors.New("invalid param"))
 	}
-	v, err := adapter.s.ListPage(userId, linkId, page, pageSize, adminAdded)
+	v, err := adapter.s.ListPage(userId, linkId, page, pageSize, adminAdded, searchQuery)
 	if err != nil {
 		return pageData, toModelError(err)
 	}
@@ -270,4 +270,23 @@ func getAllSigningInfo(
 	}
 
 	return r, nil
+}
+
+func (adapter *corpSigningAdatper) UpdateRepresentative(userId, linkID, signingID string, opt *models.RepresentativeUpdateOption) models.IModelError {
+	// 验证参数
+	if opt.RepName == "" || opt.RepEmail == "" {
+		return toModelError(errors.New("representative name and email are required"))
+	}
+
+	// 验证邮箱格式
+	if _, err := dp.NewEmailAddr(opt.RepEmail); err != nil {
+		return toModelError(err)
+	}
+
+	// 调用service层更新
+	err := adapter.s.UpdateRepresentative(userId, linkID, signingID, opt.RepName, opt.RepEmail)
+	if err != nil {
+		return toModelError(err)
+	}
+	return nil
 }

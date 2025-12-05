@@ -169,7 +169,7 @@ func (adapter *corpSigningAdatper) List(userId, linkId string) (
 	return r, nil
 }
 
-func (adapter *corpSigningAdatper) ListPage(userId, linkId string, page, pageSize int, adminAdded bool) (
+func (adapter *corpSigningAdatper) ListPage(userId, linkId string, page, pageSize int, adminAdded bool, searchQuery string) (
 	models.CorporationSigningPageSummary, models.IModelError,
 ) {
 	var pageData models.CorporationSigningPageSummary
@@ -177,7 +177,7 @@ func (adapter *corpSigningAdatper) ListPage(userId, linkId string, page, pageSiz
 	if page <= 0 || pageSize <= 0 {
 		return pageData, toModelError(errors.New("invalid param"))
 	}
-	v, err := adapter.s.ListPage(userId, linkId, page, pageSize, adminAdded)
+	v, err := adapter.s.ListPage(userId, linkId, page, pageSize, adminAdded, searchQuery)
 	if err != nil {
 		return pageData, toModelError(err)
 	}

@@ -14,6 +14,7 @@ const (
 	fieldCLANum     = "cla_num"
 	fieldRemoved    = "removed"
 	fieldOrgAlias   = "org_alias"
+	fieldOrgLogo    = "org_logo"
 	fieldPlatform   = "platform"
 	fieldSubmitter  = "submitter"
 	fieldCLASFields = "clas.fields"
@@ -74,12 +75,14 @@ func (do *linkDO) toDoc() (bson.M, error) {
 // orgInfoDO
 type orgInfoDO struct {
 	Alias      string `bson:"org_alias" json:"org_alias"  required:"true"`
+	Logo       string `bson:"org_logo"  json:"org_logo"`
 	ProjectURL string `bson:"project"   json:"project"    required:"true"`
 }
 
 func (do *orgInfoDO) toOrgInfo() domain.OrgInfo {
 	return domain.OrgInfo{
 		Alias:      do.Alias,
+		Logo:       do.Logo,
 		ProjectURL: do.ProjectURL,
 	}
 }
@@ -87,6 +90,7 @@ func (do *orgInfoDO) toOrgInfo() domain.OrgInfo {
 func toOrgInfoDO(v *domain.OrgInfo) orgInfoDO {
 	return orgInfoDO{
 		Alias:      v.Alias,
+		Logo:       v.Logo,
 		ProjectURL: v.ProjectURL,
 	}
 }

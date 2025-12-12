@@ -36,6 +36,7 @@ func (adapter *linkAdatper) GetLink(linkId string) (
 	}
 
 	org.OrgAlias = v.Org.Alias
+	org.OrgLogo = v.Org.Logo
 	org.OrgEmail = v.Email.Addr.EmailAddr()
 	org.ProjectURL = v.Org.ProjectURL
 	org.OrgEmailPlatform = v.Email.Platform
@@ -202,6 +203,7 @@ func (adapter *linkAdatper) cmdToAddLink(userId string, opt *models.LinkCreateOp
 	}
 
 	cmd.Org.Alias = opt.OrgAlias
+	cmd.Org.Logo = opt.OrgLogo
 	cmd.Org.ProjectURL = opt.ProjectURL
 
 	cmd.Submitter = userId

@@ -12,6 +12,7 @@ import (
 	"github.com/opensourceways/app-cla-server/signing/domain/claservice"
 	"github.com/opensourceways/app-cla-server/signing/domain/emailcredential"
 	"github.com/opensourceways/app-cla-server/signing/domain/loginservice"
+	"github.com/opensourceways/app-cla-server/signing/domain/randomcode"
 	"github.com/opensourceways/app-cla-server/signing/domain/userservice"
 	"github.com/opensourceways/app-cla-server/signing/domain/vcservice"
 	"github.com/opensourceways/app-cla-server/signing/infrastructure/accesstokenimpl"
@@ -71,7 +72,13 @@ func initSigning(cfg *config.Config) error {
 			mongodb.DAO(cfg.Mongodb.Collections.VerificationCode),
 		),
 		limiterimpl.NewLimiterImpl(redisdb.DAO()),
-		randomcodeimpl.NewRandomCodeImpl(),
+		// 根据配置选择验证码实现
+		func() randomcode.RandomCode {
+			if cfg.Domain.Config.IsTestEnvironment {
+				return randomcode.NewTestRandomCode(cfg.Domain.Config.TestVerificationCode)
+			}
+			return randomcodeimpl.NewRandomCodeImpl()
+		}(),
 	)
 
 	models.RegisterCorpAdminAdatper(

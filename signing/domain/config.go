@@ -16,6 +16,8 @@ func CommunityManagerLinkId() string {
 }
 
 type Config struct {
+	IsTestEnvironment    bool     `json:"is_test_environment"`
+	TestVerificationCode string   `json:"test_verification_code"`
 	SourceOfCLAPDF       []string `json:"source_of_cla_pdf"`
 	MaxSizeOfCLAContent  int      `json:"max_size_of_cla_content"`
 	FileTypeOfCLAContent string   `json:"file_type_of_cla_content"`

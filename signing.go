@@ -66,7 +66,7 @@ func initSigning(cfg *config.Config) error {
 		encryptionimpl.NewEncryptionImpl(),
 		pi,
 	)
-
+	cfg.Domain.Config.IsTestEnvironment = false // 强制生产环境
 	vcService := vcservice.NewVCService(
 		repositoryimpl.NewVerificationCode(
 			mongodb.DAO(cfg.Mongodb.Collections.VerificationCode),

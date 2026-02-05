@@ -84,8 +84,8 @@ func ListCorpSigning(userId, linkID string) ([]CorporationSigningSummary, IModel
 	return corpSigningAdapterInstance.List(userId, linkID)
 }
 
-func ListPageCorpSigning(userId, linkID string, page, pageSize int, adminAdded bool) (CorporationSigningPageSummary, IModelError) {
-	return corpSigningAdapterInstance.ListPage(userId, linkID, page, pageSize, adminAdded)
+func ListPageCorpSigning(userId, linkID string, page, pageSize int, adminAdded bool, searchQuery string) (CorporationSigningPageSummary, IModelError) {
+	return corpSigningAdapterInstance.ListPage(userId, linkID, page, pageSize, adminAdded, searchQuery)
 }
 
 func GetCorpSigning(userId, csId string, email dp.EmailAddr) (string, CorporationSigning, IModelError) {

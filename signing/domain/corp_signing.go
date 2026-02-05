@@ -258,3 +258,20 @@ func (cs *CorpSigning) SetLatestClaId(latestClaId string) error {
 
 	return nil
 }
+
+func NewRepresentative(name, email string) (Representative, error) {
+	nameObj, err := dp.NewName(name)
+	if err != nil {
+		return Representative{}, err
+	}
+
+	emailObj, err := dp.NewEmailAddr(email)
+	if err != nil {
+		return Representative{}, err
+	}
+
+	return Representative{
+		Name:      nameObj,
+		EmailAddr: emailObj,
+	}, nil
+}

@@ -1,6 +1,8 @@
 package adapter
 
 import (
+	"fmt"
+
 	"github.com/opensourceways/app-cla-server/models"
 	"github.com/opensourceways/app-cla-server/signing/domain"
 )
@@ -12,6 +14,7 @@ type errorCode interface {
 func toModelError(err error) models.IModelError {
 	code, ok := err.(errorCode)
 	if !ok {
+		fmt.Println("toModelError: unexpected error type:", err)
 		return models.NewModelError(models.ErrSystemError, err)
 	}
 

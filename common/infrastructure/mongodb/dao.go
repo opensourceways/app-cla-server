@@ -191,7 +191,6 @@ func (impl *daoImpl) updateDoc(filter bson.M, version int, cmd bson.M) error {
 		cmd[mongoCmdInc] = bson.M{fieldVersion: 1}
 
 		r, err := impl.col.UpdateOne(ctx, filter, cmd)
-
 		if err != nil {
 			return err
 		}

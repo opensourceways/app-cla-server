@@ -201,11 +201,15 @@ func (ctl *CorporationSigningController) GetAll() {
 }
 
 // @Title GetPage
-// @Description get all the corporations by page
+// @Description get all the corporations by page with search support
 // @Tags CorpSigning
 // @Accept json
-// @Param  link_id  path  string  true  "link id"
-// @Success 200 {object} models.CorporationSigningSummary
+// @Param  link_id    path  string  true  "link id"
+// @Param  page       query  int     false  "page number" default(1)
+// @Param  page_size  query  int     false  "page size" default(10)
+// @Param  admin_added query  bool    false  "filter by admin added" default(false)
+// @Param  search     query  string  false  "search query (email or corp name)"
+// @Success 200 {object} models.CorporationSigningPageSummary
 // @Failure 400 missing_url_path_parameter: missing url path parameter
 // @Failure 401 missing_token:              token is missing
 // @Failure 402 unknown_token:              token is unknown
@@ -229,12 +233,15 @@ func (ctl *CorporationSigningController) GetPage() {
 		return
 	}
 	adminAdded, sizeErr := ctl.GetBool("admin_added", false)
+	searchQuery := ctl.GetString("search") // 新增搜索参数
+
 	pl, fr := ctl.tokenPayloadBasedOnCorpManager()
 	if fr != nil {
 		ctl.sendFailedResultAsResp(fr, action)
 		return
 	}
-	if r, merr := models.ListPageCorpSigning(pl.UserId, linkID, page, pageSize, adminAdded); merr != nil {
+
+	if r, merr := models.ListPageCorpSigning(pl.UserId, linkID, page, pageSize, adminAdded, searchQuery); merr != nil {
 		ctl.sendModelErrorAsResp(merr, action)
 	} else {
 		ctl.sendSuccessResp(action, r)
@@ -330,5 +337,38 @@ func (ctl *CorporationSigningController) Agree() {
 		ctl.sendModelErrorAsResp(err, action)
 	} else {
 		ctl.sendSuccessResp(action, "successfully")
+	}
+}
+
+// @Title UpdateRepresentative
+// @Description update corporation representative info by community manager
+// @Tags CorpSigning
+// @Accept json
+// @Param  link_id    path  string  true  "link id"
+// @Param  signing_id path  string  true  "signing id"
+// @Param  body       body   models.RepresentativeUpdateOption true  "representative info"
+// @Success 200 {object} controllers.respData
+// @router /{link_id}/{signing_id}/representative [put]
+func (ctl *CorporationSigningController) UpdateRepresentative() {
+	action := "update corporation representative"
+	linkID := ctl.GetString(":link_id")
+	signingID := ctl.GetString(":signing_id")
+
+	var opt models.RepresentativeUpdateOption
+	if fr := ctl.fetchInputPayload(&opt); fr != nil {
+		ctl.sendFailedResultAsResp(fr, action)
+		return
+	}
+
+	pl, fr := ctl.tokenPayloadBasedOnCorpManager()
+	if fr != nil {
+		ctl.sendFailedResultAsResp(fr, action)
+		return
+	}
+
+	if merr := models.UpdateCorpRepresentative(pl.UserId, linkID, signingID, &opt); merr != nil {
+		ctl.sendModelErrorAsResp(merr, action)
+	} else {
+		ctl.sendSuccessResp(action, "representative updated successfully")
 	}
 }

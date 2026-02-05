@@ -56,3 +56,13 @@ type CorporationSigningBasicInfo struct {
 	CorporationName string `json:"corporation_name"`
 	Date            string `json:"date"`
 }
+
+// models/corp_signing.go
+type RepresentativeUpdateOption struct {
+	RepName  string `json:"rep_name" valid:"Required"`
+	RepEmail string `json:"rep_email" valid:"Required;Email"`
+}
+
+func UpdateCorpRepresentative(userId, linkID, signingID string, opt *RepresentativeUpdateOption) IModelError {
+	return corpSigningAdapterInstance.UpdateRepresentative(userId, linkID, signingID, opt)
+}

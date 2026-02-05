@@ -33,6 +33,7 @@ type CorpSummary struct {
 }
 
 type CorpSigning interface {
+	Update(cs *domain.CorpSigning) error
 	Add(*domain.CorpSigning) error
 	AddForMigrate(*domain.CorpSigning) error
 	FindCorpSummary(linkId, domain string) ([]CorpSummary, error)
@@ -40,7 +41,7 @@ type CorpSigning interface {
 	Find(string) (domain.CorpSigning, error)
 	Remove(*domain.CorpSigning) error
 	FindAll(linkId string) ([]CorpSigningSummary, error)
-	FindPage(linkId string, intPage, intPageSize int, adminAdded bool) (CorpSigningSummaryPage, error)
+	FindPage(linkId string, intPage, intPageSize int, adminAdded bool, searchQuery string) (CorpSigningSummaryPage, error)
 	FindAllWithPagination(linkId string, offset, limit int) ([]CorpSigningSummary, error)
 	CountByLinkId(linkId string) (int64, error)
 

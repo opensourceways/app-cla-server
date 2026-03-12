@@ -123,10 +123,8 @@ func (s *individualSigningService) FindDiffCLAFile(cmd *CmdToFindSignedCLAInfo) 
 func (s *individualSigningService) Check(cmd *CmdToCheckSinging) (dto IndividualSignedDTO, err error) {
 	f := func(claId string, t dp.CLAType) {
 		dto.Signed = true
+		dto.Type = t.CLAType()
 		dto.VersionMatched = s.cla.ContainsCla(cmd.LinkId, claId)
-		if !dto.VersionMatched {
-			dto.Type = t.CLAType()
-		}
 	}
 
 	claId, err := s.repo.FindSignedCLA(cmd.LinkId, cmd.EmailAddr)

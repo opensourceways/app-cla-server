@@ -41,8 +41,9 @@ func initSigning(cfg *config.Config) error {
 		return err
 	}
 
-	repo := repositoryimpl.NewCorpSigning(
+	repo := repositoryimpl.NewCachedCorpSigning(
 		mongodb.DAO(cfg.Mongodb.Collections.CorpSigning),
+		redisdb.DAO(),
 	)
 
 	linkRepo := repositoryimpl.NewLink(

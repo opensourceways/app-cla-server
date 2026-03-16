@@ -57,6 +57,12 @@ func toCache(p repository.CorpSigningSummaryPage) cachedCorpSigningPage {
 	items := make([]cachedCorpSigningSummary, len(p.Data))
 	for i := range p.Data {
 		s := &p.Data[i]
+		adminName := ""
+		adminEmail := ""
+		if !s.Admin.IsEmpty() {
+			adminName = s.Admin.Representative.Name.Name()
+			adminEmail = s.Admin.Representative.EmailAddr.EmailAddr()
+		}
 		items[i] = cachedCorpSigningSummary{
 			Id:                 s.Id,
 			Date:               s.Date,
@@ -71,8 +77,8 @@ func toCache(p repository.CorpSigningSummaryPage) cachedCorpSigningPage {
 			PrimaryEmailDomain: s.Corp.PrimaryEmailDomain,
 			AllEmailDomains:    s.Corp.AllEmailDomains,
 			AdminId:            s.Admin.Id,
-			AdminName:          s.Admin.Representative.Name.Name(),
-			AdminEmail:         s.Admin.Representative.EmailAddr.EmailAddr(),
+			AdminName:          adminName,
+			AdminEmail:         adminEmail,
 		}
 	}
 	return cachedCorpSigningPage{Total: p.Total, Data: items}

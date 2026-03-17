@@ -80,6 +80,16 @@ func DAO(name string) *daoImpl {
 	}
 }
 
+// EnsureIndexes creates the given indexes on the named collection if they do
+// not already exist. It is idempotent and safe to call on every startup.
+func EnsureIndexes(colName string, indexes []mongo.IndexModel) error {
+	col := cli.Collection(colName)
+	return withContext(func(ctx context.Context) error {
+		_, err := col.Indexes().CreateMany(ctx, indexes)
+		return err
+	}, cli.timeout)
+}
+
 func Collection() *client {
 	return cli
 }

@@ -2,12 +2,24 @@ package repositoryimpl
 
 import (
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
 
 	commonRepo "github.com/opensourceways/app-cla-server/common/domain/repository"
 	"github.com/opensourceways/app-cla-server/signing/domain"
 	"github.com/opensourceways/app-cla-server/signing/domain/dp"
 	"github.com/opensourceways/app-cla-server/signing/domain/repository"
 )
+
+// CorpSigningIndexes returns the index definitions that should exist on the
+// corp_signing collection. Pass the result to mongodb.EnsureIndexes on startup.
+func CorpSigningIndexes() []mongo.IndexModel {
+	return []mongo.IndexModel{
+		// Fast lookup by link — the primary query key for all page/list queries.
+		{Keys: bson.D{{Key: fieldLinkId, Value: 1}}},
+		// Compound index for the adminAdded filter (link_id + admin.id).
+		{Keys: bson.D{{Key: fieldLinkId, Value: 1}, {Key: "admin.id", Value: 1}}},
+	}
+}
 
 func NewCorpSigning(dao dao) *corpSigning {
 	return &corpSigning{
@@ -221,14 +233,11 @@ func isEmail(query string) bool {
 
 func (impl *corpSigning) FindPage(linkId string, intPage, intPageSize int, adminAdded bool, searchQuery string) (repository.CorpSigningSummaryPage, error) {
 	filter := linkIdFilter(linkId)
-	// 添加搜索过滤条件
 	if searchQuery != "" {
 		if isEmail(searchQuery) {
-			// 按邮箱搜索
 			filter[childField(fieldRep, fieldEmail)] = searchQuery
 		} else {
-			// 按企业名称搜索（模糊匹配）
-			filter[childField(fieldCorp, fieldName)] = bson.M{"$regex": searchQuery, "$options": "i"}
+			filter[childField(fieldCorp, fieldName)] = searchQuery
 		}
 	}
 
@@ -237,9 +246,10 @@ func (impl *corpSigning) FindPage(linkId string, intPage, intPageSize int, admin
 	} else {
 		filter["$or"] = []bson.M{
 			{"admin.id": ""},
-			{"admin": nil},
+			{"admin": bson.M{"$exists": false}},
 		}
 	}
+
 	project := bson.M{
 		fieldDate:      1,
 		fieldCLAId:     1,
@@ -252,29 +262,51 @@ func (impl *corpSigning) FindPage(linkId string, intPage, intPageSize int, admin
 		fieldCLANotify: 1,
 	}
 
-	var docsPage repository.CorpSigningSummaryPage
-	docsPage.Total = 0
-	total, err := impl.dao.GetDocsCount(filter)
-	if err != nil {
-		return docsPage, err
-	}
-	if total == 0 {
-		return docsPage, nil
+	// Single aggregation round-trip: $facet returns both total count and the
+	// requested page in one network call, replacing the previous two serial
+	// queries (CountDocuments + Find).
+	pipeline := bson.A{
+		bson.M{"$match": filter},
+		bson.M{"$facet": bson.M{
+			"total": bson.A{
+				bson.M{"$count": "n"},
+			},
+			"data": bson.A{
+				bson.M{"$skip": int64((intPage - 1) * intPageSize)},
+				bson.M{"$limit": int64(intPageSize)},
+				bson.M{"$project": project},
+			},
+		}},
 	}
 
-	var dos []corpSigningDO
-
-	if err := impl.dao.GetDocsPage(filter, project, intPage, intPageSize, &dos); err != nil {
-		return docsPage, err
+	var facetResult []struct {
+		Total []struct {
+			N int64 `bson:"n"`
+		} `bson:"total"`
+		Data []corpSigningDO `bson:"data"`
 	}
 
-	v := make([]repository.CorpSigningSummary, len(dos))
+	if err := impl.dao.Aggregate(pipeline, &facetResult); err != nil {
+		return repository.CorpSigningSummaryPage{}, err
+	}
+
+	var page repository.CorpSigningSummaryPage
+	if len(facetResult) == 0 || len(facetResult[0].Total) == 0 {
+		return page, nil
+	}
+
+	page.Total = facetResult[0].Total[0].N
+	if page.Total == 0 {
+		return page, nil
+	}
+
+	dos := facetResult[0].Data
+	page.Data = make([]repository.CorpSigningSummary, len(dos))
 	for i := range dos {
-		v[i] = dos[i].toCorpSigningSummary()
+		page.Data[i] = dos[i].toCorpSigningSummary()
 	}
-	docsPage.Data = v
-	docsPage.Total = total
-	return docsPage, nil
+
+	return page, nil
 }
 
 func (impl *corpSigning) HasSignedLink(linkId string) (bool, error) {

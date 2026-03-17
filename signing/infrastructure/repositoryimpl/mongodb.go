@@ -51,6 +51,7 @@ type dao interface {
 	GetArrayItem(filter bson.M, array string, filterOfArray, project bson.M, result interface{}) error
 	GetDocsPage(filter, project bson.M, intPage, intPageSize int, result interface{}) error
 	GetDocsCount(filter bson.M) (int64, error)
+	Aggregate(pipeline bson.A, result interface{}) error
 }
 
 func genDoc(doc interface{}) (m bson.M, err error) {

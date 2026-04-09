@@ -16,6 +16,7 @@ import (
 	"github.com/opensourceways/app-cla-server/signing/domain/userservice"
 	"github.com/opensourceways/app-cla-server/signing/domain/vcservice"
 	"github.com/opensourceways/app-cla-server/signing/infrastructure/accesstokenimpl"
+	"github.com/opensourceways/app-cla-server/signing/infrastructure/captchaimpl"
 	"github.com/opensourceways/app-cla-server/signing/infrastructure/encryptionimpl"
 	"github.com/opensourceways/app-cla-server/signing/infrastructure/limiterimpl"
 	"github.com/opensourceways/app-cla-server/signing/infrastructure/localclaimpl"
@@ -41,8 +42,16 @@ func initSigning(cfg *config.Config) error {
 		return err
 	}
 
-	repo := repositoryimpl.NewCorpSigning(
+	if err := mongodb.EnsureIndexes(
+		cfg.Mongodb.Collections.CorpSigning,
+		repositoryimpl.CorpSigningIndexes(),
+	); err != nil {
+		return err
+	}
+
+	repo := repositoryimpl.NewCachedCorpSigning(
 		mongodb.DAO(cfg.Mongodb.Collections.CorpSigning),
+		redisdb.DAO(),
 	)
 
 	linkRepo := repositoryimpl.NewLink(
@@ -123,7 +132,14 @@ func initSigning(cfg *config.Config) error {
 		adapter.NewUserAdapter(
 			app.NewUserService(
 				userService, loginService, repo, symmetric, ur,
-				interval, vcService, privacyVersion,
+				interval, vcService,
+				captchaimpl.NewCaptchaImpl(
+					redisdb.DAO(),
+					&cfg.Redisdb.Captcha,
+					cfg.Domain.Config.IsTestEnvironment,
+					cfg.Domain.Config.TestCaptchaAnswer,
+				),
+				privacyVersion,
 			),
 		),
 	)

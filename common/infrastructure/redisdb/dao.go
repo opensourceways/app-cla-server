@@ -64,3 +64,21 @@ func (cli *client) HasKey(key string) (bool, error) {
 func (impl *client) IsDocNotExists(err error) bool {
 	return errors.Is(err, errDocNotExists)
 }
+
+func (cli *client) Del(keys ...string) error {
+	return cli.withContext(func(ctx context.Context) error {
+		return cli.redisCli.Del(ctx, keys...).Err()
+	})
+}
+
+func (cli *client) Keys(pattern string) ([]string, error) {
+	var result []string
+	err := cli.withContext(func(ctx context.Context) error {
+		iter := cli.redisCli.Scan(ctx, 0, pattern, 0).Iterator()
+		for iter.Next(ctx) {
+			result = append(result, iter.Val())
+		}
+		return iter.Err()
+	})
+	return result, err
+}

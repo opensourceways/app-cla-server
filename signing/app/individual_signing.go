@@ -123,10 +123,8 @@ func (s *individualSigningService) FindDiffCLAFile(cmd *CmdToFindSignedCLAInfo) 
 func (s *individualSigningService) Check(cmd *CmdToCheckSinging) (dto IndividualSignedDTO, err error) {
 	f := func(claId string, t dp.CLAType) {
 		dto.Signed = true
+		dto.Type = t.CLAType()
 		dto.VersionMatched = s.cla.ContainsCla(cmd.LinkId, claId)
-		if !dto.VersionMatched {
-			dto.Type = t.CLAType()
-		}
 	}
 
 	claId, err := s.repo.FindSignedCLA(cmd.LinkId, cmd.EmailAddr)
@@ -142,18 +140,25 @@ func (s *individualSigningService) Check(cmd *CmdToCheckSinging) (dto Individual
 
 	v, err := s.corpRepo.FindEmployeesByEmail(cmd.LinkId, cmd.EmailAddr)
 	if err != nil {
-		if commonRepo.IsErrorResourceNotFound(err) {
-			err = nil
+		if !commonRepo.IsErrorResourceNotFound(err) {
+			return dto, err
 		}
+	} else if v.Enabled {
+		f(v.ClaId, dp.CLATypeCorp)
+		return
+	}
 
+	// 未签署时，检查邮箱域名是否有企业签署记录，判断应该走哪个流程
+	corps, err := s.corpRepo.FindCorpSummary(cmd.LinkId, cmd.EmailAddr.Domain())
+	if err != nil {
 		return dto, err
 	}
 
-	if !v.Enabled {
-		return dto, nil
+	if len(corps) > 0 {
+		dto.Type = dp.CLATypeCorp.CLAType()
+	} else {
+		dto.Type = dp.CLATypeIndividual.CLAType()
 	}
-
-	f(v.ClaId, dp.CLATypeCorp)
 
 	return
 }

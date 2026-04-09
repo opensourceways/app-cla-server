@@ -33,6 +33,9 @@ func NewLoginService(
 type LoginService interface {
 	LoginByAccount(linkId string, a dp.Account, p dp.Password) (domain.User, domain.Login, error)
 	LoginByEmail(linkId string, e dp.EmailAddr, p dp.Password) (domain.User, domain.Login, error)
+	// NeedCaptcha returns true when the given login ID has accumulated enough
+	// failures to require graphic captcha on the next attempt.
+	NeedCaptcha(id string) (bool, error)
 }
 
 type loginService struct {
@@ -123,4 +126,16 @@ func (s *loginService) failToLogin(l *domain.Login) error {
 
 func (s *loginService) isCorrectPassword(p dp.Password, ciphertext []byte) bool {
 	return s.encrypt.IsSame(p.Password(), ciphertext)
+}
+
+func (s *loginService) NeedCaptcha(id string) (bool, error) {
+	lv, err := s.repo.Find(id)
+	if err != nil {
+		if commonRepo.IsErrorResourceNotFound(err) {
+			return false, nil
+		}
+		return false, err
+	}
+
+	return lv.NeedCaptcha(), nil
 }

@@ -77,6 +77,7 @@ type userAdapter interface {
 	ChangePassword(string, *CorporationManagerChangePassword) IModelError
 	ResetPassword(linkId string, email string, password []byte) IModelError
 	GenKeyForPasswordRetrieval(linkId string, email string) (string, IModelError)
+	GetCaptcha() (id string, imageBase64 string, err IModelError)
 }
 
 func RegisterUserAdapter(a userAdapter) {

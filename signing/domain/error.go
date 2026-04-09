@@ -52,6 +52,8 @@ const (
 
 	ErrorCodeAccessTokenInvalid = "access_token_invalid"
 
+	ErrorCodeCaptchaInvalid = "captcha_invalid"
+
 	ErrorCodeCLAExists       = "cla_exists"
 	ErrorCodeCLANotExists    = "cla_not_exists"
 	ErrorCodeCLACanNotRemove = "cla_can_not_remove"

@@ -399,6 +399,16 @@ func (impl *daoImpl) GetDocsCount(filter bson.M) (int64, error) {
 	return count, err
 }
 
+func (impl *daoImpl) Aggregate(pipeline bson.A, result interface{}) error {
+	return impl.withContext(func(ctx context.Context) error {
+		cursor, err := impl.col.Aggregate(ctx, pipeline)
+		if err != nil {
+			return err
+		}
+		return cursor.All(ctx, result)
+	})
+}
+
 func (impl *daoImpl) GetDocAndDelete(filter, project bson.M, result interface{}) error {
 	return impl.withContext(func(ctx context.Context) error {
 		var sr *mongo.SingleResult

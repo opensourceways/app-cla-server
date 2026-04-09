@@ -155,14 +155,19 @@ func (s *userService) Login(cmd *CmdToLogin) (dto UserLoginDTO, err error) {
 	}
 
 	// Check whether captcha verification is required before attempting login.
-	if needed, checkErr := s.ls.NeedCaptcha(lid); checkErr != nil {
-		logs.Warn("failed to check captcha requirement, err: %s", checkErr.Error())
-	} else if needed {
+	// Note: If user provides captcha_id and captcha_answer, verify them first.
+	if cmd.CaptchaId != "" && cmd.CaptchaAnswer != "" {
 		if verifyErr := s.captchaService.Verify(cmd.CaptchaId, cmd.CaptchaAnswer); verifyErr != nil {
 			dto.NeedCaptcha = true
 			err = domain.NewDomainError(domain.ErrorCodeCaptchaInvalid)
 			return
 		}
+	} else if needed, checkErr := s.ls.NeedCaptcha(lid); checkErr != nil {
+		logs.Warn("failed to check captcha requirement, err: %s", checkErr.Error())
+	} else if needed {
+		dto.NeedCaptcha = true
+		err = domain.NewDomainError(domain.ErrorCodeCaptchaInvalid)
+		return
 	}
 
 	var u domain.User

@@ -163,6 +163,10 @@ func (s *userService) Login(cmd *CmdToLogin) (dto UserLoginDTO, err error) {
 			err = domain.NewDomainError(domain.ErrorCodeCaptchaInvalid)
 			return
 		}
+		// 验证码验证成功后清除失败记录
+		if err1 := s.ls.ClearLoginFailure(lid); err1 != nil {
+			logs.Warn("clear login failure failed, err: %s", err1.Error())
+		}
 	}
 
 	var u domain.User

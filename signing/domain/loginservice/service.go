@@ -36,6 +36,8 @@ type LoginService interface {
 	// NeedCaptcha returns true when the given login ID has accumulated enough
 	// failures to require graphic captcha on the next attempt.
 	NeedCaptcha(id string) (bool, error)
+	// ClearLoginFailure clears the login failure record after successful captcha verification.
+	ClearLoginFailure(id string) error
 }
 
 type loginService struct {
@@ -138,4 +140,9 @@ func (s *loginService) NeedCaptcha(id string) (bool, error) {
 	}
 
 	return lv.NeedCaptcha(), nil
+}
+
+// ClearLoginFailure clears the login failure record after successful captcha verification.
+func (s *loginService) ClearLoginFailure(id string) error {
+	return s.repo.Delete(id)
 }

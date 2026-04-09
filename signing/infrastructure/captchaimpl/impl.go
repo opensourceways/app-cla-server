@@ -1,8 +1,6 @@
 package captchaimpl
 
 import (
-	"errors"
-
 	"github.com/mojocn/base64Captcha"
 
 	"github.com/opensourceways/app-cla-server/signing/domain"
@@ -60,7 +58,7 @@ func (c *captchaImpl) Verify(id string, answer string) error {
 	}
 
 	if !c.captcha.Verify(id, answer, true) {
-		return errors.New(string(errCaptchaInvalid))
+		return errCaptchaInvalid
 	}
 
 	return nil

@@ -9,7 +9,7 @@ import (
 type dao interface {
 	SetWithExpiry(key string, val interface{}, expiry time.Duration) error
 	Get(key string, val interface{}) error
-	Expire(key string, expire time.Duration) error
+	Del(keys ...string) error
 	IsDocNotExists(err error) bool
 }
 
@@ -38,8 +38,8 @@ func (s *captchaStore) Get(id string, clear bool) string {
 	}
 
 	if clear {
-		// expire immediately
-		_ = s.dao.Expire(captchaKey(id), 0)
+		// delete key immediately
+		_ = s.dao.Del(captchaKey(id))
 	}
 
 	return val

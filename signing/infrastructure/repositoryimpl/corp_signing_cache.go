@@ -3,9 +3,10 @@ package repositoryimpl
 import (
 	"encoding/json"
 	"fmt"
+
+	"log"
 	"time"
 
-	"github.com/beego/beego/v2/core/logs"
 	"github.com/opensourceways/app-cla-server/signing/domain"
 	"github.com/opensourceways/app-cla-server/signing/domain/dp"
 	"github.com/opensourceways/app-cla-server/signing/domain/repository"
@@ -27,7 +28,8 @@ type cacheDAO interface {
 
 // cachedCorpSigningPage is a serialisable snapshot of CorpSigningSummaryPage.
 type cachedCorpSigningPage struct {
-	Total int64                      `json:"total"`
+
+	Total int64                    `json:"total"`
 	Data  []cachedCorpSigningSummary `json:"data"`
 }
 
@@ -151,11 +153,10 @@ func (c *cachedCorpSigning) FindPage(linkId string, page, pageSize int, adminAdd
 
 	// --- cache hit ---
 	var cached cachedCorpSigningPage
-	var payload string
-	if err := c.cache.Get(key, &payload); err == nil {
-		if json.Unmarshal([]byte(payload), &cached) == nil {
-			return fromCache(cached), nil
-		}
+
+	if err := c.cache.Get(key, &cached); err == nil {
+		return fromCache(cached), nil
+
 	}
 
 	// --- cache miss: query MongoDB ---
@@ -166,18 +167,14 @@ func (c *cachedCorpSigning) FindPage(linkId string, page, pageSize int, adminAdd
 
 	// populate cache asynchronously so the caller is not blocked
 	go func() {
-		defer func() {
-			if r := recover(); r != nil {
-				logs.Error("corp_signing cache goroutine recovered from panic: %v", r)
-			}
-		}()
+
 		payload, jsonErr := json.Marshal(toCache(result))
 		if jsonErr != nil {
-			logs.Error("corp_signing cache marshal error: %s", jsonErr)
+			log.Printf("corp_signing cache marshal error: %v", jsonErr)
 			return
 		}
 		if setErr := c.cache.SetWithExpiry(key, string(payload), corpSigningPageCacheTTL); setErr != nil {
-			logs.Error("corp_signing cache set error: %s", setErr)
+			log.Printf("corp_signing cache set error: %v", setErr)
 		}
 	}()
 
@@ -188,14 +185,17 @@ func (c *cachedCorpSigning) FindPage(linkId string, page, pageSize int, adminAdd
 func (c *cachedCorpSigning) invalidateLink(linkId string) {
 	keys, err := c.cache.Keys(linkPattern(linkId))
 	if err != nil {
-		logs.Error("corp_signing cache keys error: %s", err)
+
+		log.Printf("corp_signing cache keys error: %v", err)
+
 		return
 	}
 	if len(keys) == 0 {
 		return
 	}
 	if err := c.cache.Del(keys...); err != nil {
-		logs.Error("corp_signing cache invalidate error: %s", err)
+
+		log.Printf("corp_signing cache invalidate error: %v", err)
 	}
 }
 

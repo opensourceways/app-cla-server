@@ -237,8 +237,7 @@ func (impl *corpSigning) FindPage(linkId string, intPage, intPageSize int, admin
 		if isEmail(searchQuery) {
 			filter[childField(fieldRep, fieldEmail)] = searchQuery
 		} else {
-			// 按企业名称搜索（模糊匹配，case-insensitive）
-			filter[childField(fieldCorp, fieldName)] = bson.M{"$regex": searchQuery, "$options": "i"}
+			filter[childField(fieldCorp, fieldName)] = searchQuery
 		}
 	}
 

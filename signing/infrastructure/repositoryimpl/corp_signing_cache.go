@@ -3,6 +3,7 @@ package repositoryimpl
 import (
 	"encoding/json"
 	"fmt"
+
 	"log"
 	"time"
 
@@ -27,6 +28,7 @@ type cacheDAO interface {
 
 // cachedCorpSigningPage is a serialisable snapshot of CorpSigningSummaryPage.
 type cachedCorpSigningPage struct {
+
 	Total int64                    `json:"total"`
 	Data  []cachedCorpSigningSummary `json:"data"`
 }
@@ -151,8 +153,10 @@ func (c *cachedCorpSigning) FindPage(linkId string, page, pageSize int, adminAdd
 
 	// --- cache hit ---
 	var cached cachedCorpSigningPage
+
 	if err := c.cache.Get(key, &cached); err == nil {
 		return fromCache(cached), nil
+
 	}
 
 	// --- cache miss: query MongoDB ---
@@ -163,6 +167,7 @@ func (c *cachedCorpSigning) FindPage(linkId string, page, pageSize int, adminAdd
 
 	// populate cache asynchronously so the caller is not blocked
 	go func() {
+
 		payload, jsonErr := json.Marshal(toCache(result))
 		if jsonErr != nil {
 			log.Printf("corp_signing cache marshal error: %v", jsonErr)
@@ -180,13 +185,16 @@ func (c *cachedCorpSigning) FindPage(linkId string, page, pageSize int, adminAdd
 func (c *cachedCorpSigning) invalidateLink(linkId string) {
 	keys, err := c.cache.Keys(linkPattern(linkId))
 	if err != nil {
+
 		log.Printf("corp_signing cache keys error: %v", err)
+
 		return
 	}
 	if len(keys) == 0 {
 		return
 	}
 	if err := c.cache.Del(keys...); err != nil {
+
 		log.Printf("corp_signing cache invalidate error: %v", err)
 	}
 }

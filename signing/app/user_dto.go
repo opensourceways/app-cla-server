@@ -12,6 +12,8 @@ type CmdToLogin struct {
 	Account          dp.Account
 	Password         dp.Password
 	PrivacyConsented bool
+	CaptchaId        string
+	CaptchaAnswer    string
 }
 
 func (cmd *CmdToLogin) clear() {
@@ -34,6 +36,7 @@ type UserLoginDTO struct {
 	PrivacyVersion   string
 	InitialPWChanged bool
 	RetryNum         int
+	NeedCaptcha      bool
 }
 
 // CmdToChangePassword

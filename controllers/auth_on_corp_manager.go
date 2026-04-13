@@ -8,7 +8,8 @@ import (
 
 type corpAuthFailure struct {
 	errMsg
-	RetryNum int `json:"retry_num"`
+	RetryNum    int  `json:"retry_num"`
+	NeedCaptcha bool `json:"need_captcha,omitempty"`
 }
 
 // @Title Logout
@@ -52,7 +53,17 @@ func (ctl *CorporationManagerController) Login() {
 	if merr != nil {
 		if merr.IsErrorOf(models.ErrWrongIDOrPassword) {
 			body := corpAuthFailure{
-				RetryNum: v.RetryNum,
+				RetryNum:    v.RetryNum,
+				NeedCaptcha: v.NeedCaptcha,
+			}
+			body.ErrCode = merr.ErrCode()
+			body.ErrMsg = merr.Error()
+
+			ctl.sendResponse(action, body, 400)
+
+		} else if merr.IsErrorOf(models.ErrCaptchaInvalid) {
+			body := corpAuthFailure{
+				NeedCaptcha: true,
 			}
 			body.ErrCode = merr.ErrCode()
 			body.ErrMsg = merr.Error()
@@ -81,6 +92,32 @@ func (ctl *CorporationManagerController) Login() {
 	ctl.sendSuccessResp(action, "successfully")
 
 	ctl.addOperationLog(v.UserId+" / "+v.Role, action, 0)
+}
+
+// @Title GetCaptcha
+// @Description get a graphic captcha image for login brute-force protection
+// @Tags CorpManager
+// @Produce json
+// @Success 200
+// @router /captcha [get]
+func (ctl *CorporationManagerController) GetCaptcha() {
+	action := "get login captcha"
+
+	id, image, merr := models.GetLoginCaptcha()
+	if merr != nil {
+		ctl.sendModelErrorAsResp(merr, action)
+		return
+	}
+
+	ctl.sendSuccessResp(action, loginCaptchaResp{
+		CaptchaId:    id,
+		CaptchaImage: image,
+	})
+}
+
+type loginCaptchaResp struct {
+	CaptchaId    string `json:"captcha_id"`
+	CaptchaImage string `json:"captcha_image"`
 }
 
 func (ctl *CorporationManagerController) genToken(linkID string, info *models.CorpManagerLoginInfo) error {

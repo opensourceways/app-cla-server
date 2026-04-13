@@ -33,3 +33,9 @@ func (l *Login) RetryNum() int {
 func (l *Login) HasFailure() bool {
 	return l.FailedNum > 0
 }
+
+// NeedCaptcha returns true when the login has enough failures to require
+// graphic captcha verification on the next attempt.
+func (l *Login) NeedCaptcha() bool {
+	return !l.Frozen && l.FailedNum >= config.NeedCaptchaThreshold
+}

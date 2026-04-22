@@ -64,7 +64,7 @@ func (ctl *LinkController) Link() {
 // @Success 204 {object} controllers.respData
 // @router /:link_id [delete]
 func (ctl *LinkController) Delete() {
-	linkId := ctl.GetString(":link_id")
+	linkId := ctl.GetString(ParamLinkID)
 	action := "community manager delete link: " + linkId
 	sendResp := ctl.newFuncForSendingFailedResp(action)
 
@@ -123,7 +123,7 @@ func (ctl *LinkController) GetCLAForSigning() {
 	action := "fetch signing page info"
 
 	result, err := models.ListCLAs(
-		ctl.GetString(":link_id"), ctl.GetString(":apply_to"),
+		ctl.GetString(ParamLinkID), ctl.GetString(ParamApplyTo),
 	)
 	if err != nil {
 		ctl.sendModelErrorAsResp(err, action)
@@ -142,7 +142,7 @@ func (ctl *LinkController) GetCLAForSigning() {
 func (ctl *LinkController) Get() {
 	action := "fetch link org info"
 
-	result, err := models.GetLink(ctl.GetString(":link_id"))
+	result, err := models.GetLink(ctl.GetString(ParamLinkID))
 	if err != nil {
 		ctl.sendModelErrorAsResp(err, action)
 	} else {

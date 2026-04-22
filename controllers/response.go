@@ -30,7 +30,7 @@ func (ctl *baseController) sendResponse(action string, body interface{}, statusC
 		Data: body,
 	}
 
-	ctl.ServeJSON()
+	_ = ctl.ServeJSON()
 
 	ctl.operationLog(action, statusCode)
 }

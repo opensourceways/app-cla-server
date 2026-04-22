@@ -6,6 +6,11 @@ import (
 	"github.com/opensourceways/app-cla-server/models"
 )
 
+const (
+	fontNameNotoSansSC = "NotoSansSC-Regular"
+	fontFileNotoSansSC = "NotoSansSC-Regular.ttf"
+)
+
 type IPDFGenerator interface {
 	GenPDFForCorporationSigning(linkID, claFile string, signing *models.CorporationSigning, claFields []models.CLAField) (string, error)
 }
@@ -47,15 +52,15 @@ func newGeneratorForEnglish() (*corpSigningPDF, error) {
 		language: lang,
 		gh:       5.0,
 
-		contactFont: fontInfo{font: "NotoSansSC-Regular", size: 10},
+		contactFont: fontInfo{font: fontNameNotoSansSC, size: 10},
 
 		seal:          "Seal",
 		signature:     "Signature of Legal/Authorized Representative",
 		signatureDate: "Date",
 
 		newPDF: func() *gofpdf.Fpdf {
-			pdf := gofpdf.New("P", "mm", "A4", "./conf/pdf-font") // 210mm x 297mm
-			pdf.AddUTF8Font("NotoSansSC-Regular", "", "NotoSansSC-Regular.ttf")
+			pdf := gofpdf.New("P", "mm", "A4", "./conf/pdf-font")
+			pdf.AddUTF8Font(fontNameNotoSansSC, "", fontFileNotoSansSC)
 			return pdf
 		},
 	}, nil
@@ -68,16 +73,16 @@ func newGeneratorForChinese() (*corpSigningPDF, error) {
 		language: lang,
 		gh:       5.0,
 
-		contactFont: fontInfo{font: "NotoSansSC-Regular", size: 10},
+		contactFont: fontInfo{font: fontNameNotoSansSC, size: 10},
 
 		seal:          "盖章",
 		signature:     "法定/授权代表签字",
 		signatureDate: "日期",
 
 		newPDF: func() *gofpdf.Fpdf {
-			pdf := gofpdf.New("P", "mm", "A4", "./conf/pdf-font") // 210mm x 297mm
-			pdf.AddUTF8Font("NotoSansSC-Regular", "", "NotoSansSC-Regular.ttf")
-			pdf.AddUTF8Font("NotoSansSC-Regular", "I", "NotoSansSC-Regular.ttf")
+			pdf := gofpdf.New("P", "mm", "A4", "./conf/pdf-font")
+			pdf.AddUTF8Font(fontNameNotoSansSC, "", fontFileNotoSansSC)
+			pdf.AddUTF8Font(fontNameNotoSansSC, "I", fontFileNotoSansSC)
 			return pdf
 		},
 	}, nil

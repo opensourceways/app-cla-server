@@ -33,9 +33,9 @@ func (ctl *EmployeeSigningController) Prepare() {
 // @router /:link_id/:signing_id/code [post]
 func (ctl *EmployeeSigningController) SendVerificationCode() {
 	ctl.sendVerificationCodeWhenSigning(
-		ctl.GetString(":link_id"),
+		ctl.GetString(ParamLinkID),
 		func(email string) (string, models.IModelError) {
-			return models.VCOfEmployeeSigning(ctl.GetString(":signing_id"), email)
+			return models.VCOfEmployeeSigning(ctl.GetString(ParamSigningID), email)
 		},
 	)
 }
@@ -65,7 +65,7 @@ func (ctl *EmployeeSigningController) SendVerificationCode() {
 // @router /:link_id/ [post]
 func (ctl *EmployeeSigningController) Sign() {
 	action := "sign employeee cla"
-	linkID := ctl.GetString(":link_id")
+	linkID := ctl.GetString(ParamLinkID)
 
 	var info models.EmployeeSigning
 	if fr := ctl.fetchInputPayload(&info); fr != nil {
@@ -132,7 +132,7 @@ func (ctl *EmployeeSigningController) GetAll() {
 // @Success 202 {object} controllers.respData
 // @router /:signing_id [put]
 func (ctl *EmployeeSigningController) Update() {
-	employeeSigningId := ctl.GetString(":signing_id")
+	employeeSigningId := ctl.GetString(ParamSigningID)
 	action := "employee manager enable/unable employee signing, id: " + employeeSigningId
 	sendResp := ctl.newFuncForSendingFailedResp(action)
 
@@ -187,7 +187,7 @@ func (ctl *EmployeeSigningController) Update() {
 // @Success 204 {object} controllers.respData
 // @router /:signing_id [delete]
 func (ctl *EmployeeSigningController) Delete() {
-	employeeSigningId := ctl.GetString(":signing_id")
+	employeeSigningId := ctl.GetString(ParamSigningID)
 	action := "employee manager deletes employee signing, id: " + employeeSigningId
 
 	pl, fr := ctl.tokenPayloadBasedOnCorpManager()

@@ -17,9 +17,6 @@ const (
 	fieldVersion   = "version"
 	FieldAdminID   = "admin.id"
 
-	fieldIndex   = fieldIndex
-	fieldVersion = fieldVersion
-
 	mongoCmdIn          = "$in"
 	mongoCmdAll         = "$all"
 	mongoCmdSet         = "$set"

@@ -40,7 +40,7 @@ const (
 	errUnsupportedCLALang       = "unsupported_cla_lang"
 	errNotSameCorp              = string(models.ErrNotSameCorp)
 	errCanNotFetchClientIP      = "can_not_fetch_client_ip"
-	errMissingPWRetrievalKey    = "missing_pw_retrieval_key"
+	errMissingPWRetrievalKey    = "missing_pw_retrieval_key" // #nosec G101 -- error code constant, not a credential
 	errInvalidPWRetrievalKey    = string(models.ErrInvalidPWRetrievalKey) // #nosec G101 -- error code constant, not a credential
 	errTooManyRequest           = "too_many_request"
 	errNoOrg                    = "no_org"

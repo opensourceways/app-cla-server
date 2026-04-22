@@ -80,7 +80,7 @@ type notfoudError struct {
 	domainError
 }
 
-func (e notfoudError) NotFound() {}
+func (e notfoudError) NotFound() bool { return true }
 
 // NewDomainError
 func NewDomainError(v string) domainError {

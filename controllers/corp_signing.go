@@ -35,7 +35,7 @@ func (ctl *CorporationSigningController) Prepare() {
 // @Success 201 {object} controllers.respData
 // @router /:link_id/code [post]
 func (ctl *CorporationSigningController) SendVerificationCode() {
-	linkId := ctl.GetString(":link_id")
+	linkId := ctl.GetString(ParamLinkID)
 
 	ctl.sendVerificationCodeWhenSigning(
 		linkId,
@@ -64,7 +64,7 @@ func (ctl *CorporationSigningController) SendVerificationCode() {
 // @router /:link_id/ [post]
 func (ctl *CorporationSigningController) Sign() {
 	action := "sign corp CLA"
-	linkID := ctl.GetString(":link_id")
+	linkID := ctl.GetString(ParamLinkID)
 
 	var info models.CorporationSigningCreateOption
 	if fr := ctl.fetchInputPayload(&info); fr != nil {
@@ -115,7 +115,7 @@ func (ctl *CorporationSigningController) Sign() {
 // @Failure 500 system_error:               system error
 // @router /:link_id/:signing_id [delete]
 func (ctl *CorporationSigningController) Delete() {
-	csId := ctl.GetString(":signing_id")
+	csId := ctl.GetString(ParamSigningID)
 	action := "community manager deletes corp signing: " + csId
 
 	pl, fr := ctl.tokenPayloadBasedOnCorpManager()
@@ -140,7 +140,7 @@ func (ctl *CorporationSigningController) Delete() {
 // @Success 202 {object} controllers.respData
 // @router /:link_id/:signing_id [put]
 func (ctl *CorporationSigningController) ResendCorpSigningEmail() {
-	csId := ctl.GetString(":signing_id")
+	csId := ctl.GetString(ParamSigningID)
 	action := "community manager resends corp signing email, signing id: " + csId
 
 	pl, fr := ctl.tokenPayloadBasedOnCorpManager()
@@ -185,7 +185,7 @@ func (ctl *CorporationSigningController) ResendCorpSigningEmail() {
 // @router /:link_id [get]
 func (ctl *CorporationSigningController) GetAll() {
 	action := "community manager lists corp signings"
-	linkID := ctl.GetString(":link_id")
+	linkID := ctl.GetString(ParamLinkID)
 
 	pl, fr := ctl.tokenPayloadBasedOnCorpManager()
 	if fr != nil {
@@ -221,7 +221,7 @@ func (ctl *CorporationSigningController) GetAll() {
 // @router /page/:link_id [get]
 func (ctl *CorporationSigningController) GetPage() {
 	action := "community manager lists page corp signings"
-	linkID := ctl.GetString(":link_id")
+	linkID := ctl.GetString(ParamLinkID)
 	page, pageErr := ctl.GetInt("page", 1)
 	if pageErr != nil {
 		ctl.sendModelErrorAsResp(models.NewModelError(models.ErrSystemError, pageErr), action)
@@ -282,7 +282,7 @@ func (ctl *CorporationSigningController) GetCorpInfo() {
 	action := "get corporation info"
 
 	r, merr := models.FindCorpSummary(
-		ctl.GetString(":link_id"), ctl.GetString(":email"),
+		ctl.GetString(ParamLinkID), ctl.GetString(":email"),
 	)
 	if merr != nil {
 		ctl.sendModelErrorAsResp(merr, action)
@@ -351,8 +351,8 @@ func (ctl *CorporationSigningController) Agree() {
 // @router /{link_id}/{signing_id}/representative [put]
 func (ctl *CorporationSigningController) UpdateRepresentative() {
 	action := "update corporation representative"
-	linkID := ctl.GetString(":link_id")
-	signingID := ctl.GetString(":signing_id")
+	linkID := ctl.GetString(ParamLinkID)
+	signingID := ctl.GetString(ParamSigningID)
 
 	var opt models.RepresentativeUpdateOption
 	if fr := ctl.fetchInputPayload(&opt); fr != nil {

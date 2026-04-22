@@ -94,6 +94,8 @@ func (ctl *baseController) newAccessController(permission string) accessControll
 		acp = &acForCorpManagerPayload{}
 	case PermissionEmployeeManager:
 		acp = &acForCorpManagerPayload{}
+	default:
+		acp = nil
 	}
 
 	return accessController{Payload: acp}

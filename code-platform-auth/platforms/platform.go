@@ -14,7 +14,8 @@ func NewPlatform(platform string) (Platform, error) {
 
 	case "github":
 		return newGithubClient(), nil
-	}
 
-	return nil, fmt.Errorf("unknown platform:%s", platform)
+	default:
+		return nil, fmt.Errorf("unknown platform:%s", platform)
+	}
 }

@@ -8,7 +8,7 @@ import (
 
 const privacyVersionPrefix = "Last updated: "
 
-func parsePrivacyVersion(path string) (string, error) {
+func parsePrivacyVersion(path string) (string, error) { // nolint: gosec G304
 	file, err := os.Open(path)
 	if err != nil {
 		return "", err

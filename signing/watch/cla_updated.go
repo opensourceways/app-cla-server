@@ -127,7 +127,7 @@ func (impl *claUpdatedWatchImpl) handleGenCLADiff(msg message.CLAUpdatedMsg) {
 		CLAId:  msg.NewCLAId,
 	})
 
-	cmd := exec.Command(impl.pythonBin, "./util/generate_diff.py", oldPDFPath, newPDFPath, diffFile)
+	cmd := exec.Command(impl.pythonBin, "./util/generate_diff.py", oldPDFPath, newPDFPath, diffFile) // nolint: gosec G204
 	for i := 0; i < impl.config.PythonRetryTimes; i++ {
 		out, err := cmd.Output()
 		if err == nil {

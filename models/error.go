@@ -39,13 +39,13 @@ const (
 	ErrNoLinkOrUnuploaed       ModelErrCode = "no_link_or_unuploaded"
 	ErrUnmatchedEmailDomain    ModelErrCode = "unmatched_email_domain"
 	ErrRestrictedEmailSuffix   ModelErrCode = "restricted_email_suffix"
-	ErrInvalidPWRetrievalKey   ModelErrCode = "invalid_pw_retrieval_key"
+	ErrInvalidPWRetrievalKey   ModelErrCode = "invalid_pw_retrieval_key" // nolint: gosec G101
 	ErrInvalidPassword         ModelErrCode = "invalid_password"
 	ErrBadRequestParameter     ModelErrCode = "bad_request_parameter"
 	ErrNoCorpEmployeeManager   ModelErrCode = "no_employee_manager"
 	ErrUnuploaed               ModelErrCode = "unuploaded"
 	ErrGoToSignEmployeeCLA     ModelErrCode = "go_to_sign_employee_cla"
-	ErrWrongIDOrPassword       ModelErrCode = "wrong_id_or_pw"
+	ErrWrongIDOrPassword       ModelErrCode = "wrong_id_or_pw" // nolint: gosec G101
 	ErrPrivacyConsentInvalid   ModelErrCode = "privacy_consent_invalid"
 	ErrNoRefreshToken          ModelErrCode = "no_refresh_token"
 	ErrInvalidToken            ModelErrCode = "invalid_token"

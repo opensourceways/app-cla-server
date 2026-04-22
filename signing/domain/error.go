@@ -9,9 +9,9 @@ const (
 	ErrorCodeUserSamePassword           = "user_same_password"
 	ErrorPrivacyConsentInvalid          = "privacy_consent_invalid"
 	ErrorCodeUserInvalidAccount         = "user_invalid_account"
-	ErrorCodeUserInvalidPassword        = "user_invalid_password"
-	ErrorCodeUserUnmatchedPassword      = "user_unmatched_password"
-	ErrorCodeUserWrongAccountOrPassword = "user_wrong_account_or_password"
+	ErrorCodeUserInvalidPassword        = "user_invalid_password" // nolint: gosec G101
+	ErrorCodeUserUnmatchedPassword      = "user_unmatched_password" // nolint: gosec G101
+	ErrorCodeUserWrongAccountOrPassword = "user_wrong_account_or_password" // nolint: gosec G101
 
 	ErrorCodeCorpAdminExists = "corp_admin_exists"
 
@@ -46,7 +46,7 @@ const (
 	ErrorCodeVerificationCodeBusy  = "verification_code_busy"
 	ErrorCodeVerificationCodeWrong = "verification_code_wrong"
 
-	ErrorCodeEmailCredentialNotFound = "email_credential_not_found"
+	ErrorCodeEmailCredentialNotFound = "email_credential_not_found" // nolint: gosec G101
 
 	ErrorCodeGmailNoRefreshToken = "gmail_no_refresh_token"
 

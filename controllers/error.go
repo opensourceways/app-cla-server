@@ -15,7 +15,7 @@ const (
 	errUnsigned                 = string(models.ErrUnsigned)
 	errNoLink                   = string(models.ErrNoLink)
 	errNoEmployeeManager        = "no_employee_manager"
-	errWrongIDOrPassword        = "wrong_id_or_pw" // nolint: gosec G101
+	errWrongIDOrPassword        = "wrong_id_or_pw" // #nosec G101 -- error code constant, not a credential
 	errCorpManagerExists        = string(models.ErrCorpManagerExists)
 	errNoRefreshToken           = "no_refresh_token"
 	errUnknownEmailPlatform     = "unknown_email_platform"
@@ -41,7 +41,7 @@ const (
 	errNotSameCorp              = string(models.ErrNotSameCorp)
 	errCanNotFetchClientIP      = "can_not_fetch_client_ip"
 	errMissingPWRetrievalKey    = "missing_pw_retrieval_key"
-	errInvalidPWRetrievalKey    = string(models.ErrInvalidPWRetrievalKey) // nolint: gosec G101
+	errInvalidPWRetrievalKey    = string(models.ErrInvalidPWRetrievalKey) // #nosec G101 -- error code constant, not a credential
 	errTooManyRequest           = "too_many_request"
 	errNoOrg                    = "no_org"
 	errInvalidEmailAuthCode     = "invalid_email_auth_code"

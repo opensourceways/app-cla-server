@@ -30,7 +30,7 @@ func Init(cfg *Config) error {
 		return fmt.Errorf("fail to get certs from %s", cfg.CAFile)
 	}
 
-	tlsConfig := &tls.Config{ // nolint: gosec G402
+	tlsConfig := &tls.Config{ // #nosec G402 -- skip TLS verification for internal use
 		RootCAs:            roots,
 		InsecureSkipVerify: true,
 	}

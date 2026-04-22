@@ -25,7 +25,7 @@ func (impl *localCLAImpl) Remove(p string) error {
 func (impl *localCLAImpl) AddCLA(linkId string, cla *domain.CLA) (string, error) {
 	p := impl.localPath(linkId, cla.Id)
 
-	err := ioutil.WriteFile(p, cla.Text, 0644) // nolint: gosec G306
+	err := ioutil.WriteFile(p, cla.Text, 0644) // #nosec G306 -- file permissions set for group read
 
 	return p, err
 }

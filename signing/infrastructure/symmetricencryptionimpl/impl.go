@@ -41,5 +41,5 @@ func (impl *symmetricEncryptionImpl) Decrypt(ciphertext []byte) ([]byte, error) 
 	}
 
 	nonce, ciphertext := ciphertext[:nonceSize], ciphertext[nonceSize:]
-	return impl.aead.Open(nil, nonce, ciphertext, nil) // nolint: gosec G407
+	return impl.aead.Open(nil, nonce, ciphertext, nil) // #nosec G407 -- nonce is extracted from ciphertext, not hardcoded
 }

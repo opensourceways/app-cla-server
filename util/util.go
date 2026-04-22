@@ -66,11 +66,11 @@ func IsNotDir(dir string) bool {
 	return true
 }
 
-func Mkdir(p string) error { // nolint: gosec G301
+func Mkdir(p string) error { // #nosec G301 -- directory permissions set for group access
 	return os.MkdirAll(p, 0770)
 }
 
-func LoadFromYaml(path string, cfg interface{}) error { // nolint: gosec G304
+func LoadFromYaml(path string, cfg interface{}) error { // #nosec G304 -- path is from config, not user input
 	b, err := ioutil.ReadFile(path)
 	if err != nil {
 		return err
@@ -81,7 +81,7 @@ func LoadFromYaml(path string, cfg interface{}) error { // nolint: gosec G304
 	return yaml.Unmarshal(content, cfg)
 }
 
-func NewTemplate(name, path string) (*template.Template, error) { // nolint: gosec G304
+func NewTemplate(name, path string) (*template.Template, error) { // #nosec G304 -- path is from config, not user input
 	txtStr, err := ioutil.ReadFile(path)
 	if err != nil {
 		return nil, fmt.Errorf("failed to new template: read template file failed: %s", err.Error())

@@ -293,7 +293,7 @@ func (impl *corpSigning) executePageQuery(filter bson.M, project bson.M, intPage
 			"data": bson.A{
 				bson.M{"$skip": int64((intPage - 1) * intPageSize)},
 				bson.M{"$limit": int64(intPageSize)},
-				bson.M{"$project": project},
+				bson.M{mongodb.MongoCmdProject: project},
 			},
 		}},
 	}

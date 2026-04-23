@@ -20,19 +20,19 @@ const (
 	FieldIndex   = fieldIndex
 	FieldVersion = fieldVersion
 
-	mongoCmdIn          = "$in"
-	mongoCmdAll         = "$all"
-	mongoCmdSet         = "$set"
-	mongoCmdInc         = "$inc"
-	mongoCmdEach        = "$each"
-	mongoCmdPush        = "$push"
-	mongoCmdPull        = "$pull"
-	mongoCmdMatch       = "$match"
-	mongoCmdFilter      = "$filter"
-	mongoCmdProject     = "$project"
-	mongoCmdAddToSet    = "$addToSet"
-	mongoCmdElemMatch   = "$elemMatch"
-	mongoCmdSetOnInsert = "$setOnInsert"
+	MongoCmdIn          = "$in"
+	MongoCmdAll         = "$all"
+	MongoCmdSet         = "$set"
+	MongoCmdInc         = "$inc"
+	MongoCmdEach        = "$each"
+	MongoCmdPush        = "$push"
+	MongoCmdPull        = "$pull"
+	MongoCmdMatch       = "$match"
+	MongoCmdFilter      = "$filter"
+	MongoCmdProject     = "$project"
+	MongoCmdAddToSet    = "$addToSet"
+	MongoCmdElemMatch   = "$elemMatch"
+	MongoCmdSetOnInsert = "$setOnInsert"
 )
 
 var (
@@ -107,29 +107,29 @@ func (impl *daoImpl) InsertDocIfNotExists(filter, doc bson.M) (string, error) {
 func (impl *daoImpl) PushArraySingleItemAndUpdate(filter bson.M, array string, v interface{}, u bson.M, version int) error {
 	return impl.updateDoc(
 		filter, version, bson.M{
-			mongoCmdPush: bson.M{array: v},
-			mongoCmdSet:  u,
+			MongoCmdPush: bson.M{array: v},
+			MongoCmdSet:  u,
 		},
 	)
 }
 
 func (impl *daoImpl) PushArraySingleItem(filter bson.M, array string, v interface{}, version int) error {
 	return impl.updateDoc(
-		filter, version, bson.M{mongoCmdPush: bson.M{array: v}},
+		filter, version, bson.M{MongoCmdPush: bson.M{array: v}},
 	)
 }
 
 func (impl *daoImpl) PushArrayMultiItems(filter bson.M, array string, value bson.A, version int) error {
 	return impl.updateDoc(
 		filter, version,
-		bson.M{mongoCmdPush: bson.M{array: bson.M{mongoCmdEach: value}}},
+		bson.M{MongoCmdPush: bson.M{array: bson.M{MongoCmdEach: value}}},
 	)
 }
 
 func (impl *daoImpl) PullArrayMultiItems(filter bson.M, array string, filterOfItem bson.M, version int) error {
 	return impl.updateDoc(
 		filter, version,
-		bson.M{mongoCmdPull: bson.M{array: filterOfItem}},
+		bson.M{MongoCmdPull: bson.M{array: filterOfItem}},
 	)
 }
 
@@ -137,8 +137,8 @@ func (impl *daoImpl) MoveArrayItem(filter bson.M, from string, filterOfItem bson
 	return impl.updateDoc(
 		filter, version,
 		bson.M{
-			mongoCmdPull: bson.M{from: filterOfItem},
-			mongoCmdPush: bson.M{to: value},
+			MongoCmdPull: bson.M{from: filterOfItem},
+			MongoCmdPush: bson.M{to: value},
 		},
 	)
 }
@@ -147,22 +147,22 @@ func (impl *daoImpl) MoveAndAppendArrayItem(filter bson.M, from string, filterOf
 	return impl.updateDoc(
 		filter, version,
 		bson.M{
-			mongoCmdPull: bson.M{from: filterOfItem},
-			mongoCmdPush: bson.M{to: value, from: append},
+			MongoCmdPull: bson.M{from: filterOfItem},
+			MongoCmdPush: bson.M{to: value, from: append},
 		},
 	)
 }
 
 func (impl *daoImpl) UpdateDocsWithoutVersion(filter bson.M, v bson.M) error {
 	return impl.withContext(func(ctx context.Context) error {
-		_, err := impl.col.UpdateMany(ctx, filter, bson.M{mongoCmdSet: v})
+		_, err := impl.col.UpdateMany(ctx, filter, bson.M{MongoCmdSet: v})
 
 		return err
 	})
 }
 
 func (impl *daoImpl) UpdateDoc(filter bson.M, v bson.M, version int) error {
-	return impl.updateDoc(filter, version, bson.M{mongoCmdSet: v})
+	return impl.updateDoc(filter, version, bson.M{MongoCmdSet: v})
 }
 
 func (impl *daoImpl) ReplaceDoc(filter, doc bson.M) (string, error) {
@@ -192,7 +192,7 @@ func (impl *daoImpl) ReplaceDoc(filter, doc bson.M) (string, error) {
 func (impl *daoImpl) updateDoc(filter bson.M, version int, cmd bson.M) error {
 	return impl.withContext(func(ctx context.Context) error {
 		filter[fieldVersion] = version
-		cmd[mongoCmdInc] = bson.M{fieldVersion: 1}
+		cmd[MongoCmdInc] = bson.M{fieldVersion: 1}
 
 		r, err := impl.col.UpdateOne(ctx, filter, cmd)
 		if err != nil {
@@ -224,8 +224,8 @@ func (impl *daoImpl) UpdateArraySingleItem(filter bson.M, array string, filterOf
 		r, err := impl.col.UpdateOne(
 			ctx, filter,
 			bson.M{
-				mongoCmdSet: cmd,
-				mongoCmdInc: bson.M{fieldVersion: 1},
+				MongoCmdSet: cmd,
+				MongoCmdInc: bson.M{fieldVersion: 1},
 			},
 			&options.UpdateOptions{
 				ArrayFilters: &options.ArrayFilters{
@@ -272,9 +272,9 @@ func (impl *daoImpl) PushAndUpdateArrayItem(
 		r, err := impl.col.UpdateOne(
 			ctx, filter,
 			bson.M{
-				mongoCmdPush: bson.M{arrayToPush: docToPush},
-				mongoCmdSet:  cmd,
-				mongoCmdInc:  bson.M{fieldVersion: 1},
+				MongoCmdPush: bson.M{arrayToPush: docToPush},
+				MongoCmdSet:  cmd,
+				MongoCmdInc:  bson.M{fieldVersion: 1},
 			},
 			&options.UpdateOptions{
 				ArrayFilters: &options.ArrayFilters{
@@ -463,10 +463,10 @@ func (impl *daoImpl) GetArrayItem(
 			"cond":  conditionTofilterArray(filterOfArray),
 		}}
 
-		pipeline = append(pipeline, bson.M{"$project": project1})
+		pipeline = append(pipeline, bson.M{MongoCmdProject: project1})
 
 		if len(project) > 0 {
-			pipeline = append(pipeline, bson.M{"$project": project})
+			pipeline = append(pipeline, bson.M{MongoCmdProject: project})
 		}
 
 		cursor, err := impl.col.Aggregate(ctx, pipeline)
@@ -529,6 +529,6 @@ func (impl *daoImpl) DocIdsFilter(ids []string) (bson.M, error) {
 	}
 
 	return bson.M{
-		fieldIndex: bson.M{mongoCmdIn: oids},
+		fieldIndex: bson.M{MongoCmdIn: oids},
 	}, nil
 }

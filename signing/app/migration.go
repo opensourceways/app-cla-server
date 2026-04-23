@@ -1,7 +1,6 @@
 package app
 
 import (
-	"reflect"
 	"strings"
 
 	"github.com/beego/beego/v2/core/logs"
@@ -190,7 +189,7 @@ func (s *migrationService) migrateCorpSigningData(sourceLinkId, targetLinkId str
 			return err
 		}
 
-		if err := s.migrateBatchCorpSigning(toSummaryInterface(corpSigningSummaries), targetLinkId, claIdMap, corpSigningIdMap); err != nil {
+		if err := s.migrateBatchCorpSigning(corpSigningSummaries, targetLinkId, claIdMap, corpSigningIdMap); err != nil {
 			return err
 		}
 
@@ -202,15 +201,7 @@ func (s *migrationService) migrateCorpSigningData(sourceLinkId, targetLinkId str
 	return nil
 }
 
-func toSummaryInterface(summaries []repository.CorpSigningSummary) []interface{} {
-	result := make([]interface{}, len(summaries))
-	for i, s := range summaries {
-		result[i] = s
-	}
-	return result
-}
-
-func (s *migrationService) migrateBatchCorpSigning(summaries []interface{}, targetLinkId string, claIdMap, corpSigningIdMap map[string]string) error {
+func (s *migrationService) migrateBatchCorpSigning(summaries []repository.CorpSigningSummary, targetLinkId string, claIdMap, corpSigningIdMap map[string]string) error {
 	for _, summary := range summaries {
 		if err := s.migrateSingleCorpSigning(summary, targetLinkId, claIdMap, corpSigningIdMap); err != nil {
 			return err
@@ -219,13 +210,9 @@ func (s *migrationService) migrateBatchCorpSigning(summaries []interface{}, targ
 	return nil
 }
 
-func (s *migrationService) migrateSingleCorpSigning(summary interface{}, targetLinkId string, claIdMap, corpSigningIdMap map[string]string) error {
-	summaryVal := reflect.ValueOf(summary)
-	idField := summaryVal.FieldByName("Id")
-	hasPDFField := summaryVal.FieldByName("HasPDF")
-
-	oldId := idField.String()
-	hasPDF := hasPDFField.Bool()
+func (s *migrationService) migrateSingleCorpSigning(summary repository.CorpSigningSummary, targetLinkId string, claIdMap, corpSigningIdMap map[string]string) error {
+	oldId := summary.Id
+	hasPDF := summary.HasPDF
 
 	fullCorpSigning, err := s.corpRepo.Find(oldId)
 	if err != nil {

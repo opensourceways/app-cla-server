@@ -234,24 +234,43 @@ func isEmail(query string) bool {
 
 func (impl *corpSigning) FindPage(linkId string, intPage, intPageSize int, adminAdded bool, searchQuery string) (repository.CorpSigningSummaryPage, error) {
 	filter := linkIdFilter(linkId)
-	if searchQuery != "" {
-		if isEmail(searchQuery) {
-			filter[childField(fieldRep, fieldEmail)] = searchQuery
-		} else {
-			filter[childField(fieldCorp, fieldName)] = searchQuery
-		}
+	filter = impl.applySearchQuery(filter, searchQuery)
+	filter = impl.applyAdminFilter(filter, adminAdded)
+
+	project := impl.buildPageProjection()
+
+	return impl.executePageQuery(filter, project, intPage, intPageSize)
+}
+
+func (impl *corpSigning) applySearchQuery(filter bson.M, searchQuery string) bson.M {
+	if searchQuery == "" {
+		return filter
 	}
 
+	if isEmail(searchQuery) {
+		filter[childField(fieldRep, fieldEmail)] = searchQuery
+	} else {
+		filter[childField(fieldCorp, fieldName)] = searchQuery
+	}
+
+	return filter
+}
+
+func (impl *corpSigning) applyAdminFilter(filter bson.M, adminAdded bool) bson.M {
 	if adminAdded {
-		filter["admin.id"] = bson.M{"$ne": ""}
+		filter[mongodb.FieldAdminID] = bson.M{"$ne": ""}
 	} else {
 		filter["$or"] = []bson.M{
-			{"admin.id": ""},
+			{mongodb.FieldAdminID: ""},
 			{"admin": bson.M{"$exists": false}},
 		}
 	}
 
-	project := bson.M{
+	return filter
+}
+
+func (impl *corpSigning) buildPageProjection() bson.M {
+	return bson.M{
 		fieldDate:      1,
 		fieldCLAId:     1,
 		fieldLang:      1,
@@ -262,10 +281,9 @@ func (impl *corpSigning) FindPage(linkId string, intPage, intPageSize int, admin
 		fieldHasPDF:    1,
 		fieldCLANotify: 1,
 	}
+}
 
-	// Single aggregation round-trip: $facet returns both total count and the
-	// requested page in one network call, replacing the previous two serial
-	// queries (CountDocuments + Find).
+func (impl *corpSigning) executePageQuery(filter bson.M, project bson.M, intPage, intPageSize int) (repository.CorpSigningSummaryPage, error) {
 	pipeline := bson.A{
 		bson.M{"$match": filter},
 		bson.M{"$facet": bson.M{

@@ -13,9 +13,12 @@ import (
 )
 
 const (
-	fieldIndex     = "_id"
-	fieldVersion   = "version"
-	FieldAdminID   = "admin.id"
+	fieldIndex   = "_id"
+	fieldVersion = "version"
+	FieldAdminID = "admin.id"
+
+	FieldIndex   = fieldIndex
+	FieldVersion = fieldVersion
 
 	mongoCmdIn          = "$in"
 	mongoCmdAll         = "$all"

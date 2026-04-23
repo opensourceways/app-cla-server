@@ -1,6 +1,7 @@
 package app
 
 import (
+	"reflect"
 	"strings"
 
 	"github.com/beego/beego/v2/core/logs"
@@ -181,37 +182,73 @@ func (s *migrationService) migrateCorpSigningData(sourceLinkId, targetLinkId str
 	if err != nil || totalCount <= 0 {
 		return err
 	}
-	for offset := 0; int64(offset) < totalCount; offset += CorporationMigrationPageSize {
+
+	offset := 0
+	for int64(offset) < totalCount {
 		corpSigningSummaries, err := s.corpRepo.FindAllWithPagination(sourceLinkId, offset, CorporationMigrationPageSize)
 		if err != nil {
 			return err
 		}
-		for _, summary := range corpSigningSummaries {
-			// 获取完整的CorpSigning对象
-			fullCorpSigning, err := s.corpRepo.Find(summary.Id)
-			if err != nil {
-				return err
-			}
-			oldId := fullCorpSigning.Id
-			newCorpSigning := s.cloneCorpSigning(&fullCorpSigning, targetLinkId, claIdMap)
-			if err := s.corpRepo.AddForMigrate(&newCorpSigning); err != nil {
-				if strings.Contains(err.Error(), "doc exists") || strings.Contains(err.Error(), "document exists") {
-					logs.Error("文档已存在错误: 可能重复迁移或ID冲突, oldId=%s, newId=%s", oldId, newCorpSigning.Id)
-				}
-				return err
-			}
-			corpSigningIdMap[oldId] = newCorpSigning.Id
-			// 迁移 PDF 文件
-			if summary.HasPDF {
-				if err := s.migrateCorpPDF(oldId, newCorpSigning.Id); err != nil {
-					logs.Error("Failed to migrate PDF for corp signing %s: %v", oldId, err)
-				}
-			}
+
+		if err := s.migrateBatchCorpSigning(toSummaryInterface(corpSigningSummaries), targetLinkId, claIdMap, corpSigningIdMap); err != nil {
+			return err
 		}
-		// 添加日志记录迁移进度
+
 		currentProgress := offset + len(corpSigningSummaries)
 		logs.Info("企业签名迁移进度: %d/%d (%.1f%%)", currentProgress, totalCount, float64(currentProgress)/float64(totalCount)*100)
+		offset += CorporationMigrationPageSize
 	}
+
+	return nil
+}
+
+func toSummaryInterface(summaries []repository.CorpSigningSummary) []interface{} {
+	result := make([]interface{}, len(summaries))
+	for i, s := range summaries {
+		result[i] = s
+	}
+	return result
+}
+
+func (s *migrationService) migrateBatchCorpSigning(summaries []interface{}, targetLinkId string, claIdMap, corpSigningIdMap map[string]string) error {
+	for _, summary := range summaries {
+		if err := s.migrateSingleCorpSigning(summary, targetLinkId, claIdMap, corpSigningIdMap); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (s *migrationService) migrateSingleCorpSigning(summary interface{}, targetLinkId string, claIdMap, corpSigningIdMap map[string]string) error {
+	summaryVal := reflect.ValueOf(summary)
+	idField := summaryVal.FieldByName("Id")
+	hasPDFField := summaryVal.FieldByName("HasPDF")
+
+	oldId := idField.String()
+	hasPDF := hasPDFField.Bool()
+
+	fullCorpSigning, err := s.corpRepo.Find(oldId)
+	if err != nil {
+		return err
+	}
+
+	newCorpSigning := s.cloneCorpSigning(&fullCorpSigning, targetLinkId, claIdMap)
+
+	if err := s.corpRepo.AddForMigrate(&newCorpSigning); err != nil {
+		if strings.Contains(err.Error(), "doc exists") || strings.Contains(err.Error(), "document exists") {
+			logs.Error("文档已存在错误: 可能重复迁移或ID冲突, oldId=%s, newId=%s", oldId, newCorpSigning.Id)
+		}
+		return err
+	}
+
+	corpSigningIdMap[oldId] = newCorpSigning.Id
+
+	if hasPDF {
+		if err := s.migrateCorpPDF(oldId, newCorpSigning.Id); err != nil {
+			logs.Error("Failed to migrate PDF for corp signing %s: %v", oldId, err)
+		}
+	}
+
 	return nil
 }
 

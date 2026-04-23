@@ -146,6 +146,7 @@ func (s *individualSigningService) Check(cmd *CmdToCheckSinging) (dto Individual
 	} else if v.Enabled {
 		f(v.ClaId, dp.CLATypeCorp)
 		return
+	} else {
 	}
 
 	// 未签署时，检查邮箱域名是否有企业签署记录，判断应该走哪个流程

@@ -1,6 +1,7 @@
 package watch
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/beego/beego/v2/core/logs"
@@ -67,7 +68,27 @@ func (impl *watchingImpl) exit() {
 }
 
 func (impl *watchingImpl) watch() {
-	needStop := func() bool {
+	needStop := impl.createNeedStopChecker()
+
+	var timer *time.Timer
+
+	defer cleanupTimer(timer)
+
+	for {
+		if err := impl.processTriggeredItems(needStop); err != nil {
+			return
+		}
+
+		timer = impl.resetTimer(timer)
+
+		if impl.waitForIntervalOrStop(timer, needStop) {
+			return
+		}
+	}
+}
+
+func (impl *watchingImpl) createNeedStopChecker() func() bool {
+	return func() bool {
 		select {
 		case <-impl.stop:
 			return true
@@ -75,44 +96,48 @@ func (impl *watchingImpl) watch() {
 			return false
 		}
 	}
+}
 
-	var timer *time.Timer
+func cleanupTimer(timer *time.Timer) {
+	if timer != nil {
+		timer.Stop()
+	}
+	close(impl.stopped)
+}
 
-	defer func() {
-		if timer != nil {
-			timer.Stop()
+func (impl *watchingImpl) processTriggeredItems(needStop func() bool) error {
+	triggered, err := impl.cs.ListTriggered()
+	if err != nil {
+		logs.Error("failed to list triggered corp signings, err: %s", err.Error())
+	}
+
+	for _, pr := range triggered {
+		impl.handle(pr)
+
+		if needStop() {
+			return fmt.Errorf("stopped")
 		}
+	}
 
-		close(impl.stopped)
-	}()
+	return nil
+}
 
-	for {
-		triggered, err := impl.cs.ListTriggered()
-		if err != nil {
-			logs.Error("failed to list triggered corp signings, err: %s", err.Error())
-		}
+func (impl *watchingImpl) resetTimer(timer *time.Timer) *time.Timer {
+	if timer == nil {
+		return time.NewTimer(impl.interval)
+	} else {
+		timer.Reset(impl.interval)
+		return timer
+	}
+}
 
-		for _, pr := range triggered {
-			impl.handle(pr)
+func (impl *watchingImpl) waitForIntervalOrStop(timer *time.Timer, needStop func() bool) bool {
+	select {
+	case <-impl.stop:
+		return true
 
-			if needStop() {
-				return
-			}
-		}
-
-		// time starts.
-		if timer == nil {
-			timer = time.NewTimer(impl.interval)
-		} else {
-			timer.Reset(impl.interval)
-		}
-
-		select {
-		case <-impl.stop:
-			return
-
-		case <-timer.C:
-		}
+	case <-timer.C:
+		return false
 	}
 }
 

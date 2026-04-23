@@ -10,6 +10,8 @@ import (
 	"github.com/opensourceways/app-cla-server/signing/domain/repository"
 )
 
+const fieldAdminID = "admin.id"
+
 // CorpSigningIndexes returns the index definitions that should exist on the
 // corp_signing collection. Pass the result to mongodb.EnsureIndexes on startup.
 func CorpSigningIndexes() []mongo.IndexModel {
@@ -17,7 +19,7 @@ func CorpSigningIndexes() []mongo.IndexModel {
 		// Fast lookup by link — the primary query key for all page/list queries.
 		{Keys: bson.D{{Key: fieldLinkId, Value: 1}}},
 		// Compound index for the adminAdded filter (link_id + admin.id).
-		{Keys: bson.D{{Key: fieldLinkId, Value: 1}, {Key: "admin.id", Value: 1}}},
+		{Keys: bson.D{{Key: fieldLinkId, Value: 1}, {Key: fieldAdminID, Value: 1}}},
 	}
 }
 

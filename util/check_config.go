@@ -43,6 +43,16 @@ func (e errMissingInput) Error() string {
 
 // CheckConfig checks if the required fields in a struct are provided.
 func CheckConfig(opts interface{}, parent string) error {
+	optsValue, optsType := getReflectInfo(opts)
+
+	if !isValidStruct(optsValue, optsType) {
+		return fmt.Errorf("options type is not a struct")
+	}
+
+	return validateFields(optsValue, optsType, parent)
+}
+
+func getReflectInfo(opts interface{}) (reflect.Value, reflect.Type) {
 	optsValue := reflect.ValueOf(opts)
 	if optsValue.Kind() == reflect.Ptr {
 		optsValue = optsValue.Elem()
@@ -53,62 +63,96 @@ func CheckConfig(opts interface{}, parent string) error {
 		optsType = optsType.Elem()
 	}
 
-	if optsValue.Kind() != reflect.Struct {
-		return fmt.Errorf("options type is not a struct")
-	}
+	return optsValue, optsType
+}
 
-	fieldChain := func(s string) string {
-		if parent == "" {
-			return s
-		}
+func isValidStruct(optsValue reflect.Value, optsType reflect.Type) bool {
+	return optsValue.Kind() == reflect.Struct
+}
 
-		return parent + "." + s
-	}
-
-	isStruct := func(v *reflect.Value) bool {
-		return v.Kind() == reflect.Struct || (v.Kind() == reflect.Ptr && v.Elem().Kind() == reflect.Struct)
-	}
-
+func validateFields(optsValue reflect.Value, optsType reflect.Type, parent string) error {
 	for i := 0; i < optsValue.NumField(); i++ {
 		v := optsValue.Field(i)
 		f := optsType.Field(i)
 
-		// nolint:staticcheck
-		if f.Tag.Get("json") == "-" || f.Name != strings.Title(f.Name) {
+		if shouldSkipField(f) {
 			continue
 		}
 
-		if v.Kind() == reflect.Slice || (v.Kind() == reflect.Ptr && v.Elem().Kind() == reflect.Slice) {
-			sliceValue := v
-			if sliceValue.Kind() == reflect.Ptr {
-				sliceValue = sliceValue.Elem()
-			}
-
-			for i := 0; i < sliceValue.Len(); i++ {
-				element := sliceValue.Index(i)
-
-				if isStruct(&element) {
-					if err := CheckConfig(element.Interface(), fieldChain(f.Name)); err != nil {
-						return err
-					}
-				}
-			}
+		if err := validateField(v, f, parent); err != nil {
+			return err
 		}
 
-		if isStruct(&v) {
-			if err := CheckConfig(v.Interface(), fieldChain(f.Name)); err != nil {
-				return err
-			}
-		}
-
-		if t := f.Tag.Get("required"); t == "true" && isZero(v) {
+		if isRequiredFieldEmpty(f, v, parent) {
 			return errMissingInput{
-				errArgument: fieldChain(f.Name),
+				errArgument: getFieldName(f.Name, parent),
 			}
 		}
 	}
 
 	return nil
+}
+
+func isRequiredFieldEmpty(f reflect.StructField, v reflect.Value, parent string) bool {
+	return f.Tag.Get("required") == "true" && isZero(v)
+}
+
+func shouldSkipField(f reflect.StructField) bool {
+	return f.Tag.Get("json") == "-" || f.Name != strings.Title(f.Name)
+}
+
+func validateField(v reflect.Value, f reflect.StructField, parent string) error {
+	fieldName := getFieldName(f.Name, parent)
+
+	if isSliceType(v) {
+		if err := validateSliceField(v, fieldName); err != nil {
+			return err
+		}
+	}
+
+	if isStructType(v) {
+		return CheckConfig(v.Interface(), fieldName)
+	}
+
+	return nil
+}
+
+func getFieldName(fieldName, parent string) string {
+	if parent == "" {
+		return fieldName
+	}
+	return parent + "." + fieldName
+}
+
+func isSliceType(v reflect.Value) bool {
+	return v.Kind() == reflect.Slice || (v.Kind() == reflect.Ptr && v.Elem().Kind() == reflect.Slice)
+}
+
+func isStructType(v reflect.Value) bool {
+	return v.Kind() == reflect.Struct || (v.Kind() == reflect.Ptr && v.Elem().Kind() == reflect.Struct)
+}
+
+func validateSliceField(v reflect.Value, fieldName string) error {
+	sliceValue := v
+	if sliceValue.Kind() == reflect.Ptr {
+		sliceValue = sliceValue.Elem()
+	}
+
+	for i := 0; i < sliceValue.Len(); i++ {
+		element := sliceValue.Index(i)
+
+		if isElementStruct(element) {
+			if err := CheckConfig(element.Interface(), fieldName); err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
+func isElementStruct(element reflect.Value) bool {
+	return element.Kind() == reflect.Struct || (element.Kind() == reflect.Ptr && element.Elem().Kind() == reflect.Struct)
 }
 
 func isZero(v reflect.Value) bool {

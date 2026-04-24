@@ -4,6 +4,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 
+	"github.com/opensourceways/app-cla-server/common/infrastructure/mongodb"
 	commonRepo "github.com/opensourceways/app-cla-server/common/domain/repository"
 	"github.com/opensourceways/app-cla-server/signing/domain"
 	"github.com/opensourceways/app-cla-server/signing/domain/dp"
@@ -17,7 +18,7 @@ func CorpSigningIndexes() []mongo.IndexModel {
 		// Fast lookup by link — the primary query key for all page/list queries.
 		{Keys: bson.D{{Key: fieldLinkId, Value: 1}}},
 		// Compound index for the adminAdded filter (link_id + admin.id).
-		{Keys: bson.D{{Key: fieldLinkId, Value: 1}, {Key: "admin.id", Value: 1}}},
+		{Keys: bson.D{{Key: fieldLinkId, Value: 1}, {Key: mongodb.FieldAdminID, Value: 1}}},
 	}
 }
 
@@ -233,22 +234,8 @@ func isEmail(query string) bool {
 
 func (impl *corpSigning) FindPage(linkId string, intPage, intPageSize int, adminAdded bool, searchQuery string) (repository.CorpSigningSummaryPage, error) {
 	filter := linkIdFilter(linkId)
-	if searchQuery != "" {
-		if isEmail(searchQuery) {
-			filter[childField(fieldRep, fieldEmail)] = searchQuery
-		} else {
-			filter[childField(fieldCorp, fieldName)] = searchQuery
-		}
-	}
-
-	if adminAdded {
-		filter["admin.id"] = bson.M{"$ne": ""}
-	} else {
-		filter["$or"] = []bson.M{
-			{"admin.id": ""},
-			{"admin": bson.M{"$exists": false}},
-		}
-	}
+	filter = impl.applySearchQuery(filter, searchQuery)
+	filter = impl.applyAdminFilter(filter, adminAdded)
 
 	project := bson.M{
 		fieldDate:      1,
@@ -262,22 +249,7 @@ func (impl *corpSigning) FindPage(linkId string, intPage, intPageSize int, admin
 		fieldCLANotify: 1,
 	}
 
-	// Single aggregation round-trip: $facet returns both total count and the
-	// requested page in one network call, replacing the previous two serial
-	// queries (CountDocuments + Find).
-	pipeline := bson.A{
-		bson.M{"$match": filter},
-		bson.M{"$facet": bson.M{
-			"total": bson.A{
-				bson.M{"$count": "n"},
-			},
-			"data": bson.A{
-				bson.M{"$skip": int64((intPage - 1) * intPageSize)},
-				bson.M{"$limit": int64(intPageSize)},
-				bson.M{"$project": project},
-			},
-		}},
-	}
+	pipeline := impl.buildFindPagePipeline(filter, project, intPage, intPageSize)
 
 	var facetResult []struct {
 		Total []struct {
@@ -382,4 +354,44 @@ func (impl *corpSigning) Update(cs *domain.CorpSigning) error {
 	}
 
 	return impl.dao.UpdateDoc(filter, updateDoc, cs.Version)
+}
+
+func (impl *corpSigning) applySearchQuery(filter bson.M, searchQuery string) bson.M {
+	if searchQuery == "" {
+		return filter
+	}
+	if isEmail(searchQuery) {
+		filter[childField(fieldRep, fieldEmail)] = searchQuery
+	} else {
+		filter[childField(fieldCorp, fieldName)] = searchQuery
+	}
+	return filter
+}
+
+func (impl *corpSigning) applyAdminFilter(filter bson.M, adminAdded bool) bson.M {
+	if adminAdded {
+		filter[mongodb.FieldAdminID] = bson.M{"$ne": ""}
+	} else {
+		filter["$or"] = []bson.M{
+			{mongodb.FieldAdminID: ""},
+			{"admin": bson.M{"$exists": false}},
+		}
+	}
+	return filter
+}
+
+func (impl *corpSigning) buildFindPagePipeline(filter bson.M, project bson.M, intPage, intPageSize int) bson.A {
+	return bson.A{
+		bson.M{"$match": filter},
+		bson.M{"$facet": bson.M{
+			"total": bson.A{
+				bson.M{"$count": "n"},
+			},
+			"data": bson.A{
+				bson.M{"$skip": int64((intPage - 1) * intPageSize)},
+				bson.M{"$limit": int64(intPageSize)},
+				bson.M{"$project": project},
+			},
+		}},
+	}
 }

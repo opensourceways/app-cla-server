@@ -111,7 +111,7 @@ func (ctl *PasswordRetrievalController) Post() {
 // @Failure 500 system_error:               system error
 // @router /:link_id [put]
 func (ctl *PasswordRetrievalController) Reset() {
-	linkId := ctl.GetString(":link_id")
+	linkId := ctl.GetString(ParamLinkID)
 	action := "manager resets password, link id: " + linkId
 	sendResp := ctl.newFuncForSendingFailedResp(action)
 

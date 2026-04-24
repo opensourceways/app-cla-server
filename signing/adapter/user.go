@@ -118,6 +118,7 @@ func (adapter *userAdatper) Login(opt *models.CorporationManagerLoginInfo) (
 	v, err := adapter.s.Login(&cmd)
 	if err != nil {
 		r.RetryNum = v.RetryNum
+		r.NeedCaptcha = v.NeedCaptcha
 
 		code, ok := err.(errorCode)
 		// unify the error message
@@ -135,6 +136,13 @@ func (adapter *userAdatper) Login(opt *models.CorporationManagerLoginInfo) (
 			)
 		}
 
+		if ok && code.ErrorCode() == domain.ErrorCodeCaptchaInvalid {
+			return r, models.NewModelError(
+				models.ErrCaptchaInvalid,
+				errors.New("captcha invalid"),
+			)
+		}
+
 		return r, toModelError(err)
 	}
 
@@ -146,6 +154,16 @@ func (adapter *userAdatper) Login(opt *models.CorporationManagerLoginInfo) (
 	r.InitialPWChanged = v.InitialPWChanged
 
 	return r, nil
+}
+
+// GetCaptcha
+func (adapter *userAdatper) GetCaptcha() (string, string, models.IModelError) {
+	id, image, err := adapter.s.GetCaptcha()
+	if err != nil {
+		return "", "", toModelError(err)
+	}
+
+	return id, image, nil
 }
 
 // GetUserInfo
@@ -171,6 +189,8 @@ func (adapter *userAdatper) cmdToLogin(opt *models.CorporationManagerLoginInfo) 
 ) {
 	cmd.LinkId = opt.LinkID
 	cmd.PrivacyConsented = opt.PrivacyConsented
+	cmd.CaptchaId = opt.CaptchaId
+	cmd.CaptchaAnswer = opt.CaptchaAnswer
 
 	if cmd.Password, err = dp.NewPassword(opt.Password); err != nil {
 		return

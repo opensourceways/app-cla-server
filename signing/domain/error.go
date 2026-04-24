@@ -9,9 +9,9 @@ const (
 	ErrorCodeUserSamePassword           = "user_same_password"
 	ErrorPrivacyConsentInvalid          = "privacy_consent_invalid"
 	ErrorCodeUserInvalidAccount         = "user_invalid_account"
-	ErrorCodeUserInvalidPassword        = "user_invalid_password"
-	ErrorCodeUserUnmatchedPassword      = "user_unmatched_password"
-	ErrorCodeUserWrongAccountOrPassword = "user_wrong_account_or_password"
+	ErrorCodeUserInvalidPassword        = "user_invalid_password"          // #nosec G101 -- error code constant, not a credential
+	ErrorCodeUserUnmatchedPassword      = "user_unmatched_password"        // #nosec G101 -- error code constant, not a credential
+	ErrorCodeUserWrongAccountOrPassword = "user_wrong_account_or_password" // #nosec G101 -- error code constant, not a credential
 
 	ErrorCodeCorpAdminExists = "corp_admin_exists"
 
@@ -46,11 +46,13 @@ const (
 	ErrorCodeVerificationCodeBusy  = "verification_code_busy"
 	ErrorCodeVerificationCodeWrong = "verification_code_wrong"
 
-	ErrorCodeEmailCredentialNotFound = "email_credential_not_found"
+	ErrorCodeEmailCredentialNotFound = "email_credential_not_found" // #nosec G101 -- error code constant, not a credential
 
 	ErrorCodeGmailNoRefreshToken = "gmail_no_refresh_token"
 
 	ErrorCodeAccessTokenInvalid = "access_token_invalid"
+
+	ErrorCodeCaptchaInvalid = "captcha_invalid"
 
 	ErrorCodeCLAExists       = "cla_exists"
 	ErrorCodeCLANotExists    = "cla_not_exists"
@@ -80,7 +82,7 @@ type notfoudError struct {
 	domainError
 }
 
-func (e notfoudError) NotFound() {}
+func (e notfoudError) NotFound() bool { return true }
 
 // NewDomainError
 func NewDomainError(v string) domainError {

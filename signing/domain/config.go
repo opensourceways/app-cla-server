@@ -32,6 +32,12 @@ type Config struct {
 
 	MaxNumOfFailedLogin int `json:"max_num_of_failed_login"`
 
+	// NeedCaptchaThreshold: number of consecutive failures before captcha is required.
+	NeedCaptchaThreshold int `json:"need_captcha_threshold"`
+
+	// TestCaptchaAnswer is the fixed captcha answer used in test environments.
+	TestCaptchaAnswer string `json:"test_captcha_answer"`
+
 	// interval of creating verification code. seconds.
 	IntervalOfCreatingVC int `json:"interval_of_creating_vc"`
 
@@ -43,42 +49,56 @@ func (cfg *Config) InvalidCorpEmailDomains() []string {
 }
 
 func (cfg *Config) SetDefault() {
+	cfg.setExpiryDefaults()
+	cfg.setSizeDefaults()
+	cfg.setSourceDefaults()
+	cfg.setTestDefaults()
+}
+
+func (cfg *Config) setExpiryDefaults() {
 	if cfg.VerificationCodeExpiry <= 0 {
 		cfg.VerificationCodeExpiry = 300
 	}
+	if cfg.AccessTokenExpiry <= 0 {
+		cfg.AccessTokenExpiry = 3600
+	}
+	if cfg.IntervalOfCreatingVC <= 0 {
+		cfg.IntervalOfCreatingVC = 60
+	}
+}
 
+func (cfg *Config) setSizeDefaults() {
 	if cfg.MaxNumOfEmployeeManager <= 0 {
 		cfg.MaxNumOfEmployeeManager = 5
 	}
+	if cfg.MaxSizeOfCLAContent <= 0 {
+		cfg.MaxSizeOfCLAContent = 2 << 20
+	}
+	if cfg.MaxNumOfFailedLogin <= 0 {
+		cfg.MaxNumOfFailedLogin = 5
+	}
+	if cfg.NeedCaptchaThreshold <= 0 {
+		cfg.NeedCaptchaThreshold = 1
+	}
+}
 
+func (cfg *Config) setSourceDefaults() {
 	if len(cfg.SourceOfCLAPDF) == 0 {
 		cfg.SourceOfCLAPDF = []string{
 			"https://gitee.com", "https://github.com", "https://raw.gitcode.com",
 		}
 	}
-
-	if cfg.MaxSizeOfCLAContent <= 0 {
-		cfg.MaxSizeOfCLAContent = 2 << 20
-	}
-
 	if cfg.FileTypeOfCLAContent == "" {
 		cfg.FileTypeOfCLAContent = "pdf"
 	}
-
-	if cfg.AccessTokenExpiry <= 0 {
-		cfg.AccessTokenExpiry = 3600
-	}
-
-	if cfg.MaxNumOfFailedLogin <= 0 {
-		cfg.MaxNumOfFailedLogin = 5
-	}
-
-	if cfg.IntervalOfCreatingVC <= 0 {
-		cfg.IntervalOfCreatingVC = 60
-	}
-
 	if cfg.CommunityManagerLinkId == "" {
 		cfg.CommunityManagerLinkId = "fake_link"
+	}
+}
+
+func (cfg *Config) setTestDefaults() {
+	if cfg.IsTestEnvironment && cfg.TestCaptchaAnswer == "" {
+		cfg.TestCaptchaAnswer = "123456"
 	}
 }
 

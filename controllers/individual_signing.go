@@ -21,7 +21,7 @@ func (ctl *IndividualSigningController) Prepare() {
 // @Success 201 {object} controllers.respData
 // @router /:link_id/code [post]
 func (ctl *IndividualSigningController) SendVerificationCode() {
-	linkId := ctl.GetString(":link_id")
+	linkId := ctl.GetString(ParamLinkID)
 
 	ctl.sendVerificationCodeWhenSigning(
 		linkId,
@@ -54,7 +54,7 @@ func (ctl *IndividualSigningController) SendVerificationCode() {
 // @router /:link_id/ [post]
 func (ctl *IndividualSigningController) Sign() {
 	action := "sign individual cla"
-	linkID := ctl.GetString(":link_id")
+	linkID := ctl.GetString(ParamLinkID)
 
 	var info models.IndividualSigning
 	if fr := ctl.fetchInputPayload(&info); fr != nil {
@@ -101,7 +101,7 @@ func (ctl *IndividualSigningController) Sign() {
 // @router /:link_id/ [put]
 func (ctl *IndividualSigningController) Agree() {
 	action := "agree individual cla"
-	linkID := ctl.GetString(":link_id")
+	linkID := ctl.GetString(ParamLinkID)
 
 	var info models.IndividualSigning
 	if fr := ctl.fetchInputPayload(&info); fr != nil {
@@ -136,7 +136,7 @@ func (ctl *IndividualSigningController) Check() {
 	action := "check individual signing"
 
 	v, merr := models.CheckSigning(
-		ctl.GetString(":link_id"), ctl.GetString("email"),
+		ctl.GetString(ParamLinkID), ctl.GetString("email"),
 	)
 	if merr != nil {
 		ctl.sendModelErrorAsResp(merr, action)

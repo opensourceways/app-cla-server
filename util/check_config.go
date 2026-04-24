@@ -43,16 +43,7 @@ func (e errMissingInput) Error() string {
 
 // CheckConfig checks if the required fields in a struct are provided.
 func CheckConfig(opts interface{}, parent string) error {
-	optsValue := reflect.ValueOf(opts)
-	if optsValue.Kind() == reflect.Ptr {
-		optsValue = optsValue.Elem()
-	}
-
-	optsType := reflect.TypeOf(opts)
-	if optsType.Kind() == reflect.Ptr {
-		optsType = optsType.Elem()
-	}
-
+	optsValue, optsType := normalizeOpts(opts)
 	if optsValue.Kind() != reflect.Struct {
 		return fmt.Errorf("options type is not a struct")
 	}
@@ -61,54 +52,82 @@ func CheckConfig(opts interface{}, parent string) error {
 		if parent == "" {
 			return s
 		}
-
 		return parent + "." + s
-	}
-
-	isStruct := func(v *reflect.Value) bool {
-		return v.Kind() == reflect.Struct || (v.Kind() == reflect.Ptr && v.Elem().Kind() == reflect.Struct)
 	}
 
 	for i := 0; i < optsValue.NumField(); i++ {
 		v := optsValue.Field(i)
 		f := optsType.Field(i)
 
-		// nolint:staticcheck
-		if f.Tag.Get("json") == "-" || f.Name != strings.Title(f.Name) {
-			continue
+		if err := checkField(v, f, fieldChain); err != nil {
+			return err
 		}
+	}
+	return nil
+}
 
-		if v.Kind() == reflect.Slice || (v.Kind() == reflect.Ptr && v.Elem().Kind() == reflect.Slice) {
-			sliceValue := v
-			if sliceValue.Kind() == reflect.Ptr {
-				sliceValue = sliceValue.Elem()
-			}
+func normalizeOpts(opts interface{}) (reflect.Value, reflect.Type) {
+	optsValue := reflect.ValueOf(opts)
+	if optsValue.Kind() == reflect.Ptr {
+		optsValue = optsValue.Elem()
+	}
+	optsType := reflect.TypeOf(opts)
+	if optsType.Kind() == reflect.Ptr {
+		optsType = optsType.Elem()
+	}
+	return optsValue, optsType
+}
 
-			for i := 0; i < sliceValue.Len(); i++ {
-				element := sliceValue.Index(i)
+func checkField(v reflect.Value, f reflect.StructField, fieldChain func(string) string) error {
+	if f.Tag.Get("json") == "-" || f.Name != strings.Title(f.Name) {
+		return nil
+	}
 
-				if isStruct(&element) {
-					if err := CheckConfig(element.Interface(), fieldChain(f.Name)); err != nil {
-						return err
-					}
-				}
-			}
-		}
-
-		if isStruct(&v) {
-			if err := CheckConfig(v.Interface(), fieldChain(f.Name)); err != nil {
-				return err
-			}
-		}
-
-		if t := f.Tag.Get("required"); t == "true" && isZero(v) {
-			return errMissingInput{
-				errArgument: fieldChain(f.Name),
-			}
+	if isSliceOrPtrSlice(v) {
+		if err := checkSliceField(v, f, fieldChain); err != nil {
+			return err
 		}
 	}
 
+	if isStructOrPtrStruct(v) {
+		if err := checkStructField(v, f, fieldChain); err != nil {
+			return err
+		}
+	}
+
+	if f.Tag.Get("required") == "true" && isZero(v) {
+		return errMissingInput{errArgument: fieldChain(f.Name)}
+	}
 	return nil
+}
+
+func isSliceOrPtrSlice(v reflect.Value) bool {
+	return v.Kind() == reflect.Slice || (v.Kind() == reflect.Ptr && v.Elem().Kind() == reflect.Slice)
+}
+
+func isStructOrPtrStruct(v reflect.Value) bool {
+	return v.Kind() == reflect.Struct || (v.Kind() == reflect.Ptr && v.Elem().Kind() == reflect.Struct)
+}
+
+func checkSliceField(v reflect.Value, f reflect.StructField, fieldChain func(string) string) error {
+	sliceValue := v
+	if sliceValue.Kind() == reflect.Ptr {
+		sliceValue = sliceValue.Elem()
+	}
+
+	for i := 0; i < sliceValue.Len(); i++ {
+		element := sliceValue.Index(i)
+		if isStructOrPtrStruct(element) {
+			if err := CheckConfig(element.Interface(), fieldChain(f.Name)); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+func checkStructField(v reflect.Value, f reflect.StructField, fieldChain func(string) string) error {
+	return CheckConfig(v.Interface(), fieldChain(f.Name))
 }
 
 func isZero(v reflect.Value) bool {

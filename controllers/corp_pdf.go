@@ -67,7 +67,7 @@ func (ctl *CorporationPDFController) downloadCorpPDF(userId, csId, email string)
 // @Success 201 {object} controllers.respData
 // @router /:link_id/:signing_id [post]
 func (ctl *CorporationPDFController) Upload() {
-	signingId := ctl.GetString(":signing_id")
+	signingId := ctl.GetString(ParamSigningID)
 
 	action := "community manager uploads pdf of corp CLA sign: " + signingId
 
@@ -102,7 +102,7 @@ func (ctl *CorporationPDFController) Upload() {
 // @Success 200
 // @router /:link_id/:signing_id [get]
 func (ctl *CorporationPDFController) Download() {
-	signingId := ctl.GetString(":signing_id")
+	signingId := ctl.GetString(ParamSigningID)
 	action := "community manager downloads pdf of corp CLA sign: " + signingId
 
 	pl, fr := ctl.tokenPayloadBasedOnCorpManager()
@@ -111,7 +111,7 @@ func (ctl *CorporationPDFController) Download() {
 		return
 	}
 
-	fr = ctl.downloadCorpPDF(pl.UserId, ctl.GetString(":signing_id"), pl.Email)
+	fr = ctl.downloadCorpPDF(pl.UserId, ctl.GetString(ParamSigningID), pl.Email)
 	if fr != nil {
 		ctl.sendFailedResultAsResp(fr, action)
 	}

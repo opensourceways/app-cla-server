@@ -13,8 +13,12 @@ import (
 )
 
 const (
-	fieldIndex   = "_id"
+	fieldIndex     = "_id"
 	fieldVersion = "version"
+	FieldAdminID = "admin.id"
+
+	FieldIndex   = fieldIndex
+	FieldVersion = fieldVersion
 
 	mongoCmdIn          = "$in"
 	mongoCmdAll         = "$all"
@@ -459,10 +463,10 @@ func (impl *daoImpl) GetArrayItem(
 			"cond":  conditionTofilterArray(filterOfArray),
 		}}
 
-		pipeline = append(pipeline, bson.M{"$project": project1})
+		pipeline = append(pipeline, bson.M{mongoCmdProject: project1})
 
 		if len(project) > 0 {
-			pipeline = append(pipeline, bson.M{"$project": project})
+			pipeline = append(pipeline, bson.M{mongoCmdProject: project})
 		}
 
 		cursor, err := impl.col.Aggregate(ctx, pipeline)

@@ -230,6 +230,11 @@ func ResetPassword(linkId string, opt *PasswordRetrieval, key string) IModelErro
 	return userAdapterInstance.ResetPassword(linkId, key, opt.Password)
 }
 
+// GetLoginCaptcha returns a new graphic captcha ID and base64-encoded image.
+func GetLoginCaptcha() (string, string, IModelError) {
+	return userAdapterInstance.GetCaptcha()
+}
+
 // migration
 func MigrateCommunityData(userId string, opt *CommunityMigrationOpt) IModelError {
 	return migrationAdapterInstance.MigrateCommunityData(userId, opt)

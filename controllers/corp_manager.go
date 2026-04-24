@@ -11,7 +11,7 @@ type CorporationManagerController struct {
 }
 
 func (ctl *CorporationManagerController) Prepare() {
-	if strings.HasSuffix(ctl.routerPattern(), ":signing_id") {
+	if strings.HasSuffix(ctl.routerPattern(), ParamSigningID) {
 		// add administrator
 		ctl.apiPrepare(PermissionOwnerOfOrg)
 
@@ -24,6 +24,11 @@ func (ctl *CorporationManagerController) Prepare() {
 	}
 
 	if ctl.isGetRequest() {
+		if strings.HasSuffix(ctl.routerPattern(), "/captcha") {
+			// get login captcha — no authentication required
+			return
+		}
+
 		// get basic info
 		ctl.apiPrepareWithAC(
 			&accessController{Payload: &acForCorpManagerPayload{}},
@@ -51,7 +56,7 @@ func (ctl *CorporationManagerController) Prepare() {
 // @Failure util.ErrNumOfCorpManagersExceeded
 // @router /:link_id/:signing_id [post]
 func (ctl *CorporationManagerController) AddCorpAdmin() {
-	csId := ctl.GetString(":signing_id")
+	csId := ctl.GetString(ParamSigningID)
 	action := "community manager adds corp admin of signing: " + csId
 
 	pl, fr := ctl.tokenPayloadBasedOnCorpManager()

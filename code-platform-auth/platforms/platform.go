@@ -11,10 +11,9 @@ func NewPlatform(platform string) (Platform, error) {
 	switch platform {
 	case "gitee":
 		return newGiteeClient(), nil
-
 	case "github":
 		return newGithubClient(), nil
+	default:
+		return nil, fmt.Errorf("unknown platform:%s", platform)
 	}
-
-	return nil, fmt.Errorf("unknown platform:%s", platform)
 }

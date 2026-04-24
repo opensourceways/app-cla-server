@@ -39,13 +39,13 @@ const (
 	ErrNoLinkOrUnuploaed       ModelErrCode = "no_link_or_unuploaded"
 	ErrUnmatchedEmailDomain    ModelErrCode = "unmatched_email_domain"
 	ErrRestrictedEmailSuffix   ModelErrCode = "restricted_email_suffix"
-	ErrInvalidPWRetrievalKey   ModelErrCode = "invalid_pw_retrieval_key"
-	ErrInvalidPassword         ModelErrCode = "invalid_password"
+	ErrInvalidPWRetrievalKey   ModelErrCode = "invalid_pw_retrieval_key" // #nosec G101 -- error code constant, not a credential
+	ErrInvalidPassword         ModelErrCode = "invalid_password"         // #nosec G101 -- error code constant, not a credential
 	ErrBadRequestParameter     ModelErrCode = "bad_request_parameter"
 	ErrNoCorpEmployeeManager   ModelErrCode = "no_employee_manager"
 	ErrUnuploaed               ModelErrCode = "unuploaded"
 	ErrGoToSignEmployeeCLA     ModelErrCode = "go_to_sign_employee_cla"
-	ErrWrongIDOrPassword       ModelErrCode = "wrong_id_or_pw"
+	ErrWrongIDOrPassword       ModelErrCode = "wrong_id_or_pw" // #nosec G101 -- error code constant, not a credential
 	ErrPrivacyConsentInvalid   ModelErrCode = "privacy_consent_invalid"
 	ErrNoRefreshToken          ModelErrCode = "no_refresh_token"
 	ErrInvalidToken            ModelErrCode = "invalid_token"
@@ -53,6 +53,7 @@ const (
 	ErrTooManyRequest          ModelErrCode = "too_many_request"
 	ErrUserLoginFrozen         ModelErrCode = "user_login_frozen"
 	ErrUserNotExists           ModelErrCode = "user_not_exists"
+	ErrCaptchaInvalid          ModelErrCode = "captcha_invalid"
 	ErrCLAIsUsed               ModelErrCode = "cla_is_used"
 	ErrLinkIsUsed              ModelErrCode = "link_is_used"
 	ErrNoPermission            ModelErrCode = "no_permission"

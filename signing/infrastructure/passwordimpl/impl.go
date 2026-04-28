@@ -88,25 +88,33 @@ func (impl *passwordImpl) hasMultiChars(s []byte) bool {
 	part := make([]bool, 4)
 
 	for _, c := range s {
-		if c >= firstLowercase && c <= lastLowercase {
-			part[0] = true
-		} else if c >= firstUppercase && c <= lastUppercase {
-			part[1] = true
-		} else if c >= firstDigital && c <= lastDigital {
-			part[2] = true
-		} else {
-			part[3] = true
-		}
+		impl.markCharType(c, part)
 	}
 
-	i := 0
+	return impl.countCharTypes(part) >= impl.cfg.MinNumOfKindOfPasswordChar
+}
+
+func (impl *passwordImpl) markCharType(c byte, part []bool) {
+	switch {
+	case c >= firstLowercase && c <= lastLowercase:
+		part[0] = true
+	case c >= firstUppercase && c <= lastUppercase:
+		part[1] = true
+	case c >= firstDigital && c <= lastDigital:
+		part[2] = true
+	default:
+		part[3] = true
+	}
+}
+
+func (impl *passwordImpl) countCharTypes(part []bool) int {
+	count := 0
 	for _, b := range part {
 		if b {
-			i++
+			count++
 		}
 	}
-
-	return i >= impl.cfg.MinNumOfKindOfPasswordChar
+	return count
 }
 
 func (impl *passwordImpl) hasConsecutive(str []byte) bool {
@@ -115,7 +123,8 @@ func (impl *passwordImpl) hasConsecutive(str []byte) bool {
 	count := 1
 	for i := 1; i < len(str); i++ {
 		if str[i] == str[i-1] {
-			if count++; count > max {
+			count++
+			if count > max {
 				return true
 			}
 		} else {

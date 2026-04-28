@@ -181,36 +181,65 @@ func (s *migrationService) migrateCorpSigningData(sourceLinkId, targetLinkId str
 	if err != nil || totalCount <= 0 {
 		return err
 	}
-	for offset := 0; int64(offset) < totalCount; offset += CorporationMigrationPageSize {
+	offset := 0
+	for int64(offset) < totalCount {
 		corpSigningSummaries, err := s.corpRepo.FindAllWithPagination(sourceLinkId, offset, CorporationMigrationPageSize)
 		if err != nil {
 			return err
 		}
-		for _, summary := range corpSigningSummaries {
-			// 获取完整的CorpSigning对象
-			fullCorpSigning, err := s.corpRepo.Find(summary.Id)
-			if err != nil {
-				return err
-			}
-			oldId := fullCorpSigning.Id
-			newCorpSigning := s.cloneCorpSigning(&fullCorpSigning, targetLinkId, claIdMap)
-			if err := s.corpRepo.AddForMigrate(&newCorpSigning); err != nil {
-				if strings.Contains(err.Error(), "doc exists") || strings.Contains(err.Error(), "document exists") {
-					logs.Error("文档已存在错误: 可能重复迁移或ID冲突, oldId=%s, newId=%s", oldId, newCorpSigning.Id)
-				}
-				return err
-			}
-			corpSigningIdMap[oldId] = newCorpSigning.Id
-			// 迁移 PDF 文件
-			if summary.HasPDF {
-				if err := s.migrateCorpPDF(oldId, newCorpSigning.Id); err != nil {
-					logs.Error("Failed to migrate PDF for corp signing %s: %v", oldId, err)
-				}
-			}
+		if err := s.migrateBatchCorpSigning(toSummaryInterface(corpSigningSummaries), targetLinkId, claIdMap, corpSigningIdMap); err != nil {
+			return err
 		}
-		// 添加日志记录迁移进度
 		currentProgress := offset + len(corpSigningSummaries)
 		logs.Info("企业签名迁移进度: %d/%d (%.1f%%)", currentProgress, totalCount, float64(currentProgress)/float64(totalCount)*100)
+		offset += CorporationMigrationPageSize
+	}
+	return nil
+}
+
+func toSummaryInterface(summaries []repository.CorpSigningSummary) []corpSigningSummaryAdapter {
+	result := make([]corpSigningSummaryAdapter, len(summaries))
+	for i := range summaries {
+		result[i] = corpSigningSummaryAdapter{
+			Id:     summaries[i].Id,
+			HasPDF: summaries[i].HasPDF,
+		}
+	}
+	return result
+}
+
+func (s *migrationService) migrateBatchCorpSigning(summaries []corpSigningSummaryAdapter, targetLinkId string, claIdMap map[string]string, corpSigningIdMap map[string]string) error {
+	for _, summary := range summaries {
+		if err := s.migrateOneCorpSigning(summary, targetLinkId, claIdMap, corpSigningIdMap); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+type corpSigningSummaryAdapter struct {
+	Id     string
+	HasPDF bool
+}
+
+func (s *migrationService) migrateOneCorpSigning(summary corpSigningSummaryAdapter, targetLinkId string, claIdMap map[string]string, corpSigningIdMap map[string]string) error {
+	fullCorpSigning, err := s.corpRepo.Find(summary.Id)
+	if err != nil {
+		return err
+	}
+	oldId := fullCorpSigning.Id
+	newCorpSigning := s.cloneCorpSigning(&fullCorpSigning, targetLinkId, claIdMap)
+	if err := s.corpRepo.AddForMigrate(&newCorpSigning); err != nil {
+		if strings.Contains(err.Error(), "doc exists") || strings.Contains(err.Error(), "document exists") {
+			logs.Error("文档已存在错误: 可能重复迁移或ID冲突, oldId=%s, newId=%s", oldId, newCorpSigning.Id)
+		}
+		return err
+	}
+	corpSigningIdMap[oldId] = newCorpSigning.Id
+	if summary.HasPDF {
+		if err := s.migrateCorpPDF(oldId, newCorpSigning.Id); err != nil {
+			logs.Error("Failed to migrate PDF for corp signing %s: %v", oldId, err)
+		}
 	}
 	return nil
 }

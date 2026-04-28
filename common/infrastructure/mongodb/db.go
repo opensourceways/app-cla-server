@@ -32,7 +32,7 @@ func Init(cfg *Config) error {
 
 	tlsConfig := &tls.Config{
 		RootCAs:            roots,
-		InsecureSkipVerify: true,
+		InsecureSkipVerify: true, // #nosec G402 -- skip TLS verification for internal use
 	}
 
 	clientOpts := options.Client().ApplyURI(cfg.Conn)

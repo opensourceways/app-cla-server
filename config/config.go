@@ -10,6 +10,7 @@ import (
 	"github.com/opensourceways/app-cla-server/signing/domain"
 	"github.com/opensourceways/app-cla-server/signing/domain/dp"
 	"github.com/opensourceways/app-cla-server/signing/infrastructure/accesstokenimpl"
+	"github.com/opensourceways/app-cla-server/signing/infrastructure/captchaimpl"
 	"github.com/opensourceways/app-cla-server/signing/infrastructure/localclaimpl"
 	"github.com/opensourceways/app-cla-server/signing/infrastructure/loginimpl"
 	"github.com/opensourceways/app-cla-server/signing/infrastructure/passwordimpl"
@@ -48,6 +49,7 @@ type redisdbConfig struct {
 	DB          redisdb.Config         `json:"db"`
 	Login       loginimpl.Config       `json:"login"`
 	AccessToken accesstokenimpl.Config `json:"access_token"`
+	Captcha     captchaimpl.Config     `json:"captcha"`
 }
 
 type Config struct {
@@ -77,6 +79,7 @@ func (cfg *Config) ConfigItems() []interface{} {
 		&cfg.Redisdb.DB,
 		&cfg.Redisdb.Login,
 		&cfg.Redisdb.AccessToken,
+		&cfg.Redisdb.Captcha,
 		&cfg.Password,
 		&cfg.LocalCLA,
 		&cfg.Symmetric,

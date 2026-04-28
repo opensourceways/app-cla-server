@@ -41,5 +41,6 @@ func (impl *symmetricEncryptionImpl) Decrypt(ciphertext []byte) ([]byte, error) 
 	}
 
 	nonce, ciphertext := ciphertext[:nonceSize], ciphertext[nonceSize:]
+	// #nosec G407 -- nil is dst parameter, not an IV; nonce is randomly generated
 	return impl.aead.Open(nil, nonce, ciphertext, nil)
 }

@@ -67,22 +67,12 @@ func (impl *watchingImpl) exit() {
 }
 
 func (impl *watchingImpl) watch() {
-	needStop := func() bool {
-		select {
-		case <-impl.stop:
-			return true
-		default:
-			return false
-		}
-	}
-
 	var timer *time.Timer
 
 	defer func() {
 		if timer != nil {
 			timer.Stop()
 		}
-
 		close(impl.stopped)
 	}()
 
@@ -94,25 +84,42 @@ func (impl *watchingImpl) watch() {
 
 		for _, pr := range triggered {
 			impl.handle(pr)
-
-			if needStop() {
+			if impl.isStopped() {
 				return
 			}
 		}
 
-		// time starts.
-		if timer == nil {
-			timer = time.NewTimer(impl.interval)
-		} else {
-			timer.Reset(impl.interval)
-		}
-
-		select {
-		case <-impl.stop:
+		timer = impl.resetTimer(timer)
+		if impl.waitForInterval(timer) {
 			return
-
-		case <-timer.C:
 		}
+	}
+}
+
+func (impl *watchingImpl) isStopped() bool {
+	select {
+	case <-impl.stop:
+		return true
+	default:
+		return false
+	}
+}
+
+func (impl *watchingImpl) resetTimer(timer *time.Timer) *time.Timer {
+	if timer == nil {
+		timer = time.NewTimer(impl.interval)
+	} else {
+		timer.Reset(impl.interval)
+	}
+	return timer
+}
+
+func (impl *watchingImpl) waitForInterval(timer *time.Timer) bool {
+	select {
+	case <-impl.stop:
+		return true
+	case <-timer.C:
+		return false
 	}
 }
 

@@ -9,7 +9,7 @@ import (
 const privacyVersionPrefix = "Last updated: "
 
 func parsePrivacyVersion(path string) (string, error) {
-	file, err := os.Open(path)
+	file, err := os.Open(path) // #nosec G304 -- path from trusted configuration
 	if err != nil {
 		return "", err
 	}

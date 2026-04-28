@@ -143,12 +143,24 @@ func (s *individualSigningService) Check(cmd *CmdToCheckSinging) (dto Individual
 		if !commonRepo.IsErrorResourceNotFound(err) {
 			return dto, err
 		}
+		dto, err = s.checkCorpSummary(cmd, dto)
+		if err != nil {
+			return dto, err
+		}
 	} else if v.Enabled {
 		f(v.ClaId, dp.CLATypeCorp)
-		return
+		return dto, nil
+	} else {
+		dto, err = s.checkCorpSummary(cmd, dto)
+		if err != nil {
+			return dto, err
+		}
 	}
 
-	// 未签署时，检查邮箱域名是否有企业签署记录，判断应该走哪个流程
+	return dto, nil
+}
+
+func (s *individualSigningService) checkCorpSummary(cmd *CmdToCheckSinging, dto IndividualSignedDTO) (IndividualSignedDTO, error) {
 	corps, err := s.corpRepo.FindCorpSummary(cmd.LinkId, cmd.EmailAddr.Domain())
 	if err != nil {
 		return dto, err
@@ -160,5 +172,5 @@ func (s *individualSigningService) Check(cmd *CmdToCheckSinging) (dto Individual
 		dto.Type = dp.CLATypeIndividual.CLAType()
 	}
 
-	return
+	return dto, nil
 }

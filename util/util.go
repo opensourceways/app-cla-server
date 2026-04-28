@@ -67,11 +67,11 @@ func IsNotDir(dir string) bool {
 }
 
 func Mkdir(p string) error {
-	return os.MkdirAll(p, 0770)
+	return os.MkdirAll(p, 0750)
 }
 
 func LoadFromYaml(path string, cfg interface{}) error {
-	b, err := ioutil.ReadFile(path)
+	b, err := ioutil.ReadFile(path) // #nosec G304 -- path from trusted configuration
 	if err != nil {
 		return err
 	}
@@ -82,7 +82,7 @@ func LoadFromYaml(path string, cfg interface{}) error {
 }
 
 func NewTemplate(name, path string) (*template.Template, error) {
-	txtStr, err := ioutil.ReadFile(path)
+	txtStr, err := ioutil.ReadFile(path) // #nosec G304 -- path from trusted configuration
 	if err != nil {
 		return nil, fmt.Errorf("failed to new template: read template file failed: %s", err.Error())
 	}

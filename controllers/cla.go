@@ -11,7 +11,7 @@ type CLAController struct {
 }
 
 func (ctl *CLAController) Prepare() {
-	if ctl.isGetRequest() && !strings.HasSuffix(ctl.routerPattern(), "/:link_id") {
+	if ctl.isGetRequest() && !strings.HasSuffix(ctl.routerPattern(), "/"+ParamLinkID) {
 		ctl.apiPrepare("")
 	} else {
 		ctl.apiPrepare(PermissionOwnerOfOrg)
@@ -27,7 +27,7 @@ func (ctl *CLAController) Prepare() {
 // @router /:link_id [post]
 func (ctl *CLAController) Add() {
 	action := "add cla"
-	linkID := ctl.GetString(":link_id")
+	linkID := ctl.GetString(ParamLinkID)
 
 	pl, fr := ctl.tokenPayloadBasedOnCorpManager()
 	if fr != nil {
@@ -58,7 +58,7 @@ func (ctl *CLAController) Add() {
 // @router /:link_id [put]
 func (ctl *CLAController) Update() {
 	action := "update cla"
-	linkID := ctl.GetString(":link_id")
+	linkID := ctl.GetString(ParamLinkID)
 
 	pl, fr := ctl.tokenPayloadBasedOnCorpManager()
 	if fr != nil {
@@ -91,7 +91,7 @@ func (ctl *CLAController) Update() {
 // @router /:link_id/:id [delete]
 func (ctl *CLAController) Delete() {
 	action := "delete cla"
-	linkID := ctl.GetString(":link_id")
+	linkID := ctl.GetString(ParamLinkID)
 	claId := ctl.GetString(":id")
 
 	pl, fr := ctl.tokenPayloadBasedOnCorpManager()
@@ -119,7 +119,7 @@ func (ctl *CLAController) Delete() {
 // @router /:link_id/:id [get]
 func (ctl *CLAController) DownloadPDF() {
 	ctl.downloadFile(models.CLAFile(
-		ctl.GetString(":link_id"), ctl.GetString(":id"),
+		ctl.GetString(ParamLinkID), ctl.GetString(":id"),
 	))
 }
 
@@ -134,7 +134,7 @@ func (ctl *CLAController) DownloadPDF() {
 func (ctl *CLAController) DownloadDiffPDF() {
 	action := "action download diff pdf"
 
-	file, err := models.FindDiffCLAFile(ctl.GetString(":link_id"), ctl.GetString(":email"))
+	file, err := models.FindDiffCLAFile(ctl.GetString(ParamLinkID), ctl.GetString(ParamEmail))
 	if err != nil {
 		ctl.sendModelErrorAsResp(err, action)
 
@@ -153,7 +153,7 @@ func (ctl *CLAController) DownloadDiffPDF() {
 // @router /:link_id [get]
 func (ctl *CLAController) List() {
 	action := "list cla"
-	linkID := ctl.GetString(":link_id")
+	linkID := ctl.GetString(ParamLinkID)
 
 	pl, fr := ctl.tokenPayloadBasedOnCorpManager()
 	if fr != nil {

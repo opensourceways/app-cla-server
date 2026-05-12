@@ -1,11 +1,12 @@
 module github.com/opensourceways/app-cla-server
 
-go 1.25.9
+go 1.25.10
 
 require (
 	github.com/beego/beego/v2 v2.3.6
 	github.com/go-redis/redis/v8 v8.11.5
 	github.com/google/uuid v1.6.0
+	github.com/mojocn/base64Captcha v1.3.8
 	github.com/opensourceways/gofpdf v1.16.4
 	go.mongodb.org/mongo-driver v1.12.0
 	golang.org/x/crypto v0.45.0
@@ -24,7 +25,6 @@ require (
 	github.com/klauspost/compress v1.13.6 // indirect
 	github.com/kr/text v0.2.0 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
-	github.com/mojocn/base64Captcha v1.3.8 // indirect
 	github.com/montanaflynn/stats v0.0.0-20171201202039-1bf9dbcd8cbe // indirect
 	github.com/prometheus/client_golang v1.19.0 // indirect
 	github.com/prometheus/client_model v0.5.0 // indirect

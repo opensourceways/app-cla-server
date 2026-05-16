@@ -1,0 +1,58 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-test:
+    uses: opensourceways/agent-development-specification/.github/workflows/go-reusable.yml@main
+    with:
+      runs-on: ubuntu-latest
+      go-version: "1.22"
+    secrets:
+      gh-token: ${{ secrets.GH_TOKEN }}
+
+  sast:
+    uses: opensourceways/agent-development-specification/.github/workflows/sast-reusable.yml@main
+    with:
+      runs-on: ubuntu-latest
+      go-version: "1.22"
+
+  gitleaks:
+    uses: opensourceways/agent-development-specification/.github/workflows/gitleaks-reusable.yml@main
+    with:
+      runs-on: ubuntu-latest
+
+  trivy-vulnerability:
+    uses: opensourceways/agent-development-specification/.github/workflows/trivy-vulnerability-reusable.yml@main
+    with:
+      runs-on: ubuntu-latest
+
+  trivy-license:
+    uses: opensourceways/agent-development-specification/.github/workflows/trivy-license-reusable.yml@main
+    with:
+      runs-on: ubuntu-latest
+
+  check-branch-naming:
+    if: github.event_name == 'pull_request'
+    uses: opensourceways/agent-development-specification/.github/workflows/check-branch-naming-reusable.yml@main
+    with:
+      runs-on: ubuntu-latest
+
+  check-label:
+    if: github.event_name == 'pull_request'
+    uses: opensourceways/agent-development-specification/.github/workflows/check-label-reusable.yml@main
+    with:
+      runs-on: ubuntu-latest
+
+  document-gate:
+    if: github.event_name == 'pull_request'
+    uses: opensourceways/agent-development-specification/.github/workflows/document-gate-reusable.yml@main
+    with:
+      runs-on: ubuntu-latest

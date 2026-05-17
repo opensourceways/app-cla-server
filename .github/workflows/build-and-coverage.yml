@@ -3,6 +3,8 @@ name: build-and-coverage
 on:
   push:
     branches: [review]
+  pull_request:
+    branches: [review]
   workflow_dispatch:
 
 jobs:
@@ -12,4 +14,6 @@ jobs:
       GOPROXY: https://goproxy.cn,direct
     with:
       runs-on: ubuntu-latest
-      go-version: '1.23.0'
+      go-version: '1.24.1'
+    secrets:
+      gh-token: ${{ secrets.GH_TOKEN }}

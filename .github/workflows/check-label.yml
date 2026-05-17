@@ -1,0 +1,12 @@
+name: check-label
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, edited, labeled, unlabeled]
+  workflow_dispatch:
+
+jobs:
+  check-label:
+    uses: opensourceways/agent-development-specification/.github/workflows/check-label-reusable.yml@main
+    with:
+      runs-on: ubuntu-latest

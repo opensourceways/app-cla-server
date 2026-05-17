@@ -1,0 +1,14 @@
+name: gitleaks
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  workflow_dispatch:
+
+jobs:
+  gitleaks:
+    uses: opensourceways/agent-development-specification/.github/workflows/gitleaks-reusable.yml@main
+    with:
+      runs-on: ubuntu-latest
+    secrets:
+      github-token: ${{ secrets.GITHUB_TOKEN }}

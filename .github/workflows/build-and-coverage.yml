@@ -1,0 +1,15 @@
+name: build-and-coverage
+
+on:
+  push:
+    branches: [review]
+  workflow_dispatch:
+
+jobs:
+  build:
+    uses: opensourceways/agent-development-specification/.github/workflows/go-reusable.yml@main
+    env:
+      GOPROXY: https://goproxy.cn,direct
+    with:
+      runs-on: ubuntu-latest
+      go-version: '1.23.0'

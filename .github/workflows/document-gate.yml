@@ -1,0 +1,12 @@
+name: document-gate
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, edited, labeled, unlabeled]
+  workflow_dispatch:
+
+jobs:
+  document-gate:
+    uses: opensourceways/agent-development-specification/.github/workflows/document-gate-reusable.yml@main
+    with:
+      runs-on: ubuntu-latest

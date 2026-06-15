@@ -157,15 +157,18 @@ func (impl *corpSigning) FindAll(linkId string) ([]repository.CorpSigningSummary
 	filter := linkIdFilter(linkId)
 
 	project := bson.M{
-		fieldDate:      1,
-		fieldCLAId:     1,
-		fieldLang:      1,
-		fieldRep:       1,
-		fieldCorp:      1,
-		fieldAdmin:     1,
-		fieldLinkId:    1,
-		fieldHasPDF:    1,
-		fieldCLANotify: 1,
+		fieldDate:           1,
+		fieldCLAId:          1,
+		fieldLang:           1,
+		fieldRep:            1,
+		fieldCorp:           1,
+		fieldAdmin:          1,
+		fieldLinkId:         1,
+		fieldHasPDF:         1,
+		fieldCLANotify:      1,
+		fieldPendingCLAId:   1,
+		fieldCLANotifyCount: 1,
+		fieldCLANotifyTime:  1,
 	}
 
 	var dos []corpSigningDO
@@ -193,15 +196,18 @@ func (impl *corpSigning) FindAllWithPagination(linkId string, offset, limit int)
 	filter := linkIdFilter(linkId)
 
 	project := bson.M{
-		fieldDate:      1,
-		fieldCLAId:     1,
-		fieldLang:      1,
-		fieldRep:       1,
-		fieldCorp:      1,
-		fieldAdmin:     1,
-		fieldLinkId:    1,
-		fieldHasPDF:    1,
-		fieldCLANotify: 1,
+		fieldDate:           1,
+		fieldCLAId:          1,
+		fieldLang:           1,
+		fieldRep:            1,
+		fieldCorp:           1,
+		fieldAdmin:          1,
+		fieldLinkId:         1,
+		fieldHasPDF:         1,
+		fieldCLANotify:      1,
+		fieldPendingCLAId:   1,
+		fieldCLANotifyCount: 1,
+		fieldCLANotifyTime:  1,
 	}
 
 	var dos []corpSigningDO
@@ -360,8 +366,8 @@ func (impl *corpSigning) UpdateClaId(cs *domain.CorpSigning) error {
 
 	update := bson.M{
 		"$set": bson.M{
-			fieldCLAId:         cs.Link.CLAId,
-			fieldPendingCLAId:  "",
+			fieldCLAId:          cs.Link.CLAId,
+			fieldPendingCLAId:   "",
 			fieldCLANotifyCount: 0,
 			fieldCLANotifyTime:  int64(0),
 		},

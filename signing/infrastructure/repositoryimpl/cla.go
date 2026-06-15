@@ -25,7 +25,10 @@ func (impl *link) AddCLA(link *domain.Link, cla *domain.CLA) error {
 
 	err = impl.dao.PushArraySingleItemAndUpdate(
 		impl.docFilter(link.Id), fieldCLAs, doc,
-		bson.M{fieldCLANum: link.CLANum},
+		bson.M{
+			fieldCLANum:         link.CLANum,
+			fieldLastUpdateTime: time.Now().Unix(),
+		},
 		link.Version,
 	)
 	if err != nil && impl.dao.IsDocNotExists(err) {

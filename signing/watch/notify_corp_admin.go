@@ -121,7 +121,7 @@ func (impl *notifyAdminWatchImpl) handleNotifyJob() {
 			impl.handleCorpSigning(link, &corpsSummary[j])
 		}
 
-		impl.handleIndividualSignings(link)
+		impl.handleIndividualSignings(link, needStop)
 	}
 }
 
@@ -214,7 +214,7 @@ func (impl *notifyAdminWatchImpl) getLatestCorpClaId(link *repository.LinkCLA, l
 	return ""
 }
 
-func (impl *notifyAdminWatchImpl) handleIndividualSignings(link *repository.LinkCLA) {
+func (impl *notifyAdminWatchImpl) handleIndividualSignings(link *repository.LinkCLA, needStop func() bool) {
 	individuals, err := impl.individualSigningRepo.FindAll(link.Id)
 	if err != nil {
 		logs.Error("list individual signing failed in notify job:", link.Id, err)
@@ -222,6 +222,10 @@ func (impl *notifyAdminWatchImpl) handleIndividualSignings(link *repository.Link
 	}
 
 	for i := range individuals {
+		if needStop() {
+			return
+		}
+
 		impl.handleIndividualSigning(link, &individuals[i])
 	}
 }

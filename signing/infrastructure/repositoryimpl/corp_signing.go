@@ -360,8 +360,10 @@ func (impl *corpSigning) UpdateClaId(cs *domain.CorpSigning) error {
 
 	update := bson.M{
 		"$set": bson.M{
-			fieldCLAId:       cs.Link.CLAId,
-			fieldPendingCLAId: "",
+			fieldCLAId:         cs.Link.CLAId,
+			fieldPendingCLAId:  "",
+			fieldCLANotifyCount: 0,
+			fieldCLANotifyTime:  int64(0),
 		},
 		"$push": bson.M{
 			fieldLogs: bson.M{

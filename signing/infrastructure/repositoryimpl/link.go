@@ -155,6 +155,7 @@ func (impl *link) ListAll() ([]repository.LinkCLA, error) {
 			Email:       item.Email.toEmailInfo(),
 			Clas:        clas,
 			RemovedCLAs: removedClas,
+			LastUpdateTime: item.LastUpdateTime,
 		}
 	}
 

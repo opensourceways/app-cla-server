@@ -20,6 +20,7 @@ type LinkCLA struct {
 	Email       domain.EmailInfo
 	Clas        []domain.CLA
 	RemovedCLAs []domain.CLA
+	LastUpdateTime int64
 }
 
 type Link interface {

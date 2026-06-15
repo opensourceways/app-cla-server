@@ -273,6 +273,8 @@ func (cs *CorpSigning) SetLatestClaId(latestClaId string) error {
 
 	cs.Link.CLAId = latestClaId
 	cs.PendingCLAId = ""
+	cs.ClaNotifyCount = 0
+	cs.ClaNotifyTime = 0
 
 	cs.Logs = append(cs.Logs, CorpSigningLog{
 		Date:   util.Date(),

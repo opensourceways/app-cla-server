@@ -16,14 +16,18 @@ func initLink(linkRepo repository.Link) (*linkCache, error) {
 	}
 
 	cache := make(map[string][]domain.CLA, len(links))
+	lastUpdateTime := make(map[string]time.Time, len(links))
 	for i := range links {
 		v := &links[i]
 		cache[v.Id] = v.Clas
+		if v.LastUpdateTime > 0 {
+			lastUpdateTime[v.Id] = time.Unix(v.LastUpdateTime, 0)
+		}
 	}
 
 	return &linkCache{
 		cache:          cache,
-		lastUpdateTime: make(map[string]time.Time),
+		lastUpdateTime: lastUpdateTime,
 	}, nil
 }
 

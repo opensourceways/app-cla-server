@@ -16,12 +16,13 @@ import (
 
 var notifyAdminWatchInstance *notifyAdminWatchImpl
 
-func NotifyAdminWatchStart(cfg *NotifyAdminConfig, lk repoLink, corp corpSigningRepo, claPlatformURL string) {
+func NotifyAdminWatchStart(cfg *NotifyAdminConfig, lk repoLink, corp corpSigningRepo, individual individualSigningRepo, claPlatformURL string) {
 	notifyAdminWatchInstance = &notifyAdminWatchImpl{
-		config:          cfg,
-		link:            lk,
-		corpSigningRepo: corp,
-		claPlatformURL:  claPlatformURL,
+		config:                cfg,
+		link:                  lk,
+		corpSigningRepo:       corp,
+		individualSigningRepo: individual,
+		claPlatformURL:        claPlatformURL,
 	}
 
 	notifyAdminWatchInstance.start()
@@ -40,12 +41,18 @@ type corpSigningRepo interface {
 	UpdateCLANotify(summary *repository.CorpSigningSummary) error
 }
 
+type individualSigningRepo interface {
+	FindAll(linkId string) ([]domain.IndividualSigning, error)
+	UpdateCLANotify(linkId, email, claId string, count int, notifyTime int64) error
+}
+
 type notifyAdminWatchImpl struct {
 	config *NotifyAdminConfig
 
-	link            repoLink
-	corpSigningRepo corpSigningRepo
-	claPlatformURL  string
+	link                  repoLink
+	corpSigningRepo       corpSigningRepo
+	individualSigningRepo individualSigningRepo
+	claPlatformURL        string
 
 	wg   sync.WaitGroup
 	stop chan struct{}
@@ -113,10 +120,16 @@ func (impl *notifyAdminWatchImpl) handleNotifyJob() {
 
 			impl.handleCorpSigning(link, &corpsSummary[j])
 		}
+
+		impl.handleIndividualSignings(link)
 	}
 }
 
 func (impl *notifyAdminWatchImpl) handleCorpSigning(link *repository.LinkCLA, corp *repository.CorpSigningSummary) {
+	if !corp.HasPDF {
+		return
+	}
+
 	if impl.isCorpSigningLatest(link.Clas, corp.Link.CLAInfo) {
 		return
 	}
@@ -178,7 +191,12 @@ func (impl *notifyAdminWatchImpl) handleSendEmail(link *repository.LinkCLA, corp
 
 	emailMsg.From = link.Email.Addr.EmailAddr()
 	emailMsg.To = []string{corp.Admin.EmailAddr.EmailAddr()}
-	emailMsg.Subject = fmt.Sprintf("%s CLA 协议已更新 - 无需立即操作", link.Org.Alias)
+
+	if corp.Link.Language.Language() == "en" {
+		emailMsg.Subject = fmt.Sprintf("%s CLA Has Been Updated - No Immediate Action Required", link.Org.Alias)
+	} else {
+		emailMsg.Subject = fmt.Sprintf("%s CLA 协议已更新 - 无需立即操作", link.Org.Alias)
+	}
 
 	worker.GetEmailWorker().SendSimpleMessage(link.Email.Platform, &emailMsg)
 
@@ -190,6 +208,90 @@ func (impl *notifyAdminWatchImpl) handleSendEmail(link *repository.LinkCLA, corp
 func (impl *notifyAdminWatchImpl) getLatestCorpClaId(link *repository.LinkCLA, language dp.Language) string {
 	for i := range link.Clas {
 		if link.Clas[i].Type == dp.CLATypeCorp && link.Clas[i].Language == language {
+			return link.Clas[i].Id
+		}
+	}
+	return ""
+}
+
+func (impl *notifyAdminWatchImpl) handleIndividualSignings(link *repository.LinkCLA) {
+	individuals, err := impl.individualSigningRepo.FindAll(link.Id)
+	if err != nil {
+		logs.Error("list individual signing failed in notify job:", link.Id, err)
+		return
+	}
+
+	for i := range individuals {
+		impl.handleIndividualSigning(link, &individuals[i])
+	}
+}
+
+func (impl *notifyAdminWatchImpl) handleIndividualSigning(link *repository.LinkCLA, is *domain.IndividualSigning) {
+	latestClaId := impl.getLatestIndividualClaId(link, is.Link.Language)
+	if latestClaId == "" {
+		return
+	}
+
+	if is.HasSignedCLA(latestClaId) {
+		return
+	}
+
+	if is.ClaNotify == latestClaId {
+		if time.Since(time.Unix(is.ClaNotifyTime, 0)) < 7*24*time.Hour {
+			return
+		}
+	}
+
+	if err := impl.handleSendIndividualEmail(link, is); err != nil {
+		logs.Error("send individual cla notify email failed:", is.Rep.EmailAddr.EmailAddr(), err)
+		return
+	}
+
+	is.ClaNotify = latestClaId
+	is.ClaNotifyCount += 1
+	is.ClaNotifyTime = time.Now().Unix()
+	if err := impl.individualSigningRepo.UpdateCLANotify(
+		link.Id, is.Rep.EmailAddr.EmailAddr(), is.ClaNotify, is.ClaNotifyCount, is.ClaNotifyTime,
+	); err != nil {
+		logs.Error("update individual cla notify failed: ", is.Rep.EmailAddr.EmailAddr(), err)
+	}
+}
+
+func (impl *notifyAdminWatchImpl) handleSendIndividualEmail(link *repository.LinkCLA, is *domain.IndividualSigning) error {
+	if is.Rep.Name == nil {
+		return fmt.Errorf("failed to send email msg: individual name is null: %s", link.Id)
+	}
+	builder := emailtmpl.IndividualCLAUpdated{
+		Org:              link.Org.Alias,
+		Name:             is.Rep.Name.Name(),
+		UpdateDate:       time.Now().Format("2006-01-02"),
+		ProjectURL:       link.Org.ProjectURL,
+		URLOfCLAPlatform: impl.claPlatformURL + link.Id,
+	}
+	emailMsg, err := builder.GenEmailMsg()
+	if err != nil {
+		return err
+	}
+
+	emailMsg.From = link.Email.Addr.EmailAddr()
+	emailMsg.To = []string{is.Rep.EmailAddr.EmailAddr()}
+
+	if is.Link.Language.Language() == "en" {
+		emailMsg.Subject = fmt.Sprintf("%s CLA Has Been Updated - No Immediate Action Required", link.Org.Alias)
+	} else {
+		emailMsg.Subject = fmt.Sprintf("%s CLA 协议已更新 - 无需立即操作", link.Org.Alias)
+	}
+
+	worker.GetEmailWorker().SendSimpleMessage(link.Email.Platform, &emailMsg)
+
+	time.Sleep(impl.config.genSendEmailInterval())
+
+	return nil
+}
+
+func (impl *notifyAdminWatchImpl) getLatestIndividualClaId(link *repository.LinkCLA, language dp.Language) string {
+	for i := range link.Clas {
+		if link.Clas[i].Type == dp.CLATypeIndividual && link.Clas[i].Language == language {
 			return link.Clas[i].Id
 		}
 	}

@@ -50,7 +50,8 @@ type linkDO struct {
 	Deleted     bool        `bson:"deleted"    json:"deleted"`
 	RemovedCLAs []claDO     `bson:"removed"    json:"removed"`
 
-	GracePeriodDays int `bson:"grace_period_days" json:"grace_period_days"`
+	GracePeriodDays int   `bson:"grace_period_days" json:"grace_period_days"`
+	LastUpdateTime  int64 `bson:"last_update_time"  json:"last_update_time"`
 }
 
 func (do *linkDO) toLink() domain.Link {

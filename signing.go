@@ -97,7 +97,7 @@ func initSigning(cfg *config.Config) error {
 
 	// link
 	localCLA := localclaimpl.NewLocalCLAImpl(&cfg.LocalCLA)
-	cla, err := claservice.NewCLAService(linkRepo, localCLA, messageimpl.NewMessageImpl())
+	cla, err := claservice.NewCLAService(linkRepo, localCLA, messageimpl.NewMessageImpl(), repo)
 	if err != nil {
 		return err
 	}
@@ -171,7 +171,9 @@ func initSigning(cfg *config.Config) error {
 			cla,
 			individual,
 			repo,
+			linkRepo,
 			interval,
+			cfg.Domain.Config.DefaultGracePeriodDays,
 		)),
 	)
 

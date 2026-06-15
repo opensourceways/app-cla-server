@@ -14,6 +14,10 @@ type CorpSigningSummary struct {
 	Rep       domain.Representative
 	Corp      domain.Corporation
 	Admin     domain.Manager
+
+	PendingCLAId   string
+	ClaNotifyCount int
+	ClaNotifyTime  int64
 }
 
 type EmployeeSigningSummary struct {
@@ -67,4 +71,6 @@ type CorpSigning interface {
 	HasSignedCLA(*domain.CLAIndex, dp.CLAType) (bool, error)
 	UpdateClaId(cs *domain.CorpSigning) error
 	UpdateCLANotify(summary *CorpSigningSummary) error
+	SetPendingCLAForLink(linkId, newClaId string) error
+	FindPendingAgreements(linkId string) ([]CorpSigningSummary, error)
 }

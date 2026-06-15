@@ -38,6 +38,7 @@ type IndividualSignedDTO struct {
 	Type           string `json:"type"`
 	Signed         bool   `json:"signed"`
 	VersionMatched bool   `json:"version_matched"`
+	PendingVersion bool   `json:"pending_version"`
 }
 
 type CmdToFindSignedCLAInfo = CmdToCheckSinging

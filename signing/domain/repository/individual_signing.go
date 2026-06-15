@@ -17,4 +17,5 @@ type IndividualSigning interface {
 	HasSignedLink(linkId string) (bool, error)
 	HasSignedCLA(*domain.CLAIndex) (bool, error)
 	SaveNewCLA(is *domain.IndividualSigning) error
+	UpdateCLANotify(linkId, email string, claId string, count int, notifyTime int64) error
 }

@@ -125,6 +125,7 @@ func (adapter *individualSigningAdatper) Check(linkId string, email string,
 		Type:           v.Type,
 		Signed:         v.Signed,
 		VersionMatched: v.VersionMatched,
+		PendingVersion: v.PendingVersion,
 	}, nil
 }
 

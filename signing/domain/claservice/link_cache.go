@@ -2,6 +2,7 @@ package claservice
 
 import (
 	"sync"
+	"time"
 
 	"github.com/opensourceways/app-cla-server/signing/domain"
 	"github.com/opensourceways/app-cla-server/signing/domain/dp"
@@ -21,13 +22,15 @@ func initLink(linkRepo repository.Link) (*linkCache, error) {
 	}
 
 	return &linkCache{
-		cache: cache,
+		cache:          cache,
+		lastUpdateTime: make(map[string]time.Time),
 	}, nil
 }
 
 type linkCache struct {
-	mutex sync.RWMutex
-	cache map[string][]domain.CLA
+	mutex          sync.RWMutex
+	cache          map[string][]domain.CLA
+	lastUpdateTime map[string]time.Time
 }
 
 func (lc *linkCache) contains(linkId, claId string) bool {
@@ -86,12 +89,15 @@ func (lc *linkCache) update(linkId string, newCLA *domain.CLA) {
 		}
 	}
 
+	lc.lastUpdateTime[linkId] = time.Now()
+
 	lc.mutex.Unlock()
 }
 
 func (lc *linkCache) removeLink(linkId string) {
 	lc.mutex.Lock()
 	delete(lc.cache, linkId)
+	delete(lc.lastUpdateTime, linkId)
 	lc.mutex.Unlock()
 }
 
@@ -114,4 +120,14 @@ func (lc *linkCache) removeCLA(linkId, claId string) {
 	}
 
 	lc.mutex.Unlock()
+}
+
+func (lc *linkCache) getLastUpdateTime(linkId string) time.Time {
+	lc.mutex.RLock()
+	defer lc.mutex.RUnlock()
+
+	if t, ok := lc.lastUpdateTime[linkId]; ok {
+		return t
+	}
+	return time.Time{}
 }

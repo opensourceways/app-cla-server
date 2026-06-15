@@ -19,6 +19,9 @@ func toIndividualSigningDO(is *domain.IndividualSigning) individualSigningDO {
 		RepDO:                   toRepDO(&is.Rep),
 		Domain:                  is.Rep.EmailAddr.Domain(),
 		IndividualSigningLogsDO: toIndividualSigningLogsDO(is.Logs),
+		ClaNotify:               is.ClaNotify,
+		ClaNotifyCount:          is.ClaNotifyCount,
+		ClaNotifyTime:           is.ClaNotifyTime,
 	}
 }
 
@@ -36,6 +39,10 @@ type individualSigningDO struct {
 	Version   int    `bson:"version"     json:"-"`
 	Deleted   bool   `bson:"deleted"     json:"deleted"`
 	DeletedAt int64  `bson:"deleted_at"  json:"deleted_at,omitempty"`
+
+	ClaNotify      string `bson:"cla_notify"       json:"cla_notify"`
+	ClaNotifyCount int    `bson:"cla_notify_count"  json:"cla_notify_count"`
+	ClaNotifyTime  int64  `bson:"cla_notify_time"   json:"cla_notify_time"`
 }
 
 func (do *individualSigningDO) toIndividualSigning() domain.IndividualSigning {
@@ -52,11 +59,14 @@ func (do *individualSigningDO) toIndividualSigning() domain.IndividualSigning {
 				Language: dp.CreateLanguage(do.Language),
 			},
 		},
-		Rep:     do.toRep(),
-		Date:    do.Date,
-		AllInfo: do.AllInfo,
-		Version: do.Version,
-		Logs:    logs,
+		Rep:            do.toRep(),
+		Date:           do.Date,
+		AllInfo:        do.AllInfo,
+		Version:        do.Version,
+		Logs:           logs,
+		ClaNotify:      do.ClaNotify,
+		ClaNotifyCount: do.ClaNotifyCount,
+		ClaNotifyTime:  do.ClaNotifyTime,
 	}
 }
 

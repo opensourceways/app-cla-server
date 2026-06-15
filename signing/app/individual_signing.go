@@ -16,14 +16,18 @@ func NewIndividualSigningService(
 	cla claservice.CLAService,
 	repo repository.IndividualSigning,
 	corpRepo repository.CorpSigning,
+	linkRepo repository.Link,
 	interval time.Duration,
+	defaultGracePeriodDays int,
 ) *individualSigningService {
 	return &individualSigningService{
-		vc:       verificationCodeService{vc},
-		cla:      cla,
-		repo:     repo,
-		corpRepo: corpRepo,
-		interval: interval,
+		vc:                    verificationCodeService{vc},
+		cla:                   cla,
+		repo:                  repo,
+		corpRepo:              corpRepo,
+		linkRepo:              linkRepo,
+		interval:              interval,
+		defaultGracePeriodDays: defaultGracePeriodDays,
 	}
 }
 
@@ -36,11 +40,13 @@ type IndividualSigningService interface {
 }
 
 type individualSigningService struct {
-	vc       verificationCodeService
-	cla      claservice.CLAService
-	repo     repository.IndividualSigning
-	corpRepo repository.CorpSigning
-	interval time.Duration
+	vc                    verificationCodeService
+	cla                   claservice.CLAService
+	repo                  repository.IndividualSigning
+	corpRepo              repository.CorpSigning
+	linkRepo              repository.Link
+	interval              time.Duration
+	defaultGracePeriodDays int
 }
 
 func (s *individualSigningService) Verify(cmd *CmdToCreateVerificationCode) (string, error) {
@@ -121,19 +127,22 @@ func (s *individualSigningService) FindDiffCLAFile(cmd *CmdToFindSignedCLAInfo) 
 
 // Check
 func (s *individualSigningService) Check(cmd *CmdToCheckSinging) (dto IndividualSignedDTO, err error) {
-	f := func(claId string, t dp.CLAType) {
-		dto.Signed = true
-		dto.Type = t.CLAType()
-		dto.VersionMatched = s.cla.ContainsCla(cmd.LinkId, claId)
-	}
-
 	claId, err := s.repo.FindSignedCLA(cmd.LinkId, cmd.EmailAddr)
 	if err != nil {
 		return
 	}
 
 	if claId != "" {
-		f(claId, dp.CLATypeIndividual)
+		dto.Signed = true
+		dto.Type = dp.CLATypeIndividual.CLAType()
+		versionMatched := s.cla.ContainsCla(cmd.LinkId, claId)
+
+		if versionMatched {
+			dto.VersionMatched = true
+		} else {
+			dto.PendingVersion = true
+			dto.VersionMatched = s.isInGracePeriod(cmd.LinkId)
+		}
 
 		return
 	}
@@ -144,11 +153,19 @@ func (s *individualSigningService) Check(cmd *CmdToCheckSinging) (dto Individual
 			return dto, err
 		}
 	} else if v.Enabled {
-		f(v.ClaId, dp.CLATypeCorp)
+		dto.Signed = true
+		dto.Type = dp.CLATypeCorp.CLAType()
+		versionMatched := s.cla.ContainsCla(cmd.LinkId, v.ClaId)
+
+		if versionMatched {
+			dto.VersionMatched = true
+		} else {
+			dto.PendingVersion = true
+			dto.VersionMatched = s.isInGracePeriod(cmd.LinkId)
+		}
 		return
 	}
 
-	// 未签署时，检查邮箱域名是否有企业签署记录，判断应该走哪个流程
 	corps, err := s.corpRepo.FindCorpSummary(cmd.LinkId, cmd.EmailAddr.Domain())
 	if err != nil {
 		return dto, err
@@ -161,4 +178,23 @@ func (s *individualSigningService) Check(cmd *CmdToCheckSinging) (dto Individual
 	}
 
 	return
+}
+
+func (s *individualSigningService) isInGracePeriod(linkId string) bool {
+	link, err := s.linkRepo.Find(linkId)
+	if err != nil {
+		return true
+	}
+
+	days := link.GetEffectiveGracePeriodDays(s.defaultGracePeriodDays)
+	if days == 0 {
+		return true
+	}
+
+	lastUpdateTime := s.cla.GetLastUpdateTime(linkId)
+	if lastUpdateTime.IsZero() {
+		return true
+	}
+
+	return time.Since(lastUpdateTime) < time.Duration(days)*24*time.Hour
 }

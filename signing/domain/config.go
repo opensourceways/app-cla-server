@@ -36,6 +36,8 @@ type Config struct {
 	IntervalOfCreatingVC int `json:"interval_of_creating_vc"`
 
 	CommunityManagerLinkId string `json:"community_manager_link_id"`
+
+	DefaultGracePeriodDays int `json:"default_grace_period_days"`
 }
 
 func (cfg *Config) InvalidCorpEmailDomains() []string {
@@ -79,6 +81,10 @@ func (cfg *Config) SetDefault() {
 
 	if cfg.CommunityManagerLinkId == "" {
 		cfg.CommunityManagerLinkId = "fake_link"
+	}
+
+	if cfg.DefaultGracePeriodDays <= 0 {
+		cfg.DefaultGracePeriodDays = 0
 	}
 }
 

@@ -107,13 +107,15 @@ func (s *corpSigningService) Get(userId, csId string, email dp.EmailAddr) (linkI
 	}
 
 	dto = CorpSigningInfoDTO{
-		Date:     item.Date,
-		CLAId:    item.Link.CLAId,
-		Language: item.Link.Language.Language(),
-		CorpName: item.Corp.Name.CorpName(),
-		RepName:  item.Rep.Name.Name(),
-		RepEmail: item.Rep.EmailAddr.EmailAddr(),
-		AllInfo:  item.AllInfo,
+		Date:          item.Date,
+		CLAId:         item.Link.CLAId,
+		Language:      item.Link.Language.Language(),
+		CorpName:      item.Corp.Name.CorpName(),
+		RepName:       item.Rep.Name.Name(),
+		RepEmail:      item.Rep.EmailAddr.EmailAddr(),
+		AllInfo:       item.AllInfo,
+		PendingCLAId:  item.PendingCLAId,
+		Logs:          toCorpSigningLogDTOs(item.Logs),
 	}
 
 	return

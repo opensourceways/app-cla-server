@@ -49,6 +49,8 @@ type linkDO struct {
 	Version     int         `bson:"version"    json:"-"`
 	Deleted     bool        `bson:"deleted"    json:"deleted"`
 	RemovedCLAs []claDO     `bson:"removed"    json:"removed"`
+
+	GracePeriodDays int `bson:"grace_period_days" json:"grace_period_days"`
 }
 
 func (do *linkDO) toLink() domain.Link {
@@ -58,13 +60,14 @@ func (do *linkDO) toLink() domain.Link {
 	}
 
 	return domain.Link{
-		Id:        do.Id,
-		Org:       do.Org.toOrgInfo(),
-		Email:     do.Email.toEmailInfo(),
-		CLAs:      clas,
-		Submitter: do.Submitter,
-		CLANum:    do.CLANum,
-		Version:   do.Version,
+		Id:              do.Id,
+		Org:             do.Org.toOrgInfo(),
+		Email:           do.Email.toEmailInfo(),
+		CLAs:            clas,
+		Submitter:       do.Submitter,
+		CLANum:          do.CLANum,
+		Version:         do.Version,
+		GracePeriodDays: do.GracePeriodDays,
 	}
 }
 

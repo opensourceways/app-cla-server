@@ -22,9 +22,11 @@ type Link struct {
 	Org       OrgInfo
 	Email     EmailInfo
 	CLAs      []CLA
-	Submitter string // community name which is in lowcase format.
+	Submitter string
 	CLANum    int
 	Version   int
+
+	GracePeriodDays int
 }
 
 func (link *Link) CanDo(userId string) error {
@@ -85,4 +87,11 @@ func (link *Link) GetCLA(t dp.CLAType, l dp.Language) *CLA {
 	}
 
 	return nil
+}
+
+func (link *Link) GetEffectiveGracePeriodDays(defaultDays int) int {
+	if link.GracePeriodDays < 0 {
+		return defaultDays
+	}
+	return link.GracePeriodDays
 }

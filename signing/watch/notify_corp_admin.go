@@ -121,9 +121,15 @@ func (impl *notifyAdminWatchImpl) handleCorpSigning(link *repository.LinkCLA, co
 		return
 	}
 
-	// Notification email has been sent.
-	if corp.CLANotify == corp.Link.CLAId {
+	latestClaId := impl.getLatestCorpClaId(link, corp.Link.Language)
+	if latestClaId == "" {
 		return
+	}
+
+	if corp.CLANotify == latestClaId {
+		if time.Since(time.Unix(corp.ClaNotifyTime, 0)) < 7*24*time.Hour {
+			return
+		}
 	}
 
 	if err := impl.handleSendEmail(link, corp); err != nil {
@@ -131,7 +137,9 @@ func (impl *notifyAdminWatchImpl) handleCorpSigning(link *repository.LinkCLA, co
 		return
 	}
 
-	corp.CLANotify = corp.Link.CLAId
+	corp.CLANotify = latestClaId
+	corp.ClaNotifyCount += 1
+	corp.ClaNotifyTime = time.Now().Unix()
 	if err := impl.corpSigningRepo.UpdateCLANotify(corp); err != nil {
 		logs.Error("update cla notify failed: ", corp.Id, err)
 	}
@@ -157,7 +165,9 @@ func (impl *notifyAdminWatchImpl) handleSendEmail(link *repository.LinkCLA, corp
 	}
 	builder := emailtmpl.CLAUpdated{
 		Org:              link.Org.Alias,
+		CorpName:         corp.Corp.Name.CorpName(),
 		AdminName:        corp.Admin.Name.Name(),
+		UpdateDate:       time.Now().Format("2006-01-02"),
 		ProjectURL:       link.Org.ProjectURL,
 		URLOfCLAPlatform: impl.claPlatformURL + link.Id,
 	}
@@ -168,13 +178,20 @@ func (impl *notifyAdminWatchImpl) handleSendEmail(link *repository.LinkCLA, corp
 
 	emailMsg.From = link.Email.Addr.EmailAddr()
 	emailMsg.To = []string{corp.Admin.EmailAddr.EmailAddr()}
-	emailMsg.Subject = "CLA has been updated"
+	emailMsg.Subject = fmt.Sprintf("%s CLA 协议已更新 - 无需立即操作", link.Org.Alias)
 
 	worker.GetEmailWorker().SendSimpleMessage(link.Email.Platform, &emailMsg)
 
-	// Sending email is done in goroutine.
-	// Prevent the concurrency from being too high, which would cause the email server refused to serve.
 	time.Sleep(impl.config.genSendEmailInterval())
 
 	return nil
+}
+
+func (impl *notifyAdminWatchImpl) getLatestCorpClaId(link *repository.LinkCLA, language dp.Language) string {
+	for i := range link.Clas {
+		if link.Clas[i].Type == dp.CLATypeCorp && link.Clas[i].Language == language {
+			return link.Clas[i].Id
+		}
+	}
+	return ""
 }

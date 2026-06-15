@@ -21,6 +21,13 @@ func (cmd *CmdToSignCorpCLA) toCorpSigning() domain.CorpSigning {
 		Rep:     cmd.Rep,
 		Corp:    domain.NewCorporation(cmd.CorpName, cmd.Rep.EmailAddr),
 		AllInfo: cmd.AllSingingInfo,
+		Logs: []domain.CorpSigningLog{
+			{
+				Date:   util.Date(),
+				CLAId:  cmd.Link.CLAId,
+				Action: "sign",
+			},
+		},
 	}
 }
 
@@ -48,13 +55,36 @@ type CorpSigningDTO struct {
 }
 
 type CorpSigningInfoDTO struct {
-	Date     string                `json:"date"`
-	CLAId    string                `json:"cla_id"`
-	Language string                `json:"cla_language"`
-	CorpName string                `json:"corporation_name"`
-	RepName  string                `json:"rep_name"`
-	RepEmail string                `json:"rep_email"`
-	AllInfo  domain.AllSingingInfo `json:"info"`
+	Date         string                `json:"date"`
+	CLAId        string                `json:"cla_id"`
+	Language     string                `json:"cla_language"`
+	CorpName     string                `json:"corporation_name"`
+	RepName      string                `json:"rep_name"`
+	RepEmail     string                `json:"rep_email"`
+	AllInfo      domain.AllSingingInfo `json:"info"`
+	PendingCLAId string                `json:"pending_cla_id"`
+	Logs         []CorpSigningLogDTO   `json:"logs"`
+}
+
+type CorpSigningLogDTO struct {
+	Date   string `json:"date"`
+	CLAId  string `json:"cla_id"`
+	Action string `json:"action"`
+}
+
+func toCorpSigningLogDTOs(logs []domain.CorpSigningLog) []CorpSigningLogDTO {
+	if len(logs) == 0 {
+		return nil
+	}
+	result := make([]CorpSigningLogDTO, len(logs))
+	for i, v := range logs {
+		result[i] = CorpSigningLogDTO{
+			Date:   v.Date,
+			CLAId:  v.CLAId,
+			Action: v.Action,
+		}
+	}
+	return result
 }
 
 type CmdToFindCorpSummary = CmdToCheckSinging

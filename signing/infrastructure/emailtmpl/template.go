@@ -241,6 +241,7 @@ type CLAUpdated struct {
 	UpdateDate       string
 	ProjectURL       string
 	URLOfCLAPlatform string
+	GracePeriodDays  int
 }
 
 func (data *CLAUpdated) GenEmailMsg() (EmailMessage, error) {
@@ -253,6 +254,7 @@ type IndividualCLAUpdated struct {
 	UpdateDate       string
 	ProjectURL       string
 	URLOfCLAPlatform string
+	GracePeriodDays  int
 }
 
 func (data *IndividualCLAUpdated) GenEmailMsg() (EmailMessage, error) {

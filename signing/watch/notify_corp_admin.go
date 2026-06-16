@@ -16,13 +16,14 @@ import (
 
 var notifyAdminWatchInstance *notifyAdminWatchImpl
 
-func NotifyAdminWatchStart(cfg *NotifyAdminConfig, lk repoLink, corp corpSigningRepo, individual individualSigningRepo, claPlatformURL string) {
+func NotifyAdminWatchStart(cfg *NotifyAdminConfig, lk repoLink, corp corpSigningRepo, individual individualSigningRepo, claPlatformURL string, defaultGracePeriodDays int) {
 	notifyAdminWatchInstance = &notifyAdminWatchImpl{
-		config:                cfg,
-		link:                  lk,
-		corpSigningRepo:       corp,
-		individualSigningRepo: individual,
-		claPlatformURL:        claPlatformURL,
+		config:                 cfg,
+		link:                   lk,
+		corpSigningRepo:        corp,
+		individualSigningRepo:  individual,
+		claPlatformURL:         claPlatformURL,
+		defaultGracePeriodDays: defaultGracePeriodDays,
 	}
 
 	notifyAdminWatchInstance.start()
@@ -49,10 +50,11 @@ type individualSigningRepo interface {
 type notifyAdminWatchImpl struct {
 	config *NotifyAdminConfig
 
-	link                  repoLink
-	corpSigningRepo       corpSigningRepo
-	individualSigningRepo individualSigningRepo
-	claPlatformURL        string
+	link                   repoLink
+	corpSigningRepo        corpSigningRepo
+	individualSigningRepo  individualSigningRepo
+	claPlatformURL         string
+	defaultGracePeriodDays int
 
 	wg   sync.WaitGroup
 	stop chan struct{}
@@ -176,6 +178,7 @@ func (impl *notifyAdminWatchImpl) handleSendEmail(link *repository.LinkCLA, corp
 	if corp.Admin.Name == nil {
 		return fmt.Errorf("failed to send email msg: admin name is null: %s", link.Id)
 	}
+	graceDays := impl.getEffectiveGracePeriodDays(link)
 	builder := emailtmpl.CLAUpdated{
 		Org:              link.Org.Alias,
 		CorpName:         corp.Corp.Name.CorpName(),
@@ -183,6 +186,7 @@ func (impl *notifyAdminWatchImpl) handleSendEmail(link *repository.LinkCLA, corp
 		UpdateDate:       time.Now().Format("2006-01-02"),
 		ProjectURL:       link.Org.ProjectURL,
 		URLOfCLAPlatform: impl.claPlatformURL + link.Id,
+		GracePeriodDays:  graceDays,
 	}
 	emailMsg, err := builder.GenEmailMsg()
 	if err != nil {
@@ -265,12 +269,14 @@ func (impl *notifyAdminWatchImpl) handleSendIndividualEmail(link *repository.Lin
 	if is.Rep.Name == nil {
 		return fmt.Errorf("failed to send email msg: individual name is null: %s", link.Id)
 	}
+	graceDays := impl.getEffectiveGracePeriodDays(link)
 	builder := emailtmpl.IndividualCLAUpdated{
 		Org:              link.Org.Alias,
 		Name:             is.Rep.Name.Name(),
 		UpdateDate:       time.Now().Format("2006-01-02"),
 		ProjectURL:       link.Org.ProjectURL,
 		URLOfCLAPlatform: impl.claPlatformURL + link.Id,
+		GracePeriodDays:  graceDays,
 	}
 	emailMsg, err := builder.GenEmailMsg()
 	if err != nil {
@@ -291,6 +297,13 @@ func (impl *notifyAdminWatchImpl) handleSendIndividualEmail(link *repository.Lin
 	time.Sleep(impl.config.genSendEmailInterval())
 
 	return nil
+}
+
+func (impl *notifyAdminWatchImpl) getEffectiveGracePeriodDays(link *repository.LinkCLA) int {
+	if link.GracePeriodDays >= 0 {
+		return link.GracePeriodDays
+	}
+	return impl.defaultGracePeriodDays
 }
 
 func (impl *notifyAdminWatchImpl) getLatestIndividualClaId(link *repository.LinkCLA, language dp.Language) string {

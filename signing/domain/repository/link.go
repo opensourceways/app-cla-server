@@ -15,12 +15,13 @@ type LinkSummary struct {
 }
 
 type LinkCLA struct {
-	Id          string
-	Org         domain.OrgInfo
-	Email       domain.EmailInfo
-	Clas        []domain.CLA
-	RemovedCLAs []domain.CLA
-	LastUpdateTime int64
+	Id              string
+	Org             domain.OrgInfo
+	Email           domain.EmailInfo
+	Clas            []domain.CLA
+	RemovedCLAs     []domain.CLA
+	GracePeriodDays int
+	LastUpdateTime  int64
 }
 
 type Link interface {

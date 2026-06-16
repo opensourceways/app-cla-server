@@ -212,7 +212,7 @@ func initSigning(cfg *config.Config) error {
 	// watch
 	watch.Start(&cfg.Watch, repo, individual)
 	watch.CLAUpdatedWatchStart(linkRepo, localCLA, &cfg.Watch.CLAUpdateConfig, cfg.PDF.PythonBin)
-	watch.NotifyAdminWatchStart(&cfg.Watch.SendEmailConfig, linkRepo, repo, individual, cfg.API.CLAPlatformURL)
+	watch.NotifyAdminWatchStart(&cfg.Watch.SendEmailConfig, linkRepo, repo, individual, cfg.API.CLAPlatformURL, cfg.Domain.Config.DefaultGracePeriodDays)
 
 	return nil
 }

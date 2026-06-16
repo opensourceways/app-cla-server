@@ -43,7 +43,7 @@ type corpSigningRepo interface {
 }
 
 type individualSigningRepo interface {
-	FindAll(linkId string) ([]domain.IndividualSigning, error)
+	FindAllWithPagination(linkId string, offset, limit int) ([]domain.IndividualSigning, error)
 	UpdateCLANotify(linkId, email, claId string, count int, notifyTime int64) error
 }
 

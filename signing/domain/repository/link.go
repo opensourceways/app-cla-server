@@ -35,4 +35,5 @@ type Link interface {
 	AddCLA(*domain.Link, *domain.CLA) error
 	UpdateCLA(link *domain.Link, newCla *domain.CLA) error
 	RemoveCLA(*domain.Link, *domain.CLA) error
+	UpdateGracePeriodDays(linkId string, days int) error
 }

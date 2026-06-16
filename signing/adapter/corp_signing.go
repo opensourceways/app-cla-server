@@ -273,20 +273,40 @@ func getAllSigningInfo(
 }
 
 func (adapter *corpSigningAdatper) UpdateRepresentative(userId, linkID, signingID string, opt *models.RepresentativeUpdateOption) models.IModelError {
-	// 验证参数
 	if opt.RepName == "" || opt.RepEmail == "" {
 		return toModelError(errors.New("representative name and email are required"))
 	}
 
-	// 验证邮箱格式
 	if _, err := dp.NewEmailAddr(opt.RepEmail); err != nil {
 		return toModelError(err)
 	}
 
-	// 调用service层更新
 	err := adapter.s.UpdateRepresentative(userId, linkID, signingID, opt.RepName, opt.RepEmail)
 	if err != nil {
 		return toModelError(err)
 	}
 	return nil
+}
+
+func (adapter *corpSigningAdatper) FindPendingAgreements(userId, linkId string) ([]models.CorporationSigningPendingItem, models.IModelError) {
+	v, err := adapter.s.FindPendingAgreements(userId, linkId)
+	if err != nil {
+		return nil, toModelError(err)
+	}
+
+	r := make([]models.CorporationSigningPendingItem, len(v))
+	for i := range v {
+		item := &v[i]
+		r[i] = models.CorporationSigningPendingItem{
+			SigningId:         item.Id,
+			CorpName:          item.CorpName,
+			AdminEmail:        item.AdminEmail,
+			SignedCLAVersion:  item.SignedCLAId,
+			PendingCLAVersion: item.PendingCLAId,
+			NotifyCount:       item.NotifyCount,
+			LastNotifyTime:    item.LastNotifyTime,
+		}
+	}
+
+	return r, nil
 }

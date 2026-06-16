@@ -93,3 +93,13 @@ type CorpSummaryDTO struct {
 	CorpName      string `json:"corp_name"`
 	CorpSigningId string `json:"corp_signing_id"`
 }
+
+type CorpSigningPendingDTO struct {
+	Id             string `json:"signing_id"`
+	CorpName       string `json:"corp_name"`
+	AdminEmail     string `json:"admin_email"`
+	SignedCLAId    string `json:"signed_cla_version"`
+	PendingCLAId   string `json:"pending_cla_version"`
+	NotifyCount    int    `json:"notify_count"`
+	LastNotifyTime int64  `json:"last_notify_time"`
+}

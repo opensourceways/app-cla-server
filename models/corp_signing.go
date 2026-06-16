@@ -66,3 +66,17 @@ type RepresentativeUpdateOption struct {
 func UpdateCorpRepresentative(userId, linkID, signingID string, opt *RepresentativeUpdateOption) IModelError {
 	return corpSigningAdapterInstance.UpdateRepresentative(userId, linkID, signingID, opt)
 }
+
+type CorporationSigningPendingItem struct {
+	SigningId         string `json:"signing_id"`
+	CorpName          string `json:"corp_name"`
+	AdminEmail        string `json:"admin_email"`
+	SignedCLAVersion  string `json:"signed_cla_version"`
+	PendingCLAVersion string `json:"pending_cla_version"`
+	NotifyCount       int    `json:"notify_count"`
+	LastNotifyTime    int64  `json:"last_notify_time"`
+}
+
+func FindPendingAgreements(userId, linkId string) ([]CorporationSigningPendingItem, IModelError) {
+	return corpSigningAdapterInstance.FindPendingAgreements(userId, linkId)
+}

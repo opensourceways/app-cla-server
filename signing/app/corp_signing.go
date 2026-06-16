@@ -39,6 +39,7 @@ type CorpSigningService interface {
 	FindDiffCLAFile(signingId string) (string, error)
 	AgreeWithLatestCLA(signingId string) error
 	UpdateRepresentative(userId, linkID, signingID, repName, repEmail string) error
+	FindPendingAgreements(userId, linkId string) ([]CorpSigningPendingDTO, error)
 }
 
 type corpSigningService struct {
@@ -107,15 +108,15 @@ func (s *corpSigningService) Get(userId, csId string, email dp.EmailAddr) (linkI
 	}
 
 	dto = CorpSigningInfoDTO{
-		Date:          item.Date,
-		CLAId:         item.Link.CLAId,
-		Language:      item.Link.Language.Language(),
-		CorpName:      item.Corp.Name.CorpName(),
-		RepName:       item.Rep.Name.Name(),
-		RepEmail:      item.Rep.EmailAddr.EmailAddr(),
-		AllInfo:       item.AllInfo,
-		PendingCLAId:  item.PendingCLAId,
-		Logs:          toCorpSigningLogDTOs(item.Logs),
+		Date:         item.Date,
+		CLAId:        item.Link.CLAId,
+		Language:     item.Link.Language.Language(),
+		CorpName:     item.Corp.Name.CorpName(),
+		RepName:      item.Rep.Name.Name(),
+		RepEmail:     item.Rep.EmailAddr.EmailAddr(),
+		AllInfo:      item.AllInfo,
+		PendingCLAId: item.PendingCLAId,
+		Logs:         toCorpSigningLogDTOs(item.Logs),
 	}
 
 	return
@@ -246,31 +247,52 @@ func (s *corpSigningService) AgreeWithLatestCLA(signingId string) error {
 }
 
 func (s *corpSigningService) UpdateRepresentative(userId, linkID, signingID, repName, repEmail string) error {
-	// 权限验证 - 只有社区管理员可以操作
 	if _, err := checkIfCommunityManager(userId, linkID, s.linkRepo); err != nil {
 		return err
 	}
 
-	// 查找企业签名
 	cs, err := s.repo.Find(signingID)
 	if err != nil {
 		return err
 	}
 
-	// 验证link_id匹配
 	if cs.Link.Id != linkID {
 		return commonRepo.NewErrorResourceNotFound(errors.New("signing not found"))
 	}
 
-	// 创建新的代表信息
 	newRep, err := domain.NewRepresentative(repName, repEmail)
 	if err != nil {
 		return err
 	}
 
-	// 更新代表信息
 	cs.Rep = newRep
 
-	// 保存到数据库
 	return s.repo.Update(&cs)
+}
+
+func (s *corpSigningService) FindPendingAgreements(userId, linkId string) ([]CorpSigningPendingDTO, error) {
+	if _, err := checkIfCommunityManager(userId, linkId, s.linkRepo); err != nil {
+		return nil, err
+	}
+
+	v, err := s.repo.FindPendingAgreements(linkId)
+	if err != nil || len(v) == 0 {
+		return nil, err
+	}
+
+	dtos := make([]CorpSigningPendingDTO, len(v))
+	for i := range v {
+		item := &v[i]
+		dtos[i] = CorpSigningPendingDTO{
+			Id:             item.Id,
+			CorpName:       item.Corp.Name.CorpName(),
+			AdminEmail:     item.Admin.EmailAddr.EmailAddr(),
+			SignedCLAId:    item.Link.CLAId,
+			PendingCLAId:   item.PendingCLAId,
+			NotifyCount:    item.ClaNotifyCount,
+			LastNotifyTime: item.ClaNotifyTime,
+		}
+	}
+
+	return dtos, nil
 }

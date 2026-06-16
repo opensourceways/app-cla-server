@@ -8,16 +8,17 @@ import (
 )
 
 const (
-	fieldOrg        = "org"
-	fieldUrl        = "url"
-	fieldCLAs       = "clas"
-	fieldCLANum     = "cla_num"
-	fieldRemoved    = "removed"
-	fieldOrgAlias   = "org_alias"
-	fieldOrgLogo    = "org_logo"
-	fieldPlatform   = "platform"
-	fieldSubmitter  = "submitter"
-	fieldCLASFields = "clas.fields"
+	fieldOrg             = "org"
+	fieldUrl             = "url"
+	fieldCLAs            = "clas"
+	fieldCLANum          = "cla_num"
+	fieldRemoved         = "removed"
+	fieldOrgAlias        = "org_alias"
+	fieldOrgLogo         = "org_logo"
+	fieldPlatform        = "platform"
+	fieldSubmitter       = "submitter"
+	fieldCLASFields      = "clas.fields"
+	fieldGracePeriodDays = "grace_period_days"
 )
 
 func toLinkDO(v *domain.Link) linkDO {

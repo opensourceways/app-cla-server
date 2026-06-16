@@ -20,8 +20,11 @@ func (ctl *CorporationSigningController) Prepare() {
 		if strings.HasSuffix(v, "/cla/diff") || strings.HasSuffix(v, "/cla/agree") {
 			ctl.apiPrepare(PermissionCorpAdmin)
 		} else {
-			// not signing
-			ctl.apiPrepare(PermissionOwnerOfOrg)
+			if strings.HasSuffix(v, "/pending") {
+				ctl.apiPrepare(PermissionOwnerOfOrg)
+			} else {
+				ctl.apiPrepare(PermissionOwnerOfOrg)
+			}
 		}
 	}
 }
@@ -370,5 +373,36 @@ func (ctl *CorporationSigningController) UpdateRepresentative() {
 		ctl.sendModelErrorAsResp(merr, action)
 	} else {
 		ctl.sendSuccessResp(action, "representative updated successfully")
+	}
+}
+
+// @Title GetPendingAgreements
+// @Description list corp signings with pending CLA agreements
+// @Tags CorpSigning
+// @Accept json
+// @Param  link_id  path  string  true  "link id"
+// @Success 200 {object} models.CorporationSigningPendingItem
+// @Failure 400 missing_url_path_parameter: missing url path parameter
+// @Failure 401 missing_token:              token is missing
+// @Failure 402 unknown_token:              token is unknown
+// @Failure 403 expired_token:              token is expired
+// @Failure 404 unauthorized_token:         the permission of token is unmatched
+// @Failure 405 not_yours_org:              the link doesn't belong to your community
+// @Failure 500 system_error:               system error
+// @router /pending/:link_id [get]
+func (ctl *CorporationSigningController) GetPendingAgreements() {
+	action := "community manager lists pending CLA agreements"
+	linkID := ctl.GetString(":link_id")
+
+	pl, fr := ctl.tokenPayloadBasedOnCorpManager()
+	if fr != nil {
+		ctl.sendFailedResultAsResp(fr, action)
+		return
+	}
+
+	if r, merr := models.FindPendingAgreements(pl.UserId, linkID); merr != nil {
+		ctl.sendModelErrorAsResp(merr, action)
+	} else {
+		ctl.sendSuccessResp(action, r)
 	}
 }

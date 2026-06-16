@@ -14,6 +14,10 @@ type IndividualSigning struct {
 	Date    string
 	AllInfo AllSingingInfo
 	Version int
+
+	ClaNotify      string
+	ClaNotifyCount int
+	ClaNotifyTime  int64
 }
 
 type IndividualSigningLog struct {
@@ -45,6 +49,9 @@ func (i *IndividualSigning) AgreeNewCLA(claId string) error {
 	}
 
 	i.Link.CLAId = claId
+	i.ClaNotify = ""
+	i.ClaNotifyCount = 0
+	i.ClaNotifyTime = 0
 
 	i.addLogOfAgreeingNewCLA()
 

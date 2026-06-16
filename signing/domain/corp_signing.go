@@ -1,10 +1,15 @@
 package domain
 
-import "github.com/opensourceways/app-cla-server/signing/domain/dp"
+import (
+	"github.com/opensourceways/app-cla-server/signing/domain/dp"
+	"github.com/opensourceways/app-cla-server/util"
+)
 
 const (
 	RoleAdmin   = "admin"
 	RoleManager = "manager"
+
+	corpSigningActionAgree = "agree"
 )
 
 type AllSingingInfo = map[string]string
@@ -25,6 +30,12 @@ type LinkInfo struct {
 	CLAInfo
 }
 
+type CorpSigningLog struct {
+	Date   string
+	CLAId  string
+	Action string
+}
+
 type CorpSigning struct {
 	Id      string
 	Date    string
@@ -33,11 +44,17 @@ type CorpSigning struct {
 	Corp    Corporation
 	AllInfo AllSingingInfo
 
-	HasPDF    bool // true if pdf has uploaded
+	HasPDF    bool
 	Admin     Manager
 	Managers  []Manager
 	Employees []EmployeeSigning
 	Version   int
+
+	PendingCLAId   string
+	ClaNotifyCount int
+	ClaNotifyTime  int64
+
+	Logs []CorpSigningLog
 }
 
 func (cs *CorpSigning) CorpName() dp.CorpName {
@@ -255,6 +272,15 @@ func (cs *CorpSigning) SetLatestClaId(latestClaId string) error {
 	}
 
 	cs.Link.CLAId = latestClaId
+	cs.PendingCLAId = ""
+	cs.ClaNotifyCount = 0
+	cs.ClaNotifyTime = 0
+
+	cs.Logs = append(cs.Logs, CorpSigningLog{
+		Date:   util.Date(),
+		CLAId:  latestClaId,
+		Action: corpSigningActionAgree,
+	})
 
 	return nil
 }

@@ -30,6 +30,7 @@ type LinkService interface {
 	Find(linkId string) (dto LinkDTO, err error)
 	FindCLAs(cmd *CmdToFindCLAs) ([]CLADetailDTO, error)
 	FindLinkCLA(cmd *domain.CLAIndex) (dto LinkCLADTO, err error)
+	UpdateGracePeriod(userId, linkId string, days int) error
 }
 
 type linkService struct {
@@ -162,4 +163,12 @@ func (s *linkService) Find(linkId string) (dto LinkDTO, err error) {
 	dto.Email = v.Email
 
 	return
+}
+
+func (s *linkService) UpdateGracePeriod(userId, linkId string, days int) error {
+	if _, err := checkIfCommunityManager(userId, linkId, s.repo); err != nil {
+		return err
+	}
+
+	return s.repo.UpdateGracePeriodDays(linkId, days)
 }

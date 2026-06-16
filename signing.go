@@ -97,7 +97,7 @@ func initSigning(cfg *config.Config) error {
 
 	// link
 	localCLA := localclaimpl.NewLocalCLAImpl(&cfg.LocalCLA)
-	cla, err := claservice.NewCLAService(linkRepo, localCLA, messageimpl.NewMessageImpl())
+	cla, err := claservice.NewCLAService(linkRepo, localCLA, messageimpl.NewMessageImpl(), repo)
 	if err != nil {
 		return err
 	}
@@ -171,7 +171,9 @@ func initSigning(cfg *config.Config) error {
 			cla,
 			individual,
 			repo,
+			linkRepo,
 			interval,
+			cfg.Domain.Config.DefaultGracePeriodDays,
 		)),
 	)
 
@@ -210,7 +212,7 @@ func initSigning(cfg *config.Config) error {
 	// watch
 	watch.Start(&cfg.Watch, repo, individual)
 	watch.CLAUpdatedWatchStart(linkRepo, localCLA, &cfg.Watch.CLAUpdateConfig, cfg.PDF.PythonBin)
-	watch.NotifyAdminWatchStart(&cfg.Watch.SendEmailConfig, linkRepo, repo, cfg.API.CLAPlatformURL)
+	watch.NotifyAdminWatchStart(&cfg.Watch.SendEmailConfig, linkRepo, repo, individual, cfg.API.CLAPlatformURL, cfg.Domain.Config.DefaultGracePeriodDays)
 
 	return nil
 }

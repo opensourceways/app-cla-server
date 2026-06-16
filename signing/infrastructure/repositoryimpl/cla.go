@@ -2,12 +2,15 @@ package repositoryimpl
 
 import (
 	"errors"
+	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
 
 	commonRepo "github.com/opensourceways/app-cla-server/common/domain/repository"
 	"github.com/opensourceways/app-cla-server/signing/domain"
 )
+
+const fieldLastUpdateTime = "last_update_time"
 
 func (impl *link) AddCLA(link *domain.Link, cla *domain.CLA) error {
 	if err := impl.claContent.add(link.Id, cla); err != nil {
@@ -22,7 +25,10 @@ func (impl *link) AddCLA(link *domain.Link, cla *domain.CLA) error {
 
 	err = impl.dao.PushArraySingleItemAndUpdate(
 		impl.docFilter(link.Id), fieldCLAs, doc,
-		bson.M{fieldCLANum: link.CLANum},
+		bson.M{
+			fieldCLANum:         link.CLANum,
+			fieldLastUpdateTime: time.Now().Unix(),
+		},
 		link.Version,
 	)
 	if err != nil && impl.dao.IsDocNotExists(err) {
@@ -63,7 +69,8 @@ func (impl *link) UpdateCLA(link *domain.Link, newCla *domain.CLA) error {
 	}
 
 	otherSet := bson.M{
-		fieldCLANum: link.CLANum,
+		fieldCLANum:        link.CLANum,
+		fieldLastUpdateTime: time.Now().Unix(),
 	}
 
 	return impl.dao.PushAndUpdateArrayItem(

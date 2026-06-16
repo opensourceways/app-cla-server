@@ -29,6 +29,7 @@ type corpSigningAdapter interface {
 	FindDiffCLAFile(signingId string) (string, IModelError)
 	Agree(signingId string) IModelError
 	UpdateRepresentative(userId, linkID, signingID string, opt *RepresentativeUpdateOption) IModelError
+	FindPendingAgreements(userId, linkId string) ([]CorporationSigningPendingItem, IModelError)
 }
 
 func RegisterCorpSigningAdapter(a corpSigningAdapter) {
@@ -166,6 +167,7 @@ type linkAdapter interface {
 	GetLink(linkId string) (org OrgInfo, merr IModelError)
 	GetLinkCLA(linkId, claId string) (OrgInfo, CLAInfo, IModelError)
 	ListCLAs(linkId, applyTo string) ([]CLADetail, IModelError)
+	UpdateGracePeriod(userId, linkId string, days int) IModelError
 }
 
 func RegisterLinkAdapter(a linkAdapter) {

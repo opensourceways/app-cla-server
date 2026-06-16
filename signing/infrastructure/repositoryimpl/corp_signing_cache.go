@@ -334,3 +334,11 @@ func (c *cachedCorpSigning) ListTriggered() ([]TriggeredCorp, error) {
 func (c *cachedCorpSigning) ResetTriggered(csId string, version int) error {
 	return c.repo.ResetTriggered(csId, version)
 }
+
+func (c *cachedCorpSigning) SetPendingCLAForLink(linkId, newClaId string) error {
+	return c.repo.SetPendingCLAForLink(linkId, newClaId)
+}
+
+func (c *cachedCorpSigning) FindPendingAgreements(linkId string) ([]repository.CorpSigningSummary, error) {
+	return c.repo.FindPendingAgreements(linkId)
+}

@@ -163,6 +163,14 @@ func (adapter *linkAdatper) Add(userId string, opt *models.LinkCreateOption) mod
 	return nil
 }
 
+func (adapter *linkAdatper) UpdateGracePeriod(userId, linkId string, days int) models.IModelError {
+	if err := adapter.s.UpdateGracePeriod(userId, linkId, days); err != nil {
+		return toModelError(err)
+	}
+
+	return nil
+}
+
 func (adapter *linkAdatper) cmdToAddLink(userId string, opt *models.LinkCreateOption) (
 	cmd app.CmdToAddLink, err error,
 ) {

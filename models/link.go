@@ -17,6 +17,14 @@ type LinkCreateOption struct {
 	CorpCLA       *CLACreateOpt `json:"corp_cla"`
 }
 
+type GracePeriodUpdateOption struct {
+	GracePeriodDays int `json:"grace_period_days"`
+}
+
+func UpdateLinkGracePeriod(userId, linkId string, opt *GracePeriodUpdateOption) IModelError {
+	return linkAdapterInstance.UpdateGracePeriod(userId, linkId, opt.GracePeriodDays)
+}
+
 type OrgInfo struct {
 	OrgAlias         string `json:"org_alias"`
 	OrgLogo          string `json:"org_logo"`

@@ -8,16 +8,17 @@ import (
 )
 
 const (
-	fieldOrg        = "org"
-	fieldUrl        = "url"
-	fieldCLAs       = "clas"
-	fieldCLANum     = "cla_num"
-	fieldRemoved    = "removed"
-	fieldOrgAlias   = "org_alias"
-	fieldOrgLogo    = "org_logo"
-	fieldPlatform   = "platform"
-	fieldSubmitter  = "submitter"
-	fieldCLASFields = "clas.fields"
+	fieldOrg             = "org"
+	fieldUrl             = "url"
+	fieldCLAs            = "clas"
+	fieldCLANum          = "cla_num"
+	fieldRemoved         = "removed"
+	fieldOrgAlias        = "org_alias"
+	fieldOrgLogo         = "org_logo"
+	fieldPlatform        = "platform"
+	fieldSubmitter       = "submitter"
+	fieldCLASFields      = "clas.fields"
+	fieldGracePeriodDays = "grace_period_days"
 )
 
 func toLinkDO(v *domain.Link) linkDO {
@@ -49,6 +50,9 @@ type linkDO struct {
 	Version     int         `bson:"version"    json:"-"`
 	Deleted     bool        `bson:"deleted"    json:"deleted"`
 	RemovedCLAs []claDO     `bson:"removed"    json:"removed"`
+
+	GracePeriodDays int   `bson:"grace_period_days" json:"grace_period_days"`
+	LastUpdateTime  int64 `bson:"last_update_time"  json:"last_update_time"`
 }
 
 func (do *linkDO) toLink() domain.Link {
@@ -58,13 +62,14 @@ func (do *linkDO) toLink() domain.Link {
 	}
 
 	return domain.Link{
-		Id:        do.Id,
-		Org:       do.Org.toOrgInfo(),
-		Email:     do.Email.toEmailInfo(),
-		CLAs:      clas,
-		Submitter: do.Submitter,
-		CLANum:    do.CLANum,
-		Version:   do.Version,
+		Id:              do.Id,
+		Org:             do.Org.toOrgInfo(),
+		Email:           do.Email.toEmailInfo(),
+		CLAs:            clas,
+		Submitter:       do.Submitter,
+		CLANum:          do.CLANum,
+		Version:         do.Version,
+		GracePeriodDays: do.GracePeriodDays,
 	}
 }
 

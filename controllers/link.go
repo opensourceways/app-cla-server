@@ -154,3 +154,34 @@ type orgInfo struct {
 	OrgAlias string `json:"org_alias"`
 	OrgLogo  string `json:"org_logo"`
 }
+
+// @Title UpdateGracePeriod
+// @Description update link grace period days
+// @Tags Link
+// @Accept json
+// @Param  link_id  path  string                            true  "link id"
+// @Param  body     body  models.GracePeriodUpdateOption    true  "body for updating grace period"
+// @Success 200 {object} controllers.respData
+// @router /:link_id/grace-period [put]
+func (ctl *LinkController) UpdateGracePeriod() {
+	action := "community manager updates link grace period"
+	linkId := ctl.GetString(":link_id")
+
+	var opt models.GracePeriodUpdateOption
+	if fr := ctl.fetchInputPayload(&opt); fr != nil {
+		ctl.sendFailedResultAsResp(fr, action)
+		return
+	}
+
+	pl, fr := ctl.tokenPayloadBasedOnCorpManager()
+	if fr != nil {
+		ctl.sendFailedResultAsResp(fr, action)
+		return
+	}
+
+	if merr := models.UpdateLinkGracePeriod(pl.UserId, linkId, &opt); merr != nil {
+		ctl.sendModelErrorAsResp(merr, action)
+	} else {
+		ctl.sendSuccessResp(action, "successfully")
+	}
+}

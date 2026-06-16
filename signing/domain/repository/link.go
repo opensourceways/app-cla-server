@@ -15,11 +15,13 @@ type LinkSummary struct {
 }
 
 type LinkCLA struct {
-	Id          string
-	Org         domain.OrgInfo
-	Email       domain.EmailInfo
-	Clas        []domain.CLA
-	RemovedCLAs []domain.CLA
+	Id              string
+	Org             domain.OrgInfo
+	Email           domain.EmailInfo
+	Clas            []domain.CLA
+	RemovedCLAs     []domain.CLA
+	GracePeriodDays int
+	LastUpdateTime  int64
 }
 
 type Link interface {
@@ -33,4 +35,5 @@ type Link interface {
 	AddCLA(*domain.Link, *domain.CLA) error
 	UpdateCLA(link *domain.Link, newCla *domain.CLA) error
 	RemoveCLA(*domain.Link, *domain.CLA) error
+	UpdateGracePeriodDays(linkId string, days int) error
 }

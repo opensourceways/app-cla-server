@@ -10,38 +10,42 @@ import (
 )
 
 const (
-	fieldPDF       = "pdf"
-	fieldRep       = "rep"
-	fieldType      = "type"
-	fieldDate      = "date"
-	fieldCorp      = "corp"
-	fieldName      = "name"
-	fieldLang      = "lang"
-	fieldAdmin     = "admin"
-	fieldEmail     = "email"
-	fieldHasPDF    = "has_pdf"
-	fieldLinkId    = "link_id"
-	fieldDomain    = "domain"
-	fieldDomains   = "domains"
-	fieldDeleted   = "deleted"
-	fieldVersion   = "version"
-	fieldManagers  = "managers"
-	fieldEmployees = "employees"
-	fieldTriggered = "triggered"
-	fieldCLANotify = "cla_notify"
+	fieldPDF            = "pdf"
+	fieldRep            = "rep"
+	fieldType           = "type"
+	fieldDate           = "date"
+	fieldCorp           = "corp"
+	fieldName           = "name"
+	fieldLang           = "lang"
+	fieldAdmin          = "admin"
+	fieldEmail          = "email"
+	fieldHasPDF         = "has_pdf"
+	fieldLinkId         = "link_id"
+	fieldDomain         = "domain"
+	fieldDomains        = "domains"
+	fieldDeleted        = "deleted"
+	fieldVersion        = "version"
+	fieldManagers       = "managers"
+	fieldEmployees      = "employees"
+	fieldTriggered      = "triggered"
+	fieldCLANotify      = "cla_notify"
+	fieldPendingCLAId   = "pending_cla_id"
+	fieldCLANotifyCount = "cla_notify_count"
+	fieldCLANotifyTime  = "cla_notify_time"
 )
 
 func toCorpSigningDO(v *domain.CorpSigning) corpSigningDO {
 	link := &v.Link
 
 	return corpSigningDO{
-		Date:     v.Date,
-		CLAId:    link.CLAId,
-		LinkId:   link.Id,
-		Language: link.Language.Language(),
-		Rep:      toRepDO(&v.Rep),
-		Corp:     toCorpDO(&v.Corp),
-		AllInfo:  v.AllInfo,
+		Date:              v.Date,
+		CLAId:             link.CLAId,
+		LinkId:            link.Id,
+		Language:          link.Language.Language(),
+		Rep:               toRepDO(&v.Rep),
+		Corp:              toCorpDO(&v.Corp),
+		AllInfo:           v.AllInfo,
+		CorpSigningLogsDO: toCorpSigningLogsDO(v.Logs),
 	}
 }
 
@@ -49,16 +53,17 @@ func toCorpSigningDOForMigrate(v *domain.CorpSigning) corpSigningDO {
 	link := &v.Link
 
 	return corpSigningDO{
-		Date:      v.Date,
-		CLAId:     link.CLAId,
-		LinkId:    link.Id,
-		Language:  link.Language.Language(),
-		Rep:       toRepDO(&v.Rep),
-		Corp:      toCorpDO(&v.Corp),
-		AllInfo:   v.AllInfo,
-		Admin:     toManagerDO(&v.Admin),
-		Managers:  toManagerDOs(v.Managers),
-		Employees: toEmployeeSigningDOs(v.Employees),
+		Date:              v.Date,
+		CLAId:             link.CLAId,
+		LinkId:            link.Id,
+		Language:          link.Language.Language(),
+		Rep:               toRepDO(&v.Rep),
+		Corp:              toCorpDO(&v.Corp),
+		AllInfo:           v.AllInfo,
+		Admin:             toManagerDO(&v.Admin),
+		Managers:          toManagerDOs(v.Managers),
+		Employees:         toEmployeeSigningDOs(v.Employees),
+		CorpSigningLogsDO: toCorpSigningLogsDO(v.Logs),
 	}
 }
 
@@ -82,8 +87,12 @@ type corpSigningDO struct {
 	Version   int                 `bson:"version"       json:"-"`
 	ClaNotify string              `bson:"cla_notify"    json:"cla_notify"`
 
-	// uploading pdf or adding email domain will trigger individual signing checking
-	// which will delete the one that belongs to a corp.
+	PendingCLAId   string `bson:"pending_cla_id"    json:"pending_cla_id"`
+	ClaNotifyCount int    `bson:"cla_notify_count"  json:"cla_notify_count"`
+	ClaNotifyTime  int64  `bson:"cla_notify_time"   json:"cla_notify_time"`
+
+	CorpSigningLogsDO `bson:",inline"`
+
 	Triggered bool `bson:"triggered" json:"triggered,omitempty"`
 }
 
@@ -108,9 +117,12 @@ func (do *corpSigningDO) toCorpSigningSummary() repository.CorpSigningSummary {
 				Language: dp.CreateLanguage(do.Language),
 			},
 		},
-		Admin:     do.Admin.toManager(),
-		HasPDF:    do.HasPDF,
-		CLANotify: do.ClaNotify,
+		Admin:          do.Admin.toManager(),
+		HasPDF:         do.HasPDF,
+		CLANotify:      do.ClaNotify,
+		PendingCLAId:   do.PendingCLAId,
+		ClaNotifyCount: do.ClaNotifyCount,
+		ClaNotifyTime:  do.ClaNotifyTime,
 	}
 }
 
@@ -136,12 +148,16 @@ func (do *corpSigningDO) toCorpSigning() domain.CorpSigning {
 				Language: dp.CreateLanguage(do.Language),
 			},
 		},
-		Admin:     do.Admin.toManager(),
-		HasPDF:    do.HasPDF,
-		AllInfo:   do.AllInfo,
-		Managers:  do.toManagers(),
-		Employees: do.toEmployeeSignings(),
-		Version:   do.Version,
+		Admin:          do.Admin.toManager(),
+		HasPDF:         do.HasPDF,
+		AllInfo:        do.AllInfo,
+		Managers:       do.toManagers(),
+		Employees:      do.toEmployeeSignings(),
+		Version:        do.Version,
+		PendingCLAId:   do.PendingCLAId,
+		ClaNotifyCount: do.ClaNotifyCount,
+		ClaNotifyTime:  do.ClaNotifyTime,
+		Logs:           do.toCorpSigningLogs(),
 	}
 }
 
@@ -241,7 +257,7 @@ func toCorpDO(v *domain.Corporation) corpDO {
 	}
 
 	domain := ""
-	if v.PrimaryEmailDomain != "" { // 如果PrimaryEmailDomain是string，零值就是空字符串
+	if v.PrimaryEmailDomain != "" {
 		domain = v.PrimaryEmailDomain
 	}
 
@@ -255,4 +271,46 @@ func toCorpDO(v *domain.Corporation) corpDO {
 		Domain:  domain,
 		Domains: domains,
 	}
+}
+
+type CorpSigningLogsDO struct {
+	Logs []corpSigningLogDO `bson:"logs" json:"logs"`
+}
+
+type corpSigningLogDO struct {
+	Date   string `bson:"date"   json:"date"`
+	CLAId  string `bson:"cla_id" json:"cla_id"`
+	Action string `bson:"action" json:"action"`
+}
+
+func toCorpSigningLogsDO(logs []domain.CorpSigningLog) CorpSigningLogsDO {
+	var dos []corpSigningLogDO
+	for _, v := range logs {
+		dos = append(dos, toCorpSigningLogDO(v))
+	}
+	return CorpSigningLogsDO{dos}
+}
+
+func toCorpSigningLogDO(log domain.CorpSigningLog) corpSigningLogDO {
+	return corpSigningLogDO{
+		Date:   log.Date,
+		CLAId:  log.CLAId,
+		Action: log.Action,
+	}
+}
+
+func (do *corpSigningLogDO) toCorpSigningLog() domain.CorpSigningLog {
+	return domain.CorpSigningLog{
+		Date:   do.Date,
+		CLAId:  do.CLAId,
+		Action: do.Action,
+	}
+}
+
+func (do *corpSigningDO) toCorpSigningLogs() []domain.CorpSigningLog {
+	var logs []domain.CorpSigningLog
+	for _, v := range do.Logs {
+		logs = append(logs, v.toCorpSigningLog())
+	}
+	return logs
 }

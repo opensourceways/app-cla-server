@@ -219,18 +219,33 @@ func (impl *notifyAdminWatchImpl) getLatestCorpClaId(link *repository.LinkCLA, l
 }
 
 func (impl *notifyAdminWatchImpl) handleIndividualSignings(link *repository.LinkCLA, needStop func() bool) {
-	individuals, err := impl.individualSigningRepo.FindAll(link.Id)
-	if err != nil {
-		logs.Error("list individual signing failed in notify job:", link.Id, err)
-		return
-	}
+	limit := 100
+	offset := 0
 
-	for i := range individuals {
+	for {
 		if needStop() {
 			return
 		}
 
-		impl.handleIndividualSigning(link, &individuals[i])
+		individuals, err := impl.individualSigningRepo.FindAllWithPagination(link.Id, offset, limit)
+		if err != nil {
+			logs.Error("list individual signing failed in notify job:", link.Id, err)
+			return
+		}
+
+		if len(individuals) == 0 {
+			break
+		}
+
+		for i := range individuals {
+			if needStop() {
+				return
+			}
+
+			impl.handleIndividualSigning(link, &individuals[i])
+		}
+
+		offset += limit
 	}
 }
 

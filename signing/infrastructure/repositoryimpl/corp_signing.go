@@ -428,6 +428,7 @@ func (impl *corpSigning) SetPendingCLAForLink(linkId, newClaId string) error {
 func (impl *corpSigning) FindPendingAgreements(linkId string) ([]repository.CorpSigningSummary, error) {
 	filter := linkIdFilter(linkId)
 	filter[fieldPendingCLAId] = bson.M{"$ne": ""}
+	filter[fieldHasPDF] = true
 
 	project := bson.M{
 		fieldDate:           1,

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"sync"
 	"time"
 
 	"github.com/opensourceways/app-cla-server/signing/domain"
@@ -27,7 +28,7 @@ type cacheDAO interface {
 
 // cachedCorpSigningPage is a serialisable snapshot of CorpSigningSummaryPage.
 type cachedCorpSigningPage struct {
-	Total int64                    `json:"total"`
+	Total int64                      `json:"total"`
 	Data  []cachedCorpSigningSummary `json:"data"`
 }
 
@@ -135,6 +136,99 @@ func linkPattern(linkId string) string {
 type cachedCorpSigning struct {
 	repo  *corpSigning
 	cache cacheDAO
+	sf    singleflightGroup
+	sem   semaphoreWeighted
+}
+
+const cacheWriteConcurrency = 100
+
+var cacheWriteSem semaphoreWeighted
+
+type singleflightGroup interface {
+	Do(key string, fn func() (interface{}, error)) (interface{}, error, bool)
+}
+
+type semaphoreWeighted interface {
+	TryAcquire(n int64) bool
+	Release(n int64)
+}
+
+func init() {
+	cacheWriteSem = newInternalSemaphore(cacheWriteConcurrency)
+}
+
+func newInternalSemaphore(n int64) semaphoreWeighted {
+	return &internalSemaphore{ch: make(chan struct{}, n)}
+}
+
+type internalSemaphore struct {
+	ch chan struct{}
+}
+
+func (s *internalSemaphore) TryAcquire(n int64) bool {
+	for i := int64(0); i < n; i++ {
+		select {
+		case s.ch <- struct{}{}:
+		default:
+			for j := int64(0); j < i; j++ {
+				<-s.ch
+			}
+			return false
+		}
+	}
+	return true
+}
+
+func (s *internalSemaphore) Release(n int64) {
+	for i := int64(0); i < n; i++ {
+		<-s.ch
+	}
+}
+
+type internalSingleflight struct {
+	mu sync.Mutex
+	m  map[string]*call
+}
+
+type call struct {
+	wg  sync.WaitGroup
+	val interface{}
+	err error
+	dup bool
+}
+
+func newInternalSingleflight() singleflightGroup {
+	return &internalSingleflight{m: make(map[string]*call)}
+}
+
+func (g *internalSingleflight) Do(key string, fn func() (interface{}, error)) (interface{}, error, bool) {
+	g.mu.Lock()
+	if c, ok := g.m[key]; ok {
+		g.mu.Unlock()
+		c.wg.Wait()
+		return c.val, c.err, true
+	}
+	c := &call{}
+	c.wg.Add(1)
+	g.m[key] = c
+	g.mu.Unlock()
+
+	defer func() {
+		g.mu.Lock()
+		delete(g.m, key)
+		g.mu.Unlock()
+		c.wg.Done()
+	}()
+
+	func() {
+		defer func() {
+			if r := recover(); r != nil {
+				c.err = fmt.Errorf("singleflight panic: %v", r)
+			}
+		}()
+		c.val, c.err = fn()
+	}()
+	return c.val, c.err, false
 }
 
 // NewCachedCorpSigning wraps the base repo with a Redis cache layer.
@@ -142,6 +236,8 @@ func NewCachedCorpSigning(dao dao, cache cacheDAO) *cachedCorpSigning {
 	return &cachedCorpSigning{
 		repo:  NewCorpSigning(dao),
 		cache: cache,
+		sf:    newInternalSingleflight(),
+		sem:   cacheWriteSem,
 	}
 }
 
@@ -155,25 +251,34 @@ func (c *cachedCorpSigning) FindPage(linkId string, page, pageSize int, adminAdd
 		return fromCache(cached), nil
 	}
 
-	// --- cache miss: query MongoDB ---
-	result, err := c.repo.FindPage(linkId, page, pageSize, adminAdded, searchQuery)
+	// --- cache miss: singleflight to deduplicate concurrent same-key queries ---
+	v, err, _ := c.sf.Do(key, func() (interface{}, error) {
+		result, queryErr := c.repo.FindPage(linkId, page, pageSize, adminAdded, searchQuery)
+		if queryErr != nil {
+			return result, queryErr
+		}
+
+		// populate cache synchronously (inside singleflight, no race)
+		if c.sem.TryAcquire(1) {
+			defer c.sem.Release(1)
+
+			payload, jsonErr := json.Marshal(toCache(result))
+			if jsonErr != nil {
+				log.Printf("corp_signing cache marshal error: %v", jsonErr)
+				return result, nil
+			}
+			if setErr := c.cache.SetWithExpiry(key, string(payload), corpSigningPageCacheTTL); setErr != nil {
+				log.Printf("corp_signing cache set error: %v", setErr)
+			}
+		}
+		return result, nil
+	})
+
 	if err != nil {
-		return result, err
+		return repository.CorpSigningSummaryPage{}, err
 	}
 
-	// populate cache asynchronously so the caller is not blocked
-	go func() {
-		payload, jsonErr := json.Marshal(toCache(result))
-		if jsonErr != nil {
-			log.Printf("corp_signing cache marshal error: %v", jsonErr)
-			return
-		}
-		if setErr := c.cache.SetWithExpiry(key, string(payload), corpSigningPageCacheTTL); setErr != nil {
-			log.Printf("corp_signing cache set error: %v", setErr)
-		}
-	}()
-
-	return result, nil
+	return v.(repository.CorpSigningSummaryPage), nil
 }
 
 // invalidateLink deletes all cached pages for a given linkId.

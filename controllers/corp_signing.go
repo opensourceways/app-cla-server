@@ -20,11 +20,7 @@ func (ctl *CorporationSigningController) Prepare() {
 		if strings.HasSuffix(v, "/cla/diff") || strings.HasSuffix(v, "/cla/agree") {
 			ctl.apiPrepare(PermissionCorpAdmin)
 		} else {
-			if strings.HasSuffix(v, "/pending") {
-				ctl.apiPrepare(PermissionOwnerOfOrg)
-			} else {
-				ctl.apiPrepare(PermissionOwnerOfOrg)
-			}
+			ctl.apiPrepare(PermissionOwnerOfOrg)
 		}
 	}
 }

@@ -1,6 +1,7 @@
 app-cla-server
 lastupdate.tmp
 .idea
+.trae
 *.b*
 config.yaml
 CLAUDE.md

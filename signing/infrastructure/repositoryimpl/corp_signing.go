@@ -258,15 +258,18 @@ func (impl *corpSigning) FindPage(linkId string, intPage, intPageSize int, admin
 	}
 
 	project := bson.M{
-		fieldDate:      1,
-		fieldCLAId:     1,
-		fieldLang:      1,
-		fieldRep:       1,
-		fieldCorp:      1,
-		fieldAdmin:     1,
-		fieldLinkId:    1,
-		fieldHasPDF:    1,
-		fieldCLANotify: 1,
+		fieldDate:           1,
+		fieldCLAId:          1,
+		fieldLang:           1,
+		fieldRep:            1,
+		fieldCorp:           1,
+		fieldAdmin:          1,
+		fieldLinkId:         1,
+		fieldHasPDF:         1,
+		fieldCLANotify:      1,
+		fieldPendingCLAId:   1,
+		fieldCLANotifyCount: 1,
+		fieldCLANotifyTime:  1,
 	}
 
 	// Single aggregation round-trip: $facet returns both total count and the

@@ -367,23 +367,20 @@ func (impl *corpSigning) UpdateClaId(cs *domain.CorpSigning) error {
 		return err
 	}
 
-	update := bson.M{
-		"$set": bson.M{
-			fieldCLAId:          cs.Link.CLAId,
-			fieldPendingCLAId:   "",
-			fieldCLANotifyCount: 0,
-			fieldCLANotifyTime:  int64(0),
-		},
-		"$push": bson.M{
-			fieldLogs: bson.M{
-				"date":   util.Date(),
-				"cla_id": cs.Link.CLAId,
-				"action": "agree",
-			},
-		},
+	setFields := bson.M{
+		fieldCLAId:          cs.Link.CLAId,
+		fieldPendingCLAId:   "",
+		fieldCLANotifyCount: 0,
+		fieldCLANotifyTime:  int64(0),
 	}
 
-	return impl.dao.UpdateDoc(filter, update, cs.Version)
+	pushItem := bson.M{
+		"date":   util.Date(),
+		"cla_id": cs.Link.CLAId,
+		"action": "agree",
+	}
+
+	return impl.dao.PushArraySingleItemAndUpdate(filter, fieldLogs, pushItem, setFields, cs.Version)
 }
 
 func (impl *corpSigning) UpdateCLANotify(summary *repository.CorpSigningSummary) error {
@@ -419,7 +416,7 @@ func (impl *corpSigning) SetPendingCLAForLink(linkId, newClaId string) error {
 	filter := linkIdFilter(linkId)
 
 	update := bson.M{
-		"$set": bson.M{fieldPendingCLAId: newClaId},
+		fieldPendingCLAId: newClaId,
 	}
 
 	return impl.dao.UpdateDocsWithoutVersion(filter, update)

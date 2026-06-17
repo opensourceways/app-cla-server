@@ -168,7 +168,7 @@ func (impl *link) UpdateGracePeriodDays(linkId string, days int) error {
 	filter[fieldDeleted] = false
 
 	update := bson.M{
-		"$set": bson.M{fieldGracePeriodDays: days},
+		fieldGracePeriodDays: days,
 	}
 
 	return impl.dao.UpdateDocsWithoutVersion(filter, update)

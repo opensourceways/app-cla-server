@@ -285,6 +285,7 @@ func (impl *notifyAdminWatchImpl) handleSendIndividualEmail(link *repository.Lin
 		return fmt.Errorf("failed to send email msg: individual name is null: %s", link.Id)
 	}
 	graceDays := impl.getEffectiveGracePeriodDays(link)
+	signCLAURL := impl.claPlatformURL + "sign-cla/" + link.Id + "/individual?email=" + is.Rep.EmailAddr.EmailAddr()
 	builder := emailtmpl.IndividualCLAUpdated{
 		Org:              link.Org.Alias,
 		Name:             is.Rep.Name.Name(),
@@ -292,6 +293,7 @@ func (impl *notifyAdminWatchImpl) handleSendIndividualEmail(link *repository.Lin
 		ProjectURL:       link.Org.ProjectURL,
 		URLOfCLAPlatform: impl.claPlatformURL + link.Id,
 		GracePeriodDays:  graceDays,
+		SignCLAURL:       signCLAURL,
 	}
 	emailMsg, err := builder.GenEmailMsg()
 	if err != nil {

@@ -255,6 +255,7 @@ type IndividualCLAUpdated struct {
 	ProjectURL       string
 	URLOfCLAPlatform string
 	GracePeriodDays  int
+	SignCLAURL       string
 }
 
 func (data *IndividualCLAUpdated) GenEmailMsg() (EmailMessage, error) {

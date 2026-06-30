@@ -43,12 +43,12 @@ type IndividualSignedDTO struct {
 }
 
 type DebugInfoDTO struct {
-	IsLatestClaVersion bool   `json:"is_latest_cla_version"`  // 签署的CLA版本是否最新？
-	InGracePeriod      bool   `json:"in_grace_period"`        // 是否在宽限期内？
-	GracePeriodDays    int    `json:"grace_period_days"`      // 宽限期总共多少天
-	ClaUpdatedAt       string `json:"cla_updated_at"`         // CLA最后更新的日期
-	ElapsedDays        int    `json:"elapsed_days"`           // 自CLA更新以来已经过了多少天
-	GracePeriodEndsAt  string `json:"grace_period_ends_at"`   // 宽限期结束日期
+	IsLatestClaVersion  bool   `json:"is_latest_cla_version"`     // 你签署的版本是最新的吗？
+	InGracePeriod       bool   `json:"in_grace_period"`           // 当前在宽限期内吗？
+	GracePeriodDays     int    `json:"grace_period_days"`         // 宽限期是多少天？
+	ClaUpdatedAt        string `json:"cla_updated_at"`            // CLA最后更新日期
+	DaysSinceLastUpdate int    `json:"days_since_last_update"`    // 自CLA更新以来过了多少天
+	GracePeriodEndsAt   string `json:"grace_period_ends_at"`      // 宽限期什么时候结束
 }
 
 type CmdToFindSignedCLAInfo = CmdToCheckSinging

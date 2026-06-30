@@ -210,12 +210,12 @@ func (s *individualSigningService) getDebugInfo(linkId string, isLatestClaVersio
 	gracePeriodEndsAt := lastUpdateTime.AddDate(0, 0, gracePeriodDays)
 
 	return &DebugInfoDTO{
-		IsLatestClaVersion: isLatestClaVersion,
-		InGracePeriod:      elapsedDays < gracePeriodDays,
-		GracePeriodDays:    gracePeriodDays,
-		ClaUpdatedAt:       lastUpdateTime.Format("2006-01-02"),
-		ElapsedDays:        elapsedDays,
-		GracePeriodEndsAt:  gracePeriodEndsAt.Format("2006-01-02"),
+		IsLatestClaVersion:  isLatestClaVersion,
+		InGracePeriod:       elapsedDays < gracePeriodDays,
+		GracePeriodDays:     gracePeriodDays,
+		ClaUpdatedAt:        lastUpdateTime.Format("2006-01-02"),
+		DaysSinceLastUpdate: elapsedDays,
+		GracePeriodEndsAt:   gracePeriodEndsAt.Format("2006-01-02"),
 	}
 }
 

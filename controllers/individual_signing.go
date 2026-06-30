@@ -135,7 +135,7 @@ func (ctl *IndividualSigningController) Agree() {
 // @router /:link_id [get]
 func (ctl *IndividualSigningController) Check() {
 	action := "check individual signing"
-	debug := ctl.GetBool("debug")
+	debug, _ := ctl.GetBool("debug")
 
 	v, merr := models.CheckSigning(
 		ctl.GetString(":link_id"), ctl.GetString("email"),

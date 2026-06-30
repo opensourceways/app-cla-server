@@ -35,8 +35,20 @@ type CmdToCheckSinging struct {
 }
 
 type IndividualSignedDTO struct {
-	Type   string `json:"type"`   // "individual" 或 "corp"
-	Status string `json:"status"` // "not_signed" | "valid" | "expired"
+	Type           string      `json:"type"`                      // "individual" 或 "corp"
+	Signed         bool        `json:"signed,omitempty"`          // 是否已签署过
+	VersionMatched bool        `json:"version_matched,omitempty"` // 签署是否当前有效（考虑宽限期）
+	Status         string      `json:"status,omitempty"`          // 内部状态："not_signed" | "valid" | "expired"
+	DebugInfo      *DebugInfoDTO `json:"_debug,omitempty"`        // 调试信息（仅debug=true时返回）
+}
+
+type DebugInfoDTO struct {
+	IsLatestClaVersion bool   `json:"is_latest_cla_version"`  // 签署的CLA版本是否最新？
+	InGracePeriod      bool   `json:"in_grace_period"`        // 是否在宽限期内？
+	GracePeriodDays    int    `json:"grace_period_days"`      // 宽限期总共多少天
+	ClaUpdatedAt       string `json:"cla_updated_at"`         // CLA最后更新的日期
+	ElapsedDays        int    `json:"elapsed_days"`           // 自CLA更新以来已经过了多少天
+	GracePeriodEndsAt  string `json:"grace_period_ends_at"`   // 宽限期结束日期
 }
 
 type CmdToFindSignedCLAInfo = CmdToCheckSinging

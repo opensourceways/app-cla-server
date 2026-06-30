@@ -8,6 +8,9 @@ import (
 	"github.com/opensourceways/app-cla-server/signing/domain/dp"
 )
 
+// 类型别名，使转换更简洁
+type DebugInfoDTO = app.DebugInfoDTO
+
 func NewIndividualSigningAdapter(s app.IndividualSigningService) *individualSigningAdatper {
 	return &individualSigningAdatper{s}
 }
@@ -122,9 +125,27 @@ func (adapter *individualSigningAdatper) Check(linkId string, email string,
 	}
 
 	return models.IndividualSigned{
-		Type:   v.Type,
-		Status: v.Status,
+		Type:           v.Type,
+		Signed:         v.Signed,
+		VersionMatched: v.VersionMatched,
+		Status:         v.Status,
+		DebugInfo:      convertDebugInfo(v.DebugInfo),
 	}, nil
+}
+
+// convertDebugInfo 将 DTO 的调试信息转换为 models 的调试信息
+func convertDebugInfo(dto *DebugInfoDTO) *models.DebugInfo {
+	if dto == nil {
+		return nil
+	}
+	return &models.DebugInfo{
+		IsLatestClaVersion: dto.IsLatestClaVersion,
+		InGracePeriod:      dto.InGracePeriod,
+		GracePeriodDays:    dto.GracePeriodDays,
+		ClaUpdatedAt:       dto.ClaUpdatedAt,
+		ElapsedDays:        dto.ElapsedDays,
+		GracePeriodEndsAt:  dto.GracePeriodEndsAt,
+	}
 }
 
 func createCodeForSigning(

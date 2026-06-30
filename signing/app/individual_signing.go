@@ -133,19 +133,21 @@ func (s *individualSigningService) Check(cmd *CmdToCheckSinging) (dto Individual
 	}
 
 	if claId != "" {
+		dto.Signed = true
 		dto.Type = dp.CLATypeIndividual.CLAType()
 		versionMatched := s.cla.ContainsCla(cmd.LinkId, claId)
 
-		if versionMatched {
-			// 版本匹配，签署有效
+		// version_matched 表达：签署是否当前有效（考虑宽限期）
+		if versionMatched || s.isInGracePeriod(cmd.LinkId) {
 			dto.Status = "valid"
-		} else if s.isInGracePeriod(cmd.LinkId) {
-			// 版本不匹配但在宽限期内，签署仍有效
-			dto.Status = "valid"
+			dto.VersionMatched = true
 		} else {
-			// 版本不匹配且超过宽限期，签署已过期
 			dto.Status = "expired"
+			dto.VersionMatched = false
 		}
+
+		// 获取调试信息
+		dto.DebugInfo = s.getDebugInfo(cmd.LinkId, versionMatched)
 
 		return
 	}
@@ -156,19 +158,19 @@ func (s *individualSigningService) Check(cmd *CmdToCheckSinging) (dto Individual
 			return dto, err
 		}
 	} else if v.Enabled {
+		dto.Signed = true
 		dto.Type = dp.CLATypeCorp.CLAType()
 		versionMatched := s.cla.ContainsCla(cmd.LinkId, v.ClaId)
 
-		if versionMatched {
-			// 版本匹配，签署有效
+		if versionMatched || s.isInGracePeriod(cmd.LinkId) {
 			dto.Status = "valid"
-		} else if s.isInGracePeriod(cmd.LinkId) {
-			// 版本不匹配但在宽限期内，签署仍有效
-			dto.Status = "valid"
+			dto.VersionMatched = true
 		} else {
-			// 版本不匹配且超过宽限期，签署已过期
 			dto.Status = "expired"
+			dto.VersionMatched = false
 		}
+
+		dto.DebugInfo = s.getDebugInfo(cmd.LinkId, versionMatched)
 		return
 	}
 
@@ -185,8 +187,36 @@ func (s *individualSigningService) Check(cmd *CmdToCheckSinging) (dto Individual
 	}
 
 	dto.Status = "not_signed"
+	dto.Signed = false
+	dto.VersionMatched = false
 
 	return
+}
+
+// getDebugInfo 获取调试信息
+func (s *individualSigningService) getDebugInfo(linkId string, isLatestClaVersion bool) *DebugInfoDTO {
+	link, err := s.linkRepo.Find(linkId)
+	if err != nil {
+		return nil
+	}
+
+	lastUpdateTime := s.cla.GetLastUpdateTime(linkId)
+	if lastUpdateTime.IsZero() {
+		return nil
+	}
+
+	gracePeriodDays := link.GetEffectiveGracePeriodDays(s.defaultGracePeriodDays)
+	elapsedDays := int(time.Since(lastUpdateTime).Hours() / 24)
+	gracePeriodEndsAt := lastUpdateTime.AddDate(0, 0, gracePeriodDays)
+
+	return &DebugInfoDTO{
+		IsLatestClaVersion: isLatestClaVersion,
+		InGracePeriod:      elapsedDays < gracePeriodDays,
+		GracePeriodDays:    gracePeriodDays,
+		ClaUpdatedAt:       lastUpdateTime.Format("2006-01-02"),
+		ElapsedDays:        elapsedDays,
+		GracePeriodEndsAt:  gracePeriodEndsAt.Format("2006-01-02"),
+	}
 }
 
 func (s *individualSigningService) isInGracePeriod(linkId string) bool {

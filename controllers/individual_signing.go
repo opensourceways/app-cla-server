@@ -128,16 +128,25 @@ func (ctl *IndividualSigningController) Agree() {
 // @Accept json
 // @Param  link_id  path   string  true  "link id"
 // @Param  email    query  string  true  "email of contributor"
+// @Param  debug    query  bool    false "debug mode to show internal status information"
 // @Success 200 {object} controllers.individualSigned
 // @Failure 400 no_link:      there is not link for org
 // @Failure 500 system_error: system error
 // @router /:link_id [get]
 func (ctl *IndividualSigningController) Check() {
 	action := "check individual signing"
+	debug := ctl.GetBool("debug")
 
 	v, merr := models.CheckSigning(
 		ctl.GetString(":link_id"), ctl.GetString("email"),
 	)
+
+	// 非 debug 模式时隐藏调试信息
+	if !debug {
+		v.Status = ""
+		v.DebugInfo = nil
+	}
+
 	if merr != nil {
 		ctl.sendModelErrorAsResp(merr, action)
 	} else {

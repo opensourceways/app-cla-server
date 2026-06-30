@@ -28,9 +28,9 @@ type IndividualSigningInfo struct {
 
 type IndividualSigned struct {
 	Type           string     `json:"type"`                      // "individual" 或 "corp"
-	Signed         bool       `json:"signed,omitempty"`          // 是否已签署过
+	Signed         bool       `json:"signed"`                    // 是否已签署过
 	VersionMatched bool       `json:"version_matched,omitempty"` // 签署是否当前有效（考虑宽限期）
-	Status         string     `json:"status,omitempty"`          // 内部状态："not_signed" | "valid" | "expired"
+	Status         string     `json:"status"`                    // 内部状态："not_signed" | "valid" | "expired"
 	DebugInfo      *DebugInfo `json:"_debug,omitempty"`          // 调试信息（仅debug=true时返回）
 }
 

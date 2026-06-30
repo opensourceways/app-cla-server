@@ -139,12 +139,12 @@ func convertDebugInfo(dto *DebugInfoDTO) *models.DebugInfo {
 		return nil
 	}
 	return &models.DebugInfo{
-		IsLatestClaVersion: dto.IsLatestClaVersion,
-		InGracePeriod:      dto.InGracePeriod,
-		GracePeriodDays:    dto.GracePeriodDays,
-		ClaUpdatedAt:       dto.ClaUpdatedAt,
-		ElapsedDays:        dto.ElapsedDays,
-		GracePeriodEndsAt:  dto.GracePeriodEndsAt,
+		IsLatestClaVersion:  dto.IsLatestClaVersion,
+		InGracePeriod:       dto.InGracePeriod,
+		GracePeriodDays:     dto.GracePeriodDays,
+		ClaUpdatedAt:        dto.ClaUpdatedAt,
+		DaysSinceLastUpdate: dto.DaysSinceLastUpdate,
+		GracePeriodEndsAt:   dto.GracePeriodEndsAt,
 	}
 }
 

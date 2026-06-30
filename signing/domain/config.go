@@ -84,7 +84,7 @@ func (cfg *Config) SetDefault() {
 	}
 
 	if cfg.DefaultGracePeriodDays <= 0 {
-		cfg.DefaultGracePeriodDays = 30
+		cfg.DefaultGracePeriodDays = 365
 	}
 }
 

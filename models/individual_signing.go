@@ -27,8 +27,6 @@ type IndividualSigningInfo struct {
 }
 
 type IndividualSigned struct {
-	Type           string `json:"type"`
-	Signed         bool   `json:"signed"`
-	VersionMatched bool   `json:"version_matched"`
-	PendingVersion bool   `json:"pending_version"`
+	Type   string `json:"type"`   // "individual" 或 "corp"
+	Status string `json:"status"` // "not_signed" | "valid" | "expired"
 }

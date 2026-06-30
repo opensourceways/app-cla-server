@@ -133,15 +133,18 @@ func (s *individualSigningService) Check(cmd *CmdToCheckSinging) (dto Individual
 	}
 
 	if claId != "" {
-		dto.Signed = true
 		dto.Type = dp.CLATypeIndividual.CLAType()
 		versionMatched := s.cla.ContainsCla(cmd.LinkId, claId)
 
 		if versionMatched {
-			dto.VersionMatched = true
+			// 版本匹配，签署有效
+			dto.Status = "valid"
+		} else if s.isInGracePeriod(cmd.LinkId) {
+			// 版本不匹配但在宽限期内，签署仍有效
+			dto.Status = "valid"
 		} else {
-			dto.PendingVersion = true
-			dto.VersionMatched = s.isInGracePeriod(cmd.LinkId)
+			// 版本不匹配且超过宽限期，签署已过期
+			dto.Status = "expired"
 		}
 
 		return
@@ -153,19 +156,23 @@ func (s *individualSigningService) Check(cmd *CmdToCheckSinging) (dto Individual
 			return dto, err
 		}
 	} else if v.Enabled {
-		dto.Signed = true
 		dto.Type = dp.CLATypeCorp.CLAType()
 		versionMatched := s.cla.ContainsCla(cmd.LinkId, v.ClaId)
 
 		if versionMatched {
-			dto.VersionMatched = true
+			// 版本匹配，签署有效
+			dto.Status = "valid"
+		} else if s.isInGracePeriod(cmd.LinkId) {
+			// 版本不匹配但在宽限期内，签署仍有效
+			dto.Status = "valid"
 		} else {
-			dto.PendingVersion = true
-			dto.VersionMatched = s.isInGracePeriod(cmd.LinkId)
+			// 版本不匹配且超过宽限期，签署已过期
+			dto.Status = "expired"
 		}
 		return
 	}
 
+	// 未签署过
 	corps, err := s.corpRepo.FindCorpSummary(cmd.LinkId, cmd.EmailAddr.Domain())
 	if err != nil {
 		return dto, err
@@ -176,6 +183,8 @@ func (s *individualSigningService) Check(cmd *CmdToCheckSinging) (dto Individual
 	} else {
 		dto.Type = dp.CLATypeIndividual.CLAType()
 	}
+
+	dto.Status = "not_signed"
 
 	return
 }

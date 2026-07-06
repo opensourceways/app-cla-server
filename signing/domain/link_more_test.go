@@ -99,16 +99,19 @@ func TestLinkGetCLA(t *testing.T) {
 }
 
 func TestLinkGetEffectiveGracePeriodDaysAllBranches(t *testing.T) {
+	intPtr := func(v int) *int { return &v }
+
 	tests := []struct {
 		name        string
-		linkDays    int
+		linkDays    *int
 		defaultDays int
 		want        int
 	}{
-		{"negative uses default", -1, 30, 30},
-		{"zero returns zero", 0, 30, 0},
-		{"positive overrides", 15, 30, 15},
-		{"negative with zero default", -1, 0, 0},
+		{"nil (字段缺失) uses default", nil, 30, 30},
+		{"negative uses default", intPtr(-1), 30, 30},
+		{"zero returns zero", intPtr(0), 30, 0},
+		{"positive overrides", intPtr(15), 30, 15},
+		{"negative with zero default", intPtr(-1), 0, 0},
 	}
 
 	for _, tt := range tests {

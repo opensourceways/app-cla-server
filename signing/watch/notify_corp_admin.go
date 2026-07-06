@@ -317,8 +317,8 @@ func (impl *notifyAdminWatchImpl) handleSendIndividualEmail(link *repository.Lin
 }
 
 func (impl *notifyAdminWatchImpl) getEffectiveGracePeriodDays(link *repository.LinkCLA) int {
-	if link.GracePeriodDays >= 0 {
-		return link.GracePeriodDays
+	if link.GracePeriodDays != nil && *link.GracePeriodDays >= 0 {
+		return *link.GracePeriodDays
 	}
 	return impl.defaultGracePeriodDays
 }

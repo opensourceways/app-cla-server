@@ -28,8 +28,8 @@ func (cmd *CmdToAddLink) toLink() domain.Link {
 		CLANum:    len(cmd.CLAs),
 		Submitter: cmd.Submitter,
 
-		// -1 表示未显式设置，读取时回退到全局默认宽限期天数
-		GracePeriodDays: -1,
+		// GracePeriodDays 留空(nil)表示未显式配置，读取时自动回退到全局默认宽限期天数，
+		// 不需要显式赋值，也不需要任何数据迁移。
 	}
 }
 

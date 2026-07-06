@@ -11,16 +11,18 @@ import (
 
 func TestGetEffectiveGracePeriodDays(t *testing.T) {
 	impl := &notifyAdminWatchImpl{defaultGracePeriodDays: 30}
+	intPtr := func(v int) *int { return &v }
 
 	tests := []struct {
 		name       string
-		linkDays   int
+		linkDays   *int
 		defaultDay int
 		want       int
 	}{
-		{"link override positive", 15, 30, 15},
-		{"link zero returns zero", 0, 30, 0},
-		{"link negative uses default", -1, 30, 30},
+		{"link nil (字段缺失) uses default", nil, 30, 30},
+		{"link override positive", intPtr(15), 30, 15},
+		{"link zero returns zero", intPtr(0), 30, 0},
+		{"link negative uses default", intPtr(-1), 30, 30},
 	}
 
 	for _, tt := range tests {

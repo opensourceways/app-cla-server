@@ -52,7 +52,9 @@ type linkDO struct {
 	Deleted     bool        `bson:"deleted"    json:"deleted"`
 	RemovedCLAs []claDO     `bson:"removed"    json:"removed"`
 
-	GracePeriodDays int   `bson:"grace_period_days" json:"grace_period_days"`
+	// 指针类型：nil 表示该字段在文档里缺失/为null，即“从未显式配置过”，
+	// 由上层回退到全局默认宽限期天数；非nil（含0）则是显式配置的值。
+	GracePeriodDays *int  `bson:"grace_period_days" json:"grace_period_days"`
 	LastUpdateTime  int64 `bson:"last_update_time"  json:"last_update_time"`
 }
 

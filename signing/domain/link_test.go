@@ -3,17 +3,20 @@ package domain
 import "testing"
 
 func TestGetEffectiveGracePeriodDays(t *testing.T) {
+	intPtr := func(v int) *int { return &v }
+
 	tests := []struct {
 		name        string
-		linkDays    int
+		linkDays    *int
 		defaultDays int
 		want        int
 	}{
-		{"negative means use default", -1, 30, 30},
-		{"negative with zero default", -1, 0, 0},
-		{"zero means zero (never block)", 0, 30, 0},
-		{"positive overrides default", 15, 30, 15},
-		{"positive overrides zero default", 10, 0, 10},
+		{"nil (字段缺失/从未配置) 回退默认值", nil, 30, 30},
+		{"nil 且默认值为0", nil, 0, 0},
+		{"负数显式重置为默认值", intPtr(-1), 30, 30},
+		{"零表示没有宽限期，不再是永久宽限", intPtr(0), 30, 0},
+		{"正数覆盖默认值", intPtr(15), 30, 15},
+		{"正数覆盖零默认值", intPtr(10), 0, 10},
 	}
 
 	for _, tt := range tests {
@@ -21,8 +24,8 @@ func TestGetEffectiveGracePeriodDays(t *testing.T) {
 			link := &Link{GracePeriodDays: tt.linkDays}
 			got := link.GetEffectiveGracePeriodDays(tt.defaultDays)
 			if got != tt.want {
-				t.Errorf("GetEffectiveGracePeriodDays(%d) with linkDays=%d = %d, want %d",
-					tt.defaultDays, tt.linkDays, got, tt.want)
+				t.Errorf("GetEffectiveGracePeriodDays(%d) = %d, want %d",
+					tt.defaultDays, got, tt.want)
 			}
 		})
 	}

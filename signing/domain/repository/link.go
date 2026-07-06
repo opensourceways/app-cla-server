@@ -15,12 +15,13 @@ type LinkSummary struct {
 }
 
 type LinkCLA struct {
-	Id              string
-	Org             domain.OrgInfo
-	Email           domain.EmailInfo
-	Clas            []domain.CLA
-	RemovedCLAs     []domain.CLA
-	GracePeriodDays int
+	Id          string
+	Org         domain.OrgInfo
+	Email       domain.EmailInfo
+	Clas        []domain.CLA
+	RemovedCLAs []domain.CLA
+	// nil 表示未显式配置，由调用方回退到全局默认宽限期天数
+	GracePeriodDays *int
 	LastUpdateTime  int64
 }
 

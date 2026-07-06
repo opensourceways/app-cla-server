@@ -127,7 +127,7 @@ func (s *individualSigningService) FindDiffCLAFile(cmd *CmdToFindSignedCLAInfo) 
 
 // Check
 func (s *individualSigningService) Check(cmd *CmdToCheckSinging) (dto IndividualSignedDTO, err error) {
-	claId, err := s.repo.FindSignedCLA(cmd.LinkId, cmd.EmailAddr)
+	claId, language, err := s.repo.FindSignedCLA(cmd.LinkId, cmd.EmailAddr)
 	if err != nil {
 		return
 	}
@@ -138,7 +138,7 @@ func (s *individualSigningService) Check(cmd *CmdToCheckSinging) (dto Individual
 		versionMatched := s.cla.ContainsCla(cmd.LinkId, claId)
 
 		// version_matched 表达：签署是否当前有效（考虑宽限期）
-		if versionMatched || s.isInGracePeriod(cmd.LinkId) {
+		if versionMatched || s.isInGracePeriod(cmd.LinkId, dp.CLATypeIndividual, language) {
 			dto.Status = "valid"
 			dto.VersionMatched = true
 		} else {
@@ -147,7 +147,7 @@ func (s *individualSigningService) Check(cmd *CmdToCheckSinging) (dto Individual
 		}
 
 		// 获取调试信息
-		dto.DebugInfo = s.getDebugInfo(cmd.LinkId, versionMatched)
+		dto.DebugInfo = s.getDebugInfo(cmd.LinkId, dp.CLATypeIndividual, language, versionMatched)
 
 		return
 	}
@@ -162,7 +162,7 @@ func (s *individualSigningService) Check(cmd *CmdToCheckSinging) (dto Individual
 		dto.Type = dp.CLATypeCorp.CLAType()
 		versionMatched := s.cla.ContainsCla(cmd.LinkId, v.ClaId)
 
-		if versionMatched || s.isInGracePeriod(cmd.LinkId) {
+		if versionMatched || s.isInGracePeriod(cmd.LinkId, dp.CLATypeCorp, v.Language) {
 			dto.Status = "valid"
 			dto.VersionMatched = true
 		} else {
@@ -170,7 +170,7 @@ func (s *individualSigningService) Check(cmd *CmdToCheckSinging) (dto Individual
 			dto.VersionMatched = false
 		}
 
-		dto.DebugInfo = s.getDebugInfo(cmd.LinkId, versionMatched)
+		dto.DebugInfo = s.getDebugInfo(cmd.LinkId, dp.CLATypeCorp, v.Language, versionMatched)
 		return
 	}
 
@@ -194,13 +194,15 @@ func (s *individualSigningService) Check(cmd *CmdToCheckSinging) (dto Individual
 }
 
 // getDebugInfo 获取调试信息
-func (s *individualSigningService) getDebugInfo(linkId string, isLatestClaVersion bool) *DebugInfoDTO {
+func (s *individualSigningService) getDebugInfo(
+	linkId string, claType dp.CLAType, language dp.Language, isLatestClaVersion bool,
+) *DebugInfoDTO {
 	link, err := s.linkRepo.Find(linkId)
 	if err != nil {
 		return nil
 	}
 
-	lastUpdateTime := s.cla.GetLastUpdateTime(linkId)
+	lastUpdateTime := s.cla.GetLastUpdateTime(linkId, claType, language)
 	if lastUpdateTime.IsZero() {
 		return nil
 	}
@@ -211,7 +213,7 @@ func (s *individualSigningService) getDebugInfo(linkId string, isLatestClaVersio
 
 	return &DebugInfoDTO{
 		IsLatestClaVersion:  isLatestClaVersion,
-		InGracePeriod:       elapsedDays < gracePeriodDays,
+		InGracePeriod:       inGracePeriod(gracePeriodDays, lastUpdateTime),
 		GracePeriodDays:     gracePeriodDays,
 		ClaUpdatedAt:        lastUpdateTime.Format("2006-01-02"),
 		DaysSinceLastUpdate: elapsedDays,
@@ -219,21 +221,24 @@ func (s *individualSigningService) getDebugInfo(linkId string, isLatestClaVersio
 	}
 }
 
-func (s *individualSigningService) isInGracePeriod(linkId string) bool {
+func (s *individualSigningService) isInGracePeriod(linkId string, claType dp.CLAType, language dp.Language) bool {
 	link, err := s.linkRepo.Find(linkId)
 	if err != nil {
 		return true
 	}
 
 	days := link.GetEffectiveGracePeriodDays(s.defaultGracePeriodDays)
-	if days == 0 {
-		return true
-	}
 
-	lastUpdateTime := s.cla.GetLastUpdateTime(linkId)
+	lastUpdateTime := s.cla.GetLastUpdateTime(linkId, claType, language)
 	if lastUpdateTime.IsZero() {
 		return true
 	}
 
+	return inGracePeriod(days, lastUpdateTime)
+}
+
+// inGracePeriod 是 isInGracePeriod 与 getDebugInfo 共用的唯一判定口径，避免两处逻辑各算一套、互相矛盾。
+// days <= 0 表示没有宽限期，一旦版本不匹配立即视为过期。
+func inGracePeriod(days int, lastUpdateTime time.Time) bool {
 	return time.Since(lastUpdateTime) < time.Duration(days)*24*time.Hour
 }

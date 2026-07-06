@@ -8,7 +8,7 @@ import (
 type IndividualSigning interface {
 	Add(*domain.IndividualSigning) error
 	AddForMigrate(*domain.IndividualSigning) error
-	FindSignedCLA(linkId string, email dp.EmailAddr) (string, error)
+	FindSignedCLA(linkId string, email dp.EmailAddr) (claId string, language dp.Language, err error)
 	Find(linkId string, email dp.EmailAddr) (domain.IndividualSigning, error)
 	FindAll(LinkId string) ([]domain.IndividualSigning, error)
 	FindAllWithPagination(linkId string, offset, limit int) ([]domain.IndividualSigning, error)

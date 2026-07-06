@@ -21,8 +21,9 @@ type CorpSigningSummary struct {
 }
 
 type EmployeeSigningSummary struct {
-	Enabled bool
-	ClaId   string
+	Enabled  bool
+	ClaId    string
+	Language dp.Language
 }
 
 type CorpSigningSummaryPage struct {

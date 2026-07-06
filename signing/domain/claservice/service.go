@@ -44,7 +44,7 @@ type CLAService interface {
 	AddLink(link *domain.Link) error
 	ContainsCla(linkId, claId string) bool
 	GetClaId(linkId string, claType dp.CLAType, language dp.Language) string
-	GetLastUpdateTime(linkId string) time.Time
+	GetLastUpdateTime(linkId string, claType dp.CLAType, language dp.Language) time.Time
 	RemoveLink(linkId string)
 	RemoveCLA(linkId, claId string)
 }
@@ -191,8 +191,8 @@ func (s *claService) ContainsCla(linkId, claId string) bool {
 	return s.linkCache.contains(linkId, claId)
 }
 
-func (s *claService) GetLastUpdateTime(linkId string) time.Time {
-	return s.linkCache.getLastUpdateTime(linkId)
+func (s *claService) GetLastUpdateTime(linkId string, claType dp.CLAType, language dp.Language) time.Time {
+	return s.linkCache.getLastUpdateTime(linkId, claType, language)
 }
 
 func (s *claService) GetClaId(linkId string, claType dp.CLAType, language dp.Language) string {

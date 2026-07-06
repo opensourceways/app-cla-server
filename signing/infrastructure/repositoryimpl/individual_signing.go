@@ -62,7 +62,7 @@ func (impl *individualSigning) AddForMigrate(is *domain.IndividualSigning) error
 	return err
 }
 
-func (impl *individualSigning) FindSignedCLA(linkId string, email dp.EmailAddr) (string, error) {
+func (impl *individualSigning) FindSignedCLA(linkId string, email dp.EmailAddr) (string, dp.Language, error) {
 	filter := linkIdFilter(linkId)
 	filter[fieldEmail] = email.EmailAddr()
 	filter[fieldDeleted] = false
@@ -71,13 +71,13 @@ func (impl *individualSigning) FindSignedCLA(linkId string, email dp.EmailAddr) 
 
 	if err := impl.dao.GetDoc(filter, nil, &do); err != nil {
 		if impl.dao.IsDocNotExists(err) {
-			return "", nil
+			return "", nil, nil
 		}
 
-		return "", err
+		return "", nil, err
 	}
 
-	return do.CLAId, nil
+	return do.CLAId, dp.CreateLanguage(do.Language), nil
 }
 
 func (impl *individualSigning) Find(linkId string, email dp.EmailAddr) (domain.IndividualSigning, error) {

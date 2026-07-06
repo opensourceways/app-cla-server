@@ -23,11 +23,12 @@ const (
 
 func toLinkDO(v *domain.Link) linkDO {
 	do := linkDO{
-		Id:        v.Id,
-		Org:       toOrgInfoDO(&v.Org),
-		Email:     toEmailInfoDO(&v.Email),
-		Submitter: v.Submitter,
-		CLANum:    v.CLANum,
+		Id:              v.Id,
+		Org:             toOrgInfoDO(&v.Org),
+		Email:           toEmailInfoDO(&v.Email),
+		Submitter:       v.Submitter,
+		CLANum:          v.CLANum,
+		GracePeriodDays: v.GracePeriodDays,
 	}
 
 	clas := make([]claDO, len(v.CLAs))

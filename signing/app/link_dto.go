@@ -27,6 +27,9 @@ func (cmd *CmdToAddLink) toLink() domain.Link {
 		CLAs:      v,
 		CLANum:    len(cmd.CLAs),
 		Submitter: cmd.Submitter,
+
+		// -1 表示未显式设置，读取时回退到全局默认宽限期天数
+		GracePeriodDays: -1,
 	}
 }
 

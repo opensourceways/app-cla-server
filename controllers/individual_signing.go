@@ -141,9 +141,8 @@ func (ctl *IndividualSigningController) Check() {
 		ctl.GetString(":link_id"), ctl.GetString("email"),
 	)
 
-	// 非 debug 模式时隐藏调试信息
+	// status 是权威状态字段，始终返回；调试信息仅在 debug 模式下返回
 	if !debug {
-		v.Status = ""
 		v.DebugInfo = nil
 	}
 

@@ -185,7 +185,7 @@ func (impl *notifyAdminWatchImpl) handleSendEmail(link *repository.LinkCLA, corp
 		AdminName:        corp.Admin.Name.Name(),
 		UpdateDate:       time.Now().Format("2006-01-02"),
 		ProjectURL:       link.Org.ProjectURL,
-		URLOfCLAPlatform: impl.claPlatformURL + link.Id,
+		URLOfCLAPlatform: impl.claPlatformURL + "corporation-manager-login/" + link.Id,
 		GracePeriodDays:  graceDays,
 	}
 	emailMsg, err := builder.GenEmailMsg()

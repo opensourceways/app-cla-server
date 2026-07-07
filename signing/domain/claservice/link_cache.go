@@ -21,15 +21,27 @@ func initLink(linkRepo repository.Link) (*linkCache, error) {
 		v := &links[i]
 		cache[v.Id] = v.Clas
 
-		// 历史数据只有整条 link 级别的最后更新时间，作为迁移期兜底：
-		// 把它同时套用到该 link 下每个已存在的 CLA 上，后续再更新哪个 CLA
-		// 就只会刷新那一个 CLA 自己的时间戳，不会互相影响。
-		if v.LastUpdateTime > 0 {
-			t := time.Unix(v.LastUpdateTime, 0)
-			m := make(map[string]time.Time, len(v.Clas))
-			for j := range v.Clas {
-				m[claCacheKey(v.Clas[j].Type, v.Clas[j].Language)] = t
+		m := make(map[string]time.Time, len(v.Clas))
+		for j := range v.Clas {
+			cla := &v.Clas[j]
+
+			var t time.Time
+			switch {
+			case cla.UpdatedAt > 0:
+				// 优先用这份CLA自己的更新时间，服务重启也不会互相污染
+				t = time.Unix(cla.UpdatedAt, 0)
+			case v.LastUpdateTime > 0:
+				// 兼容旧数据：这份CLA还没有独立时间戳（本次修复上线前就存在），
+				// 退化用link级别的历史值兜底，不然会直接变成“完全不知道”。
+				t = time.Unix(v.LastUpdateTime, 0)
+			default:
+				continue
 			}
+
+			m[claCacheKey(cla.Type, cla.Language)] = t
+		}
+
+		if len(m) > 0 {
 			lastUpdateTime[v.Id] = m
 		}
 	}

@@ -10,12 +10,18 @@ import (
 	"github.com/opensourceways/app-cla-server/signing/domain"
 )
 
-const fieldLastUpdateTime = "last_update_time"
+const (
+	fieldLastUpdateTime = "last_update_time"
+	fieldClaUpdatedAt   = "updated_at"
+)
 
 func (impl *link) AddCLA(link *domain.Link, cla *domain.CLA) error {
 	if err := impl.claContent.add(link.Id, cla); err != nil {
 		return err
 	}
+
+	// 单独记录这份CLA自己的更新时间，而不是只靠下面link级别的 last_update_time
+	cla.UpdatedAt = time.Now().Unix()
 
 	do := toCLADO(cla)
 	doc, err := do.toDoc()
@@ -63,13 +69,16 @@ func (impl *link) UpdateCLA(link *domain.Link, newCla *domain.CLA) error {
 		fieldType: oldCla.Type.CLAType(),
 	}
 
+	newCla.UpdatedAt = time.Now().Unix()
+
 	update := bson.M{
-		fieldId:  newCla.Id,
-		fieldUrl: newCla.URL,
+		fieldId:           newCla.Id,
+		fieldUrl:          newCla.URL,
+		fieldClaUpdatedAt: newCla.UpdatedAt,
 	}
 
 	otherSet := bson.M{
-		fieldCLANum:        link.CLANum,
+		fieldCLANum:         link.CLANum,
 		fieldLastUpdateTime: time.Now().Unix(),
 	}
 

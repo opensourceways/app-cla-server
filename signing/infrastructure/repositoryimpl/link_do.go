@@ -161,6 +161,10 @@ type claDO struct {
 	Type     string    `bson:"type"    json:"type"   required:"true"`
 	Fields   []fieldDO `bson:"fields"  json:"fields,omitempty"`
 	Language string    `bson:"lang"    json:"lang"   required:"true"`
+
+	// UpdatedAt: 这份CLA自己最后一次被替换的时间(unix秒)，按“类型+语言”这个槽位单独记录，
+	// 不再借用整条link共享的 last_update_time，避免同一link下其他CLA被改动时互相干扰宽限期计时。
+	UpdatedAt int64 `bson:"updated_at" json:"updated_at"`
 }
 
 func (do *claDO) toCLA() domain.CLA {
@@ -170,11 +174,12 @@ func (do *claDO) toCLA() domain.CLA {
 	}
 
 	return domain.CLA{
-		Id:       do.Id,
-		URL:      dp.CreateURL(do.URL),
-		Type:     dp.CreateCLAType(do.Type),
-		Fields:   fields,
-		Language: dp.CreateLanguage(do.Language),
+		Id:        do.Id,
+		URL:       dp.CreateURL(do.URL),
+		Type:      dp.CreateCLAType(do.Type),
+		Fields:    fields,
+		Language:  dp.CreateLanguage(do.Language),
+		UpdatedAt: do.UpdatedAt,
 	}
 }
 
@@ -189,10 +194,11 @@ func toCLADO(v *domain.CLA) claDO {
 	}
 
 	return claDO{
-		Id:       v.Id,
-		URL:      v.URL.URL(),
-		Type:     v.Type.CLAType(),
-		Fields:   fields,
-		Language: v.Language.Language(),
+		Id:        v.Id,
+		URL:       v.URL.URL(),
+		Type:      v.Type.CLAType(),
+		Fields:    fields,
+		Language:  v.Language.Language(),
+		UpdatedAt: v.UpdatedAt,
 	}
 }

@@ -14,6 +14,10 @@ type CLA struct {
 	Type     dp.CLAType
 	Fields   []Field
 	Language dp.Language
+
+	// UpdatedAt 是这份CLA（按类型+语言区分）自己最后一次被替换的时间(unix秒)，
+	// 由持久化层在新增/更新时写入，用于宽限期计时。0表示历史遗留数据，从未记录过。
+	UpdatedAt int64
 }
 
 func (cla *CLA) isMe(cla1 *CLA) bool {

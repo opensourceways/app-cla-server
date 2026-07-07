@@ -22,7 +22,6 @@ type LinkCLA struct {
 	RemovedCLAs []domain.CLA
 	// nil 表示未显式配置，由调用方回退到全局默认宽限期天数
 	GracePeriodDays *int
-	LastUpdateTime  int64
 }
 
 type Link interface {

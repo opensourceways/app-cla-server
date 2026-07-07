@@ -156,7 +156,6 @@ func (impl *link) ListAll() ([]repository.LinkCLA, error) {
 			Clas:            clas,
 			RemovedCLAs:     removedClas,
 			GracePeriodDays: item.GracePeriodDays,
-			LastUpdateTime:  item.LastUpdateTime,
 		}
 	}
 

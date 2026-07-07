@@ -21,24 +21,16 @@ func initLink(linkRepo repository.Link) (*linkCache, error) {
 		v := &links[i]
 		cache[v.Id] = v.Clas
 
+		// 故意不再用link级别的历史字段兜底：那个字段是整条link共用的，任何一份CLA被
+		// 改动都会刷新它，拿来当“某份CLA没有自己时间戳时”的兜底，等于把“改A影响B的宽限
+		// 期计时”这个问题原样带回来。这里宁可对没有自己时间戳的CLA“不知道”（下游会按安全
+		// 默认处理，不会误判为过期），也不用这个会被污染的共享值。
 		m := make(map[string]time.Time, len(v.Clas))
 		for j := range v.Clas {
 			cla := &v.Clas[j]
-
-			var t time.Time
-			switch {
-			case cla.UpdatedAt > 0:
-				// 优先用这份CLA自己的更新时间，服务重启也不会互相污染
-				t = time.Unix(cla.UpdatedAt, 0)
-			case v.LastUpdateTime > 0:
-				// 兼容旧数据：这份CLA还没有独立时间戳（本次修复上线前就存在），
-				// 退化用link级别的历史值兜底，不然会直接变成“完全不知道”。
-				t = time.Unix(v.LastUpdateTime, 0)
-			default:
-				continue
+			if cla.UpdatedAt > 0 {
+				m[claCacheKey(cla.Type, cla.Language)] = time.Unix(cla.UpdatedAt, 0)
 			}
-
-			m[claCacheKey(cla.Type, cla.Language)] = t
 		}
 
 		if len(m) > 0 {

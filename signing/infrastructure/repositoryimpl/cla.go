@@ -10,17 +10,15 @@ import (
 	"github.com/opensourceways/app-cla-server/signing/domain"
 )
 
-const (
-	fieldLastUpdateTime = "last_update_time"
-	fieldClaUpdatedAt   = "updated_at"
-)
+const fieldClaUpdatedAt = "updated_at"
 
 func (impl *link) AddCLA(link *domain.Link, cla *domain.CLA) error {
 	if err := impl.claContent.add(link.Id, cla); err != nil {
 		return err
 	}
 
-	// 单独记录这份CLA自己的更新时间，而不是只靠下面link级别的 last_update_time
+	// 只记录这份CLA自己的更新时间，不再往link级别写一个所有CLA共用的时间戳
+	// （那样会导致改动其中一份CLA时，误把其他CLA的宽限期计时也一起刷新）。
 	cla.UpdatedAt = time.Now().Unix()
 
 	do := toCLADO(cla)
@@ -32,8 +30,7 @@ func (impl *link) AddCLA(link *domain.Link, cla *domain.CLA) error {
 	err = impl.dao.PushArraySingleItemAndUpdate(
 		impl.docFilter(link.Id), fieldCLAs, doc,
 		bson.M{
-			fieldCLANum:         link.CLANum,
-			fieldLastUpdateTime: time.Now().Unix(),
+			fieldCLANum: link.CLANum,
 		},
 		link.Version,
 	)
@@ -78,8 +75,7 @@ func (impl *link) UpdateCLA(link *domain.Link, newCla *domain.CLA) error {
 	}
 
 	otherSet := bson.M{
-		fieldCLANum:         link.CLANum,
-		fieldLastUpdateTime: time.Now().Unix(),
+		fieldCLANum: link.CLANum,
 	}
 
 	return impl.dao.PushAndUpdateArrayItem(

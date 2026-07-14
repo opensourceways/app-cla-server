@@ -37,8 +37,8 @@ type CmdToCheckSinging struct {
 type IndividualSignedDTO struct {
 	Type           string      `json:"type"`                      // "individual" 或 "corp"
 	Signed         bool        `json:"signed,omitempty"`          // 是否已签署过
+	Status         string      `json:"status,omitempty"`          // "valid" 或 "expired"
 	VersionMatched bool        `json:"version_matched,omitempty"` // 签署是否当前有效（考虑宽限期）
-	Status         string      `json:"status,omitempty"`          // 内部状态："not_signed" | "valid" | "expired"
 	DebugInfo      *DebugInfoDTO `json:"_debug,omitempty"`        // 调试信息（仅debug=true时返回）
 }
 

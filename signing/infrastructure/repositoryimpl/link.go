@@ -164,11 +164,5 @@ func (impl *link) ListAll() ([]repository.LinkCLA, error) {
 
 func (impl *link) UpdateGracePeriodDays(linkId string, days int) error {
 	filter := impl.docFilter(linkId)
-	filter[fieldDeleted] = false
-
-	update := bson.M{
-		fieldGracePeriodDays: days,
-	}
-
-	return impl.dao.UpdateDocsWithoutVersion(filter, update)
+	return impl.dao.UpdateDocsWithoutVersion(filter, bson.M{"grace_period_days": days})
 }

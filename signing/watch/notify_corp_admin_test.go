@@ -2,7 +2,6 @@ package watch
 
 import (
 	"testing"
-	"time"
 
 	"github.com/opensourceways/app-cla-server/signing/domain"
 	"github.com/opensourceways/app-cla-server/signing/domain/dp"
@@ -61,10 +60,9 @@ func TestHandleCorpSigningNotifyWithin7Days(t *testing.T) {
 	}
 
 	corp := &repository.CorpSigningSummary{
-		HasPDF:        true,
-		CLANotify:     "10",
-		Link:          domain.LinkInfo{CLAInfo: domain.CLAInfo{CLAId: "9", Language: dp.CreateLanguage("en")}},
-		ClaNotifyTime: time.Now().Unix() - 3*24*3600,
+		HasPDF:    true,
+		CLANotify: "10",
+		Link:      domain.LinkInfo{CLAInfo: domain.CLAInfo{CLAId: "9", Language: dp.CreateLanguage("en")}},
 	}
 
 	impl.handleCorpSigning(link, corp)

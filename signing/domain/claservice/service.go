@@ -20,7 +20,6 @@ func NewCLAService(
 	repo repository.Link,
 	local localcla.LocalCLA,
 	message message.Message,
-	corpRepo repository.CorpSigning,
 ) (CLAService, error) {
 	cache, err := initLink(repo)
 	if err != nil {
@@ -32,7 +31,6 @@ func NewCLAService(
 		local:     local,
 		message:   message,
 		linkCache: cache,
-		corpRepo:  corpRepo,
 	}, nil
 }
 
@@ -55,7 +53,6 @@ type claService struct {
 	repo      repository.Link
 	local     localcla.LocalCLA
 	message   message.Message
-	corpRepo  repository.CorpSigning
 }
 
 func (s *claService) Add(link *domain.Link, cla *domain.CLA) error {
@@ -106,10 +103,6 @@ func (s *claService) Update(link *domain.Link, newCla *domain.CLA) error {
 			OldCLAId: oldCLA.Id,
 			NewCLAId: newCla.Id,
 		})
-
-		if err = s.corpRepo.SetPendingCLAForLink(link.Id, newCla.Id); err != nil {
-			return err
-		}
 	}
 
 	return err
@@ -191,12 +184,12 @@ func (s *claService) ContainsCla(linkId, claId string) bool {
 	return s.linkCache.contains(linkId, claId)
 }
 
-func (s *claService) GetLastUpdateTime(linkId string, claType dp.CLAType, language dp.Language) time.Time {
-	return s.linkCache.getLastUpdateTime(linkId, claType, language)
-}
-
 func (s *claService) GetClaId(linkId string, claType dp.CLAType, language dp.Language) string {
 	return s.linkCache.getClaId(linkId, claType, language)
+}
+
+func (s *claService) GetLastUpdateTime(linkId string, claType dp.CLAType, language dp.Language) time.Time {
+	return s.linkCache.getLastUpdateTime(linkId, claType, language)
 }
 
 func (s *claService) RemoveLink(linkId string) {

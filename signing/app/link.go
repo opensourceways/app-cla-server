@@ -103,6 +103,9 @@ func (s *linkService) List(userId string) ([]repository.LinkSummary, error) {
 func (s *linkService) FindCLAs(cmd *CmdToFindCLAs) ([]CLADetailDTO, error) {
 	v, err := s.repo.Find(cmd.LinkId)
 	if err != nil {
+		if commonRepo.IsErrorResourceNotFound(err) {
+			return nil, domain.NewDomainError(domain.ErrorCodeLinkNotExists)
+		}
 		return nil, err
 	}
 

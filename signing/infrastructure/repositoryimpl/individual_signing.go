@@ -179,22 +179,22 @@ func (impl *individualSigning) SaveNewCLA(is *domain.IndividualSigning) error {
 	}
 	doc[fieldCLAId] = is.Link.CLAId
 	doc[fieldCLANotify] = ""
-	doc[fieldCLANotifyCount] = 0
-	doc[fieldCLANotifyTime] = int64(0)
+	doc["cla_notify_count"] = 0
+	doc["cla_notify_time"] = int64(0)
 
 	return impl.dao.UpdateDoc(filter, doc, is.Version)
 }
 
-func (impl *individualSigning) UpdateCLANotify(linkId, email, claId string, count int, notifyTime int64) error {
-	filter := linkIdFilter(linkId)
-	filter[fieldEmail] = email
+func (impl *individualSigning) UpdateCLANotify(is *domain.IndividualSigning) error {
+	filter := linkIdFilter(is.Link.Id)
+	filter[fieldEmail] = is.Rep.EmailAddr.EmailAddr()
 	filter[fieldDeleted] = false
 
-	update := bson.M{
-		fieldCLANotify:      claId,
-		fieldCLANotifyCount: count,
-		fieldCLANotifyTime:  notifyTime,
+	doc := bson.M{
+		fieldCLANotify:      is.ClaNotify,
+		"cla_notify_count":  is.ClaNotifyCount,
+		"cla_notify_time":   is.ClaNotifyTime,
 	}
 
-	return impl.dao.UpdateDocsWithoutVersion(filter, update)
+	return impl.dao.UpdateDoc(filter, doc, is.Version)
 }

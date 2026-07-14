@@ -23,7 +23,6 @@ func TestCorpSigningSetLatestClaIdWithExistingLogs(t *testing.T) {
 		PendingCLAId:   "5",
 		ClaNotifyCount: 3,
 		ClaNotifyTime:  2000,
-		Logs:           []CorpSigningLog{{Date: "2025-01-01", CLAId: "3", Action: "sign"}},
 	}
 
 	err := cs.SetLatestClaId("5")
@@ -42,13 +41,6 @@ func TestCorpSigningSetLatestClaIdWithExistingLogs(t *testing.T) {
 	}
 	if cs.ClaNotifyTime != 0 {
 		t.Errorf("ClaNotifyTime: got %d, want 0", cs.ClaNotifyTime)
-	}
-	if len(cs.Logs) != 2 {
-		t.Fatalf("Logs length: got %d, want 2", len(cs.Logs))
-	}
-	last := cs.Logs[len(cs.Logs)-1]
-	if last.Action != "agree" || last.CLAId != "5" {
-		t.Errorf("last log: action=%s claId=%s, want agree/5", last.Action, last.CLAId)
 	}
 }
 

@@ -97,14 +97,14 @@ func initSigning(cfg *config.Config) error {
 
 	// link
 	localCLA := localclaimpl.NewLocalCLAImpl(&cfg.LocalCLA)
-	cla, err := claservice.NewCLAService(linkRepo, localCLA, messageimpl.NewMessageImpl(), repo)
+	cla, err := claservice.NewCLAService(linkRepo, localCLA, messageimpl.NewMessageImpl())
 	if err != nil {
 		return err
 	}
 
 	models.RegisterCorpSigningAdapter(
 		adapter.NewCorpSigningAdapter(
-			app.NewCorpSigningService(repo, vcService, interval, linkRepo, cla),
+			app.NewCorpSigningService(repo, vcService, interval, linkRepo, cla, userService),
 			cfg.Domain.Config.InvalidCorpEmailDomains(),
 		),
 	)
@@ -173,7 +173,7 @@ func initSigning(cfg *config.Config) error {
 			repo,
 			linkRepo,
 			interval,
-			cfg.Domain.Config.DefaultGracePeriodDays,
+			cfg.Domain.DefaultGracePeriodDays,
 		)),
 	)
 
@@ -212,7 +212,7 @@ func initSigning(cfg *config.Config) error {
 	// watch
 	watch.Start(&cfg.Watch, repo, individual)
 	watch.CLAUpdatedWatchStart(linkRepo, localCLA, &cfg.Watch.CLAUpdateConfig, cfg.PDF.PythonBin)
-	watch.NotifyAdminWatchStart(&cfg.Watch.SendEmailConfig, linkRepo, repo, individual, cfg.API.CLAPlatformURL, cfg.Domain.Config.DefaultGracePeriodDays)
+	watch.NotifyAdminWatchStart(&cfg.Watch.SendEmailConfig, linkRepo, repo, individual, cfg.API.CLAPlatformURL, cfg.Domain.DefaultGracePeriodDays)
 
 	return nil
 }

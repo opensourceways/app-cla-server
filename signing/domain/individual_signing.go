@@ -15,9 +15,9 @@ type IndividualSigning struct {
 	AllInfo AllSingingInfo
 	Version int
 
-	ClaNotify      string
-	ClaNotifyCount int
-	ClaNotifyTime  int64
+	ClaNotify      string // 已通知的 CLA 版本
+	ClaNotifyCount int    // 已发送通知次数
+	ClaNotifyTime  int64  // 上次通知时间(unix timestamp)
 }
 
 type IndividualSigningLog struct {

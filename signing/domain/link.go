@@ -22,11 +22,9 @@ type Link struct {
 	Org       OrgInfo
 	Email     EmailInfo
 	CLAs      []CLA
-	Submitter string
+	Submitter string // community name which is in lowcase format.
 	CLANum    int
 	Version   int
-
-	// nil 表示未显式配置，回退全局默认宽限期天数；非nil则是管理员显式设置的值（含0）。
 	GracePeriodDays *int
 }
 
@@ -91,9 +89,6 @@ func (link *Link) GetCLA(t dp.CLAType, l dp.Language) *CLA {
 }
 
 func (link *Link) GetEffectiveGracePeriodDays(defaultDays int) int {
-	// nil：字段缺失/从未配置过（新建link、或功能上线前的历史数据）
-	// 负数：显式重置为“使用默认值”
-	// 二者都回退到全局默认宽限期天数，不需要任何数据迁移。
 	if link.GracePeriodDays == nil || *link.GracePeriodDays < 0 {
 		return defaultDays
 	}

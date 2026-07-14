@@ -11,6 +11,7 @@ type User interface {
 	Remove([]string) error
 	RemoveByAccount(linkId string, accounts []dp.Account) error
 
+	Save(*domain.User) error
 	SavePassword(*domain.User) error
 	SavePrivacyConsent(*domain.User) error
 

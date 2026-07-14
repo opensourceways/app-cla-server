@@ -51,8 +51,10 @@ func (cfg *CLAUpdateConfig) genAllDiffInterval() time.Duration {
 }
 
 type NotifyAdminConfig struct {
-	SendEmailInterval       int `json:"send_email_interval"`
-	NotifyCorpAdminInterval int `json:"notify_corp_admin_interval"`
+	SendEmailInterval          int `json:"send_email_interval"`
+	NotifyCorpAdminInterval    int `json:"notify_corp_admin_interval"`
+	NotifyIndividualInterval   int `json:"notify_individual_interval"`
+	NotifyIndividualRemindDays int `json:"notify_individual_remind_days"`
 }
 
 func (cfg *NotifyAdminConfig) SetDefault() {
@@ -63,6 +65,14 @@ func (cfg *NotifyAdminConfig) SetDefault() {
 	if cfg.NotifyCorpAdminInterval <= 0 {
 		cfg.NotifyCorpAdminInterval = 1200
 	}
+
+	if cfg.NotifyIndividualInterval <= 0 {
+		cfg.NotifyIndividualInterval = 86400
+	}
+
+	if cfg.NotifyIndividualRemindDays <= 0 {
+		cfg.NotifyIndividualRemindDays = 90
+	}
 }
 
 func (cfg *NotifyAdminConfig) genSendEmailInterval() time.Duration {
@@ -71,4 +81,12 @@ func (cfg *NotifyAdminConfig) genSendEmailInterval() time.Duration {
 
 func (cfg *NotifyAdminConfig) genNotifyCorpAdminInterval() time.Duration {
 	return time.Second * time.Duration(cfg.NotifyCorpAdminInterval)
+}
+
+func (cfg *NotifyAdminConfig) genNotifyIndividualInterval() time.Duration {
+	return time.Second * time.Duration(cfg.NotifyIndividualInterval)
+}
+
+func (cfg *NotifyAdminConfig) genNotifyIndividualRemindDays() int {
+	return cfg.NotifyIndividualRemindDays
 }

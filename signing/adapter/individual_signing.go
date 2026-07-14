@@ -8,9 +8,6 @@ import (
 	"github.com/opensourceways/app-cla-server/signing/domain/dp"
 )
 
-// 类型别名，使转换更简洁
-type DebugInfoDTO = app.DebugInfoDTO
-
 func NewIndividualSigningAdapter(s app.IndividualSigningService) *individualSigningAdatper {
 	return &individualSigningAdatper{s}
 }
@@ -56,8 +53,11 @@ func (adapter *individualSigningAdatper) cmdToSignIndividualCLA(
 		return
 	}
 
-	if cmd.Rep.Name, err = dp.NewName(opt.Name); err != nil {
-		return
+	// Name 仅在签署(Sign)时需要，同意新版本(Agree)时不需要
+	if claFields != nil {
+		if cmd.Rep.Name, err = dp.NewName(opt.Name); err != nil {
+			return
+		}
 	}
 
 	if cmd.Rep.EmailAddr, err = dp.NewEmailAddr(opt.Email); err != nil {
@@ -128,24 +128,7 @@ func (adapter *individualSigningAdatper) Check(linkId string, email string,
 		Type:           v.Type,
 		Signed:         v.Signed,
 		VersionMatched: v.VersionMatched,
-		Status:         v.Status,
-		DebugInfo:      convertDebugInfo(v.DebugInfo),
 	}, nil
-}
-
-// convertDebugInfo 将 DTO 的调试信息转换为 models 的调试信息
-func convertDebugInfo(dto *DebugInfoDTO) *models.DebugInfo {
-	if dto == nil {
-		return nil
-	}
-	return &models.DebugInfo{
-		IsLatestClaVersion:  dto.IsLatestClaVersion,
-		InGracePeriod:       dto.InGracePeriod,
-		GracePeriodDays:     dto.GracePeriodDays,
-		ClaUpdatedAt:        dto.ClaUpdatedAt,
-		DaysSinceLastUpdate: dto.DaysSinceLastUpdate,
-		GracePeriodEndsAt:   dto.GracePeriodEndsAt,
-	}
 }
 
 func createCodeForSigning(

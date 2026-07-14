@@ -181,6 +181,21 @@ func (s *claService) AddLink(link *domain.Link) error {
 }
 
 func (s *claService) ContainsCla(linkId, claId string) bool {
+	if s.linkCache.contains(linkId, claId) {
+		return true
+	}
+
+	// 缓存未命中时兜底查询数据库，防止缓存因服务未重启等原因落后于数据库
+	link, err := s.repo.Find(linkId)
+	if err != nil {
+		return false
+	}
+
+	for i := range link.CLAs {
+		item := &link.CLAs[i]
+		s.linkCache.update(linkId, item)
+	}
+
 	return s.linkCache.contains(linkId, claId)
 }
 

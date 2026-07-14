@@ -65,7 +65,9 @@ func (impl *link) UpdateCLA(link *domain.Link, newCla *domain.CLA) error {
 	newCla.UpdatedAt = time.Now().Unix()
 
 	update := bson.M{
-		fieldCLANum: link.CLANum,
+		fieldUrl:          newCla.URL.URL(),
+		fieldLang:         newCla.Language.Language(),
+		fieldType:         newCla.Type.CLAType(),
 		fieldClaUpdatedAt: newCla.UpdatedAt,
 	}
 

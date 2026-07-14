@@ -186,25 +186,43 @@ func (s *claService) ContainsCla(linkId, claId string) bool {
 	}
 
 	// 缓存未命中时兜底查询数据库，防止缓存因服务未重启等原因落后于数据库
+	s.fillCacheFromDB(linkId)
+
+	return s.linkCache.contains(linkId, claId)
+}
+
+func (s *claService) GetClaId(linkId string, claType dp.CLAType, language dp.Language) string {
+	id := s.linkCache.getClaId(linkId, claType, language)
+	if id != "" {
+		return id
+	}
+
+	s.fillCacheFromDB(linkId)
+
+	return s.linkCache.getClaId(linkId, claType, language)
+}
+
+func (s *claService) GetLastUpdateTime(linkId string, claType dp.CLAType, language dp.Language) time.Time {
+	t := s.linkCache.getLastUpdateTime(linkId, claType, language)
+	if !t.IsZero() {
+		return t
+	}
+
+	s.fillCacheFromDB(linkId)
+
+	return s.linkCache.getLastUpdateTime(linkId, claType, language)
+}
+
+func (s *claService) fillCacheFromDB(linkId string) {
 	link, err := s.repo.Find(linkId)
 	if err != nil {
-		return false
+		return
 	}
 
 	for i := range link.CLAs {
 		item := &link.CLAs[i]
 		s.linkCache.update(linkId, item)
 	}
-
-	return s.linkCache.contains(linkId, claId)
-}
-
-func (s *claService) GetClaId(linkId string, claType dp.CLAType, language dp.Language) string {
-	return s.linkCache.getClaId(linkId, claType, language)
-}
-
-func (s *claService) GetLastUpdateTime(linkId string, claType dp.CLAType, language dp.Language) time.Time {
-	return s.linkCache.getLastUpdateTime(linkId, claType, language)
 }
 
 func (s *claService) RemoveLink(linkId string) {

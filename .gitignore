@@ -5,3 +5,5 @@ lastupdate.tmp
 *.b*
 config.yaml
 CLAUDE.md
+# Test binaries
+*.test

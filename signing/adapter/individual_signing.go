@@ -127,6 +127,7 @@ func (adapter *individualSigningAdatper) Check(linkId string, email string,
 	return models.IndividualSigned{
 		Type:           v.Type,
 		Signed:         v.Signed,
+		Status:         v.Status,
 		VersionMatched: v.VersionMatched,
 	}, nil
 }

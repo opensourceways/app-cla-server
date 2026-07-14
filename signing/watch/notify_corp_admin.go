@@ -173,7 +173,7 @@ func (impl *notifyAdminWatchImpl) handleSendEmail(link *repository.LinkCLA, corp
 		Org:              link.Org.Alias,
 		AdminName:        corp.Admin.Name.Name(),
 		ProjectURL:       link.Org.ProjectURL,
-		URLOfCLAPlatform: impl.rootURL() + "/" + link.Id,
+		URLOfCLAPlatform: impl.rootURL() + "/corporation-manager-login/" + link.Id,
 	}
 	emailMsg, err := builder.GenEmailMsg()
 	if err != nil {
@@ -321,7 +321,8 @@ func (impl *notifyAdminWatchImpl) handleSendIndividualEmail(link *repository.Lin
 	updateDate := time.Unix(latestCLA.UpdatedAt, 0).Format("2006-01-02")
 
 	// 构造个人签署 URL：从 claPlatformURL 提取 scheme+host，避免 /sign/sign-cla 双前缀
-	signURL := fmt.Sprintf("%s/%s/individual-update?email=%s",
+	// 最终格式：https://clasign.osinfra.cn/sign-cla/{linkId}/individual-update?email=xxx
+	signURL := fmt.Sprintf("%s/sign-cla/%s/individual-update?email=%s",
 		impl.rootURL(), link.Id, is.Rep.EmailAddr.EmailAddr())
 
 	builder := emailtmpl.CLAUpdatedIndividual{

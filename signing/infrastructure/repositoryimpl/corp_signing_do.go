@@ -28,20 +28,24 @@ const (
 	fieldManagers  = "managers"
 	fieldEmployees = "employees"
 	fieldTriggered = "triggered"
-	fieldCLANotify = "cla_notify"
+	fieldCLANotify       = "cla_notify"
+	fieldClaNotifyCount  = "cla_notify_count"
+	fieldClaNotifyTime   = "cla_notify_time"
 )
 
 func toCorpSigningDO(v *domain.CorpSigning) corpSigningDO {
 	link := &v.Link
 
 	return corpSigningDO{
-		Date:     v.Date,
-		CLAId:    link.CLAId,
-		LinkId:   link.Id,
-		Language: link.Language.Language(),
-		Rep:      toRepDO(&v.Rep),
-		Corp:     toCorpDO(&v.Corp),
-		AllInfo:  v.AllInfo,
+		Date:           v.Date,
+		CLAId:          link.CLAId,
+		LinkId:         link.Id,
+		Language:       link.Language.Language(),
+		Rep:            toRepDO(&v.Rep),
+		Corp:           toCorpDO(&v.Corp),
+		AllInfo:        v.AllInfo,
+		ClaNotifyCount: v.ClaNotifyCount,
+		ClaNotifyTime:  v.ClaNotifyTime,
 	}
 }
 
@@ -49,16 +53,18 @@ func toCorpSigningDOForMigrate(v *domain.CorpSigning) corpSigningDO {
 	link := &v.Link
 
 	return corpSigningDO{
-		Date:      v.Date,
-		CLAId:     link.CLAId,
-		LinkId:    link.Id,
-		Language:  link.Language.Language(),
-		Rep:       toRepDO(&v.Rep),
-		Corp:      toCorpDO(&v.Corp),
-		AllInfo:   v.AllInfo,
-		Admin:     toManagerDO(&v.Admin),
-		Managers:  toManagerDOs(v.Managers),
-		Employees: toEmployeeSigningDOs(v.Employees),
+		Date:           v.Date,
+		CLAId:          link.CLAId,
+		LinkId:         link.Id,
+		Language:       link.Language.Language(),
+		Rep:            toRepDO(&v.Rep),
+		Corp:           toCorpDO(&v.Corp),
+		AllInfo:        v.AllInfo,
+		Admin:          toManagerDO(&v.Admin),
+		Managers:       toManagerDOs(v.Managers),
+		Employees:      toEmployeeSigningDOs(v.Employees),
+		ClaNotifyCount: v.ClaNotifyCount,
+		ClaNotifyTime:  v.ClaNotifyTime,
 	}
 }
 
@@ -80,7 +86,9 @@ type corpSigningDO struct {
 	Employees []employeeSigningDO `bson:"employees"     json:"employees"`
 	Deleted   []employeeSigningDO `bson:"deleted"       json:"deleted"`
 	Version   int                 `bson:"version"       json:"-"`
-	ClaNotify string              `bson:"cla_notify"    json:"cla_notify"`
+	ClaNotify      string `bson:"cla_notify"       json:"cla_notify"`
+	ClaNotifyCount int    `bson:"cla_notify_count" json:"cla_notify_count"`
+	ClaNotifyTime  int64  `bson:"cla_notify_time"  json:"cla_notify_time"`
 
 	// uploading pdf or adding email domain will trigger individual signing checking
 	// which will delete the one that belongs to a corp.
@@ -108,9 +116,11 @@ func (do *corpSigningDO) toCorpSigningSummary() repository.CorpSigningSummary {
 				Language: dp.CreateLanguage(do.Language),
 			},
 		},
-		Admin:     do.Admin.toManager(),
-		HasPDF:    do.HasPDF,
-		CLANotify: do.ClaNotify,
+		Admin:          do.Admin.toManager(),
+		HasPDF:         do.HasPDF,
+		CLANotify:      do.ClaNotify,
+		ClaNotifyCount: do.ClaNotifyCount,
+		ClaNotifyTime:  do.ClaNotifyTime,
 	}
 }
 
@@ -136,12 +146,14 @@ func (do *corpSigningDO) toCorpSigning() domain.CorpSigning {
 				Language: dp.CreateLanguage(do.Language),
 			},
 		},
-		Admin:     do.Admin.toManager(),
-		HasPDF:    do.HasPDF,
-		AllInfo:   do.AllInfo,
-		Managers:  do.toManagers(),
-		Employees: do.toEmployeeSignings(),
-		Version:   do.Version,
+		Admin:          do.Admin.toManager(),
+		HasPDF:         do.HasPDF,
+		AllInfo:        do.AllInfo,
+		Managers:       do.toManagers(),
+		Employees:      do.toEmployeeSignings(),
+		Version:        do.Version,
+		ClaNotifyCount: do.ClaNotifyCount,
+		ClaNotifyTime:  do.ClaNotifyTime,
 	}
 }
 

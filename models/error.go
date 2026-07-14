@@ -56,6 +56,7 @@ const (
 	ErrCLAIsUsed               ModelErrCode = "cla_is_used"
 	ErrLinkIsUsed              ModelErrCode = "link_is_used"
 	ErrNoPermission            ModelErrCode = "no_permission"
+	ErrCLAIsLatest             ModelErrCode = "cla_is_latest"
 )
 
 type IModelError interface {

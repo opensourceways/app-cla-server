@@ -6,14 +6,16 @@ import (
 )
 
 type CorpSigningSummary struct {
-	Id        string
-	Date      string
-	HasPDF    bool
-	CLANotify string
-	Link      domain.LinkInfo
-	Rep       domain.Representative
-	Corp      domain.Corporation
-	Admin     domain.Manager
+	Id             string
+	Date           string
+	HasPDF         bool
+	CLANotify      string
+	ClaNotifyCount int
+	ClaNotifyTime  int64
+	Link           domain.LinkInfo
+	Rep            domain.Representative
+	Corp           domain.Corporation
+	Admin          domain.Manager
 }
 
 type EmployeeSigningSummary struct {

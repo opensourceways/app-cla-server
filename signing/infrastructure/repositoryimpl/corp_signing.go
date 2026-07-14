@@ -156,15 +156,17 @@ func (impl *corpSigning) FindAll(linkId string) ([]repository.CorpSigningSummary
 	filter := linkIdFilter(linkId)
 
 	project := bson.M{
-		fieldDate:      1,
-		fieldCLAId:     1,
-		fieldLang:      1,
-		fieldRep:       1,
-		fieldCorp:      1,
-		fieldAdmin:     1,
-		fieldLinkId:    1,
-		fieldHasPDF:    1,
-		fieldCLANotify: 1,
+		fieldDate:           1,
+		fieldCLAId:          1,
+		fieldLang:           1,
+		fieldRep:            1,
+		fieldCorp:           1,
+		fieldAdmin:          1,
+		fieldLinkId:         1,
+		fieldHasPDF:         1,
+		fieldCLANotify:      1,
+		fieldClaNotifyCount: 1,
+		fieldClaNotifyTime:  1,
 	}
 
 	var dos []corpSigningDO
@@ -192,15 +194,17 @@ func (impl *corpSigning) FindAllWithPagination(linkId string, offset, limit int)
 	filter := linkIdFilter(linkId)
 
 	project := bson.M{
-		fieldDate:      1,
-		fieldCLAId:     1,
-		fieldLang:      1,
-		fieldRep:       1,
-		fieldCorp:      1,
-		fieldAdmin:     1,
-		fieldLinkId:    1,
-		fieldHasPDF:    1,
-		fieldCLANotify: 1,
+		fieldDate:           1,
+		fieldCLAId:          1,
+		fieldLang:           1,
+		fieldRep:            1,
+		fieldCorp:           1,
+		fieldAdmin:          1,
+		fieldLinkId:         1,
+		fieldHasPDF:         1,
+		fieldCLANotify:      1,
+		fieldClaNotifyCount: 1,
+		fieldClaNotifyTime:  1,
 	}
 
 	var dos []corpSigningDO
@@ -251,15 +255,17 @@ func (impl *corpSigning) FindPage(linkId string, intPage, intPageSize int, admin
 	}
 
 	project := bson.M{
-		fieldDate:      1,
-		fieldCLAId:     1,
-		fieldLang:      1,
-		fieldRep:       1,
-		fieldCorp:      1,
-		fieldAdmin:     1,
-		fieldLinkId:    1,
-		fieldHasPDF:    1,
-		fieldCLANotify: 1,
+		fieldDate:           1,
+		fieldCLAId:          1,
+		fieldLang:           1,
+		fieldRep:            1,
+		fieldCorp:           1,
+		fieldAdmin:          1,
+		fieldLinkId:         1,
+		fieldHasPDF:         1,
+		fieldCLANotify:      1,
+		fieldClaNotifyCount: 1,
+		fieldClaNotifyTime:  1,
 	}
 
 	// Single aggregation round-trip: $facet returns both total count and the
@@ -358,8 +364,10 @@ func (impl *corpSigning) UpdateClaId(cs *domain.CorpSigning) error {
 	}
 
 	return impl.dao.UpdateDoc(filter, bson.M{
-		fieldCLAId:    cs.Link.CLAId,
-		fieldCLANotify: "",
+		fieldCLAId:          cs.Link.CLAId,
+		fieldCLANotify:      "",
+		fieldClaNotifyCount: 0,
+		fieldClaNotifyTime:  0,
 	}, cs.Version)
 }
 
@@ -369,7 +377,11 @@ func (impl *corpSigning) UpdateCLANotify(summary *repository.CorpSigningSummary)
 		return err
 	}
 
-	return impl.dao.UpdateDocsWithoutVersion(filter, bson.M{fieldCLANotify: summary.CLANotify})
+	return impl.dao.UpdateDocsWithoutVersion(filter, bson.M{
+		fieldCLANotify:      summary.CLANotify,
+		fieldClaNotifyCount: summary.ClaNotifyCount,
+		fieldClaNotifyTime:  summary.ClaNotifyTime,
+	})
 }
 
 func (impl *corpSigning) Update(cs *domain.CorpSigning) error {

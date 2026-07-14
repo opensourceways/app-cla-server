@@ -51,6 +51,9 @@ func codeMap(code string) models.ModelErrCode {
 	case domain.ErrorCodeCorpSigningCanNotDelete:
 		return models.ErrCorpManagerExists
 
+	case domain.ErrorCodeCorpSigningCLAIsLatest:
+		return models.ErrCLAIsLatest
+
 	// corp pdf
 	case domain.ErrorCodeCorpPDFNotFound:
 		return models.ErrUnuploaed
@@ -107,6 +110,9 @@ func codeMap(code string) models.ModelErrCode {
 
 	case domain.ErrorCodeIndividualSigningCorpExists:
 		return models.ErrGoToSignEmployeeCLA
+
+	case domain.ErrorCodeIndividualSigningCLAIsLatest:
+		return models.ErrCLAIsLatest
 
 	// cla
 	case domain.ErrorCodeCLAExists:

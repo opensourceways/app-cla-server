@@ -135,8 +135,26 @@ func (impl *notifyAdminWatchImpl) handleCorpSigning(link *repository.LinkCLA, co
 		return
 	}
 
-	// Notification email has been sent.
-	if corp.CLANotify == corp.Link.CLAId {
+	latestCLA := impl.getLatestCorpCLA(link.Clas, corp.Link.Language)
+	if latestCLA == nil {
+		return
+	}
+
+	remindDays := impl.config.genNotifyCorpAdminRemindDays()
+	nowUnix := time.Now().Unix()
+
+	if corp.CLANotify != latestCLA.Id {
+		corp.CLANotify = latestCLA.Id
+		corp.ClaNotifyCount = 0
+		corp.ClaNotifyTime = 0
+	}
+
+	daysSinceLastNotify := 0
+	if corp.ClaNotifyTime > 0 {
+		daysSinceLastNotify = int((nowUnix - corp.ClaNotifyTime) / 86400)
+	}
+
+	if daysSinceLastNotify < remindDays && corp.ClaNotifyCount > 0 {
 		return
 	}
 
@@ -145,7 +163,8 @@ func (impl *notifyAdminWatchImpl) handleCorpSigning(link *repository.LinkCLA, co
 		return
 	}
 
-	corp.CLANotify = corp.Link.CLAId
+	corp.ClaNotifyCount++
+	corp.ClaNotifyTime = nowUnix
 	if err := impl.corpSigningRepo.UpdateCLANotify(corp); err != nil {
 		logs.Error("update cla notify failed: ", corp.Id, err)
 	}
@@ -305,6 +324,15 @@ func (impl *notifyAdminWatchImpl) isIndividualSigningLatest(latestCLAs []domain.
 func (impl *notifyAdminWatchImpl) getLatestIndividualCLA(clas []domain.CLA, language dp.Language) *domain.CLA {
 	for i := range clas {
 		if clas[i].Type == dp.CLATypeIndividual && clas[i].Language == language {
+			return &clas[i]
+		}
+	}
+	return nil
+}
+
+func (impl *notifyAdminWatchImpl) getLatestCorpCLA(clas []domain.CLA, language dp.Language) *domain.CLA {
+	for i := range clas {
+		if clas[i].Type == dp.CLATypeCorp && clas[i].Language == language {
 			return &clas[i]
 		}
 	}

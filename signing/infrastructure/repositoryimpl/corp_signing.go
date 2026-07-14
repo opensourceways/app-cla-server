@@ -357,7 +357,10 @@ func (impl *corpSigning) UpdateClaId(cs *domain.CorpSigning) error {
 		return err
 	}
 
-	return impl.dao.UpdateDoc(filter, bson.M{fieldCLAId: cs.Link.CLAId}, cs.Version)
+	return impl.dao.UpdateDoc(filter, bson.M{
+		fieldCLAId:    cs.Link.CLAId,
+		fieldCLANotify: "",
+	}, cs.Version)
 }
 
 func (impl *corpSigning) UpdateCLANotify(summary *repository.CorpSigningSummary) error {

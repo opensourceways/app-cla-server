@@ -149,6 +149,15 @@ func (impl *notifyAdminWatchImpl) handleCorpSigning(link *repository.LinkCLA, co
 		corp.ClaNotifyTime = 0
 	}
 
+	if corp.ClaNotifyTime == 0 && corp.ClaNotifyCount == 0 && corp.CLANotify == latestCLA.Id {
+		corp.ClaNotifyCount = 1
+		corp.ClaNotifyTime = nowUnix
+		if err := impl.corpSigningRepo.UpdateCLANotify(corp); err != nil {
+			logs.Error("init cla_notify_count/time failed: ", corp.Id, err)
+		}
+		return
+	}
+
 	daysSinceLastNotify := 0
 	if corp.ClaNotifyTime > 0 {
 		daysSinceLastNotify = int((nowUnix - corp.ClaNotifyTime) / 86400)
@@ -281,11 +290,19 @@ func (impl *notifyAdminWatchImpl) handleIndividualSigning(link *repository.LinkC
 	remindDays := impl.config.genNotifyIndividualRemindDays()
 	nowUnix := time.Now().Unix()
 
-	// 如果 CLA 版本已变更（与上次通知的版本不同），重置通知计数
 	if is.ClaNotify != latestCLA.Id {
 		is.ClaNotify = latestCLA.Id
 		is.ClaNotifyCount = 0
 		is.ClaNotifyTime = 0
+	}
+
+	if is.ClaNotifyTime == 0 && is.ClaNotifyCount == 0 && is.ClaNotify == latestCLA.Id {
+		is.ClaNotifyCount = 1
+		is.ClaNotifyTime = nowUnix
+		if err := impl.individualRepo.UpdateCLANotify(is); err != nil {
+			logs.Error("init cla_notify_count/time failed: ", is.Rep.EmailAddr.EmailAddr(), err)
+		}
+		return
 	}
 
 	// 计算距离上次通知的天数

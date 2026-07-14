@@ -410,7 +410,11 @@ func (impl *corpSigning) SetPendingCLAForLink(linkId, newClaId string) error {
 		fieldLinkId: linkId,
 	}
 
-	return impl.dao.UpdateDocsWithoutVersion(filter, bson.M{fieldCLANotify: newClaId})
+	return impl.dao.UpdateDocsWithoutVersion(filter, bson.M{
+		fieldCLANotify:      newClaId,
+		fieldClaNotifyCount: 0,
+		fieldClaNotifyTime:  0,
+	})
 }
 
 func (impl *corpSigning) FindPendingAgreements(linkId string) ([]repository.CorpSigningSummary, error) {

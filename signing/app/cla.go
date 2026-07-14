@@ -55,7 +55,11 @@ func (s *claService) Update(cmd *CmdToUpdateCLA) error {
 
 	cla := cmd.newCLA()
 
-	return s.cla.Update(link, &cla)
+	if err = s.cla.Update(link, &cla); err != nil {
+		return err
+	}
+
+	return s.cs.SetPendingCLAForLink(cmd.LinkId, cla.Id)
 }
 
 func (s *claService) Remove(cmd *CmdToRemoveCLA) error {

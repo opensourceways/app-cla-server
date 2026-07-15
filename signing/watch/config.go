@@ -64,7 +64,7 @@ func (cfg *NotifyAdminConfig) SetDefault() {
 	}
 
 	if cfg.NotifyCorpAdminInterval <= 0 {
-		cfg.NotifyCorpAdminInterval = 1200
+		cfg.NotifyCorpAdminInterval = 86400
 	}
 
 	if cfg.NotifyIndividualInterval <= 0 {

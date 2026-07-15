@@ -98,7 +98,7 @@ func (impl *notifyAdminWatchImpl) exit() {
 }
 
 func (impl *notifyAdminWatchImpl) notifyCorpAdmin() {
-	timer := time.NewTimer(timeUntilMidnight())
+	timer := time.NewTimer(nextNoonOrMidnight())
 	for {
 		select {
 		case <-impl.stop:
@@ -107,10 +107,10 @@ func (impl *notifyAdminWatchImpl) notifyCorpAdmin() {
 			return
 		case <-timer.C:
 			impl.handleNotifyJob()
-			timer.Reset(timeUntilMidnight())
+			timer.Reset(12 * time.Hour)
 		case <-impl.corpTrigger:
 			impl.handleNotifyJob()
-			timer.Reset(timeUntilMidnight())
+			timer.Reset(nextNoonOrMidnight())
 		}
 	}
 }
@@ -245,7 +245,7 @@ func (impl *notifyAdminWatchImpl) handleSendEmail(link *repository.LinkCLA, corp
 }
 
 func (impl *notifyAdminWatchImpl) notifyIndividualSigner() {
-	timer := time.NewTimer(timeUntilMidnight())
+	timer := time.NewTimer(nextNoonOrMidnight())
 	for {
 		select {
 		case <-impl.stop:
@@ -254,10 +254,10 @@ func (impl *notifyAdminWatchImpl) notifyIndividualSigner() {
 			return
 		case <-timer.C:
 			impl.handleIndividualNotifyJob()
-			timer.Reset(timeUntilMidnight())
+			timer.Reset(12 * time.Hour)
 		case <-impl.individualTrigger:
 			impl.handleIndividualNotifyJob()
-			timer.Reset(timeUntilMidnight())
+			timer.Reset(nextNoonOrMidnight())
 		}
 	}
 }
@@ -430,8 +430,15 @@ func (impl *notifyAdminWatchImpl) rootURL() string {
 	return fmt.Sprintf("%s://%s", u.Scheme, u.Host)
 }
 
-func timeUntilMidnight() time.Duration {
+func nextNoonOrMidnight() time.Duration {
 	now := time.Now()
+	noon := time.Date(now.Year(), now.Month(), now.Day(), 12, 0, 0, 0, now.Location())
+	if now.After(noon) {
+		noon = noon.Add(24 * time.Hour)
+	}
 	midnight := time.Date(now.Year(), now.Month(), now.Day()+1, 0, 0, 0, 0, now.Location())
+	if noon.Before(midnight) {
+		return noon.Sub(now)
+	}
 	return midnight.Sub(now)
 }

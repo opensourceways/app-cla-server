@@ -8,8 +8,19 @@ import (
 	"github.com/opensourceways/app-cla-server/signing/domain/repository"
 )
 
+func newTestImpl() *notifyAdminWatchImpl {
+	return &notifyAdminWatchImpl{
+		config: &NotifyAdminConfig{
+			NotifyCorpAdminRemindDays:  90,
+			NotifyIndividualRemindDays: 90,
+			NotifyBatchSize:            500,
+		},
+		defaultGracePeriodDays: 30,
+	}
+}
+
 func TestHandleCorpSigningNoPDF(t *testing.T) {
-	impl := &notifyAdminWatchImpl{defaultGracePeriodDays: 30}
+	impl := newTestImpl()
 
 	link := &repository.LinkCLA{Id: "link1"}
 	corp := &repository.CorpSigningSummary{HasPDF: false}
@@ -18,7 +29,7 @@ func TestHandleCorpSigningNoPDF(t *testing.T) {
 }
 
 func TestHandleCorpSigningAlreadyLatest(t *testing.T) {
-	impl := &notifyAdminWatchImpl{defaultGracePeriodDays: 30}
+	impl := newTestImpl()
 
 	link := &repository.LinkCLA{
 		Id: "link1",
@@ -35,7 +46,7 @@ func TestHandleCorpSigningAlreadyLatest(t *testing.T) {
 }
 
 func TestHandleCorpSigningNoLatestCorpCLA(t *testing.T) {
-	impl := &notifyAdminWatchImpl{defaultGracePeriodDays: 30}
+	impl := newTestImpl()
 
 	link := &repository.LinkCLA{
 		Id:   "link1",
@@ -50,7 +61,7 @@ func TestHandleCorpSigningNoLatestCorpCLA(t *testing.T) {
 }
 
 func TestHandleCorpSigningNotifyWithin7Days(t *testing.T) {
-	impl := &notifyAdminWatchImpl{defaultGracePeriodDays: 30}
+	impl := newTestImpl()
 
 	link := &repository.LinkCLA{
 		Id: "link1",
@@ -69,7 +80,7 @@ func TestHandleCorpSigningNotifyWithin7Days(t *testing.T) {
 }
 
 func TestHandleIndividualSigningAlreadyLatest(t *testing.T) {
-	impl := &notifyAdminWatchImpl{defaultGracePeriodDays: 30}
+	impl := newTestImpl()
 
 	link := &repository.LinkCLA{
 		Id: "link1",
@@ -86,7 +97,7 @@ func TestHandleIndividualSigningAlreadyLatest(t *testing.T) {
 }
 
 func TestHandleIndividualSigningNoLatestCLA(t *testing.T) {
-	impl := &notifyAdminWatchImpl{defaultGracePeriodDays: 30}
+	impl := newTestImpl()
 
 	link := &repository.LinkCLA{
 		Id:   "link1",

@@ -5,6 +5,7 @@ import (
 	"github.com/opensourceways/app-cla-server/signing/domain/claservice"
 	"github.com/opensourceways/app-cla-server/signing/domain/dp"
 	"github.com/opensourceways/app-cla-server/signing/domain/repository"
+	"github.com/opensourceways/app-cla-server/signing/watch"
 )
 
 func NewCLAService(
@@ -59,7 +60,13 @@ func (s *claService) Update(cmd *CmdToUpdateCLA) error {
 		return err
 	}
 
-	return s.cs.SetPendingCLAForLink(cmd.LinkId, cla.Id)
+	if err = s.cs.SetPendingCLAForLink(cmd.LinkId, cla.Id); err != nil {
+		return err
+	}
+
+	watch.TriggerNotify()
+
+	return nil
 }
 
 func (s *claService) Remove(cmd *CmdToRemoveCLA) error {

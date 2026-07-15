@@ -3,6 +3,7 @@ package adapter
 import (
 	"fmt"
 
+	commonRepo "github.com/opensourceways/app-cla-server/common/domain/repository"
 	"github.com/opensourceways/app-cla-server/models"
 	"github.com/opensourceways/app-cla-server/signing/domain"
 )
@@ -12,6 +13,10 @@ type errorCode interface {
 }
 
 func toModelError(err error) models.IModelError {
+	if commonRepo.IsErrorResourceNotFound(err) {
+		return models.NewModelError(models.ErrNoLink, err)
+	}
+
 	code, ok := err.(errorCode)
 	if !ok {
 		fmt.Println("toModelError: unexpected error type:", err)
@@ -45,6 +50,9 @@ func codeMap(code string) models.ModelErrCode {
 
 	case domain.ErrorCodeCorpSigningCanNotDelete:
 		return models.ErrCorpManagerExists
+
+	case domain.ErrorCodeCorpSigningCLAIsLatest:
+		return models.ErrCLAIsLatest
 
 	// corp pdf
 	case domain.ErrorCodeCorpPDFNotFound:
@@ -102,6 +110,9 @@ func codeMap(code string) models.ModelErrCode {
 
 	case domain.ErrorCodeIndividualSigningCorpExists:
 		return models.ErrGoToSignEmployeeCLA
+
+	case domain.ErrorCodeIndividualSigningCLAIsLatest:
+		return models.ErrCLAIsLatest
 
 	// cla
 	case domain.ErrorCodeCLAExists:

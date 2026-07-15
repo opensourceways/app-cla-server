@@ -6,18 +6,16 @@ import (
 )
 
 type CorpSigningSummary struct {
-	Id        string
-	Date      string
-	HasPDF    bool
-	CLANotify string
-	Link      domain.LinkInfo
-	Rep       domain.Representative
-	Corp      domain.Corporation
-	Admin     domain.Manager
-
-	PendingCLAId   string
+	Id             string
+	Date           string
+	HasPDF         bool
+	CLANotify      string
 	ClaNotifyCount int
 	ClaNotifyTime  int64
+	Link           domain.LinkInfo
+	Rep            domain.Representative
+	Corp           domain.Corporation
+	Admin          domain.Manager
 }
 
 type EmployeeSigningSummary struct {
@@ -71,7 +69,6 @@ type CorpSigning interface {
 	HasSignedLink(linkId string) (bool, error)
 	HasSignedCLA(*domain.CLAIndex, dp.CLAType) (bool, error)
 	UpdateClaId(cs *domain.CorpSigning) error
-	UpdateCLANotify(summary *CorpSigningSummary) error
-	SetPendingCLAForLink(linkId, newClaId string) error
 	FindPendingAgreements(linkId string) ([]CorpSigningSummary, error)
+	SetPendingCLAForLink(linkId, newClaId string) error
 }

@@ -23,8 +23,8 @@ const (
 	TmplRemovingingEmployee   = "removing employee"
 	TmplPasswordRetrieval     = "password retrieval"
 	TmplEmailVerification     = "email verification"
-	TmplCLAUpdated            = "cla updated"
-	TmplIndividualCLAUpdated  = "individual cla updated"
+	TmplCLAUpdated         = "cla updated"
+	TmplCLAUpdatedIndividual = "cla updated individual"
 )
 
 var msgTmpl = map[string]*template.Template{}
@@ -47,8 +47,8 @@ func Init() error {
 		TmplRemovingingEmployee:   "./conf/email-template/removing-employee.tmpl",
 		TmplPasswordRetrieval:     "./conf/email-template/password-retrieval.tmpl",
 		TmplEmailVerification:     "./conf/email-template/email_verification.tmpl",
-		TmplCLAUpdated:            "./conf/email-template/cla-updated.tmpl",
-		TmplIndividualCLAUpdated:  "./conf/email-template/cla-updated-individual.tmpl",
+		TmplCLAUpdated:         "./conf/email-template/cla-updated.tmpl",
+		TmplCLAUpdatedIndividual: "./conf/email-template/cla-updated-individual.tmpl",
 	}
 
 	for name, path := range items {
@@ -236,28 +236,24 @@ func (data *EmailVerification) GenEmailMsg() (EmailMessage, error) {
 
 type CLAUpdated struct {
 	Org              string
-	CorpName         string
 	AdminName        string
-	UpdateDate       string
 	ProjectURL       string
 	URLOfCLAPlatform string
-	GracePeriodDays  int
 }
 
 func (data *CLAUpdated) GenEmailMsg() (EmailMessage, error) {
 	return genEmailMsg(TmplCLAUpdated, data)
 }
 
-type IndividualCLAUpdated struct {
-	Org              string
-	Name             string
-	UpdateDate       string
-	ProjectURL       string
-	URLOfCLAPlatform string
-	GracePeriodDays  int
-	SignCLAURL       string
+type CLAUpdatedIndividual struct {
+	Name            string
+	Org             string
+	UpdateDate      string
+	GracePeriodDays int
+	SignCLAURL      string
+	ProjectURL      string
 }
 
-func (data *IndividualCLAUpdated) GenEmailMsg() (EmailMessage, error) {
-	return genEmailMsg(TmplIndividualCLAUpdated, data)
+func (data *CLAUpdatedIndividual) GenEmailMsg() (EmailMessage, error) {
+	return genEmailMsg(TmplCLAUpdatedIndividual, data)
 }

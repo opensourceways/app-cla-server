@@ -34,8 +34,8 @@ func TestConfigSetDefault(t *testing.T) {
 	if cfg.CommunityManagerLinkId != "fake_link" {
 		t.Errorf("CommunityManagerLinkId: got %s, want fake_link", cfg.CommunityManagerLinkId)
 	}
-	if cfg.DefaultGracePeriodDays != 365 {
-		t.Errorf("DefaultGracePeriodDays: got %d, want 365", cfg.DefaultGracePeriodDays)
+	if cfg.DefaultGracePeriodDays != 730 {
+		t.Errorf("DefaultGracePeriodDays: got %d, want 730", cfg.DefaultGracePeriodDays)
 	}
 }
 
@@ -94,8 +94,8 @@ func TestConfigSetDefaultZeroValues(t *testing.T) {
 
 	cfg.SetDefault()
 
-	if cfg.DefaultGracePeriodDays != 365 {
-		t.Errorf("DefaultGracePeriodDays 0 should default to 365: got %d", cfg.DefaultGracePeriodDays)
+	if cfg.DefaultGracePeriodDays != 730 {
+		t.Errorf("DefaultGracePeriodDays 0 should default to 730: got %d", cfg.DefaultGracePeriodDays)
 	}
 }
 

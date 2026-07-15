@@ -1,10 +1,13 @@
 package app
 
 import (
+	"github.com/beego/beego/v2/core/logs"
+
 	"github.com/opensourceways/app-cla-server/signing/domain"
 	"github.com/opensourceways/app-cla-server/signing/domain/claservice"
 	"github.com/opensourceways/app-cla-server/signing/domain/dp"
 	"github.com/opensourceways/app-cla-server/signing/domain/repository"
+	"github.com/opensourceways/app-cla-server/signing/watch"
 )
 
 func NewCLAService(
@@ -55,7 +58,17 @@ func (s *claService) Update(cmd *CmdToUpdateCLA) error {
 
 	cla := cmd.newCLA()
 
-	return s.cla.Update(link, &cla)
+	if err = s.cla.Update(link, &cla); err != nil {
+		return err
+	}
+
+	if err = s.cs.SetPendingCLAForLink(cmd.LinkId, cla.Id); err != nil {
+		logs.Error("set pending CLA for link failed: %s, err: %v", cmd.LinkId, err)
+	}
+
+	watch.TriggerNotify()
+
+	return nil
 }
 
 func (s *claService) Remove(cmd *CmdToRemoveCLA) error {

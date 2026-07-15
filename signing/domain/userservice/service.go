@@ -33,6 +33,7 @@ type UserService interface {
 	RemoveByAccount(linkId string, accounts []dp.Account)
 	ChangePassword(index string, old, newOne dp.Password) error
 	ResetPassword(linkId string, email dp.EmailAddr, newOne dp.Password) error
+	UpdateEmail(linkId string, oldEmail, newEmail dp.EmailAddr) error
 }
 
 type userService struct {
@@ -143,6 +144,32 @@ func (s *userService) ResetPassword(linkId string, email dp.EmailAddr, newOne dp
 	u.ResetPassword(v)
 
 	return s.repo.SavePassword(&u)
+}
+
+func (s *userService) UpdateEmail(linkId string, oldEmail, newEmail dp.EmailAddr) error {
+	if oldEmail.EmailAddr() == newEmail.EmailAddr() {
+		return nil
+	}
+
+	u, err := s.repo.FindByEmail(linkId, oldEmail)
+	if err != nil {
+		return err
+	}
+
+	u.EmailAddr = newEmail
+
+	// account 格式为 {adminId}_{emailDomain}，domain 变了 account 也要变
+	oldAccount := u.Account.Account()
+	lastUnderscore := strings.LastIndex(oldAccount, "_")
+	if lastUnderscore > 0 {
+		newAccount, err := dp.NewAccount(oldAccount[:lastUnderscore] + "_" + newEmail.Domain())
+		if err != nil {
+			return err
+		}
+		u.Account = newAccount
+	}
+
+	return s.repo.Save(&u)
 }
 
 func (s *userService) IsAValidUser(linkId string, email dp.EmailAddr) (bool, error) {

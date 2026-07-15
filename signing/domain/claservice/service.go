@@ -20,7 +20,6 @@ func NewCLAService(
 	repo repository.Link,
 	local localcla.LocalCLA,
 	message message.Message,
-	corpRepo repository.CorpSigning,
 ) (CLAService, error) {
 	cache, err := initLink(repo)
 	if err != nil {
@@ -32,7 +31,6 @@ func NewCLAService(
 		local:     local,
 		message:   message,
 		linkCache: cache,
-		corpRepo:  corpRepo,
 	}, nil
 }
 
@@ -55,7 +53,6 @@ type claService struct {
 	repo      repository.Link
 	local     localcla.LocalCLA
 	message   message.Message
-	corpRepo  repository.CorpSigning
 }
 
 func (s *claService) Add(link *domain.Link, cla *domain.CLA) error {
@@ -106,10 +103,6 @@ func (s *claService) Update(link *domain.Link, newCla *domain.CLA) error {
 			OldCLAId: oldCLA.Id,
 			NewCLAId: newCla.Id,
 		})
-
-		if err = s.corpRepo.SetPendingCLAForLink(link.Id, newCla.Id); err != nil {
-			return err
-		}
 	}
 
 	return err
@@ -188,15 +181,48 @@ func (s *claService) AddLink(link *domain.Link) error {
 }
 
 func (s *claService) ContainsCla(linkId, claId string) bool {
+	if s.linkCache.contains(linkId, claId) {
+		return true
+	}
+
+	// 缓存未命中时兜底查询数据库，防止缓存因服务未重启等原因落后于数据库
+	s.fillCacheFromDB(linkId)
+
 	return s.linkCache.contains(linkId, claId)
 }
 
+func (s *claService) GetClaId(linkId string, claType dp.CLAType, language dp.Language) string {
+	id := s.linkCache.getClaId(linkId, claType, language)
+	if id != "" {
+		return id
+	}
+
+	s.fillCacheFromDB(linkId)
+
+	return s.linkCache.getClaId(linkId, claType, language)
+}
+
 func (s *claService) GetLastUpdateTime(linkId string, claType dp.CLAType, language dp.Language) time.Time {
+	t := s.linkCache.getLastUpdateTime(linkId, claType, language)
+	if !t.IsZero() {
+		return t
+	}
+
+	s.fillCacheFromDB(linkId)
+
 	return s.linkCache.getLastUpdateTime(linkId, claType, language)
 }
 
-func (s *claService) GetClaId(linkId string, claType dp.CLAType, language dp.Language) string {
-	return s.linkCache.getClaId(linkId, claType, language)
+func (s *claService) fillCacheFromDB(linkId string) {
+	link, err := s.repo.Find(linkId)
+	if err != nil {
+		return
+	}
+
+	for i := range link.CLAs {
+		item := &link.CLAs[i]
+		s.linkCache.update(linkId, item)
+	}
 }
 
 func (s *claService) RemoveLink(linkId string) {

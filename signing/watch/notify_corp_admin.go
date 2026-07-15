@@ -2,6 +2,7 @@ package watch
 
 import (
 	"fmt"
+	"net/url"
 	"sync"
 	"time"
 
@@ -18,12 +19,15 @@ var notifyAdminWatchInstance *notifyAdminWatchImpl
 
 func NotifyAdminWatchStart(cfg *NotifyAdminConfig, lk repoLink, corp corpSigningRepo, individual individualSigningRepo, claPlatformURL string, defaultGracePeriodDays int) {
 	notifyAdminWatchInstance = &notifyAdminWatchImpl{
-		config:                 cfg,
-		link:                   lk,
-		corpSigningRepo:        corp,
-		individualSigningRepo:  individual,
-		claPlatformURL:         claPlatformURL,
+		config:                cfg,
+		link:                  lk,
+		corpSigningRepo:       corp,
+		individualRepo:        individual,
+		claPlatformURL:        claPlatformURL,
 		defaultGracePeriodDays: defaultGracePeriodDays,
+		stop:                   make(chan struct{}),
+		corpTrigger:            make(chan struct{}, 1),
+		individualTrigger:      make(chan struct{}, 1),
 	}
 
 	notifyAdminWatchInstance.start()
@@ -37,32 +41,54 @@ func NotifyAdminWatchStop() {
 	}
 }
 
+// TriggerNotify 立即触发一次通知扫描，不等待定时器周期。
+// CLA 更新后应调用此函数，确保企业和个人都在最短时间内收到通知。
+func TriggerNotify() {
+	if notifyAdminWatchInstance == nil {
+		return
+	}
+	select {
+	case notifyAdminWatchInstance.corpTrigger <- struct{}{}:
+	default:
+	}
+	select {
+	case notifyAdminWatchInstance.individualTrigger <- struct{}{}:
+	default:
+	}
+}
+
 type corpSigningRepo interface {
 	FindAll(linkId string) ([]repository.CorpSigningSummary, error)
 	UpdateCLANotify(summary *repository.CorpSigningSummary) error
 }
 
 type individualSigningRepo interface {
-	FindAllWithPagination(linkId string, offset, limit int) ([]domain.IndividualSigning, error)
-	UpdateCLANotify(linkId, email, claId string, count int, notifyTime int64) error
+	FindAll(linkId string) ([]domain.IndividualSigning, error)
+	UpdateCLANotify(is *domain.IndividualSigning) error
 }
 
 type notifyAdminWatchImpl struct {
 	config *NotifyAdminConfig
 
-	link                   repoLink
-	corpSigningRepo        corpSigningRepo
-	individualSigningRepo  individualSigningRepo
-	claPlatformURL         string
+	link            repoLink
+	corpSigningRepo corpSigningRepo
+	individualRepo  individualSigningRepo
+	claPlatformURL  string
+
 	defaultGracePeriodDays int
 
-	wg   sync.WaitGroup
-	stop chan struct{}
+	wg               sync.WaitGroup
+	stop             chan struct{}
+	corpTrigger      chan struct{}
+	individualTrigger chan struct{}
 }
 
 func (impl *notifyAdminWatchImpl) start() {
 	impl.wg.Add(1)
 	go impl.notifyCorpAdmin()
+
+	impl.wg.Add(1)
+	go impl.notifyIndividualSigner()
 }
 
 func (impl *notifyAdminWatchImpl) exit() {
@@ -73,7 +99,7 @@ func (impl *notifyAdminWatchImpl) exit() {
 
 func (impl *notifyAdminWatchImpl) notifyCorpAdmin() {
 	interval := impl.config.genNotifyCorpAdminInterval()
-	timer := time.NewTimer(interval)
+	timer := time.NewTimer(impl.initialDelay(interval))
 	for {
 		select {
 		case <-impl.stop:
@@ -82,7 +108,10 @@ func (impl *notifyAdminWatchImpl) notifyCorpAdmin() {
 			return
 		case <-timer.C:
 			impl.handleNotifyJob()
-			timer.Reset(interval)
+			timer.Reset(impl.nextDelay(interval))
+		case <-impl.corpTrigger:
+			impl.handleNotifyJob()
+			timer.Reset(impl.nextDelay(interval))
 		}
 	}
 }
@@ -97,6 +126,9 @@ func (impl *notifyAdminWatchImpl) handleNotifyJob() {
 		}
 	}
 
+	sendCount := 0
+	batchSize := impl.config.genNotifyBatchSize()
+
 	links, err := impl.link.ListAll()
 	if err != nil {
 		logs.Error("list all link failed in notify job: ", err)
@@ -109,6 +141,11 @@ func (impl *notifyAdminWatchImpl) handleNotifyJob() {
 		}
 
 		link := &links[i]
+
+		if !impl.config.isCommunityEnabled(link.Org.Alias) {
+			continue
+		}
+
 		corpsSummary, err := impl.corpSigningRepo.FindAll(link.Id)
 		if err != nil {
 			logs.Error("list corp signing failed in notify job:", link.Id, err)
@@ -119,45 +156,58 @@ func (impl *notifyAdminWatchImpl) handleNotifyJob() {
 			if needStop() {
 				return
 			}
+			if sendCount >= batchSize {
+				logs.Info("corp notify job reached batch limit: %d", batchSize)
+				return
+			}
 
-			impl.handleCorpSigning(link, &corpsSummary[j])
+			if impl.handleCorpSigning(link, &corpsSummary[j]) {
+				sendCount++
+			}
 		}
-
-		impl.handleIndividualSignings(link, needStop)
 	}
 }
 
-func (impl *notifyAdminWatchImpl) handleCorpSigning(link *repository.LinkCLA, corp *repository.CorpSigningSummary) {
-	if !corp.HasPDF {
-		return
-	}
-
+func (impl *notifyAdminWatchImpl) handleCorpSigning(link *repository.LinkCLA, corp *repository.CorpSigningSummary) bool {
 	if impl.isCorpSigningLatest(link.Clas, corp.Link.CLAInfo) {
-		return
+		return false
 	}
 
-	latestClaId := impl.getLatestCorpClaId(link, corp.Link.Language)
-	if latestClaId == "" {
-		return
+	latestCLA := impl.getLatestCorpCLA(link.Clas, corp.Link.Language)
+	if latestCLA == nil {
+		return false
 	}
 
-	if corp.CLANotify == latestClaId {
-		if time.Since(time.Unix(corp.ClaNotifyTime, 0)) < 7*24*time.Hour {
-			return
-		}
+	remindDays := impl.config.genNotifyCorpAdminRemindDays()
+	nowUnix := time.Now().Unix()
+
+	if corp.CLANotify != latestCLA.Id {
+		corp.CLANotify = latestCLA.Id
+		corp.ClaNotifyCount = 0
+		corp.ClaNotifyTime = 0
+	}
+
+	daysSinceLastNotify := 0
+	if corp.ClaNotifyTime > 0 {
+		daysSinceLastNotify = int((nowUnix - corp.ClaNotifyTime) / 86400)
+	}
+
+	if daysSinceLastNotify < remindDays && corp.ClaNotifyCount > 0 {
+		return false
 	}
 
 	if err := impl.handleSendEmail(link, corp); err != nil {
 		logs.Error("send cla notify email failed:", corp.Id, err)
-		return
+		return false
 	}
 
-	corp.CLANotify = latestClaId
-	corp.ClaNotifyCount += 1
-	corp.ClaNotifyTime = time.Now().Unix()
+	corp.ClaNotifyCount++
+	corp.ClaNotifyTime = nowUnix
 	if err := impl.corpSigningRepo.UpdateCLANotify(corp); err != nil {
 		logs.Error("update cla notify failed: ", corp.Id, err)
 	}
+
+	return true
 }
 
 func (impl *notifyAdminWatchImpl) isCorpSigningLatest(latestCLAs []domain.CLA, signedInfo domain.CLAInfo) bool {
@@ -178,15 +228,11 @@ func (impl *notifyAdminWatchImpl) handleSendEmail(link *repository.LinkCLA, corp
 	if corp.Admin.Name == nil {
 		return fmt.Errorf("failed to send email msg: admin name is null: %s", link.Id)
 	}
-	graceDays := impl.getEffectiveGracePeriodDays(link)
 	builder := emailtmpl.CLAUpdated{
 		Org:              link.Org.Alias,
-		CorpName:         corp.Corp.Name.CorpName(),
 		AdminName:        corp.Admin.Name.Name(),
-		UpdateDate:       time.Now().Format("2006-01-02"),
 		ProjectURL:       link.Org.ProjectURL,
-		URLOfCLAPlatform: impl.claPlatformURL + "corporation-manager-login/" + link.Id,
-		GracePeriodDays:  graceDays,
+		URLOfCLAPlatform: impl.rootURL() + "/corporation-manager-login/" + link.Id,
 	}
 	emailMsg, err := builder.GenEmailMsg()
 	if err != nil {
@@ -195,105 +241,184 @@ func (impl *notifyAdminWatchImpl) handleSendEmail(link *repository.LinkCLA, corp
 
 	emailMsg.From = link.Email.Addr.EmailAddr()
 	emailMsg.To = []string{corp.Admin.EmailAddr.EmailAddr()}
-
-	if corp.Link.Language.Language() == "en" {
-		emailMsg.Subject = fmt.Sprintf("%s CLA Has Been Updated - No Immediate Action Required", link.Org.Alias)
-	} else {
-		emailMsg.Subject = fmt.Sprintf("%s CLA 协议已更新 - 无需立即操作", link.Org.Alias)
-	}
+	emailMsg.Subject = "CLA has been updated"
 
 	worker.GetEmailWorker().SendSimpleMessage(link.Email.Platform, &emailMsg)
 
+	// Sending email is done in goroutine.
+	// Prevent the concurrency from being too high, which would cause the email server refused to serve.
 	time.Sleep(impl.config.genSendEmailInterval())
 
 	return nil
 }
 
-func (impl *notifyAdminWatchImpl) getLatestCorpClaId(link *repository.LinkCLA, language dp.Language) string {
-	for i := range link.Clas {
-		if link.Clas[i].Type == dp.CLATypeCorp && link.Clas[i].Language == language {
-			return link.Clas[i].Id
+func (impl *notifyAdminWatchImpl) notifyIndividualSigner() {
+	interval := impl.config.genNotifyIndividualInterval()
+	timer := time.NewTimer(impl.initialDelay(interval))
+	for {
+		select {
+		case <-impl.stop:
+			timer.Stop()
+			impl.wg.Done()
+			return
+		case <-timer.C:
+			impl.handleIndividualNotifyJob()
+			timer.Reset(impl.nextDelay(interval))
+		case <-impl.individualTrigger:
+			impl.handleIndividualNotifyJob()
+			timer.Reset(impl.nextDelay(interval))
 		}
 	}
-	return ""
 }
 
-func (impl *notifyAdminWatchImpl) handleIndividualSignings(link *repository.LinkCLA, needStop func() bool) {
-	limit := 100
-	offset := 0
+func (impl *notifyAdminWatchImpl) handleIndividualNotifyJob() {
+	needStop := func() bool {
+		select {
+		case <-impl.stop:
+			return true
+		default:
+			return false
+		}
+	}
 
-	for {
+	sendCount := 0
+	batchSize := impl.config.genNotifyBatchSize()
+
+	links, err := impl.link.ListAll()
+	if err != nil {
+		logs.Error("list all link failed in individual notify job: ", err)
+		return
+	}
+
+	for i := range links {
 		if needStop() {
 			return
 		}
 
-		individuals, err := impl.individualSigningRepo.FindAllWithPagination(link.Id, offset, limit)
+		link := &links[i]
+
+		if !impl.config.isCommunityEnabled(link.Org.Alias) {
+			continue
+		}
+
+		individuals, err := impl.individualRepo.FindAll(link.Id)
 		if err != nil {
 			logs.Error("list individual signing failed in notify job:", link.Id, err)
-			return
+			continue
 		}
 
-		if len(individuals) == 0 {
-			break
-		}
-
-		for i := range individuals {
+		for j := range individuals {
 			if needStop() {
 				return
 			}
+			if sendCount >= batchSize {
+				logs.Info("individual notify job reached batch limit: %d", batchSize)
+				return
+			}
 
-			impl.handleIndividualSigning(link, &individuals[i])
+			if impl.handleIndividualSigning(link, &individuals[j]) {
+				sendCount++
+			}
 		}
-
-		offset += limit
 	}
 }
 
-func (impl *notifyAdminWatchImpl) handleIndividualSigning(link *repository.LinkCLA, is *domain.IndividualSigning) {
-	latestClaId := impl.getLatestIndividualClaId(link, is.Link.Language)
-	if latestClaId == "" {
-		return
+func (impl *notifyAdminWatchImpl) handleIndividualSigning(link *repository.LinkCLA, is *domain.IndividualSigning) bool {
+	// 检查是否签署了最新版本
+	if impl.isIndividualSigningLatest(link.Clas, is.Link.CLAInfo) {
+		return false
 	}
 
-	if is.HasSignedCLA(latestClaId) {
-		return
+	// 获取当前 CLA 的更新时间
+	latestCLA := impl.getLatestIndividualCLA(link.Clas, is.Link.Language)
+	if latestCLA == nil {
+		return false
 	}
 
-	if is.ClaNotify == latestClaId {
-		if time.Since(time.Unix(is.ClaNotifyTime, 0)) < 7*24*time.Hour {
-			return
-		}
+	remindDays := impl.config.genNotifyIndividualRemindDays()
+	nowUnix := time.Now().Unix()
+
+	if is.ClaNotify != latestCLA.Id {
+		is.ClaNotify = latestCLA.Id
+		is.ClaNotifyCount = 0
+		is.ClaNotifyTime = 0
 	}
 
-	if err := impl.handleSendIndividualEmail(link, is); err != nil {
+	daysSinceLastNotify := 0
+	if is.ClaNotifyTime > 0 {
+		daysSinceLastNotify = int((nowUnix - is.ClaNotifyTime) / 86400)
+	}
+
+	// 如果距上次通知不足 remindDays 天，跳过
+	if daysSinceLastNotify < remindDays && is.ClaNotifyCount > 0 {
+		return false
+	}
+
+	if err := impl.handleSendIndividualEmail(link, is, latestCLA); err != nil {
 		logs.Error("send individual cla notify email failed:", is.Rep.EmailAddr.EmailAddr(), err)
-		return
+		return false
 	}
 
-	is.ClaNotify = latestClaId
-	is.ClaNotifyCount += 1
-	is.ClaNotifyTime = time.Now().Unix()
-	if err := impl.individualSigningRepo.UpdateCLANotify(
-		link.Id, is.Rep.EmailAddr.EmailAddr(), is.ClaNotify, is.ClaNotifyCount, is.ClaNotifyTime,
-	); err != nil {
+	is.ClaNotifyCount++
+	is.ClaNotifyTime = nowUnix
+	if err := impl.individualRepo.UpdateCLANotify(is); err != nil {
 		logs.Error("update individual cla notify failed: ", is.Rep.EmailAddr.EmailAddr(), err)
 	}
+
+	return true
 }
 
-func (impl *notifyAdminWatchImpl) handleSendIndividualEmail(link *repository.LinkCLA, is *domain.IndividualSigning) error {
-	if is.Rep.Name == nil {
-		return fmt.Errorf("failed to send email msg: individual name is null: %s", link.Id)
+func (impl *notifyAdminWatchImpl) isIndividualSigningLatest(latestCLAs []domain.CLA, signedInfo domain.CLAInfo) bool {
+	var matchedCLA *domain.CLA
+	for i := range latestCLAs {
+		if latestCLAs[i].Type == dp.CLATypeIndividual &&
+			latestCLAs[i].Language == signedInfo.Language {
+			matchedCLA = &latestCLAs[i]
+			break
+		}
 	}
-	graceDays := impl.getEffectiveGracePeriodDays(link)
-	signCLAURL := impl.claPlatformURL + "sign-cla/" + link.Id + "/individual?email=" + is.Rep.EmailAddr.EmailAddr()
-	builder := emailtmpl.IndividualCLAUpdated{
-		Org:              link.Org.Alias,
-		Name:             is.Rep.Name.Name(),
-		UpdateDate:       time.Now().Format("2006-01-02"),
-		ProjectURL:       link.Org.ProjectURL,
-		URLOfCLAPlatform: impl.claPlatformURL + link.Id,
-		GracePeriodDays:  graceDays,
-		SignCLAURL:       signCLAURL,
+	return matchedCLA != nil && matchedCLA.Id == signedInfo.CLAId
+}
+
+func (impl *notifyAdminWatchImpl) getLatestIndividualCLA(clas []domain.CLA, language dp.Language) *domain.CLA {
+	for i := range clas {
+		if clas[i].Type == dp.CLATypeIndividual && clas[i].Language == language {
+			return &clas[i]
+		}
+	}
+	return nil
+}
+
+func (impl *notifyAdminWatchImpl) getLatestCorpCLA(clas []domain.CLA, language dp.Language) *domain.CLA {
+	for i := range clas {
+		if clas[i].Type == dp.CLATypeCorp && clas[i].Language == language {
+			return &clas[i]
+		}
+	}
+	return nil
+}
+
+func (impl *notifyAdminWatchImpl) handleSendIndividualEmail(link *repository.LinkCLA, is *domain.IndividualSigning, latestCLA *domain.CLA) error {
+	name := ""
+	if is.Rep.Name != nil {
+		name = is.Rep.Name.Name()
+	}
+
+	// 格式化 CLA 更新时间
+	updateDate := time.Unix(latestCLA.UpdatedAt, 0).Format("2006-01-02")
+
+	// 构造个人签署 URL：从 claPlatformURL 提取 scheme+host，避免 /sign/sign-cla 双前缀
+	// 最终格式：https://clasign.osinfra.cn/sign-cla/{linkId}/individual-update?email=xxx
+	signURL := fmt.Sprintf("%s/sign-cla/%s/individual-update?email=%s",
+		impl.rootURL(), link.Id, is.Rep.EmailAddr.EmailAddr())
+
+	builder := emailtmpl.CLAUpdatedIndividual{
+		Name:            name,
+		Org:             link.Org.Alias,
+		UpdateDate:      updateDate,
+		GracePeriodDays: link.GetEffectiveGracePeriodDays(impl.defaultGracePeriodDays),
+		SignCLAURL:      signURL,
+		ProjectURL:      link.Org.ProjectURL,
 	}
 	emailMsg, err := builder.GenEmailMsg()
 	if err != nil {
@@ -302,12 +427,7 @@ func (impl *notifyAdminWatchImpl) handleSendIndividualEmail(link *repository.Lin
 
 	emailMsg.From = link.Email.Addr.EmailAddr()
 	emailMsg.To = []string{is.Rep.EmailAddr.EmailAddr()}
-
-	if is.Link.Language.Language() == "en" {
-		emailMsg.Subject = fmt.Sprintf("%s CLA Has Been Updated - No Immediate Action Required", link.Org.Alias)
-	} else {
-		emailMsg.Subject = fmt.Sprintf("%s CLA 协议已更新 - 无需立即操作", link.Org.Alias)
-	}
+	emailMsg.Subject = "CLA has been updated - Action Required"
 
 	worker.GetEmailWorker().SendSimpleMessage(link.Email.Platform, &emailMsg)
 
@@ -316,18 +436,44 @@ func (impl *notifyAdminWatchImpl) handleSendIndividualEmail(link *repository.Lin
 	return nil
 }
 
-func (impl *notifyAdminWatchImpl) getEffectiveGracePeriodDays(link *repository.LinkCLA) int {
-	if link.GracePeriodDays != nil && *link.GracePeriodDays >= 0 {
-		return *link.GracePeriodDays
+// rootURL 从 claPlatformURL 中提取 scheme+host（去掉路径前缀），
+// 用于构造前端签署页面 URL，避免 /sign/sign-cla 双前缀问题。
+// 例如 https://clasign.osinfra.cn/sign/ -> https://clasign.osinfra.cn
+func (impl *notifyAdminWatchImpl) rootURL() string {
+	u, err := url.Parse(impl.claPlatformURL)
+	if err != nil {
+		return impl.claPlatformURL
 	}
-	return impl.defaultGracePeriodDays
+	return fmt.Sprintf("%s://%s", u.Scheme, u.Host)
 }
 
-func (impl *notifyAdminWatchImpl) getLatestIndividualClaId(link *repository.LinkCLA, language dp.Language) string {
-	for i := range link.Clas {
-		if link.Clas[i].Type == dp.CLATypeIndividual && link.Clas[i].Language == language {
-			return link.Clas[i].Id
-		}
+func nextNoonOrMidnight() time.Duration {
+	now := time.Now()
+	noon := time.Date(now.Year(), now.Month(), now.Day(), 12, 0, 0, 0, now.Location())
+	if now.After(noon) {
+		noon = noon.Add(24 * time.Hour)
 	}
-	return ""
+	midnight := time.Date(now.Year(), now.Month(), now.Day()+1, 0, 0, 0, 0, now.Location())
+	if noon.Before(midnight) {
+		return noon.Sub(now)
+	}
+	return midnight.Sub(now)
+}
+
+// initialDelay 计算首次扫描的延迟。若 interval 为默认 86400（生产模式），
+// 使用中午/凌晨对齐策略；否则直接使用配置的 interval（测试环境可配为短间隔）。
+func (impl *notifyAdminWatchImpl) initialDelay(interval time.Duration) time.Duration {
+	if interval >= 86400*time.Second {
+		return nextNoonOrMidnight()
+	}
+	return interval
+}
+
+// nextDelay 计算后续扫描的间隔。生产模式用 12 小时（保证每日 2 次），
+// 测试模式直接使用配置的 interval。
+func (impl *notifyAdminWatchImpl) nextDelay(interval time.Duration) time.Duration {
+	if interval >= 86400*time.Second {
+		return 12 * time.Hour
+	}
+	return interval
 }

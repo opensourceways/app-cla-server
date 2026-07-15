@@ -2,15 +2,25 @@ package watch
 
 import (
 	"testing"
-	"time"
 
 	"github.com/opensourceways/app-cla-server/signing/domain"
 	"github.com/opensourceways/app-cla-server/signing/domain/dp"
 	"github.com/opensourceways/app-cla-server/signing/domain/repository"
 )
 
+func newTestImpl() *notifyAdminWatchImpl {
+	return &notifyAdminWatchImpl{
+		config: &NotifyAdminConfig{
+			NotifyCorpAdminRemindDays:  90,
+			NotifyIndividualRemindDays: 90,
+			NotifyBatchSize:            500,
+		},
+		defaultGracePeriodDays: 30,
+	}
+}
+
 func TestHandleCorpSigningNoPDF(t *testing.T) {
-	impl := &notifyAdminWatchImpl{defaultGracePeriodDays: 30}
+	impl := newTestImpl()
 
 	link := &repository.LinkCLA{Id: "link1"}
 	corp := &repository.CorpSigningSummary{HasPDF: false}
@@ -19,7 +29,7 @@ func TestHandleCorpSigningNoPDF(t *testing.T) {
 }
 
 func TestHandleCorpSigningAlreadyLatest(t *testing.T) {
-	impl := &notifyAdminWatchImpl{defaultGracePeriodDays: 30}
+	impl := newTestImpl()
 
 	link := &repository.LinkCLA{
 		Id: "link1",
@@ -36,7 +46,7 @@ func TestHandleCorpSigningAlreadyLatest(t *testing.T) {
 }
 
 func TestHandleCorpSigningNoLatestCorpCLA(t *testing.T) {
-	impl := &notifyAdminWatchImpl{defaultGracePeriodDays: 30}
+	impl := newTestImpl()
 
 	link := &repository.LinkCLA{
 		Id:   "link1",
@@ -51,7 +61,7 @@ func TestHandleCorpSigningNoLatestCorpCLA(t *testing.T) {
 }
 
 func TestHandleCorpSigningNotifyWithin7Days(t *testing.T) {
-	impl := &notifyAdminWatchImpl{defaultGracePeriodDays: 30}
+	impl := newTestImpl()
 
 	link := &repository.LinkCLA{
 		Id: "link1",
@@ -61,17 +71,16 @@ func TestHandleCorpSigningNotifyWithin7Days(t *testing.T) {
 	}
 
 	corp := &repository.CorpSigningSummary{
-		HasPDF:        true,
-		CLANotify:     "10",
-		Link:          domain.LinkInfo{CLAInfo: domain.CLAInfo{CLAId: "9", Language: dp.CreateLanguage("en")}},
-		ClaNotifyTime: time.Now().Unix() - 3*24*3600,
+		HasPDF:    true,
+		CLANotify: "10",
+		Link:      domain.LinkInfo{CLAInfo: domain.CLAInfo{CLAId: "9", Language: dp.CreateLanguage("en")}},
 	}
 
 	impl.handleCorpSigning(link, corp)
 }
 
 func TestHandleIndividualSigningAlreadyLatest(t *testing.T) {
-	impl := &notifyAdminWatchImpl{defaultGracePeriodDays: 30}
+	impl := newTestImpl()
 
 	link := &repository.LinkCLA{
 		Id: "link1",
@@ -88,7 +97,7 @@ func TestHandleIndividualSigningAlreadyLatest(t *testing.T) {
 }
 
 func TestHandleIndividualSigningNoLatestCLA(t *testing.T) {
-	impl := &notifyAdminWatchImpl{defaultGracePeriodDays: 30}
+	impl := newTestImpl()
 
 	link := &repository.LinkCLA{
 		Id:   "link1",

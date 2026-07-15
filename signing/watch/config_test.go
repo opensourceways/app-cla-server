@@ -9,34 +9,6 @@ import (
 	"github.com/opensourceways/app-cla-server/signing/domain/repository"
 )
 
-func TestGetEffectiveGracePeriodDays(t *testing.T) {
-	impl := &notifyAdminWatchImpl{defaultGracePeriodDays: 30}
-	intPtr := func(v int) *int { return &v }
-
-	tests := []struct {
-		name       string
-		linkDays   *int
-		defaultDay int
-		want       int
-	}{
-		{"link nil (字段缺失) uses default", nil, 30, 30},
-		{"link override positive", intPtr(15), 30, 15},
-		{"link zero returns zero", intPtr(0), 30, 0},
-		{"link negative uses default", intPtr(-1), 30, 30},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			link := &repository.LinkCLA{GracePeriodDays: tt.linkDays}
-			impl.defaultGracePeriodDays = tt.defaultDay
-			got := impl.getEffectiveGracePeriodDays(link)
-			if got != tt.want {
-				t.Errorf("got %d, want %d", got, tt.want)
-			}
-		})
-	}
-}
-
 func TestIsCorpSigningLatest(t *testing.T) {
 	impl := &notifyAdminWatchImpl{}
 
@@ -56,47 +28,68 @@ func TestIsCorpSigningLatest(t *testing.T) {
 	}
 }
 
-func TestGetLatestCorpClaId(t *testing.T) {
+func TestGetLatestIndividualCLA(t *testing.T) {
 	impl := &notifyAdminWatchImpl{}
 
-	link := &repository.LinkCLA{
-		Clas: []domain.CLA{
-			{Id: "10", Type: dp.CLATypeCorp, Language: dp.CreateLanguage("en")},
-			{Id: "11", Type: dp.CLATypeIndividual, Language: dp.CreateLanguage("en")},
-			{Id: "12", Type: dp.CLATypeCorp, Language: dp.CreateLanguage("zh")},
-		},
+	clas := []domain.CLA{
+		{Id: "10", Type: dp.CLATypeCorp, Language: dp.CreateLanguage("en")},
+		{Id: "11", Type: dp.CLATypeIndividual, Language: dp.CreateLanguage("en")},
+		{Id: "12", Type: dp.CLATypeIndividual, Language: dp.CreateLanguage("zh")},
 	}
 
-	if id := impl.getLatestCorpClaId(link, dp.CreateLanguage("en")); id != "10" {
-		t.Errorf("getLatestCorpClaId en: got %s, want 10", id)
+	if cla := impl.getLatestIndividualCLA(clas, dp.CreateLanguage("en")); cla == nil || cla.Id != "11" {
+		t.Errorf("getLatestIndividualCLA en: got %v, want id=11", cla)
 	}
-	if id := impl.getLatestCorpClaId(link, dp.CreateLanguage("zh")); id != "12" {
-		t.Errorf("getLatestCorpClaId zh: got %s, want 12", id)
+	if cla := impl.getLatestIndividualCLA(clas, dp.CreateLanguage("zh")); cla == nil || cla.Id != "12" {
+		t.Errorf("getLatestIndividualCLA zh: got %v, want id=12", cla)
 	}
-	if id := impl.getLatestCorpClaId(link, dp.CreateLanguage("fr")); id != "" {
-		t.Errorf("getLatestCorpClaId fr: got %s, want empty", id)
+	if cla := impl.getLatestIndividualCLA(clas, dp.CreateLanguage("fr")); cla != nil {
+		t.Errorf("getLatestIndividualCLA fr: got %v, want nil", cla)
 	}
 }
 
-func TestGetLatestIndividualClaId(t *testing.T) {
+func TestIsIndividualSigningLatest(t *testing.T) {
 	impl := &notifyAdminWatchImpl{}
 
-	link := &repository.LinkCLA{
-		Clas: []domain.CLA{
-			{Id: "10", Type: dp.CLATypeCorp, Language: dp.CreateLanguage("en")},
-			{Id: "11", Type: dp.CLATypeIndividual, Language: dp.CreateLanguage("en")},
-			{Id: "12", Type: dp.CLATypeIndividual, Language: dp.CreateLanguage("zh")},
-		},
+	clas := []domain.CLA{
+		{Id: "10", Type: dp.CLATypeIndividual, Language: dp.CreateLanguage("en")},
+		{Id: "11", Type: dp.CLATypeCorp, Language: dp.CreateLanguage("en")},
 	}
 
-	if id := impl.getLatestIndividualClaId(link, dp.CreateLanguage("en")); id != "11" {
-		t.Errorf("getLatestIndividualClaId en: got %s, want 11", id)
+	signedInfo := domain.CLAInfo{CLAId: "10", Language: dp.CreateLanguage("en")}
+	if !impl.isIndividualSigningLatest(clas, signedInfo) {
+		t.Error("isIndividualSigningLatest should return true for matching CLA")
 	}
-	if id := impl.getLatestIndividualClaId(link, dp.CreateLanguage("zh")); id != "12" {
-		t.Errorf("getLatestIndividualClaId zh: got %s, want 12", id)
+
+	signedInfo2 := domain.CLAInfo{CLAId: "9", Language: dp.CreateLanguage("en")}
+	if impl.isIndividualSigningLatest(clas, signedInfo2) {
+		t.Error("isIndividualSigningLatest should return false for outdated CLA")
 	}
-	if id := impl.getLatestIndividualClaId(link, dp.CreateLanguage("fr")); id != "" {
-		t.Errorf("getLatestIndividualClaId fr: got %s, want empty", id)
+}
+
+func TestGetEffectiveGracePeriodDays(t *testing.T) {
+	intPtr := func(v int) *int { return &v }
+
+	tests := []struct {
+		name       string
+		linkDays   *int
+		defaultDay int
+		want       int
+	}{
+		{"link nil uses default", nil, 30, 30},
+		{"link override positive", intPtr(15), 30, 15},
+		{"link zero returns zero", intPtr(0), 30, 0},
+		{"link negative uses default", intPtr(-1), 30, 30},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			link := &repository.LinkCLA{GracePeriodDays: tt.linkDays}
+			got := link.GetEffectiveGracePeriodDays(tt.defaultDay)
+			if got != tt.want {
+				t.Errorf("got %d, want %d", got, tt.want)
+			}
+		})
 	}
 }
 
@@ -110,10 +103,21 @@ func TestNotifyAdminConfigSetDefault(t *testing.T) {
 	if cfg.NotifyCorpAdminInterval != 1200 {
 		t.Errorf("NotifyCorpAdminInterval: got %d, want 1200", cfg.NotifyCorpAdminInterval)
 	}
+	if cfg.NotifyIndividualInterval != 86400 {
+		t.Errorf("NotifyIndividualInterval: got %d, want 86400", cfg.NotifyIndividualInterval)
+	}
+	if cfg.NotifyIndividualRemindDays != 90 {
+		t.Errorf("NotifyIndividualRemindDays: got %d, want 90", cfg.NotifyIndividualRemindDays)
+	}
 }
 
 func TestNotifyAdminConfigSetDefaultPreserves(t *testing.T) {
-	cfg := NotifyAdminConfig{SendEmailInterval: 20, NotifyCorpAdminInterval: 600}
+	cfg := NotifyAdminConfig{
+		SendEmailInterval:          20,
+		NotifyCorpAdminInterval:    600,
+		NotifyIndividualInterval:   43200,
+		NotifyIndividualRemindDays: 45,
+	}
 	cfg.SetDefault()
 
 	if cfg.SendEmailInterval != 20 {
@@ -121,6 +125,12 @@ func TestNotifyAdminConfigSetDefaultPreserves(t *testing.T) {
 	}
 	if cfg.NotifyCorpAdminInterval != 600 {
 		t.Errorf("NotifyCorpAdminInterval should be preserved: got %d, want 600", cfg.NotifyCorpAdminInterval)
+	}
+	if cfg.NotifyIndividualInterval != 43200 {
+		t.Errorf("NotifyIndividualInterval should be preserved: got %d, want 43200", cfg.NotifyIndividualInterval)
+	}
+	if cfg.NotifyIndividualRemindDays != 45 {
+		t.Errorf("NotifyIndividualRemindDays should be preserved: got %d, want 45", cfg.NotifyIndividualRemindDays)
 	}
 }
 
@@ -137,6 +147,22 @@ func TestNotifyAdminConfigGenNotifyCorpAdminInterval(t *testing.T) {
 	d := cfg.genNotifyCorpAdminInterval()
 	if d != 100*time.Second {
 		t.Errorf("genNotifyCorpAdminInterval: got %v, want 100s", d)
+	}
+}
+
+func TestNotifyAdminConfigGenNotifyIndividualInterval(t *testing.T) {
+	cfg := NotifyAdminConfig{NotifyIndividualInterval: 200}
+	d := cfg.genNotifyIndividualInterval()
+	if d != 200*time.Second {
+		t.Errorf("genNotifyIndividualInterval: got %v, want 200s", d)
+	}
+}
+
+func TestNotifyAdminConfigGenNotifyIndividualRemindDays(t *testing.T) {
+	cfg := NotifyAdminConfig{NotifyIndividualRemindDays: 7}
+	d := cfg.genNotifyIndividualRemindDays()
+	if d != 7 {
+		t.Errorf("genNotifyIndividualRemindDays: got %d, want 7", d)
 	}
 }
 
@@ -193,21 +219,5 @@ func TestWatchConfigSetDefaultPreserves(t *testing.T) {
 
 	if cfg.Interval != 7200 {
 		t.Errorf("Interval preserved: got %d, want 7200", cfg.Interval)
-	}
-}
-
-func TestWatchConfigConfigItems(t *testing.T) {
-	cfg := Config{}
-	items := cfg.ConfigItems()
-	if len(items) != 2 {
-		t.Errorf("ConfigItems length: got %d, want 2", len(items))
-	}
-}
-
-func TestWatchConfigIntervalDuration(t *testing.T) {
-	cfg := Config{Interval: 60}
-	d := cfg.intervalDuration()
-	if d != 60*time.Second {
-		t.Errorf("intervalDuration: got %v, want 60s", d)
 	}
 }

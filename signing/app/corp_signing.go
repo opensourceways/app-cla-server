@@ -9,6 +9,7 @@ import (
 	"github.com/opensourceways/app-cla-server/signing/domain/claservice"
 	"github.com/opensourceways/app-cla-server/signing/domain/dp"
 	"github.com/opensourceways/app-cla-server/signing/domain/repository"
+	"github.com/opensourceways/app-cla-server/signing/domain/userservice"
 	"github.com/opensourceways/app-cla-server/signing/domain/vcservice"
 )
 
@@ -18,13 +19,15 @@ func NewCorpSigningService(
 	interval time.Duration,
 	linkRepo repository.Link,
 	cla claservice.CLAService,
+	userService userservice.UserService,
 ) *corpSigningService {
 	return &corpSigningService{
-		repo:     repo,
-		vc:       verificationCodeService{vc},
-		interval: interval,
-		linkRepo: linkRepo,
-		cla:      cla,
+		repo:        repo,
+		vc:          verificationCodeService{vc},
+		interval:    interval,
+		linkRepo:    linkRepo,
+		cla:         cla,
+		userService: userService,
 	}
 }
 
@@ -43,11 +46,12 @@ type CorpSigningService interface {
 }
 
 type corpSigningService struct {
-	vc       verificationCodeService
-	cla      claservice.CLAService
-	repo     repository.CorpSigning
-	interval time.Duration
-	linkRepo repository.Link
+	vc          verificationCodeService
+	cla         claservice.CLAService
+	repo        repository.CorpSigning
+	interval    time.Duration
+	linkRepo    repository.Link
+	userService userservice.UserService
 }
 
 func (s *corpSigningService) Verify(cmd *CmdToCreateVerificationCode) (string, error) {
@@ -108,15 +112,13 @@ func (s *corpSigningService) Get(userId, csId string, email dp.EmailAddr) (linkI
 	}
 
 	dto = CorpSigningInfoDTO{
-		Date:         item.Date,
-		CLAId:        item.Link.CLAId,
-		Language:     item.Link.Language.Language(),
-		CorpName:     item.Corp.Name.CorpName(),
-		RepName:      item.Rep.Name.Name(),
-		RepEmail:     item.Rep.EmailAddr.EmailAddr(),
-		AllInfo:      item.AllInfo,
-		PendingCLAId: item.PendingCLAId,
-		Logs:         toCorpSigningLogDTOs(item.Logs),
+		Date:     item.Date,
+		CLAId:    item.Link.CLAId,
+		Language: item.Link.Language.Language(),
+		CorpName: item.Corp.Name.CorpName(),
+		RepName:  item.Rep.Name.Name(),
+		RepEmail: item.Rep.EmailAddr.EmailAddr(),
+		AllInfo:  item.AllInfo,
 	}
 
 	return
@@ -247,27 +249,51 @@ func (s *corpSigningService) AgreeWithLatestCLA(signingId string) error {
 }
 
 func (s *corpSigningService) UpdateRepresentative(userId, linkID, signingID, repName, repEmail string) error {
+	// 权限验证 - 只有社区管理员可以操作
 	if _, err := checkIfCommunityManager(userId, linkID, s.linkRepo); err != nil {
 		return err
 	}
 
+	// 查找企业签名
 	cs, err := s.repo.Find(signingID)
 	if err != nil {
 		return err
 	}
 
+	// 验证link_id匹配
 	if cs.Link.Id != linkID {
 		return commonRepo.NewErrorResourceNotFound(errors.New("signing not found"))
 	}
 
+	// 创建新的代表信息
 	newRep, err := domain.NewRepresentative(repName, repEmail)
 	if err != nil {
 		return err
 	}
 
+	oldEmail := cs.Rep.EmailAddr
+
+	// 更新代表信息
 	cs.Rep = newRep
 
-	return s.repo.Update(&cs)
+	// 同步更新 Admin 信息（管理员登录账号）
+	if cs.Admin.Id != "" {
+		cs.Admin.Representative = newRep
+	}
+
+	// 保存到数据库
+	if err := s.repo.Update(&cs); err != nil {
+		return err
+	}
+
+	// 同步更新 User 表中的邮箱
+	if cs.Admin.Id != "" {
+		if err := s.userService.UpdateEmail(cs.Link.Id, oldEmail, newRep.EmailAddr); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func (s *corpSigningService) FindPendingAgreements(userId, linkId string) ([]CorpSigningPendingDTO, error) {
@@ -275,24 +301,20 @@ func (s *corpSigningService) FindPendingAgreements(userId, linkId string) ([]Cor
 		return nil, err
 	}
 
-	v, err := s.repo.FindPendingAgreements(linkId)
-	if err != nil || len(v) == 0 {
+	summaries, err := s.repo.FindPendingAgreements(linkId)
+	if err != nil {
 		return nil, err
 	}
 
-	dtos := make([]CorpSigningPendingDTO, len(v))
-	for i := range v {
-		item := &v[i]
-		dtos[i] = CorpSigningPendingDTO{
-			Id:             item.Id,
-			CorpName:       item.Corp.Name.CorpName(),
-			AdminEmail:     item.Admin.EmailAddr.EmailAddr(),
-			SignedCLAId:    item.Link.CLAId,
-			PendingCLAId:   item.PendingCLAId,
-			NotifyCount:    item.ClaNotifyCount,
-			LastNotifyTime: item.ClaNotifyTime,
+	r := make([]CorpSigningPendingDTO, len(summaries))
+	for i := range summaries {
+		item := &summaries[i]
+		r[i] = CorpSigningPendingDTO{
+			Id:         item.Id,
+			CorpName:   item.Corp.Name.CorpName(),
+			AdminEmail: item.Admin.EmailAddr.EmailAddr(),
 		}
 	}
 
-	return dtos, nil
+	return r, nil
 }

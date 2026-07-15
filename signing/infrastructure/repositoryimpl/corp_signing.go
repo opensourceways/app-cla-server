@@ -8,7 +8,6 @@ import (
 	"github.com/opensourceways/app-cla-server/signing/domain"
 	"github.com/opensourceways/app-cla-server/signing/domain/dp"
 	"github.com/opensourceways/app-cla-server/signing/domain/repository"
-	"github.com/opensourceways/app-cla-server/util"
 )
 
 // CorpSigningIndexes returns the index definitions that should exist on the
@@ -166,9 +165,8 @@ func (impl *corpSigning) FindAll(linkId string) ([]repository.CorpSigningSummary
 		fieldLinkId:         1,
 		fieldHasPDF:         1,
 		fieldCLANotify:      1,
-		fieldPendingCLAId:   1,
-		fieldCLANotifyCount: 1,
-		fieldCLANotifyTime:  1,
+		fieldClaNotifyCount: 1,
+		fieldClaNotifyTime:  1,
 	}
 
 	var dos []corpSigningDO
@@ -205,9 +203,8 @@ func (impl *corpSigning) FindAllWithPagination(linkId string, offset, limit int)
 		fieldLinkId:         1,
 		fieldHasPDF:         1,
 		fieldCLANotify:      1,
-		fieldPendingCLAId:   1,
-		fieldCLANotifyCount: 1,
-		fieldCLANotifyTime:  1,
+		fieldClaNotifyCount: 1,
+		fieldClaNotifyTime:  1,
 	}
 
 	var dos []corpSigningDO
@@ -267,9 +264,8 @@ func (impl *corpSigning) FindPage(linkId string, intPage, intPageSize int, admin
 		fieldLinkId:         1,
 		fieldHasPDF:         1,
 		fieldCLANotify:      1,
-		fieldPendingCLAId:   1,
-		fieldCLANotifyCount: 1,
-		fieldCLANotifyTime:  1,
+		fieldClaNotifyCount: 1,
+		fieldClaNotifyTime:  1,
 	}
 
 	// Single aggregation round-trip: $facet returns both total count and the
@@ -367,20 +363,12 @@ func (impl *corpSigning) UpdateClaId(cs *domain.CorpSigning) error {
 		return err
 	}
 
-	setFields := bson.M{
+	return impl.dao.UpdateDoc(filter, bson.M{
 		fieldCLAId:          cs.Link.CLAId,
-		fieldPendingCLAId:   "",
-		fieldCLANotifyCount: 0,
-		fieldCLANotifyTime:  int64(0),
-	}
-
-	pushItem := bson.M{
-		"date":   util.Date(),
-		"cla_id": cs.Link.CLAId,
-		"action": "agree",
-	}
-
-	return impl.dao.PushArraySingleItemAndUpdate(filter, fieldLogs, pushItem, setFields, cs.Version)
+		fieldCLANotify:      "",
+		fieldClaNotifyCount: 0,
+		fieldClaNotifyTime:  0,
+	}, cs.Version)
 }
 
 func (impl *corpSigning) UpdateCLANotify(summary *repository.CorpSigningSummary) error {
@@ -389,13 +377,11 @@ func (impl *corpSigning) UpdateCLANotify(summary *repository.CorpSigningSummary)
 		return err
 	}
 
-	update := bson.M{
+	return impl.dao.UpdateDocsWithoutVersion(filter, bson.M{
 		fieldCLANotify:      summary.CLANotify,
-		fieldCLANotifyCount: summary.ClaNotifyCount,
-		fieldCLANotifyTime:  summary.ClaNotifyTime,
-	}
-
-	return impl.dao.UpdateDocsWithoutVersion(filter, update)
+		fieldClaNotifyCount: summary.ClaNotifyCount,
+		fieldClaNotifyTime:  summary.ClaNotifyTime,
+	})
 }
 
 func (impl *corpSigning) Update(cs *domain.CorpSigning) error {
@@ -404,54 +390,49 @@ func (impl *corpSigning) Update(cs *domain.CorpSigning) error {
 		return err
 	}
 
+	// 构建更新文档
 	updateDoc := bson.M{
 		childField(fieldRep, fieldName):  cs.Rep.Name.Name(),
 		childField(fieldRep, fieldEmail): cs.Rep.EmailAddr.EmailAddr(),
+	}
+
+	// 同步更新 Admin 信息
+	if cs.Admin.Id != "" {
+		updateDoc[childField(fieldAdmin, fieldName)] = cs.Admin.Name.Name()
+		updateDoc[childField(fieldAdmin, fieldEmail)] = cs.Admin.EmailAddr.EmailAddr()
 	}
 
 	return impl.dao.UpdateDoc(filter, updateDoc, cs.Version)
 }
 
 func (impl *corpSigning) SetPendingCLAForLink(linkId, newClaId string) error {
-	filter := linkIdFilter(linkId)
-
-	update := bson.M{
-		fieldPendingCLAId: newClaId,
+	filter := bson.M{
+		fieldLinkId: linkId,
 	}
 
-	return impl.dao.UpdateDocsWithoutVersion(filter, update)
+	return impl.dao.UpdateDocsWithoutVersion(filter, bson.M{
+		fieldCLANotify:      newClaId,
+		fieldClaNotifyCount: 0,
+		fieldClaNotifyTime:  0,
+	})
 }
 
 func (impl *corpSigning) FindPendingAgreements(linkId string) ([]repository.CorpSigningSummary, error) {
-	filter := linkIdFilter(linkId)
-	filter[fieldPendingCLAId] = bson.M{"$ne": ""}
-	filter[fieldHasPDF] = true
-
-	project := bson.M{
-		fieldDate:           1,
-		fieldCLAId:          1,
-		fieldLang:           1,
-		fieldRep:            1,
-		fieldCorp:           1,
-		fieldAdmin:          1,
-		fieldLinkId:         1,
-		fieldHasPDF:         1,
-		fieldCLANotify:      1,
-		fieldPendingCLAId:   1,
-		fieldCLANotifyCount: 1,
-		fieldCLANotifyTime:  1,
+	filter := bson.M{
+		fieldLinkId:    linkId,
+		fieldCLANotify: bson.M{"$ne": ""},
 	}
 
 	var dos []corpSigningDO
-
-	if err := impl.dao.GetDocs(filter, project, &dos); err != nil {
+	err := impl.dao.GetDocs(filter, nil, &dos)
+	if err != nil || len(dos) == 0 {
 		return nil, err
 	}
 
-	v := make([]repository.CorpSigningSummary, len(dos))
+	r := make([]repository.CorpSigningSummary, len(dos))
 	for i := range dos {
-		v[i] = dos[i].toCorpSigningSummary()
+		r[i] = dos[i].toCorpSigningSummary()
 	}
 
-	return v, nil
+	return r, nil
 }

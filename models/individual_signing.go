@@ -30,7 +30,6 @@ type IndividualSigned struct {
 	Type           string     `json:"type"`                      // "individual" 或 "corp"
 	Signed         bool       `json:"signed"`                    // 是否已签署过
 	VersionMatched bool       `json:"version_matched"`            // 签署是否当前有效（考虑宽限期），始终返回以兼容旧版本调用
-	Status         string     `json:"status"`                    // 内部状态："not_signed" | "valid" | "expired"
 	DebugInfo      *DebugInfo `json:"_debug,omitempty"`          // 调试信息（仅debug=true时返回）
 }
 

@@ -107,7 +107,7 @@ func (impl *notifyAdminWatchImpl) notifyCorpAdmin() {
 			return
 		case <-timer.C:
 			impl.handleNotifyJob()
-			timer.Reset(12 * time.Hour)
+			timer.Reset(nextNoonOrMidnight())
 		case <-impl.corpTrigger:
 			impl.handleNotifyJob()
 			timer.Reset(nextNoonOrMidnight())
@@ -170,15 +170,6 @@ func (impl *notifyAdminWatchImpl) handleCorpSigning(link *repository.LinkCLA, co
 		corp.CLANotify = latestCLA.Id
 		corp.ClaNotifyCount = 0
 		corp.ClaNotifyTime = 0
-	}
-
-	if corp.ClaNotifyTime == 0 && corp.ClaNotifyCount == 0 && corp.CLANotify == latestCLA.Id {
-		corp.ClaNotifyCount = 1
-		corp.ClaNotifyTime = nowUnix
-		if err := impl.corpSigningRepo.UpdateCLANotify(corp); err != nil {
-			logs.Error("init cla_notify_count/time failed: ", corp.Id, err)
-		}
-		return
 	}
 
 	daysSinceLastNotify := 0
@@ -254,7 +245,7 @@ func (impl *notifyAdminWatchImpl) notifyIndividualSigner() {
 			return
 		case <-timer.C:
 			impl.handleIndividualNotifyJob()
-			timer.Reset(12 * time.Hour)
+			timer.Reset(nextNoonOrMidnight())
 		case <-impl.individualTrigger:
 			impl.handleIndividualNotifyJob()
 			timer.Reset(nextNoonOrMidnight())
@@ -321,16 +312,6 @@ func (impl *notifyAdminWatchImpl) handleIndividualSigning(link *repository.LinkC
 		is.ClaNotifyTime = 0
 	}
 
-	if is.ClaNotifyTime == 0 && is.ClaNotifyCount == 0 && is.ClaNotify == latestCLA.Id {
-		is.ClaNotifyCount = 1
-		is.ClaNotifyTime = nowUnix
-		if err := impl.individualRepo.UpdateCLANotify(is); err != nil {
-			logs.Error("init cla_notify_count/time failed: ", is.Rep.EmailAddr.EmailAddr(), err)
-		}
-		return
-	}
-
-	// 计算距离上次通知的天数
 	daysSinceLastNotify := 0
 	if is.ClaNotifyTime > 0 {
 		daysSinceLastNotify = int((nowUnix - is.ClaNotifyTime) / 86400)
@@ -354,13 +335,15 @@ func (impl *notifyAdminWatchImpl) handleIndividualSigning(link *repository.LinkC
 }
 
 func (impl *notifyAdminWatchImpl) isIndividualSigningLatest(latestCLAs []domain.CLA, signedInfo domain.CLAInfo) bool {
+	var matchedCLA *domain.CLA
 	for i := range latestCLAs {
 		if latestCLAs[i].Type == dp.CLATypeIndividual &&
 			latestCLAs[i].Language == signedInfo.Language {
-			return latestCLAs[i].Id == signedInfo.CLAId
+			matchedCLA = &latestCLAs[i]
+			break
 		}
 	}
-	return true
+	return matchedCLA != nil && matchedCLA.Id == signedInfo.CLAId
 }
 
 func (impl *notifyAdminWatchImpl) getLatestIndividualCLA(clas []domain.CLA, language dp.Language) *domain.CLA {

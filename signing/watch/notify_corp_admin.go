@@ -125,6 +125,9 @@ func (impl *notifyAdminWatchImpl) handleNotifyJob() {
 		}
 	}
 
+	sendCount := 0
+	batchSize := impl.config.genNotifyBatchSize()
+
 	links, err := impl.link.ListAll()
 	if err != nil {
 		logs.Error("list all link failed in notify job: ", err)
@@ -147,20 +150,26 @@ func (impl *notifyAdminWatchImpl) handleNotifyJob() {
 			if needStop() {
 				return
 			}
+			if sendCount >= batchSize {
+				logs.Info("corp notify job reached batch limit: %d", batchSize)
+				return
+			}
 
-			impl.handleCorpSigning(link, &corpsSummary[j])
+			if impl.handleCorpSigning(link, &corpsSummary[j]) {
+				sendCount++
+			}
 		}
 	}
 }
 
-func (impl *notifyAdminWatchImpl) handleCorpSigning(link *repository.LinkCLA, corp *repository.CorpSigningSummary) {
+func (impl *notifyAdminWatchImpl) handleCorpSigning(link *repository.LinkCLA, corp *repository.CorpSigningSummary) bool {
 	if impl.isCorpSigningLatest(link.Clas, corp.Link.CLAInfo) {
-		return
+		return false
 	}
 
 	latestCLA := impl.getLatestCorpCLA(link.Clas, corp.Link.Language)
 	if latestCLA == nil {
-		return
+		return false
 	}
 
 	remindDays := impl.config.genNotifyCorpAdminRemindDays()
@@ -178,12 +187,12 @@ func (impl *notifyAdminWatchImpl) handleCorpSigning(link *repository.LinkCLA, co
 	}
 
 	if daysSinceLastNotify < remindDays && corp.ClaNotifyCount > 0 {
-		return
+		return false
 	}
 
 	if err := impl.handleSendEmail(link, corp); err != nil {
 		logs.Error("send cla notify email failed:", corp.Id, err)
-		return
+		return false
 	}
 
 	corp.ClaNotifyCount++
@@ -191,6 +200,8 @@ func (impl *notifyAdminWatchImpl) handleCorpSigning(link *repository.LinkCLA, co
 	if err := impl.corpSigningRepo.UpdateCLANotify(corp); err != nil {
 		logs.Error("update cla notify failed: ", corp.Id, err)
 	}
+
+	return true
 }
 
 func (impl *notifyAdminWatchImpl) isCorpSigningLatest(latestCLAs []domain.CLA, signedInfo domain.CLAInfo) bool {
@@ -263,6 +274,9 @@ func (impl *notifyAdminWatchImpl) handleIndividualNotifyJob() {
 		}
 	}
 
+	sendCount := 0
+	batchSize := impl.config.genNotifyBatchSize()
+
 	links, err := impl.link.ListAll()
 	if err != nil {
 		logs.Error("list all link failed in individual notify job: ", err)
@@ -285,22 +299,28 @@ func (impl *notifyAdminWatchImpl) handleIndividualNotifyJob() {
 			if needStop() {
 				return
 			}
+			if sendCount >= batchSize {
+				logs.Info("individual notify job reached batch limit: %d", batchSize)
+				return
+			}
 
-			impl.handleIndividualSigning(link, &individuals[j])
+			if impl.handleIndividualSigning(link, &individuals[j]) {
+				sendCount++
+			}
 		}
 	}
 }
 
-func (impl *notifyAdminWatchImpl) handleIndividualSigning(link *repository.LinkCLA, is *domain.IndividualSigning) {
+func (impl *notifyAdminWatchImpl) handleIndividualSigning(link *repository.LinkCLA, is *domain.IndividualSigning) bool {
 	// 检查是否签署了最新版本
 	if impl.isIndividualSigningLatest(link.Clas, is.Link.CLAInfo) {
-		return
+		return false
 	}
 
 	// 获取当前 CLA 的更新时间
 	latestCLA := impl.getLatestIndividualCLA(link.Clas, is.Link.Language)
 	if latestCLA == nil {
-		return
+		return false
 	}
 
 	remindDays := impl.config.genNotifyIndividualRemindDays()
@@ -319,12 +339,12 @@ func (impl *notifyAdminWatchImpl) handleIndividualSigning(link *repository.LinkC
 
 	// 如果距上次通知不足 remindDays 天，跳过
 	if daysSinceLastNotify < remindDays && is.ClaNotifyCount > 0 {
-		return
+		return false
 	}
 
 	if err := impl.handleSendIndividualEmail(link, is, latestCLA); err != nil {
 		logs.Error("send individual cla notify email failed:", is.Rep.EmailAddr.EmailAddr(), err)
-		return
+		return false
 	}
 
 	is.ClaNotifyCount++
@@ -332,6 +352,8 @@ func (impl *notifyAdminWatchImpl) handleIndividualSigning(link *repository.LinkC
 	if err := impl.individualRepo.UpdateCLANotify(is); err != nil {
 		logs.Error("update individual cla notify failed: ", is.Rep.EmailAddr.EmailAddr(), err)
 	}
+
+	return true
 }
 
 func (impl *notifyAdminWatchImpl) isIndividualSigningLatest(latestCLAs []domain.CLA, signedInfo domain.CLAInfo) bool {

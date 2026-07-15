@@ -178,7 +178,7 @@ func (impl *notifyAdminWatchImpl) handleCorpSigning(link *repository.LinkCLA, co
 		return false
 	}
 
-	remindDays := impl.config.genNotifyCorpAdminRemindDays()
+	remindSeconds := impl.config.genNotifyCorpAdminRemindSeconds()
 	nowUnix := time.Now().Unix()
 
 	if corp.CLANotify != latestCLA.Id {
@@ -187,12 +187,8 @@ func (impl *notifyAdminWatchImpl) handleCorpSigning(link *repository.LinkCLA, co
 		corp.ClaNotifyTime = 0
 	}
 
-	daysSinceLastNotify := 0
-	if corp.ClaNotifyTime > 0 {
-		daysSinceLastNotify = int((nowUnix - corp.ClaNotifyTime) / 86400)
-	}
-
-	if daysSinceLastNotify < remindDays && corp.ClaNotifyCount > 0 {
+	elapsed := nowUnix - corp.ClaNotifyTime
+	if elapsed < int64(remindSeconds) && corp.ClaNotifyCount > 0 {
 		return false
 	}
 
@@ -335,7 +331,7 @@ func (impl *notifyAdminWatchImpl) handleIndividualSigning(link *repository.LinkC
 		return false
 	}
 
-	remindDays := impl.config.genNotifyIndividualRemindDays()
+	remindSeconds := impl.config.genNotifyIndividualRemindSeconds()
 	nowUnix := time.Now().Unix()
 
 	if is.ClaNotify != latestCLA.Id {
@@ -344,13 +340,8 @@ func (impl *notifyAdminWatchImpl) handleIndividualSigning(link *repository.LinkC
 		is.ClaNotifyTime = 0
 	}
 
-	daysSinceLastNotify := 0
-	if is.ClaNotifyTime > 0 {
-		daysSinceLastNotify = int((nowUnix - is.ClaNotifyTime) / 86400)
-	}
-
-	// 如果距上次通知不足 remindDays 天，跳过
-	if daysSinceLastNotify < remindDays && is.ClaNotifyCount > 0 {
+	elapsed := nowUnix - is.ClaNotifyTime
+	if elapsed < int64(remindSeconds) && is.ClaNotifyCount > 0 {
 		return false
 	}
 

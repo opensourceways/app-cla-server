@@ -51,13 +51,15 @@ func (cfg *CLAUpdateConfig) genAllDiffInterval() time.Duration {
 }
 
 type NotifyAdminConfig struct {
-	SendEmailInterval          int      `json:"send_email_interval"`
-	NotifyCorpAdminInterval    int      `json:"notify_corp_admin_interval"`
-	NotifyIndividualInterval   int      `json:"notify_individual_interval"`
-	NotifyIndividualRemindDays int      `json:"notify_individual_remind_days"`
-	NotifyCorpAdminRemindDays  int      `json:"notify_corp_admin_remind_days"`
-	NotifyBatchSize            int      `json:"notify_batch_size"`
-	EnabledCommunityOrgs       []string `json:"enabled_community_orgs"`
+	SendEmailInterval            int      `json:"send_email_interval"`
+	NotifyCorpAdminInterval      int      `json:"notify_corp_admin_interval"`
+	NotifyIndividualInterval     int      `json:"notify_individual_interval"`
+	NotifyIndividualRemindDays   int      `json:"notify_individual_remind_days"`
+	NotifyCorpAdminRemindDays    int      `json:"notify_corp_admin_remind_days"`
+	NotifyCorpAdminRemindSeconds int      `json:"notify_corp_admin_remind_seconds"`
+	NotifyIndividualRemindSeconds int     `json:"notify_individual_remind_seconds"`
+	NotifyBatchSize              int      `json:"notify_batch_size"`
+	EnabledCommunityOrgs         []string `json:"enabled_community_orgs"`
 }
 
 func (cfg *NotifyAdminConfig) SetDefault() {
@@ -104,6 +106,20 @@ func (cfg *NotifyAdminConfig) genNotifyIndividualRemindDays() int {
 
 func (cfg *NotifyAdminConfig) genNotifyCorpAdminRemindDays() int {
 	return cfg.NotifyCorpAdminRemindDays
+}
+
+func (cfg *NotifyAdminConfig) genNotifyCorpAdminRemindSeconds() int {
+	if cfg.NotifyCorpAdminRemindSeconds > 0 {
+		return cfg.NotifyCorpAdminRemindSeconds
+	}
+	return cfg.NotifyCorpAdminRemindDays * 86400
+}
+
+func (cfg *NotifyAdminConfig) genNotifyIndividualRemindSeconds() int {
+	if cfg.NotifyIndividualRemindSeconds > 0 {
+		return cfg.NotifyIndividualRemindSeconds
+	}
+	return cfg.NotifyIndividualRemindDays * 86400
 }
 
 func (cfg *NotifyAdminConfig) genNotifyBatchSize() int {

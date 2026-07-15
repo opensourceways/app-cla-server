@@ -51,12 +51,13 @@ func (cfg *CLAUpdateConfig) genAllDiffInterval() time.Duration {
 }
 
 type NotifyAdminConfig struct {
-	SendEmailInterval          int `json:"send_email_interval"`
-	NotifyCorpAdminInterval    int `json:"notify_corp_admin_interval"`
-	NotifyIndividualInterval   int `json:"notify_individual_interval"`
-	NotifyIndividualRemindDays int `json:"notify_individual_remind_days"`
-	NotifyCorpAdminRemindDays  int `json:"notify_corp_admin_remind_days"`
-	NotifyBatchSize            int `json:"notify_batch_size"`
+	SendEmailInterval          int      `json:"send_email_interval"`
+	NotifyCorpAdminInterval    int      `json:"notify_corp_admin_interval"`
+	NotifyIndividualInterval   int      `json:"notify_individual_interval"`
+	NotifyIndividualRemindDays int      `json:"notify_individual_remind_days"`
+	NotifyCorpAdminRemindDays  int      `json:"notify_corp_admin_remind_days"`
+	NotifyBatchSize            int      `json:"notify_batch_size"`
+	EnabledCommunityOrgs       []string `json:"enabled_community_orgs"`
 }
 
 func (cfg *NotifyAdminConfig) SetDefault() {
@@ -107,4 +108,18 @@ func (cfg *NotifyAdminConfig) genNotifyCorpAdminRemindDays() int {
 
 func (cfg *NotifyAdminConfig) genNotifyBatchSize() int {
 	return cfg.NotifyBatchSize
+}
+
+func (cfg *NotifyAdminConfig) isCommunityEnabled(alias string) bool {
+	if len(cfg.EnabledCommunityOrgs) == 0 {
+		return true
+	}
+
+	for _, org := range cfg.EnabledCommunityOrgs {
+		if org == alias {
+			return true
+		}
+	}
+
+	return false
 }

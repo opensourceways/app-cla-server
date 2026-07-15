@@ -98,7 +98,8 @@ func (impl *notifyAdminWatchImpl) exit() {
 }
 
 func (impl *notifyAdminWatchImpl) notifyCorpAdmin() {
-	timer := time.NewTimer(nextNoonOrMidnight())
+	interval := impl.config.genNotifyCorpAdminInterval()
+	timer := time.NewTimer(impl.initialDelay(interval))
 	for {
 		select {
 		case <-impl.stop:
@@ -107,10 +108,10 @@ func (impl *notifyAdminWatchImpl) notifyCorpAdmin() {
 			return
 		case <-timer.C:
 			impl.handleNotifyJob()
-			timer.Reset(nextNoonOrMidnight())
+			timer.Reset(impl.nextDelay(interval))
 		case <-impl.corpTrigger:
 			impl.handleNotifyJob()
-			timer.Reset(nextNoonOrMidnight())
+			timer.Reset(impl.nextDelay(interval))
 		}
 	}
 }
@@ -140,6 +141,11 @@ func (impl *notifyAdminWatchImpl) handleNotifyJob() {
 		}
 
 		link := &links[i]
+
+		if !impl.config.isCommunityEnabled(link.Org.Alias) {
+			continue
+		}
+
 		corpsSummary, err := impl.corpSigningRepo.FindAll(link.Id)
 		if err != nil {
 			logs.Error("list corp signing failed in notify job:", link.Id, err)
@@ -247,7 +253,8 @@ func (impl *notifyAdminWatchImpl) handleSendEmail(link *repository.LinkCLA, corp
 }
 
 func (impl *notifyAdminWatchImpl) notifyIndividualSigner() {
-	timer := time.NewTimer(nextNoonOrMidnight())
+	interval := impl.config.genNotifyIndividualInterval()
+	timer := time.NewTimer(impl.initialDelay(interval))
 	for {
 		select {
 		case <-impl.stop:
@@ -256,10 +263,10 @@ func (impl *notifyAdminWatchImpl) notifyIndividualSigner() {
 			return
 		case <-timer.C:
 			impl.handleIndividualNotifyJob()
-			timer.Reset(nextNoonOrMidnight())
+			timer.Reset(impl.nextDelay(interval))
 		case <-impl.individualTrigger:
 			impl.handleIndividualNotifyJob()
-			timer.Reset(nextNoonOrMidnight())
+			timer.Reset(impl.nextDelay(interval))
 		}
 	}
 }
@@ -289,6 +296,11 @@ func (impl *notifyAdminWatchImpl) handleIndividualNotifyJob() {
 		}
 
 		link := &links[i]
+
+		if !impl.config.isCommunityEnabled(link.Org.Alias) {
+			continue
+		}
+
 		individuals, err := impl.individualRepo.FindAll(link.Id)
 		if err != nil {
 			logs.Error("list individual signing failed in notify job:", link.Id, err)
@@ -446,4 +458,22 @@ func nextNoonOrMidnight() time.Duration {
 		return noon.Sub(now)
 	}
 	return midnight.Sub(now)
+}
+
+// initialDelay 计算首次扫描的延迟。若 interval 为默认 86400（生产模式），
+// 使用中午/凌晨对齐策略；否则直接使用配置的 interval（测试环境可配为短间隔）。
+func (impl *notifyAdminWatchImpl) initialDelay(interval time.Duration) time.Duration {
+	if interval >= 86400*time.Second {
+		return nextNoonOrMidnight()
+	}
+	return interval
+}
+
+// nextDelay 计算后续扫描的间隔。生产模式用 12 小时（保证每日 2 次），
+// 测试模式直接使用配置的 interval。
+func (impl *notifyAdminWatchImpl) nextDelay(interval time.Duration) time.Duration {
+	if interval >= 86400*time.Second {
+		return 12 * time.Hour
+	}
+	return interval
 }

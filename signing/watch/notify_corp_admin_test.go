@@ -9,10 +9,11 @@ import (
 )
 
 func newTestImpl() *notifyAdminWatchImpl {
+	remindDays := 90
 	return &notifyAdminWatchImpl{
 		config: &NotifyAdminConfig{
-			NotifyCorpAdminRemindDays:  90,
-			NotifyIndividualRemindDays: 90,
+			NotifyCorpAdminRemindDays:  &remindDays,
+			NotifyIndividualRemindDays: &remindDays,
 			NotifyBatchSize:            500,
 		},
 		defaultGracePeriodDays: 30,

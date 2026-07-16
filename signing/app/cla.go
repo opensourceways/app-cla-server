@@ -62,11 +62,13 @@ func (s *claService) Update(cmd *CmdToUpdateCLA) error {
 		return err
 	}
 
-	if err = s.cs.SetPendingCLAForLink(cmd.LinkId, cla.Id); err != nil {
-		logs.Error("set pending CLA for link failed: %s, err: %v", cmd.LinkId, err)
+	if !dp.IsCLATypeIndividual(cla.Type) {
+		if err = s.cs.SetPendingCLAForLink(cmd.LinkId, cla.Id); err != nil {
+			logs.Error("set pending CLA for link failed: %s, err: %v", cmd.LinkId, err)
+		}
 	}
 
-	watch.TriggerNotify()
+	watch.TriggerNotify(cla.Type)
 
 	return nil
 }

@@ -50,18 +50,22 @@ func NotifyAdminWatchStop() {
 }
 
 // TriggerNotify 立即触发一次通知扫描，不等待定时器周期。
-// CLA 更新后应调用此函数，确保企业和个人都在最短时间内收到通知。
-func TriggerNotify() {
+// t 指定要触发的 CLA 类型，只触发对应类型的扫描器。
+func TriggerNotify(t dp.CLAType) {
 	if notifyAdminWatchInstance == nil {
 		return
 	}
-	select {
-	case notifyAdminWatchInstance.corpTrigger <- struct{}{}:
-	default:
+	if !dp.IsCLATypeIndividual(t) {
+		select {
+		case notifyAdminWatchInstance.corpTrigger <- struct{}{}:
+		default:
+		}
 	}
-	select {
-	case notifyAdminWatchInstance.individualTrigger <- struct{}{}:
-	default:
+	if dp.IsCLATypeIndividual(t) {
+		select {
+		case notifyAdminWatchInstance.individualTrigger <- struct{}{}:
+		default:
+		}
 	}
 }
 
@@ -515,4 +519,24 @@ func (impl *notifyAdminWatchImpl) nextDelay(interval time.Duration) time.Duratio
 		return 12 * time.Hour
 	}
 	return interval
+}
+
+func (impl *notifyAdminWatchImpl) getEffectiveGracePeriodDays(link *repository.LinkCLA) int {
+	return link.GetEffectiveGracePeriodDays(impl.defaultGracePeriodDays)
+}
+
+func (impl *notifyAdminWatchImpl) getLatestCorpClaId(link *repository.LinkCLA, language dp.Language) string {
+	cla := impl.getLatestCorpCLA(link.Clas, language)
+	if cla == nil {
+		return ""
+	}
+	return cla.Id
+}
+
+func (impl *notifyAdminWatchImpl) getLatestIndividualClaId(link *repository.LinkCLA, language dp.Language) string {
+	cla := impl.getLatestIndividualCLA(link.Clas, language)
+	if cla == nil {
+		return ""
+	}
+	return cla.Id
 }

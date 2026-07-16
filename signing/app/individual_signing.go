@@ -86,16 +86,17 @@ func (s *individualSigningService) AgreeNewCLA(cmd *CmdToSignIndividualCLA) erro
 		return err
 	}
 
-	if !s.cla.ContainsCla(cmd.Link.Id, cmd.Link.CLAId) {
-		return domain.NewDomainError(domain.ErrorCodeCLANotExists)
-	}
-
 	sign, err := s.repo.Find(cmd.Link.Id, cmd.Rep.EmailAddr)
 	if err != nil {
 		return err
 	}
 
-	if err = sign.AgreeNewCLA(cmd.Link.CLAId); err != nil {
+	latestClaId := s.cla.GetClaId(sign.Link.Id, dp.CLATypeIndividual, sign.Link.Language)
+	if latestClaId == "" {
+		return domain.NewDomainError(domain.ErrorCodeCLANotExists)
+	}
+
+	if err = sign.AgreeNewCLA(latestClaId); err != nil {
 		return err
 	}
 

@@ -368,7 +368,7 @@ func (impl *notifyAdminWatchImpl) handleIndividualSigning(link *repository.LinkC
 	}
 
 	if impl.config.genNotifyEmailTo() != "" {
-		logs.Info("skip updating cla notify record, email sent to configured address: %s, individual signing: %s", impl.config.genNotifyEmailTo(), is.Rep.EmailAddr.EmailAddr())
+		logs.Info("skip updating cla notify record, email sent to configured")
 		return true
 	}
 

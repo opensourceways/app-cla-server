@@ -27,7 +27,6 @@ func TestIndividualSignedJSONSerialization(t *testing.T) {
 				Type:           "corporation",
 				Signed:         true,
 				VersionMatched: true,
-				Status:         "valid",
 			},
 			want: map[string]interface{}{
 				"type":            "corporation",
@@ -42,7 +41,6 @@ func TestIndividualSignedJSONSerialization(t *testing.T) {
 				Type:           "corporation",
 				Signed:         true,
 				VersionMatched: false,
-				Status:         "expired",
 			},
 			want: map[string]interface{}{
 				"type":            "corporation",
@@ -57,7 +55,6 @@ func TestIndividualSignedJSONSerialization(t *testing.T) {
 				Type:           "individual",
 				Signed:         false,
 				VersionMatched: false,
-				Status:         "not_signed",
 			},
 			want: map[string]interface{}{
 				"type":            "individual",
@@ -106,7 +103,6 @@ func TestIndividualSignedDebugInfoOmittedWhenNil(t *testing.T) {
 		Type:           "individual",
 		Signed:         true,
 		VersionMatched: true,
-		Status:         "valid",
 	}
 
 	raw, err := json.Marshal(in)

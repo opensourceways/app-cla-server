@@ -30,6 +30,14 @@ func NotifyAdminWatchStart(cfg *NotifyAdminConfig, lk repoLink, corp corpSigning
 		individualTrigger:      make(chan struct{}, 1),
 	}
 
+	logs.Info("notify admin watch config: interval_corp=%ds interval_ind=%ds remind_corp=%dd remind_ind=%dd batch=%d communities=%v",
+		int(cfg.genNotifyCorpAdminInterval().Seconds()),
+		int(cfg.genNotifyIndividualInterval().Seconds()),
+		cfg.genNotifyCorpAdminRemindDays(),
+		cfg.genNotifyIndividualRemindDays(),
+		cfg.genNotifyBatchSize(),
+		cfg.EnabledCommunityOrgs)
+
 	notifyAdminWatchInstance.start()
 }
 
@@ -42,18 +50,22 @@ func NotifyAdminWatchStop() {
 }
 
 // TriggerNotify 立即触发一次通知扫描，不等待定时器周期。
-// CLA 更新后应调用此函数，确保企业和个人都在最短时间内收到通知。
-func TriggerNotify() {
+// t 指定要触发的 CLA 类型，只触发对应类型的扫描器。
+func TriggerNotify(t dp.CLAType) {
 	if notifyAdminWatchInstance == nil {
 		return
 	}
-	select {
-	case notifyAdminWatchInstance.corpTrigger <- struct{}{}:
-	default:
+	if !dp.IsCLATypeIndividual(t) {
+		select {
+		case notifyAdminWatchInstance.corpTrigger <- struct{}{}:
+		default:
+		}
 	}
-	select {
-	case notifyAdminWatchInstance.individualTrigger <- struct{}{}:
-	default:
+	if dp.IsCLATypeIndividual(t) {
+		select {
+		case notifyAdminWatchInstance.individualTrigger <- struct{}{}:
+		default:
+		}
 	}
 }
 
@@ -135,6 +147,8 @@ func (impl *notifyAdminWatchImpl) handleNotifyJob() {
 		return
 	}
 
+	logs.Debug("corp notify job start, links=%d, batch=%d", len(links), batchSize)
+
 	for i := range links {
 		if needStop() {
 			return
@@ -152,6 +166,8 @@ func (impl *notifyAdminWatchImpl) handleNotifyJob() {
 			continue
 		}
 
+		logs.Debug("corp notify: link=%s org=%s, signings=%d", link.Id, link.Org.Alias, len(corpsSummary))
+
 		for j := range corpsSummary {
 			if needStop() {
 				return
@@ -166,6 +182,8 @@ func (impl *notifyAdminWatchImpl) handleNotifyJob() {
 			}
 		}
 	}
+
+	logs.Debug("corp notify job done, sent=%d", sendCount)
 }
 
 func (impl *notifyAdminWatchImpl) handleCorpSigning(link *repository.LinkCLA, corp *repository.CorpSigningSummary) bool {
@@ -175,6 +193,7 @@ func (impl *notifyAdminWatchImpl) handleCorpSigning(link *repository.LinkCLA, co
 
 	latestCLA := impl.getLatestCorpCLA(link.Clas, corp.Link.Language)
 	if latestCLA == nil {
+		logs.Debug("corp notify skip: no matching CLA, link=%s corp=%s lang=%s", link.Id, corp.Id, corp.Link.Language.Language())
 		return false
 	}
 
@@ -185,6 +204,7 @@ func (impl *notifyAdminWatchImpl) handleCorpSigning(link *repository.LinkCLA, co
 		corp.CLANotify = latestCLA.Id
 		corp.ClaNotifyCount = 0
 		corp.ClaNotifyTime = 0
+		logs.Debug("corp notify reset: corp=%s old_notify=%s new_notify=%s", corp.Id, corp.CLANotify, latestCLA.Id)
 	}
 
 	daysSinceLastNotify := 0
@@ -193,6 +213,7 @@ func (impl *notifyAdminWatchImpl) handleCorpSigning(link *repository.LinkCLA, co
 	}
 
 	if daysSinceLastNotify < remindDays && corp.ClaNotifyCount > 0 {
+		logs.Debug("corp notify skip: in cool-down, corp=%s count=%d days=%d remind=%d", corp.Id, corp.ClaNotifyCount, daysSinceLastNotify, remindDays)
 		return false
 	}
 
@@ -293,6 +314,8 @@ func (impl *notifyAdminWatchImpl) handleIndividualNotifyJob() {
 		return
 	}
 
+	logs.Debug("individual notify job start, links=%d, batch=%d", len(links), batchSize)
+
 	for i := range links {
 		if needStop() {
 			return
@@ -310,6 +333,8 @@ func (impl *notifyAdminWatchImpl) handleIndividualNotifyJob() {
 			continue
 		}
 
+		logs.Debug("individual notify: link=%s org=%s, signings=%d", link.Id, link.Org.Alias, len(individuals))
+
 		for j := range individuals {
 			if needStop() {
 				return
@@ -324,19 +349,23 @@ func (impl *notifyAdminWatchImpl) handleIndividualNotifyJob() {
 			}
 		}
 	}
+
+	logs.Debug("individual notify job done, sent=%d", sendCount)
 }
 
 func (impl *notifyAdminWatchImpl) handleIndividualSigning(link *repository.LinkCLA, is *domain.IndividualSigning) bool {
-	// 检查是否签署了最新版本
 	if impl.isIndividualSigningLatest(link.Clas, is.Link.CLAInfo) {
 		return false
 	}
 
-	// 获取当前 CLA 的更新时间
 	latestCLA := impl.getLatestIndividualCLA(link.Clas, is.Link.Language)
 	if latestCLA == nil {
+		logs.Debug("individual notify skip: no matching CLA, link=%s email=%s lang=%s", link.Id, is.Rep.EmailAddr.EmailAddr(), is.Link.Language.Language())
 		return false
 	}
+
+	logs.Info("individual notify candidate: email=%s signed_cla=%s latest_cla=%s cla_notify=%s count=%d time=%d",
+		is.Rep.EmailAddr.EmailAddr(), is.Link.CLAId, latestCLA.Id, is.ClaNotify, is.ClaNotifyCount, is.ClaNotifyTime)
 
 	remindDays := impl.config.genNotifyIndividualRemindDays()
 	nowUnix := time.Now().Unix()
@@ -345,6 +374,7 @@ func (impl *notifyAdminWatchImpl) handleIndividualSigning(link *repository.LinkC
 		is.ClaNotify = latestCLA.Id
 		is.ClaNotifyCount = 0
 		is.ClaNotifyTime = 0
+		logs.Debug("individual notify reset: email=%s old_notify=%s new_notify=%s", is.Rep.EmailAddr.EmailAddr(), is.ClaNotify, latestCLA.Id)
 	}
 
 	daysSinceLastNotify := 0
@@ -354,6 +384,7 @@ func (impl *notifyAdminWatchImpl) handleIndividualSigning(link *repository.LinkC
 
 	// 如果距上次通知不足 remindDays 天，跳过
 	if daysSinceLastNotify < remindDays && is.ClaNotifyCount > 0 {
+		logs.Debug("individual notify skip: in cool-down, email=%s count=%d days=%d remind=%d", is.Rep.EmailAddr.EmailAddr(), is.ClaNotifyCount, daysSinceLastNotify, remindDays)
 		return false
 	}
 
@@ -367,6 +398,8 @@ func (impl *notifyAdminWatchImpl) handleIndividualSigning(link *repository.LinkC
 	if err := impl.individualRepo.UpdateCLANotify(is); err != nil {
 		logs.Error("update individual cla notify failed: ", is.Rep.EmailAddr.EmailAddr(), err)
 	}
+
+	logs.Info("individual notify sent: email=%s link=%s count=%d", is.Rep.EmailAddr.EmailAddr(), link.Id, is.ClaNotifyCount)
 
 	return true
 }
@@ -486,4 +519,24 @@ func (impl *notifyAdminWatchImpl) nextDelay(interval time.Duration) time.Duratio
 		return 12 * time.Hour
 	}
 	return interval
+}
+
+func (impl *notifyAdminWatchImpl) getEffectiveGracePeriodDays(link *repository.LinkCLA) int {
+	return link.GetEffectiveGracePeriodDays(impl.defaultGracePeriodDays)
+}
+
+func (impl *notifyAdminWatchImpl) getLatestCorpClaId(link *repository.LinkCLA, language dp.Language) string {
+	cla := impl.getLatestCorpCLA(link.Clas, language)
+	if cla == nil {
+		return ""
+	}
+	return cla.Id
+}
+
+func (impl *notifyAdminWatchImpl) getLatestIndividualClaId(link *repository.LinkCLA, language dp.Language) string {
+	cla := impl.getLatestIndividualCLA(link.Clas, language)
+	if cla == nil {
+		return ""
+	}
+	return cla.Id
 }

@@ -352,6 +352,9 @@ func (impl *notifyAdminWatchImpl) handleIndividualSigning(link *repository.LinkC
 		return false
 	}
 
+	logs.Info("individual notify candidate: email=%s signed_cla=%s latest_cla=%s cla_notify=%s count=%d time=%d",
+		is.Rep.EmailAddr.EmailAddr(), is.Link.CLAId, latestCLA.Id, is.ClaNotify, is.ClaNotifyCount, is.ClaNotifyTime)
+
 	remindDays := impl.config.genNotifyIndividualRemindDays()
 	nowUnix := time.Now().Unix()
 

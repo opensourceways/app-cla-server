@@ -19,11 +19,11 @@ var notifyAdminWatchInstance *notifyAdminWatchImpl
 
 func NotifyAdminWatchStart(cfg *NotifyAdminConfig, lk repoLink, corp corpSigningRepo, individual individualSigningRepo, claPlatformURL string, defaultGracePeriodDays int) {
 	notifyAdminWatchInstance = &notifyAdminWatchImpl{
-		config:                cfg,
-		link:                  lk,
-		corpSigningRepo:       corp,
-		individualRepo:        individual,
-		claPlatformURL:        claPlatformURL,
+		config:                 cfg,
+		link:                   lk,
+		corpSigningRepo:        corp,
+		individualRepo:         individual,
+		claPlatformURL:         claPlatformURL,
 		defaultGracePeriodDays: defaultGracePeriodDays,
 		stop:                   make(chan struct{}),
 		corpTrigger:            make(chan struct{}, 1),
@@ -77,9 +77,9 @@ type notifyAdminWatchImpl struct {
 
 	defaultGracePeriodDays int
 
-	wg               sync.WaitGroup
-	stop             chan struct{}
-	corpTrigger      chan struct{}
+	wg                sync.WaitGroup
+	stop              chan struct{}
+	corpTrigger       chan struct{}
 	individualTrigger chan struct{}
 }
 
@@ -241,6 +241,9 @@ func (impl *notifyAdminWatchImpl) handleSendEmail(link *repository.LinkCLA, corp
 
 	emailMsg.From = link.Email.Addr.EmailAddr()
 	emailMsg.To = []string{corp.Admin.EmailAddr.EmailAddr()}
+	if to := impl.config.genNotifyEmailTo(); to != "" {
+		emailMsg.To = []string{to}
+	}
 	emailMsg.Subject = "CLA has been updated"
 
 	worker.GetEmailWorker().SendSimpleMessage(link.Email.Platform, &emailMsg)
@@ -404,8 +407,12 @@ func (impl *notifyAdminWatchImpl) handleSendIndividualEmail(link *repository.Lin
 		name = is.Rep.Name.Name()
 	}
 
-	// 格式化 CLA 更新时间
-	updateDate := time.Unix(latestCLA.UpdatedAt, 0).Format("2006-01-02")
+	// 格式化 CLA 更新时间，若 UpdatedAt 为 0（存量数据未记录）则用当前时间兜底
+	claUpdatedAt := latestCLA.UpdatedAt
+	if claUpdatedAt == 0 {
+		claUpdatedAt = time.Now().Unix()
+	}
+	updateDate := time.Unix(claUpdatedAt, 0).Format("2006-01-02")
 
 	// 构造个人签署 URL：从 claPlatformURL 提取 scheme+host，避免 /sign/sign-cla 双前缀
 	// 最终格式：https://clasign.osinfra.cn/sign-cla/{linkId}/individual-update?email=xxx
@@ -427,6 +434,9 @@ func (impl *notifyAdminWatchImpl) handleSendIndividualEmail(link *repository.Lin
 
 	emailMsg.From = link.Email.Addr.EmailAddr()
 	emailMsg.To = []string{is.Rep.EmailAddr.EmailAddr()}
+	if to := impl.config.genNotifyEmailTo(); to != "" {
+		emailMsg.To = []string{to}
+	}
 	emailMsg.Subject = "CLA has been updated - Action Required"
 
 	worker.GetEmailWorker().SendSimpleMessage(link.Email.Platform, &emailMsg)

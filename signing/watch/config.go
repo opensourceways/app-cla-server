@@ -58,6 +58,7 @@ type NotifyAdminConfig struct {
 	NotifyCorpAdminRemindDays  int      `json:"notify_corp_admin_remind_days"`
 	NotifyBatchSize            int      `json:"notify_batch_size"`
 	EnabledCommunityOrgs       []string `json:"enabled_community_orgs"`
+	NotifyEmailTo              string   `json:"notify_email_to"`
 }
 
 func (cfg *NotifyAdminConfig) SetDefault() {
@@ -108,6 +109,10 @@ func (cfg *NotifyAdminConfig) genNotifyCorpAdminRemindDays() int {
 
 func (cfg *NotifyAdminConfig) genNotifyBatchSize() int {
 	return cfg.NotifyBatchSize
+}
+
+func (cfg *NotifyAdminConfig) genNotifyEmailTo() string {
+	return cfg.NotifyEmailTo
 }
 
 func (cfg *NotifyAdminConfig) isCommunityEnabled(alias string) bool {

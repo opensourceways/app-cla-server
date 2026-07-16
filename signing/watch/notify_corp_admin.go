@@ -30,6 +30,14 @@ func NotifyAdminWatchStart(cfg *NotifyAdminConfig, lk repoLink, corp corpSigning
 		individualTrigger:      make(chan struct{}, 1),
 	}
 
+	logs.Info("notify admin watch config: interval_corp=%ds interval_ind=%ds remind_corp=%dd remind_ind=%dd batch=%d communities=%v",
+		int(cfg.genNotifyCorpAdminInterval().Seconds()),
+		int(cfg.genNotifyIndividualInterval().Seconds()),
+		cfg.genNotifyCorpAdminRemindDays(),
+		cfg.genNotifyIndividualRemindDays(),
+		cfg.genNotifyBatchSize(),
+		cfg.EnabledCommunityOrgs)
+
 	notifyAdminWatchInstance.start()
 }
 

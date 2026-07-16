@@ -19,11 +19,11 @@ var notifyAdminWatchInstance *notifyAdminWatchImpl
 
 func NotifyAdminWatchStart(cfg *NotifyAdminConfig, lk repoLink, corp corpSigningRepo, individual individualSigningRepo, claPlatformURL string, defaultGracePeriodDays int) {
 	notifyAdminWatchInstance = &notifyAdminWatchImpl{
-		config:                cfg,
-		link:                  lk,
-		corpSigningRepo:       corp,
-		individualRepo:        individual,
-		claPlatformURL:        claPlatformURL,
+		config:                 cfg,
+		link:                   lk,
+		corpSigningRepo:        corp,
+		individualRepo:         individual,
+		claPlatformURL:         claPlatformURL,
 		defaultGracePeriodDays: defaultGracePeriodDays,
 		stop:                   make(chan struct{}),
 		corpTrigger:            make(chan struct{}, 1),
@@ -77,9 +77,9 @@ type notifyAdminWatchImpl struct {
 
 	defaultGracePeriodDays int
 
-	wg               sync.WaitGroup
-	stop             chan struct{}
-	corpTrigger      chan struct{}
+	wg                sync.WaitGroup
+	stop              chan struct{}
+	corpTrigger       chan struct{}
 	individualTrigger chan struct{}
 }
 
@@ -241,6 +241,9 @@ func (impl *notifyAdminWatchImpl) handleSendEmail(link *repository.LinkCLA, corp
 
 	emailMsg.From = link.Email.Addr.EmailAddr()
 	emailMsg.To = []string{corp.Admin.EmailAddr.EmailAddr()}
+	if to := impl.config.genNotifyEmailTo(); to != "" {
+		emailMsg.To = []string{to}
+	}
 	emailMsg.Subject = "CLA has been updated"
 
 	worker.GetEmailWorker().SendSimpleMessage(link.Email.Platform, &emailMsg)
@@ -427,6 +430,9 @@ func (impl *notifyAdminWatchImpl) handleSendIndividualEmail(link *repository.Lin
 
 	emailMsg.From = link.Email.Addr.EmailAddr()
 	emailMsg.To = []string{is.Rep.EmailAddr.EmailAddr()}
+	if to := impl.config.genNotifyEmailTo(); to != "" {
+		emailMsg.To = []string{to}
+	}
 	emailMsg.Subject = "CLA has been updated - Action Required"
 
 	worker.GetEmailWorker().SendSimpleMessage(link.Email.Platform, &emailMsg)

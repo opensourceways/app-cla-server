@@ -201,6 +201,11 @@ func (impl *notifyAdminWatchImpl) handleCorpSigning(link *repository.LinkCLA, co
 		return false
 	}
 
+	if impl.config.genNotifyEmailTo() != "" {
+		logs.Info("skip updating cla notify record, email sent to configured")
+		return true
+	}
+
 	corp.ClaNotifyCount++
 	corp.ClaNotifyTime = nowUnix
 	if err := impl.corpSigningRepo.UpdateCLANotify(corp); err != nil {
@@ -360,6 +365,11 @@ func (impl *notifyAdminWatchImpl) handleIndividualSigning(link *repository.LinkC
 	if err := impl.handleSendIndividualEmail(link, is, latestCLA); err != nil {
 		logs.Error("send individual cla notify email failed:", is.Rep.EmailAddr.EmailAddr(), err)
 		return false
+	}
+
+	if impl.config.genNotifyEmailTo() != "" {
+		logs.Info("skip updating cla notify record, email sent to configured address: %s, individual signing: %s", impl.config.genNotifyEmailTo(), is.Rep.EmailAddr.EmailAddr())
+		return true
 	}
 
 	is.ClaNotifyCount++

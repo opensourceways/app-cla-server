@@ -407,8 +407,12 @@ func (impl *notifyAdminWatchImpl) handleSendIndividualEmail(link *repository.Lin
 		name = is.Rep.Name.Name()
 	}
 
-	// 格式化 CLA 更新时间
-	updateDate := time.Unix(latestCLA.UpdatedAt, 0).Format("2006-01-02")
+	// 格式化 CLA 更新时间，若 UpdatedAt 为 0（存量数据未记录）则用当前时间兜底
+	claUpdatedAt := latestCLA.UpdatedAt
+	if claUpdatedAt == 0 {
+		claUpdatedAt = time.Now().Unix()
+	}
+	updateDate := time.Unix(claUpdatedAt, 0).Format("2006-01-02")
 
 	// 构造个人签署 URL：从 claPlatformURL 提取 scheme+host，避免 /sign/sign-cla 双前缀
 	// 最终格式：https://clasign.osinfra.cn/sign-cla/{linkId}/individual-update?email=xxx

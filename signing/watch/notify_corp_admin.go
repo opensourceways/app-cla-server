@@ -26,8 +26,6 @@ func NotifyAdminWatchStart(cfg *NotifyAdminConfig, lk repoLink, corp corpSigning
 		claPlatformURL:         claPlatformURL,
 		defaultGracePeriodDays: defaultGracePeriodDays,
 		stop:                   make(chan struct{}),
-		corpTrigger:            make(chan struct{}, 1),
-		individualTrigger:      make(chan struct{}, 1),
 	}
 
 	notifyAdminWatchInstance.start()
@@ -38,22 +36,6 @@ func NotifyAdminWatchStop() {
 		notifyAdminWatchInstance.exit()
 
 		logs.Info("stop watching send email")
-	}
-}
-
-// TriggerNotify 立即触发一次通知扫描，不等待定时器周期。
-// CLA 更新后应调用此函数，确保企业和个人都在最短时间内收到通知。
-func TriggerNotify() {
-	if notifyAdminWatchInstance == nil {
-		return
-	}
-	select {
-	case notifyAdminWatchInstance.corpTrigger <- struct{}{}:
-	default:
-	}
-	select {
-	case notifyAdminWatchInstance.individualTrigger <- struct{}{}:
-	default:
 	}
 }
 
@@ -77,10 +59,8 @@ type notifyAdminWatchImpl struct {
 
 	defaultGracePeriodDays int
 
-	wg                sync.WaitGroup
-	stop              chan struct{}
-	corpTrigger       chan struct{}
-	individualTrigger chan struct{}
+	wg   sync.WaitGroup
+	stop chan struct{}
 }
 
 func (impl *notifyAdminWatchImpl) start() {
@@ -107,9 +87,6 @@ func (impl *notifyAdminWatchImpl) notifyCorpAdmin() {
 			impl.wg.Done()
 			return
 		case <-timer.C:
-			impl.handleNotifyJob()
-			timer.Reset(impl.nextDelay(interval))
-		case <-impl.corpTrigger:
 			impl.handleNotifyJob()
 			timer.Reset(impl.nextDelay(interval))
 		}
@@ -270,9 +247,6 @@ func (impl *notifyAdminWatchImpl) notifyIndividualSigner() {
 			impl.wg.Done()
 			return
 		case <-timer.C:
-			impl.handleIndividualNotifyJob()
-			timer.Reset(impl.nextDelay(interval))
-		case <-impl.individualTrigger:
 			impl.handleIndividualNotifyJob()
 			timer.Reset(impl.nextDelay(interval))
 		}

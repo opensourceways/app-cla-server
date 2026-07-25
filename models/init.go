@@ -28,7 +28,7 @@ type corpSigningAdapter interface {
 	FindCorpSummary(linkId string, email string) (interface{}, IModelError)
 	FindDiffCLAFile(signingId string) (string, IModelError)
 	Agree(signingId string) IModelError
-	UpdateRepresentative(userId, linkID, signingID string, opt *RepresentativeUpdateOption) IModelError
+	UpdateRepresentative(userId, linkID, signingID string, opt *RepresentativeUpdateOption) (*CorporationManagerCreateOption, IModelError)
 	FindPendingAgreements(userId, linkId string) ([]CorporationSigningPendingItem, IModelError)
 }
 

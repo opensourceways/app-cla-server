@@ -272,20 +272,25 @@ func getAllSigningInfo(
 	return r, nil
 }
 
-func (adapter *corpSigningAdatper) UpdateRepresentative(userId, linkID, signingID string, opt *models.RepresentativeUpdateOption) models.IModelError {
+func (adapter *corpSigningAdatper) UpdateRepresentative(userId, linkID, signingID string, opt *models.RepresentativeUpdateOption) (*models.CorporationManagerCreateOption, models.IModelError) {
 	if opt.RepName == "" || opt.RepEmail == "" {
-		return toModelError(errors.New("representative name and email are required"))
+		return nil, toModelError(errors.New("representative name and email are required"))
 	}
 
 	if _, err := dp.NewEmailAddr(opt.RepEmail); err != nil {
-		return toModelError(err)
+		return nil, toModelError(err)
 	}
 
-	err := adapter.s.UpdateRepresentative(userId, linkID, signingID, opt.RepName, opt.RepEmail)
+	created, err := adapter.s.UpdateRepresentative(userId, linkID, signingID, opt.RepName, opt.RepEmail)
 	if err != nil {
-		return toModelError(err)
+		return nil, toModelError(err)
 	}
-	return nil
+	if created == nil {
+		return nil, nil
+	}
+
+	r := toCorporationManagerCreateOption(created)
+	return &r, nil
 }
 
 func (adapter *corpSigningAdatper) FindPendingAgreements(userId, linkId string) ([]models.CorporationSigningPendingItem, models.IModelError) {

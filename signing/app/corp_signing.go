@@ -4,6 +4,8 @@ import (
 	"errors"
 	"time"
 
+	"github.com/beego/beego/v2/core/logs"
+
 	commonRepo "github.com/opensourceways/app-cla-server/common/domain/repository"
 	"github.com/opensourceways/app-cla-server/signing/domain"
 	"github.com/opensourceways/app-cla-server/signing/domain/claservice"
@@ -41,7 +43,7 @@ type CorpSigningService interface {
 	FindCorpSummary(cmd *CmdToFindCorpSummary) ([]CorpSummaryDTO, error)
 	FindDiffCLAFile(signingId string) (string, error)
 	AgreeWithLatestCLA(signingId string) error
-	UpdateRepresentative(userId, linkID, signingID, repName, repEmail string) error
+	UpdateRepresentative(userId, linkID, signingID, repName, repEmail string) (*ManagerDTO, error)
 	FindPendingAgreements(userId, linkId string) ([]CorpSigningPendingDTO, error)
 }
 
@@ -248,27 +250,27 @@ func (s *corpSigningService) AgreeWithLatestCLA(signingId string) error {
 	return s.repo.UpdateClaId(&signed)
 }
 
-func (s *corpSigningService) UpdateRepresentative(userId, linkID, signingID, repName, repEmail string) error {
+func (s *corpSigningService) UpdateRepresentative(userId, linkID, signingID, repName, repEmail string) (*ManagerDTO, error) {
 	// 权限验证 - 只有社区管理员可以操作
 	if _, err := checkIfCommunityManager(userId, linkID, s.linkRepo); err != nil {
-		return err
+		return nil, err
 	}
 
 	// 查找企业签名
 	cs, err := s.repo.Find(signingID)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	// 验证link_id匹配
 	if cs.Link.Id != linkID {
-		return commonRepo.NewErrorResourceNotFound(errors.New("signing not found"))
+		return nil, commonRepo.NewErrorResourceNotFound(errors.New("signing not found"))
 	}
 
 	// 创建新的代表信息
 	newRep, err := domain.NewRepresentative(repName, repEmail)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	oldEmail := cs.Rep.EmailAddr
@@ -283,17 +285,69 @@ func (s *corpSigningService) UpdateRepresentative(userId, linkID, signingID, rep
 
 	// 保存到数据库
 	if err := s.repo.Update(&cs); err != nil {
-		return err
+		return nil, err
 	}
 
-	// 同步更新 User 表中的邮箱
-	if cs.Admin.Id != "" {
+	// 无管理员账号或邮箱未变：无需同步 user 表
+	if cs.Admin.Id == "" || oldEmail.EmailAddr() == newRep.EmailAddr.EmailAddr() {
+		return nil, nil
+	}
+
+	// 旧邮箱对应账号已存在：复用并改写邮箱
+	exists, err := s.userService.IsAValidUser(cs.Link.Id, oldEmail)
+	if err != nil {
+		return nil, err
+	}
+	if exists {
 		if err := s.userService.UpdateEmail(cs.Link.Id, oldEmail, newRep.EmailAddr); err != nil {
-			return err
+			return nil, err
 		}
+		return nil, nil
 	}
 
-	return nil
+	// 旧账号缺失（未预置/迁移遗留）：为当前管理员新建账号
+	logs.Info(
+		"create user account for the new representative, since the old email(%s) is not found, link_id: %s, signing_id: %s",
+		oldEmail.EmailAddr(), cs.Link.Id, signingID,
+	)
+
+	pws, _, err := s.userService.Add(cs.Link.Id, signingID, []domain.Manager{cs.Admin})
+	if err == nil {
+		account, aerr := cs.Admin.Account()
+		if aerr != nil {
+			return nil, aerr
+		}
+
+		admin := &cs.Admin
+		return &ManagerDTO{
+			Role:      domain.RoleAdmin,
+			Name:      admin.Name.Name(),
+			Account:   account.Account(),
+			Password:  pws[admin.Id].Password(),
+			EmailAddr: admin.EmailAddr.EmailAddr(),
+		}, nil
+	}
+
+	// 新建失败且为账号重复（存在邮箱漂移的孤儿管理员账号）：
+	// 按新账号定位孤儿并改写其邮箱，复用已有账号
+	if domain.IsErrorOf(err, domain.ErrorCodeUserExists) {
+		account, aerr := cs.Admin.Account()
+		if aerr != nil {
+			return nil, aerr
+		}
+
+		logs.Info(
+			"fallback to update email by account(%s) for orphan admin, link_id: %s",
+			account.Account(), cs.Link.Id,
+		)
+
+		if uerr := s.userService.UpdateEmailByAccount(cs.Link.Id, account, newRep.EmailAddr); uerr != nil {
+			return nil, uerr
+		}
+		return nil, nil
+	}
+
+	return nil, err
 }
 
 func (s *corpSigningService) FindPendingAgreements(userId, linkId string) ([]CorpSigningPendingDTO, error) {

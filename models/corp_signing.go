@@ -63,7 +63,7 @@ type RepresentativeUpdateOption struct {
 	RepEmail string `json:"rep_email" valid:"Required;Email"`
 }
 
-func UpdateCorpRepresentative(userId, linkID, signingID string, opt *RepresentativeUpdateOption) IModelError {
+func UpdateCorpRepresentative(userId, linkID, signingID string, opt *RepresentativeUpdateOption) (*CorporationManagerCreateOption, IModelError) {
 	return corpSigningAdapterInstance.UpdateRepresentative(userId, linkID, signingID, opt)
 }
 

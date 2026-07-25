@@ -3,6 +3,8 @@ package controllers
 import (
 	"strings"
 
+	"github.com/beego/beego/v2/core/logs"
+
 	"github.com/opensourceways/app-cla-server/models"
 	"github.com/opensourceways/app-cla-server/signing/domain/dp"
 	"github.com/opensourceways/app-cla-server/worker"
@@ -365,10 +367,20 @@ func (ctl *CorporationSigningController) UpdateRepresentative() {
 		return
 	}
 
-	if merr := models.UpdateCorpRepresentative(pl.UserId, linkID, signingID, &opt); merr != nil {
+	if created, merr := models.UpdateCorpRepresentative(pl.UserId, linkID, signingID, &opt); merr != nil {
 		ctl.sendModelErrorAsResp(merr, action)
 	} else {
 		ctl.sendSuccessResp(action, "representative updated successfully")
+
+		// 本次为新管理员补建了账号：发送账号通知邮件（best-effort）
+		if created != nil {
+			orgInfo, omerr := models.GetLink(linkID)
+			if omerr != nil {
+				logs.Error("get link info failed after updating representative, link_id: %s, err: %s", linkID, omerr.Error())
+			} else {
+				notifyCorpAdmin(linkID, &orgInfo, created)
+			}
+		}
 	}
 }
 

@@ -34,6 +34,7 @@ type UserService interface {
 	ChangePassword(index string, old, newOne dp.Password) error
 	ResetPassword(linkId string, email dp.EmailAddr, newOne dp.Password) error
 	UpdateEmail(linkId string, oldEmail, newEmail dp.EmailAddr) error
+	UpdateEmailByAccount(linkId string, account dp.Account, newEmail dp.EmailAddr) error
 }
 
 type userService struct {
@@ -168,6 +169,17 @@ func (s *userService) UpdateEmail(linkId string, oldEmail, newEmail dp.EmailAddr
 		}
 		u.Account = newAccount
 	}
+
+	return s.repo.Save(&u)
+}
+
+func (s *userService) UpdateEmailByAccount(linkId string, account dp.Account, newEmail dp.EmailAddr) error {
+	u, err := s.repo.FindByAccount(linkId, account)
+	if err != nil {
+		return err
+	}
+
+	u.EmailAddr = newEmail
 
 	return s.repo.Save(&u)
 }

@@ -253,6 +253,12 @@ func (impl *notifyAdminWatchImpl) handleSendEmail(link *repository.LinkCLA, corp
 
 	worker.GetEmailWorker().SendSimpleMessage(link.Email.Platform, &emailMsg)
 
+	// [audit] 记录企业 CLA 变更通知的发信意图（4W + CLA 上下文），便于审计追溯。
+	// 此时 corp.CLANotify 已在 handleCorpSigning 中更新为最新 CLA id。
+	logs.Info("[audit] cla_notify_email: scene=corp, link_id=%s, org=%s, corp_signing_id=%s, recipient=%s, from=%s, subject=%s, new_cla_id=%s, signed_cla_id=%s, notify_count=%d",
+		link.Id, link.Org.Alias, corp.Id, corp.Admin.EmailAddr.EmailAddr(),
+		emailMsg.From, emailMsg.Subject, corp.CLANotify, corp.Link.CLAInfo.CLAId, corp.ClaNotifyCount)
+
 	// Sending email is done in goroutine.
 	// Prevent the concurrency from being too high, which would cause the email server refused to serve.
 	time.Sleep(impl.config.genSendEmailInterval())
@@ -450,6 +456,11 @@ func (impl *notifyAdminWatchImpl) handleSendIndividualEmail(link *repository.Lin
 	emailMsg.Subject = "CLA has been updated - Action Required"
 
 	worker.GetEmailWorker().SendSimpleMessage(link.Email.Platform, &emailMsg)
+
+	// [audit] 记录个人 CLA 变更通知的发信意图（4W + CLA 上下文），便于审计追溯。
+	logs.Info("[audit] cla_notify_email: scene=individual, link_id=%s, org=%s, recipient=%s, from=%s, subject=%s, new_cla_id=%s, signed_cla_id=%s, notify_count=%d",
+		link.Id, link.Org.Alias, is.Rep.EmailAddr.EmailAddr(),
+		emailMsg.From, emailMsg.Subject, latestCLA.Id, is.Link.CLAInfo.CLAId, is.ClaNotifyCount)
 
 	time.Sleep(impl.config.genSendEmailInterval())
 

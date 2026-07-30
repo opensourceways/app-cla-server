@@ -18,7 +18,7 @@ RUN cd /go/src/github.com/opensourceways/app-cla-server && GO111MODULE=on /usr/l
 FROM openeuler/openeuler:22.03
 RUN dnf -y update && \
     dnf in -y shadow git python3 python3-pip && \
-    pip3 install git+https://github.com/py-pdf/pypdf.git@3.12.0 && \
+    pip3 install git+https://github.com/py-pdf/pypdf.git@6.14.2 && \
     dnf remove -y gdb-gdbserver && \
     groupadd -g 1000 cla && \
     useradd -u 1000 -g cla -s /sbin/nologin -m cla

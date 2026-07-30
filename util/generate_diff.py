@@ -5,14 +5,39 @@ from collections import defaultdict
 from pypdf import PdfReader
 
 
+def clean_extracted_text(text):
+    """清理提取的文本：连续空白行作为段落分隔，段内换行和空白去除"""
+    lines = text.split('\n')
+    paragraphs = []
+    current_para = []
+
+    for line in lines:
+        stripped = line.strip()
+        if stripped:
+            current_para.append(stripped)
+        else:
+            if current_para:
+                para_text = ' '.join(current_para)
+                para_text = re.sub(r'\s+', '', para_text).strip()
+                paragraphs.append(para_text)
+                current_para = []
+
+    if current_para:
+        para_text = ' '.join(current_para)
+        para_text = re.sub(r'\s+', ' ', para_text).strip()
+        paragraphs.append(para_text)
+
+    return '\n\n'.join(paragraphs)
+
+
 def extract_text_from_pdf(pdf_path):
     """从PDF文件中提取文本"""
     reader = PdfReader(pdf_path)
     text = ""
     for page in reader.pages:
-        text += page.extract_text() + "\n"
+        text += page.extract_text(extraction_mode="layout") + "\n"
 
-    return text
+    return clean_extracted_text(text)
 
 def extract_text(pdf_path):
     """从PDF文件中提取文本"""
@@ -49,8 +74,8 @@ def generate_word_level_diff(text1, text2):
 
 def compare_texts(text1, text2):
     """比较两个文本并生成行内差异报告"""
-    lines1 = text1.splitlines()
-    lines2 = text2.splitlines()
+    lines1 = text1.split('\n')
+    lines2 = text2.split('\n')
 
     differ = difflib.Differ()
     diff = list(differ.compare(lines1, lines2))

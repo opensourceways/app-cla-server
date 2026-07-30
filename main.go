@@ -78,9 +78,9 @@ func main() {
 
 func loadConfig(f string) *config.Config {
 	cfg, err := config.Load(f)
-	err1 := os.Remove(f)
+	//err1 := os.Remove(f)
 
-	if err2 := util.MultiErrors(err, err1); err2 != nil {
+	if err2 := util.MultiErrors(err); err2 != nil {
 		logs.Error(err2)
 
 		return nil

@@ -1,33 +1,83 @@
 import sys
 import difflib
 import re
+import os
 from collections import defaultdict
 from pypdf import PdfReader
 
 
+def is_english(char):
+    """判断字符是否为英文字母"""
+    return 'a' <= char <= 'z' or 'A' <= char <= 'Z'
+
+def is_english_document(text):
+    """判断文档类型：英文字符超过50%则为英文文档"""
+    if not text:
+        return False
+    
+    total_chars = 0
+    english_chars = 0
+    
+    for char in text:
+        # 统计所有非空白字符
+        if not char.isspace():
+            total_chars += 1
+            # 统计英文字符
+            if is_english(char):
+                english_chars += 1
+    
+    # 如果没有字符，默认为中文
+    if total_chars == 0:
+        return False
+    
+    # 英文字符占比超过50%则为英文文档
+    return english_chars / total_chars > 0.5
+
 def clean_extracted_text(text):
-    """清理提取的文本：连续空白行作为段落分隔，段内换行和空白去除"""
-    lines = text.split('\n')
-    paragraphs = []
-    current_para = []
-
-    for line in lines:
-        stripped = line.strip()
-        if stripped:
-            current_para.append(stripped)
-        else:
-            if current_para:
-                para_text = ' '.join(current_para)
-                para_text = re.sub(r'\s+', '', para_text).strip()
-                paragraphs.append(para_text)
-                current_para = []
-
-    if current_para:
-        para_text = ' '.join(current_para)
-        para_text = re.sub(r'\s+', ' ', para_text).strip()
-        paragraphs.append(para_text)
-
-    return '\n\n'.join(paragraphs)
+    """清理提取的文本：按空白行分割段落，处理段落内的空白字符"""
+    
+    # 兼容linux(\n)和windows(\r\n)换行符，统一转换为\n
+    text = text.replace('\r\n', '\n').replace('\r', '\n')
+    
+    # 判断文档类型
+    is_english_doc = is_english_document(text)
+    
+    if is_english_doc:
+        # 英文文档：直接处理所有文本，不按空白行分割段落
+        # 将所有换行符替换为空格
+        text = text.replace('\n', ' ')
+        # 多个连续空格替换为一个空格
+        text = re.sub(r' +', ' ', text)
+        # 去除首尾空白
+        text = text.strip()
+        result_text = text
+    else:
+        # 中文文档：按空白行分割段落
+        paragraphs = re.split(r'\n\s*\n', text)
+        
+        processed_paragraphs = []
+        
+        for para in paragraphs:
+            # 去除段落前后的空白
+            para = para.strip()
+            if not para:
+                continue
+            
+            # 将回车换行符替换为空格（兼容Linux和Windows换行符）
+            para = para.replace('\r\n', ' ').replace('\r', ' ').replace('\n', ' ')
+            
+            # 多个连续空格替换为一个空格
+            para = re.sub(r' +', ' ', para)
+            
+            # 中文文档，去掉所有空格
+            para = para.replace(' ', '')
+            
+            processed_paragraphs.append(para)
+        
+        # 对每个段落遍历后，最后得到需要进行对比的文本
+        result_text = '\n\n'.join(processed_paragraphs)
+    
+    return result_text
 
 
 def extract_text_from_pdf(pdf_path):
@@ -36,7 +86,7 @@ def extract_text_from_pdf(pdf_path):
     text = ""
     for page in reader.pages:
         text += page.extract_text(extraction_mode="layout") + "\n"
-
+    
     return clean_extracted_text(text)
 
 def extract_text(pdf_path):

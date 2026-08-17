@@ -1,6 +1,6 @@
 module github.com/opensourceways/app-cla-server
 
-go 1.26.5
+go 1.26.6
 
 require (
 	github.com/beego/beego/v2 v2.3.6

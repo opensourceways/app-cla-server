@@ -12,6 +12,7 @@ import (
 	"github.com/opensourceways/app-cla-server/signing/domain/dp"
 	"github.com/opensourceways/app-cla-server/signing/domain/repository"
 	"github.com/opensourceways/app-cla-server/signing/infrastructure/emailtmpl"
+	"github.com/opensourceways/app-cla-server/util"
 	"github.com/opensourceways/app-cla-server/worker"
 )
 
@@ -256,7 +257,7 @@ func (impl *notifyAdminWatchImpl) handleSendEmail(link *repository.LinkCLA, corp
 	// [audit] 记录企业 CLA 变更通知的发信意图（4W + CLA 上下文），便于审计追溯。
 	// 此时 corp.CLANotify 已在 handleCorpSigning 中更新为最新 CLA id。
 	logs.Info("[audit] cla_notify_email: scene=corp, link_id=%s, org=%s, corp_signing_id=%s, recipient=%s, from=%s, subject=%s, new_cla_id=%s, signed_cla_id=%s, notify_count=%d",
-		link.Id, link.Org.Alias, corp.Id, corp.Admin.EmailAddr.EmailAddr(),
+		link.Id, link.Org.Alias, corp.Id, util.MaskEmail(corp.Admin.EmailAddr.EmailAddr()),
 		emailMsg.From, emailMsg.Subject, corp.CLANotify, corp.Link.CLAInfo.CLAId, corp.ClaNotifyCount)
 
 	// Sending email is done in goroutine.
@@ -459,7 +460,7 @@ func (impl *notifyAdminWatchImpl) handleSendIndividualEmail(link *repository.Lin
 
 	// [audit] 记录个人 CLA 变更通知的发信意图（4W + CLA 上下文），便于审计追溯。
 	logs.Info("[audit] cla_notify_email: scene=individual, link_id=%s, org=%s, recipient=%s, from=%s, subject=%s, new_cla_id=%s, signed_cla_id=%s, notify_count=%d",
-		link.Id, link.Org.Alias, is.Rep.EmailAddr.EmailAddr(),
+		link.Id, link.Org.Alias, util.MaskEmail(is.Rep.EmailAddr.EmailAddr()),
 		emailMsg.From, emailMsg.Subject, latestCLA.Id, is.Link.CLAInfo.CLAId, is.ClaNotifyCount)
 
 	time.Sleep(impl.config.genSendEmailInterval())

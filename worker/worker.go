@@ -31,6 +31,14 @@ func GetEmailWorker() IEmailWorker {
 	return worker
 }
 
+// SetEmailWorker 注入一个 email worker 实例（主要用于测试中替换为假 worker），
+// 返回还原函数以恢复原值。调用方应在测试结束后调用还原函数。
+func SetEmailWorker(w IEmailWorker) func() {
+	prev := worker
+	worker = w
+	return func() { worker = prev }
+}
+
 func Init(g pdf.IPDFGenerator) {
 	pdfGenerator = g
 
@@ -104,14 +112,20 @@ func (w *emailWorker) SendSimpleMessage(emailPlatform string, msg *EmailMessage)
 			return nil
 		}
 
-		w.tryToSendEmail(action)
+		// [audit] 据发信最终结果记录审计日志（成功 Info / 失败 Error），覆盖所有走 SendSimpleMessage 的邮件。
+		if w.tryToSendEmail(action) {
+			logs.Info("[audit] email_result: outcome=sent, platform=%s, to=%v, subject=%s", platform, msg1.To, msg1.Subject)
+		} else {
+			logs.Error("[audit] email_result: outcome=failed, platform=%s, to=%v, subject=%s", platform, msg1.To, msg1.Subject)
+		}
 	}
 
 	w.wg.Add(1)
 	go f(emailPlatform, *msg)
 }
 
-func (w *emailWorker) tryToSendEmail(action func() error) {
+// tryToSendEmail 执行带重试的发信动作，返回是否最终发送成功（true=成功，false=重试耗尽或被停止）。
+func (w *emailWorker) tryToSendEmail(action func() error) bool {
 	t := time.NewTimer(1 * time.Minute)
 	defer t.Stop()
 
@@ -125,7 +139,7 @@ func (w *emailWorker) tryToSendEmail(action func() error) {
 	for i := 0; i < 10; i++ {
 		err := action()
 		if err == nil {
-			break
+			return true
 		}
 
 		logs.Error(err)
@@ -134,8 +148,10 @@ func (w *emailWorker) tryToSendEmail(action func() error) {
 
 		select {
 		case <-w.stop:
-			return
+			return false
 		case <-t.C:
 		}
 	}
+
+	return false
 }

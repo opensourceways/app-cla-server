@@ -46,6 +46,22 @@ func EmailSuffix(email string) string {
 	return email
 }
 
+func MaskEmail(email string) string {
+	parts := strings.SplitN(email, "@", 2)
+	if len(parts) != 2 || parts[0] == "" || parts[1] == "" {
+		return email
+	}
+
+	local := parts[0]
+	suffix := parts[1]
+
+	if utf8.RuneCountInString(local) <= 4 {
+		return local + "***@" + suffix
+	}
+
+	return string([]rune(local)[:4]) + "***@" + suffix
+}
+
 func GenFilePath(dir, fileName string) string {
 	return filepath.Join(dir, fileName)
 }

@@ -100,8 +100,8 @@ func TestNotifyAdminConfigSetDefault(t *testing.T) {
 	if cfg.SendEmailInterval != 10 {
 		t.Errorf("SendEmailInterval: got %d, want 10", cfg.SendEmailInterval)
 	}
-	if cfg.NotifyCorpAdminInterval != 1200 {
-		t.Errorf("NotifyCorpAdminInterval: got %d, want 1200", cfg.NotifyCorpAdminInterval)
+	if cfg.NotifyCorpAdminInterval != 86400 {
+		t.Errorf("NotifyCorpAdminInterval: got %d, want 86400", cfg.NotifyCorpAdminInterval)
 	}
 	if cfg.NotifyIndividualInterval != 86400 {
 		t.Errorf("NotifyIndividualInterval: got %d, want 86400", cfg.NotifyIndividualInterval)

@@ -2,6 +2,7 @@ package repositoryimpl
 
 import (
 	"errors"
+	"reflect"
 	"testing"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -105,11 +106,16 @@ func TestIndividualSigningIndexes(t *testing.T) {
 type fakeDAO struct {
 	dao
 
-	getDocsFn func(filter, project bson.M, result interface{}) error
+	getDocsFn                  func(filter, project bson.M, result interface{}) error
+	updateDocsWithoutVersionFn func(filter, doc bson.M) error
 }
 
 func (f *fakeDAO) GetDocs(filter, project bson.M, result interface{}) error {
 	return f.getDocsFn(filter, project, result)
+}
+
+func (f *fakeDAO) UpdateDocsWithoutVersion(filter, doc bson.M) error {
+	return f.updateDocsWithoutVersionFn(filter, doc)
 }
 
 func TestIndividualSigningFindByDomains(t *testing.T) {
@@ -185,4 +191,95 @@ func TestIndividualSigningFindByDomains(t *testing.T) {
 			t.Error("FindByDomains should propagate the dao error")
 		}
 	})
+}
+
+func TestIndividualSigningRemoveAll(t *testing.T) {
+	t.Run("soft deletes with the same case-insensitive domain conditions", func(t *testing.T) {
+		var gotFilter, gotDoc bson.M
+
+		impl := NewIndividualSigning(&fakeDAO{
+			updateDocsWithoutVersionFn: func(filter, doc bson.M) error {
+				gotFilter = filter
+				gotDoc = doc
+				return nil
+			},
+		})
+
+		if err := impl.RemoveAll("link1", []string{"UNI.edu.cn"}); err != nil {
+			t.Fatalf("RemoveAll: unexpected error %v", err)
+		}
+
+		if gotFilter[fieldLinkId] != "link1" {
+			t.Errorf("filter link_id = %v, want link1", gotFilter[fieldLinkId])
+		}
+		if gotFilter[fieldDeleted] != false {
+			t.Errorf("filter deleted = %v, want false", gotFilter[fieldDeleted])
+		}
+
+		domainCond, ok := gotFilter[fieldDomain].(bson.M)
+		if !ok {
+			t.Fatalf("filter domain type = %T, want bson.M", gotFilter[fieldDomain])
+		}
+		conditions, ok := domainCond[mongodbCmdIn].(bson.A)
+		if !ok || len(conditions) != 1 {
+			t.Fatalf("domain conditions = %#v, want one", domainCond[mongodbCmdIn])
+		}
+		regex, ok := conditions[0].(bson.M)
+		if !ok || regex["$regex"] != "(?i)^UNI\\.edu\\.cn$" {
+			t.Errorf("first condition = %#v, want an anchored case-insensitive regex, not a case-sensitive $in", conditions[0])
+		}
+
+		if gotDoc[fieldDeleted] != true {
+			t.Errorf("update deleted = %v, want true", gotDoc[fieldDeleted])
+		}
+		if _, ok := gotDoc[fieldDeletedAt]; !ok {
+			t.Errorf("update doc = %v, want deleted_at to be set", gotDoc)
+		}
+	})
+
+	t.Run("propagates the dao error", func(t *testing.T) {
+		impl := NewIndividualSigning(&fakeDAO{
+			updateDocsWithoutVersionFn: func(filter, doc bson.M) error {
+				return errors.New("db error")
+			},
+		})
+
+		if err := impl.RemoveAll("link1", []string{"uni.edu.cn"}); err == nil {
+			t.Error("RemoveAll should propagate the dao error")
+		}
+	})
+}
+
+// TestRemoveAllAndFindByDomainsShareDomainMatching guards the invariant that
+// the soft delete of RemoveAll matches exactly the records that
+// FindByDomains collects: with mixed-case domains (corp registers
+// "UNI.edu.cn" while individual signings store "uni.edu.cn"), a record must
+// never be collected without being soft deleted afterwards.
+func TestRemoveAllAndFindByDomainsShareDomainMatching(t *testing.T) {
+	domains := []string{"UNI.edu.cn", "Corp.IO", "x.y.org"}
+
+	var findFilter, removeFilter bson.M
+
+	impl := NewIndividualSigning(&fakeDAO{
+		getDocsFn: func(filter, project bson.M, result interface{}) error {
+			findFilter = filter
+			return nil
+		},
+		updateDocsWithoutVersionFn: func(filter, doc bson.M) error {
+			removeFilter = filter
+			return nil
+		},
+	})
+
+	if _, err := impl.FindByDomains("link1", domains); err != nil {
+		t.Fatalf("FindByDomains: unexpected error %v", err)
+	}
+	if err := impl.RemoveAll("link1", domains); err != nil {
+		t.Fatalf("RemoveAll: unexpected error %v", err)
+	}
+
+	if !reflect.DeepEqual(findFilter[fieldDomain], removeFilter[fieldDomain]) {
+		t.Errorf("domain conditions differ: FindByDomains = %#v, RemoveAll = %#v",
+			findFilter[fieldDomain], removeFilter[fieldDomain])
+	}
 }

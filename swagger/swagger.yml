@@ -1727,6 +1727,9 @@ definitions:
         type: string
       name:
         type: string
+      source:
+        type: string
+        description: individual means the employee signing is collected from a historical individual signing
   models.LinkCreateOption:
     title: LinkCreateOption
     type: object

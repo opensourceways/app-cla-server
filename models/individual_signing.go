@@ -16,6 +16,7 @@ type IndividualSigningBasicInfo struct {
 	Name    string `json:"name"`
 	Date    string `json:"date"`
 	Enabled bool   `json:"enabled"`
+	Source  string `json:"source,omitempty"` // "individual" = collected from individual signing
 }
 
 type IndividualSigningInfo struct {

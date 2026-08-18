@@ -8,7 +8,12 @@ const (
 	employeeSigningActionEnable  = "enable"
 	employeeSigningActionDisable = "disable"
 	employeeSigningActionDelete  = "delete"
+	employeeSigningActionCollect = "collect"
 )
+
+// EmployeeSigningSourceIndividual marks the employee signing is collected
+// from a historical individual signing.
+const EmployeeSigningSourceIndividual = "individual"
 
 type EmployeeSigningLog struct {
 	Time   int64
@@ -23,6 +28,27 @@ type EmployeeSigning struct {
 	Enabled bool
 	AllInfo AllSingingInfo
 	Logs    []EmployeeSigningLog
+	Source  string
+}
+
+// NewCollectedEmployeeSigning generates a disabled employee signing from a
+// historical individual signing. It must be activated by a corp manager
+// before it takes effect.
+func NewCollectedEmployeeSigning(
+	cla CLAInfo, rep Representative, date string, all AllSingingInfo,
+) EmployeeSigning {
+	es := EmployeeSigning{
+		CLA:     cla,
+		Rep:     rep,
+		Date:    date,
+		Enabled: false,
+		AllInfo: all,
+		Source:  EmployeeSigningSourceIndividual,
+	}
+
+	es.addLog(employeeSigningActionCollect)
+
+	return es
 }
 
 func (es *EmployeeSigning) isMe(es1 *EmployeeSigning) bool {

@@ -145,5 +145,6 @@ func (s *employeeSigningService) toEmployeeSigningDTO(v *domain.EmployeeSigning)
 	return EmployeeSigningDTO{
 		IndividualSigningDTO: dto,
 		Enabled:              v.Enabled,
+		Source:               v.Source,
 	}
 }

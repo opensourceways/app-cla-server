@@ -10,6 +10,7 @@ type IndividualSigning interface {
 	AddForMigrate(*domain.IndividualSigning) error
 	FindSignedCLA(linkId string, email dp.EmailAddr) (claId string, language dp.Language, err error)
 	Find(linkId string, email dp.EmailAddr) (domain.IndividualSigning, error)
+	FindByDomains(linkId string, domains []string) ([]domain.IndividualSigning, error)
 	FindAll(LinkId string) ([]domain.IndividualSigning, error)
 	FindAllWithPagination(linkId string, offset, limit int) ([]domain.IndividualSigning, error)
 	CountByLinkId(linkId string) (int64, error)

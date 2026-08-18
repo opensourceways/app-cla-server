@@ -1,7 +1,11 @@
 package repositoryimpl
 
 import (
+	"fmt"
+	"regexp"
+
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
 
 	commonRepo "github.com/opensourceways/app-cla-server/common/domain/repository"
 	"github.com/opensourceways/app-cla-server/signing/domain"
@@ -11,6 +15,17 @@ import (
 const (
 	fieldLogs = "logs"
 )
+
+// IndividualSigningIndexes returns the index definitions that should exist on
+// the individual_signing collection. Pass the result to mongodb.EnsureIndexes
+// on startup.
+func IndividualSigningIndexes() []mongo.IndexModel {
+	return []mongo.IndexModel{
+		// Support FindByDomains: match active individual signings of one
+		// link by email domain (case-insensitive regex).
+		{Keys: bson.D{{Key: fieldLinkId, Value: 1}, {Key: fieldDomain, Value: 1}}},
+	}
+}
 
 func NewIndividualSigning(dao dao) *individualSigning {
 	return &individualSigning{
@@ -92,6 +107,44 @@ func (impl *individualSigning) Find(linkId string, email dp.EmailAddr) (domain.I
 	}
 
 	return do.toIndividualSigning(), nil
+}
+
+// toDomainRegexConditions converts email domains to anchored
+// case-insensitive regex conditions, escaping regex metacharacters so that
+// a domain is matched literally.
+func toDomainRegexConditions(domains []string) bson.A {
+	conditions := make(bson.A, 0, len(domains))
+
+	for _, d := range domains {
+		conditions = append(conditions, bson.M{
+			"$regex": fmt.Sprintf("(?i)^%s$", regexp.QuoteMeta(d)),
+		})
+	}
+
+	return conditions
+}
+
+func (impl *individualSigning) FindByDomains(linkId string, domains []string) ([]domain.IndividualSigning, error) {
+	if len(domains) == 0 {
+		return nil, nil
+	}
+
+	filter := linkIdFilter(linkId)
+	filter[fieldDeleted] = false
+	filter[fieldDomain] = bson.M{mongodbCmdIn: toDomainRegexConditions(domains)}
+
+	var dos []individualSigningDO
+
+	if err := impl.dao.GetDocs(filter, nil, &dos); err != nil {
+		return nil, err
+	}
+
+	result := make([]domain.IndividualSigning, len(dos))
+	for i := range dos {
+		result[i] = dos[i].toIndividualSigning()
+	}
+
+	return result, nil
 }
 
 func (impl *individualSigning) FindAll(linkId string) ([]domain.IndividualSigning, error) {

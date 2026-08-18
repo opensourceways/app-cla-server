@@ -52,5 +52,6 @@ type IndividualSigningDTO struct {
 type EmployeeSigningDTO struct {
 	IndividualSigningDTO
 
-	Enabled bool `json:"enabled"`
+	Enabled bool   `json:"enabled"`
+	Source  string `json:"source,omitempty"`
 }

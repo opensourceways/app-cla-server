@@ -114,6 +114,9 @@ func codeMap(code string) models.ModelErrCode {
 	case domain.ErrorCodeIndividualSigningCLAIsLatest:
 		return models.ErrCLAIsLatest
 
+	case domain.ErrorCodeCLAConfirmTokenInvalid:
+		return models.ErrCLAConfirmTokenInvalid
+
 	// cla
 	case domain.ErrorCodeCLAExists:
 		return models.ErrCLAExists

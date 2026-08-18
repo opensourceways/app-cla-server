@@ -1,6 +1,8 @@
 package controllers
 
 import (
+	"github.com/beego/beego/v2/core/logs"
+
 	"github.com/opensourceways/app-cla-server/models"
 )
 
@@ -120,6 +122,48 @@ func (ctl *IndividualSigningController) Agree() {
 	} else {
 		ctl.sendSuccessResp(action, "successfully")
 	}
+}
+
+// @Title ConfirmByToken
+// @Description confirm the individual cla update with a one-time token from the notification email, no verification code needed
+// @Tags IndividualSigning
+// @Accept json
+// @Param  token  path  string  true  "one-time cla confirm token"
+// @Success 200 {object} controllers.respData
+// @Failure 400 invalid_cla_confirm_token:  the confirm link is invalid, expired or already used
+// @Failure 400 cla_is_latest:              the cla change has already been confirmed
+// @Failure 500 system_error:               system error
+// @router /cla-confirm/:token [post]
+func (ctl *IndividualSigningController) ConfirmByToken() {
+	action := "confirm individual cla by token"
+	token := ctl.GetString(":token")
+
+	v, merr := models.ConfirmIndividualCLAByToken(token)
+	if merr != nil {
+		// [audit] 记录一键确认失败（token 无效/过期/已用），只打 token 前缀用于与生成日志关联。
+		logs.Info("[audit] cla_confirm_by_token: result=failed, token_prefix=%s, ip=%s",
+			tokenPrefix(token), ctl.Ctx.Input.IP())
+
+		ctl.sendModelErrorAsResp(merr, action)
+
+		return
+	}
+
+	// [audit] 记录一键确认成功（4W + CLA 上下文）；email 脱敏，不落完整 token。
+	logs.Info("[audit] cla_confirm_by_token: result=success, link_id=%s, recipient=%s, ip=%s, new_cla_id=%s",
+		v.LinkId, v.EmailMasked, ctl.Ctx.Input.IP(), v.ClaId)
+
+	ctl.sendSuccessResp(action, v)
+}
+
+// tokenPrefix returns the first 8 characters of the token for audit logs,
+// never the full value.
+func tokenPrefix(token string) string {
+	if len(token) <= 8 {
+		return token
+	}
+
+	return token[:8]
 }
 
 // @Title Check

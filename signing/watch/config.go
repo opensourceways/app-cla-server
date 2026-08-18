@@ -59,6 +59,7 @@ type NotifyAdminConfig struct {
 	NotifyBatchSize            int      `json:"notify_batch_size"`
 	EnabledCommunityOrgs       []string `json:"enabled_community_orgs"`
 	NotifyEmailTo              string   `json:"notify_email_to"`
+	CLAConfirmTokenExpiry      int      `json:"cla_confirm_token_expiry"`
 }
 
 func (cfg *NotifyAdminConfig) SetDefault() {
@@ -84,6 +85,10 @@ func (cfg *NotifyAdminConfig) SetDefault() {
 
 	if cfg.NotifyBatchSize <= 0 {
 		cfg.NotifyBatchSize = 500
+	}
+
+	if cfg.CLAConfirmTokenExpiry <= 0 {
+		cfg.CLAConfirmTokenExpiry = 604800 // 7 days
 	}
 }
 
@@ -113,6 +118,12 @@ func (cfg *NotifyAdminConfig) genNotifyBatchSize() int {
 
 func (cfg *NotifyAdminConfig) genNotifyEmailTo() string {
 	return cfg.NotifyEmailTo
+}
+
+// genCLAConfirmTokenExpiry is the TTL of the one-time confirm token embedded
+// in the individual CLA update notification email.
+func (cfg *NotifyAdminConfig) genCLAConfirmTokenExpiry() time.Duration {
+	return time.Second * time.Duration(cfg.CLAConfirmTokenExpiry)
 }
 
 func (cfg *NotifyAdminConfig) isCommunityEnabled(alias string) bool {

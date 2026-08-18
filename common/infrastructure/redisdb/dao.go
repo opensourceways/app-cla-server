@@ -2,6 +2,8 @@ package redisdb
 
 import (
 	"context"
+	"encoding"
+	"encoding/json"
 	"errors"
 	"time"
 
@@ -9,6 +11,18 @@ import (
 )
 
 var errDocNotExists = errors.New("doc doesn't exist")
+
+// getAndDeleteScript atomically reads and deletes a key, so that a one-time
+// value can be consumed exactly once even under concurrent requests.
+// It returns 0 when the key doesn't exist, otherwise the stored value.
+var getAndDeleteScript = redis.NewScript(`
+local v = redis.call("GET", KEYS[1])
+if not v then
+	return 0
+end
+redis.call("DEL", KEYS[1])
+return v
+`)
 
 func (cli *client) Set(key string, val interface{}) error {
 	return cli.withContext(func(ctx context.Context) error {
@@ -31,6 +45,31 @@ func (cli *client) Get(key string, data interface{}) error {
 
 		return err
 	})
+}
+
+// GetAndDelete atomically fetches the value of the key and deletes the key.
+// It returns errDocNotExists if the key doesn't exist.
+func (cli *client) GetAndDelete(key string, data interface{}) error {
+	return cli.withContext(func(ctx context.Context) error {
+		res, err := getAndDeleteScript.Run(ctx, cli.redisCli, []string{key}).Result()
+		if err != nil {
+			return err
+		}
+
+		if s, ok := res.(string); ok && s != "" {
+			return unmarshalTo(s, data)
+		}
+
+		return errDocNotExists
+	})
+}
+
+func unmarshalTo(s string, data interface{}) error {
+	if u, ok := data.(encoding.BinaryUnmarshaler); ok {
+		return u.UnmarshalBinary([]byte(s))
+	}
+
+	return json.Unmarshal([]byte(s), data)
 }
 
 func (cli *client) Expire(key string, expire time.Duration) error {

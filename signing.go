@@ -16,6 +16,7 @@ import (
 	"github.com/opensourceways/app-cla-server/signing/domain/userservice"
 	"github.com/opensourceways/app-cla-server/signing/domain/vcservice"
 	"github.com/opensourceways/app-cla-server/signing/infrastructure/accesstokenimpl"
+	"github.com/opensourceways/app-cla-server/signing/infrastructure/claconfirmtokenimpl"
 	"github.com/opensourceways/app-cla-server/signing/infrastructure/encryptionimpl"
 	"github.com/opensourceways/app-cla-server/signing/infrastructure/limiterimpl"
 	"github.com/opensourceways/app-cla-server/signing/infrastructure/localclaimpl"
@@ -165,6 +166,9 @@ func initSigning(cfg *config.Config) error {
 		adapter.NewAccessTokenAdapter(app.NewAccessTokenService(at)),
 	)
 
+	// cla confirm token (one-time link for individual CLA update confirmation)
+	claConfirmToken := claconfirmtokenimpl.NewCLAConfirmTokenImpl(redisdb.DAO())
+
 	models.RegisterIndividualSigningAdapter(
 		adapter.NewIndividualSigningAdapter(app.NewIndividualSigningService(
 			vcService,
@@ -172,6 +176,7 @@ func initSigning(cfg *config.Config) error {
 			individual,
 			repo,
 			linkRepo,
+			claConfirmToken,
 			interval,
 			cfg.Domain.DefaultGracePeriodDays,
 		)),
@@ -212,7 +217,7 @@ func initSigning(cfg *config.Config) error {
 	// watch
 	watch.Start(&cfg.Watch, repo, individual)
 	watch.CLAUpdatedWatchStart(linkRepo, localCLA, &cfg.Watch.CLAUpdateConfig, cfg.PDF.PythonBin)
-	watch.NotifyAdminWatchStart(&cfg.Watch.SendEmailConfig, linkRepo, repo, individual, cfg.API.CLAPlatformURL, cfg.Domain.DefaultGracePeriodDays)
+	watch.NotifyAdminWatchStart(&cfg.Watch.SendEmailConfig, linkRepo, repo, individual, claConfirmToken, cfg.API.CLAPlatformURL, cfg.Domain.DefaultGracePeriodDays)
 
 	return nil
 }

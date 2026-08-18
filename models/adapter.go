@@ -168,6 +168,10 @@ func AgreeIndividualCLA(linkId string, opt *IndividualSigning) IModelError {
 	return individualSigningAdapterInstance.Agree(linkId, opt)
 }
 
+func ConfirmIndividualCLAByToken(token string) (CLAConfirmResult, IModelError) {
+	return individualSigningAdapterInstance.ConfirmByToken(token)
+}
+
 func FindDiffCLAFile(linkId, email string) (string, IModelError) {
 	return individualSigningAdapterInstance.FindDiffCLAFile(linkId, email)
 }

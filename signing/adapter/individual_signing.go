@@ -89,6 +89,23 @@ func (adapter *individualSigningAdatper) Agree(linkId string, opt *models.Indivi
 	return nil
 }
 
+// ConfirmByToken confirms the individual CLA change with a one-time token
+// from the notification email, without any verification code.
+func (adapter *individualSigningAdatper) ConfirmByToken(token string) (models.CLAConfirmResult, models.IModelError) {
+	v, err := adapter.s.ConfirmByToken(&app.CmdToConfirmCLAByToken{Token: token})
+	if err != nil {
+		return models.CLAConfirmResult{}, toModelError(err)
+	}
+
+	return models.CLAConfirmResult{
+		Result:      v.Result,
+		OrgAlias:    v.OrgAlias,
+		EmailMasked: v.EmailMasked,
+		LinkId:      v.LinkId,
+		ClaId:       v.ClaId,
+	}, nil
+}
+
 func (adapter *individualSigningAdatper) FindDiffCLAFile(linkId, email string) (string, models.IModelError) {
 	cmd := app.CmdToFindSignedCLAInfo{
 		LinkId: linkId,
@@ -128,6 +145,7 @@ func (adapter *individualSigningAdatper) Check(linkId string, email string,
 		Type:           v.Type,
 		Signed:         v.Signed,
 		VersionMatched: v.VersionMatched,
+		Status:         v.Status,
 	}, nil
 }
 

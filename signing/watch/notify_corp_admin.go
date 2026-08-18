@@ -18,12 +18,13 @@ import (
 
 var notifyAdminWatchInstance *notifyAdminWatchImpl
 
-func NotifyAdminWatchStart(cfg *NotifyAdminConfig, lk repoLink, corp corpSigningRepo, individual individualSigningRepo, claPlatformURL string, defaultGracePeriodDays int) {
+func NotifyAdminWatchStart(cfg *NotifyAdminConfig, lk repoLink, corp corpSigningRepo, individual individualSigningRepo, claConfirmToken repository.CLAConfirmToken, claPlatformURL string, defaultGracePeriodDays int) {
 	notifyAdminWatchInstance = &notifyAdminWatchImpl{
 		config:                 cfg,
 		link:                   lk,
 		corpSigningRepo:        corp,
 		individualRepo:         individual,
+		claConfirmToken:        claConfirmToken,
 		claPlatformURL:         claPlatformURL,
 		defaultGracePeriodDays: defaultGracePeriodDays,
 		stop:                   make(chan struct{}),
@@ -74,6 +75,7 @@ type notifyAdminWatchImpl struct {
 	link            repoLink
 	corpSigningRepo corpSigningRepo
 	individualRepo  individualSigningRepo
+	claConfirmToken repository.CLAConfirmToken
 	claPlatformURL  string
 
 	defaultGracePeriodDays int
@@ -431,18 +433,23 @@ func (impl *notifyAdminWatchImpl) handleSendIndividualEmail(link *repository.Lin
 	}
 	updateDate := time.Unix(claUpdatedAt, 0).Format("2006-01-02")
 
+	// 生成一次性确认令牌并拼装一键确认链接；失败时降级为仅含验证码链接的邮件
+	confirmURL, validDays := impl.genCLAConfirmURL(link, is, latestCLA)
+
 	// 构造个人签署 URL：从 claPlatformURL 提取 scheme+host，避免 /sign/sign-cla 双前缀
 	// 最终格式：https://clasign.osinfra.cn/sign-cla/{linkId}/individual-update?email=xxx
 	signURL := fmt.Sprintf("%s/sign-cla/%s/individual-update?email=%s",
 		impl.rootURL(), link.Id, is.Rep.EmailAddr.EmailAddr())
 
 	builder := emailtmpl.CLAUpdatedIndividual{
-		Name:            name,
-		Org:             link.Org.Alias,
-		UpdateDate:      updateDate,
-		GracePeriodDays: link.GetEffectiveGracePeriodDays(impl.defaultGracePeriodDays),
-		SignCLAURL:      signURL,
-		ProjectURL:      link.Org.ProjectURL,
+		Name:              name,
+		Org:               link.Org.Alias,
+		UpdateDate:        updateDate,
+		GracePeriodDays:   link.GetEffectiveGracePeriodDays(impl.defaultGracePeriodDays),
+		SignCLAURL:        signURL,
+		ProjectURL:        link.Org.ProjectURL,
+		ConfirmURL:        confirmURL,
+		ConfirmValidDays:  validDays,
 	}
 	emailMsg, err := builder.GenEmailMsg()
 	if err != nil {
@@ -466,6 +473,35 @@ func (impl *notifyAdminWatchImpl) handleSendIndividualEmail(link *repository.Lin
 	time.Sleep(impl.config.genSendEmailInterval())
 
 	return nil
+}
+
+// genCLAConfirmURL generates a one-time confirm token and returns the
+// confirm URL for the notification email together with its validity in days.
+// On failure it logs the error and degrades gracefully (empty URL), so the
+// email is still sent with the verification-code link only.
+func (impl *notifyAdminWatchImpl) genCLAConfirmURL(
+	link *repository.LinkCLA, is *domain.IndividualSigning, latestCLA *domain.CLA,
+) (string, int) {
+	if impl.claConfirmToken == nil {
+		return "", 0
+	}
+
+	ttl := impl.config.genCLAConfirmTokenExpiry()
+	token, err := impl.claConfirmToken.Add(
+		link.Id, is.Rep.EmailAddr.EmailAddr(), latestCLA.Id, ttl,
+	)
+	if err != nil {
+		logs.Error("generate cla confirm token failed, degrade to verification-code email: ",
+			link.Id, util.MaskEmail(is.Rep.EmailAddr.EmailAddr()), err)
+
+		return "", 0
+	}
+
+	logs.Info("[audit] cla_confirm_token_gen: link_id=%s, org=%s, recipient=%s, token_prefix=%s, new_cla_id=%s",
+		link.Id, link.Org.Alias, util.MaskEmail(is.Rep.EmailAddr.EmailAddr()),
+		token[:8], latestCLA.Id)
+
+	return fmt.Sprintf("%s/confirm-cla/%s?t=%s", impl.rootURL(), link.Id, token), int(ttl.Hours() / 24)
 }
 
 // rootURL 从 claPlatformURL 中提取 scheme+host（去掉路径前缀），

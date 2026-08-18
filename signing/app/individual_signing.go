@@ -9,6 +9,7 @@ import (
 	"github.com/opensourceways/app-cla-server/signing/domain/dp"
 	"github.com/opensourceways/app-cla-server/signing/domain/repository"
 	"github.com/opensourceways/app-cla-server/signing/domain/vcservice"
+	"github.com/opensourceways/app-cla-server/util"
 )
 
 func NewIndividualSigningService(
@@ -17,6 +18,7 @@ func NewIndividualSigningService(
 	repo repository.IndividualSigning,
 	corpRepo repository.CorpSigning,
 	linkRepo repository.Link,
+	claConfirmToken repository.CLAConfirmToken,
 	interval time.Duration,
 	defaultGracePeriodDays int,
 ) *individualSigningService {
@@ -26,6 +28,7 @@ func NewIndividualSigningService(
 		repo:                  repo,
 		corpRepo:              corpRepo,
 		linkRepo:              linkRepo,
+		claConfirmToken:       claConfirmToken,
 		interval:              interval,
 		defaultGracePeriodDays: defaultGracePeriodDays,
 	}
@@ -35,6 +38,7 @@ type IndividualSigningService interface {
 	Verify(cmd *CmdToCreateVerificationCode) (string, error)
 	Sign(cmd *CmdToSignIndividualCLA) error
 	AgreeNewCLA(cmd *CmdToSignIndividualCLA) error
+	ConfirmByToken(cmd *CmdToConfirmCLAByToken) (CLAConfirmResultDTO, error)
 	FindDiffCLAFile(cmd *CmdToFindSignedCLAInfo) (string, error)
 	Check(cmd *CmdToCheckSinging) (IndividualSignedDTO, error)
 }
@@ -45,6 +49,7 @@ type individualSigningService struct {
 	repo                  repository.IndividualSigning
 	corpRepo              repository.CorpSigning
 	linkRepo              repository.Link
+	claConfirmToken       repository.CLAConfirmToken
 	interval              time.Duration
 	defaultGracePeriodDays int
 }
@@ -101,6 +106,74 @@ func (s *individualSigningService) AgreeNewCLA(cmd *CmdToSignIndividualCLA) erro
 	}
 
 	return s.repo.SaveNewCLA(&sign)
+}
+
+// ConfirmByToken confirms the latest individual CLA for the signing record
+// bound to a one-time token, without a verification code. The token is
+// consumed atomically first, so the confirmation can be submitted only once.
+func (s *individualSigningService) ConfirmByToken(cmd *CmdToConfirmCLAByToken) (CLAConfirmResultDTO, error) {
+	payload, err := s.claConfirmToken.Consume(cmd.Token)
+	if err != nil {
+		return CLAConfirmResultDTO{}, toCLAConfirmTokenInvalid(err)
+	}
+
+	email, err := dp.NewEmailAddr(payload.Email)
+	if err != nil {
+		return CLAConfirmResultDTO{}, domain.NewDomainError(domain.ErrorCodeCLAConfirmTokenInvalid)
+	}
+
+	sign, err := s.repo.Find(payload.LinkId, email)
+	if err != nil {
+		if commonRepo.IsErrorResourceNotFound(err) {
+			return CLAConfirmResultDTO{}, domain.NewDomainError(domain.ErrorCodeCLAConfirmTokenInvalid)
+		}
+
+		return CLAConfirmResultDTO{}, err
+	}
+
+	latestClaId := s.cla.GetClaId(sign.Link.Id, dp.CLATypeIndividual, sign.Link.Language)
+	if latestClaId == "" {
+		return CLAConfirmResultDTO{}, domain.NewNotFoundDomainError(domain.ErrorCodeCLANotExists)
+	}
+
+	if err = sign.AgreeNewCLA(latestClaId); err != nil {
+		return CLAConfirmResultDTO{}, err
+	}
+
+	if err = s.repo.SaveNewCLA(&sign); err != nil {
+		return CLAConfirmResultDTO{}, err
+	}
+
+	return s.genCLAConfirmResult(payload.LinkId, latestClaId, payload.Email), nil
+}
+
+func (s *individualSigningService) genCLAConfirmResult(linkId, claId, email string) CLAConfirmResultDTO {
+	dto := CLAConfirmResultDTO{
+		Result:      "confirmed",
+		EmailMasked: util.MaskEmail(email),
+		LinkId:      linkId,
+		ClaId:       claId,
+	}
+
+	// The confirmation is already persisted; a missing org alias must not
+	// turn a successful confirmation into a failed response.
+	if link, err := s.linkRepo.Find(linkId); err == nil {
+		dto.OrgAlias = link.Org.Alias
+	}
+
+	return dto
+}
+
+// toCLAConfirmTokenInvalid maps token-related failures (invalid format,
+// expired, already used, unknown) to a single domain error, so that clients
+// can't distinguish the reason. Other errors pass through as system errors.
+func toCLAConfirmTokenInvalid(err error) error {
+	if commonRepo.IsErrorResourceNotFound(err) ||
+		domain.IsErrorOf(err, domain.ErrorCodeCLAConfirmTokenInvalid) {
+		return domain.NewDomainError(domain.ErrorCodeCLAConfirmTokenInvalid)
+	}
+
+	return err
 }
 
 func (s *individualSigningService) FindDiffCLAFile(cmd *CmdToFindSignedCLAInfo) (string, error) {

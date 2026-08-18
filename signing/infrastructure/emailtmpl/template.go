@@ -246,12 +246,14 @@ func (data *CLAUpdated) GenEmailMsg() (EmailMessage, error) {
 }
 
 type CLAUpdatedIndividual struct {
-	Name            string
-	Org             string
-	UpdateDate      string
-	GracePeriodDays int
-	SignCLAURL      string
-	ProjectURL      string
+	Name             string
+	Org              string
+	UpdateDate       string
+	GracePeriodDays  int
+	SignCLAURL       string
+	ProjectURL       string
+	ConfirmURL       string
+	ConfirmValidDays int
 }
 
 func (data *CLAUpdatedIndividual) GenEmailMsg() (EmailMessage, error) {

@@ -34,6 +34,20 @@ type CmdToCheckSinging struct {
 	EmailAddr dp.EmailAddr
 }
 
+type CmdToConfirmCLAByToken struct {
+	Token string
+}
+
+type CLAConfirmResultDTO struct {
+	Result      string `json:"result"`
+	OrgAlias    string `json:"org_alias"`
+	EmailMasked string `json:"email_masked"`
+
+	// audit-only context, never serialized to the API response
+	LinkId string `json:"-"`
+	ClaId  string `json:"-"`
+}
+
 type IndividualSignedDTO struct {
 	Type           string      `json:"type"`                      // "individual" 或 "corp"
 	Signed         bool        `json:"signed,omitempty"`          // 是否已签署过

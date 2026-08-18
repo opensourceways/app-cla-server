@@ -7,8 +7,12 @@ You have previously signed the CLA, and you can still contribute code normally â
 What does this mean for you?
 Within {{.GracePeriodDays}} days after the update, you would still match the latest agreement version. Failure to do so will result in your CLA signing privileges being revoked.
 
-Please agree to the latest agreement version by clicking the link below:
-  Sign CLA URL: {{.SignCLAURL}}
+{{if .ConfirmURL}}You can agree to the latest agreement version with ONE click (link valid for {{.ConfirmValidDays}} days, one-time use):
+  Confirm URL: {{.ConfirmURL}}
+
+If the one-click link above is expired or already used, you can still confirm the update with a verification code via the link below.
+{{else}}Please agree to the latest agreement version by clicking the link below:
+{{end}}  Sign CLA URL: {{.SignCLAURL}}
 
 Have questions or need help? Just reply to this email and the {{.Org}} Community Support Team will help you sort it out.
 

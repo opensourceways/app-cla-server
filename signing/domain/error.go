@@ -43,6 +43,8 @@ const (
 	ErrorCodeIndividualSigningCorpExists  = "individual_signing_corp_exists"
 	ErrorCodeIndividualSigningCLAIsLatest = "individual_signing_cla_is_latest"
 
+	ErrorCodeCLAConfirmTokenInvalid = "cla_confirm_token_invalid"
+
 	ErrorCodeVerificationCodeBusy  = "verification_code_busy"
 	ErrorCodeVerificationCodeWrong = "verification_code_wrong"
 

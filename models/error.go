@@ -57,6 +57,7 @@ const (
 	ErrLinkIsUsed              ModelErrCode = "link_is_used"
 	ErrNoPermission            ModelErrCode = "no_permission"
 	ErrCLAIsLatest             ModelErrCode = "cla_is_latest"
+	ErrCLAConfirmTokenInvalid  ModelErrCode = "invalid_cla_confirm_token"
 )
 
 type IModelError interface {

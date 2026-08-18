@@ -100,14 +100,17 @@ func TestNotifyAdminConfigSetDefault(t *testing.T) {
 	if cfg.SendEmailInterval != 10 {
 		t.Errorf("SendEmailInterval: got %d, want 10", cfg.SendEmailInterval)
 	}
-	if cfg.NotifyCorpAdminInterval != 1200 {
-		t.Errorf("NotifyCorpAdminInterval: got %d, want 1200", cfg.NotifyCorpAdminInterval)
+	if cfg.NotifyCorpAdminInterval != 86400 {
+		t.Errorf("NotifyCorpAdminInterval: got %d, want 86400", cfg.NotifyCorpAdminInterval)
 	}
 	if cfg.NotifyIndividualInterval != 86400 {
 		t.Errorf("NotifyIndividualInterval: got %d, want 86400", cfg.NotifyIndividualInterval)
 	}
 	if cfg.NotifyIndividualRemindDays != 90 {
 		t.Errorf("NotifyIndividualRemindDays: got %d, want 90", cfg.NotifyIndividualRemindDays)
+	}
+	if cfg.CLAConfirmTokenExpiry != 604800 {
+		t.Errorf("CLAConfirmTokenExpiry: got %d, want 604800 (7 days)", cfg.CLAConfirmTokenExpiry)
 	}
 }
 
@@ -117,6 +120,7 @@ func TestNotifyAdminConfigSetDefaultPreserves(t *testing.T) {
 		NotifyCorpAdminInterval:    600,
 		NotifyIndividualInterval:   43200,
 		NotifyIndividualRemindDays: 45,
+		CLAConfirmTokenExpiry:      300,
 	}
 	cfg.SetDefault()
 
@@ -131,6 +135,16 @@ func TestNotifyAdminConfigSetDefaultPreserves(t *testing.T) {
 	}
 	if cfg.NotifyIndividualRemindDays != 45 {
 		t.Errorf("NotifyIndividualRemindDays should be preserved: got %d, want 45", cfg.NotifyIndividualRemindDays)
+	}
+	if cfg.CLAConfirmTokenExpiry != 300 {
+		t.Errorf("CLAConfirmTokenExpiry should be preserved: got %d, want 300", cfg.CLAConfirmTokenExpiry)
+	}
+}
+
+func TestNotifyAdminConfigGenCLAConfirmTokenExpiry(t *testing.T) {
+	cfg := NotifyAdminConfig{CLAConfirmTokenExpiry: 300}
+	if d := cfg.genCLAConfirmTokenExpiry(); d != 300*time.Second {
+		t.Errorf("genCLAConfirmTokenExpiry: got %v, want 300s", d)
 	}
 }
 

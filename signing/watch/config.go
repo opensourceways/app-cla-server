@@ -11,7 +11,7 @@ type Config struct {
 
 func (cfg *Config) SetDefault() {
 	if cfg.Interval <= 0 {
-		cfg.Interval = 3600
+		cfg.Interval = 600
 	}
 }
 

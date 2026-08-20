@@ -57,6 +57,10 @@ func (impl *corpSigning) ResetTriggered(csId string, version int) error {
 }
 
 func (impl *individualSigning) RemoveAll(linkId string, domains []string) error {
+	if len(domains) == 0 {
+		return nil
+	}
+
 	// Keep the domain matching semantics consistent with FindByDomains:
 	// anchored case-insensitive regex conditions, otherwise records whose
 	// domain differs only in case would be collected but never removed.
@@ -64,7 +68,7 @@ func (impl *individualSigning) RemoveAll(linkId string, domains []string) error 
 		bson.M{
 			fieldLinkId:  linkId,
 			fieldDeleted: false,
-			fieldDomain:  bson.M{mongodbCmdIn: toDomainRegexConditions(domains)},
+			fieldDomain:  toDomainRegex(domains),
 		},
 		bson.M{
 			fieldDeleted:   true,

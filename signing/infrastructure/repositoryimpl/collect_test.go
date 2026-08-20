@@ -62,23 +62,17 @@ func TestEmployeeSigningDOCollectedSource(t *testing.T) {
 	})
 }
 
-func TestToDomainRegexConditions(t *testing.T) {
-	got := toDomainRegexConditions([]string{"uni.edu.cn", "a+b.cn", "x.*y.org"})
+func TestToDomainRegex(t *testing.T) {
+	got := toDomainRegex([]string{"uni.edu.cn", "a+b.cn", "x.*y.org"})
 
-	if len(got) != 3 {
-		t.Fatalf("conditions = %d, want 3", len(got))
+	regex, ok := got["$regex"].(string)
+	if !ok {
+		t.Fatalf("regex = %#v, want a string", got["$regex"])
 	}
 
-	expect := []string{`(?i)^uni\.edu\.cn$`, `(?i)^a\+b\.cn$`, `(?i)^x\.\*y\.org$`}
-
-	for i := range expect {
-		c, ok := got[i].(bson.M)
-		if !ok {
-			t.Fatalf("condition %d is %T, want bson.M", i, got[i])
-		}
-		if c["$regex"] != expect[i] {
-			t.Errorf("condition %d regex = %q, want %q", i, c["$regex"], expect[i])
-		}
+	expect := `(?i)^(uni\.edu\.cn|a\+b\.cn|x\.\*y\.org)$`
+	if regex != expect {
+		t.Errorf("regex = %q, want %q", regex, expect)
 	}
 }
 
@@ -166,13 +160,9 @@ func TestIndividualSigningFindByDomains(t *testing.T) {
 		if !ok {
 			t.Fatalf("filter domain type = %T, want bson.M", gotFilter[fieldDomain])
 		}
-		conditions, ok := domainCond[mongodbCmdIn].(bson.A)
-		if !ok || len(conditions) != 1 {
-			t.Fatalf("domain conditions = %#v, want one", domainCond[mongodbCmdIn])
-		}
-		regex, ok := conditions[0].(bson.M)
-		if !ok || regex["$regex"] != "(?i)^UNI\\.edu\\.cn$" {
-			t.Errorf("first condition = %#v, want an anchored case-insensitive regex", conditions[0])
+		regex, ok := domainCond["$regex"].(string)
+		if !ok || regex != `(?i)^(UNI\.edu\.cn)$` {
+			t.Errorf("domain regex = %#v, want an anchored case-insensitive regex", domainCond["$regex"])
 		}
 
 		if len(v) != 1 || v[0].Link.Id != "link1" || v[0].Date != "2026-01-01" {
@@ -220,13 +210,9 @@ func TestIndividualSigningRemoveAll(t *testing.T) {
 		if !ok {
 			t.Fatalf("filter domain type = %T, want bson.M", gotFilter[fieldDomain])
 		}
-		conditions, ok := domainCond[mongodbCmdIn].(bson.A)
-		if !ok || len(conditions) != 1 {
-			t.Fatalf("domain conditions = %#v, want one", domainCond[mongodbCmdIn])
-		}
-		regex, ok := conditions[0].(bson.M)
-		if !ok || regex["$regex"] != "(?i)^UNI\\.edu\\.cn$" {
-			t.Errorf("first condition = %#v, want an anchored case-insensitive regex, not a case-sensitive $in", conditions[0])
+		regex, ok := domainCond["$regex"].(string)
+		if !ok || regex != `(?i)^(UNI\.edu\.cn)$` {
+			t.Errorf("domain regex = %#v, want an anchored case-insensitive regex, not a case-sensitive $in", domainCond["$regex"])
 		}
 
 		if gotDoc[fieldDeleted] != true {

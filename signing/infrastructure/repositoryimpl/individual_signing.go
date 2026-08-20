@@ -3,6 +3,7 @@ package repositoryimpl
 import (
 	"fmt"
 	"regexp"
+	"strings"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -109,19 +110,17 @@ func (impl *individualSigning) Find(linkId string, email dp.EmailAddr) (domain.I
 	return do.toIndividualSigning(), nil
 }
 
-// toDomainRegexConditions converts email domains to anchored
-// case-insensitive regex conditions, escaping regex metacharacters so that
-// a domain is matched literally.
-func toDomainRegexConditions(domains []string) bson.A {
-	conditions := make(bson.A, 0, len(domains))
-
-	for _, d := range domains {
-		conditions = append(conditions, bson.M{
-			"$regex": fmt.Sprintf("(?i)^%s$", regexp.QuoteMeta(d)),
-		})
+// toDomainRegex builds a single case-insensitive, anchored regex that
+// matches any of the given domains literally. MongoDB does not allow
+// operator expressions such as $regex to be nested inside $in, so the
+// domains are combined into one alternation pattern instead.
+func toDomainRegex(domains []string) bson.M {
+	parts := make([]string, len(domains))
+	for i, d := range domains {
+		parts[i] = regexp.QuoteMeta(d)
 	}
 
-	return conditions
+	return bson.M{"$regex": fmt.Sprintf("(?i)^(%s)$", strings.Join(parts, "|"))}
 }
 
 func (impl *individualSigning) FindByDomains(linkId string, domains []string) ([]domain.IndividualSigning, error) {
@@ -131,7 +130,7 @@ func (impl *individualSigning) FindByDomains(linkId string, domains []string) ([
 
 	filter := linkIdFilter(linkId)
 	filter[fieldDeleted] = false
-	filter[fieldDomain] = bson.M{mongodbCmdIn: toDomainRegexConditions(domains)}
+	filter[fieldDomain] = toDomainRegex(domains)
 
 	var dos []individualSigningDO
 

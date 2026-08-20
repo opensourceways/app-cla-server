@@ -210,13 +210,11 @@ func TestIndividualSigningRemoveAll(t *testing.T) {
 		if !ok {
 			t.Fatalf("filter domain type = %T, want bson.M", gotFilter[fieldDomain])
 		}
-		conditions, ok := domainCond[mongodbCmdIn].(bson.A)
-		if !ok || len(conditions) != 1 {
-			t.Fatalf("domain conditions = %#v, want one", domainCond[mongodbCmdIn])
-		}
-		regex, ok := conditions[0].(bson.M)
-		if !ok || regex["$regex"] != "(?i)^UNI\\.edu\\.cn$" {
-			t.Errorf("first condition = %#v, want an anchored case-insensitive regex, not a case-sensitive $in", conditions[0])
+		// 与 FindByDomains 使用相同的 toDomainRegex：单个锚定且大小写不敏感的
+		// 正则（$regex 不能嵌套进 $in，故采用合并的交替模式）。
+		regex, ok := domainCond["$regex"].(string)
+		if !ok || regex != `(?i)^(UNI\.edu\.cn)$` {
+			t.Errorf("domain regex = %#v, want an anchored case-insensitive regex", domainCond["$regex"])
 		}
 
 		if gotDoc[fieldDeleted] != true {

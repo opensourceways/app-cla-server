@@ -6,7 +6,11 @@ import (
 	"errors"
 	"time"
 
+	"github.com/beego/beego/v2/core/logs"
+
+	commonRepo "github.com/opensourceways/app-cla-server/common/domain/repository"
 	"github.com/opensourceways/app-cla-server/signing/domain"
+	"github.com/opensourceways/app-cla-server/signing/domain/captchaservice"
 	"github.com/opensourceways/app-cla-server/signing/domain/loginservice"
 	"github.com/opensourceways/app-cla-server/signing/domain/repository"
 	"github.com/opensourceways/app-cla-server/signing/domain/symmetricencryption"
@@ -22,6 +26,7 @@ func NewUserService(
 	userRepo repository.User,
 	interval time.Duration,
 	vcService vcservice.VCService,
+	captchaSvc captchaservice.CaptchaService,
 	privacyVersion string,
 ) UserService {
 	return &userService{
@@ -32,6 +37,7 @@ func NewUserService(
 		userRepo:       userRepo,
 		interval:       interval,
 		vcService:      verificationCodeService{vcService},
+		captchaService: captchaSvc,
 		privacyVersion: privacyVersion,
 	}
 }
@@ -39,6 +45,7 @@ func NewUserService(
 type UserService interface {
 	Get(userId string) (dto UserBasicInfoDTO, err error)
 	Login(cmd *CmdToLogin) (dto UserLoginDTO, err error)
+	GetCaptcha() (id string, imageBase64 string, err error)
 	ResetPassword(cmd *CmdToResetPassword) error
 	ChangePassword(cmd *CmdToChangePassword) error
 	GenKeyForPasswordRetrieval(*CmdToGenKeyForPasswordRetrieval) (string, error)
@@ -52,6 +59,7 @@ type userService struct {
 	userRepo       repository.User
 	interval       time.Duration
 	vcService      verificationCodeService
+	captchaService captchaservice.CaptchaService
 	privacyVersion string
 }
 
@@ -135,6 +143,12 @@ func (s *userService) ResetPassword(cmd *CmdToResetPassword) error {
 func (s *userService) Login(cmd *CmdToLogin) (dto UserLoginDTO, err error) {
 	defer cmd.clear()
 
+	lid := s.getLoginId(cmd)
+
+	if err = s.validateCaptcha(cmd, lid, &dto); err != nil {
+		return
+	}
+
 	var u domain.User
 	var l domain.Login
 
@@ -146,9 +160,14 @@ func (s *userService) Login(cmd *CmdToLogin) (dto UserLoginDTO, err error) {
 
 	// It should record the retry number whatever if it is success or not.
 	dto.RetryNum = l.RetryNum()
+	dto.NeedCaptcha = l.NeedCaptcha()
 
 	if err != nil {
 		return
+	}
+
+	if err1 := s.ls.ClearLoginFailure(lid); err1 != nil {
+		logs.Warn("clear login failure failed, err: %s", err1.Error())
 	}
 
 	if err = s.checkPrivacyConsent(cmd.PrivacyConsented, &u); err != nil {
@@ -166,6 +185,50 @@ func (s *userService) Login(cmd *CmdToLogin) (dto UserLoginDTO, err error) {
 	dto.InitialPWChanged = u.PasswordChanged
 
 	return
+}
+
+func (s *userService) getLoginId(cmd *CmdToLogin) string {
+	if cmd.Account != nil {
+		return cmd.Account.Account()
+	}
+	return cmd.Email.EmailAddr()
+}
+
+func (s *userService) validateCaptcha(cmd *CmdToLogin, lid string, dto *UserLoginDTO) error {
+	loginInfo, loginInfoErr := s.ls.GetLoginInfo(lid)
+	if loginInfoErr != nil {
+		if commonRepo.IsErrorResourceNotFound(loginInfoErr) {
+			return nil
+		}
+		logs.Error("failed to get login info for %s, err: %s", lid, loginInfoErr.Error())
+		return loginInfoErr
+	}
+
+	needCaptcha := false
+	if loginInfo != nil {
+		dto.RetryNum = loginInfo.RetryNum()
+		needCaptcha = loginInfo.NeedCaptcha()
+		dto.NeedCaptcha = needCaptcha
+	}
+
+	hasCaptcha := cmd.CaptchaId != "" && cmd.CaptchaAnswer != ""
+
+	if needCaptcha && !hasCaptcha {
+		return domain.NewDomainError(domain.ErrorCodeCaptchaInvalid)
+	}
+
+	if hasCaptcha {
+		if verifyErr := s.captchaService.Verify(cmd.CaptchaId, cmd.CaptchaAnswer); verifyErr != nil {
+			dto.NeedCaptcha = true
+			return domain.NewDomainError(domain.ErrorCodeCaptchaInvalid)
+		}
+	}
+
+	return nil
+}
+
+func (s *userService) GetCaptcha() (id string, imageBase64 string, err error) {
+	return s.captchaService.Generate()
 }
 
 func (s *userService) checkPrivacyConsent(privacyConsented bool, u *domain.User) error {

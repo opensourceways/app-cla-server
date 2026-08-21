@@ -32,6 +32,8 @@ type Config struct {
 
 	MaxNumOfFailedLogin int `json:"max_num_of_failed_login"`
 
+	NeedCaptchaThreshold int `json:"need_captcha_threshold"`
+
 	// interval of creating verification code. seconds.
 	IntervalOfCreatingVC int `json:"interval_of_creating_vc"`
 
@@ -73,6 +75,10 @@ func (cfg *Config) SetDefault() {
 
 	if cfg.MaxNumOfFailedLogin <= 0 {
 		cfg.MaxNumOfFailedLogin = 5
+	}
+
+	if cfg.NeedCaptchaThreshold <= 0 {
+		cfg.NeedCaptchaThreshold = 1
 	}
 
 	if cfg.IntervalOfCreatingVC <= 0 {

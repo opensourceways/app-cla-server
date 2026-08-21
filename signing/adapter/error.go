@@ -142,6 +142,9 @@ func codeMap(code string) models.ModelErrCode {
 	case domain.ErrorCodeNoPermission:
 		return models.ErrNoPermission
 
+	case domain.ErrorCodeCaptchaInvalid:
+		return models.ErrCaptchaInvalid
+
 	default:
 		return models.ErrBadRequestParameter
 	}

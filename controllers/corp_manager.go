@@ -24,6 +24,10 @@ func (ctl *CorporationManagerController) Prepare() {
 	}
 
 	if ctl.isGetRequest() {
+		if strings.HasSuffix(ctl.routerPattern(), "/captcha") {
+			return
+		}
+
 		// get basic info
 		ctl.apiPrepareWithAC(
 			&accessController{Payload: &acForCorpManagerPayload{}},

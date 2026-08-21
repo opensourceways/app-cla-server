@@ -19,6 +19,7 @@ func toEmployeeSigningDO(es *domain.EmployeeSigning) employeeSigningDO {
 		Enabled:  es.Enabled,
 		AllInfo:  es.AllInfo,
 		Logs:     toEmployeeSigningLogDOs(es.Logs),
+		Source:   es.Source,
 	}
 }
 
@@ -59,6 +60,7 @@ type employeeSigningDO struct {
 	Enabled  bool                   `bson:"enabled"  json:"enabled"`
 	AllInfo  anyDoc                 `bson:"info"     json:"info,omitempty"`
 	Logs     []employeeSigningLogDO `bson:"logs"     json:"logs"`
+	Source   string                 `bson:"source,omitempty"  json:"source,omitempty"`
 
 	RepDO `bson:",inline"`
 }
@@ -79,6 +81,7 @@ func (do *employeeSigningDO) toEmployeeSigning() domain.EmployeeSigning {
 		Logs:    do.toEmployeeSigningLogs(),
 		Enabled: do.Enabled,
 		AllInfo: do.AllInfo,
+		Source:  do.Source,
 	}
 }
 

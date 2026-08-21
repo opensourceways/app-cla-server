@@ -1,6 +1,8 @@
 package domain
 
 import (
+	"strings"
+
 	"github.com/opensourceways/app-cla-server/signing/domain/dp"
 )
 
@@ -23,6 +25,18 @@ func (c *Corporation) isMyEmail(email dp.EmailAddr) bool {
 
 	for _, v := range c.AllEmailDomains {
 		if v == domain {
+			return true
+		}
+	}
+
+	return false
+}
+
+func (c *Corporation) isMyEmailIgnoreCase(email dp.EmailAddr) bool {
+	domain := email.Domain()
+
+	for _, v := range c.AllEmailDomains {
+		if strings.EqualFold(v, domain) {
 			return true
 		}
 	}

@@ -5,7 +5,9 @@ import (
 
 	"github.com/beego/beego/v2/core/logs"
 
+	"github.com/opensourceways/app-cla-server/signing/domain"
 	"github.com/opensourceways/app-cla-server/signing/infrastructure/repositoryimpl"
+	"github.com/opensourceways/app-cla-server/util"
 )
 
 var impl *watchingImpl
@@ -40,11 +42,14 @@ func Stop() {
 type corpSigning interface {
 	ListTriggered() ([]repositoryimpl.TriggeredCorp, error)
 	ResetTriggered(csId string, version int) error
+	Find(string) (domain.CorpSigning, error)
+	AddEmployee(*domain.CorpSigning, *domain.EmployeeSigning) error
 }
 
 // individualSigning
 type individualSigning interface {
 	RemoveAll(linkId string, domains []string) error
+	FindByDomains(linkId string, domains []string) ([]domain.IndividualSigning, error)
 }
 
 // watchingImpl
@@ -116,7 +121,69 @@ func (impl *watchingImpl) watch() {
 	}
 }
 
+// handle collects the historical individual signings of a triggered corp
+// into the corp as disabled employee signings, then soft-deletes them and
+// resets the trigger. Any failure aborts the remaining steps of this round,
+// keeping the data untouched so that the next round can retry safely.
 func (impl *watchingImpl) handle(corp repositoryimpl.TriggeredCorp) {
+	cs, err := impl.cs.Find(corp.Id)
+	if err != nil {
+		logs.Error(
+			"failed to find corp signing when collecting, csid:%s, err:%s",
+			corp.Id, err.Error(),
+		)
+
+		return
+	}
+
+	list, err := impl.ins.FindByDomains(corp.LinkId, corp.Domains)
+	if err != nil {
+		logs.Error(
+			"failed to find individual signings by domains, csid:%s, link_id:%s, err:%s",
+			corp.Id, corp.LinkId, err.Error(),
+		)
+
+		return
+	}
+
+	matched := len(list)
+	collected, skipped := 0, 0
+
+	for i := range list {
+		is := &list[i]
+
+		// only the individual signings signed no later than the corp
+		// signing are collected
+		if is.Date > cs.Date {
+			skipped++
+
+			continue
+		}
+
+		es := domain.NewCollectedEmployeeSigning(cs.Link.CLAInfo, is.Rep, is.Date, is.AllInfo)
+
+		if err := cs.CollectEmployee(&es); err != nil {
+			// the employee signing already exists, keep it as is
+			skipped++
+
+			continue
+		}
+
+		if err := impl.cs.AddEmployee(&cs, &es); err != nil {
+			logs.Error(
+				"failed to collect individual signing to employee signing, csid:%s, err:%s",
+				corp.Id, err.Error(),
+			)
+
+			return
+		}
+
+		// AddEmployee bumps the doc version, keep the local one aligned
+		cs.Version++
+
+		collected++
+	}
+
 	if err := impl.ins.RemoveAll(corp.LinkId, corp.Domains); err != nil {
 		logs.Error(
 			"failed to remove individual signings, csid:%s, err:%s",
@@ -126,10 +193,29 @@ func (impl *watchingImpl) handle(corp repositoryimpl.TriggeredCorp) {
 		return
 	}
 
-	if err := impl.cs.ResetTriggered(corp.Id, corp.Version); err != nil {
+	// AddEmployee bumps the doc version, so reload the corp signing to get
+	// the current version and reset the trigger in the same round.
+	cs1, err := impl.cs.Find(corp.Id)
+	if err != nil {
+		logs.Error(
+			"failed to reload corp signing when collecting, csid:%s, err:%s",
+			corp.Id, err.Error(),
+		)
+
+		return
+	}
+
+	if err := impl.cs.ResetTriggered(corp.Id, cs1.Version); err != nil {
 		logs.Error(
 			"failed to reset triggered corp signing, csid:%s, err:%s",
 			corp.Id, err.Error(),
 		)
+
+		return
 	}
+
+	logs.Info(
+		"collected individual signings to corp, csid:%s, link_id:%s, matched:%d, collected:%d, skipped:%d, time:%d",
+		corp.Id, corp.LinkId, matched, collected, skipped, util.Now(),
+	)
 }

@@ -48,6 +48,13 @@ func initSigning(cfg *config.Config) error {
 		return err
 	}
 
+	if err := mongodb.EnsureIndexes(
+		cfg.Mongodb.Collections.IndividualSigning,
+		repositoryimpl.IndividualSigningIndexes(),
+	); err != nil {
+		return err
+	}
+
 	repo := repositoryimpl.NewCachedCorpSigning(
 		mongodb.DAO(cfg.Mongodb.Collections.CorpSigning),
 		redisdb.DAO(),

@@ -1,0 +1,6 @@
+# gitleaks:ignore -- false positives / historical findings reviewed below
+#
+# Historical test fixture token (fake value a1b2c3d4e5f6a7b8 in a _test.go
+# assertion URL). The line no longer exists in the working tree; it only
+# remains in git history at the commit below. Not a real credential.
+a1916610f002ba855d7f99b1ffb5d45ea66baf5b:signing/watch/notify_corp_admin_test.go:generic-api-key:288

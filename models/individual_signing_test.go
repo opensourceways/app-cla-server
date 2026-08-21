@@ -6,15 +6,15 @@ import (
 )
 
 // TestIndividualSignedJSONSerialization verifies that the Check API response
-// always includes signed, version_matched and status fields so that legacy
-// callers keep working and the new authoritative status field is always present.
+// always includes signed and version_matched fields so that legacy callers
+// keep working.
 //
-// Requirement (#909): the response must look like
+// The signing states are fully covered by the two fields (refactor b8e3107):
 //
-//	{"data":{"type":"corporation","signed":true,"version_matched":true,"status":"valid"}}
+//	{"data":{"type":"corporation","signed":true,"version_matched":true}}
 //
-// for all three states (not_signed / valid / expired), signed and
-// version_matched must be present even when false.
+// signed and version_matched must be present even when false, for all three
+// states (not_signed / valid / expired).
 func TestIndividualSignedJSONSerialization(t *testing.T) {
 	tests := []struct {
 		name string
@@ -27,13 +27,11 @@ func TestIndividualSignedJSONSerialization(t *testing.T) {
 				Type:           "corporation",
 				Signed:         true,
 				VersionMatched: true,
-				Status:         "valid",
 			},
 			want: map[string]interface{}{
 				"type":            "corporation",
 				"signed":          true,
 				"version_matched": true,
-				"status":          "valid",
 			},
 		},
 		{
@@ -42,13 +40,11 @@ func TestIndividualSignedJSONSerialization(t *testing.T) {
 				Type:           "corporation",
 				Signed:         true,
 				VersionMatched: false,
-				Status:         "expired",
 			},
 			want: map[string]interface{}{
 				"type":            "corporation",
 				"signed":          true,
 				"version_matched": false,
-				"status":          "expired",
 			},
 		},
 		{
@@ -57,13 +53,11 @@ func TestIndividualSignedJSONSerialization(t *testing.T) {
 				Type:           "individual",
 				Signed:         false,
 				VersionMatched: false,
-				Status:         "not_signed",
 			},
 			want: map[string]interface{}{
 				"type":            "individual",
 				"signed":          false,
 				"version_matched": false,
-				"status":          "not_signed",
 			},
 		},
 	}
@@ -106,7 +100,6 @@ func TestIndividualSignedDebugInfoOmittedWhenNil(t *testing.T) {
 		Type:           "individual",
 		Signed:         true,
 		VersionMatched: true,
-		Status:         "valid",
 	}
 
 	raw, err := json.Marshal(in)

@@ -181,6 +181,26 @@ func (cs *CorpSigning) AddEmployee(es *EmployeeSigning) error {
 	return nil
 }
 
+// CollectEmployee appends an employee signing collected from a historical
+// individual signing. Unlike AddEmployee, it does not require managers to be
+// configured: the corp pdf can be uploaded before any manager exists, and
+// the collected record stays disabled until a manager activates it.
+func (cs *CorpSigning) CollectEmployee(es *EmployeeSigning) error {
+	if !cs.isSameCorpIgnoreCase(es.Rep.EmailAddr) {
+		return NewDomainError(ErrorCodeEmployeeNotSameCorp)
+	}
+
+	for i := range cs.Employees {
+		if cs.Employees[i].isMe(es) {
+			return NewDomainError(ErrorCodeEmployeeSigningReSigning)
+		}
+	}
+
+	cs.Employees = append(cs.Employees, *es)
+
+	return nil
+}
+
 func (cs *CorpSigning) UpdateEmployee(index string, enabled bool) (es *EmployeeSigning, err error) {
 	i, ok := cs.posOfEmployee(index)
 	if !ok {
@@ -217,6 +237,10 @@ func (cs *CorpSigning) RemoveEmployee(index string) (es *EmployeeSigning, err er
 
 func (cs *CorpSigning) isSameCorp(email dp.EmailAddr) bool {
 	return cs.Corp.isMyEmail(email)
+}
+
+func (cs *CorpSigning) isSameCorpIgnoreCase(email dp.EmailAddr) bool {
+	return cs.Corp.isMyEmailIgnoreCase(email)
 }
 
 func (cs *CorpSigning) hasManager(m *Manager) bool {

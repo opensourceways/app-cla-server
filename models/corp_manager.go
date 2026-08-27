@@ -16,6 +16,8 @@ type CorporationManagerLoginInfo struct {
 	LinkID           string `json:"link_id"`
 	Password         []byte `json:"password"`
 	PrivacyConsented bool   `json:"privacy_consented"`
+	CaptchaId        string `json:"captcha_id"`
+	CaptchaAnswer    string `json:"captcha_answer"`
 }
 
 func (info *CorporationManagerLoginInfo) Validate() IModelError {
@@ -49,6 +51,7 @@ type CorpManagerLoginInfo struct {
 	PrivacyVersion   string
 	InitialPWChanged bool
 	RetryNum         int
+	NeedCaptcha      bool
 }
 
 type CorporationManagerCreateOption struct {

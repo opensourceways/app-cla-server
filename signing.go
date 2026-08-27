@@ -16,6 +16,7 @@ import (
 	"github.com/opensourceways/app-cla-server/signing/domain/userservice"
 	"github.com/opensourceways/app-cla-server/signing/domain/vcservice"
 	"github.com/opensourceways/app-cla-server/signing/infrastructure/accesstokenimpl"
+	"github.com/opensourceways/app-cla-server/signing/infrastructure/captchaimpl"
 	"github.com/opensourceways/app-cla-server/signing/infrastructure/encryptionimpl"
 	"github.com/opensourceways/app-cla-server/signing/infrastructure/limiterimpl"
 	"github.com/opensourceways/app-cla-server/signing/infrastructure/localclaimpl"
@@ -138,7 +139,12 @@ func initSigning(cfg *config.Config) error {
 		adapter.NewUserAdapter(
 			app.NewUserService(
 				userService, loginService, repo, symmetric, ur,
-				interval, vcService, privacyVersion,
+				interval, vcService,
+				captchaimpl.NewCaptchaImpl(
+					redisdb.DAO(),
+					&cfg.Redisdb.Captcha,
+				),
+				privacyVersion,
 			),
 		),
 	)

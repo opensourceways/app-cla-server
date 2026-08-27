@@ -9,17 +9,17 @@ Purpose: Sign the CLA to participate in code contributions, as well as for relat
 Personal data type: data you voluntarily submit
 Collection method: user input
 Personal data fields: We collect personal data based on the scenario:
-    - For corporate CLA signing:  **name of the authorized representative**,  **position**,  **company name**, **email address**, **email verification code**, **phone number (optional)**, **address (optional)**, **fax number (optional)**, and **the signed CLA document**
-    - For corporate contributor registration: **name**, **email address**, corporation, and **email verification code**
-    - For individual CLA signing: **name**, **email address**, and **email verification code**
+    - For individual CLA signing: **name, email address,** and **email verification code**
+    - For enterprise CLA signing: **name of the authorized representative, position, company name, email address, email verification code,** and **the signed CLA document**
+    - For enterprise contributor registration: **name, email address, corporation, and email verification code**
 
 2. CLA Management
 Purpose: Manage the CLA signing process.
 Personal data type: data you voluntarily submit
 Collection method: user input
 Personal data fields: We collect personal data based on the scenario:
-    - For enterprise administrator login: **account**, **password**, and **email address**
-    - For community administrator login: **account**, **password**, **email address** and **email authorization code**
+    - For enterprise administrator login: **account, password,** and **email address**
+    - For community administrator login: **account, password, email address** and **email authorization code**
 
 3. Service Optimization
 
@@ -27,3 +27,5 @@ Purpose: Maintain service quality and operational requirements by automatically 
 Personal data type: application or device information
 Collection method: collected by the system
 Personal data fields: access timestamp, **IP address**, request details, access status, accessed resource size, access source, user agent
+
+Revised Date: August 18, 2026

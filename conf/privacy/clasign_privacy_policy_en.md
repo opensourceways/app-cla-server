@@ -1,22 +1,22 @@
-## <center>CLA Sign Privacy Policy</center>
+## <center>CLA Sign Privacy Statement</center>
 
 We understand the importance of your privacy and fully respect it. If you have any questions about how we process your personal data, please feel free to contact us at the email address provided in this policy. Unless otherwise specified, "we" in this policy refers to the provider of the CLA Sign service.
 
 **Version Change Notes**
 
-Please carefully review the following updates to this privacy policy:
+Please carefully review the following updates to this privacy statement:
 
-1. Updated the description of community administrator login in the "How We Collect and Process Your Personal Data" section.
-2. Updated the description in the "How This Policy Is Updated" section.
+1. Change the description of "Corporate" to "Enterprise".
+2. Optimize description.
 
 #### 1. How We Collect and Process Your Personal Data
 Personal data refers to the information that relates to an identified or identifiable individual. When you use the Contributor License Agreement Signing and Management ("CLA Sign") service, we will collect your personal data accordingly in the following circumstances. You may also obtain a quick understanding of how we collect and use personal data by reviewing the <span id="information-list">Personal Data Collection Overview</span>.
-1. Corporate CLA Signing
-    When you sign a corporate CLA, we collect **name of the authorized representative**, **position**, **company name**, **email address**, **email verification code**, **phone number(optional)**, **address (optional)**, **fax number (optional)**, and **the signed CLA document**.
-2. Corporate Contributor Registration
-    When you register as a corporate contributor, we collect your **name**, **email address**, corporation, and **email verification code**.
-3. Individual CLA Signing
+1. Individual CLA Signing
     When you sign an individual CLA, we collect your **name**, **email address**, and **email verification code**
+2. Enterprise CLA Signing
+    When you sign a enterprise CLA, we collect **name of the authorized representative**, **position**, **company name**, **email address**, **email verification code**, and **the signed CLA document**.
+3. Enterprise Contributor Registration
+    When you register as a enterprise contributor, we collect your **name**, **email address**, **corporation**, and **email verification code**.
 4. Enterprise Administrator Login
     When you log in as an enterprise administrator, we collect your **account**, **password**, and **email address**.
 5. Community Administrator Login
@@ -49,7 +49,7 @@ In a word, we are committed to protecting your personal data. Nevertheless, no s
 To provide you with the CLA Sign service, we will retain your personal data. The retention period of such data will depend on the specific purpose for which it is used, as well as the requirements of applicable laws and regulations.
 You acknowledge and understand that the CLA is a legally binding document signed by you or the corporation you represent, serving as evidence of the permanent rights granted over your contributions. Therefore, if you request the deletion of the data collected for the purpose of executing the CLA (including, but not limited to, your **name** and **email address**), we may not be able to comply with such a request, unless the deletion of such data does not affect the legal validity of the CLA you have signed.
 
-For service optimization, the access timestamp, IP address, request details, access status, accessed resource size, access source, and request user agent information collected based on the access quantity statistics will be automatically deleted after 10 days.
+For service optimization, the access timestamp, IP address, request details, access status, accessed resource size, access source, and request user agent information collected based on the access quantity statistics will be automatically deleted after 180 days.
 #### 7. How We Access or Control Your Personal Data
 In accordance with applicable laws and regulations, you may have the following rights regarding your personal data:  
 (1) Access the personal data we hold about you.  
@@ -58,7 +58,7 @@ In accordance with applicable laws and regulations, you may have the following r
 (4) Object to or restrict our use of your personal data.  
 (5) Request us to provide you with a copy of the personal data you provided to us, provided that the processing of such personal data is based on your consent or the contract with you and is automated.  
 (6) Lodge a complaint with the competent data protection authority.  
-Generally, we will respond to your request within one month, unless otherwise required by applicable laws and regulations. Please note that under some circumstances, for example where we cannot verify your identity, or your claim exceeds your rights under applicable laws, we may refuse your request. In this case, we will inform you in written form that your request is refused together with the reasons for our refusal. If you need our assistance in exercising the requests or rights above, please contact us as set out in the "How to Contact Us" section below.  
+Generally, we will respond to your request as soon as possible, unless otherwise required by applicable laws and regulations. Please note that under some circumstances, for example where we cannot verify your identity, or your claim exceeds your rights under applicable laws, we may refuse your request. In this case, we will inform you in written form that your request is refused together with the reasons for our refusal. If you need our assistance in exercising the requests or rights above, please contact us as set out in the "How to Contact Us" section below.  
 You can change the scope of your authorization for us to collect your personal data or withdraw your authorization. However, your decision to withdraw your consent or authorization does not affect any previous processing of personal data based on your authorization.  
 #### 8. Where Your Personal Data Is Stored
 Your personal data is stored in the People's Republic of China. None of our service scenarios involve the cross-border transfer of personal data.  
@@ -69,6 +69,6 @@ We may update this policy from time to time according to changes of our services
 #### 11. How to Contact Us
 If you have any questions, comments, or suggestions about your personal data or any matters related to this agreement, or exercise your rights related to personal data, please contact us at cla-contact@osinfra.cn.
 
-Last updated: March 29, 2025
+Last updated: August 18, 2026
 
-Privacy policy version: v20250329
+Privacy policy version: v20260818

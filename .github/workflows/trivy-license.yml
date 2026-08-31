@@ -1,0 +1,13 @@
+name: trivy-license
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  workflow_dispatch:
+
+jobs:
+  trivy-license:
+    uses: opensourceways/agent-development-specification/.github/workflows/trivy-license-reusable.yml@main
+    with:
+      runs-on: ubuntu-latest
+      exit-code: '0'

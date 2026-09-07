@@ -1595,6 +1595,8 @@ definitions:
     properties:
       admin_added:
         type: boolean
+      admin_added_date:
+        type: string
       admin_email:
         type: string
       admin_name:

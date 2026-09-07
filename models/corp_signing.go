@@ -43,9 +43,10 @@ type CorporationSigningPageSummary struct {
 type CorporationSigningSummary struct {
 	CorporationSigningBasicInfo
 
-	Id          string `json:"id"`
-	AdminAdded  bool   `json:"admin_added"`
-	PDFUploaded bool   `json:"pdf_uploaded"`
+	Id             string `json:"id"`
+	AdminAdded     bool   `json:"admin_added"`
+	PDFUploaded    bool   `json:"pdf_uploaded"`
+	AdminAddedDate string `json:"admin_added_date,omitempty"`
 }
 
 type CorporationSigningBasicInfo struct {

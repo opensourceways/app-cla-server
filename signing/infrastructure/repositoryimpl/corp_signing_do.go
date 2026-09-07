@@ -31,6 +31,7 @@ const (
 	fieldCLANotify       = "cla_notify"
 	fieldClaNotifyCount  = "cla_notify_count"
 	fieldClaNotifyTime   = "cla_notify_time"
+	fieldAdminAddedDate  = "admin_added_date"
 )
 
 func toCorpSigningDO(v *domain.CorpSigning) corpSigningDO {
@@ -89,6 +90,7 @@ type corpSigningDO struct {
 	ClaNotify      string `bson:"cla_notify"       json:"cla_notify"`
 	ClaNotifyCount int    `bson:"cla_notify_count" json:"cla_notify_count"`
 	ClaNotifyTime  int64  `bson:"cla_notify_time"  json:"cla_notify_time"`
+	AdminAddedDate string `bson:"admin_added_date" json:"admin_added_date,omitempty"`
 
 	// uploading pdf or adding email domain will trigger individual signing checking
 	// which will delete the one that belongs to a corp.
@@ -105,10 +107,10 @@ func (do *corpSigningDO) index() string {
 
 func (do *corpSigningDO) toCorpSigningSummary() repository.CorpSigningSummary {
 	return repository.CorpSigningSummary{
-		Id:   do.index(),
-		Rep:  do.Rep.toRep(),
-		Date: do.Date,
-		Corp: do.Corp.toCorp(),
+		Id:             do.index(),
+		Rep:            do.Rep.toRep(),
+		Date:           do.Date,
+		Corp:           do.Corp.toCorp(),
 		Link: domain.LinkInfo{
 			Id: do.LinkId,
 			CLAInfo: domain.CLAInfo{
@@ -121,6 +123,7 @@ func (do *corpSigningDO) toCorpSigningSummary() repository.CorpSigningSummary {
 		CLANotify:      do.ClaNotify,
 		ClaNotifyCount: do.ClaNotifyCount,
 		ClaNotifyTime:  do.ClaNotifyTime,
+		AdminAddedDate: do.AdminAddedDate,
 	}
 }
 

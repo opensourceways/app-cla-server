@@ -207,7 +207,7 @@ func (ctl *CorporationSigningController) GetAll() {
 // @Param  page       query  int     false  "page number" default(1)
 // @Param  page_size  query  int     false  "page size" default(10)
 // @Param  admin_added query  bool    false  "filter by admin added" default(false)
-// @Param  search     query  string  false  "search query (email or corp name)"
+// @Param  search     query  string  false  "fuzzy search by corporation name or rep email (substring, case-insensitive)"
 // @Success 200 {object} models.CorporationSigningPageSummary
 // @Failure 400 missing_url_path_parameter: missing url path parameter
 // @Failure 401 missing_token:              token is missing

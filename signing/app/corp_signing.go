@@ -148,6 +148,7 @@ func (s *corpSigningService) List(userId, linkId string) ([]CorpSigningDTO, erro
 			RepEmail:       item.Rep.EmailAddr.EmailAddr(),
 			HasAdminAdded:  !item.Admin.IsEmpty(),
 			HasPDFUploaded: item.HasPDF,
+			AdminAddedDate: item.AdminAddedDate,
 		}
 	}
 
@@ -180,6 +181,7 @@ func (s *corpSigningService) ListPage(userId, linkId string, page, pageSize int,
 			RepEmail:       item.Rep.EmailAddr.EmailAddr(),
 			HasAdminAdded:  !item.Admin.IsEmpty(),
 			HasPDFUploaded: item.HasPDF,
+			AdminAddedDate: item.AdminAddedDate,
 		}
 	}
 	pageData.Data = dtos

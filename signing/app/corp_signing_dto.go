@@ -45,6 +45,7 @@ type CorpSigningDTO struct {
 	RepEmail       string `json:"rep_email"`
 	HasAdminAdded  bool   `json:"has_admin_added"`
 	HasPDFUploaded bool   `json:"has_pdf_uploaded"`
+	AdminAddedDate string `json:"admin_added_date,omitempty"`
 }
 
 type CorpSigningInfoDTO struct {

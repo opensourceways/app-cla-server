@@ -1,6 +1,8 @@
 package repositoryimpl
 
 import (
+	"regexp"
+
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 
@@ -18,6 +20,13 @@ func CorpSigningIndexes() []mongo.IndexModel {
 		{Keys: bson.D{{Key: fieldLinkId, Value: 1}}},
 		// Compound index for the adminAdded filter (link_id + admin.id).
 		{Keys: bson.D{{Key: fieldLinkId, Value: 1}, {Key: "admin.id", Value: 1}}},
+		// Compound index supporting the page query's $sort(date desc, _id desc)
+		// after the link_id $match, avoiding in-memory sorts.
+		{Keys: bson.D{
+			{Key: fieldLinkId, Value: 1},
+			{Key: fieldDate, Value: -1},
+			{Key: "_id", Value: -1},
+		}},
 	}
 }
 
@@ -167,6 +176,7 @@ func (impl *corpSigning) FindAll(linkId string) ([]repository.CorpSigningSummary
 		fieldCLANotify:      1,
 		fieldClaNotifyCount: 1,
 		fieldClaNotifyTime:  1,
+		fieldAdminAddedDate: 1,
 	}
 
 	var dos []corpSigningDO
@@ -205,6 +215,7 @@ func (impl *corpSigning) FindAllWithPagination(linkId string, offset, limit int)
 		fieldCLANotify:      1,
 		fieldClaNotifyCount: 1,
 		fieldClaNotifyTime:  1,
+		fieldAdminAddedDate: 1,
 	}
 
 	var dos []corpSigningDO
@@ -228,33 +239,9 @@ func (impl *corpSigning) CountByLinkId(linkId string) (int64, error) {
 	return impl.dao.CountDocs(filter)
 }
 
-// 邮箱验证辅助函数
-func isEmail(query string) bool {
-	// 使用现有的邮箱验证逻辑
-	_, err := dp.NewEmailAddr(query)
-	return err == nil
-}
-
-func (impl *corpSigning) FindPage(linkId string, intPage, intPageSize int, adminAdded bool, searchQuery string) (repository.CorpSigningSummaryPage, error) {
-	filter := linkIdFilter(linkId)
-	if searchQuery != "" {
-		if isEmail(searchQuery) {
-			filter[childField(fieldRep, fieldEmail)] = searchQuery
-		} else {
-			filter[childField(fieldCorp, fieldName)] = searchQuery
-		}
-	}
-
-	if adminAdded {
-		filter["admin.id"] = bson.M{"$ne": ""}
-	} else {
-		filter["$or"] = []bson.M{
-			{"admin.id": ""},
-			{"admin": bson.M{"$exists": false}},
-		}
-	}
-
-	project := bson.M{
+// corpSigningPageProject lists the fields projected for the FindPage aggregation.
+func corpSigningPageProject() bson.M {
+	return bson.M{
 		fieldDate:           1,
 		fieldCLAId:          1,
 		fieldLang:           1,
@@ -266,24 +253,84 @@ func (impl *corpSigning) FindPage(linkId string, intPage, intPageSize int, admin
 		fieldCLANotify:      1,
 		fieldClaNotifyCount: 1,
 		fieldClaNotifyTime:  1,
+		fieldAdminAddedDate: 1,
 	}
+}
 
-	// Single aggregation round-trip: $facet returns both total count and the
-	// requested page in one network call, replacing the previous two serial
-	// queries (CountDocuments + Find).
-	pipeline := bson.A{
+// buildCorpSigningSearchFilter builds the $or filter that fuzzy-matches the
+// search query against the corporation name or the representative email.
+// regexp.QuoteMeta escapes regex metacharacters to prevent regex injection
+// and catastrophic backtracking. The "i" option makes the match
+// case-insensitive.
+func buildCorpSigningSearchFilter(q string) bson.M {
+	escaped := regexp.QuoteMeta(q)
+	regex := bson.M{mongodbCmdRegex: escaped, "$options": "i"}
+	return bson.M{mongodbCmdOr: bson.A{
+		bson.M{childField(fieldCorp, fieldName): regex},
+		bson.M{childField(fieldRep, fieldEmail): regex},
+	}}
+}
+
+// buildCorpSigningPagePipeline constructs the aggregation pipeline used by
+// FindPage. Exposed as a standalone function so unit tests can verify the
+// $sort/$skip/$limit ordering and the $or search branches without a live
+// MongoDB connection.
+func buildCorpSigningPagePipeline(filter bson.M, project bson.M, intPage, intPageSize int) bson.A {
+	return bson.A{
 		bson.M{"$match": filter},
 		bson.M{"$facet": bson.M{
 			"total": bson.A{
 				bson.M{"$count": "n"},
 			},
 			"data": bson.A{
+				bson.M{"$sort": bson.D{
+					{Key: fieldDate, Value: -1},
+					{Key: "_id", Value: -1},
+				}},
 				bson.M{"$skip": int64((intPage - 1) * intPageSize)},
 				bson.M{"$limit": int64(intPageSize)},
 				bson.M{"$project": project},
 			},
 		}},
 	}
+}
+
+func (impl *corpSigning) FindPage(linkId string, intPage, intPageSize int, adminAdded bool, searchQuery string) (repository.CorpSigningSummaryPage, error) {
+	filter := linkIdFilter(linkId)
+
+	// Build the adminAdded condition. When false it uses $or (admin.id == ""
+	// or admin missing), which collides with the search $or if merged into the
+	// same filter, so both $or-based conditions are combined with $and when
+	// they coexist.
+	var adminOrCond *bson.M
+	if adminAdded {
+		filter["admin.id"] = bson.M{"$ne": ""}
+	} else {
+		c := bson.M{mongodbCmdOr: bson.A{
+			bson.M{"admin.id": ""},
+			bson.M{"admin": bson.M{"$exists": false}},
+		}}
+		adminOrCond = &c
+	}
+
+	var searchOrCond *bson.M
+	if searchQuery != "" {
+		c := buildCorpSigningSearchFilter(searchQuery)
+		searchOrCond = &c
+	}
+
+	switch {
+	case adminOrCond != nil && searchOrCond != nil:
+		filter[mongodbCmdAnd] = bson.A{*adminOrCond, *searchOrCond}
+	case adminOrCond != nil:
+		filter[mongodbCmdOr] = (*adminOrCond)[mongodbCmdOr]
+	case searchOrCond != nil:
+		filter[mongodbCmdOr] = (*searchOrCond)[mongodbCmdOr]
+	}
+
+	project := corpSigningPageProject()
+
+	pipeline := buildCorpSigningPagePipeline(filter, project, intPage, intPageSize)
 
 	var facetResult []struct {
 		Total []struct {

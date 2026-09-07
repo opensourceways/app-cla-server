@@ -9,9 +9,11 @@ import (
 
 const (
 	mongodbCmdOr        = "$or"
+	mongodbCmdAnd       = "$and"
 	mongodbCmdIn        = "$in"
 	mongodbCmdLt        = "$lt"
 	mongodbCmdElemMatch = "$elemMatch"
+	mongodbCmdRegex     = "$regex"
 )
 
 type anyDoc = map[string]string

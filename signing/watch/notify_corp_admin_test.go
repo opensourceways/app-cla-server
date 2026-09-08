@@ -285,7 +285,7 @@ func TestHandleSendIndividualEmailWithConfirmToken(t *testing.T) {
 	defer restore()
 
 	impl, link, is, latestCLA := newIndividualEmailCase()
-	impl.claConfirmToken = &fakeCLAConfirmTokenRepo{token: "a1b2c3d4e5f6a7b8a1b2c3d4e5f6a7b8a1b2c3d4e5f6a7b8a1b2c3d4e5f6a7b8"}
+	impl.claConfirmToken = &fakeCLAConfirmTokenRepo{token: "testtoken"}
 
 	if err := impl.handleSendIndividualEmail(link, is, latestCLA); err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -295,7 +295,7 @@ func TestHandleSendIndividualEmailWithConfirmToken(t *testing.T) {
 		t.Fatalf("expected one email, got %d", fw.sendCount)
 	}
 
-	wantConfirm := "/confirm-cla/link1?t=a1b2c3d4e5f6a7b8"
+	wantConfirm := "/confirm-cla/link1?t=testtoken"
 	if !strings.Contains(fw.content, wantConfirm) {
 		t.Fatalf("email content should contain confirm url %q, content:\n%s", wantConfirm, fw.content)
 	}

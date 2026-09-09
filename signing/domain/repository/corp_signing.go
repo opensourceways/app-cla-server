@@ -12,6 +12,7 @@ type CorpSigningSummary struct {
 	CLANotify      string
 	ClaNotifyCount int
 	ClaNotifyTime  int64
+	AdminAddedDate string
 	Link           domain.LinkInfo
 	Rep            domain.Representative
 	Corp           domain.Corporation

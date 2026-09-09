@@ -16,6 +16,7 @@ const (
 	fieldFailedNum  = "failed_num"
 	fieldLoginTime  = "login_time"
 	fieldFrozenTime = "frozen_time"
+	fieldCsId        = "cs_id"
 )
 
 type privacyConsentDO struct {

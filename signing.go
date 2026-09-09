@@ -49,6 +49,13 @@ func initSigning(cfg *config.Config) error {
 		return err
 	}
 
+	// Backfill admin_added_date for historical corp_signing documents. Runs
+	// once on startup, is idempotent, and does not block startup on failure.
+	_ = repositoryimpl.BackfillAdminAddedDate(
+		mongodb.DAO(cfg.Mongodb.Collections.CorpSigning),
+		mongodb.DAO(cfg.Mongodb.Collections.User),
+	)
+
 	if err := mongodb.EnsureIndexes(
 		cfg.Mongodb.Collections.IndividualSigning,
 		repositoryimpl.IndividualSigningIndexes(),

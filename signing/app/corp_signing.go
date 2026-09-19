@@ -1,7 +1,10 @@
 package app
 
 import (
+	"bytes"
+	"encoding/csv"
 	"errors"
+	"strconv"
 	"time"
 
 	commonRepo "github.com/opensourceways/app-cla-server/common/domain/repository"
@@ -38,6 +41,7 @@ type CorpSigningService interface {
 	Get(userId, csId string, email dp.EmailAddr) (string, CorpSigningInfoDTO, error)
 	List(userId, linkId string) ([]CorpSigningDTO, error)
 	ListPage(userId, linkId string, page, pageSize int, adminAdded bool, searchQuery string) (CorpSigningPageDTO, error)
+	Export(userId, linkId string, adminAdded bool, searchQuery string) ([]byte, error)
 	FindCorpSummary(cmd *CmdToFindCorpSummary) ([]CorpSummaryDTO, error)
 	FindDiffCLAFile(signingId string) (string, error)
 	AgreeWithLatestCLA(signingId string) error
@@ -186,6 +190,82 @@ func (s *corpSigningService) ListPage(userId, linkId string, page, pageSize int,
 	pageData.Total = v.Total
 
 	return pageData, nil
+}
+
+func (s *corpSigningService) Export(userId, linkId string, adminAdded bool, searchQuery string) ([]byte, error) {
+	if _, err := checkIfCommunityManager(userId, linkId, s.linkRepo); err != nil {
+		return nil, err
+	}
+
+	const pageSize = 200
+	const maxPages = 500
+
+	var dtos []CorpSigningDTO
+	for page := 1; page <= maxPages; page++ {
+		v, err := s.repo.FindPage(linkId, page, pageSize, adminAdded, searchQuery)
+		if err != nil {
+			return nil, err
+		}
+		if v.Total == 0 {
+			break
+		}
+
+		for i := range v.Data {
+			item := &v.Data[i]
+			dtos = append(dtos, CorpSigningDTO{
+				Id:             item.Id,
+				Date:           item.Date,
+				Language:       item.Link.Language.Language(),
+				CorpName:       item.Corp.Name.CorpName(),
+				RepName:        item.Rep.Name.Name(),
+				RepEmail:       item.Rep.EmailAddr.EmailAddr(),
+				HasAdminAdded:  !item.Admin.IsEmpty(),
+				HasPDFUploaded: item.HasPDF,
+			})
+		}
+
+		if len(v.Data) < pageSize {
+			break
+		}
+	}
+
+	return corpListToCSV(dtos), nil
+}
+
+func corpListToCSV(rows []CorpSigningDTO) []byte {
+	var buf bytes.Buffer
+	buf.WriteRune('\ufeff')
+
+	w := csv.NewWriter(&buf)
+	_ = w.Write([]string{"序号", "企业名称", "申请状态", "CLA语言", "申请时间"})
+
+	for i, row := range rows {
+		status := "未完成"
+		if row.HasAdminAdded {
+			status = "已完成"
+		}
+		_ = w.Write([]string{
+			strconv.Itoa(i + 1),
+			escapeCSVCell(row.CorpName),
+			status,
+			escapeCSVCell(row.Language),
+			escapeCSVCell(row.Date),
+		})
+	}
+	w.Flush()
+
+	return buf.Bytes()
+}
+
+func escapeCSVCell(s string) string {
+	if len(s) == 0 {
+		return s
+	}
+	switch s[0] {
+	case '=', '+', '-', '@':
+		return "'" + s
+	}
+	return s
 }
 
 func (s *corpSigningService) FindCorpSummary(cmd *CmdToFindCorpSummary) ([]CorpSummaryDTO, error) {

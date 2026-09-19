@@ -204,6 +204,14 @@ func (adapter *corpSigningAdatper) ListPage(userId, linkId string, page, pageSiz
 	return pageData, nil
 }
 
+func (adapter *corpSigningAdatper) ExportCorpSigningList(userId, linkId string, adminAdded bool, searchQuery string) ([]byte, models.IModelError) {
+	data, err := adapter.s.Export(userId, linkId, adminAdded, searchQuery)
+	if err != nil {
+		return nil, toModelError(err)
+	}
+	return data, nil
+}
+
 // FindCorpSigningId
 func (adapter *corpSigningAdatper) FindCorpSummary(linkId string, email string) (
 	interface{}, models.IModelError,

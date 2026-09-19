@@ -25,6 +25,7 @@ type corpSigningAdapter interface {
 	Get(userId, csId string, email dp.EmailAddr) (string, CorporationSigning, IModelError)
 	List(userId, linkId string) ([]CorporationSigningSummary, IModelError)
 	ListPage(userId, linkId string, page, pageSize int, adminAdded bool, searchQuery string) (CorporationSigningPageSummary, IModelError)
+	ExportCorpSigningList(userId, linkId string, adminAdded bool, searchQuery string) ([]byte, IModelError)
 	FindCorpSummary(linkId string, email string) (interface{}, IModelError)
 	FindDiffCLAFile(signingId string) (string, IModelError)
 	Agree(signingId string) IModelError

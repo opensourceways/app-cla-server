@@ -324,6 +324,9 @@ func (s *corpSigningService) FindPendingAgreements(userId, linkId string) ([]Cor
 func (s *corpSigningService) GetAutoApproval(signingId string) (bool, error) {
 	cs, err := s.repo.Find(signingId)
 	if err != nil {
+		if commonRepo.IsErrorResourceNotFound(err) {
+			err = domain.NewNotFoundDomainError(domain.ErrorCodeCorpSigningNotFound)
+		}
 		return false, err
 	}
 
@@ -333,6 +336,9 @@ func (s *corpSigningService) GetAutoApproval(signingId string) (bool, error) {
 func (s *corpSigningService) UpdateAutoApproval(signingId string, enabled bool) error {
 	cs, err := s.repo.Find(signingId)
 	if err != nil {
+		if commonRepo.IsErrorResourceNotFound(err) {
+			err = domain.NewNotFoundDomainError(domain.ErrorCodeCorpSigningNotFound)
+		}
 		return err
 	}
 

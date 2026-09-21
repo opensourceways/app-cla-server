@@ -17,14 +17,14 @@ import (
 type fakeCorpSigningRepo struct {
 	repository.CorpSigning
 
-	findFn             func(index string) (domain.CorpSigning, error)
+	findFn              func(index string) (domain.CorpSigning, error)
 	updateAutoApproveFn func(cs *domain.CorpSigning) error
-	addEmployeeFn      func(cs *domain.CorpSigning, es *domain.EmployeeSigning) error
-	findByEmailFn     func(linkId string, email dp.EmailAddr) (repository.EmployeeSigningSummary, error)
+	addEmployeeFn       func(cs *domain.CorpSigning, es *domain.EmployeeSigning) error
+	findByEmailFn       func(linkId string, email dp.EmailAddr) (repository.EmployeeSigningSummary, error)
 
 	updateAutoApproveCalls int
-	addEmployeeCalls      int
-	lastAutoApprove       bool
+	addEmployeeCalls       int
+	lastAutoApprove        bool
 }
 
 func (f *fakeCorpSigningRepo) Find(index string) (domain.CorpSigning, error) {
@@ -177,12 +177,53 @@ func TestCorpSigningServiceUpdateAutoApprovalFindError(t *testing.T) {
 	}
 }
 
+// ---- AC10: a non-existent corp signing must be mapped to the
+// ErrorCodeCorpSigningNotFound domain error (consistent with the Sign path),
+// so the adapter surfaces errCode "unsigned" rather than "no_link".
+
+func TestCorpSigningServiceGetAutoApprovalNotFound(t *testing.T) {
+	repo := &fakeCorpSigningRepo{
+		findFn: func(index string) (domain.CorpSigning, error) {
+			return domain.CorpSigning{}, commonRepo.NewErrorResourceNotFound(errors.New("not found"))
+		},
+	}
+
+	s := newCorpSigningServiceForTest(repo)
+
+	_, err := s.GetAutoApproval("cs1")
+	if err == nil {
+		t.Fatal("GetAutoApproval: expected error for missing corp signing, got nil")
+	}
+	if !domain.IsErrorOf(err, domain.ErrorCodeCorpSigningNotFound) {
+		t.Errorf("GetAutoApproval: expected error code %q, got %v", domain.ErrorCodeCorpSigningNotFound, err)
+	}
+}
+
+func TestCorpSigningServiceUpdateAutoApprovalNotFound(t *testing.T) {
+	repo := &fakeCorpSigningRepo{
+		findFn: func(index string) (domain.CorpSigning, error) {
+			return domain.CorpSigning{}, commonRepo.NewErrorResourceNotFound(errors.New("not found"))
+		},
+	}
+
+	s := newCorpSigningServiceForTest(repo)
+
+	if err := s.UpdateAutoApproval("cs1", true); err == nil {
+		t.Fatal("UpdateAutoApproval: expected error for missing corp signing, got nil")
+	} else if !domain.IsErrorOf(err, domain.ErrorCodeCorpSigningNotFound) {
+		t.Errorf("UpdateAutoApproval: expected error code %q, got %v", domain.ErrorCodeCorpSigningNotFound, err)
+	}
+	if repo.updateAutoApproveCalls != 0 {
+		t.Errorf("UpdateAutoApprove should not be called when Find fails with not found, got %d calls", repo.updateAutoApproveCalls)
+	}
+}
+
 // ---- EmployeeSigningService.Sign auto-approval branch ----
 
 func TestEmployeeSigningServiceSignAutoApprovalEnabled(t *testing.T) {
 	email := dp.CreateEmailAddr("user@test.com")
 	mgr := domain.Manager{
-		Id:            "m1",
+		Id: "m1",
 		Representative: domain.Representative{
 			Name:      dp.CreateName("Manager"),
 			EmailAddr: dp.CreateEmailAddr("mgr@test.com"),
@@ -224,7 +265,7 @@ func TestEmployeeSigningServiceSignAutoApprovalEnabled(t *testing.T) {
 func TestEmployeeSigningServiceSignAutoApprovalDisabled(t *testing.T) {
 	email := dp.CreateEmailAddr("user@test.com")
 	mgr := domain.Manager{
-		Id:            "m1",
+		Id: "m1",
 		Representative: domain.Representative{
 			Name:      dp.CreateName("Manager"),
 			EmailAddr: dp.CreateEmailAddr("mgr@test.com"),

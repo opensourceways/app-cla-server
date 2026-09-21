@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/opensourceways/app-cla-server/models"
@@ -454,22 +455,42 @@ func (ctl *CorporationSigningController) UpdateAutoApproval() {
 		return
 	}
 
-	var opt models.CorpAutoApprovalOption
-	if fr := ctl.fetchInputPayload(&opt); fr != nil {
+	enabled, fr := parseCorpAutoApprovalOption(ctl.Ctx.Input.RequestBody)
+	if fr != nil {
 		ctl.sendFailedResultAsResp(fr, action)
 		return
 	}
 
-	if merr := models.UpdateCorpAutoApproval(pl.SigningId, opt.Enabled); merr != nil {
+	if merr := models.UpdateCorpAutoApproval(pl.SigningId, enabled); merr != nil {
 		ctl.sendModelErrorAsResp(merr, action)
 		return
 	}
 
 	direction := "close"
-	if opt.Enabled {
+	if enabled {
 		direction = "open"
 	}
 	ctl.addOperationLog(pl.UserId, "corp admin "+direction+" auto-approval", 200)
 
 	ctl.sendSuccessResp(action, "successfully")
+}
+
+// parseCorpAutoApprovalOption parses and validates the PUT body of the
+// auto-approval preference. The "enabled" field is required and must be a
+// boolean; a missing field or a non-bool value yields error_parsing_api_body
+// (HTTP 400), consistent with the non-bool unmarshal failure path.
+func parseCorpAutoApprovalOption(body []byte) (bool, *failedApiResult) {
+	var opt struct {
+		Enabled *bool `json:"enabled"`
+	}
+	if fr := fetchInputPayloadData(body, &opt); fr != nil {
+		return false, fr
+	}
+	if opt.Enabled == nil {
+		return false, newFailedApiResult(
+			400, errParsingApiBody,
+			fmt.Errorf("missing required field: enabled"),
+		)
+	}
+	return *opt.Enabled, nil
 }

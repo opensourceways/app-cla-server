@@ -111,3 +111,42 @@ func TestCorpSigningRemoveEmployee(t *testing.T) {
 		t.Error("RemoveEmployee unknown id should fail")
 	}
 }
+
+func TestEmployeeSigningAutoEnable(t *testing.T) {
+	es := &EmployeeSigning{Enabled: false, Logs: []EmployeeSigningLog{}}
+
+	es.AutoEnable()
+
+	if !es.Enabled {
+		t.Error("Enabled should be true after AutoEnable")
+	}
+	if len(es.Logs) != 1 || es.Logs[0].Action != "auto_enable" {
+		t.Errorf("Logs after AutoEnable: got %v, want single entry with action=auto_enable", es.Logs)
+	}
+	if es.Logs[0].Time == 0 {
+		t.Error("AutoEnable log should have a non-zero timestamp")
+	}
+}
+
+func TestEmployeeSigningAutoEnableDistinctFromEnable(t *testing.T) {
+	auto := &EmployeeSigning{Enabled: false, Logs: []EmployeeSigningLog{}}
+	auto.AutoEnable()
+
+	manual := &EmployeeSigning{Enabled: false, Logs: []EmployeeSigningLog{}}
+	if err := manual.enable(); err != nil {
+		t.Fatalf("enable: unexpected error %v", err)
+	}
+
+	if auto.Logs[0].Action == manual.Logs[0].Action {
+		t.Errorf(
+			"auto_enable and enable should produce different log actions, both got %q",
+			auto.Logs[0].Action,
+		)
+	}
+	if auto.Logs[0].Action != "auto_enable" {
+		t.Errorf("auto log action: got %q, want auto_enable", auto.Logs[0].Action)
+	}
+	if manual.Logs[0].Action != "enable" {
+		t.Errorf("manual log action: got %q, want enable", manual.Logs[0].Action)
+	}
+}

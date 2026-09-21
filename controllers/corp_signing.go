@@ -17,7 +17,7 @@ func (ctl *CorporationSigningController) Prepare() {
 	if strings.HasSuffix(v, ":link_id/corps/:email") || ctl.isPostRequest() {
 		ctl.apiPrepare("")
 	} else {
-		if strings.HasSuffix(v, "/cla/diff") || strings.HasSuffix(v, "/cla/agree") {
+		if strings.HasSuffix(v, "/cla/diff") || strings.HasSuffix(v, "/cla/agree") || strings.HasSuffix(v, "/auto-approval") {
 			ctl.apiPrepare(PermissionCorpAdmin)
 		} else {
 			ctl.apiPrepare(PermissionOwnerOfOrg)
@@ -401,4 +401,75 @@ func (ctl *CorporationSigningController) GetPendingAgreements() {
 	} else {
 		ctl.sendSuccessResp(action, r)
 	}
+}
+
+// @Title GetAutoApproval
+// @Description get the auto-approval preference of corp signing
+// @Tags CorpSigning
+// @Accept json
+// @Success 200 {object} models.CorpAutoApprovalOption
+// @Failure 401 missing_token:              token is missing
+// @Failure 402 unknown_token:              token is unknown
+// @Failure 403 expired_token:              token is expired
+// @Failure 404 unauthorized_token:         the permission of token is unmatched
+// @Failure 500 system_error:               system error
+// @router /auto-approval [get]
+func (ctl *CorporationSigningController) GetAutoApproval() {
+	action := "corp admin gets auto-approval preference"
+
+	pl, fr := ctl.tokenPayloadBasedOnCorpManager()
+	if fr != nil {
+		ctl.sendFailedResultAsResp(fr, action)
+		return
+	}
+
+	enabled, merr := models.GetCorpAutoApproval(pl.SigningId)
+	if merr != nil {
+		ctl.sendModelErrorAsResp(merr, action)
+		return
+	}
+
+	ctl.sendSuccessResp(action, models.CorpAutoApprovalOption{Enabled: enabled})
+}
+
+// @Title UpdateAutoApproval
+// @Description set the auto-approval preference of corp signing
+// @Tags CorpSigning
+// @Accept json
+// @Param  body  body  models.CorpAutoApprovalOption  true  "auto-approval preference"
+// @Success 200 {object} controllers.respData
+// @Failure 400 error_parsing_api_body:     parse input parameter failed
+// @Failure 401 missing_token:              token is missing
+// @Failure 402 unknown_token:              token is unknown
+// @Failure 403 expired_token:              token is expired
+// @Failure 404 unauthorized_token:         the permission of token is unmatched
+// @Failure 500 system_error:               system error
+// @router /auto-approval [put]
+func (ctl *CorporationSigningController) UpdateAutoApproval() {
+	action := "corp admin updates auto-approval preference"
+
+	pl, fr := ctl.tokenPayloadBasedOnCorpManager()
+	if fr != nil {
+		ctl.sendFailedResultAsResp(fr, action)
+		return
+	}
+
+	var opt models.CorpAutoApprovalOption
+	if fr := ctl.fetchInputPayload(&opt); fr != nil {
+		ctl.sendFailedResultAsResp(fr, action)
+		return
+	}
+
+	if merr := models.UpdateCorpAutoApproval(pl.SigningId, opt.Enabled); merr != nil {
+		ctl.sendModelErrorAsResp(merr, action)
+		return
+	}
+
+	direction := "close"
+	if opt.Enabled {
+		direction = "open"
+	}
+	ctl.addOperationLog(pl.UserId, "corp admin "+direction+" auto-approval", 200)
+
+	ctl.sendSuccessResp(action, "successfully")
 }

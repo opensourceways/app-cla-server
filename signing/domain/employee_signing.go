@@ -5,16 +5,21 @@ import (
 )
 
 const (
-	employeeSigningActionEnable    = "enable"
-	employeeSigningActionDisable   = "disable"
-	employeeSigningActionDelete    = "delete"
-	employeeSigningActionCollect   = "collect"
+	employeeSigningActionEnable     = "enable"
+	employeeSigningActionDisable    = "disable"
+	employeeSigningActionDelete     = "delete"
+	employeeSigningActionCollect    = "collect"
 	employeeSigningActionAutoEnable = "auto_enable"
 )
 
-// EmployeeSigningSourceIndividual marks the employee signing is collected
-// from a historical individual signing.
-const EmployeeSigningSourceIndividual = "individual"
+const (
+	// EmployeeSigningSourceIndividual marks the employee signing is collected
+	// from a historical individual signing.
+	EmployeeSigningSourceIndividual = "individual"
+
+	// EmployeeSigningSourceAutoEnable marks the employee singing is enable automatically.
+	EmployeeSigningSourceAutoEnable = "auto_enable"
+)
 
 type EmployeeSigningLog struct {
 	Time   int64
@@ -74,6 +79,7 @@ func (es *EmployeeSigning) enable() error {
 // signings during Sign, so Enabled is always false at this point.
 func (es *EmployeeSigning) AutoEnable() {
 	es.Enabled = true
+	es.Source = EmployeeSigningSourceAutoEnable
 	es.addLog(employeeSigningActionAutoEnable)
 }
 

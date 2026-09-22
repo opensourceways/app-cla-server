@@ -77,8 +77,11 @@ func (s *accessTokenService) validate(old domain.AccessTokenKey) ([]byte, error)
 		return nil, invalidToken
 	}
 
+	logs.Error("token length ok")
+
 	token, err := s.repo.Find(old.Id)
 	if err != nil {
+		logs.Error("find token failed, err:%s", err.Error())
 		if commonRepo.IsErrorResourceNotFound(err) {
 			return nil, invalidToken
 		}
@@ -87,10 +90,12 @@ func (s *accessTokenService) validate(old domain.AccessTokenKey) ([]byte, error)
 	}
 
 	if !token.IsValid() {
+		logs.Error("invalid token")
 		return nil, invalidToken
 	}
 
 	if !s.isSameToken(csrf, token.EncryptedCSRF) {
+		logs.Error("invalid token, no same")
 		return nil, invalidToken
 	}
 

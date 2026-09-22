@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"errors"
 
+	"github.com/beego/beego/v2/core/logs"
+
 	"github.com/opensourceways/app-cla-server/models"
 )
 
@@ -104,6 +106,8 @@ func (ctl *baseController) checkApiReqToken(ac *accessController, permission []s
 	if fr != nil {
 		return fr
 	}
+
+	logs.Error("get token: ", token.Id, token.CSRF)
 
 	newToken, v, err := models.ValidateAndRefreshAccessToken(token)
 

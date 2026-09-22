@@ -109,14 +109,16 @@ func (s *accessTokenService) ValidateAndRefresh(old domain.AccessTokenKey) (
 		return
 	}
 
-	newOne, err1 := s.Add(p)
-	if err1 == nil {
-		if err1 := s.repo.Delete(old.Id); err1 != nil {
-			logs.Error("delete token, id:%s, err:%s", old.Id, err1.Error())
-		}
-	} else {
-		newOne = old
-	}
+	//newOne, err1 := s.Add(p)
+	//if err1 == nil {
+	//	if err1 := s.repo.Delete(old.Id); err1 != nil {
+	//		logs.Error("delete token, id:%s, err:%s", old.Id, err1.Error())
+	//	}
+	//} else {
+	//	newOne = old
+	//}
+
+	newOne = old
 
 	return
 }

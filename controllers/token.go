@@ -59,11 +59,11 @@ func (ctl *baseController) setCookie(k, v string, httpOnly bool) {
 }
 
 func (ctl *baseController) getToken() (t models.AccessToken, fr *failedApiResult) {
-	if t.CSRF = ctl.apiReqHeader(headerToken); t.CSRF == "" {
-		fr = newFailedApiResult(401, errMissingToken, fmt.Errorf("no token passed"))
-
-		return
-	}
+	//if t.CSRF = ctl.apiReqHeader(headerToken); t.CSRF == "" {
+	//	fr = newFailedApiResult(401, errMissingToken, fmt.Errorf("no token passed"))
+	//
+	//	return
+	//}
 
 	if t.Id = ctl.Ctx.GetCookie(accessToken); t.Id == "" {
 		fr = newFailedApiResult(401, errMissingToken, fmt.Errorf("no token passed"))

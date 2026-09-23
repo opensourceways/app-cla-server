@@ -18,8 +18,17 @@ func (ctl *CorporationSigningController) Prepare() {
 	if strings.HasSuffix(v, ":link_id/corps/:email") || ctl.isPostRequest() {
 		ctl.apiPrepare("")
 	} else {
-		if strings.HasSuffix(v, "/cla/diff") || strings.HasSuffix(v, "/cla/agree") || strings.HasSuffix(v, "/auto-approval") {
+		if strings.HasSuffix(v, "/cla/diff") || strings.HasSuffix(v, "/cla/agree") {
 			ctl.apiPrepare(PermissionCorpAdmin)
+		} else if strings.HasSuffix(v, "/auto-approval") {
+			if ctl.isGetRequest() {
+				ctl.apiPrepareWithAC(
+					&accessController{Payload: &acForCorpManagerPayload{}},
+					[]string{PermissionCorpAdmin, PermissionEmployeeManager},
+				)
+			} else {
+				ctl.apiPrepare(PermissionCorpAdmin)
+			}
 		} else {
 			ctl.apiPrepare(PermissionOwnerOfOrg)
 		}

@@ -54,6 +54,9 @@ func codeMap(code string) models.ModelErrCode {
 	case domain.ErrorCodeCorpSigningCLAIsLatest:
 		return models.ErrCLAIsLatest
 
+	case domain.ErrorCodeCorpSigningAutoApprovalUnchanged:
+		return models.ErrAutoApprovalUnchanged
+
 	// corp pdf
 	case domain.ErrorCodeCorpPDFNotFound:
 		return models.ErrUnuploaed

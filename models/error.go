@@ -58,6 +58,7 @@ const (
 	ErrLinkIsUsed              ModelErrCode = "link_is_used"
 	ErrNoPermission            ModelErrCode = "no_permission"
 	ErrCLAIsLatest             ModelErrCode = "cla_is_latest"
+	ErrAutoApprovalUnchanged   ModelErrCode = "auto_approval_unchanged"
 )
 
 type IModelError interface {

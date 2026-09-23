@@ -342,6 +342,10 @@ func (s *corpSigningService) UpdateAutoApproval(signingId string, enabled bool) 
 		return err
 	}
 
+	if cs.AutoApproveEmployees == enabled {
+		return domain.NewDomainError(domain.ErrorCodeCorpSigningAutoApprovalUnchanged)
+	}
+
 	cs.SetAutoApprove(enabled)
 
 	return s.repo.UpdateAutoApprove(&cs)

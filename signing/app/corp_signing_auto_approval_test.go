@@ -218,6 +218,40 @@ func TestCorpSigningServiceUpdateAutoApprovalNotFound(t *testing.T) {
 	}
 }
 
+// TestCorpSigningServiceUpdateAutoApprovalUnchanged 验证新旧值相同时报错，且不调用 UpdateAutoApprove
+func TestCorpSigningServiceUpdateAutoApprovalUnchanged(t *testing.T) {
+	tests := []struct {
+		name    string
+		enabled bool
+	}{
+		{"已开启，再次开启", true},
+		{"已关闭，再次关闭", false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			repo := &fakeCorpSigningRepo{
+				findFn: func(index string) (domain.CorpSigning, error) {
+					return domain.CorpSigning{Id: index, AutoApproveEmployees: tt.enabled}, nil
+				},
+			}
+
+			s := newCorpSigningServiceForTest(repo)
+
+			err := s.UpdateAutoApproval("cs1", tt.enabled)
+			if err == nil {
+				t.Fatal("UpdateAutoApproval: 新旧值相同时应返回错误")
+			}
+			if !domain.IsErrorOf(err, domain.ErrorCodeCorpSigningAutoApprovalUnchanged) {
+				t.Errorf("期望错误码 %q, 实际 %v", domain.ErrorCodeCorpSigningAutoApprovalUnchanged, err)
+			}
+			if repo.updateAutoApproveCalls != 0 {
+				t.Errorf("新旧值相同时不应调用 UpdateAutoApprove, 实际调用了 %d 次", repo.updateAutoApproveCalls)
+			}
+		})
+	}
+}
+
 // ---- EmployeeSigningService.Sign auto-approval branch ----
 
 func TestEmployeeSigningServiceSignAutoApprovalEnabled(t *testing.T) {

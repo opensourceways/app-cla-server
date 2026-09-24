@@ -483,43 +483,51 @@ func (ctl *CorporationSigningController) UpdateAutoApproval() {
 		direction = "open"
 	}
 
-	orgInfo, merr := models.GetLink(pl.LinkID)
-	if merr != nil {
-		logs.Error("failed to get org info for auto-approval email: %s", merr.Error())
-	} else {
-		managers, merr := models.ListEmployeeManagers(pl.SigningId)
-		if merr != nil {
-			logs.Error("failed to list employee managers for auto-approval email: %s", merr.Error())
-		} else {
-			to := make([]string, 0, len(managers))
-			for _, item := range managers {
-				to = append(to, item.Email)
-			}
+	ctl.sendAutoApprovalEmail(pl.LinkID, pl.SigningId, direction, enabled)
 
-			subject := fmt.Sprintf(
-				"Auto-approval %s on project of \"%s\"",
-				direction, orgInfo.OrgAlias,
-			)
-			if enabled {
-				msg := emailtmpl.AutoApprovalEnabled{
-					Org:              orgInfo.OrgAlias,
-					ProjectURL:       orgInfo.ProjectURL,
-					URLOfCLAPlatform: config.signingURL(pl.LinkID),
-				}
-				sendEmail(to, &orgInfo, subject, &msg)
-			} else {
-				msg := emailtmpl.AutoApprovalDisabled{
-					Org:              orgInfo.OrgAlias,
-					ProjectURL:       orgInfo.ProjectURL,
-					URLOfCLAPlatform: config.signingURL(pl.LinkID),
-				}
-				sendEmail(to, &orgInfo, subject, &msg)
-			}
-		}
-	}
 	ctl.addOperationLog(pl.UserId, "corp admin "+direction+" auto-approval", 200)
 
 	ctl.sendSuccessResp(action, "successfully")
+}
+
+func (ctl *CorporationSigningController) sendAutoApprovalEmail(linkId, signingId, direction string, enabled bool) {
+	orgInfo, merr := models.GetLink(linkId)
+	if merr != nil {
+		logs.Error("failed to get org info for auto-approval email: %s", merr.Error())
+		return
+	}
+
+	managers, merr := models.ListEmployeeManagers(signingId)
+	if merr != nil {
+		logs.Error("failed to list employee managers for auto-approval email: %s", merr.Error())
+		return
+	}
+
+	to := make([]string, 0, len(managers))
+	for _, item := range managers {
+		to = append(to, item.Email)
+	}
+
+	subject := fmt.Sprintf(
+		"Auto-approval %s on project of \"%s\"",
+		direction, orgInfo.OrgAlias,
+	)
+
+	if enabled {
+		msg := emailtmpl.AutoApprovalEnabled{
+			Org:              orgInfo.OrgAlias,
+			ProjectURL:       orgInfo.ProjectURL,
+			URLOfCLAPlatform: config.signingURL(linkId),
+		}
+		sendEmail(to, &orgInfo, subject, &msg)
+	} else {
+		msg := emailtmpl.AutoApprovalDisabled{
+			Org:              orgInfo.OrgAlias,
+			ProjectURL:       orgInfo.ProjectURL,
+			URLOfCLAPlatform: config.signingURL(linkId),
+		}
+		sendEmail(to, &orgInfo, subject, &msg)
+	}
 }
 
 // parseCorpAutoApprovalOption parses and validates the PUT body of the

@@ -128,6 +128,7 @@ func TestCorpSigningServiceGetAutoApprovalFindError(t *testing.T) {
 // ---- UpdateAutoApproval ----
 
 func TestCorpSigningServiceUpdateAutoApproval(t *testing.T) {
+	mgr := domain.Manager{Id: "m1"}
 	tests := []struct {
 		name    string
 		enabled bool
@@ -140,7 +141,11 @@ func TestCorpSigningServiceUpdateAutoApproval(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			repo := &fakeCorpSigningRepo{
 				findFn: func(index string) (domain.CorpSigning, error) {
-					return domain.CorpSigning{Id: index, AutoApproveEmployees: !tt.enabled}, nil
+					return domain.CorpSigning{
+						Id:                   index,
+						AutoApproveEmployees: !tt.enabled,
+						Managers:             []domain.Manager{mgr},
+					}, nil
 				},
 			}
 
@@ -253,6 +258,28 @@ func TestCorpSigningServiceUpdateAutoApprovalUnchanged(t *testing.T) {
 }
 
 // ---- EmployeeSigningService.Sign auto-approval branch ----
+
+// TestCorpSigningServiceUpdateAutoApprovalNoManager 验证无管理员时不允许开启自动审批
+func TestCorpSigningServiceUpdateAutoApprovalNoManager(t *testing.T) {
+	repo := &fakeCorpSigningRepo{
+		findFn: func(index string) (domain.CorpSigning, error) {
+			return domain.CorpSigning{Id: index, AutoApproveEmployees: false}, nil
+		},
+	}
+
+	s := newCorpSigningServiceForTest(repo)
+
+	err := s.UpdateAutoApproval("cs1", true)
+	if err == nil {
+		t.Fatal("UpdateAutoApproval: 无管理员时开启应返回错误")
+	}
+	if !domain.IsErrorOf(err, domain.ErrorCodeCorpSigningAutoApprovalNoManager) {
+		t.Errorf("期望错误码 %q, 实际 %v", domain.ErrorCodeCorpSigningAutoApprovalNoManager, err)
+	}
+	if repo.updateAutoApproveCalls != 0 {
+		t.Errorf("无管理员时不应调用 UpdateAutoApprove, 实际调用了 %d 次", repo.updateAutoApproveCalls)
+	}
+}
 
 func TestEmployeeSigningServiceSignAutoApprovalEnabled(t *testing.T) {
 	email := dp.CreateEmailAddr("user@test.com")

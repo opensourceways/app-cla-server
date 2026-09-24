@@ -30,6 +30,8 @@ type corpSigningAdapter interface {
 	Agree(signingId string) IModelError
 	UpdateRepresentative(userId, linkID, signingID string, opt *RepresentativeUpdateOption) IModelError
 	FindPendingAgreements(userId, linkId string) ([]CorporationSigningPendingItem, IModelError)
+	GetAutoApproval(csId string) (bool, IModelError)
+	UpdateAutoApproval(csId string, enabled bool) IModelError
 }
 
 func RegisterCorpSigningAdapter(a corpSigningAdapter) {

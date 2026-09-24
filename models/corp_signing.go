@@ -80,3 +80,9 @@ type CorporationSigningPendingItem struct {
 func FindPendingAgreements(userId, linkId string) ([]CorporationSigningPendingItem, IModelError) {
 	return corpSigningAdapterInstance.FindPendingAgreements(userId, linkId)
 }
+
+// CorpAutoApprovalOption is the request/response body for the auto-approval
+// preference of a corporation signing.
+type CorpAutoApprovalOption struct {
+	Enabled bool `json:"enabled"`
+}

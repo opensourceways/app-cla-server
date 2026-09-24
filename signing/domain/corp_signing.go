@@ -42,6 +42,8 @@ type CorpSigning struct {
 	PendingCLAId   string // 待同意的 CLA 版本
 	ClaNotifyCount int    // 已发送通知次数
 	ClaNotifyTime  int64  // 上次通知时间(unix timestamp)
+
+	AutoApproveEmployees bool // 企业超管开启后，员工签署自动通过，无需管理员审批
 }
 
 func (cs *CorpSigning) CorpName() dp.CorpName {
@@ -275,6 +277,12 @@ func (cs *CorpSigning) posOfEmployee(index string) (int, bool) {
 
 func (cs *CorpSigning) HasSignedCLA(latestClaId string) bool {
 	return cs.Link.CLAId == latestClaId
+}
+
+// SetAutoApprove sets the auto-approval preference for employee signings.
+// It is idempotent and can be called regardless of the current value.
+func (cs *CorpSigning) SetAutoApprove(enabled bool) {
+	cs.AutoApproveEmployees = enabled
 }
 
 func (cs *CorpSigning) SetLatestClaId(latestClaId string) error {

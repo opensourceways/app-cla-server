@@ -1,10 +1,14 @@
 package controllers
 
 import (
+	"fmt"
 	"strings"
+
+	"github.com/beego/beego/v2/core/logs"
 
 	"github.com/opensourceways/app-cla-server/models"
 	"github.com/opensourceways/app-cla-server/signing/domain/dp"
+	"github.com/opensourceways/app-cla-server/signing/infrastructure/emailtmpl"
 	"github.com/opensourceways/app-cla-server/worker"
 )
 
@@ -19,6 +23,15 @@ func (ctl *CorporationSigningController) Prepare() {
 	} else {
 		if strings.HasSuffix(v, "/cla/diff") || strings.HasSuffix(v, "/cla/agree") {
 			ctl.apiPrepare(PermissionCorpAdmin)
+		} else if strings.HasSuffix(v, "/auto-approval") {
+			if ctl.isGetRequest() {
+				ctl.apiPrepareWithAC(
+					&accessController{Payload: &acForCorpManagerPayload{}},
+					[]string{PermissionCorpAdmin, PermissionEmployeeManager},
+				)
+			} else {
+				ctl.apiPrepare(PermissionCorpAdmin)
+			}
 		} else {
 			ctl.apiPrepare(PermissionOwnerOfOrg)
 		}
@@ -401,4 +414,130 @@ func (ctl *CorporationSigningController) GetPendingAgreements() {
 	} else {
 		ctl.sendSuccessResp(action, r)
 	}
+}
+
+// @Title GetAutoApproval
+// @Description get the auto-approval preference of corp signing
+// @Tags CorpSigning
+// @Accept json
+// @Success 200 {object} models.CorpAutoApprovalOption
+// @Failure 401 missing_token:              token is missing
+// @Failure 402 unknown_token:              token is unknown
+// @Failure 403 expired_token:              token is expired
+// @Failure 404 unauthorized_token:         the permission of token is unmatched
+// @Failure 500 system_error:               system error
+// @router /auto-approval [get]
+func (ctl *CorporationSigningController) GetAutoApproval() {
+	action := "corp admin gets auto-approval preference"
+
+	pl, fr := ctl.tokenPayloadBasedOnCorpManager()
+	if fr != nil {
+		ctl.sendFailedResultAsResp(fr, action)
+		return
+	}
+
+	enabled, merr := models.GetCorpAutoApproval(pl.SigningId)
+	if merr != nil {
+		ctl.sendModelErrorAsResp(merr, action)
+		return
+	}
+
+	ctl.sendSuccessResp(action, models.CorpAutoApprovalOption{Enabled: enabled})
+}
+
+// @Title UpdateAutoApproval
+// @Description set the auto-approval preference of corp signing
+// @Tags CorpSigning
+// @Accept json
+// @Param  body  body  models.CorpAutoApprovalOption  true  "auto-approval preference"
+// @Success 200 {object} controllers.respData
+// @Failure 400 error_parsing_api_body:     parse input parameter failed
+// @Failure 401 missing_token:              token is missing
+// @Failure 402 unknown_token:              token is unknown
+// @Failure 403 expired_token:              token is expired
+// @Failure 404 unauthorized_token:         the permission of token is unmatched
+// @Failure 500 system_error:               system error
+// @router /auto-approval [put]
+func (ctl *CorporationSigningController) UpdateAutoApproval() {
+	action := "corp admin updates auto-approval preference"
+
+	pl, fr := ctl.tokenPayloadBasedOnCorpManager()
+	if fr != nil {
+		ctl.sendFailedResultAsResp(fr, action)
+		return
+	}
+
+	enabled, fr := parseCorpAutoApprovalOption(ctl.Ctx.Input.RequestBody)
+	if fr != nil {
+		ctl.sendFailedResultAsResp(fr, action)
+		return
+	}
+
+	if merr := models.UpdateCorpAutoApproval(pl.SigningId, enabled); merr != nil {
+		ctl.sendModelErrorAsResp(merr, action)
+		return
+	}
+
+	direction := "close"
+	if enabled {
+		direction = "open"
+	}
+
+	orgInfo, merr := models.GetLink(pl.LinkID)
+	if merr != nil {
+		logs.Error("failed to get org info for auto-approval email: %s", merr.Error())
+	} else {
+		managers, merr := models.ListEmployeeManagers(pl.SigningId)
+		if merr != nil {
+			logs.Error("failed to list employee managers for auto-approval email: %s", merr.Error())
+		} else {
+			to := make([]string, 0, len(managers))
+			for _, item := range managers {
+				to = append(to, item.Email)
+			}
+
+			subject := fmt.Sprintf(
+				"Auto-approval %s on project of \"%s\"",
+				direction, orgInfo.OrgAlias,
+			)
+			if enabled {
+				msg := emailtmpl.AutoApprovalEnabled{
+					Org:              orgInfo.OrgAlias,
+					ProjectURL:       orgInfo.ProjectURL,
+					URLOfCLAPlatform: config.signingURL(pl.LinkID),
+				}
+				sendEmail(to, &orgInfo, subject, &msg)
+			} else {
+				msg := emailtmpl.AutoApprovalDisabled{
+					Org:              orgInfo.OrgAlias,
+					ProjectURL:       orgInfo.ProjectURL,
+					URLOfCLAPlatform: config.signingURL(pl.LinkID),
+				}
+				sendEmail(to, &orgInfo, subject, &msg)
+			}
+		}
+	}
+	ctl.addOperationLog(pl.UserId, "corp admin "+direction+" auto-approval", 200)
+
+	ctl.sendSuccessResp(action, "successfully")
+}
+
+// parseCorpAutoApprovalOption parses and validates the PUT body of the
+// auto-approval preference. The "enabled" field is required and must be a
+// boolean; a missing field or a non-bool value yields error_parsing_api_body
+// (HTTP 400), consistent with the non-bool unmarshal failure path.
+func parseCorpAutoApprovalOption(body []byte) (bool, *failedApiResult) {
+	var opt struct {
+		Enabled *bool `json:"enabled"`
+	}
+	if fr := fetchInputPayloadData(body, &opt); fr != nil {
+		return false, fr
+	}
+	if opt.Enabled == nil {
+		return false, newFailedApiResult(
+			400, errParsingApiBody,
+			fmt.Errorf("missing required field: enabled"),
+		)
+	}
+	return *opt.Enabled, nil
 }

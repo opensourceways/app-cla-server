@@ -58,6 +58,10 @@ const (
 	ErrLinkIsUsed              ModelErrCode = "link_is_used"
 	ErrNoPermission            ModelErrCode = "no_permission"
 	ErrCLAIsLatest             ModelErrCode = "cla_is_latest"
+	ErrCLANotCorp              ModelErrCode = "cla_not_corp"
+	ErrGenTemplatePDFFailed    ModelErrCode = "gen_template_pdf_failed"
+	ErrGenDiffFailed           ModelErrCode = "gen_diff_failed"
+	ErrNotAllowedCLAPDFSource  ModelErrCode = "not_allowed_cla_pdf_source"
 )
 
 type IModelError interface {

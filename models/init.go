@@ -145,6 +145,8 @@ type claAdapter interface {
 	Remove(userId, linkId, claId string) IModelError
 	CLALocalFilePath(linkId, claId string) string
 	List(userId, linkId string) (CLAOfLink, IModelError)
+	CorpCLATemplatePDF(userId, linkId, claId string) (string, IModelError)
+	DiffPreview(userId, linkId string, opt *CLADiffPreviewOpt) (CLADiffPreviewResult, IModelError)
 }
 
 func RegisterCLAAdapter(a claAdapter) {

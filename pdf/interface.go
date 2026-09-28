@@ -8,6 +8,7 @@ import (
 
 type IPDFGenerator interface {
 	GenPDFForCorporationSigning(linkID, claFile string, signing *models.CorporationSigning, claFields []models.CLAField) (string, error)
+	GenCLATemplatePDF(linkID, claFile, claLang string, claFields []models.CLAField) (string, error)
 }
 
 var generator *pdfGenerator

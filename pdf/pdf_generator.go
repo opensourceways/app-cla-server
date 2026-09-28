@@ -110,3 +110,46 @@ func genPDFFileName(linkID, email, other string) string {
 	s := strings.ReplaceAll(util.EmailSuffix(email), ".", "_")
 	return fmt.Sprintf("%s_%s%s.pdf", linkID, s, other)
 }
+
+func genCLATemplateFileName(linkID, other string) string {
+	return fmt.Sprintf("%s%s.pdf", linkID, other)
+}
+
+func (pg *pdfGenerator) GenCLATemplatePDF(linkID, claFile, claLang string, claFields []models.CLAField) (string, error) {
+	corp := pg.generator(claLang)
+	if corp == nil {
+		return "", fmt.Errorf("unknown cla language:%s", claLang)
+	}
+
+	tempPdf := util.GenFilePath(pg.pdfOutDir, genCLATemplateFileName(linkID, "_tmpl"))
+	if err := genTemplateSignaturePDF(corp, claFields, tempPdf); err != nil {
+		return "", err
+	}
+	defer os.Remove(tempPdf)
+
+	outfile := util.GenFilePath(pg.pdfOutDir, genCLATemplateFileName(linkID, "_template"))
+	if err := appendCorpPDFSignaturePage(pg.pythonBin, claFile, tempPdf, outfile); err != nil {
+		return "", err
+	}
+
+	return outfile, nil
+}
+
+func genTemplateSignaturePDF(c *corpSigningPDF, claFields []models.CLAField, outFile string) error {
+	pdf := c.newPDF()
+
+	pdf.AddPage()
+	orders, titles := BuildCorpContact(claFields)
+	c.addSignature(pdf, map[string]string{}, orders, titles)
+
+	if !util.IsFileNotExist(outFile) {
+		if err := os.Remove(outFile); err != nil {
+			return err
+		}
+	}
+
+	if err := c.end(pdf, outFile); err != nil {
+		return fmt.Errorf("generate template signature pdf failed: %s", err.Error())
+	}
+	return nil
+}

@@ -30,6 +30,8 @@ type CLAService interface {
 	Remove(cmd *CmdToRemoveCLA) error
 	CLALocalFilePath(domain.CLAIndex) string
 	List(userId, linkId string) ([]CLADTO, []CLADTO, error)
+	CorpCLADetail(userId, linkId, claId string) (CLADetailDTO, error)
+	DiffPreviewCLA(userId, linkId string, claType dp.CLAType, language dp.Language) (string, string, error)
 }
 
 type claService struct {
@@ -148,10 +150,11 @@ func (s *claService) List(userId, linkId string) (individuals []CLADTO, corps []
 		item := &v.CLAs[i]
 
 		dto := CLADTO{
-			Id:       item.Id,
-			URL:      item.URL.URL(),
-			Type:     item.Type.CLAType(),
-			Language: item.Language.Language(),
+			Id:        item.Id,
+			URL:       item.URL.URL(),
+			Type:      item.Type.CLAType(),
+			Language:  item.Language.Language(),
+			UpdatedAt: item.UpdatedAt,
 		}
 
 		if dp.IsCLATypeIndividual(item.Type) {
@@ -166,4 +169,42 @@ func (s *claService) List(userId, linkId string) (individuals []CLADTO, corps []
 
 func (s *claService) CLALocalFilePath(index domain.CLAIndex) string {
 	return s.cla.CLALocalFilePath(&index)
+}
+
+func (s *claService) CorpCLADetail(userId, linkId, claId string) (CLADetailDTO, error) {
+	link, err := checkIfCommunityManager(userId, linkId, s.repo)
+	if err != nil {
+		return CLADetailDTO{}, err
+	}
+
+	cla := link.FindCLA(claId)
+	if cla == nil {
+		return CLADetailDTO{}, domain.NewNotFoundDomainError(domain.ErrorCodeCLANotExists)
+	}
+
+	if dp.IsCLATypeIndividual(cla.Type) {
+		return CLADetailDTO{}, domain.NewDomainError(domain.ErrorCodeCLANotCorp)
+	}
+
+	return CLADetailDTO{
+		Id:        cla.Id,
+		Fileds:    cla.Fields,
+		Language:  cla.Language.Language(),
+		LocalFile: s.cla.CLALocalFilePath(&domain.CLAIndex{LinkId: linkId, CLAId: claId}),
+	}, nil
+}
+
+func (s *claService) DiffPreviewCLA(userId, linkId string, claType dp.CLAType, language dp.Language) (string, string, error) {
+	if _, err := checkIfCommunityManager(userId, linkId, s.repo); err != nil {
+		return "", "", err
+	}
+
+	oldId := s.cla.GetClaId(linkId, claType, language)
+	if oldId == "" {
+		return "", "", nil
+	}
+
+	oldFile := s.cla.CLALocalFilePath(&domain.CLAIndex{LinkId: linkId, CLAId: oldId})
+
+	return oldId, oldFile, nil
 }

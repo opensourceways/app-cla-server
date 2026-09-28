@@ -55,10 +55,11 @@ func (cmd *CmdToUpdateCLA) newCLA() domain.CLA {
 }
 
 type CLADTO struct {
-	Id       string
-	Type     string
-	URL      string
-	Language string
+	Id        string
+	Type      string
+	URL       string
+	Language  string
+	UpdatedAt int64
 }
 
 type CLADetailDTO struct {

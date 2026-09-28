@@ -2,6 +2,7 @@ import sys
 import difflib
 import re
 import os
+import html
 from collections import defaultdict
 from pypdf import PdfReader
 
@@ -165,8 +166,11 @@ def save_diff_report1(diff_text, output_path):
 
 def save_diff_report(diff_text, output_path):
     """保存差异报告到HTML文件"""
+    # 先对文本做HTML转义，防止PDF中提取的文本经v-html注入恶意标签；
+    # diff标记[-,-],{+,+}不含HTML特殊字符，不受影响
+    escaped = html.escape(diff_text)
     html_content = f"""
-        <pre>{diff_text.replace('[-', '<span class="removed">').replace('-]', '</span>')
+        <pre>{escaped.replace('[-', '<span class="removed">').replace('-]', '</span>')
                      .replace('{+', '<span class="added">').replace('+}', '</span>')}</pre>
     """
     with open(output_path, "w", encoding="utf-8") as f:

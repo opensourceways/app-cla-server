@@ -121,6 +121,9 @@ func codeMap(code string) models.ModelErrCode {
 	case domain.ErrorCodeCLACanNotRemove:
 		return models.ErrCLAIsUsed
 
+	case domain.ErrorCodeCLANotCorp:
+		return models.ErrCLANotCorp
+
 	// link
 	case domain.ErrorCodeLinkNotExists:
 		return models.ErrNoLink

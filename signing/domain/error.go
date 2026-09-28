@@ -57,6 +57,7 @@ const (
 	ErrorCodeCLAExists       = "cla_exists"
 	ErrorCodeCLANotExists    = "cla_not_exists"
 	ErrorCodeCLACanNotRemove = "cla_can_not_remove"
+	ErrorCodeCLANotCorp      = "cla_not_corp"
 
 	ErrorCodeLinkExists       = "link_exists"
 	ErrorCodeLinkNotExists    = "link_not_exists"

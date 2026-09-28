@@ -37,11 +37,23 @@ type CLAData struct {
 type CLADetail struct {
 	CLAData
 
-	CLAId string `json:"cla_id"`
+	CLAId     string `json:"cla_id"`
+	UpdatedAt string `json:"updated_at"`
 }
 
 type CLAUpdateOpt struct {
 	URL      string `json:"url"`
 	Type     string `json:"type"`
 	Language string `json:"language"`
+}
+
+type CLADiffPreviewOpt struct {
+	URL      string `json:"url"`
+	Type     string `json:"type"`
+	Language string `json:"language"`
+}
+
+type CLADiffPreviewResult struct {
+	IsNew    bool   `json:"is_new"`
+	DiffHTML string `json:"diff_html"`
 }

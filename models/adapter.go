@@ -36,6 +36,14 @@ func ListCLAInstances(userId, linkId string) (CLAOfLink, IModelError) {
 	return claAdapterInstance.List(userId, linkId)
 }
 
+func CorpCLATemplatePDF(userId, linkId, claId string) (string, IModelError) {
+	return claAdapterInstance.CorpCLATemplatePDF(userId, linkId, claId)
+}
+
+func DiffPreviewCLA(userId, linkId string, opt *CLADiffPreviewOpt) (CLADiffPreviewResult, IModelError) {
+	return claAdapterInstance.DiffPreview(userId, linkId, opt)
+}
+
 func RemoveCLAInstance(userId, linkId, claId string) IModelError {
 	return claAdapterInstance.Remove(userId, linkId, claId)
 }

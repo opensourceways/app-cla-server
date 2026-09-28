@@ -195,6 +195,9 @@ func initSigning(cfg *config.Config) error {
 		cfg.Domain.MaxSizeOfCLAContent,
 		cfg.Domain.FileTypeOfCLAContent,
 		cfg.Domain.SourceOfCLAPDF,
+		cfg.PDF.PythonBin,
+		cfg.Watch.CLAUpdateConfig.PythonRetryTimes,
+		cfg.PDF.PDFOutDir,
 	)
 
 	models.RegisterCLAAdapter(claAapter)

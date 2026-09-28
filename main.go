@@ -15,6 +15,7 @@ import (
 	"github.com/opensourceways/app-cla-server/common/infrastructure/redisdb"
 	"github.com/opensourceways/app-cla-server/config"
 	"github.com/opensourceways/app-cla-server/interrupts"
+	"github.com/opensourceways/app-cla-server/obs"
 	"github.com/opensourceways/app-cla-server/pdf"
 	_ "github.com/opensourceways/app-cla-server/routers"
 	"github.com/opensourceways/app-cla-server/signing/domain"
@@ -139,7 +140,20 @@ func startSignSerivce(cfg *config.Config) {
 	worker.Init(pdf.GetPDFGenerator())
 	defer worker.Exit()
 
+	initObservability()
+
 	run()
+}
+
+// initObservability 装配 obs-sdk 指标：HTTP 服务器指标经 beegomw 过滤器链记录，
+// /metrics 端点裸暴露（不走鉴权），业务计数器（邮件/PDF）注入 worker。
+// 指标注册发生在调用时刻，每个 registry 只能调用一次，故此处只执行一次。
+func initObservability() {
+	m := obs.NewMetrics()
+	beego.InsertFilterChain("/*", obs.FilterChain(m))
+	beego.Handler("/metrics", obs.MetricsHandler(m))
+	bm := obs.NewBusinessMetrics(m)
+	worker.SetBusinessMetrics(bm.EmailSent, bm.PDFGen)
 }
 
 func exitMongoService() {

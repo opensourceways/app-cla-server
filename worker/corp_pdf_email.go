@@ -94,10 +94,12 @@ func (impl *corpPDFEmail) genFile() error {
 		impl.linkID, impl.claInfo.CLAFile, &impl.signing, impl.claInfo.Fields,
 	)
 	if err != nil {
+		incPDF("failed")
 		return fmt.Errorf("error to generate pdf, err: %s", err.Error())
 	}
 
 	impl.pdfFilePath = v
+	incPDF("success")
 
 	return nil
 }

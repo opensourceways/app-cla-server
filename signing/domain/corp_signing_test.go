@@ -231,3 +231,24 @@ func TestNotFoundDomainError(t *testing.T) {
 		t.Error("notFoundError should still match error code via IsErrorOf")
 	}
 }
+
+func TestCorpSigningSetAutoApprove(t *testing.T) {
+	cs := &CorpSigning{}
+
+	cs.SetAutoApprove(true)
+	if !cs.AutoApproveEmployees {
+		t.Error("AutoApproveEmployees should be true after SetAutoApprove(true)")
+	}
+
+	cs.SetAutoApprove(false)
+	if cs.AutoApproveEmployees {
+		t.Error("AutoApproveEmployees should be false after SetAutoApprove(false)")
+	}
+
+	// idempotent: setting the same value multiple times is fine
+	cs.SetAutoApprove(true)
+	cs.SetAutoApprove(true)
+	if !cs.AutoApproveEmployees {
+		t.Error("AutoApproveEmployees should be true after calling SetAutoApprove(true) twice")
+	}
+}

@@ -242,6 +242,23 @@ func (adapter *corpSigningAdatper) Agree(signingId string) models.IModelError {
 	return nil
 }
 
+func (adapter *corpSigningAdatper) GetAutoApproval(csId string) (bool, models.IModelError) {
+	enabled, err := adapter.s.GetAutoApproval(csId)
+	if err != nil {
+		return false, toModelError(err)
+	}
+
+	return enabled, nil
+}
+
+func (adapter *corpSigningAdatper) UpdateAutoApproval(csId string, enabled bool) models.IModelError {
+	if err := adapter.s.UpdateAutoApproval(csId, enabled); err != nil {
+		return toModelError(err)
+	}
+
+	return nil
+}
+
 func getAllSigningInfo(
 	input models.TypeSigningInfo, fields []models.CLAField, t dp.CLAType, l dp.Language,
 ) (domain.AllSingingInfo, error) {

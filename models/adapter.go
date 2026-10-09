@@ -104,6 +104,14 @@ func AgreeCorpCLA(signingId string) IModelError {
 	return corpSigningAdapterInstance.Agree(signingId)
 }
 
+func GetCorpAutoApproval(csId string) (bool, IModelError) {
+	return corpSigningAdapterInstance.GetAutoApproval(csId)
+}
+
+func UpdateCorpAutoApproval(csId string, enabled bool) IModelError {
+	return corpSigningAdapterInstance.UpdateAutoApproval(csId, enabled)
+}
+
 // corp pdf
 
 func UploadCorpPDF(userId, csId string, pdf []byte) IModelError {

@@ -439,6 +439,10 @@ func (c *cachedCorpSigning) UpdateCLANotify(summary *repository.CorpSigningSumma
 	return c.repo.UpdateCLANotify(summary)
 }
 
+func (c *cachedCorpSigning) UpdateAutoApprove(cs *domain.CorpSigning) error {
+	return c.repo.UpdateAutoApprove(cs)
+}
+
 func (c *cachedCorpSigning) ListTriggered() ([]TriggeredCorp, error) {
 	return c.repo.ListTriggered()
 }

@@ -384,6 +384,17 @@ func (impl *corpSigning) UpdateCLANotify(summary *repository.CorpSigningSummary)
 	})
 }
 
+func (impl *corpSigning) UpdateAutoApprove(cs *domain.CorpSigning) error {
+	filter, err := impl.toCorpSigningIndex(cs.Id)
+	if err != nil {
+		return err
+	}
+
+	return impl.dao.UpdateDocsWithoutVersion(filter, bson.M{
+		fieldAutoApprove: cs.AutoApproveEmployees,
+	})
+}
+
 func (impl *corpSigning) Update(cs *domain.CorpSigning) error {
 	filter, err := impl.toCorpSigningIndex(cs.Id)
 	if err != nil {

@@ -43,6 +43,8 @@ type CorpSigningService interface {
 	AgreeWithLatestCLA(signingId string) error
 	UpdateRepresentative(userId, linkID, signingID, repName, repEmail string) error
 	FindPendingAgreements(userId, linkId string) ([]CorpSigningPendingDTO, error)
+	GetAutoApproval(signingId string) (bool, error)
+	UpdateAutoApproval(signingId string, enabled bool) error
 }
 
 type corpSigningService struct {
@@ -317,4 +319,38 @@ func (s *corpSigningService) FindPendingAgreements(userId, linkId string) ([]Cor
 	}
 
 	return r, nil
+}
+
+func (s *corpSigningService) GetAutoApproval(signingId string) (bool, error) {
+	cs, err := s.repo.Find(signingId)
+	if err != nil {
+		if commonRepo.IsErrorResourceNotFound(err) {
+			err = domain.NewNotFoundDomainError(domain.ErrorCodeCorpSigningNotFound)
+		}
+		return false, err
+	}
+
+	return cs.AutoApproveEmployees, nil
+}
+
+func (s *corpSigningService) UpdateAutoApproval(signingId string, enabled bool) error {
+	cs, err := s.repo.Find(signingId)
+	if err != nil {
+		if commonRepo.IsErrorResourceNotFound(err) {
+			err = domain.NewNotFoundDomainError(domain.ErrorCodeCorpSigningNotFound)
+		}
+		return err
+	}
+
+	if cs.AutoApproveEmployees == enabled {
+		return domain.NewDomainError(domain.ErrorCodeCorpSigningAutoApprovalUnchanged)
+	}
+
+	if enabled && len(cs.Managers) == 0 {
+		return domain.NewDomainError(domain.ErrorCodeCorpSigningAutoApprovalNoManager)
+	}
+
+	cs.SetAutoApprove(enabled)
+
+	return s.repo.UpdateAutoApprove(&cs)
 }

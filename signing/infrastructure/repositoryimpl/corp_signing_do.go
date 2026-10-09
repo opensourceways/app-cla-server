@@ -31,6 +31,7 @@ const (
 	fieldCLANotify       = "cla_notify"
 	fieldClaNotifyCount  = "cla_notify_count"
 	fieldClaNotifyTime   = "cla_notify_time"
+	fieldAutoApprove     = "auto_approve_employees"
 )
 
 func toCorpSigningDO(v *domain.CorpSigning) corpSigningDO {
@@ -46,6 +47,7 @@ func toCorpSigningDO(v *domain.CorpSigning) corpSigningDO {
 		AllInfo:        v.AllInfo,
 		ClaNotifyCount: v.ClaNotifyCount,
 		ClaNotifyTime:  v.ClaNotifyTime,
+		AutoApproveEmployees: v.AutoApproveEmployees,
 	}
 }
 
@@ -65,6 +67,7 @@ func toCorpSigningDOForMigrate(v *domain.CorpSigning) corpSigningDO {
 		Employees:      toEmployeeSigningDOs(v.Employees),
 		ClaNotifyCount: v.ClaNotifyCount,
 		ClaNotifyTime:  v.ClaNotifyTime,
+		AutoApproveEmployees: v.AutoApproveEmployees,
 	}
 }
 
@@ -89,6 +92,7 @@ type corpSigningDO struct {
 	ClaNotify      string `bson:"cla_notify"       json:"cla_notify"`
 	ClaNotifyCount int    `bson:"cla_notify_count" json:"cla_notify_count"`
 	ClaNotifyTime  int64  `bson:"cla_notify_time"  json:"cla_notify_time"`
+	AutoApproveEmployees bool `bson:"auto_approve_employees" json:"auto_approve_employees"`
 
 	// uploading pdf or adding email domain will trigger individual signing checking
 	// which will delete the one that belongs to a corp.
@@ -154,6 +158,7 @@ func (do *corpSigningDO) toCorpSigning() domain.CorpSigning {
 		Version:        do.Version,
 		ClaNotifyCount: do.ClaNotifyCount,
 		ClaNotifyTime:  do.ClaNotifyTime,
+		AutoApproveEmployees: do.AutoApproveEmployees,
 	}
 }
 

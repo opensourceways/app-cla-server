@@ -5,15 +5,21 @@ import (
 )
 
 const (
-	employeeSigningActionEnable  = "enable"
-	employeeSigningActionDisable = "disable"
-	employeeSigningActionDelete  = "delete"
-	employeeSigningActionCollect = "collect"
+	employeeSigningActionEnable     = "enable"
+	employeeSigningActionDisable    = "disable"
+	employeeSigningActionDelete     = "delete"
+	employeeSigningActionCollect    = "collect"
+	employeeSigningActionAutoEnable = "auto_enable"
 )
 
-// EmployeeSigningSourceIndividual marks the employee signing is collected
-// from a historical individual signing.
-const EmployeeSigningSourceIndividual = "individual"
+const (
+	// EmployeeSigningSourceIndividual marks the employee signing is collected
+	// from a historical individual signing.
+	EmployeeSigningSourceIndividual = "individual"
+
+	// EmployeeSigningSourceAutoEnable marks the employee singing is enable automatically.
+	EmployeeSigningSourceAutoEnable = "auto_enable"
+)
 
 type EmployeeSigningLog struct {
 	Time   int64
@@ -64,6 +70,17 @@ func (es *EmployeeSigning) enable() error {
 	es.addLog(employeeSigningActionEnable)
 
 	return nil
+}
+
+// AutoEnable marks the employee signing as enabled by the auto-approval
+// preference (corp admin opened the switch). Unlike enable(), it writes a
+// distinct "auto_enable" audit log so auto-passed records can be told apart
+// from manually approved ones. It is called on freshly created employee
+// signings during Sign, so Enabled is always false at this point.
+func (es *EmployeeSigning) AutoEnable() {
+	es.Enabled = true
+	es.Source = EmployeeSigningSourceAutoEnable
+	es.addLog(employeeSigningActionAutoEnable)
 }
 
 func (es *EmployeeSigning) disable() error {

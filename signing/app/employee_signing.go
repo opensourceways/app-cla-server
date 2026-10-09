@@ -56,6 +56,9 @@ func (s *employeeSigningService) Sign(cmd *CmdToSignEmployeeCLA) ([]EmployeeMana
 	}
 
 	es := cmd.toEmployeeSigning()
+	if cs.AutoApproveEmployees {
+		es.AutoEnable()
+	}
 	if err := cs.AddEmployee(&es); err != nil {
 		return nil, err
 	}

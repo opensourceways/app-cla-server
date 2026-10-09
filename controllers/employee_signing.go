@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/beego/beego/v2/core/logs"
+
 	"github.com/opensourceways/app-cla-server/models"
 	"github.com/opensourceways/app-cla-server/signing/infrastructure/emailtmpl"
 )
@@ -91,7 +93,16 @@ func (ctl *EmployeeSigningController) Sign() {
 	}
 
 	ctl.sendSuccessResp(action, "successfully")
-	ctl.notifyManagers(linkID, managers, &info, &orgInfo)
+
+	autoApproved, merr := models.GetCorpAutoApproval(info.CorpSigningId)
+	if merr != nil {
+		logs.Error("failed to get auto-approval preference: %s", merr.Error())
+	}
+	if autoApproved {
+		ctl.notifyAutoApproval(linkID, managers, &info, &orgInfo)
+	} else {
+		ctl.notifyManagers(linkID, managers, &info, &orgInfo)
+	}
 }
 
 // @Title GetAll
@@ -249,6 +260,36 @@ func (ctl *EmployeeSigningController) notifyManagers(
 		URLOfCLAPlatform: config.signingURL(linkId),
 	}
 	sendEmail(to, orgInfo, "An employee has signed CLA", &msg1)
+}
+
+func (ctl *EmployeeSigningController) notifyAutoApproval(
+	linkId string,
+	managers []models.CorporationManagerListResult,
+	info *models.EmployeeSigning, orgInfo *models.OrgInfo,
+) {
+	to := make([]string, 0, len(managers))
+	for _, item := range managers {
+		to = append(to, item.Email)
+	}
+
+	msg := emailtmpl.AutoApprovalEmployee{
+		Name:       info.Name,
+		Org:        orgInfo.OrgAlias,
+		ProjectURL: orgInfo.ProjectURL,
+	}
+	sendEmailToIndividual(
+		info.Email, orgInfo,
+		fmt.Sprintf("CLA auto-approved on project of \"%s\"", orgInfo.OrgAlias),
+		&msg,
+	)
+
+	msg1 := emailtmpl.AutoApprovalManager{
+		Org:              orgInfo.OrgAlias,
+		EmployeeEmail:    info.Email,
+		ProjectURL:       orgInfo.ProjectURL,
+		URLOfCLAPlatform: config.signingURL(linkId),
+	}
+	sendEmail(to, orgInfo, "An employee has been auto-approved", &msg1)
 }
 
 func (ctl *EmployeeSigningController) newEmployeeNotification(

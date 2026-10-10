@@ -1,17 +1,44 @@
 package adapter
 
 import (
+	"errors"
+	"strings"
+
 	"github.com/opensourceways/app-cla-server/models"
 	"github.com/opensourceways/app-cla-server/signing/app"
 	"github.com/opensourceways/app-cla-server/signing/domain/dp"
 )
 
-func NewCorpEmailDomainAdapter(s app.CorpEmailDomainService) *corpEmailDomainAdatper {
-	return &corpEmailDomainAdatper{s}
+func NewCorpEmailDomainAdapter(
+	s app.CorpEmailDomainService,
+	invalidCorpEmailDomain []string,
+) *corpEmailDomainAdatper {
+	v := make([]string, len(invalidCorpEmailDomain))
+	for i, item := range invalidCorpEmailDomain {
+		v[i] = strings.ToLower(item)
+	}
+
+	return &corpEmailDomainAdatper{
+		s:                      s,
+		invalidCorpEmailDomain: v,
+	}
 }
 
 type corpEmailDomainAdatper struct {
-	s app.CorpEmailDomainService
+	s                      app.CorpEmailDomainService
+	invalidCorpEmailDomain []string
+}
+
+func (adapter *corpEmailDomainAdatper) isValidaCorpEmailDomain(v string) bool {
+	v = strings.ToLower(v)
+
+	for _, item := range adapter.invalidCorpEmailDomain {
+		if item == v {
+			return false
+		}
+	}
+
+	return true
 }
 
 func (adapter *corpEmailDomainAdatper) Verify(
@@ -56,6 +83,14 @@ func (adapter *corpEmailDomainAdatper) cmdToVerifyEmailDomain(csId string, email
 	}
 
 	cmd.EmailAddr, err = dp.NewEmailAddr(email)
+	if err != nil {
+		return
+	}
+
+	if !adapter.isValidaCorpEmailDomain(cmd.EmailAddr.Domain()) {
+		err = errors.New("invalid email domain")
+		return
+	}
 
 	return
 }

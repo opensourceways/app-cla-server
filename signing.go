@@ -128,7 +128,10 @@ func initSigning(cfg *config.Config) error {
 	)
 
 	models.RegisterCorpEmailDomainAdapter(
-		adapter.NewCorpEmailDomainAdapter(app.NewCorpEmailDomainService(vcService, repo)),
+		adapter.NewCorpEmailDomainAdapter(
+			app.NewCorpEmailDomainService(vcService, repo),
+			cfg.Domain.Config.InvalidCorpEmailDomains(),
+		),
 	)
 
 	models.RegisterCorpPDFAdapter(

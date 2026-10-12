@@ -1,12 +1,5 @@
-FROM openeuler/openeuler:23.03 as BUILDER
-RUN dnf update -y && \
-    dnf install -y wget tar gcc && \
-    wget https://mirrors.aliyun.com/golang/go1.24.1.linux-amd64.tar.gz && \
-    tar -C /usr/local -xzf go1.24.1.linux-amd64.tar.gz && \
-    export PATH=$PATH:/usr/local/go/bin  && \
-    echo "PATH=\$PATH:/usr/local/go/bin" >> /etc/profile && \
-    go version && \
-    go env -w GOPROXY=https://goproxy.cn,direct
+FROM golang:1.26.9 as BUILDER
+RUN go env -w GOPROXY=https://goproxy.cn,direct
 
 MAINTAINER TommyLike<tommylikehu@gmail.com>
 
@@ -15,7 +8,7 @@ COPY . /go/src/github.com/opensourceways/app-cla-server
 RUN cd /go/src/github.com/opensourceways/app-cla-server && GO111MODULE=on /usr/local/go/bin/go build -o cla-server -buildmode=pie --ldflags "-s -linkmode 'external' -extldflags '-Wl,-z,now'"
 
 # copy binary config and utils
-FROM openeuler/openeuler:22.03
+FROM openeuler/openeuler:24.03-lts-sp4
 RUN dnf -y update && \
     dnf in -y shadow git python3 python3-pip && \
     pip3 install git+https://github.com/py-pdf/pypdf.git@6.14.2 && \

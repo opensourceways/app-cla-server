@@ -1,10 +1,15 @@
 package adapter
 
 import (
+	"net/http"
+	"net/http/httptest"
+	"os"
+	"strconv"
 	"testing"
 	"time"
 
 	"github.com/opensourceways/app-cla-server/models"
+	"github.com/opensourceways/app-cla-server/pdf"
 	"github.com/opensourceways/app-cla-server/signing/app"
 	"github.com/opensourceways/app-cla-server/signing/domain"
 	"github.com/opensourceways/app-cla-server/signing/domain/dp"
@@ -162,4 +167,273 @@ func TestDiffPreviewInvalidType(t *testing.T) {
 	if !merr.IsErrorOf(models.ErrBadRequestParameter) {
 		t.Errorf("expected ErrBadRequestParameter, got %s", merr.ErrCode())
 	}
+}
+
+func TestDiffPreviewInvalidLanguage(t *testing.T) {
+	adapter := &claAdatper{
+		claPDFSource:         []string{"https://gitee.com"},
+		fileTypeOfCLAContent: "pdf",
+		maxSizeOfCLAContent:  2 << 20,
+	}
+
+	opt := &models.CLADiffPreviewOpt{
+		URL:      "https://gitee.com/x.pdf",
+		Type:     "corporation",
+		Language: "fr",
+	}
+
+	_, merr := adapter.DiffPreview("user1", "link1", opt)
+	if merr == nil {
+		t.Fatal("expected error for invalid language")
+	}
+	if !merr.IsErrorOf(models.ErrBadRequestParameter) {
+		t.Errorf("expected ErrBadRequestParameter, got %s", merr.ErrCode())
+	}
+}
+
+func TestDiffPreviewIsNew(t *testing.T) {
+	srv := newTestPDFServer()
+	defer srv.Close()
+
+	adapter := &claAdatper{
+		s: &mockCLAService{
+			diffPreviewId:      "",
+			diffPreviewOldFile: "",
+			diffPreviewErr:     nil,
+		},
+		claPDFSource:         []string{srv.URL},
+		fileTypeOfCLAContent: "pdf",
+		maxSizeOfCLAContent:  2 << 20,
+		pythonBin:            "/bin/true",
+		pythonRetryTimes:     3,
+	}
+
+	opt := &models.CLADiffPreviewOpt{
+		URL:      srv.URL + "/test.pdf",
+		Type:     "corporation",
+		Language: "Chinese",
+	}
+
+	result, merr := adapter.DiffPreview("user1", "link1", opt)
+	if merr != nil {
+		t.Fatalf("unexpected error: %v", merr)
+	}
+	if !result.IsNew {
+		t.Error("expected IsNew=true")
+	}
+	if result.DiffHTML != "" {
+		t.Error("expected empty DiffHTML for new CLA")
+	}
+}
+
+func TestDiffPreviewGenDiffFailed(t *testing.T) {
+	srv := newTestPDFServer()
+	defer srv.Close()
+
+	oldFile, err := os.CreateTemp("", "old_cla_*.pdf")
+	if err != nil {
+		t.Fatal(err)
+	}
+	oldFile.Close()
+	defer os.Remove(oldFile.Name())
+
+	adapter := &claAdatper{
+		s: &mockCLAService{
+			diffPreviewId:      "cla1",
+			diffPreviewOldFile: oldFile.Name(),
+			diffPreviewErr:     nil,
+		},
+		claPDFSource:         []string{srv.URL},
+		fileTypeOfCLAContent: "pdf",
+		maxSizeOfCLAContent:  2 << 20,
+		pythonBin:            "/nonexistent/python-bin",
+		pythonRetryTimes:     3,
+	}
+
+	opt := &models.CLADiffPreviewOpt{
+		URL:      srv.URL + "/test.pdf",
+		Type:     "corporation",
+		Language: "Chinese",
+	}
+
+	_, merr := adapter.DiffPreview("user1", "link1", opt)
+	if merr == nil {
+		t.Fatal("expected error for diff generation failure")
+	}
+	if !merr.IsErrorOf(models.ErrGenDiffFailed) {
+		t.Errorf("expected ErrGenDiffFailed, got %s", merr.ErrCode())
+	}
+}
+
+func TestDiffPreviewSuccess(t *testing.T) {
+	srv := newTestPDFServer()
+	defer srv.Close()
+
+	oldFile, err := os.CreateTemp("", "old_cla_*.pdf")
+	if err != nil {
+		t.Fatal(err)
+	}
+	oldFile.Close()
+	defer os.Remove(oldFile.Name())
+
+	adapter := &claAdatper{
+		s: &mockCLAService{
+			diffPreviewId:      "cla1",
+			diffPreviewOldFile: oldFile.Name(),
+			diffPreviewErr:     nil,
+		},
+		claPDFSource:         []string{srv.URL},
+		fileTypeOfCLAContent: "pdf",
+		maxSizeOfCLAContent:  2 << 20,
+		pythonBin:            "/bin/true",
+		pythonRetryTimes:     3,
+	}
+
+	opt := &models.CLADiffPreviewOpt{
+		URL:      srv.URL + "/test.pdf",
+		Type:     "corporation",
+		Language: "Chinese",
+	}
+
+	result, merr := adapter.DiffPreview("user1", "link1", opt)
+	if merr != nil {
+		t.Fatalf("unexpected error: %v", merr)
+	}
+	if result.IsNew {
+		t.Error("expected IsNew=false")
+	}
+}
+
+func TestRunGenerateDiffFailure(t *testing.T) {
+	adapter := &claAdatper{
+		pythonBin:        "/nonexistent/python-bin",
+		pythonRetryTimes: 3,
+	}
+
+	err := adapter.runGenerateDiff("old.pdf", "new.pdf", "out.html")
+	if err == nil {
+		t.Fatal("expected error for non-existent python")
+	}
+}
+
+func TestRunGenerateDiffSuccess(t *testing.T) {
+	adapter := &claAdatper{
+		pythonBin:        "/bin/true",
+		pythonRetryTimes: 3,
+	}
+
+	err := adapter.runGenerateDiff("old.pdf", "new.pdf", "out.html")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+func TestRunGenerateDiffDefaultRetry(t *testing.T) {
+	adapter := &claAdatper{
+		pythonBin:        "/bin/true",
+		pythonRetryTimes: 0,
+	}
+
+	err := adapter.runGenerateDiff("old.pdf", "new.pdf", "out.html")
+	if err != nil {
+		t.Fatalf("unexpected error with default retry: %v", err)
+	}
+}
+
+func TestCorpCLATemplatePDFServiceError(t *testing.T) {
+	adapter := &claAdatper{
+		s: &mockCLAService{
+			corpDetailErr: domain.NewDomainError(domain.ErrorCodeCLANotCorp),
+		},
+	}
+
+	_, merr := adapter.CorpCLATemplatePDF("user1", "link1", "cla1")
+	if merr == nil {
+		t.Fatal("expected error from service")
+	}
+	if !merr.IsErrorOf(models.ErrCLANotCorp) {
+		t.Errorf("expected ErrCLANotCorp, got %s", merr.ErrCode())
+	}
+}
+
+func TestCorpCLATemplatePDFGenNil(t *testing.T) {
+	adapter := &claAdatper{
+		s: &mockCLAService{
+			corpDetail: app.CLADetailDTO{
+				Id:        "cla1",
+				Language:  "English",
+				LocalFile: "/tmp/test.pdf",
+			},
+		},
+	}
+
+	_, merr := adapter.CorpCLATemplatePDF("user1", "link1", "cla1")
+	if merr == nil {
+		t.Fatal("expected error for nil pdf generator")
+	}
+	if !merr.IsErrorOf(models.ErrGenTemplatePDFFailed) {
+		t.Errorf("expected ErrGenTemplatePDFFailed, got %s", merr.ErrCode())
+	}
+}
+
+func TestCorpCLATemplatePDFGenError(t *testing.T) {
+	tmpDir := t.TempDir()
+	pdf.InitPDFGenerator(&pdf.Config{
+		PDFOutDir: tmpDir,
+		PythonBin: "/bin/true",
+	})
+
+	adapter := &claAdatper{
+		s: &mockCLAService{
+			corpDetail: app.CLADetailDTO{
+				Id:        "cla1",
+				Language:  "french",
+				LocalFile: "/tmp/test.pdf",
+			},
+		},
+	}
+
+	_, merr := adapter.CorpCLATemplatePDF("user1", "link1", "cla1")
+	if merr == nil {
+		t.Fatal("expected error for unknown language")
+	}
+	if !merr.IsErrorOf(models.ErrGenTemplatePDFFailed) {
+		t.Errorf("expected ErrGenTemplatePDFFailed, got %s", merr.ErrCode())
+	}
+}
+
+func TestCorpCLATemplatePDFSuccess(t *testing.T) {
+	tmpDir := t.TempDir()
+	pdf.InitPDFGenerator(&pdf.Config{
+		PDFOutDir: tmpDir,
+		PythonBin: "/bin/true",
+	})
+
+	adapter := &claAdatper{
+		s: &mockCLAService{
+			corpDetail: app.CLADetailDTO{
+				Id:        "cla1",
+				Language:  "English",
+				LocalFile: "/tmp/test.pdf",
+			},
+		},
+	}
+
+	outfile, merr := adapter.CorpCLATemplatePDF("user1", "link1", "cla1")
+	if merr != nil {
+		t.Fatalf("unexpected error: %v", merr)
+	}
+	if outfile == "" {
+		t.Error("expected non-empty outfile path")
+	}
+}
+
+func newTestPDFServer() *httptest.Server {
+	body := []byte("dummy pdf content")
+	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/pdf")
+		w.Header().Set("Content-Length", strconv.Itoa(len(body)))
+		w.WriteHeader(http.StatusOK)
+		w.Write(body)
+	}))
 }

@@ -38,6 +38,9 @@ func InitPDFGenerator(cfg *Config) error {
 }
 
 func GetPDFGenerator() IPDFGenerator {
+	if generator == nil {
+		return nil
+	}
 	return generator
 }
 

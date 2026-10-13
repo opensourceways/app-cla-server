@@ -1,9 +1,12 @@
 package pdf
 
 import (
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/opensourceways/app-cla-server/models"
+	"github.com/opensourceways/app-cla-server/util"
 )
 
 func TestGenCLATemplateFileName(t *testing.T) {
@@ -80,5 +83,117 @@ func TestBuildCorpContactInvalidID(t *testing.T) {
 	}
 	if orders[0] != "1" {
 		t.Errorf("orders[0] = %s, want 1", orders[0])
+	}
+}
+
+func TestGenTemplateSignaturePDFEmpty(t *testing.T) {
+	corp, err := newGeneratorForEnglish()
+	if err != nil {
+		t.Fatalf("newGeneratorForEnglish failed: %v", err)
+	}
+
+	outFile := filepath.Join(t.TempDir(), "test_sig_empty.pdf")
+	err = genTemplateSignaturePDF(corp, []models.CLAField{}, outFile)
+	if err != nil {
+		t.Fatalf("genTemplateSignaturePDF with empty fields failed: %v", err)
+	}
+	if util.IsFileNotExist(outFile) {
+		t.Error("expected output file to be created")
+	}
+}
+
+func TestGenTemplateSignaturePDFWithFields(t *testing.T) {
+	corp, err := newGeneratorForChinese()
+	if err != nil {
+		t.Fatalf("newGeneratorForChinese failed: %v", err)
+	}
+
+	fields := []models.CLAField{
+		{ID: "1", Title: "Name", Type: "name"},
+		{ID: "2", Title: "Email", Type: "email"},
+	}
+
+	outFile := filepath.Join(t.TempDir(), "test_sig_fields.pdf")
+	err = genTemplateSignaturePDF(corp, fields, outFile)
+	if err != nil {
+		t.Fatalf("genTemplateSignaturePDF with fields failed: %v", err)
+	}
+	if util.IsFileNotExist(outFile) {
+		t.Error("expected output file to be created")
+	}
+}
+
+func TestGenCLATemplatePDFUnknownLang(t *testing.T) {
+	pg := &pdfGenerator{
+		pythonBin: "/bin/true",
+		pdfOutDir: t.TempDir(),
+		corp:      nil,
+	}
+
+	_, err := pg.GenCLATemplatePDF("link1", "/tmp/test.pdf", "chinese", nil)
+	if err == nil {
+		t.Fatal("expected error for unknown language")
+	}
+}
+
+func TestGenCLATemplatePDFSuccess(t *testing.T) {
+	eng, err := newGeneratorForEnglish()
+	if err != nil {
+		t.Fatalf("newGeneratorForEnglish failed: %v", err)
+	}
+
+	outDir := t.TempDir()
+	pg := &pdfGenerator{
+		pythonBin: "/bin/true",
+		pdfOutDir: outDir,
+		corp:      []*corpSigningPDF{eng},
+	}
+
+	claFile := filepath.Join(outDir, "dummy_cla.pdf")
+	if err := os.WriteFile(claFile, []byte("%PDF-1.4 dummy"), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	outfile, err := pg.GenCLATemplatePDF("link1", claFile, "English", []models.CLAField{})
+	if err != nil {
+		t.Fatalf("GenCLATemplatePDF failed: %v", err)
+	}
+	if outfile == "" {
+		t.Error("expected non-empty outfile path")
+	}
+}
+
+func TestGenTemplateSignaturePDFExistingFile(t *testing.T) {
+	corp, err := newGeneratorForEnglish()
+	if err != nil {
+		t.Fatalf("newGeneratorForEnglish failed: %v", err)
+	}
+
+	outFile := filepath.Join(t.TempDir(), "test_sig_existing.pdf")
+	if err := os.WriteFile(outFile, []byte("old content"), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	err = genTemplateSignaturePDF(corp, []models.CLAField{}, outFile)
+	if err != nil {
+		t.Fatalf("genTemplateSignaturePDF with existing file failed: %v", err)
+	}
+	if util.IsFileNotExist(outFile) {
+		t.Error("expected output file to be created")
+	}
+}
+
+func TestGetPDFGenerator(t *testing.T) {
+	if gen := GetPDFGenerator(); gen != nil {
+		t.Error("expected nil generator before init")
+	}
+
+	InitPDFGenerator(&Config{
+		PDFOutDir: t.TempDir(),
+		PythonBin: "/bin/true",
+	})
+
+	if gen := GetPDFGenerator(); gen == nil {
+		t.Error("expected non-nil generator after init")
 	}
 }

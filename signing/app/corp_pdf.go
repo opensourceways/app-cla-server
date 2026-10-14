@@ -113,39 +113,34 @@ func (s *corpPDFService) MigrateCorpPDFsToOBS(batchSize int) error {
 		batchSize = 50
 	}
 
-	page := 1
-	var migrated, failed int
-
-	for {
-		ids, total, err := s.repo.FindCorpSigningIDsForPDFMigration(page, batchSize)
-		if err != nil {
-			logs.Error("find corp signing ids for pdf migration failed, page=%d, err=%s", page, err.Error())
-			return err
-		}
-
-		if len(ids) == 0 {
-			break
-		}
-
-		for _, id := range ids {
-			if err := s.migrateOneCorpPDF(id); err != nil {
-				logs.Error("migrate corp pdf failed, csId=%s, err=%s", id, err.Error())
-				failed++
-			} else {
-				migrated++
-			}
-		}
-
-		logs.Info("pdf migration progress: migrated=%d, failed=%d, total=%d", migrated, failed, total)
-
-		if int64(page*batchSize) >= total {
-			break
-		}
-
-		page++
+	ids, total, err := s.repo.FindCorpSigningIDsForPDFMigration(1, 0)
+	if err != nil {
+		logs.Error("find corp signing ids for pdf migration failed, err=%s", err.Error())
+		return err
 	}
 
-	logs.Info("pdf migration completed: migrated=%d, failed=%d", migrated, failed)
+	if len(ids) == 0 {
+		logs.Info("pdf migration: no documents to migrate")
+		return nil
+	}
+
+	logs.Info("pdf migration: starting migration of %d documents", total)
+
+	var migrated, failed int
+	for i, id := range ids {
+		if err := s.migrateOneCorpPDF(id); err != nil {
+			logs.Error("migrate corp pdf failed, csId=%s, err=%s", id, err.Error())
+			failed++
+		} else {
+			migrated++
+		}
+
+		if (i+1)%batchSize == 0 {
+			logs.Info("pdf migration progress: %d/%d, migrated=%d, failed=%d", i+1, len(ids), migrated, failed)
+		}
+	}
+
+	logs.Info("pdf migration completed: total=%d, migrated=%d, failed=%d", len(ids), migrated, failed)
 
 	return nil
 }

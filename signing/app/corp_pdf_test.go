@@ -2,6 +2,7 @@ package app
 
 import (
 	"errors"
+	"strconv"
 	"testing"
 
 	commonRepo "github.com/opensourceways/app-cla-server/common/domain/repository"
@@ -423,12 +424,7 @@ func TestCorpPDFServiceDownloadAsAdmin(t *testing.T) {
 
 func TestMigrateCorpPDFsToOBS(t *testing.T) {
 	repo := defaultFindCSRepo()
-	called := false
 	repo.findCorpSigningIDsForMigFn = func(page, pageSize int) ([]string, int64, error) {
-		if called {
-			return nil, 0, nil
-		}
-		called = true
 		return []string{"cs1", "cs2"}, 2, nil
 	}
 	repo.findCorpPDFFn = func(csId string) ([]byte, error) {
@@ -448,6 +444,9 @@ func TestMigrateCorpPDFsToOBS(t *testing.T) {
 	}
 	if repo.setCorpPDFURLAndUnsetPDFCalls != 2 {
 		t.Errorf("MigrateCorpPDFsToOBS: SetCorpPDFURLAndUnsetPDF calls got %d, want 2", repo.setCorpPDFURLAndUnsetPDFCalls)
+	}
+	if repo.findMigCalls != 1 {
+		t.Errorf("MigrateCorpPDFsToOBS: FindCorpSigningIDsForPDFMigration calls got %d, want 1", repo.findMigCalls)
 	}
 }
 
@@ -472,12 +471,7 @@ func TestMigrateCorpPDFsToOBSNoData(t *testing.T) {
 
 func TestMigrateCorpPDFsToOBSPartialFailure(t *testing.T) {
 	repo := defaultFindCSRepo()
-	called := false
 	repo.findCorpSigningIDsForMigFn = func(page, pageSize int) ([]string, int64, error) {
-		if called {
-			return nil, 0, nil
-		}
-		called = true
 		return []string{"cs1", "cs2"}, 2, nil
 	}
 	repo.findCorpPDFFn = func(csId string) ([]byte, error) {
@@ -498,16 +492,14 @@ func TestMigrateCorpPDFsToOBSPartialFailure(t *testing.T) {
 	if obs.uploadCalls != 1 {
 		t.Errorf("MigrateCorpPDFsToOBS: OBS upload calls got %d, want 1 (only cs1 succeeds)", obs.uploadCalls)
 	}
+	if repo.findMigCalls != 1 {
+		t.Errorf("MigrateCorpPDFsToOBS: FindCorpSigningIDsForPDFMigration calls got %d, want 1", repo.findMigCalls)
+	}
 }
 
 func TestMigrateCorpPDFsToOBSEmptyPDF(t *testing.T) {
 	repo := defaultFindCSRepo()
-	called := false
 	repo.findCorpSigningIDsForMigFn = func(page, pageSize int) ([]string, int64, error) {
-		if called {
-			return nil, 0, nil
-		}
-		called = true
 		return []string{"cs1"}, 1, nil
 	}
 	repo.findCorpPDFFn = func(string) ([]byte, error) {
@@ -527,6 +519,9 @@ func TestMigrateCorpPDFsToOBSEmptyPDF(t *testing.T) {
 	}
 	if repo.setCorpPDFURLAndUnsetPDFCalls != 0 {
 		t.Errorf("MigrateCorpPDFsToOBS: should not set URL for empty PDF, got %d calls", repo.setCorpPDFURLAndUnsetPDFCalls)
+	}
+	if repo.findMigCalls != 1 {
+		t.Errorf("MigrateCorpPDFsToOBS: FindCorpSigningIDsForPDFMigration calls got %d, want 1", repo.findMigCalls)
 	}
 }
 
@@ -548,12 +543,7 @@ func TestMigrateCorpPDFsToOBSFindIDsFails(t *testing.T) {
 
 func TestMigrateCorpPDFsToOBSFindPDFNotFound(t *testing.T) {
 	repo := defaultFindCSRepo()
-	called := false
 	repo.findCorpSigningIDsForMigFn = func(page, pageSize int) ([]string, int64, error) {
-		if called {
-			return nil, 0, nil
-		}
-		called = true
 		return []string{"cs1"}, 1, nil
 	}
 	repo.findCorpPDFFn = func(string) ([]byte, error) {
@@ -570,6 +560,107 @@ func TestMigrateCorpPDFsToOBSFindPDFNotFound(t *testing.T) {
 	}
 	if obs.uploadCalls != 0 {
 		t.Errorf("MigrateCorpPDFsToOBS: should not upload when PDF not found, got %d calls", obs.uploadCalls)
+	}
+	if repo.findMigCalls != 1 {
+		t.Errorf("MigrateCorpPDFsToOBS: FindCorpSigningIDsForPDFMigration calls got %d, want 1", repo.findMigCalls)
+	}
+}
+
+func TestMigrateCorpPDFsToOBSMultiBatch(t *testing.T) {
+	repo := defaultFindCSRepo()
+	ids := make([]string, 120)
+	for i := range ids {
+		ids[i] = "cs" + strconv.Itoa(i)
+	}
+	var receivedPage, receivedPageSize int
+	repo.findCorpSigningIDsForMigFn = func(page, pageSize int) ([]string, int64, error) {
+		receivedPage = page
+		receivedPageSize = pageSize
+		return ids, 120, nil
+	}
+	repo.findCorpPDFFn = func(csId string) ([]byte, error) {
+		return []byte("pdf-" + csId), nil
+	}
+	linkRepo := defaultLinkRepo()
+	obs := &fakePDFStorage{}
+
+	s := newCorpPDFServiceForTest(repo, linkRepo, obs)
+
+	err := s.MigrateCorpPDFsToOBS(50)
+	if err != nil {
+		t.Fatalf("MigrateCorpPDFsToOBS: unexpected error %v", err)
+	}
+	if repo.findMigCalls != 1 {
+		t.Errorf("MigrateCorpPDFsToOBS: FindCorpSigningIDsForPDFMigration calls got %d, want 1", repo.findMigCalls)
+	}
+	if receivedPage != 1 {
+		t.Errorf("MigrateCorpPDFsToOBS: expected page=1 to fetch all, got page=%d", receivedPage)
+	}
+	if receivedPageSize != 0 {
+		t.Errorf("MigrateCorpPDFsToOBS: expected pageSize=0 to fetch all, got pageSize=%d", receivedPageSize)
+	}
+	if obs.uploadCalls != 120 {
+		t.Errorf("MigrateCorpPDFsToOBS: OBS upload calls got %d, want 120", obs.uploadCalls)
+	}
+	if repo.setCorpPDFURLAndUnsetPDFCalls != 120 {
+		t.Errorf("MigrateCorpPDFsToOBS: SetCorpPDFURLAndUnsetPDF calls got %d, want 120", repo.setCorpPDFURLAndUnsetPDFCalls)
+	}
+}
+
+func TestMigrateCorpPDFsToOBSMultiBatchWithFailures(t *testing.T) {
+	repo := defaultFindCSRepo()
+	ids := make([]string, 100)
+	for i := range ids {
+		ids[i] = "cs" + strconv.Itoa(i)
+	}
+	repo.findCorpSigningIDsForMigFn = func(page, pageSize int) ([]string, int64, error) {
+		return ids, 100, nil
+	}
+	repo.findCorpPDFFn = func(csId string) ([]byte, error) {
+		if csId == "cs0" || csId == "cs99" {
+			return nil, errors.New("read error")
+		}
+		return []byte("pdf-" + csId), nil
+	}
+	linkRepo := defaultLinkRepo()
+	obs := &fakePDFStorage{}
+
+	s := newCorpPDFServiceForTest(repo, linkRepo, obs)
+
+	err := s.MigrateCorpPDFsToOBS(50)
+	if err != nil {
+		t.Fatalf("MigrateCorpPDFsToOBS: unexpected error %v", err)
+	}
+	if repo.findMigCalls != 1 {
+		t.Errorf("MigrateCorpPDFsToOBS: FindCorpSigningIDsForPDFMigration calls got %d, want 1", repo.findMigCalls)
+	}
+	if obs.uploadCalls != 98 {
+		t.Errorf("MigrateCorpPDFsToOBS: OBS upload calls got %d, want 98", obs.uploadCalls)
+	}
+	if repo.setCorpPDFURLAndUnsetPDFCalls != 98 {
+		t.Errorf("MigrateCorpPDFsToOBS: SetCorpPDFURLAndUnsetPDF calls got %d, want 98", repo.setCorpPDFURLAndUnsetPDFCalls)
+	}
+}
+
+func TestMigrateCorpPDFsToOBSDefaultBatchSize(t *testing.T) {
+	repo := defaultFindCSRepo()
+	repo.findCorpSigningIDsForMigFn = func(page, pageSize int) ([]string, int64, error) {
+		return []string{"cs1"}, 1, nil
+	}
+	repo.findCorpPDFFn = func(string) ([]byte, error) {
+		return []byte("pdf-1"), nil
+	}
+	linkRepo := defaultLinkRepo()
+	obs := &fakePDFStorage{}
+
+	s := newCorpPDFServiceForTest(repo, linkRepo, obs)
+
+	err := s.MigrateCorpPDFsToOBS(0)
+	if err != nil {
+		t.Fatalf("MigrateCorpPDFsToOBS: unexpected error %v", err)
+	}
+	if obs.uploadCalls != 1 {
+		t.Errorf("MigrateCorpPDFsToOBS: OBS upload calls got %d, want 1", obs.uploadCalls)
 	}
 }
 

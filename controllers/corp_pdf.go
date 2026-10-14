@@ -2,14 +2,10 @@ package controllers
 
 import (
 	"fmt"
-	"os"
 	"strings"
-
-	"github.com/beego/beego/v2/core/logs"
 
 	"github.com/opensourceways/app-cla-server/models"
 	"github.com/opensourceways/app-cla-server/signing/domain/dp"
-	"github.com/opensourceways/app-cla-server/util"
 )
 
 const (
@@ -40,19 +36,14 @@ func (ctl *CorporationPDFController) downloadCorpPDF(userId, csId, email string)
 		return parseModelError(merr)
 	}
 
-	fn, err := util.WriteToTempFile(
-		config.PDFDownloadDir,
-		fmt.Sprintf("%s_*.pdf", csId),
-		pdf,
+	ctl.Ctx.ResponseWriter.Header().Set("Content-Type", "application/pdf")
+	ctl.Ctx.ResponseWriter.Header().Set(
+		"Content-Disposition",
+		fmt.Sprintf(`inline; filename="%s.pdf"`, csId),
 	)
-	if err != nil {
+
+	if err := ctl.Ctx.Output.Body(pdf); err != nil {
 		return newFailedApiResult(500, errSystemError, err)
-	}
-
-	ctl.downloadFile(fn)
-
-	if err := os.Remove(fn); err != nil {
-		logs.Error("remove temp file failed, err: %s", err.Error())
 	}
 
 	return nil

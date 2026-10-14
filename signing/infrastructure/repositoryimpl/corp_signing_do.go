@@ -11,6 +11,7 @@ import (
 
 const (
 	fieldPDF       = "pdf"
+	fieldPDFURL    = "pdf_url"
 	fieldRep       = "rep"
 	fieldType      = "type"
 	fieldDate      = "date"
@@ -82,6 +83,7 @@ type corpSigningDO struct {
 	Corp     corpDO             `bson:"corp"     json:"corp"     required:"true"`
 	AllInfo  anyDoc             `bson:"info"     json:"info,omitempty"`
 
+	PDFURL    string             `bson:"pdf_url"       json:"pdf_url,omitempty"`
 	PDF       []byte              `bson:"pdf"           json:"pdf,omitempty"`
 	HasPDF    bool                `bson:"has_pdf"       json:"has_pdf"`
 	Admin     managerDO           `bson:"admin"         json:"admin"`

@@ -13,6 +13,7 @@ import (
 	"github.com/opensourceways/app-cla-server/signing/infrastructure/captchaimpl"
 	"github.com/opensourceways/app-cla-server/signing/infrastructure/localclaimpl"
 	"github.com/opensourceways/app-cla-server/signing/infrastructure/loginimpl"
+	"github.com/opensourceways/app-cla-server/signing/infrastructure/obsimpl"
 	"github.com/opensourceways/app-cla-server/signing/infrastructure/passwordimpl"
 	"github.com/opensourceways/app-cla-server/signing/infrastructure/repositoryimpl"
 	"github.com/opensourceways/app-cla-server/signing/infrastructure/smtpimpl"
@@ -64,6 +65,7 @@ type Config struct {
 	LocalCLA     localclaimpl.Config            `json:"local_cla"       required:"true"`
 	Symmetric    symmetricencryptionimpl.Config `json:"symmetric"       required:"true"`
 	CodePlatform platformAuth.Config            `json:"code_platform"   required:"true"`
+	OBS          obsimpl.Config                 `json:"obs"`
 }
 
 func (cfg *Config) ConfigItems() []interface{} {
@@ -84,6 +86,7 @@ func (cfg *Config) ConfigItems() []interface{} {
 		&cfg.LocalCLA,
 		&cfg.Symmetric,
 		&cfg.CodePlatform,
+		&cfg.OBS,
 	}
 }
 

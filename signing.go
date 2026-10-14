@@ -22,6 +22,7 @@ import (
 	"github.com/opensourceways/app-cla-server/signing/infrastructure/localclaimpl"
 	"github.com/opensourceways/app-cla-server/signing/infrastructure/loginimpl"
 	"github.com/opensourceways/app-cla-server/signing/infrastructure/messageimpl"
+	"github.com/opensourceways/app-cla-server/signing/infrastructure/obsimpl"
 	"github.com/opensourceways/app-cla-server/signing/infrastructure/passwordimpl"
 	"github.com/opensourceways/app-cla-server/signing/infrastructure/randombytesimpl"
 	"github.com/opensourceways/app-cla-server/signing/infrastructure/randomcodeimpl"
@@ -134,8 +135,13 @@ func initSigning(cfg *config.Config) error {
 		),
 	)
 
+	obsStorage, err := obsimpl.NewPDFStorage(&cfg.OBS)
+	if err != nil {
+		return err
+	}
+
 	models.RegisterCorpPDFAdapter(
-		adapter.NewCorpPDFAdapter(app.NewCorpPDFService(repo, linkRepo)),
+		adapter.NewCorpPDFAdapter(app.NewCorpPDFService(repo, linkRepo, obsStorage)),
 	)
 
 	models.RegisterUserAdapter(
@@ -211,7 +217,7 @@ func initSigning(cfg *config.Config) error {
 	// migration
 	models.RegisterMigrationAdapter(
 		adapter.NewMigrationAdapter(
-			app.NewMigrationService(linkRepo, repo, individual, ur, cla, localCLA)),
+			app.NewMigrationService(linkRepo, repo, individual, ur, cla, localCLA, obsStorage)),
 	)
 	// controllers
 	controllers.Init(

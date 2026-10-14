@@ -16,6 +16,7 @@ const (
 	ErrorCodeCorpAdminExists = "corp_admin_exists"
 
 	ErrorCodeCorpPDFNotFound = "corp_pdf_not_found"
+	ErrorCodeCorpPDFUploadFailed = "corp_pdf_upload_failed"
 
 	ErrorCodeCorpSigningNotFound     = "corp_signing_not_found"
 	ErrorCodeCorpSigningReSigning    = "corp_signing_resigning"

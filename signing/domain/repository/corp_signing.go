@@ -63,8 +63,11 @@ type CorpSigning interface {
 	AddEmailDomain(*domain.CorpSigning, string) error
 	FindEmailDomains(string) ([]string, error)
 
-	SaveCorpPDF(*domain.CorpSigning, []byte) error
+	SaveCorpPDFURL(*domain.CorpSigning, string) error
+	FindCorpPDFURL(string) (string, error)
 	FindCorpPDF(string) ([]byte, error)
+	SetCorpPDFURLAndUnsetPDF(string, string) error
+	FindCorpSigningIDsForPDFMigration(int, int) ([]string, int64, error)
 
 	HasSignedLink(linkId string) (bool, error)
 	HasSignedCLA(*domain.CLAIndex, dp.CLAType) (bool, error)

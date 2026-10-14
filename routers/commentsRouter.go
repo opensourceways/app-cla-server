@@ -510,4 +510,13 @@ func init() {
 			MethodParams:     param.Make(),
 			Filters:          nil,
 			Params:           nil})
+
+	beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:MigrationController"] = append(beego.GlobalControllerRouter["github.com/opensourceways/app-cla-server/controllers:MigrationController"],
+		beego.ControllerComments{
+			Method:           "MigrateCorpPDFsToOBS",
+			Router:           `/pdfs`,
+			AllowHTTPMethods: []string{"post"},
+			MethodParams:     param.Make(),
+			Filters:          nil,
+			Params:           nil})
 }

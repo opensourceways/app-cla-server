@@ -1,9 +1,9 @@
 pdf:
   python_bin: /usr/bin/python3
-  pdf_out_dir: ./conf/pdfs/output
+  pdf_out_dir: /tmp/cla-server/pdfs/output
 
 api:
-  pdf_download_dir: ./conf/pdfs/download
+  pdf_download_dir: /tmp/cla-server/pdfs/download
   cookie_domain: "${COOKIE_DOMAIN}"
   cla_platform_url: "${CLA_PLATFORM_URL}"
   password_reset_url: "${PASSWORD_RESET_URL}"
@@ -155,3 +155,10 @@ code_platform:
       redirect_url: "${CLA_PLATFORM_URL}/api/v1/auth/github/login"
       scope:
       - read:org
+
+obs:
+  endpoint: "{OBS_ENDPOINT}"
+  bucket: "{OBS_BUCKET}"
+  access_key: "{OBS_ACCESS_KEY}"
+  secret_key: "{OBS_SECRET_KEY}"
+  path_prefix: cla-pdfs

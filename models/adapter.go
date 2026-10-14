@@ -122,6 +122,10 @@ func DownloadCorpPDF(userId, csId string, email dp.EmailAddr) ([]byte, IModelErr
 	return corpPDFAdapterInstance.Download(userId, csId, email)
 }
 
+func MigrateCorpPDFsToOBS() IModelError {
+	return corpPDFAdapterInstance.MigrateCorpPDFsToOBS()
+}
+
 // employee signing
 
 func VCOfEmployeeSigning(csId, email string) (string, IModelError) {

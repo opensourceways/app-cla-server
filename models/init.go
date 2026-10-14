@@ -113,6 +113,7 @@ func RegisterCorpEmailDomainAdapter(a corpEmailDomainAdapter) {
 type corpPDFAdapter interface {
 	Upload(userId, csId string, pdf []byte) IModelError
 	Download(userId, csId string, email dp.EmailAddr) ([]byte, IModelError)
+	MigrateCorpPDFsToOBS() IModelError
 }
 
 func RegisterCorpPDFAdapter(a corpPDFAdapter) {

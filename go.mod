@@ -6,6 +6,7 @@ require (
 	github.com/beego/beego/v2 v2.3.6
 	github.com/go-redis/redis/v8 v8.11.5
 	github.com/google/uuid v1.6.0
+	github.com/huaweicloud/huaweicloud-sdk-go-obs v3.26.6+incompatible
 	github.com/mojocn/base64Captcha v1.3.8
 	github.com/opensourceways/gofpdf v1.16.4
 	go.mongodb.org/mongo-driver v1.17.7

@@ -36,3 +36,11 @@ func (adapter *corpPDFAdatper) Download(userId, csId string, email dp.EmailAddr)
 
 	return v, nil
 }
+
+func (adapter *corpPDFAdatper) MigrateCorpPDFsToOBS() models.IModelError {
+	if err := adapter.s.MigrateCorpPDFsToOBS(50); err != nil {
+		return toModelError(err)
+	}
+
+	return nil
+}

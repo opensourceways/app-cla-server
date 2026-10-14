@@ -337,8 +337,8 @@ func (c *cachedCorpSigning) AddAdmin(cs *domain.CorpSigning) error {
 	return err
 }
 
-func (c *cachedCorpSigning) SaveCorpPDF(cs *domain.CorpSigning, pdf []byte) error {
-	err := c.repo.SaveCorpPDF(cs, pdf)
+func (c *cachedCorpSigning) SaveCorpPDFURL(cs *domain.CorpSigning, url string) error {
+	err := c.repo.SaveCorpPDFURL(cs, url)
 	if err == nil {
 		go c.invalidateLink(cs.Link.Id)
 	}
@@ -419,8 +419,20 @@ func (c *cachedCorpSigning) FindEmailDomains(csId string) ([]string, error) {
 	return c.repo.FindEmailDomains(csId)
 }
 
+func (c *cachedCorpSigning) FindCorpPDFURL(csId string) (string, error) {
+	return c.repo.FindCorpPDFURL(csId)
+}
+
 func (c *cachedCorpSigning) FindCorpPDF(csId string) ([]byte, error) {
 	return c.repo.FindCorpPDF(csId)
+}
+
+func (c *cachedCorpSigning) SetCorpPDFURLAndUnsetPDF(csId, url string) error {
+	return c.repo.SetCorpPDFURLAndUnsetPDF(csId, url)
+}
+
+func (c *cachedCorpSigning) FindCorpSigningIDsForPDFMigration(page, pageSize int) ([]string, int64, error) {
+	return c.repo.FindCorpSigningIDsForPDFMigration(page, pageSize)
 }
 
 func (c *cachedCorpSigning) HasSignedLink(linkId string) (bool, error) {

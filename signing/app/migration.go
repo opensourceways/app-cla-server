@@ -9,6 +9,7 @@ import (
 	"github.com/opensourceways/app-cla-server/signing/domain/claservice"
 	"github.com/opensourceways/app-cla-server/signing/domain/localcla"
 	"github.com/opensourceways/app-cla-server/signing/domain/repository"
+	"github.com/opensourceways/app-cla-server/signing/infrastructure/obsimpl"
 )
 
 const (
@@ -33,6 +34,7 @@ func NewMigrationService(
 	userRepo repository.User,
 	claService claservice.CLAService,
 	localCLA localcla.LocalCLA,
+	obs obsimpl.PDFStorage,
 ) MigrationService {
 	return &migrationService{
 		linkRepo:       linkRepo,
@@ -41,6 +43,7 @@ func NewMigrationService(
 		userRepo:       userRepo,
 		claService:     claService,
 		localCLA:       localCLA,
+		obs:            obs,
 	}
 }
 
@@ -51,6 +54,7 @@ type migrationService struct {
 	userRepo       repository.User
 	claService     claservice.CLAService
 	localCLA       localcla.LocalCLA
+	obs            obsimpl.PDFStorage
 }
 
 func (s *migrationService) MigrateCommunityData(cmd *CmdToMigrateCommunity) error {
@@ -217,6 +221,47 @@ func (s *migrationService) migrateCorpSigningData(sourceLinkId, targetLinkId str
 
 // 迁移企业 PDF
 func (s *migrationService) migrateCorpPDF(oldCorpSigningId, newCorpSigningId string) error {
+	pdfURL, err := s.corpRepo.FindCorpPDFURL(oldCorpSigningId)
+	if err != nil {
+		if commonRepo.IsErrorResourceNotFound(err) {
+			return s.migrateCorpPDFLegacy(oldCorpSigningId, newCorpSigningId)
+		}
+		if strings.Contains(err.Error(), "cannot decode") {
+			logs.Warning("PDF URL format issue for corp signing %s, trying legacy: %v", oldCorpSigningId, err)
+			return s.migrateCorpPDFLegacy(oldCorpSigningId, newCorpSigningId)
+		}
+		return err
+	}
+
+	if pdfURL == "" {
+		return s.migrateCorpPDFLegacy(oldCorpSigningId, newCorpSigningId)
+	}
+
+	pdfData, err := s.obs.Download(pdfURL)
+	if err != nil {
+		return err
+	}
+
+	if len(pdfData) == 0 {
+		logs.Warning("Empty PDF data from OBS for corp signing %s, skipping", oldCorpSigningId)
+		return nil
+	}
+
+	newURL, err := s.obs.Upload(newCorpSigningId, pdfData)
+	if err != nil {
+		return err
+	}
+
+	newCorpSigning, err := s.corpRepo.Find(newCorpSigningId)
+	if err != nil {
+		return err
+	}
+
+	return s.corpRepo.SaveCorpPDFURL(&newCorpSigning, newURL)
+}
+
+// migrateCorpPDFLegacy handles migration of legacy PDF binary data stored in MongoDB
+func (s *migrationService) migrateCorpPDFLegacy(oldCorpSigningId, newCorpSigningId string) error {
 	pdfData, err := s.corpRepo.FindCorpPDF(oldCorpSigningId)
 	if err != nil {
 		if commonRepo.IsErrorResourceNotFound(err) {
@@ -232,12 +277,18 @@ func (s *migrationService) migrateCorpPDF(oldCorpSigningId, newCorpSigningId str
 		logs.Warning("Empty PDF data for corp signing %s, skipping", oldCorpSigningId)
 		return nil
 	}
+
+	newURL, err := s.obs.Upload(newCorpSigningId, pdfData)
+	if err != nil {
+		return err
+	}
+
 	newCorpSigning, err := s.corpRepo.Find(newCorpSigningId)
 	if err != nil {
 		return err
 	}
 
-	return s.corpRepo.SaveCorpPDF(&newCorpSigning, pdfData)
+	return s.corpRepo.SaveCorpPDFURL(&newCorpSigning, newURL)
 }
 
 func (s *migrationService) migrateIndividualSigningData(sourceLinkId, targetLinkId string, claIdMap map[string]string) error {

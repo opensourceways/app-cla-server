@@ -38,3 +38,27 @@ func (ctl *MigrationController) MigrateCommunityData() {
 		ctl.sendSuccessResp(action, "successfully")
 	}
 }
+
+// @Title MigrateCorpPDFsToOBS
+// @Description migrate corp signing PDFs from MongoDB to OBS
+// @Tags Migration
+// @Accept json
+// @Success 200 {object} controllers.respData
+// @router /pdfs [post]
+func (ctl *MigrationController) MigrateCorpPDFsToOBS() {
+	action := "migrate corp pdfs to obs"
+
+	pl, fr := ctl.tokenPayloadBasedOnCorpManager()
+	if fr != nil {
+		ctl.sendFailedResultAsResp(fr, action)
+		return
+	}
+
+	_ = pl
+
+	if err := models.MigrateCorpPDFsToOBS(); err != nil {
+		ctl.sendModelErrorAsResp(err, action)
+	} else {
+		ctl.sendSuccessResp(action, "successfully")
+	}
+}

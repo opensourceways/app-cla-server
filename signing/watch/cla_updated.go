@@ -39,7 +39,7 @@ func SendCLAUpdatedEvent(msg message.CLAUpdatedMsg) {
 	select {
 	case claUpdatedWatchInstance.genCLADiff <- msg:
 	default:
-		log.Error("send cla updated event failed", "msg", msg)
+		log.Error("send cla updated event failed", "event_msg", msg)
 	}
 }
 

@@ -3,15 +3,18 @@ package worker
 import (
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"strings"
 	"testing"
 
-	"github.com/prometheus/client_golang/prometheus/testutil"
+	"github.com/opensourceways/app-cla-server/models"
+	"github.com/opensourceways/app-cla-server/pdf"
 	"github.com/opensourceways/app-cla-server/signing/domain/emailservice"
 	obsmetrics "github.com/opensourceways/obs-sdk/go/metrics"
 	"github.com/opensourceways/obs-sdk/go/middleware/beegomw"
 	beego "github.com/beego/beego/v2/server/web"
 	beecontext "github.com/beego/beego/v2/server/web/context"
+	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -305,18 +308,236 @@ func TestMetricsEndpointNoAuth(t *testing.T) {
 	assert.Contains(t, mw.Body.String(), "http_server_requests_total")
 }
 
-// TestCorpPDFEmailPathRecordsEmailMetric verifies that the corp_pdf_email path
-// (direct emailservice.SendEmail, not through SendSimpleMessage) also
-// records the email_sent_total metric (acceptance criterion 7).
-func TestCorpPDFEmailPathRecordsEmailMetric(t *testing.T) {
+// --- corp_pdf_email.go integration tests ---
+// These tests exercise the real do()/genFile() code paths (acceptance criterion 7)
+// by injecting a fake pdf.IPDFGenerator and a fake emailservice, then asserting
+// on real /metrics text output.
+
+// fakePDFGenerator implements pdf.IPDFGenerator for testing.
+type fakePDFGenerator struct {
+	filePath string
+	err      error
+	calls    int
+}
+
+func (f *fakePDFGenerator) GenPDFForCorporationSigning(
+	linkID, claFile string,
+	signing *models.CorporationSigning,
+	claFields []models.CLAField,
+) (string, error) {
+	f.calls++
+	if f.err != nil {
+		return "", f.err
+	}
+	return f.filePath, nil
+}
+
+func setPDFGenerator(g pdf.IPDFGenerator) func() {
+	prev := pdfGenerator
+	pdfGenerator = g
+	return func() { pdfGenerator = prev }
+}
+
+func createTempPDFFile(t *testing.T) string {
+	t.Helper()
+	f, err := os.CreateTemp("", "test-*.pdf")
+	require.NoError(t, err)
+	require.NoError(t, f.Close())
+	return f.Name()
+}
+
+func newTestCorpPDFEmail(platform string) *corpPDFEmail {
+	return &corpPDFEmail{
+		linkID: "test-link-id",
+		msg:    &EmailMessage{To: []string{"admin@example.com"}, Subject: "test"},
+		orgInfo: models.OrgInfo{
+			OrgEmailPlatform: platform,
+			OrgAlias:         "test-org",
+			OrgEmail:         "noreply@example.com",
+		},
+		claInfo: models.CLAInfo{
+			CLAFile: "test-cla.pdf",
+			Fields:  []models.CLAField{{ID: "corp", Title: "Corporation"}},
+		},
+		signing: models.CorporationSigning{
+			CorporationSigningBasicInfo: models.CorporationSigningBasicInfo{
+				AdminName:  "admin",
+				AdminEmail: "admin@example.com",
+				Date:       "2024-01-01",
+			},
+			Info: models.TypeSigningInfo{"corp": "Test Corp"},
+		},
+	}
+}
+
+func gatherMetricsText(t *testing.T, m *obsmetrics.Metrics) string {
+	t.Helper()
+	w := httptest.NewRecorder()
+	m.Handler().ServeHTTP(w, httptest.NewRequest(http.MethodGet, "/metrics", nil))
+	return w.Body.String()
+}
+
+// TestCorpPDFEmailDoRecordsMetrics verifies that corp_pdf_email.do() records
+// both email_sent_total{outcome="sent"} and pdf_generated_total{outcome="success"}
+// through the real code path (acceptance criterion 7).
+func TestCorpPDFEmailDoRecordsMetrics(t *testing.T) {
 	resetBusinessMetrics()
 	m := newTestMetrics(t)
 	InitBusinessMetrics(m)
 
-	recordEmailSent("gmail", "sent")
+	platform := "test-pdf-email-ok"
+	fake := &fakeEmailService{}
+	emailservice.Register(platform, fake)
+
+	tmpFile := createTempPDFFile(t)
+	t.Cleanup(func() { os.Remove(tmpFile) })
+
+	restore := setPDFGenerator(&fakePDFGenerator{filePath: tmpFile})
+	t.Cleanup(restore)
+
+	impl := newTestCorpPDFEmail(platform)
+	err := impl.do()
+	require.NoError(t, err)
+
+	body := gatherMetricsText(t, m)
+	assert.Contains(t, body, "cla_email_sent_total")
+	assert.Contains(t, body, "cla_pdf_generated_total")
+	assert.Contains(t, body, `platform="test-pdf-email-ok"`)
+	assert.Contains(t, body, `outcome="sent"`)
+	assert.Contains(t, body, `outcome="success"`)
 
 	require.Equal(t, 1.0, testutil.ToFloat64(
-		emailSentCounter.Vec().WithLabelValues("openeuler", "gmail", "sent")))
+		emailSentCounter.Vec().WithLabelValues("openeuler", platform, "sent")))
+	require.Equal(t, 1.0, testutil.ToFloat64(
+		pdfGeneratedCounter.Vec().WithLabelValues("openeuler", "success")))
+	require.Equal(t, 1, fake.calls)
+}
+
+// TestCorpPDFEmailDoEmailFailureRecordsFailedMetric verifies that when
+// emailservice.SendEmail fails inside do(), the email_sent_total{outcome="failed"}
+// metric is recorded (acceptance criterion 7).
+func TestCorpPDFEmailDoEmailFailureRecordsFailedMetric(t *testing.T) {
+	resetBusinessMetrics()
+	m := newTestMetrics(t)
+	InitBusinessMetrics(m)
+
+	platform := "test-pdf-email-fail"
+	fake := &fakeEmailService{err: fakeSendErr}
+	emailservice.Register(platform, fake)
+
+	tmpFile := createTempPDFFile(t)
+	t.Cleanup(func() { os.Remove(tmpFile) })
+
+	restore := setPDFGenerator(&fakePDFGenerator{filePath: tmpFile})
+	t.Cleanup(restore)
+
+	impl := newTestCorpPDFEmail(platform)
+	err := impl.do()
+	require.Error(t, err)
+
+	body := gatherMetricsText(t, m)
+	assert.Contains(t, body, `outcome="failed"`)
+	assert.Contains(t, body, `outcome="success"`)
+
+	require.Equal(t, 1.0, testutil.ToFloat64(
+		emailSentCounter.Vec().WithLabelValues("openeuler", platform, "failed")))
+	require.Equal(t, 1.0, testutil.ToFloat64(
+		pdfGeneratedCounter.Vec().WithLabelValues("openeuler", "success")))
+}
+
+// TestCorpPDFEmailDoPDFFailureRecordsFailedMetric verifies that when
+// pdfGenerator fails inside genFile(), the pdf_generated_total{outcome="failed"}
+// metric is recorded and do() returns early (acceptance criterion 7).
+func TestCorpPDFEmailDoPDFFailureRecordsFailedMetric(t *testing.T) {
+	resetBusinessMetrics()
+	m := newTestMetrics(t)
+	InitBusinessMetrics(m)
+
+	platform := "test-pdf-gen-fail"
+	emailservice.Register(platform, &fakeEmailService{})
+
+	restore := setPDFGenerator(&fakePDFGenerator{err: fakeSendErr})
+	t.Cleanup(restore)
+
+	impl := newTestCorpPDFEmail(platform)
+	err := impl.do()
+	require.Error(t, err)
+
+	body := gatherMetricsText(t, m)
+	assert.Contains(t, body, "cla_pdf_generated_total")
+	assert.Contains(t, body, `outcome="failed"`)
+
+	require.Equal(t, 1.0, testutil.ToFloat64(
+		pdfGeneratedCounter.Vec().WithLabelValues("openeuler", "failed")))
+}
+
+// TestCorpPDFEmailDoGenMsgFailure verifies that when genMsg() fails inside
+// do() (no email templates loaded), the pdf_generated_total{outcome="success"}
+// metric is still recorded and do() returns the error.
+func TestCorpPDFEmailDoGenMsgFailure(t *testing.T) {
+	resetBusinessMetrics()
+	m := newTestMetrics(t)
+	InitBusinessMetrics(m)
+
+	platform := "test-pdf-genmsg-fail"
+	emailservice.Register(platform, &fakeEmailService{})
+
+	tmpFile := createTempPDFFile(t)
+	t.Cleanup(func() { os.Remove(tmpFile) })
+
+	restore := setPDFGenerator(&fakePDFGenerator{filePath: tmpFile})
+	t.Cleanup(restore)
+
+	impl := newTestCorpPDFEmail(platform)
+	impl.msg = nil
+
+	err := impl.do()
+	require.Error(t, err)
+
+	require.Equal(t, 1.0, testutil.ToFloat64(
+		pdfGeneratedCounter.Vec().WithLabelValues("openeuler", "success")))
+}
+
+// TestCorpPDFEmailGenFileSkipsWhenFileExists verifies that genFile() returns
+// early without calling pdfGenerator when the PDF file already exists,
+// so no pdf_generated_total metric is recorded.
+func TestCorpPDFEmailGenFileSkipsWhenFileExists(t *testing.T) {
+	resetBusinessMetrics()
+	m := newTestMetrics(t)
+	InitBusinessMetrics(m)
+
+	tmpFile := createTempPDFFile(t)
+	t.Cleanup(func() { os.Remove(tmpFile) })
+
+	fg := &fakePDFGenerator{filePath: tmpFile}
+	restore := setPDFGenerator(fg)
+	t.Cleanup(restore)
+
+	impl := newTestCorpPDFEmail("test-skip")
+	impl.pdfFilePath = tmpFile
+
+	err := impl.genFile()
+	require.NoError(t, err)
+	require.Equal(t, 0, fg.calls)
+}
+
+// TestCorpPDFEmailCleanRemovesFile verifies that clean() removes the PDF file
+// when it exists.
+func TestCorpPDFEmailCleanRemovesFile(t *testing.T) {
+	tmpFile := createTempPDFFile(t)
+
+	impl := &corpPDFEmail{pdfFilePath: tmpFile}
+	impl.clean()
+
+	_, err := os.Stat(tmpFile)
+	require.True(t, os.IsNotExist(err), "temp file should be removed")
+}
+
+// TestCorpPDFEmailCleanNoFile verifies that clean() does not panic when no
+// PDF file exists.
+func TestCorpPDFEmailCleanNoFile(t *testing.T) {
+	impl := &corpPDFEmail{}
+	impl.clean()
 }
 
 // TestNoHighCardinalityLabelsInMetrics verifies that no high-cardinality

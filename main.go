@@ -7,8 +7,10 @@ import (
 	"os"
 	"time"
 
-	"github.com/beego/beego/v2/core/logs"
 	beego "github.com/beego/beego/v2/server/web"
+	"github.com/opensourceways/obs-sdk/go/log"
+	obsmetrics "github.com/opensourceways/obs-sdk/go/metrics"
+	"github.com/opensourceways/obs-sdk/go/middleware/beegomw"
 
 	platformAuth "github.com/opensourceways/app-cla-server/code-platform-auth"
 	commondb "github.com/opensourceways/app-cla-server/common/infrastructure/mongodb"
@@ -25,6 +27,10 @@ import (
 	"github.com/opensourceways/app-cla-server/util"
 	"github.com/opensourceways/app-cla-server/worker"
 )
+
+const serviceName = "app-cla-server"
+
+var obsMetrics *obsmetrics.Metrics
 
 type options struct {
 	configFile string
@@ -46,13 +52,15 @@ func gatherOptions(fs *flag.FlagSet, args ...string) options {
 	)
 
 	if err := fs.Parse(args); err != nil {
-		logs.Error(err)
+		log.Error("failed to parse flags", "error", err)
 	}
 
 	return o
 }
 
 func main() {
+	log.Init(log.Config{Service: serviceName})
+
 	if beego.BConfig.RunMode == "dev" {
 		beego.BConfig.WebConfig.DirectoryIndex = true
 		beego.BConfig.WebConfig.StaticDir["/swagger"] = "swagger"
@@ -63,7 +71,7 @@ func main() {
 		os.Args[1:]...,
 	)
 	if err := o.Validate(); err != nil {
-		logs.Error("Invalid options, err:%s", err.Error())
+		log.Error("invalid options", "error", err)
 
 		return
 	}
@@ -81,7 +89,7 @@ func loadConfig(f string) *config.Config {
 	err1 := os.Remove(f)
 
 	if err2 := util.MultiErrors(err, err1); err2 != nil {
-		logs.Error(err2)
+		log.Error("failed to load config or remove temp file", "error", err2)
 
 		return nil
 	}
@@ -94,31 +102,31 @@ func startSignSerivce(cfg *config.Config) {
 	domain.Init(&cfg.Domain.Config)
 
 	if err := emailtmpl.Init(); err != nil {
-		logs.Error(err)
+		log.Error("failed to init email templates", "error", err)
 		return
 	}
 
 	smtpimpl.Init(&cfg.SMTP)
 
 	if err := platformAuth.Initialize(&cfg.CodePlatform); err != nil {
-		logs.Error(err)
+		log.Error("failed to init code platform auth", "error", err)
 		return
 	}
 
 	if err := pdf.InitPDFGenerator(&cfg.PDF); err != nil {
-		logs.Error(err)
+		log.Error("failed to init pdf generator", "error", err)
 		return
 	}
 
 	if err := commondb.Init(&cfg.Mongodb.DB); err != nil {
-		logs.Error(err)
+		log.Error("failed to init mongodb", "error", err)
 		return
 	}
 
 	defer exitMongoService()
 
 	if err := redisdb.Init(&cfg.Redisdb.DB); err != nil {
-		logs.Error(err)
+		log.Error("failed to init redis", "error", err)
 		return
 	}
 
@@ -126,7 +134,7 @@ func startSignSerivce(cfg *config.Config) {
 
 	// must run after init mongodb
 	if err := initSigning(cfg); err != nil {
-		logs.Error(err)
+		log.Error("failed to init signing", "error", err)
 
 		return
 	}
@@ -139,18 +147,24 @@ func startSignSerivce(cfg *config.Config) {
 	worker.Init(pdf.GetPDFGenerator())
 	defer worker.Exit()
 
+	obsMetrics = obsmetrics.New(obsmetrics.Config{Service: serviceName})
+	worker.InitBusinessMetrics(obsMetrics)
+
+	beego.InsertFilterChain("/*", beegomw.Middleware(beegomw.Options{Metrics: obsMetrics}))
+	beego.Handler("/metrics", obsMetrics.Handler())
+
 	run()
 }
 
 func exitMongoService() {
 	if err := commondb.Close(); err != nil {
-		logs.Error(err)
+		log.Error("failed to close mongodb", "error", err)
 	}
 }
 
 func exitRedisService() {
 	if err := redisdb.Close(); err != nil {
-		logs.Error(err)
+		log.Error("failed to close redis", "error", err)
 	}
 }
 
@@ -165,11 +179,11 @@ func run() {
 }
 
 func shutdown() {
-	logs.Info("server shutting down...")
+	log.Info("server shutting down")
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	if err := beego.BeeApp.Server.Shutdown(ctx); err != nil {
-		logs.Error("error to shut down server, err:", err.Error())
+		log.Error("failed to shut down server", "error", err)
 	}
 	cancel()
 }

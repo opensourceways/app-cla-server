@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/beego/beego/v2/core/logs"
+	"github.com/opensourceways/obs-sdk/go/log"
 
 	"github.com/opensourceways/app-cla-server/models"
 	"github.com/opensourceways/app-cla-server/signing/domain/dp"
@@ -493,13 +493,13 @@ func (ctl *CorporationSigningController) UpdateAutoApproval() {
 func (ctl *CorporationSigningController) sendAutoApprovalEmail(linkId, signingId, direction string, enabled bool) {
 	orgInfo, merr := models.GetLink(linkId)
 	if merr != nil {
-		logs.Error("failed to get org info for auto-approval email: %s", merr.Error())
+		log.ErrorContext(ctl.Ctx.Request.Context(), "failed to get org info for auto-approval email", "error", merr)
 		return
 	}
 
 	managers, merr := models.ListEmployeeManagers(signingId)
 	if merr != nil {
-		logs.Error("failed to list employee managers for auto-approval email: %s", merr.Error())
+		log.ErrorContext(ctl.Ctx.Request.Context(), "failed to list employee managers for auto-approval email", "error", merr)
 		return
 	}
 

@@ -4,7 +4,7 @@ import (
 	"os/exec"
 	"sync"
 
-	"github.com/beego/beego/v2/core/logs"
+	"github.com/opensourceways/obs-sdk/go/log"
 
 	"github.com/opensourceways/app-cla-server/signing/domain"
 	"github.com/opensourceways/app-cla-server/signing/domain/message"
@@ -31,7 +31,7 @@ func CLAUpdateWatchStop() {
 	if claUpdatedWatchInstance != nil {
 		claUpdatedWatchInstance.exit()
 
-		logs.Info("stop watching cla updated")
+		log.Info("stop watching cla updated")
 	}
 }
 
@@ -39,7 +39,7 @@ func SendCLAUpdatedEvent(msg message.CLAUpdatedMsg) {
 	select {
 	case claUpdatedWatchInstance.genCLADiff <- msg:
 	default:
-		logs.Error("send cla updated event failed: ", msg)
+		log.Error("send cla updated event failed", "msg", msg)
 	}
 }
 
@@ -134,6 +134,6 @@ func (impl *claUpdatedWatchImpl) handleGenCLADiff(msg message.CLAUpdatedMsg) {
 			break
 		}
 
-		logs.Error("gen pdf diff failed: ", diffFile, string(out), err)
+		log.Error("gen pdf diff failed", "diff_file", diffFile, "output", string(out), "error", err)
 	}
 }

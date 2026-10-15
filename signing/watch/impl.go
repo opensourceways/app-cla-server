@@ -3,7 +3,7 @@ package watch
 import (
 	"time"
 
-	"github.com/beego/beego/v2/core/logs"
+	"github.com/opensourceways/obs-sdk/go/log"
 
 	"github.com/opensourceways/app-cla-server/signing/domain"
 	"github.com/opensourceways/app-cla-server/signing/infrastructure/repositoryimpl"
@@ -27,14 +27,14 @@ func Start(
 
 	impl.start()
 
-	logs.Info("start to watch corp signing")
+	log.Info("start to watch corp signing")
 }
 
 func Stop() {
 	if impl != nil {
 		impl.exit()
 
-		logs.Info("stop watching corp signing")
+		log.Info("stop watching corp signing")
 	}
 }
 
@@ -94,7 +94,7 @@ func (impl *watchingImpl) watch() {
 	for {
 		triggered, err := impl.cs.ListTriggered()
 		if err != nil {
-			logs.Error("failed to list triggered corp signings, err: %s", err.Error())
+			log.Error("failed to list triggered corp signings", "error", err)
 		}
 
 		for _, pr := range triggered {
@@ -128,20 +128,16 @@ func (impl *watchingImpl) watch() {
 func (impl *watchingImpl) handle(corp repositoryimpl.TriggeredCorp) {
 	cs, err := impl.cs.Find(corp.Id)
 	if err != nil {
-		logs.Error(
-			"failed to find corp signing when collecting, csid:%s, err:%s",
-			corp.Id, err.Error(),
-		)
+		log.Error("failed to find corp signing when collecting",
+			"corp_signing_id", corp.Id, "error", err)
 
 		return
 	}
 
 	list, err := impl.ins.FindByDomains(corp.LinkId, corp.Domains)
 	if err != nil {
-		logs.Error(
-			"failed to find individual signings by domains, csid:%s, link_id:%s, err:%s",
-			corp.Id, corp.LinkId, err.Error(),
-		)
+		log.Error("failed to find individual signings by domains",
+			"corp_signing_id", corp.Id, "link_id", corp.LinkId, "error", err)
 
 		return
 	}
@@ -170,10 +166,8 @@ func (impl *watchingImpl) handle(corp repositoryimpl.TriggeredCorp) {
 		}
 
 		if err := impl.cs.AddEmployee(&cs, &es); err != nil {
-			logs.Error(
-				"failed to collect individual signing to employee signing, csid:%s, err:%s",
-				corp.Id, err.Error(),
-			)
+			log.Error("failed to collect individual signing to employee signing",
+				"corp_signing_id", corp.Id, "error", err)
 
 			return
 		}
@@ -185,10 +179,8 @@ func (impl *watchingImpl) handle(corp repositoryimpl.TriggeredCorp) {
 	}
 
 	if err := impl.ins.RemoveAll(corp.LinkId, corp.Domains); err != nil {
-		logs.Error(
-			"failed to remove individual signings, csid:%s, err:%s",
-			corp.Id, err.Error(),
-		)
+		log.Error("failed to remove individual signings",
+			"corp_signing_id", corp.Id, "error", err)
 
 		return
 	}
@@ -197,25 +189,25 @@ func (impl *watchingImpl) handle(corp repositoryimpl.TriggeredCorp) {
 	// the current version and reset the trigger in the same round.
 	cs1, err := impl.cs.Find(corp.Id)
 	if err != nil {
-		logs.Error(
-			"failed to reload corp signing when collecting, csid:%s, err:%s",
-			corp.Id, err.Error(),
-		)
+		log.Error("failed to reload corp signing when collecting",
+			"corp_signing_id", corp.Id, "error", err)
 
 		return
 	}
 
 	if err := impl.cs.ResetTriggered(corp.Id, cs1.Version); err != nil {
-		logs.Error(
-			"failed to reset triggered corp signing, csid:%s, err:%s",
-			corp.Id, err.Error(),
-		)
+		log.Error("failed to reset triggered corp signing",
+			"corp_signing_id", corp.Id, "error", err)
 
 		return
 	}
 
-	logs.Info(
-		"collected individual signings to corp, csid:%s, link_id:%s, matched:%d, collected:%d, skipped:%d, time:%d",
-		corp.Id, corp.LinkId, matched, collected, skipped, util.Now(),
+	log.Info("collected individual signings to corp",
+		"corp_signing_id", corp.Id,
+		"link_id", corp.LinkId,
+		"matched", matched,
+		"collected", collected,
+		"skipped", skipped,
+		"time", util.Now(),
 	)
 }

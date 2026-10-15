@@ -5,7 +5,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/beego/beego/v2/core/logs"
+	"github.com/opensourceways/obs-sdk/go/log"
 
 	"github.com/opensourceways/app-cla-server/models"
 	"github.com/opensourceways/app-cla-server/pdf"
@@ -65,8 +65,11 @@ func (impl *corpPDFEmail) do() error {
 		impl.orgInfo.OrgEmailPlatform, impl.msg,
 	)
 	if err != nil {
+		recordEmailSent(impl.orgInfo.OrgEmailPlatform, "failed")
 		return fmt.Errorf("error to send email, err:%s", err.Error())
 	}
+
+	recordEmailSent(impl.orgInfo.OrgEmailPlatform, "sent")
 
 	return nil
 }
@@ -77,7 +80,7 @@ func (impl *corpPDFEmail) clean() {
 	}
 
 	if err := os.Remove(impl.pdfFilePath); err != nil {
-		logs.Error(err)
+		log.Error("failed to remove pdf file", "error", err)
 	}
 }
 
@@ -94,8 +97,11 @@ func (impl *corpPDFEmail) genFile() error {
 		impl.linkID, impl.claInfo.CLAFile, &impl.signing, impl.claInfo.Fields,
 	)
 	if err != nil {
+		recordPDFGenerated("failed")
 		return fmt.Errorf("error to generate pdf, err: %s", err.Error())
 	}
+
+	recordPDFGenerated("success")
 
 	impl.pdfFilePath = v
 

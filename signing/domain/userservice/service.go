@@ -3,7 +3,7 @@ package userservice
 import (
 	"strings"
 
-	"github.com/beego/beego/v2/core/logs"
+	"github.com/opensourceways/obs-sdk/go/log"
 
 	commonRepo "github.com/opensourceways/app-cla-server/common/domain/repository"
 	"github.com/opensourceways/app-cla-server/signing/domain"
@@ -75,10 +75,7 @@ func (s *userService) Add(linkId, csId string, managers []domain.Manager) (map[s
 
 func (s *userService) Remove(ids []string) {
 	if err := s.repo.Remove(ids); err != nil {
-		logs.Error(
-			"remove user failed, user id: %s, err: %s",
-			strings.Join(ids, ","), err.Error(),
-		)
+		log.Error("remove user failed", "user_ids", strings.Join(ids, ","), "error", err)
 	}
 }
 
@@ -89,10 +86,7 @@ func (s *userService) RemoveByAccount(linkId string, accounts []dp.Account) {
 			v[i] = accounts[i].Account()
 		}
 
-		logs.Error(
-			"remove user failed, user: %s, err: %s",
-			strings.Join(v, ","), err.Error(),
-		)
+		log.Error("remove user failed", "users", strings.Join(v, ","), "error", err)
 	}
 }
 

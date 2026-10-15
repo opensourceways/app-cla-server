@@ -1,7 +1,7 @@
 package app
 
 import (
-	"github.com/beego/beego/v2/core/logs"
+	"github.com/opensourceways/obs-sdk/go/log"
 
 	"github.com/opensourceways/app-cla-server/signing/domain"
 	"github.com/opensourceways/app-cla-server/signing/domain/claservice"
@@ -63,7 +63,7 @@ func (s *claService) Update(cmd *CmdToUpdateCLA) error {
 	}
 
 	if err = s.cs.SetPendingCLAForLink(cmd.LinkId, cla.Id); err != nil {
-		logs.Error("set pending CLA for link failed: %s, err: %v", cmd.LinkId, err)
+		log.Error("set pending CLA for link failed", "link_id", cmd.LinkId, "error", err)
 	}
 
 	watch.TriggerNotify()

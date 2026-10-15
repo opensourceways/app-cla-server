@@ -256,7 +256,7 @@ func (impl *notifyAdminWatchImpl) handleSendEmail(link *repository.LinkCLA, corp
 
 	// [audit] 记录企业 CLA 变更通知的发信意图（4W + CLA 上下文），便于审计追溯。
 	// 此时 corp.CLANotify 已在 handleCorpSigning 中更新为最新 CLA id。
-	log.Info("[audit] cla notify email",
+	log.Info("[audit] cla_notify_email",
 		"scene", "corp",
 		"link_id", link.Id,
 		"org", link.Org.Alias,
@@ -468,7 +468,7 @@ func (impl *notifyAdminWatchImpl) handleSendIndividualEmail(link *repository.Lin
 	worker.GetEmailWorker().SendSimpleMessage(link.Email.Platform, &emailMsg)
 
 	// [audit] 记录个人 CLA 变更通知的发信意图（4W + CLA 上下文），便于审计追溯。
-	log.Info("[audit] cla notify email",
+	log.Info("[audit] cla_notify_email",
 		"scene", "individual",
 		"link_id", link.Id,
 		"org", link.Org.Alias,

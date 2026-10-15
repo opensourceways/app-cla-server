@@ -10,43 +10,43 @@ import (
 )
 
 const (
-	fieldPDF       = "pdf"
-	fieldRep       = "rep"
-	fieldType      = "type"
-	fieldDate      = "date"
-	fieldCorp      = "corp"
-	fieldName      = "name"
-	fieldLang      = "lang"
-	fieldAdmin     = "admin"
-	fieldEmail     = "email"
-	fieldHasPDF    = "has_pdf"
-	fieldLinkId    = "link_id"
-	fieldDomain    = "domain"
-	fieldDomains   = "domains"
-	fieldDeleted   = "deleted"
-	fieldVersion   = "version"
-	fieldManagers  = "managers"
-	fieldEmployees = "employees"
-	fieldTriggered = "triggered"
-	fieldCLANotify       = "cla_notify"
-	fieldClaNotifyCount  = "cla_notify_count"
-	fieldClaNotifyTime   = "cla_notify_time"
-	fieldAutoApprove     = "auto_approve_employees"
+	fieldPDF            = "pdf"
+	fieldRep            = "rep"
+	fieldType           = "type"
+	fieldDate           = "date"
+	fieldCorp           = "corp"
+	fieldName           = "name"
+	fieldLang           = "lang"
+	fieldAdmin          = "admin"
+	fieldEmail          = "email"
+	fieldHasPDF         = "has_pdf"
+	fieldLinkId         = "link_id"
+	fieldDomain         = "domain"
+	fieldDomains        = "domains"
+	fieldDeleted        = "deleted"
+	fieldVersion        = "version"
+	fieldManagers       = "managers"
+	fieldEmployees      = "employees"
+	fieldTriggered      = "triggered"
+	fieldCLANotify      = "cla_notify"
+	fieldClaNotifyCount = "cla_notify_count"
+	fieldClaNotifyTime  = "cla_notify_time"
+	fieldAutoApprove    = "auto_approve_employees"
 )
 
 func toCorpSigningDO(v *domain.CorpSigning) corpSigningDO {
 	link := &v.Link
 
 	return corpSigningDO{
-		Date:           v.Date,
-		CLAId:          link.CLAId,
-		LinkId:         link.Id,
-		Language:       link.Language.Language(),
-		Rep:            toRepDO(&v.Rep),
-		Corp:           toCorpDO(&v.Corp),
-		AllInfo:        v.AllInfo,
-		ClaNotifyCount: v.ClaNotifyCount,
-		ClaNotifyTime:  v.ClaNotifyTime,
+		Date:                 v.Date,
+		CLAId:                link.CLAId,
+		LinkId:               link.Id,
+		Language:             link.Language.Language(),
+		Rep:                  toRepDO(&v.Rep),
+		Corp:                 toCorpDO(&v.Corp),
+		AllInfo:              v.AllInfo,
+		ClaNotifyCount:       v.ClaNotifyCount,
+		ClaNotifyTime:        v.ClaNotifyTime,
 		AutoApproveEmployees: v.AutoApproveEmployees,
 	}
 }
@@ -55,18 +55,18 @@ func toCorpSigningDOForMigrate(v *domain.CorpSigning) corpSigningDO {
 	link := &v.Link
 
 	return corpSigningDO{
-		Date:           v.Date,
-		CLAId:          link.CLAId,
-		LinkId:         link.Id,
-		Language:       link.Language.Language(),
-		Rep:            toRepDO(&v.Rep),
-		Corp:           toCorpDO(&v.Corp),
-		AllInfo:        v.AllInfo,
-		Admin:          toManagerDO(&v.Admin),
-		Managers:       toManagerDOs(v.Managers),
-		Employees:      toEmployeeSigningDOs(v.Employees),
-		ClaNotifyCount: v.ClaNotifyCount,
-		ClaNotifyTime:  v.ClaNotifyTime,
+		Date:                 v.Date,
+		CLAId:                link.CLAId,
+		LinkId:               link.Id,
+		Language:             link.Language.Language(),
+		Rep:                  toRepDO(&v.Rep),
+		Corp:                 toCorpDO(&v.Corp),
+		AllInfo:              v.AllInfo,
+		Admin:                toManagerDO(&v.Admin),
+		Managers:             toManagerDOs(v.Managers),
+		Employees:            toEmployeeSigningDOs(v.Employees),
+		ClaNotifyCount:       v.ClaNotifyCount,
+		ClaNotifyTime:        v.ClaNotifyTime,
 		AutoApproveEmployees: v.AutoApproveEmployees,
 	}
 }
@@ -82,17 +82,17 @@ type corpSigningDO struct {
 	Corp     corpDO             `bson:"corp"     json:"corp"     required:"true"`
 	AllInfo  anyDoc             `bson:"info"     json:"info,omitempty"`
 
-	PDF       []byte              `bson:"pdf"           json:"pdf,omitempty"`
-	HasPDF    bool                `bson:"has_pdf"       json:"has_pdf"`
-	Admin     managerDO           `bson:"admin"         json:"admin"`
-	Managers  []managerDO         `bson:"managers"      json:"managers"`
-	Employees []employeeSigningDO `bson:"employees"     json:"employees"`
-	Deleted   []employeeSigningDO `bson:"deleted"       json:"deleted"`
-	Version   int                 `bson:"version"       json:"-"`
-	ClaNotify      string `bson:"cla_notify"       json:"cla_notify"`
-	ClaNotifyCount int    `bson:"cla_notify_count" json:"cla_notify_count"`
-	ClaNotifyTime  int64  `bson:"cla_notify_time"  json:"cla_notify_time"`
-	AutoApproveEmployees bool `bson:"auto_approve_employees" json:"auto_approve_employees"`
+	PDF                  []byte              `bson:"pdf"           json:"pdf,omitempty"`
+	HasPDF               bool                `bson:"has_pdf"       json:"has_pdf"`
+	Admin                managerDO           `bson:"admin"         json:"admin"`
+	Managers             []managerDO         `bson:"managers"      json:"managers"`
+	Employees            []employeeSigningDO `bson:"employees"     json:"employees"`
+	Deleted              []employeeSigningDO `bson:"deleted"       json:"deleted"`
+	Version              int                 `bson:"version"       json:"-"`
+	ClaNotify            string              `bson:"cla_notify"       json:"cla_notify"`
+	ClaNotifyCount       int                 `bson:"cla_notify_count" json:"cla_notify_count"`
+	ClaNotifyTime        int64               `bson:"cla_notify_time"  json:"cla_notify_time"`
+	AutoApproveEmployees bool                `bson:"auto_approve_employees" json:"auto_approve_employees"`
 
 	// uploading pdf or adding email domain will trigger individual signing checking
 	// which will delete the one that belongs to a corp.
@@ -150,14 +150,14 @@ func (do *corpSigningDO) toCorpSigning() domain.CorpSigning {
 				Language: dp.CreateLanguage(do.Language),
 			},
 		},
-		Admin:          do.Admin.toManager(),
-		HasPDF:         do.HasPDF,
-		AllInfo:        do.AllInfo,
-		Managers:       do.toManagers(),
-		Employees:      do.toEmployeeSignings(),
-		Version:        do.Version,
-		ClaNotifyCount: do.ClaNotifyCount,
-		ClaNotifyTime:  do.ClaNotifyTime,
+		Admin:                do.Admin.toManager(),
+		HasPDF:               do.HasPDF,
+		AllInfo:              do.AllInfo,
+		Managers:             do.toManagers(),
+		Employees:            do.toEmployeeSignings(),
+		Version:              do.Version,
+		ClaNotifyCount:       do.ClaNotifyCount,
+		ClaNotifyTime:        do.ClaNotifyTime,
 		AutoApproveEmployees: do.AutoApproveEmployees,
 	}
 }

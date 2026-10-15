@@ -65,11 +65,11 @@ type CorpSummaryDTO struct {
 }
 
 type CorpSigningPendingDTO struct {
-	Id              string
-	CorpName        string
-	AdminEmail      string
-	SignedCLAId     string
-	PendingCLAId    string
-	NotifyCount     int
-	LastNotifyTime  int64
+	Id             string
+	CorpName       string
+	AdminEmail     string
+	SignedCLAId    string
+	PendingCLAId   string
+	NotifyCount    int
+	LastNotifyTime int64
 }

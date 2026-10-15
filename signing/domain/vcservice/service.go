@@ -3,13 +3,13 @@ package vcservice
 import (
 	"time"
 
-	"github.com/opensourceways/obs-sdk/go/log"
 	commonRepo "github.com/opensourceways/app-cla-server/common/domain/repository"
 	"github.com/opensourceways/app-cla-server/signing/domain"
 	"github.com/opensourceways/app-cla-server/signing/domain/dp"
 	"github.com/opensourceways/app-cla-server/signing/domain/limiter"
 	"github.com/opensourceways/app-cla-server/signing/domain/randomcode"
 	"github.com/opensourceways/app-cla-server/signing/domain/repository"
+	"github.com/opensourceways/obs-sdk/go/log"
 )
 
 var invalidCode = domain.NewDomainError(domain.ErrorCodeVerificationCodeWrong)

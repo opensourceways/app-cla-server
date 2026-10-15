@@ -9,9 +9,9 @@ import (
 	"strings"
 	"testing"
 
+	beecontext "github.com/beego/beego/v2/server/web/context"
 	"github.com/opensourceways/obs-sdk/go/log"
 	"github.com/opensourceways/obs-sdk/go/sdkctx"
-	beecontext "github.com/beego/beego/v2/server/web/context"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

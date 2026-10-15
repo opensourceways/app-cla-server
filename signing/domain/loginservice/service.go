@@ -102,9 +102,9 @@ func (s *loginService) login(find func() (domain.User, error), p dp.Password, li
 
 	if s.isCorrectPassword(p, u.Password) {
 		if lv.HasFailure() {
-		if err1 := s.repo.Delete(lid); err1 != nil {
-			log.Error("delete login info failed", "error", err1)
-		}
+			if err1 := s.repo.Delete(lid); err1 != nil {
+				log.Error("delete login info failed", "error", err1)
+			}
 		}
 
 		return

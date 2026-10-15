@@ -3,12 +3,12 @@ package app
 import (
 	"strings"
 
-	"github.com/opensourceways/obs-sdk/go/log"
 	commonRepo "github.com/opensourceways/app-cla-server/common/domain/repository"
 	"github.com/opensourceways/app-cla-server/signing/domain"
 	"github.com/opensourceways/app-cla-server/signing/domain/claservice"
 	"github.com/opensourceways/app-cla-server/signing/domain/localcla"
 	"github.com/opensourceways/app-cla-server/signing/domain/repository"
+	"github.com/opensourceways/obs-sdk/go/log"
 )
 
 const (
@@ -258,18 +258,18 @@ func (s *migrationService) migrateIndividualSigningData(sourceLinkId, targetLink
 		// 批量迁移当前页的数据
 		for _, individualSigning := range individualSignings {
 			newIndividualSigning := s.cloneIndividualSigning(&individualSigning, targetLinkId, claIdMap)
-		if err := s.individualRepo.AddForMigrate(&newIndividualSigning); err != nil {
-			// 特别检查是否是文档已存在的错误
-			if strings.Contains(err.Error(), "doc exists") || strings.Contains(err.Error(), "document exists") {
-				log.Error("document exists error: possible duplicate migration or ID conflict",
-					"new_id", individualSigning.Link.Id, "error", err)
+			if err := s.individualRepo.AddForMigrate(&newIndividualSigning); err != nil {
+				// 特别检查是否是文档已存在的错误
+				if strings.Contains(err.Error(), "doc exists") || strings.Contains(err.Error(), "document exists") {
+					log.Error("document exists error: possible duplicate migration or ID conflict",
+						"new_id", individualSigning.Link.Id, "error", err)
+				}
+				return err
 			}
-			return err
 		}
-	}
 
-	// 添加日志记录迁移进度
-	log.Info("individual signing migration progress", "current", offset+len(individualSignings), "total", totalCount)
+		// 添加日志记录迁移进度
+		log.Info("individual signing migration progress", "current", offset+len(individualSignings), "total", totalCount)
 	}
 
 	return nil

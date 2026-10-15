@@ -243,9 +243,9 @@ func (impl *individualSigning) UpdateCLANotify(is *domain.IndividualSigning) err
 	filter[fieldDeleted] = false
 
 	doc := bson.M{
-		fieldCLANotify:      is.ClaNotify,
-		"cla_notify_count":  is.ClaNotifyCount,
-		"cla_notify_time":   is.ClaNotifyTime,
+		fieldCLANotify:     is.ClaNotify,
+		"cla_notify_count": is.ClaNotifyCount,
+		"cla_notify_time":  is.ClaNotifyTime,
 	}
 
 	return impl.dao.UpdateDoc(filter, doc, is.Version)

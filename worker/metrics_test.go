@@ -7,14 +7,13 @@ import (
 	"strings"
 	"testing"
 
+	beego "github.com/beego/beego/v2/server/web"
+	beecontext "github.com/beego/beego/v2/server/web/context"
 	"github.com/opensourceways/app-cla-server/models"
 	"github.com/opensourceways/app-cla-server/pdf"
 	"github.com/opensourceways/app-cla-server/signing/domain/emailservice"
 	obsmetrics "github.com/opensourceways/obs-sdk/go/metrics"
 	"github.com/opensourceways/obs-sdk/go/middleware/beegomw"
-	beego "github.com/beego/beego/v2/server/web"
-	beecontext "github.com/beego/beego/v2/server/web/context"
-	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -68,7 +67,7 @@ func TestBusinessMetricsExposed(t *testing.T) {
 	assert.Contains(t, body, `outcome="failed"`)
 }
 
-// TestEmailSentMetricValue verifies the counter value via testutil.
+// TestEmailSentMetricValue verifies the counter value via registry gather.
 func TestEmailSentMetricValue(t *testing.T) {
 	resetBusinessMetrics()
 	m := newTestMetrics(t)
@@ -78,13 +77,15 @@ func TestEmailSentMetricValue(t *testing.T) {
 	recordEmailSent("gmail", "sent")
 	recordEmailSent("gmail", "failed")
 
-	require.Equal(t, 2.0, testutil.ToFloat64(
-		emailSentCounter.Vec().WithLabelValues("openeuler", "gmail", "sent")))
-	require.Equal(t, 1.0, testutil.ToFloat64(
-		emailSentCounter.Vec().WithLabelValues("openeuler", "gmail", "failed")))
+	require.Equal(t, 2.0, findCounterValue(t, m, "cla_email_sent_total", map[string]string{
+		"community": "openeuler", "platform": "gmail", "outcome": "sent",
+	}))
+	require.Equal(t, 1.0, findCounterValue(t, m, "cla_email_sent_total", map[string]string{
+		"community": "openeuler", "platform": "gmail", "outcome": "failed",
+	}))
 }
 
-// TestPDFGeneratedMetricValue verifies the pdf counter value via testutil.
+// TestPDFGeneratedMetricValue verifies the pdf counter value via registry gather.
 func TestPDFGeneratedMetricValue(t *testing.T) {
 	resetBusinessMetrics()
 	m := newTestMetrics(t)
@@ -94,10 +95,12 @@ func TestPDFGeneratedMetricValue(t *testing.T) {
 	recordPDFGenerated("success")
 	recordPDFGenerated("failed")
 
-	require.Equal(t, 2.0, testutil.ToFloat64(
-		pdfGeneratedCounter.Vec().WithLabelValues("openeuler", "success")))
-	require.Equal(t, 1.0, testutil.ToFloat64(
-		pdfGeneratedCounter.Vec().WithLabelValues("openeuler", "failed")))
+	require.Equal(t, 2.0, findCounterValue(t, m, "cla_pdf_generated_total", map[string]string{
+		"community": "openeuler", "outcome": "success",
+	}))
+	require.Equal(t, 1.0, findCounterValue(t, m, "cla_pdf_generated_total", map[string]string{
+		"community": "openeuler", "outcome": "failed",
+	}))
 }
 
 // TestSendSimpleMessageRecordsEmailMetric verifies that SendSimpleMessage
@@ -116,8 +119,9 @@ func TestSendSimpleMessageRecordsEmailMetric(t *testing.T) {
 	w.SendSimpleMessage("test-metric-success", msg)
 	w.Shutdown()
 
-	require.Equal(t, 1.0, testutil.ToFloat64(
-		emailSentCounter.Vec().WithLabelValues("openeuler", "test-metric-success", "sent")))
+	require.Equal(t, 1.0, findCounterValue(t, m, "cla_email_sent_total", map[string]string{
+		"community": "openeuler", "platform": "test-metric-success", "outcome": "sent",
+	}))
 }
 
 // TestSendSimpleMessageFailureRecordsEmailMetric verifies that SendSimpleMessage
@@ -136,8 +140,9 @@ func TestSendSimpleMessageFailureRecordsEmailMetric(t *testing.T) {
 	w.SendSimpleMessage("test-metric-fail", msg)
 	w.Shutdown()
 
-	require.GreaterOrEqual(t, testutil.ToFloat64(
-		emailSentCounter.Vec().WithLabelValues("openeuler", "test-metric-fail", "failed")), 1.0)
+	require.GreaterOrEqual(t, findCounterValue(t, m, "cla_email_sent_total", map[string]string{
+		"community": "openeuler", "platform": "test-metric-fail", "outcome": "failed",
+	}), 1.0)
 }
 
 // --- HTTP middleware integration tests ---
@@ -406,10 +411,12 @@ func TestCorpPDFEmailDoRecordsMetrics(t *testing.T) {
 	assert.Contains(t, body, `outcome="sent"`)
 	assert.Contains(t, body, `outcome="success"`)
 
-	require.Equal(t, 1.0, testutil.ToFloat64(
-		emailSentCounter.Vec().WithLabelValues("openeuler", platform, "sent")))
-	require.Equal(t, 1.0, testutil.ToFloat64(
-		pdfGeneratedCounter.Vec().WithLabelValues("openeuler", "success")))
+	require.Equal(t, 1.0, findCounterValue(t, m, "cla_email_sent_total", map[string]string{
+		"community": "openeuler", "platform": platform, "outcome": "sent",
+	}))
+	require.Equal(t, 1.0, findCounterValue(t, m, "cla_pdf_generated_total", map[string]string{
+		"community": "openeuler", "outcome": "success",
+	}))
 	require.Equal(t, 1, fake.calls)
 }
 
@@ -439,10 +446,12 @@ func TestCorpPDFEmailDoEmailFailureRecordsFailedMetric(t *testing.T) {
 	assert.Contains(t, body, `outcome="failed"`)
 	assert.Contains(t, body, `outcome="success"`)
 
-	require.Equal(t, 1.0, testutil.ToFloat64(
-		emailSentCounter.Vec().WithLabelValues("openeuler", platform, "failed")))
-	require.Equal(t, 1.0, testutil.ToFloat64(
-		pdfGeneratedCounter.Vec().WithLabelValues("openeuler", "success")))
+	require.Equal(t, 1.0, findCounterValue(t, m, "cla_email_sent_total", map[string]string{
+		"community": "openeuler", "platform": platform, "outcome": "failed",
+	}))
+	require.Equal(t, 1.0, findCounterValue(t, m, "cla_pdf_generated_total", map[string]string{
+		"community": "openeuler", "outcome": "success",
+	}))
 }
 
 // TestCorpPDFEmailDoPDFFailureRecordsFailedMetric verifies that when
@@ -467,8 +476,9 @@ func TestCorpPDFEmailDoPDFFailureRecordsFailedMetric(t *testing.T) {
 	assert.Contains(t, body, "cla_pdf_generated_total")
 	assert.Contains(t, body, `outcome="failed"`)
 
-	require.Equal(t, 1.0, testutil.ToFloat64(
-		pdfGeneratedCounter.Vec().WithLabelValues("openeuler", "failed")))
+	require.Equal(t, 1.0, findCounterValue(t, m, "cla_pdf_generated_total", map[string]string{
+		"community": "openeuler", "outcome": "failed",
+	}))
 }
 
 // TestCorpPDFEmailDoGenMsgFailure verifies that when genMsg() fails inside
@@ -494,8 +504,9 @@ func TestCorpPDFEmailDoGenMsgFailure(t *testing.T) {
 	err := impl.do()
 	require.Error(t, err)
 
-	require.Equal(t, 1.0, testutil.ToFloat64(
-		pdfGeneratedCounter.Vec().WithLabelValues("openeuler", "success")))
+	require.Equal(t, 1.0, findCounterValue(t, m, "cla_pdf_generated_total", map[string]string{
+		"community": "openeuler", "outcome": "success",
+	}))
 }
 
 // TestCorpPDFEmailGenFileSkipsWhenFileExists verifies that genFile() returns

@@ -12,7 +12,7 @@ type accessTokenDO struct {
 	EncryptedCSRF []byte `json:"encrypted_csrf"`
 }
 
-//MarshalBinary in order to store struct directly in redis
+// MarshalBinary in order to store struct directly in redis
 func (do *accessTokenDO) MarshalBinary() ([]byte, error) {
 	return json.Marshal(do)
 }

@@ -1,6 +1,8 @@
 package worker
 
 import (
+	"bytes"
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -12,6 +14,7 @@ import (
 	"github.com/opensourceways/app-cla-server/models"
 	"github.com/opensourceways/app-cla-server/pdf"
 	"github.com/opensourceways/app-cla-server/signing/domain/emailservice"
+	"github.com/opensourceways/obs-sdk/go/log"
 	obsmetrics "github.com/opensourceways/obs-sdk/go/metrics"
 	"github.com/opensourceways/obs-sdk/go/middleware/beegomw"
 	"github.com/stretchr/testify/assert"
@@ -582,3 +585,94 @@ var fakeSendErr = &fakeError{msg: "smtp down"}
 type fakeError struct{ msg string }
 
 func (e *fakeError) Error() string { return e.msg }
+
+// initWorkerTestLogger replaces the global default logger with one writing
+// to a buffer, returning the buffer and a cleanup to restore the original.
+func initWorkerTestLogger(t *testing.T) (*bytes.Buffer, func()) {
+	t.Helper()
+	var buf bytes.Buffer
+	orig := log.Default()
+	log.SetDefault(log.New(log.Config{
+		Service:   "app-cla-server",
+		Env:       "test",
+		Instance:  "pod-1",
+		Community: "openeuler",
+		Output:    &buf,
+	}))
+	return &buf, func() { log.SetDefault(orig) }
+}
+
+func parseWorkerLogLines(t *testing.T, buf *bytes.Buffer) []map[string]interface{} {
+	t.Helper()
+	lines := strings.Split(strings.TrimSpace(buf.String()), "\n")
+	result := make([]map[string]interface{}, 0, len(lines))
+	for _, line := range lines {
+		line = strings.TrimSpace(line)
+		if line == "" {
+			continue
+		}
+		var m map[string]interface{}
+		require.NoError(t, json.Unmarshal([]byte(line), &m), "line: %s", line)
+		result = append(result, m)
+	}
+	return result
+}
+
+func findLogEntryByMsg(t *testing.T, entries []map[string]interface{}, msg string) map[string]interface{} {
+	t.Helper()
+	for _, e := range entries {
+		if e["msg"] == msg {
+			return e
+		}
+	}
+	t.Fatalf("log entry with msg=%q not found in %d entries", msg, len(entries))
+	return nil
+}
+
+// TestAuditLogMsgEmailResultSent verifies that the JSON log line emitted on
+// successful email send has msg="[audit] email_result" (underscore event
+// identifier, not space-separated) with outcome="sent".
+func TestAuditLogMsgEmailResultSent(t *testing.T) {
+	buf, cleanup := initWorkerTestLogger(t)
+	defer cleanup()
+
+	fake := &fakeEmailService{}
+	emailservice.Register("test-audit-ok", fake)
+
+	w := &emailWorker{stop: make(chan struct{})}
+	msg := &EmailMessage{To: []string{"a@example.com"}, Subject: "hi"}
+
+	w.SendSimpleMessage("test-audit-ok", msg)
+	w.Shutdown()
+
+	entries := parseWorkerLogLines(t, buf)
+	e := findLogEntryByMsg(t, entries, "[audit] email_result")
+
+	assert.Equal(t, "info", e["level"])
+	assert.Equal(t, "sent", e["outcome"])
+	assert.Equal(t, "test-audit-ok", e["platform"])
+}
+
+// TestAuditLogMsgEmailResultFailed verifies that the JSON log line emitted on
+// failed email send has msg="[audit] email_result" (underscore event
+// identifier) with outcome="failed".
+func TestAuditLogMsgEmailResultFailed(t *testing.T) {
+	buf, cleanup := initWorkerTestLogger(t)
+	defer cleanup()
+
+	fake := &fakeEmailService{err: fakeSendErr}
+	emailservice.Register("test-audit-fail", fake)
+
+	w := &emailWorker{stop: make(chan struct{})}
+	msg := &EmailMessage{To: []string{"a@example.com"}, Subject: "hi"}
+
+	w.SendSimpleMessage("test-audit-fail", msg)
+	w.Shutdown()
+
+	entries := parseWorkerLogLines(t, buf)
+	e := findLogEntryByMsg(t, entries, "[audit] email_result")
+
+	assert.Equal(t, "error", e["level"])
+	assert.Equal(t, "failed", e["outcome"])
+	assert.Equal(t, "test-audit-fail", e["platform"])
+}

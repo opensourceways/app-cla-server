@@ -3,7 +3,7 @@ package controllers
 import (
 	"fmt"
 
-	"github.com/beego/beego/v2/core/logs"
+	"github.com/opensourceways/obs-sdk/go/log"
 
 	"github.com/opensourceways/app-cla-server/models"
 )
@@ -55,7 +55,8 @@ func (ctl *baseController) sendFailedResultAsResp(fr *failedApiResult, action st
 
 func (ctl *baseController) sendFailedResponse(statusCode int, errCode string, reason error, action string) {
 	if statusCode >= 500 {
-		logs.Error("Failed to %s, errCode: %s, err: %s", action, errCode, reason.Error())
+		log.ErrorContext(ctl.Ctx.Request.Context(), "api failed",
+			"action", action, "err_code", errCode, "error", reason)
 
 		errCode = errSystemError
 		reason = fmt.Errorf("system error")
@@ -69,17 +70,21 @@ func (ctl *baseController) sendFailedResponse(statusCode int, errCode string, re
 	ctl.sendResponse(action, d, statusCode)
 }
 
+// operationLog records an access log line for every API response, including
+// failure paths (400/401/403). The user identity is best-effort: on 401 the
+// token is invalid so the access controller is absent, but the action and
+// status_code still identify the denied operation.
 func (ctl *baseController) operationLog(action string, statusCode int) {
 	user := ""
 	if ac, err := ctl.getAccessController(); err == nil {
 		user = ac.getUser()
 	}
 
-	if user != "" {
-		logs.Info("%s, %s, %d", user, action, statusCode)
-	}
+	log.InfoContext(ctl.Ctx.Request.Context(), "api access",
+		"user", user, "action", action, "status_code", statusCode)
 }
 
 func (ctl *baseController) addOperationLog(user, action string, statusCode int) {
-	logs.Info("%s, %s, %d", user, action, statusCode)
+	log.InfoContext(ctl.Ctx.Request.Context(), "api access",
+		"user", user, "action", action, "status_code", statusCode)
 }

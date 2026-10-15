@@ -5,7 +5,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/beego/beego/v2/core/logs"
+	"github.com/opensourceways/obs-sdk/go/log"
 
 	"github.com/opensourceways/app-cla-server/models"
 	"github.com/opensourceways/app-cla-server/signing/domain/dp"
@@ -52,7 +52,7 @@ func (ctl *CorporationPDFController) downloadCorpPDF(userId, csId, email string)
 	ctl.downloadFile(fn)
 
 	if err := os.Remove(fn); err != nil {
-		logs.Error("remove temp file failed, err: %s", err.Error())
+		log.ErrorContext(ctl.Ctx.Request.Context(), "remove temp file failed", "error", err)
 	}
 
 	return nil

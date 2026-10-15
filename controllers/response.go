@@ -60,6 +60,10 @@ func (ctl *baseController) sendFailedResponse(statusCode int, errCode string, re
 
 		errCode = errSystemError
 		reason = fmt.Errorf("system error")
+	} else if statusCode >= 400 {
+		log.WarnContext(ctl.Ctx.Request.Context(), "api failed",
+			"action", action, "status_code", statusCode,
+			"err_code", errCode, "error", reason)
 	}
 
 	d := errMsg{

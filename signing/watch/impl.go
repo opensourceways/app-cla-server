@@ -208,6 +208,6 @@ func (impl *watchingImpl) handle(corp repositoryimpl.TriggeredCorp) {
 		"matched", matched,
 		"collected", collected,
 		"skipped", skipped,
-		"time", util.Now(),
+		"ts", util.Now(),
 	)
 }

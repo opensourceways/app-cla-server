@@ -72,8 +72,8 @@ func newBaseControllerWithRequest(reqID string) *baseController {
 }
 
 // TestOperationLogCondition verifies that operationLog only writes a log line
-// when user is non-empty (original behavior). When user is empty (401/403/400
-// with no access controller), no log line is produced.
+// when user is non-empty. When user is empty (401/403/400 with no access
+// controller), no log line is produced.
 func TestOperationLogCondition(t *testing.T) {
 	t.Run("empty user produces no log", func(t *testing.T) {
 		buf, cleanup := initTestLogger(t)
@@ -111,7 +111,7 @@ func TestOperationLogCondition(t *testing.T) {
 }
 
 // TestAddOperationLog verifies addOperationLog produces a log line with
-// user, action, and status_code (acceptance criterion 11).
+// user, action, and status_code.
 func TestAddOperationLog(t *testing.T) {
 	buf, cleanup := initTestLogger(t)
 	defer cleanup()
@@ -186,6 +186,103 @@ func TestSendFailedResponse500NoUserLogsOnlyError(t *testing.T) {
 type errLogTest struct{}
 
 func (e errLogTest) Error() string { return "internal failure" }
+
+// TestSendFailedResponseLogs400 verifies that 400 failures produce a warn
+// log with action, status_code, err_code, and error.
+func TestSendFailedResponseLogs400(t *testing.T) {
+	buf, cleanup := initTestLogger(t)
+	defer cleanup()
+
+	ctl := newBaseControllerWithRequest("req-400")
+	ctl.sendFailedResponse(400, "missing_url_path_parameter", errLogTest{}, "access resource")
+
+	entries := parseLogLines(t, buf)
+	require.Len(t, entries, 1)
+
+	e := entries[0]
+	assert.Equal(t, "warn", e["level"])
+	assert.Equal(t, "api failed", e["msg"])
+	assert.Equal(t, "access resource", e["action"])
+	assert.Equal(t, float64(400), e["status_code"])
+	assert.Equal(t, "missing_url_path_parameter", e["err_code"])
+	assert.Equal(t, "internal failure", e["error"])
+	assert.Equal(t, "req-400", e["request_id"])
+}
+
+// TestSendFailedResponseLogs401 verifies that 401 failures produce a warn
+// log with action, status_code, err_code, and error.
+func TestSendFailedResponseLogs401(t *testing.T) {
+	buf, cleanup := initTestLogger(t)
+	defer cleanup()
+
+	ctl := newBaseControllerWithRequest("req-401")
+	ctl.sendFailedResponse(401, "unknown_token", errLogTest{}, "access resource")
+
+	entries := parseLogLines(t, buf)
+	require.Len(t, entries, 1)
+
+	e := entries[0]
+	assert.Equal(t, "warn", e["level"])
+	assert.Equal(t, "api failed", e["msg"])
+	assert.Equal(t, "access resource", e["action"])
+	assert.Equal(t, float64(401), e["status_code"])
+	assert.Equal(t, "unknown_token", e["err_code"])
+	assert.Equal(t, "internal failure", e["error"])
+	assert.Equal(t, "req-401", e["request_id"])
+}
+
+// TestSendFailedResponseLogs403 verifies that 403 failures produce a warn
+// log with action, status_code, err_code, and error.
+func TestSendFailedResponseLogs403(t *testing.T) {
+	buf, cleanup := initTestLogger(t)
+	defer cleanup()
+
+	ctl := newBaseControllerWithRequest("req-403")
+	ctl.sendFailedResponse(403, "unauthorized_token", errLogTest{}, "access resource")
+
+	entries := parseLogLines(t, buf)
+	require.Len(t, entries, 1)
+
+	e := entries[0]
+	assert.Equal(t, "warn", e["level"])
+	assert.Equal(t, "api failed", e["msg"])
+	assert.Equal(t, "access resource", e["action"])
+	assert.Equal(t, float64(403), e["status_code"])
+	assert.Equal(t, "unauthorized_token", e["err_code"])
+	assert.Equal(t, "internal failure", e["error"])
+	assert.Equal(t, "req-403", e["request_id"])
+}
+
+// TestSendFailedResponse4xxWithUserLogsWarnAndAccess verifies that when user
+// is present, a 4xx failure produces both a warn log and an access log.
+func TestSendFailedResponse4xxWithUserLogsWarnAndAccess(t *testing.T) {
+	buf, cleanup := initTestLogger(t)
+	defer cleanup()
+
+	ctl := newBaseControllerWithRequest("req-400-user")
+	ctl.Data[apiAccessController] = accessController{
+		RemoteAddr: "1.2.3.4",
+		Permission: PermissionOwnerOfOrg,
+		Payload:    &acForCorpManagerPayload{UserId: "admin1"},
+	}
+	ctl.sendFailedResponse(403, "unauthorized_token", errLogTest{}, "process signing")
+
+	entries := parseLogLines(t, buf)
+	require.Len(t, entries, 2)
+
+	e1 := entries[0]
+	assert.Equal(t, "warn", e1["level"])
+	assert.Equal(t, "api failed", e1["msg"])
+	assert.Equal(t, "process signing", e1["action"])
+	assert.Equal(t, float64(403), e1["status_code"])
+
+	e2 := entries[1]
+	assert.Equal(t, "info", e2["level"])
+	assert.Equal(t, "api access", e2["msg"])
+	assert.Equal(t, "process signing", e2["action"])
+	assert.Equal(t, float64(403), e2["status_code"])
+	assert.Equal(t, "admin1", e2["user"])
+}
 
 // TestOperationLogJSONFormat verifies the output is single-line flat JSON
 // with service/env/instance/community (acceptance criterion 8).

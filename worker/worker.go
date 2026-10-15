@@ -113,10 +113,10 @@ func (w *emailWorker) SendSimpleMessage(emailPlatform string, msg *EmailMessage)
 		}
 
 		if w.tryToSendEmail(action) {
-			log.Info("email result", "outcome", "sent", "platform", platform, "to", msg1.To, "subject", msg1.Subject)
+			log.Info("[audit] email result", "outcome", "sent", "platform", platform, "to", msg1.To, "subject", msg1.Subject)
 			recordEmailSent(platform, "sent")
 		} else {
-			log.Error("email result", "outcome", "failed", "platform", platform, "to", msg1.To, "subject", msg1.Subject)
+			log.Error("[audit] email result", "outcome", "failed", "platform", platform, "to", msg1.To, "subject", msg1.Subject)
 			recordEmailSent(platform, "failed")
 		}
 	}

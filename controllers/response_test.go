@@ -71,40 +71,43 @@ func newBaseControllerWithRequest(reqID string) *baseController {
 	return ctl
 }
 
-// TestOperationLogAlwaysLogs verifies that operationLog produces a log line
-// for every API response, including failure paths (400/401/403) where user
-// is empty (acceptance criterion 11).
-func TestOperationLogAlwaysLogs(t *testing.T) {
-	tests := []struct {
-		name       string
-		action     string
-		statusCode int
-	}{
-		{"400 missing param", "create corp signing", 400},
-		{"401 unauthorized", "access resource", 401},
-		{"403 forbidden", "upload pdf", 403},
-		{"200 success", "get cla", 200},
-	}
+// TestOperationLogCondition verifies that operationLog only writes a log line
+// when user is non-empty (original behavior). When user is empty (401/403/400
+// with no access controller), no log line is produced.
+func TestOperationLogCondition(t *testing.T) {
+	t.Run("empty user produces no log", func(t *testing.T) {
+		buf, cleanup := initTestLogger(t)
+		defer cleanup()
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			buf, cleanup := initTestLogger(t)
-			defer cleanup()
+		ctl := newBaseControllerWithRequest("req-empty")
+		ctl.operationLog("access resource", 401)
 
-			ctl := newBaseControllerWithRequest("req-" + tt.name)
-			ctl.operationLog(tt.action, tt.statusCode)
+		entries := parseLogLines(t, buf)
+		require.Len(t, entries, 0, "no log line should be produced when user is empty")
+	})
 
-			entries := parseLogLines(t, buf)
-			require.Len(t, entries, 1)
-			e := entries[0]
+	t.Run("non-empty user produces valid JSON log", func(t *testing.T) {
+		buf, cleanup := initTestLogger(t)
+		defer cleanup()
 
-			assert.Equal(t, "api access", e["msg"])
-			assert.Equal(t, tt.action, e["action"])
-			assert.Equal(t, float64(tt.statusCode), e["status_code"])
-			assert.Equal(t, "req-"+tt.name, e["request_id"])
-			assert.Equal(t, "", e["user"])
-		})
-	}
+		ctl := newBaseControllerWithRequest("req-user")
+		ctl.Data[apiAccessController] = accessController{
+			RemoteAddr: "1.2.3.4",
+			Permission: PermissionOwnerOfOrg,
+			Payload:    &acForCorpManagerPayload{UserId: "user1"},
+		}
+		ctl.operationLog("get signing", 200)
+
+		entries := parseLogLines(t, buf)
+		require.Len(t, entries, 1)
+		e := entries[0]
+
+		assert.Equal(t, "api access", e["msg"])
+		assert.Equal(t, "user1", e["user"])
+		assert.Equal(t, "get signing", e["action"])
+		assert.Equal(t, float64(200), e["status_code"])
+		assert.Equal(t, "req-user", e["request_id"])
+	})
 }
 
 // TestAddOperationLog verifies addOperationLog produces a log line with
@@ -128,13 +131,18 @@ func TestAddOperationLog(t *testing.T) {
 }
 
 // TestSendFailedResponseLogs500 verifies that 5xx failures produce an error
-// log with action, err_code, and error, plus an access log with status_code
-// (acceptance criterion 11).
+// log with action, err_code, and error. When user is present, an access log
+// with status_code is also produced via operationLog.
 func TestSendFailedResponseLogs500(t *testing.T) {
 	buf, cleanup := initTestLogger(t)
 	defer cleanup()
 
 	ctl := newBaseControllerWithRequest("req-500")
+	ctl.Data[apiAccessController] = accessController{
+		RemoteAddr: "1.2.3.4",
+		Permission: PermissionOwnerOfOrg,
+		Payload:    &acForCorpManagerPayload{UserId: "admin1"},
+	}
 	ctl.sendFailedResponse(500, "system_error", errLogTest{}, "process signing")
 
 	entries := parseLogLines(t, buf)
@@ -153,6 +161,26 @@ func TestSendFailedResponseLogs500(t *testing.T) {
 	assert.Equal(t, "api access", e2["msg"])
 	assert.Equal(t, "process signing", e2["action"])
 	assert.Equal(t, float64(500), e2["status_code"])
+	assert.Equal(t, "admin1", e2["user"])
+}
+
+// TestSendFailedResponse500NoUserLogsOnlyError verifies that when user is
+// empty, a 5xx response only produces the error log (no access log).
+func TestSendFailedResponse500NoUserLogsOnlyError(t *testing.T) {
+	buf, cleanup := initTestLogger(t)
+	defer cleanup()
+
+	ctl := newBaseControllerWithRequest("req-500-nouser")
+	ctl.sendFailedResponse(500, "system_error", errLogTest{}, "process signing")
+
+	entries := parseLogLines(t, buf)
+	require.Len(t, entries, 1)
+
+	e := entries[0]
+	assert.Equal(t, "error", e["level"])
+	assert.Equal(t, "api failed", e["msg"])
+	assert.Equal(t, "process signing", e["action"])
+	assert.Equal(t, "req-500-nouser", e["request_id"])
 }
 
 type errLogTest struct{}
@@ -166,6 +194,11 @@ func TestOperationLogJSONFormat(t *testing.T) {
 	defer cleanup()
 
 	ctl := newBaseControllerWithRequest("req-fmt")
+	ctl.Data[apiAccessController] = accessController{
+		RemoteAddr: "1.2.3.4",
+		Permission: PermissionOwnerOfOrg,
+		Payload:    &acForCorpManagerPayload{UserId: "user1"},
+	}
 	ctl.operationLog("get link", 200)
 
 	entries := parseLogLines(t, buf)

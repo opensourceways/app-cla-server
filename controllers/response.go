@@ -70,18 +70,16 @@ func (ctl *baseController) sendFailedResponse(statusCode int, errCode string, re
 	ctl.sendResponse(action, d, statusCode)
 }
 
-// operationLog records an access log line for every API response, including
-// failure paths (400/401/403). The user identity is best-effort: on 401 the
-// token is invalid so the access controller is absent, but the action and
-// status_code still identify the denied operation.
 func (ctl *baseController) operationLog(action string, statusCode int) {
 	user := ""
 	if ac, err := ctl.getAccessController(); err == nil {
 		user = ac.getUser()
 	}
 
-	log.InfoContext(ctl.Ctx.Request.Context(), "api access",
-		"user", user, "action", action, "status_code", statusCode)
+	if user != "" {
+		log.InfoContext(ctl.Ctx.Request.Context(), "api access",
+			"user", user, "action", action, "status_code", statusCode)
+	}
 }
 
 func (ctl *baseController) addOperationLog(user, action string, statusCode int) {

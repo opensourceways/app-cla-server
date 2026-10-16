@@ -58,14 +58,14 @@ func (do *individualSigningDO) toIndividualSigning() domain.IndividualSigning {
 				Language: dp.CreateLanguage(do.Language),
 			},
 		},
-		Rep:           do.toRep(),
-		Date:          do.Date,
-		AllInfo:       do.AllInfo,
-		Version:       do.Version,
-		Logs:          logs,
-		ClaNotify:     do.ClaNotify,
+		Rep:            do.toRep(),
+		Date:           do.Date,
+		AllInfo:        do.AllInfo,
+		Version:        do.Version,
+		Logs:           logs,
+		ClaNotify:      do.ClaNotify,
 		ClaNotifyCount: do.ClaNotifyCount,
-		ClaNotifyTime: do.ClaNotifyTime,
+		ClaNotifyTime:  do.ClaNotifyTime,
 	}
 }
 

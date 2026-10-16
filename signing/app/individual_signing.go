@@ -21,12 +21,12 @@ func NewIndividualSigningService(
 	defaultGracePeriodDays int,
 ) *individualSigningService {
 	return &individualSigningService{
-		vc:                    verificationCodeService{vc},
-		cla:                   cla,
-		repo:                  repo,
-		corpRepo:              corpRepo,
-		linkRepo:              linkRepo,
-		interval:              interval,
+		vc:                     verificationCodeService{vc},
+		cla:                    cla,
+		repo:                   repo,
+		corpRepo:               corpRepo,
+		linkRepo:               linkRepo,
+		interval:               interval,
 		defaultGracePeriodDays: defaultGracePeriodDays,
 	}
 }
@@ -40,12 +40,12 @@ type IndividualSigningService interface {
 }
 
 type individualSigningService struct {
-	vc                    verificationCodeService
-	cla                   claservice.CLAService
-	repo                  repository.IndividualSigning
-	corpRepo              repository.CorpSigning
-	linkRepo              repository.Link
-	interval              time.Duration
+	vc                     verificationCodeService
+	cla                    claservice.CLAService
+	repo                   repository.IndividualSigning
+	corpRepo               repository.CorpSigning
+	linkRepo               repository.Link
+	interval               time.Duration
 	defaultGracePeriodDays int
 }
 

@@ -23,12 +23,12 @@ const (
 	TmplRemovingingEmployee   = "removing employee"
 	TmplPasswordRetrieval     = "password retrieval"
 	TmplEmailVerification     = "email verification"
-	TmplCLAUpdated           = "cla updated"
-	TmplCLAUpdatedIndividual = "cla updated individual"
-	TmplAutoApprovalEnabled  = "auto approval enabled"
-	TmplAutoApprovalDisabled = "auto approval disabled"
-	TmplAutoApprovalEmployee = "auto approval employee"
-	TmplAutoApprovalManager  = "auto approval manager"
+	TmplCLAUpdated            = "cla updated"
+	TmplCLAUpdatedIndividual  = "cla updated individual"
+	TmplAutoApprovalEnabled   = "auto approval enabled"
+	TmplAutoApprovalDisabled  = "auto approval disabled"
+	TmplAutoApprovalEmployee  = "auto approval employee"
+	TmplAutoApprovalManager   = "auto approval manager"
 )
 
 var msgTmpl = map[string]*template.Template{}
@@ -51,12 +51,12 @@ func Init() error {
 		TmplRemovingingEmployee:   "./conf/email-template/removing-employee.tmpl",
 		TmplPasswordRetrieval:     "./conf/email-template/password-retrieval.tmpl",
 		TmplEmailVerification:     "./conf/email-template/email_verification.tmpl",
-		TmplCLAUpdated:           "./conf/email-template/cla-updated.tmpl",
-		TmplCLAUpdatedIndividual: "./conf/email-template/cla-updated-individual.tmpl",
-		TmplAutoApprovalEnabled:  "./conf/email-template/auto-approval-enabled.tmpl",
-		TmplAutoApprovalDisabled: "./conf/email-template/auto-approval-disabled.tmpl",
-		TmplAutoApprovalEmployee: "./conf/email-template/auto-approval-employee.tmpl",
-		TmplAutoApprovalManager:  "./conf/email-template/auto-approval-manager.tmpl",
+		TmplCLAUpdated:            "./conf/email-template/cla-updated.tmpl",
+		TmplCLAUpdatedIndividual:  "./conf/email-template/cla-updated-individual.tmpl",
+		TmplAutoApprovalEnabled:   "./conf/email-template/auto-approval-enabled.tmpl",
+		TmplAutoApprovalDisabled:  "./conf/email-template/auto-approval-disabled.tmpl",
+		TmplAutoApprovalEmployee:  "./conf/email-template/auto-approval-employee.tmpl",
+		TmplAutoApprovalManager:   "./conf/email-template/auto-approval-manager.tmpl",
 	}
 
 	for name, path := range items {

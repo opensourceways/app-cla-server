@@ -1,7 +1,7 @@
 package repositoryimpl
 
 import (
-	"github.com/beego/beego/v2/core/logs"
+	"github.com/opensourceways/obs-sdk/go/log"
 	"go.mongodb.org/mongo-driver/bson"
 
 	commonRepo "github.com/opensourceways/app-cla-server/common/domain/repository"
@@ -30,7 +30,7 @@ func (impl *verificationCode) Add(code *domain.VerificationCode) error {
 		fieldExpiry: bson.M{mongodbCmdLt: util.Now()},
 	})
 	if err != nil {
-		logs.Error("remove expired code failed, err:%s", err.Error())
+		log.Error("remove expired code failed", "error", err)
 	}
 
 	_, err = impl.dao.InsertDoc(doc)

@@ -1,6 +1,9 @@
 package watch
 
 import (
+	"bytes"
+	"encoding/json"
+	"strings"
 	"testing"
 	"time"
 
@@ -9,6 +12,9 @@ import (
 	"github.com/opensourceways/app-cla-server/signing/domain/dp"
 	"github.com/opensourceways/app-cla-server/signing/domain/repository"
 	"github.com/opensourceways/app-cla-server/worker"
+	"github.com/opensourceways/obs-sdk/go/log"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func newTestImpl() *notifyAdminWatchImpl {
@@ -218,4 +224,133 @@ func TestHandleSendIndividualEmailAuditLogIndividual(t *testing.T) {
 	if len(fw.to) != 1 || fw.to[0] != "alice@example.com" {
 		t.Fatalf("unexpected recipient: %v", fw.to)
 	}
+}
+
+// initWatchTestLogger replaces the global default logger with one writing
+// to a buffer, returning the buffer and a cleanup to restore the original.
+func initWatchTestLogger(t *testing.T) (*bytes.Buffer, func()) {
+	t.Helper()
+	var buf bytes.Buffer
+	orig := log.Default()
+	log.SetDefault(log.New(log.Config{
+		Service:   "app-cla-server",
+		Env:       "test",
+		Instance:  "pod-1",
+		Community: "openeuler",
+		Output:    &buf,
+	}))
+	return &buf, func() { log.SetDefault(orig) }
+}
+
+func parseWatchLogLines(t *testing.T, buf *bytes.Buffer) []map[string]interface{} {
+	t.Helper()
+	lines := strings.Split(strings.TrimSpace(buf.String()), "\n")
+	result := make([]map[string]interface{}, 0, len(lines))
+	for _, line := range lines {
+		line = strings.TrimSpace(line)
+		if line == "" {
+			continue
+		}
+		var m map[string]interface{}
+		require.NoError(t, json.Unmarshal([]byte(line), &m), "line: %s", line)
+		result = append(result, m)
+	}
+	return result
+}
+
+func findWatchLogEntryByMsg(t *testing.T, entries []map[string]interface{}, msg string) map[string]interface{} {
+	t.Helper()
+	for _, e := range entries {
+		if e["msg"] == msg {
+			return e
+		}
+	}
+	t.Fatalf("log entry with msg=%q not found in %d entries", msg, len(entries))
+	return nil
+}
+
+// TestAuditLogMsgClaNotifyEmailCorp verifies that the JSON log line emitted
+// on corp CLA change notification has msg="[audit] cla_notify_email"
+// (underscore event identifier, not space-separated) with scene="corp".
+func TestAuditLogMsgClaNotifyEmailCorp(t *testing.T) {
+	buf, cleanup := initWatchTestLogger(t)
+	defer cleanup()
+
+	fw := &fakeEmailWorker{}
+	restore := worker.SetEmailWorker(fw)
+	defer restore()
+
+	impl := newTestImpl()
+
+	link := &repository.LinkCLA{
+		Id:  "link1",
+		Org: domain.OrgInfo{Alias: "test-org", ProjectURL: "http://project.example.com"},
+		Email: domain.EmailInfo{
+			Addr:     dp.CreateEmailAddr("from@example.com"),
+			Platform: "plat1",
+		},
+	}
+	corp := &repository.CorpSigningSummary{
+		Id: "corp1",
+		Admin: domain.Manager{Representative: domain.Representative{
+			Name:      dp.CreateName("admin"),
+			EmailAddr: dp.CreateEmailAddr("admin@example.com"),
+		}},
+		CLANotify:      "new-cla-id",
+		Link:           domain.LinkInfo{CLAInfo: domain.CLAInfo{CLAId: "old-cla-id"}},
+		ClaNotifyCount: 2,
+	}
+
+	err := impl.handleSendEmail(link, corp)
+	require.NoError(t, err)
+
+	entries := parseWatchLogLines(t, buf)
+	e := findWatchLogEntryByMsg(t, entries, "[audit] cla_notify_email")
+
+	assert.Equal(t, "info", e["level"])
+	assert.Equal(t, "corp", e["scene"])
+	assert.Equal(t, "link1", e["link_id"])
+}
+
+// TestAuditLogMsgClaNotifyEmailIndividual verifies that the JSON log line
+// emitted on individual CLA change notification has msg="[audit] cla_notify_email"
+// (underscore event identifier) with scene="individual".
+func TestAuditLogMsgClaNotifyEmailIndividual(t *testing.T) {
+	buf, cleanup := initWatchTestLogger(t)
+	defer cleanup()
+
+	fw := &fakeEmailWorker{}
+	restore := worker.SetEmailWorker(fw)
+	defer restore()
+
+	impl := newTestImpl()
+	impl.claPlatformURL = "http://cla.example.com/sign/"
+
+	link := &repository.LinkCLA{
+		Id:  "link1",
+		Org: domain.OrgInfo{Alias: "test-org", ProjectURL: "http://project.example.com"},
+		Email: domain.EmailInfo{
+			Addr:     dp.CreateEmailAddr("from@example.com"),
+			Platform: "plat1",
+		},
+	}
+	is := &domain.IndividualSigning{
+		Rep: domain.Representative{
+			Name:      dp.CreateName("alice"),
+			EmailAddr: dp.CreateEmailAddr("alice@example.com"),
+		},
+		Link:           domain.LinkInfo{CLAInfo: domain.CLAInfo{CLAId: "old-cla-id"}},
+		ClaNotifyCount: 3,
+	}
+	latestCLA := &domain.CLA{Id: "new-cla-id", UpdatedAt: time.Now().Unix()}
+
+	err := impl.handleSendIndividualEmail(link, is, latestCLA)
+	require.NoError(t, err)
+
+	entries := parseWatchLogLines(t, buf)
+	e := findWatchLogEntryByMsg(t, entries, "[audit] cla_notify_email")
+
+	assert.Equal(t, "info", e["level"])
+	assert.Equal(t, "individual", e["scene"])
+	assert.Equal(t, "link1", e["link_id"])
 }

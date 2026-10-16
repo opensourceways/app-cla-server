@@ -6,7 +6,7 @@ import (
 	"errors"
 	"time"
 
-	"github.com/beego/beego/v2/core/logs"
+	"github.com/opensourceways/obs-sdk/go/log"
 
 	commonRepo "github.com/opensourceways/app-cla-server/common/domain/repository"
 	"github.com/opensourceways/app-cla-server/signing/domain"
@@ -167,7 +167,7 @@ func (s *userService) Login(cmd *CmdToLogin) (dto UserLoginDTO, err error) {
 	}
 
 	if err1 := s.ls.ClearLoginFailure(lid); err1 != nil {
-		logs.Warn("clear login failure failed, err: %s", err1.Error())
+		log.Warn("clear login failure failed", "error", err1)
 	}
 
 	if err = s.checkPrivacyConsent(cmd.PrivacyConsented, &u); err != nil {
@@ -200,7 +200,7 @@ func (s *userService) validateCaptcha(cmd *CmdToLogin, lid string, dto *UserLogi
 		if commonRepo.IsErrorResourceNotFound(loginInfoErr) {
 			return nil
 		}
-		logs.Error("failed to get login info for %s, err: %s", lid, loginInfoErr.Error())
+		log.Error("failed to get login info", "login_id", lid, "error", loginInfoErr)
 		return loginInfoErr
 	}
 

@@ -35,20 +35,20 @@ type CmdToCheckSinging struct {
 }
 
 type IndividualSignedDTO struct {
-	Type           string      `json:"type"`                      // "individual" 或 "corp"
-	Signed         bool        `json:"signed,omitempty"`          // 是否已签署过
-	Status         string      `json:"status,omitempty"`          // "valid" 或 "expired"
-	VersionMatched bool        `json:"version_matched,omitempty"` // 签署是否当前有效（考虑宽限期）
-	DebugInfo      *DebugInfoDTO `json:"_debug,omitempty"`        // 调试信息（仅debug=true时返回）
+	Type           string        `json:"type"`                      // "individual" 或 "corp"
+	Signed         bool          `json:"signed,omitempty"`          // 是否已签署过
+	Status         string        `json:"status,omitempty"`          // "valid" 或 "expired"
+	VersionMatched bool          `json:"version_matched,omitempty"` // 签署是否当前有效（考虑宽限期）
+	DebugInfo      *DebugInfoDTO `json:"_debug,omitempty"`          // 调试信息（仅debug=true时返回）
 }
 
 type DebugInfoDTO struct {
-	IsLatestClaVersion  bool   `json:"is_latest_cla_version"`     // 你签署的版本是最新的吗？
-	InGracePeriod       bool   `json:"in_grace_period"`           // 当前在宽限期内吗？
-	GracePeriodDays     int    `json:"grace_period_days"`         // 宽限期是多少天？
-	ClaUpdatedAt        string `json:"cla_updated_at"`            // CLA最后更新日期
-	DaysSinceLastUpdate int    `json:"days_since_last_update"`    // 自CLA更新以来过了多少天
-	GracePeriodEndsAt   string `json:"grace_period_ends_at"`      // 宽限期什么时候结束
+	IsLatestClaVersion  bool   `json:"is_latest_cla_version"`  // 你签署的版本是最新的吗？
+	InGracePeriod       bool   `json:"in_grace_period"`        // 当前在宽限期内吗？
+	GracePeriodDays     int    `json:"grace_period_days"`      // 宽限期是多少天？
+	ClaUpdatedAt        string `json:"cla_updated_at"`         // CLA最后更新日期
+	DaysSinceLastUpdate int    `json:"days_since_last_update"` // 自CLA更新以来过了多少天
+	GracePeriodEndsAt   string `json:"grace_period_ends_at"`   // 宽限期什么时候结束
 }
 
 type CmdToFindSignedCLAInfo = CmdToCheckSinging

@@ -4,7 +4,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/beego/beego/v2/core/logs"
+	"github.com/opensourceways/obs-sdk/go/log"
 
 	commonRepo "github.com/opensourceways/app-cla-server/common/domain/repository"
 	"github.com/opensourceways/app-cla-server/signing/domain"
@@ -67,7 +67,7 @@ func (s *claService) Add(link *domain.Link, cla *domain.CLA) error {
 
 	if err = s.repo.AddCLA(link, cla); err != nil {
 		if err1 := s.local.Remove(p); err1 != nil {
-			logs.Error("remove local file, err:%s", err1.Error())
+			log.Error("remove local file", "error", err1)
 		}
 	} else {
 		s.linkCache.update(link.Id, cla)
@@ -93,7 +93,7 @@ func (s *claService) Update(link *domain.Link, newCla *domain.CLA) error {
 
 	if err = s.repo.UpdateCLA(link, newCla); err != nil {
 		if err1 := s.local.Remove(p); err1 != nil {
-			logs.Error("remove local file, err:%s", err1.Error())
+			log.Error("remove local file", "error", err1)
 		}
 	} else {
 		s.linkCache.update(link.Id, newCla)
@@ -144,7 +144,7 @@ func (s *claService) AddLink(link *domain.Link) error {
 	clean := func() {
 		for _, p := range tempFiles {
 			if err1 := s.local.Remove(p); err1 != nil {
-				logs.Error("remove temp file, err:%s", err1.Error())
+				log.Error("remove temp file", "error", err1)
 			}
 		}
 	}

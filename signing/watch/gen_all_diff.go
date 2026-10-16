@@ -5,7 +5,7 @@ import (
 	"sort"
 	"time"
 
-	"github.com/beego/beego/v2/core/logs"
+	"github.com/opensourceways/obs-sdk/go/log"
 
 	"github.com/opensourceways/app-cla-server/signing/domain"
 	"github.com/opensourceways/app-cla-server/signing/domain/message"
@@ -36,7 +36,7 @@ func (impl *claUpdatedWatchImpl) genAllDiffFile() {
 func (impl *claUpdatedWatchImpl) handleGenJob() {
 	links, err := impl.link.ListAll()
 	if err != nil {
-		logs.Error("list all link failed: ", err)
+		log.Error("list all link failed", "error", err)
 		return
 	}
 

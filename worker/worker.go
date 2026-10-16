@@ -5,7 +5,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/beego/beego/v2/core/logs"
+	"github.com/opensourceways/obs-sdk/go/log"
 
 	"github.com/opensourceways/app-cla-server/models"
 	"github.com/opensourceways/app-cla-server/pdf"
@@ -61,7 +61,7 @@ type emailWorker struct {
 func (w *emailWorker) Shutdown() {
 	close(w.stop)
 
-	logs.Info("worker exit")
+	log.Info("worker exit")
 
 	// Handle remaining requests
 	w.wg.Wait()
@@ -112,11 +112,12 @@ func (w *emailWorker) SendSimpleMessage(emailPlatform string, msg *EmailMessage)
 			return nil
 		}
 
-		// [audit] 据发信最终结果记录审计日志（成功 Info / 失败 Error），覆盖所有走 SendSimpleMessage 的邮件。
 		if w.tryToSendEmail(action) {
-			logs.Info("[audit] email_result: outcome=sent, platform=%s, to=%v, subject=%s", platform, msg1.To, msg1.Subject)
+			log.Info("[audit] email_result", "outcome", "sent", "platform", platform, "to", msg1.To, "subject", msg1.Subject)
+			recordEmailSent(platform, "sent")
 		} else {
-			logs.Error("[audit] email_result: outcome=failed, platform=%s, to=%v, subject=%s", platform, msg1.To, msg1.Subject)
+			log.Error("[audit] email_result", "outcome", "failed", "platform", platform, "to", msg1.To, "subject", msg1.Subject)
+			recordEmailSent(platform, "failed")
 		}
 	}
 
@@ -142,7 +143,7 @@ func (w *emailWorker) tryToSendEmail(action func() error) bool {
 			return true
 		}
 
-		logs.Error(err)
+		log.Error("failed to send email", "error", err)
 
 		reset(i > 0) // timer must be expired when i > 0
 

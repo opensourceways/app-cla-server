@@ -18,13 +18,13 @@ type OrgInfo struct {
 }
 
 type Link struct {
-	Id        string
-	Org       OrgInfo
-	Email     EmailInfo
-	CLAs      []CLA
-	Submitter string // community name which is in lowcase format.
-	CLANum    int
-	Version   int
+	Id              string
+	Org             OrgInfo
+	Email           EmailInfo
+	CLAs            []CLA
+	Submitter       string // community name which is in lowcase format.
+	CLANum          int
+	Version         int
 	GracePeriodDays *int
 }
 

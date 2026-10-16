@@ -6,7 +6,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/beego/beego/v2/core/logs"
+	"github.com/opensourceways/obs-sdk/go/log"
 
 	"github.com/opensourceways/app-cla-server/signing/domain"
 	"github.com/opensourceways/app-cla-server/signing/domain/dp"
@@ -38,7 +38,7 @@ func NotifyAdminWatchStop() {
 	if notifyAdminWatchInstance != nil {
 		notifyAdminWatchInstance.exit()
 
-		logs.Info("stop watching send email")
+		log.Info("stop watching send email")
 	}
 }
 
@@ -132,7 +132,7 @@ func (impl *notifyAdminWatchImpl) handleNotifyJob() {
 
 	links, err := impl.link.ListAll()
 	if err != nil {
-		logs.Error("list all link failed in notify job: ", err)
+		log.Error("list all link failed in notify job", "error", err)
 		return
 	}
 
@@ -149,7 +149,7 @@ func (impl *notifyAdminWatchImpl) handleNotifyJob() {
 
 		corpsSummary, err := impl.corpSigningRepo.FindAll(link.Id)
 		if err != nil {
-			logs.Error("list corp signing failed in notify job:", link.Id, err)
+			log.Error("list corp signing failed in notify job", "link_id", link.Id, "error", err)
 			continue
 		}
 
@@ -158,7 +158,7 @@ func (impl *notifyAdminWatchImpl) handleNotifyJob() {
 				return
 			}
 			if sendCount >= batchSize {
-				logs.Info("corp notify job reached batch limit: %d", batchSize)
+				log.Info("corp notify job reached batch limit", "batch_size", batchSize)
 				return
 			}
 
@@ -198,19 +198,19 @@ func (impl *notifyAdminWatchImpl) handleCorpSigning(link *repository.LinkCLA, co
 	}
 
 	if err := impl.handleSendEmail(link, corp); err != nil {
-		logs.Error("send cla notify email failed:", corp.Id, err)
+		log.Error("send cla notify email failed", "corp_signing_id", corp.Id, "error", err)
 		return false
 	}
 
 	if impl.config.genNotifyEmailTo() != "" {
-		logs.Info("skip updating cla notify record, email sent to configured")
+		log.Info("skip updating cla notify record, email sent to configured")
 		return true
 	}
 
 	corp.ClaNotifyCount++
 	corp.ClaNotifyTime = nowUnix
 	if err := impl.corpSigningRepo.UpdateCLANotify(corp); err != nil {
-		logs.Error("update cla notify failed: ", corp.Id, err)
+		log.Error("update cla notify failed", "corp_signing_id", corp.Id, "error", err)
 	}
 
 	return true
@@ -256,9 +256,18 @@ func (impl *notifyAdminWatchImpl) handleSendEmail(link *repository.LinkCLA, corp
 
 	// [audit] 记录企业 CLA 变更通知的发信意图（4W + CLA 上下文），便于审计追溯。
 	// 此时 corp.CLANotify 已在 handleCorpSigning 中更新为最新 CLA id。
-	logs.Info("[audit] cla_notify_email: scene=corp, link_id=%s, org=%s, corp_signing_id=%s, recipient=%s, from=%s, subject=%s, new_cla_id=%s, signed_cla_id=%s, notify_count=%d",
-		link.Id, link.Org.Alias, corp.Id, util.MaskEmail(corp.Admin.EmailAddr.EmailAddr()),
-		emailMsg.From, emailMsg.Subject, corp.CLANotify, corp.Link.CLAInfo.CLAId, corp.ClaNotifyCount)
+	log.Info("[audit] cla_notify_email",
+		"scene", "corp",
+		"link_id", link.Id,
+		"org", link.Org.Alias,
+		"corp_signing_id", corp.Id,
+		"recipient", util.MaskEmail(corp.Admin.EmailAddr.EmailAddr()),
+		"from", emailMsg.From,
+		"subject", emailMsg.Subject,
+		"new_cla_id", corp.CLANotify,
+		"signed_cla_id", corp.Link.CLAInfo.CLAId,
+		"notify_count", corp.ClaNotifyCount,
+	)
 
 	// Sending email is done in goroutine.
 	// Prevent the concurrency from being too high, which would cause the email server refused to serve.
@@ -301,7 +310,7 @@ func (impl *notifyAdminWatchImpl) handleIndividualNotifyJob() {
 
 	links, err := impl.link.ListAll()
 	if err != nil {
-		logs.Error("list all link failed in individual notify job: ", err)
+		log.Error("list all link failed in individual notify job", "error", err)
 		return
 	}
 
@@ -318,7 +327,7 @@ func (impl *notifyAdminWatchImpl) handleIndividualNotifyJob() {
 
 		individuals, err := impl.individualRepo.FindAll(link.Id)
 		if err != nil {
-			logs.Error("list individual signing failed in notify job:", link.Id, err)
+			log.Error("list individual signing failed in notify job", "link_id", link.Id, "error", err)
 			continue
 		}
 
@@ -327,7 +336,7 @@ func (impl *notifyAdminWatchImpl) handleIndividualNotifyJob() {
 				return
 			}
 			if sendCount >= batchSize {
-				logs.Info("individual notify job reached batch limit: %d", batchSize)
+				log.Info("individual notify job reached batch limit", "batch_size", batchSize)
 				return
 			}
 
@@ -370,19 +379,19 @@ func (impl *notifyAdminWatchImpl) handleIndividualSigning(link *repository.LinkC
 	}
 
 	if err := impl.handleSendIndividualEmail(link, is, latestCLA); err != nil {
-		logs.Error("send individual cla notify email failed:", is.Rep.EmailAddr.EmailAddr(), err)
+		log.Error("send individual cla notify email failed", "recipient", is.Rep.EmailAddr.EmailAddr(), "error", err)
 		return false
 	}
 
 	if impl.config.genNotifyEmailTo() != "" {
-		logs.Info("skip updating cla notify record, email sent to configured")
+		log.Info("skip updating cla notify record, email sent to configured")
 		return true
 	}
 
 	is.ClaNotifyCount++
 	is.ClaNotifyTime = nowUnix
 	if err := impl.individualRepo.UpdateCLANotify(is); err != nil {
-		logs.Error("update individual cla notify failed: ", is.Rep.EmailAddr.EmailAddr(), err)
+		log.Error("update individual cla notify failed", "recipient", is.Rep.EmailAddr.EmailAddr(), "error", err)
 	}
 
 	return true
@@ -459,9 +468,17 @@ func (impl *notifyAdminWatchImpl) handleSendIndividualEmail(link *repository.Lin
 	worker.GetEmailWorker().SendSimpleMessage(link.Email.Platform, &emailMsg)
 
 	// [audit] 记录个人 CLA 变更通知的发信意图（4W + CLA 上下文），便于审计追溯。
-	logs.Info("[audit] cla_notify_email: scene=individual, link_id=%s, org=%s, recipient=%s, from=%s, subject=%s, new_cla_id=%s, signed_cla_id=%s, notify_count=%d",
-		link.Id, link.Org.Alias, util.MaskEmail(is.Rep.EmailAddr.EmailAddr()),
-		emailMsg.From, emailMsg.Subject, latestCLA.Id, is.Link.CLAInfo.CLAId, is.ClaNotifyCount)
+	log.Info("[audit] cla_notify_email",
+		"scene", "individual",
+		"link_id", link.Id,
+		"org", link.Org.Alias,
+		"recipient", util.MaskEmail(is.Rep.EmailAddr.EmailAddr()),
+		"from", emailMsg.From,
+		"subject", emailMsg.Subject,
+		"new_cla_id", latestCLA.Id,
+		"signed_cla_id", is.Link.CLAInfo.CLAId,
+		"notify_count", is.ClaNotifyCount,
+	)
 
 	time.Sleep(impl.config.genSendEmailInterval())
 

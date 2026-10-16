@@ -6,3 +6,5 @@ lastupdate.tmp
 config.yaml
 # Test binaries
 *.test
+# Coverage report
+coverage.out

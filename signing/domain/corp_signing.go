@@ -97,6 +97,33 @@ func (cs *CorpSigning) SetAdmin(adminId string) {
 	cs.Admin.Representative = cs.Rep
 }
 
+func (cs *CorpSigning) SelfAssignAsManager() error {
+	if cs.Admin.IsEmpty() {
+		return NewDomainError(ErrorCodeCorpAdminNotExists)
+	}
+
+	manager := Manager{
+		Id:            "self",
+		Representative: cs.Admin.Representative,
+	}
+
+	if len(cs.Managers)+1 > config.MaxNumOfEmployeeManager {
+		return NewDomainError(ErrorCodeEmployeeManagerTooMany)
+	}
+
+	if !cs.isSameCorp(manager.EmailAddr) {
+		return NewDomainError(ErrorCodeEmployeeManagerNotSameCorp)
+	}
+
+	if cs.hasManager(&manager) {
+		return NewDomainError(ErrorCodeEmployeeManagerExists)
+	}
+
+	cs.Managers = append(cs.Managers, manager)
+
+	return nil
+}
+
 func (cs *CorpSigning) AddEmailDomain(email dp.EmailAddr) error {
 	return cs.Corp.addEmailDomain(email.Domain())
 }

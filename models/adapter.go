@@ -162,6 +162,10 @@ func RemoveEmployeeManager(csId string, opt *EmployeeManagerDeleteOption) (
 	return employeeManagerAdapterInstance.Remove(csId, opt)
 }
 
+func SelfAssignEmployeeManager(csId string) IModelError {
+	return employeeManagerAdapterInstance.SelfAssign(csId)
+}
+
 // individual signing
 
 func VCOfIndividualSigning(linkId, email string) (string, IModelError) {

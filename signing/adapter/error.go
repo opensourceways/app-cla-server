@@ -41,6 +41,9 @@ func codeMap(code string) models.ModelErrCode {
 	case domain.ErrorCodeCorpAdminExists:
 		return models.ErrNoLinkOrManagerExists
 
+	case domain.ErrorCodeCorpAdminNotExists:
+		return models.ErrCorpAdminNotExists
+
 	// corp signing
 	case domain.ErrorCodeCorpSigningReSigning:
 		return models.ErrNoLinkOrResigned

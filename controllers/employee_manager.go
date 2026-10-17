@@ -129,3 +129,29 @@ func (ctl *EmployeeManagerController) GetAll() {
 		sendResp(parseModelError(err))
 	}
 }
+
+// @Title SelfAssign
+// @Description corp admin self assigns as employee manager
+// @Tags EmployeeManager
+// @Accept json
+// @Success 200 {object} controllers.respData
+// @router /self [post]
+func (ctl *EmployeeManagerController) SelfAssign() {
+	action := "corp admin self assigns as employee manager"
+	sendResp := ctl.newFuncForSendingFailedResp(action)
+
+	pl, fr := ctl.tokenPayloadBasedOnCorpManager()
+	if fr != nil {
+		sendResp(fr)
+		return
+	}
+
+	if merr := models.SelfAssignEmployeeManager(pl.SigningId); merr != nil {
+		ctl.sendModelErrorAsResp(merr, action)
+		return
+	}
+
+	ctl.sendSuccessResp(action, "successfully")
+
+	ctl.addOperationLog(pl.UserId, action, 0)
+}

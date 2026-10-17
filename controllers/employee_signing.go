@@ -20,7 +20,10 @@ func (ctl *EmployeeSigningController) Prepare() {
 		ctl.apiPrepare("")
 	} else {
 		// get, update and delete employee
-		ctl.apiPrepare(PermissionEmployeeManager)
+		ctl.apiPrepareWithAC(
+			&accessController{Payload: &acForCorpManagerPayload{}},
+			[]string{PermissionCorpAdmin, PermissionEmployeeManager},
+		)
 	}
 }
 

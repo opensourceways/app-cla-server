@@ -15,6 +15,8 @@ const (
 
 	ErrorCodeCorpAdminExists = "corp_admin_exists"
 
+	ErrorCodeCorpAdminNotExists = "corp_admin_not_exists"
+
 	ErrorCodeCorpPDFNotFound = "corp_pdf_not_found"
 
 	ErrorCodeCorpSigningNotFound              = "corp_signing_not_found"

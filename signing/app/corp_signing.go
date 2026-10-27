@@ -290,7 +290,7 @@ func (s *corpSigningService) UpdateRepresentative(userId, linkID, signingID, rep
 
 	// 同步更新 User 表中的邮箱
 	if cs.Admin.Id != "" {
-		if err := s.userService.UpdateEmail(cs.Link.Id, oldEmail, newRep.EmailAddr); err != nil {
+		if err := s.userService.UpdateEmail(cs.Link.Id, cs.Id, cs.Admin.Id, oldEmail, newRep.EmailAddr); err != nil {
 			return err
 		}
 	}

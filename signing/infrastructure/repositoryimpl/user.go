@@ -214,6 +214,24 @@ func (impl *user) FindByEmail(linkId string, e dp.EmailAddr) (u domain.User, err
 	return
 }
 
+func (impl *user) FindByEmailOfCorpSigning(linkId, csId string, e dp.EmailAddr) (u domain.User, err error) {
+	filter := linkIdFilter(linkId)
+	filter[fieldCsId] = csId
+	filter[fieldEmail] = e.EmailAddr()
+
+	var do userDO
+
+	if err = impl.dao.GetDoc(filter, nil, &do); err != nil {
+		if impl.dao.IsDocNotExists(err) {
+			err = commonRepo.NewErrorResourceNotFound(err)
+		}
+	} else {
+		u = do.toUser()
+	}
+
+	return
+}
+
 func (impl *user) FindAllByLinkId(linkId string) ([]domain.User, error) {
 	filter := linkIdFilter(linkId)
 

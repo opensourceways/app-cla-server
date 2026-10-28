@@ -19,12 +19,12 @@ const (
 
 	ErrorCodeCorpPDFNotFound = "corp_pdf_not_found"
 
-	ErrorCodeCorpSigningNotFound     = "corp_signing_not_found"
-	ErrorCodeCorpSigningReSigning    = "corp_signing_resigning"
-	ErrorCodeCorpSigningCanNotDelete = "corp_signing_can_not_delete"
-	ErrorCodeCorpSigningCLAIsLatest  = "corp_signing_cla_is_latest"
-	ErrorCodeCorpSigningAutoApprovalUnchanged  = "corp_signing_auto_approval_unchanged"
-	ErrorCodeCorpSigningAutoApprovalNoManager  = "corp_signing_auto_approval_no_manager"
+	ErrorCodeCorpSigningNotFound              = "corp_signing_not_found"
+	ErrorCodeCorpSigningReSigning             = "corp_signing_resigning"
+	ErrorCodeCorpSigningCanNotDelete          = "corp_signing_can_not_delete"
+	ErrorCodeCorpSigningCLAIsLatest           = "corp_signing_cla_is_latest"
+	ErrorCodeCorpSigningAutoApprovalUnchanged = "corp_signing_auto_approval_unchanged"
+	ErrorCodeCorpSigningAutoApprovalNoManager = "corp_signing_auto_approval_no_manager"
 
 	ErrorCodeCorpEmailDomainExists   = "corp_email_domain_exists"
 	ErrorCodeCorpEmailDomainNotMatch = "corp_email_domain_not_match"

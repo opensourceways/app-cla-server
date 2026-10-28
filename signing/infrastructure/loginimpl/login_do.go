@@ -11,7 +11,7 @@ type loginDO struct {
 	FailedNum int  `json:"failed_num"`
 }
 
-//MarshalBinary in order to store struct directly in redis
+// MarshalBinary in order to store struct directly in redis
 func (do *loginDO) MarshalBinary() ([]byte, error) {
 	return json.Marshal(do)
 }

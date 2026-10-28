@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/beego/beego/v2/core/logs"
+	"github.com/opensourceways/obs-sdk/go/log"
 
 	"github.com/opensourceways/app-cla-server/models"
 	"github.com/opensourceways/app-cla-server/signing/infrastructure/emailtmpl"
@@ -99,7 +99,7 @@ func (ctl *EmployeeSigningController) Sign() {
 
 	autoApproved, merr := models.GetCorpAutoApproval(info.CorpSigningId)
 	if merr != nil {
-		logs.Error("failed to get auto-approval preference: %s", merr.Error())
+		log.ErrorContext(ctl.Ctx.Request.Context(), "failed to get auto-approval preference", "error", merr)
 	}
 	if autoApproved {
 		ctl.notifyAutoApproval(linkID, managers, &info, &orgInfo)

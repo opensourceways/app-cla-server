@@ -3,7 +3,7 @@ package accesstokenservice
 import (
 	"encoding/base64"
 
-	"github.com/beego/beego/v2/core/logs"
+	"github.com/opensourceways/obs-sdk/go/log"
 
 	commonRepo "github.com/opensourceways/app-cla-server/common/domain/repository"
 	"github.com/opensourceways/app-cla-server/signing/domain"
@@ -43,7 +43,7 @@ type accessTokenService struct {
 
 func (s *accessTokenService) Remove(tokenId string) {
 	if err := s.repo.Delete(tokenId); err != nil {
-		logs.Error("remove token failed, err:%s", err.Error())
+		log.Error("remove token failed", "error", err)
 	}
 }
 
@@ -107,7 +107,7 @@ func (s *accessTokenService) ValidateAndRefresh(old domain.AccessTokenKey) (
 	newOne, err1 := s.Add(p)
 	if err1 == nil {
 		if err1 := s.repo.Delete(old.Id); err1 != nil {
-			logs.Error("delete token, id:%s, err:%s", old.Id, err1.Error())
+			log.Error("delete token failed", "token_id", old.Id, "error", err1)
 		}
 	} else {
 		newOne = old

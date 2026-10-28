@@ -8,6 +8,8 @@ import (
 	"github.com/opensourceways/app-cla-server/signing/domain"
 	"github.com/opensourceways/app-cla-server/signing/domain/dp"
 	"github.com/opensourceways/app-cla-server/signing/infrastructure/repositoryimpl"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 // fakeCorpSigning records the calls made by handle.
@@ -343,5 +345,42 @@ func TestHandleStillRemovesLaterSignings(t *testing.T) {
 	}
 	if cs.resetCalls != 1 {
 		t.Error("trigger should be reset when nothing needs collecting")
+	}
+}
+
+// TestHandleSuccessLogUsesTsKey verifies that the success-path log line uses
+// the business kv key "ts" (not "time", which is the obs-sdk contract field
+// for the timestamp). The contract "time" is always an ISO string; the
+// business kv "ts" carries the Unix-seconds value.
+func TestHandleSuccessLogUsesTsKey(t *testing.T) {
+	buf, cleanup := initWatchTestLogger(t)
+	defer cleanup()
+
+	cs := &fakeCorpSigning{findVersions: []int{3, 4}}
+	ins := &fakeIndividualSigning{
+		records: []domain.IndividualSigning{newIndividual("stu1@uni.edu.cn", "2026-01-01")},
+	}
+
+	newImpl(cs, ins).handle(triggered())
+
+	entries := parseWatchLogLines(t, buf)
+	var successEntry map[string]interface{}
+	for _, e := range entries {
+		if e["msg"] == "collected individual signings to corp" {
+			successEntry = e
+			break
+		}
+	}
+	require.NotNil(t, successEntry, "expected a success log entry")
+
+	ts, ok := successEntry["ts"]
+	assert.True(t, ok, "log should contain ts business kv key")
+	assert.NotNil(t, ts)
+
+	// The contract "time" field is always present as an ISO string; it must
+	// not be overwritten by the Unix-seconds business value.
+	if timeVal, hasTime := successEntry["time"]; hasTime {
+		_, isString := timeVal.(string)
+		assert.True(t, isString, "contract time field should be an ISO string, not overwritten by business kv")
 	}
 }

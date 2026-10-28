@@ -298,6 +298,27 @@ func (cs *CorpSigning) SetLatestClaId(latestClaId string) error {
 	return nil
 }
 
+// UpdateRepresentative replaces the representative of the corp signing and
+// synchronizes the admin's representative when an admin exists.
+func (cs *CorpSigning) UpdateRepresentative(repName, repEmail string) error {
+	newRep, err := NewRepresentative(repName, repEmail)
+	if err != nil {
+		return err
+	}
+
+	if !cs.isSameCorpIgnoreCase(newRep.EmailAddr) {
+		return NewDomainError(ErrorCodeEmployeeManagerNotSameCorp)
+	}
+
+	cs.Rep = newRep
+
+	if cs.Admin.Id != "" {
+		cs.Admin.Representative = newRep
+	}
+
+	return nil
+}
+
 func NewRepresentative(name, email string) (Representative, error) {
 	nameObj, err := dp.NewName(name)
 	if err != nil {

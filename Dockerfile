@@ -1,4 +1,4 @@
-FROM golang:1.26.9 as BUILDER
+FROM golang:1.26.10 as BUILDER
 RUN go env -w GOPROXY=https://goproxy.cn,direct
 
 MAINTAINER TommyLike<tommylikehu@gmail.com>

@@ -179,8 +179,11 @@ func TestCorpSigningAddEmployeeNoManager(t *testing.T) {
 		Rep: Representative{EmailAddr: dp.CreateEmailAddr("user@test.com")},
 	}
 
-	if err := cs.AddEmployee(es); err == nil {
-		t.Error("AddEmployee with no manager should fail")
+	if err := cs.AddEmployee(es); err != nil {
+		t.Fatalf("AddEmployee without managers should succeed: %v", err)
+	}
+	if len(cs.Employees) != 1 {
+		t.Errorf("Employees length: got %d, want 1", len(cs.Employees))
 	}
 }
 

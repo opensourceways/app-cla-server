@@ -164,10 +164,6 @@ func (cs *CorpSigning) RemoveManagers(managers []string) ([]Manager, error) {
 }
 
 func (cs *CorpSigning) AddEmployee(es *EmployeeSigning) error {
-	if len(cs.Managers) == 0 {
-		return NewDomainError(ErrorCodeEmployeeSigningNoManager)
-	}
-
 	if !cs.isSameCorp(es.Rep.EmailAddr) {
 		return NewDomainError(ErrorCodeEmployeeNotSameCorp)
 	}
@@ -184,9 +180,9 @@ func (cs *CorpSigning) AddEmployee(es *EmployeeSigning) error {
 }
 
 // CollectEmployee appends an employee signing collected from a historical
-// individual signing. Unlike AddEmployee, it does not require managers to be
-// configured: the corp pdf can be uploaded before any manager exists, and
-// the collected record stays disabled until a manager activates it.
+// individual signing. Unlike AddEmployee, it allows a different email domain
+// case-insensitively: the corp pdf can be uploaded before any manager exists,
+// and the collected record stays disabled until a manager activates it.
 func (cs *CorpSigning) CollectEmployee(es *EmployeeSigning) error {
 	if !cs.isSameCorpIgnoreCase(es.Rep.EmailAddr) {
 		return NewDomainError(ErrorCodeEmployeeNotSameCorp)

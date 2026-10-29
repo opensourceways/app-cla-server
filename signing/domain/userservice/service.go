@@ -11,6 +11,7 @@ import (
 	"github.com/opensourceways/app-cla-server/signing/domain/encryption"
 	"github.com/opensourceways/app-cla-server/signing/domain/repository"
 	"github.com/opensourceways/app-cla-server/signing/domain/userpassword"
+	"github.com/opensourceways/app-cla-server/util"
 )
 
 func NewUserService(
@@ -159,6 +160,9 @@ func (s *userService) UpdateEmail(linkId, csId, adminId string, oldEmail, newEma
 		return err
 	}
 	u.Account = newAccount
+
+	log.Info("change super admin:",
+		linkId, csId, util.MaskEmail(oldEmail.EmailAddr()), util.MaskEmail(newEmail.EmailAddr()), u.Id)
 
 	return s.repo.Save(&u)
 }

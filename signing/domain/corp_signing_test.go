@@ -252,3 +252,142 @@ func TestCorpSigningSetAutoApprove(t *testing.T) {
 		t.Error("AutoApproveEmployees should be true after calling SetAutoApprove(true) twice")
 	}
 }
+
+func TestCorpSigningSelfAssignAsManagerSuccess(t *testing.T) {
+	adminEmail := dp.CreateEmailAddr("admin@test.com")
+	cs := &CorpSigning{
+		Corp: Corporation{AllEmailDomains: []string{"test.com"}},
+		Admin: Manager{
+			Id:            "admin1",
+			Representative: Representative{
+				Name:      dp.CreateName("Admin"),
+				EmailAddr: adminEmail,
+			},
+		},
+	}
+
+	err := cs.SelfAssignAsManager()
+	if err != nil {
+		t.Fatalf("SelfAssignAsManager: unexpected error %v", err)
+	}
+
+	if len(cs.Managers) != 1 {
+		t.Fatalf("Managers length: got %d, want 1", len(cs.Managers))
+	}
+
+	m := cs.Managers[0]
+	if m.Id != "self" {
+		t.Errorf("Manager Id: got %s, want self", m.Id)
+	}
+	if m.EmailAddr.EmailAddr() != "admin@test.com" {
+		t.Errorf("Manager Email: got %s, want admin@test.com", m.EmailAddr.EmailAddr())
+	}
+	if m.Name.Name() != "Admin" {
+		t.Errorf("Manager Name: got %s, want Admin", m.Name.Name())
+	}
+}
+
+func TestCorpSigningSelfAssignAsManagerAdminNotExists(t *testing.T) {
+	cs := &CorpSigning{
+		Corp:    Corporation{AllEmailDomains: []string{"test.com"}},
+		Admin:   Manager{},
+	}
+
+	err := cs.SelfAssignAsManager()
+	if err == nil {
+		t.Fatal("SelfAssignAsManager should fail when admin is empty")
+	}
+	if !IsErrorOf(err, ErrorCodeCorpAdminNotExists) {
+		t.Errorf("expected error code %s, got %v", ErrorCodeCorpAdminNotExists, err)
+	}
+}
+
+func TestCorpSigningSelfAssignAsManagerDuplicate(t *testing.T) {
+	adminEmail := dp.CreateEmailAddr("admin@test.com")
+	cs := &CorpSigning{
+		Corp: Corporation{AllEmailDomains: []string{"test.com"}},
+		Admin: Manager{
+			Id:            "admin1",
+			Representative: Representative{
+				Name:      dp.CreateName("Admin"),
+				EmailAddr: adminEmail,
+			},
+		},
+		Managers: []Manager{
+			{
+				Id:            "self",
+				Representative: Representative{
+					Name:      dp.CreateName("Admin"),
+					EmailAddr: adminEmail,
+				},
+			},
+		},
+	}
+
+	err := cs.SelfAssignAsManager()
+	if err == nil {
+		t.Fatal("SelfAssignAsManager should fail when already self-assigned")
+	}
+	if !IsErrorOf(err, ErrorCodeEmployeeManagerExists) {
+		t.Errorf("expected error code %s, got %v", ErrorCodeEmployeeManagerExists, err)
+	}
+	if len(cs.Managers) != 1 {
+		t.Errorf("Managers length should remain 1, got %d", len(cs.Managers))
+	}
+}
+
+func TestCorpSigningSelfAssignAsManagerTooMany(t *testing.T) {
+	// config.MaxNumOfEmployeeManager is 5 (set in test_setup_test.go)
+	adminEmail := dp.CreateEmailAddr("admin@test.com")
+	managers := make([]Manager, 5)
+	for i := range managers {
+		managers[i] = Manager{
+			Id:            "m" + string(rune('a'+i)),
+			Representative: Representative{
+				Name:      dp.CreateName("Mgr"),
+				EmailAddr: dp.CreateEmailAddr("mgr" + string(rune('a'+i)) + "@test.com"),
+			},
+		}
+	}
+
+	cs := &CorpSigning{
+		Corp:     Corporation{AllEmailDomains: []string{"test.com"}},
+		Managers: managers,
+		Admin: Manager{
+			Id:            "admin1",
+			Representative: Representative{
+				Name:      dp.CreateName("Admin"),
+				EmailAddr: adminEmail,
+			},
+		},
+	}
+
+	err := cs.SelfAssignAsManager()
+	if err == nil {
+		t.Fatal("SelfAssignAsManager should fail when managers exceed limit")
+	}
+	if !IsErrorOf(err, ErrorCodeEmployeeManagerTooMany) {
+		t.Errorf("expected error code %s, got %v", ErrorCodeEmployeeManagerTooMany, err)
+	}
+}
+
+func TestCorpSigningSelfAssignAsManagerNotSameCorp(t *testing.T) {
+	cs := &CorpSigning{
+		Corp: Corporation{AllEmailDomains: []string{"other.com"}},
+		Admin: Manager{
+			Id:            "admin1",
+			Representative: Representative{
+				Name:      dp.CreateName("Admin"),
+				EmailAddr: dp.CreateEmailAddr("admin@test.com"),
+			},
+		},
+	}
+
+	err := cs.SelfAssignAsManager()
+	if err == nil {
+		t.Fatal("SelfAssignAsManager should fail when admin email is not same corp")
+	}
+	if !IsErrorOf(err, ErrorCodeEmployeeManagerNotSameCorp) {
+		t.Errorf("expected error code %s, got %v", ErrorCodeEmployeeManagerNotSameCorp, err)
+	}
+}

@@ -190,6 +190,14 @@ func (adapter *employeeManagerAdatper) List(csId string) (
 	return v, nil
 }
 
+func (adapter *employeeManagerAdatper) SelfAssign(csId string) models.IModelError {
+	if err := adapter.s.SelfAssignManager(csId); err != nil {
+		return toModelError(err)
+	}
+
+	return nil
+}
+
 func toCorporationManagerListResult(m *app.EmployeeManagerDTO) models.CorporationManagerListResult {
 	return models.CorporationManagerListResult{
 		ID:    m.ID,

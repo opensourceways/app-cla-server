@@ -21,6 +21,7 @@ type EmployeeManagerService interface {
 	Add(cmd *CmdToAddEmployeeManager) ([]ManagerDTO, error)
 	Remove(cmd *CmdToRemoveEmployeeManager) (dtos []RemovedManagerDTO, err error)
 	List(string) ([]EmployeeManagerDTO, error)
+	SelfAssignManager(csId string) error
 }
 
 type employeeManagerService struct {
@@ -100,6 +101,21 @@ func (s *employeeManagerService) List(csId string) ([]EmployeeManagerDTO, error)
 	}
 
 	return dtos, nil
+}
+
+func (s *employeeManagerService) SelfAssignManager(csId string) error {
+	cs, err := s.repo.Find(csId)
+	if err != nil {
+		return err
+	}
+
+	if err = cs.SelfAssignAsManager(); err != nil {
+		return err
+	}
+
+	manager := cs.Managers[len(cs.Managers)-1]
+
+	return s.repo.AddEmployeeManagers(&cs, []domain.Manager{manager})
 }
 
 func (s *employeeManagerService) toManageDTOs(pws map[string]dp.Password, ms []domain.Manager) ([]ManagerDTO, error) {

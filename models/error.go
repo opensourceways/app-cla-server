@@ -60,6 +60,7 @@ const (
 	ErrCLAIsLatest             ModelErrCode = "cla_is_latest"
 	ErrAutoApprovalUnchanged   ModelErrCode = "auto_approval_unchanged"
 	ErrAutoApprovalNoManager   ModelErrCode = "auto_approval_no_manager"
+	ErrCorpAdminNotExists      ModelErrCode = "corp_admin_not_exists"
 )
 
 type IModelError interface {

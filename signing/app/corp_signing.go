@@ -267,30 +267,19 @@ func (s *corpSigningService) UpdateRepresentative(userId, linkID, signingID, rep
 		return commonRepo.NewErrorResourceNotFound(errors.New("signing not found"))
 	}
 
-	// 创建新的代表信息
-	newRep, err := domain.NewRepresentative(repName, repEmail)
-	if err != nil {
+	oldEmail := cs.Admin.EmailAddr
+	if err = cs.UpdateRepresentative(repName, repEmail); err != nil {
 		return err
 	}
 
-	oldEmail := cs.Rep.EmailAddr
-
-	// 更新代表信息
-	cs.Rep = newRep
-
-	// 同步更新 Admin 信息（管理员登录账号）
-	if cs.Admin.Id != "" {
-		cs.Admin.Representative = newRep
-	}
-
 	// 保存到数据库
-	if err := s.repo.Update(&cs); err != nil {
+	if err = s.repo.Update(&cs); err != nil {
 		return err
 	}
 
 	// 同步更新 User 表中的邮箱
 	if cs.Admin.Id != "" {
-		if err := s.userService.UpdateEmail(cs.Link.Id, oldEmail, newRep.EmailAddr); err != nil {
+		if err = s.userService.UpdateEmail(cs.Link.Id, cs.Id, cs.Admin.Id, oldEmail, cs.Admin.EmailAddr); err != nil {
 			return err
 		}
 	}

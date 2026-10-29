@@ -1,0 +1,31 @@
+package app
+
+import (
+	"os"
+	"testing"
+
+	"github.com/opensourceways/app-cla-server/signing/domain"
+	"github.com/opensourceways/app-cla-server/signing/domain/dp"
+)
+
+func TestMain(m *testing.M) {
+	dp.Init(&dp.Config{
+		MaxLengthOfName:     100,
+		MaxLengthOfTitle:    200,
+		MaxLengthOfEmail:    200,
+		MaxLengthOfAccount:  100,
+		MaxLengthOfCorpName: 200,
+	})
+
+	domain.Init(&domain.Config{
+		MaxNumOfEmployeeManager: 5,
+		DefaultGracePeriodDays:  30,
+		VerificationCodeExpiry:  300,
+		AccessTokenExpiry:       3600,
+		MaxNumOfFailedLogin:     5,
+		IntervalOfCreatingVC:    60,
+		CommunityManagerLinkId:  "fake_link",
+	})
+
+	os.Exit(m.Run())
+}

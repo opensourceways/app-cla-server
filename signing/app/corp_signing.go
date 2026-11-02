@@ -198,12 +198,11 @@ func (s *corpSigningService) FindCorpSummary(cmd *CmdToFindCorpSummary) ([]CorpS
 
 	r := make([]CorpSummaryDTO, 0, len(v))
 	for i := range v {
-		if item := &v[i]; item.HasManager {
-			r = append(r, CorpSummaryDTO{
-				CorpName:      item.CorpName.CorpName(),
-				CorpSigningId: item.CorpSigningId,
-			})
-		}
+		item := &v[i]
+		r = append(r, CorpSummaryDTO{
+			CorpName:      item.CorpName.CorpName(),
+			CorpSigningId: item.CorpSigningId,
+		})
 	}
 
 	return r, nil
@@ -333,10 +332,6 @@ func (s *corpSigningService) UpdateAutoApproval(signingId string, enabled bool) 
 
 	if cs.AutoApproveEmployees == enabled {
 		return domain.NewDomainError(domain.ErrorCodeCorpSigningAutoApprovalUnchanged)
-	}
-
-	if enabled && len(cs.Managers) == 0 {
-		return domain.NewDomainError(domain.ErrorCodeCorpSigningAutoApprovalNoManager)
 	}
 
 	cs.SetAutoApprove(enabled)

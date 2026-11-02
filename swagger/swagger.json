@@ -1217,12 +1217,9 @@
                         "description": "no_link:                    the link id is not exists"
                     },
                     "411": {
-                        "description": "no_employee_manager:        there is not any employee managers for the corresponding corp"
-                    },
-                    "412": {
                         "description": "unmatched_cla:              the cla hash is not equal to the one of backend server"
                     },
-                    "413": {
+                    "412": {
                         "description": "resigned:                   the signer has signed the cla"
                     },
                     "500": {

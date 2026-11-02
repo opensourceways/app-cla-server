@@ -92,6 +92,7 @@ type employeeManagerAdapter interface {
 	Add(string, *EmployeeManagerCreateOption) ([]CorporationManagerCreateOption, IModelError)
 	Remove(string, *EmployeeManagerDeleteOption) ([]CorporationManagerCreateOption, IModelError)
 	List(csId string) ([]CorporationManagerListResult, IModelError)
+	SelfAssign(csId string) IModelError
 }
 
 func RegisterEmployeeManagerAdapter(a employeeManagerAdapter) {

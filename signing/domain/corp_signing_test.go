@@ -255,3 +255,119 @@ func TestCorpSigningSetAutoApprove(t *testing.T) {
 		t.Error("AutoApproveEmployees should be true after calling SetAutoApprove(true) twice")
 	}
 }
+
+func TestSelfAssignAsManagerSuccess(t *testing.T) {
+	adminEmail := dp.CreateEmailAddr("admin@test.com")
+	cs := &CorpSigning{
+		Admin: Manager{
+			Id: "admin1",
+			Representative: Representative{
+				Name:      dp.CreateName("Admin"),
+				EmailAddr: adminEmail,
+			},
+		},
+		Corp: Corporation{AllEmailDomains: []string{"test.com"}},
+	}
+
+	if err := cs.SelfAssignAsManager(); err != nil {
+		t.Fatalf("SelfAssignAsManager: unexpected error %v", err)
+	}
+
+	if len(cs.Managers) != 1 {
+		t.Fatalf("Managers length: got %d, want 1", len(cs.Managers))
+	}
+
+	m := &cs.Managers[0]
+	if m.Id != "self" {
+		t.Errorf("Manager.Id: got %s, want self", m.Id)
+	}
+	if m.EmailAddr.EmailAddr() != "admin@test.com" {
+		t.Errorf("Manager.EmailAddr: got %s, want admin@test.com", m.EmailAddr.EmailAddr())
+	}
+	if m.Name.Name() != "Admin" {
+		t.Errorf("Manager.Name: got %s, want Admin", m.Name.Name())
+	}
+}
+
+func TestSelfAssignAsManagerAdminNotExists(t *testing.T) {
+	cs := &CorpSigning{
+		Corp: Corporation{AllEmailDomains: []string{"test.com"}},
+	}
+
+	err := cs.SelfAssignAsManager()
+	if err == nil {
+		t.Fatal("SelfAssignAsManager should fail when admin is empty")
+	}
+	if !IsErrorOf(err, ErrorCodeCorpAdminNotExists) {
+		t.Errorf("expected error code %q, got %v", ErrorCodeCorpAdminNotExists, err)
+	}
+}
+
+func TestSelfAssignAsManagerDuplicate(t *testing.T) {
+	adminEmail := dp.CreateEmailAddr("admin@test.com")
+	cs := &CorpSigning{
+		Admin: Manager{
+			Id: "admin1",
+			Representative: Representative{
+				Name:      dp.CreateName("Admin"),
+				EmailAddr: adminEmail,
+			},
+		},
+		Corp: Corporation{AllEmailDomains: []string{"test.com"}},
+		Managers: []Manager{
+			{
+				Id: "self",
+				Representative: Representative{
+					Name:      dp.CreateName("Admin"),
+					EmailAddr: adminEmail,
+				},
+			},
+		},
+	}
+
+	err := cs.SelfAssignAsManager()
+	if err == nil {
+		t.Fatal("SelfAssignAsManager should fail when already self-assigned")
+	}
+	if !IsErrorOf(err, ErrorCodeEmployeeManagerExists) {
+		t.Errorf("expected error code %q, got %v", ErrorCodeEmployeeManagerExists, err)
+	}
+	if len(cs.Managers) != 1 {
+		t.Errorf("Managers length should remain 1, got %d", len(cs.Managers))
+	}
+}
+
+func TestSelfAssignAsManagerTooMany(t *testing.T) {
+	adminEmail := dp.CreateEmailAddr("admin@test.com")
+	admin := Manager{
+		Id: "admin1",
+		Representative: Representative{
+			Name:      dp.CreateName("Admin"),
+			EmailAddr: adminEmail,
+		},
+	}
+
+	managers := make([]Manager, config.MaxNumOfEmployeeManager)
+	for i := range managers {
+		managers[i] = Manager{
+			Id: string(rune('a' + i)),
+			Representative: Representative{
+				EmailAddr: dp.CreateEmailAddr(string(rune('a'+i)) + "@test.com"),
+			},
+		}
+	}
+
+	cs := &CorpSigning{
+		Admin:    admin,
+		Corp:     Corporation{AllEmailDomains: []string{"test.com"}},
+		Managers: managers,
+	}
+
+	err := cs.SelfAssignAsManager()
+	if err == nil {
+		t.Fatal("SelfAssignAsManager should fail when too many managers")
+	}
+	if !IsErrorOf(err, ErrorCodeEmployeeManagerTooMany) {
+		t.Errorf("expected error code %q, got %v", ErrorCodeEmployeeManagerTooMany, err)
+	}
+}

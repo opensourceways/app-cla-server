@@ -19,6 +19,7 @@ const (
 	ErrSamePassword            ModelErrCode = "same_password"
 	ErrNoLinkOrNoManager       ModelErrCode = "no_link_or_no_manager"
 	ErrNoLinkOrManagerExists   ModelErrCode = "no_link_or_manager_exists"
+	ErrCorpAdminNotExists      ModelErrCode = "corp_admin_not_exists"
 	ErrCorpManagerExists       ModelErrCode = "corp_manager_exists"
 	ErrInvalidManagerID        ModelErrCode = "invalid_manager_id"
 	ErrDuplicateManagerID      ModelErrCode = "duplicate_manager_id"

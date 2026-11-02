@@ -20,7 +20,10 @@ func (ctl *EmployeeSigningController) Prepare() {
 		ctl.apiPrepare("")
 	} else {
 		// get, update and delete employee
-		ctl.apiPrepare(PermissionEmployeeManager)
+		ctl.apiPrepareWithAC(
+			&accessController{Payload: &acForCorpManagerPayload{}},
+			[]string{PermissionCorpAdmin, PermissionEmployeeManager},
+		)
 	}
 }
 
@@ -60,9 +63,8 @@ func (ctl *EmployeeSigningController) SendVerificationCode() {
 // @Failure 408 expired_verification_code:  the verification code is expired
 // @Failure 409 wrong_verification_code:    the verification code is wrong
 // @Failure 410 no_link:                    the link id is not exists
-// @Failure 411 no_employee_manager:        there is not any employee managers for the corresponding corp
-// @Failure 412 unmatched_cla:              the cla hash is not equal to the one of backend server
-// @Failure 413 resigned:                   the signer has signed the cla
+// @Failure 411 unmatched_cla:              the cla hash is not equal to the one of backend server
+// @Failure 412 resigned:                   the signer has signed the cla
 // @Failure 500 system_error:               system error
 // @router /:link_id/ [post]
 func (ctl *EmployeeSigningController) Sign() {
@@ -259,7 +261,9 @@ func (ctl *EmployeeSigningController) notifyManagers(
 		ProjectURL:       orgInfo.ProjectURL,
 		URLOfCLAPlatform: config.signingURL(linkId),
 	}
-	sendEmail(to, orgInfo, "An employee has signed CLA", &msg1)
+	if len(to) > 0 {
+		sendEmail(to, orgInfo, "An employee has signed CLA", &msg1)
+	}
 }
 
 func (ctl *EmployeeSigningController) notifyAutoApproval(
@@ -289,7 +293,9 @@ func (ctl *EmployeeSigningController) notifyAutoApproval(
 		ProjectURL:       orgInfo.ProjectURL,
 		URLOfCLAPlatform: config.signingURL(linkId),
 	}
-	sendEmail(to, orgInfo, "An employee has been auto-approved", &msg1)
+	if len(to) > 0 {
+		sendEmail(to, orgInfo, "An employee has been auto-approved", &msg1)
+	}
 }
 
 func (ctl *EmployeeSigningController) newEmployeeNotification(

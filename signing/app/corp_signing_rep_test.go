@@ -99,6 +99,10 @@ func TestUpdateRepresentativeSuccess(t *testing.T) {
 	cs := domain.CorpSigning{
 		Id:   "cs1",
 		Link: domain.LinkInfo{Id: "link1"},
+		Corp: domain.Corporation{
+			AllEmailDomains:    []string{"old.com", "new.com"},
+			PrimaryEmailDomain: "old.com",
+		},
 		Rep: domain.Representative{
 			Name:      dp.CreateName("Old Name"),
 			EmailAddr: oldEmail,
@@ -162,6 +166,10 @@ func TestUpdateRepresentativeNoAdminSkipsUpdateEmail(t *testing.T) {
 	cs := domain.CorpSigning{
 		Id:   "cs1",
 		Link: domain.LinkInfo{Id: "link1"},
+		Corp: domain.Corporation{
+			AllEmailDomains:    []string{"old.com", "new.com"},
+			PrimaryEmailDomain: "old.com",
+		},
 		Rep: domain.Representative{
 			Name:      dp.CreateName("Old Name"),
 			EmailAddr: dp.CreateEmailAddr("rep@old.com"),

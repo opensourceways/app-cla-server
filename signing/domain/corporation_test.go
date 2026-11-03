@@ -41,10 +41,13 @@ func TestCorporationIsMyEmail(t *testing.T) {
 }
 
 func TestCorporationAddEmailDomain(t *testing.T) {
-	corp := Corporation{AllEmailDomains: []string{"corp.com"}}
+	corp := Corporation{
+		AllEmailDomains:    []string{"corp.com"},
+		PrimaryEmailDomain: "corp.com",
+	}
 
-	if err := corp.addEmailDomain("new.com"); err != nil {
-		t.Fatalf("addEmailDomain new: unexpected error %v", err)
+	if err := corp.addEmailDomain("sub.corp.com"); err != nil {
+		t.Fatalf("addEmailDomain subdomain: unexpected error %v", err)
 	}
 	if len(corp.AllEmailDomains) != 2 {
 		t.Errorf("AllEmailDomains length: got %d, want 2", len(corp.AllEmailDomains))
@@ -53,15 +56,75 @@ func TestCorporationAddEmailDomain(t *testing.T) {
 	if err := corp.addEmailDomain("corp.com"); err == nil {
 		t.Error("addEmailDomain duplicate should fail")
 	}
+
+	if err := corp.addEmailDomain("bbb.com"); err == nil {
+		t.Error("addEmailDomain unrelated domain should fail")
+	}
 }
 
 func TestCorpSigningAddEmailDomain(t *testing.T) {
-	cs := &CorpSigning{Corp: Corporation{AllEmailDomains: []string{"corp.com"}}}
+	cs := &CorpSigning{Corp: Corporation{
+		AllEmailDomains:    []string{"corp.com"},
+		PrimaryEmailDomain: "corp.com",
+	}}
 
-	if err := cs.AddEmailDomain(dp.CreateEmailAddr("user@new.com")); err != nil {
-		t.Fatalf("AddEmailDomain new: unexpected error %v", err)
+	if err := cs.AddEmailDomain(dp.CreateEmailAddr("user@sub.corp.com")); err != nil {
+		t.Fatalf("AddEmailDomain subdomain: unexpected error %v", err)
 	}
 	if err := cs.AddEmailDomain(dp.CreateEmailAddr("user@corp.com")); err == nil {
 		t.Error("AddEmailDomain duplicate should fail")
+	}
+	if err := cs.AddEmailDomain(dp.CreateEmailAddr("user@bbb.com")); err == nil {
+		t.Error("AddEmailDomain unrelated domain should fail")
+	}
+}
+
+func TestCorporationAddEmailDomainSubdomainValidation(t *testing.T) {
+	corp := Corporation{
+		AllEmailDomains:    []string{"aaa.com"},
+		PrimaryEmailDomain: "aaa.com",
+	}
+
+	cases := []struct {
+		name    string
+		domain  string
+		wantErr bool
+		errCode string
+	}{
+		{"valid subdomain", "xxx.aaa.com", false, ""},
+		{"valid deep subdomain", "a.b.aaa.com", false, ""},
+		{"unrelated domain", "bbb.com", true, ErrorCodeCorpEmailDomainNotMatch},
+		{"look-alike domain", "baaa.com", true, ErrorCodeCorpEmailDomainNotMatch},
+		{"sibling tld", "aaa.org", true, ErrorCodeCorpEmailDomainNotMatch},
+		{"case-insensitive subdomain", "SUB.AAA.COM", false, ""},
+		{"primary itself is duplicate", "aaa.com", true, ErrorCodeCorpEmailDomainExists},
+		{"already added subdomain", "xxx.aaa.com", true, ErrorCodeCorpEmailDomainExists},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			err := corp.addEmailDomain(tc.domain)
+			if tc.wantErr {
+				if err == nil {
+					t.Errorf("addEmailDomain(%q): expected error, got nil", tc.domain)
+					return
+				}
+				if tc.errCode != "" && !IsErrorOf(err, tc.errCode) {
+					t.Errorf("addEmailDomain(%q): error code got %v, want %s", tc.domain, err, tc.errCode)
+				}
+			} else {
+				if err != nil {
+					t.Errorf("addEmailDomain(%q): unexpected error %v", tc.domain, err)
+				}
+			}
+		})
+	}
+}
+
+func TestCorporationAddEmailDomainNoPrimary(t *testing.T) {
+	corp := Corporation{AllEmailDomains: []string{"corp.com"}}
+
+	if err := corp.addEmailDomain("sub.corp.com"); err == nil {
+		t.Error("addEmailDomain without primary domain should fail")
 	}
 }

@@ -42,6 +42,8 @@ type CorpSigning struct {
 	PendingCLAId   string // 待同意的 CLA 版本
 	ClaNotifyCount int    // 已发送通知次数
 	ClaNotifyTime  int64  // 上次通知时间(unix timestamp)
+
+	AutoApproveEmployees bool // 企业超管开启后，员工签署自动通过，无需管理员审批
 }
 
 func (cs *CorpSigning) CorpName() dp.CorpName {
@@ -162,10 +164,6 @@ func (cs *CorpSigning) RemoveManagers(managers []string) ([]Manager, error) {
 }
 
 func (cs *CorpSigning) AddEmployee(es *EmployeeSigning) error {
-	if len(cs.Managers) == 0 {
-		return NewDomainError(ErrorCodeEmployeeSigningNoManager)
-	}
-
 	if !cs.isSameCorp(es.Rep.EmailAddr) {
 		return NewDomainError(ErrorCodeEmployeeNotSameCorp)
 	}
@@ -182,9 +180,9 @@ func (cs *CorpSigning) AddEmployee(es *EmployeeSigning) error {
 }
 
 // CollectEmployee appends an employee signing collected from a historical
-// individual signing. Unlike AddEmployee, it does not require managers to be
-// configured: the corp pdf can be uploaded before any manager exists, and
-// the collected record stays disabled until a manager activates it.
+// individual signing. Unlike AddEmployee, it allows a different email domain
+// case-insensitively: the corp pdf can be uploaded before any manager exists,
+// and the collected record stays disabled until a manager activates it.
 func (cs *CorpSigning) CollectEmployee(es *EmployeeSigning) error {
 	if !cs.isSameCorpIgnoreCase(es.Rep.EmailAddr) {
 		return NewDomainError(ErrorCodeEmployeeNotSameCorp)
@@ -277,6 +275,12 @@ func (cs *CorpSigning) HasSignedCLA(latestClaId string) bool {
 	return cs.Link.CLAId == latestClaId
 }
 
+// SetAutoApprove sets the auto-approval preference for employee signings.
+// It is idempotent and can be called regardless of the current value.
+func (cs *CorpSigning) SetAutoApprove(enabled bool) {
+	cs.AutoApproveEmployees = enabled
+}
+
 func (cs *CorpSigning) SetLatestClaId(latestClaId string) error {
 	if cs.HasSignedCLA(latestClaId) {
 		return NewDomainError(ErrorCodeCorpSigningCLAIsLatest)
@@ -286,6 +290,27 @@ func (cs *CorpSigning) SetLatestClaId(latestClaId string) error {
 	cs.PendingCLAId = ""
 	cs.ClaNotifyCount = 0
 	cs.ClaNotifyTime = 0
+
+	return nil
+}
+
+// UpdateRepresentative replaces the representative of the corp signing and
+// synchronizes the admin's representative when an admin exists.
+func (cs *CorpSigning) UpdateRepresentative(repName, repEmail string) error {
+	newRep, err := NewRepresentative(repName, repEmail)
+	if err != nil {
+		return err
+	}
+
+	if !cs.isSameCorpIgnoreCase(newRep.EmailAddr) {
+		return NewDomainError(ErrorCodeEmployeeManagerNotSameCorp)
+	}
+
+	cs.Rep = newRep
+
+	if cs.Admin.Id != "" {
+		cs.Admin.Representative = newRep
+	}
 
 	return nil
 }

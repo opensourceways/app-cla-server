@@ -51,7 +51,20 @@ func (c *Corporation) addEmailDomain(ed string) error {
 		}
 	}
 
+	if !c.isSubDomainOfPrimary(ed) {
+		return NewDomainError(ErrorCodeCorpEmailDomainNotMatch)
+	}
+
 	c.AllEmailDomains = append(c.AllEmailDomains, ed)
 
 	return nil
+}
+
+func (c *Corporation) isSubDomainOfPrimary(ed string) bool {
+	primary := c.PrimaryEmailDomain
+	if primary == "" {
+		return false
+	}
+
+	return strings.HasSuffix(strings.ToLower(ed), "."+strings.ToLower(primary))
 }

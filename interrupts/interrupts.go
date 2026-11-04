@@ -23,7 +23,7 @@ import (
 	"sync"
 	"syscall"
 
-	"github.com/beego/beego/v2/core/logs"
+	"github.com/opensourceways/obs-sdk/go/log"
 )
 
 // only one instance of the manager ever exists
@@ -57,7 +57,7 @@ func handleInterrupt() {
 	sigChan := signals()
 	signalsLock.Unlock()
 	s := <-sigChan
-	logs.Info("Received signal: %v.", s)
+	log.Info("received signal", "signal", s)
 	single.c.L.Lock()
 	single.seenSignal = true
 	single.c.Broadcast()
@@ -93,12 +93,12 @@ func wait(cancel func()) {
 // blocking.
 func WaitForGracefulShutdown() {
 	wait(func() {
-		logs.Info("Interrupt received.")
+		log.Info("interrupt received")
 	})
 
 	single.wg.Wait()
 
-	logs.Info("All workers gracefully terminated, exiting.")
+	log.Info("all workers gracefully terminated, exiting")
 }
 
 // OnInterrupt ensures that work is done when an interrupt is fired

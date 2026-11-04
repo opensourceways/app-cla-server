@@ -3,7 +3,7 @@ package controllers
 import (
 	"fmt"
 
-	"github.com/beego/beego/v2/core/logs"
+	"github.com/opensourceways/obs-sdk/go/log"
 
 	"github.com/opensourceways/app-cla-server/models"
 )
@@ -55,10 +55,15 @@ func (ctl *baseController) sendFailedResultAsResp(fr *failedApiResult, action st
 
 func (ctl *baseController) sendFailedResponse(statusCode int, errCode string, reason error, action string) {
 	if statusCode >= 500 {
-		logs.Error("Failed to %s, errCode: %s, err: %s", action, errCode, reason.Error())
+		log.ErrorContext(ctl.Ctx.Request.Context(), "api failed",
+			"action", action, "err_code", errCode, "error", reason)
 
 		errCode = errSystemError
 		reason = fmt.Errorf("system error")
+	} else if statusCode >= 400 {
+		log.WarnContext(ctl.Ctx.Request.Context(), "api failed",
+			"action", action, "status_code", statusCode,
+			"err_code", errCode, "error", reason)
 	}
 
 	d := errMsg{
@@ -76,10 +81,12 @@ func (ctl *baseController) operationLog(action string, statusCode int) {
 	}
 
 	if user != "" {
-		logs.Info("%s, %s, %d", user, action, statusCode)
+		log.InfoContext(ctl.Ctx.Request.Context(), "api access",
+			"user", user, "action", action, "status_code", statusCode)
 	}
 }
 
 func (ctl *baseController) addOperationLog(user, action string, statusCode int) {
-	logs.Info("%s, %s, %d", user, action, statusCode)
+	log.InfoContext(ctl.Ctx.Request.Context(), "api access",
+		"user", user, "action", action, "status_code", statusCode)
 }

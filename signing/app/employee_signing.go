@@ -56,6 +56,9 @@ func (s *employeeSigningService) Sign(cmd *CmdToSignEmployeeCLA) ([]EmployeeMana
 	}
 
 	es := cmd.toEmployeeSigning()
+	if cs.AutoApproveEmployees {
+		es.AutoEnable()
+	}
 	if err := cs.AddEmployee(&es); err != nil {
 		return nil, err
 	}
@@ -73,9 +76,12 @@ func (s *employeeSigningService) Sign(cmd *CmdToSignEmployeeCLA) ([]EmployeeMana
 		return nil, err
 	}
 
-	dtos := make([]EmployeeManagerDTO, len(cs.Managers))
+	dtos := make([]EmployeeManagerDTO, 0, len(cs.Managers)+1)
+	if !cs.Admin.IsEmpty() {
+		dtos = append(dtos, toEmployeeManagerDTO(&cs.Admin))
+	}
 	for i := range cs.Managers {
-		dtos[i] = toEmployeeManagerDTO(&cs.Managers[i])
+		dtos = append(dtos, toEmployeeManagerDTO(&cs.Managers[i]))
 	}
 
 	return dtos, nil

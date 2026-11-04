@@ -6,7 +6,7 @@ import (
 	"path"
 	"strings"
 
-	"github.com/beego/beego/v2/core/logs"
+	"github.com/opensourceways/obs-sdk/go/log"
 
 	"github.com/opensourceways/app-cla-server/models"
 	"github.com/opensourceways/app-cla-server/signing/infrastructure/emailtmpl"
@@ -143,7 +143,7 @@ func (ctl *PasswordRetrievalController) Reset() {
 func genURLToResetPassword(linkId, key string) string {
 	v, err := url.Parse(config.PasswordResetURL)
 	if err != nil {
-		logs.Error(err)
+		log.Error("failed to parse password reset URL", "error", err)
 
 		return ""
 	}
@@ -159,7 +159,7 @@ func genURLToResetPassword(linkId, key string) string {
 func genURLToRetrievalPassword(linkId string) string {
 	v, err := url.Parse(config.PasswordRetrievalURL)
 	if err != nil {
-		logs.Error(err)
+		log.Error("failed to parse password retrieval URL", "error", err)
 
 		return ""
 	}

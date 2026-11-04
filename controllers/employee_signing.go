@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/opensourceways/obs-sdk/go/log"
+
 	"github.com/opensourceways/app-cla-server/models"
 	"github.com/opensourceways/app-cla-server/signing/infrastructure/emailtmpl"
 )
@@ -18,7 +20,10 @@ func (ctl *EmployeeSigningController) Prepare() {
 		ctl.apiPrepare("")
 	} else {
 		// get, update and delete employee
-		ctl.apiPrepare(PermissionEmployeeManager)
+		ctl.apiPrepareWithAC(
+			&accessController{Payload: &acForCorpManagerPayload{}},
+			[]string{PermissionCorpAdmin, PermissionEmployeeManager},
+		)
 	}
 }
 
@@ -58,9 +63,8 @@ func (ctl *EmployeeSigningController) SendVerificationCode() {
 // @Failure 408 expired_verification_code:  the verification code is expired
 // @Failure 409 wrong_verification_code:    the verification code is wrong
 // @Failure 410 no_link:                    the link id is not exists
-// @Failure 411 no_employee_manager:        there is not any employee managers for the corresponding corp
-// @Failure 412 unmatched_cla:              the cla hash is not equal to the one of backend server
-// @Failure 413 resigned:                   the signer has signed the cla
+// @Failure 411 unmatched_cla:              the cla hash is not equal to the one of backend server
+// @Failure 412 resigned:                   the signer has signed the cla
 // @Failure 500 system_error:               system error
 // @router /:link_id/ [post]
 func (ctl *EmployeeSigningController) Sign() {
@@ -91,7 +95,16 @@ func (ctl *EmployeeSigningController) Sign() {
 	}
 
 	ctl.sendSuccessResp(action, "successfully")
-	ctl.notifyManagers(linkID, managers, &info, &orgInfo)
+
+	autoApproved, merr := models.GetCorpAutoApproval(info.CorpSigningId)
+	if merr != nil {
+		log.ErrorContext(ctl.Ctx.Request.Context(), "failed to get auto-approval preference", "error", merr)
+	}
+	if autoApproved {
+		ctl.notifyAutoApproval(linkID, managers, &info, &orgInfo)
+	} else {
+		ctl.notifyManagers(linkID, managers, &info, &orgInfo)
+	}
 }
 
 // @Title GetAll
@@ -248,7 +261,41 @@ func (ctl *EmployeeSigningController) notifyManagers(
 		ProjectURL:       orgInfo.ProjectURL,
 		URLOfCLAPlatform: config.signingURL(linkId),
 	}
-	sendEmail(to, orgInfo, "An employee has signed CLA", &msg1)
+	if len(to) > 0 {
+		sendEmail(to, orgInfo, "An employee has signed CLA", &msg1)
+	}
+}
+
+func (ctl *EmployeeSigningController) notifyAutoApproval(
+	linkId string,
+	managers []models.CorporationManagerListResult,
+	info *models.EmployeeSigning, orgInfo *models.OrgInfo,
+) {
+	to := make([]string, 0, len(managers))
+	for _, item := range managers {
+		to = append(to, item.Email)
+	}
+
+	msg := emailtmpl.AutoApprovalEmployee{
+		Name:       info.Name,
+		Org:        orgInfo.OrgAlias,
+		ProjectURL: orgInfo.ProjectURL,
+	}
+	sendEmailToIndividual(
+		info.Email, orgInfo,
+		fmt.Sprintf("CLA auto-approved on project of \"%s\"", orgInfo.OrgAlias),
+		&msg,
+	)
+
+	msg1 := emailtmpl.AutoApprovalManager{
+		Org:              orgInfo.OrgAlias,
+		EmployeeEmail:    info.Email,
+		ProjectURL:       orgInfo.ProjectURL,
+		URLOfCLAPlatform: config.signingURL(linkId),
+	}
+	if len(to) > 0 {
+		sendEmail(to, orgInfo, "An employee has been auto-approved", &msg1)
+	}
 }
 
 func (ctl *EmployeeSigningController) newEmployeeNotification(

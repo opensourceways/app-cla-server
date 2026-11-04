@@ -3,13 +3,13 @@ package vcservice
 import (
 	"time"
 
-	"github.com/beego/beego/v2/core/logs"
 	commonRepo "github.com/opensourceways/app-cla-server/common/domain/repository"
 	"github.com/opensourceways/app-cla-server/signing/domain"
 	"github.com/opensourceways/app-cla-server/signing/domain/dp"
 	"github.com/opensourceways/app-cla-server/signing/domain/limiter"
 	"github.com/opensourceways/app-cla-server/signing/domain/randomcode"
 	"github.com/opensourceways/app-cla-server/signing/domain/repository"
+	"github.com/opensourceways/obs-sdk/go/log"
 )
 
 var invalidCode = domain.NewDomainError(domain.ErrorCodeVerificationCodeWrong)
@@ -73,7 +73,7 @@ func (s *vcService) New(purpose dp.Purpose) (string, error) {
 func (s *vcService) NewIfItCan(purpose dp.Purpose, interval time.Duration) (string, error) {
 	b, err := s.limiter.IsAllowed(purpose.Purpose())
 	if err != nil {
-		logs.Error("failed to check if it is busy to create code, err:%s", err.Error())
+		log.Error("failed to check if it is busy to create code", "error", err)
 	}
 
 	if !b {
@@ -88,7 +88,7 @@ func (s *vcService) NewIfItCan(purpose dp.Purpose, interval time.Duration) (stri
 	vc := domain.NewVerificationCode(code, purpose)
 	if err = s.repo.Add(&vc); err == nil {
 		if err1 := s.limiter.Add(purpose.Purpose(), interval); err1 != nil {
-			logs.Error("add limiter failed, err:%s", err1.Error())
+			log.Error("add limiter failed", "error", err1)
 		}
 	}
 

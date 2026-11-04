@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/beego/beego/v2/core/logs"
+	"github.com/opensourceways/obs-sdk/go/log"
 
 	"github.com/opensourceways/app-cla-server/models"
 	"github.com/opensourceways/app-cla-server/signing/domain/emailservice"
@@ -26,7 +26,7 @@ func sendEmailToIndividual(to string, orgInfo *models.OrgInfo, subject string, b
 func sendEmail(to []string, orgInfo *models.OrgInfo, subject string, builder emailservice.IEmailMessageBulder) {
 	msg, err := builder.GenEmailMsg()
 	if err != nil {
-		logs.Error(err)
+		log.Error("failed to generate email msg", "error", err)
 
 		return
 	}

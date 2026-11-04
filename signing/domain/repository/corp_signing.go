@@ -69,6 +69,7 @@ type CorpSigning interface {
 	HasSignedLink(linkId string) (bool, error)
 	HasSignedCLA(*domain.CLAIndex, dp.CLAType) (bool, error)
 	UpdateClaId(cs *domain.CorpSigning) error
+	UpdateAutoApprove(cs *domain.CorpSigning) error
 	FindPendingAgreements(linkId string) ([]CorpSigningSummary, error)
 	SetPendingCLAForLink(linkId, newClaId string) error
 }

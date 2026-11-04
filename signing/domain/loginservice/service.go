@@ -1,7 +1,7 @@
 package loginservice
 
 import (
-	"github.com/beego/beego/v2/core/logs"
+	"github.com/opensourceways/obs-sdk/go/log"
 
 	commonRepo "github.com/opensourceways/app-cla-server/common/domain/repository"
 	"github.com/opensourceways/app-cla-server/signing/domain"
@@ -103,7 +103,7 @@ func (s *loginService) login(find func() (domain.User, error), p dp.Password, li
 	if s.isCorrectPassword(p, u.Password) {
 		if lv.HasFailure() {
 			if err1 := s.repo.Delete(lid); err1 != nil {
-				logs.Error("delete login info failed, err:%s", err1.Error())
+				log.Error("delete login info failed", "error", err1)
 			}
 		}
 
@@ -122,7 +122,7 @@ func (s *loginService) failToLogin(l *domain.Login) error {
 	}
 
 	if err1 := s.repo.Add(l); err1 != nil {
-		logs.Error("save login info failed, err: %s", err1.Error())
+		log.Error("save login info failed", "error", err1)
 	}
 
 	return err

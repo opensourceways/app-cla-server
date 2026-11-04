@@ -47,6 +47,8 @@ type CorpSigningService interface {
 	AgreeWithLatestCLA(signingId string) error
 	UpdateRepresentative(userId, linkID, signingID, repName, repEmail string) error
 	FindPendingAgreements(userId, linkId string) ([]CorpSigningPendingDTO, error)
+	GetAutoApproval(signingId string) (bool, error)
+	UpdateAutoApproval(signingId string, enabled bool) error
 }
 
 type corpSigningService struct {
@@ -276,12 +278,11 @@ func (s *corpSigningService) FindCorpSummary(cmd *CmdToFindCorpSummary) ([]CorpS
 
 	r := make([]CorpSummaryDTO, 0, len(v))
 	for i := range v {
-		if item := &v[i]; item.HasManager {
-			r = append(r, CorpSummaryDTO{
-				CorpName:      item.CorpName.CorpName(),
-				CorpSigningId: item.CorpSigningId,
-			})
-		}
+		item := &v[i]
+		r = append(r, CorpSummaryDTO{
+			CorpName:      item.CorpName.CorpName(),
+			CorpSigningId: item.CorpSigningId,
+		})
 	}
 
 	return r, nil
@@ -345,30 +346,19 @@ func (s *corpSigningService) UpdateRepresentative(userId, linkID, signingID, rep
 		return commonRepo.NewErrorResourceNotFound(errors.New("signing not found"))
 	}
 
-	// 创建新的代表信息
-	newRep, err := domain.NewRepresentative(repName, repEmail)
-	if err != nil {
+	oldEmail := cs.Admin.EmailAddr
+	if err = cs.UpdateRepresentative(repName, repEmail); err != nil {
 		return err
 	}
 
-	oldEmail := cs.Rep.EmailAddr
-
-	// 更新代表信息
-	cs.Rep = newRep
-
-	// 同步更新 Admin 信息（管理员登录账号）
-	if cs.Admin.Id != "" {
-		cs.Admin.Representative = newRep
-	}
-
 	// 保存到数据库
-	if err := s.repo.Update(&cs); err != nil {
+	if err = s.repo.Update(&cs); err != nil {
 		return err
 	}
 
 	// 同步更新 User 表中的邮箱
 	if cs.Admin.Id != "" {
-		if err := s.userService.UpdateEmail(cs.Link.Id, oldEmail, newRep.EmailAddr); err != nil {
+		if err = s.userService.UpdateEmail(cs.Link.Id, cs.Id, cs.Admin.Id, oldEmail, cs.Admin.EmailAddr); err != nil {
 			return err
 		}
 	}
@@ -397,4 +387,34 @@ func (s *corpSigningService) FindPendingAgreements(userId, linkId string) ([]Cor
 	}
 
 	return r, nil
+}
+
+func (s *corpSigningService) GetAutoApproval(signingId string) (bool, error) {
+	cs, err := s.repo.Find(signingId)
+	if err != nil {
+		if commonRepo.IsErrorResourceNotFound(err) {
+			err = domain.NewNotFoundDomainError(domain.ErrorCodeCorpSigningNotFound)
+		}
+		return false, err
+	}
+
+	return cs.AutoApproveEmployees, nil
+}
+
+func (s *corpSigningService) UpdateAutoApproval(signingId string, enabled bool) error {
+	cs, err := s.repo.Find(signingId)
+	if err != nil {
+		if commonRepo.IsErrorResourceNotFound(err) {
+			err = domain.NewNotFoundDomainError(domain.ErrorCodeCorpSigningNotFound)
+		}
+		return err
+	}
+
+	if cs.AutoApproveEmployees == enabled {
+		return domain.NewDomainError(domain.ErrorCodeCorpSigningAutoApprovalUnchanged)
+	}
+
+	cs.SetAutoApprove(enabled)
+
+	return s.repo.UpdateAutoApprove(&cs)
 }

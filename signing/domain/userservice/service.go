@@ -3,7 +3,7 @@ package userservice
 import (
 	"strings"
 
-	"github.com/beego/beego/v2/core/logs"
+	"github.com/opensourceways/obs-sdk/go/log"
 
 	commonRepo "github.com/opensourceways/app-cla-server/common/domain/repository"
 	"github.com/opensourceways/app-cla-server/signing/domain"
@@ -11,6 +11,7 @@ import (
 	"github.com/opensourceways/app-cla-server/signing/domain/encryption"
 	"github.com/opensourceways/app-cla-server/signing/domain/repository"
 	"github.com/opensourceways/app-cla-server/signing/domain/userpassword"
+	"github.com/opensourceways/app-cla-server/util"
 )
 
 func NewUserService(
@@ -33,7 +34,7 @@ type UserService interface {
 	RemoveByAccount(linkId string, accounts []dp.Account)
 	ChangePassword(index string, old, newOne dp.Password) error
 	ResetPassword(linkId string, email dp.EmailAddr, newOne dp.Password) error
-	UpdateEmail(linkId string, oldEmail, newEmail dp.EmailAddr) error
+	UpdateEmail(linkId, csId, adminId string, oldEmail, newEmail dp.EmailAddr) error
 }
 
 type userService struct {
@@ -75,10 +76,7 @@ func (s *userService) Add(linkId, csId string, managers []domain.Manager) (map[s
 
 func (s *userService) Remove(ids []string) {
 	if err := s.repo.Remove(ids); err != nil {
-		logs.Error(
-			"remove user failed, user id: %s, err: %s",
-			strings.Join(ids, ","), err.Error(),
-		)
+		log.Error("remove user failed", "user_ids", strings.Join(ids, ","), "error", err)
 	}
 }
 
@@ -89,10 +87,7 @@ func (s *userService) RemoveByAccount(linkId string, accounts []dp.Account) {
 			v[i] = accounts[i].Account()
 		}
 
-		logs.Error(
-			"remove user failed, user: %s, err: %s",
-			strings.Join(v, ","), err.Error(),
-		)
+		log.Error("remove user failed", "users", strings.Join(v, ","), "error", err)
 	}
 }
 
@@ -146,28 +141,28 @@ func (s *userService) ResetPassword(linkId string, email dp.EmailAddr, newOne dp
 	return s.repo.SavePassword(&u)
 }
 
-func (s *userService) UpdateEmail(linkId string, oldEmail, newEmail dp.EmailAddr) error {
+func (s *userService) UpdateEmail(linkId, csId, adminId string, oldEmail, newEmail dp.EmailAddr) error {
 	if oldEmail.EmailAddr() == newEmail.EmailAddr() {
 		return nil
 	}
 
-	u, err := s.repo.FindByEmail(linkId, oldEmail)
+	u, err := s.repo.FindByEmailOfCorpSigning(linkId, csId, oldEmail)
 	if err != nil {
 		return err
 	}
 
 	u.EmailAddr = newEmail
 
-	// account 格式为 {adminId}_{emailDomain}，domain 变了 account 也要变
-	oldAccount := u.Account.Account()
-	lastUnderscore := strings.LastIndex(oldAccount, "_")
-	if lastUnderscore > 0 {
-		newAccount, err := dp.NewAccount(oldAccount[:lastUnderscore] + "_" + newEmail.Domain())
-		if err != nil {
-			return err
-		}
-		u.Account = newAccount
+	// account 格式为 {adminId}_{emailDomain}，domain 变了 account 也要变。
+	// 使用 cs.Admin.Id（adminId）同步重建 account，确保 admin.id 与 user 表一致。
+	newAccount, err := dp.NewAccount(adminId + "_" + newEmail.Domain())
+	if err != nil {
+		return err
 	}
+	u.Account = newAccount
+
+	log.Info("change super admin:",
+		linkId, csId, util.MaskEmail(oldEmail.EmailAddr()), util.MaskEmail(newEmail.EmailAddr()), u.Id)
 
 	return s.repo.Save(&u)
 }

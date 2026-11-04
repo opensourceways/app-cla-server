@@ -3,12 +3,12 @@ package app
 import (
 	"strings"
 
-	"github.com/beego/beego/v2/core/logs"
 	commonRepo "github.com/opensourceways/app-cla-server/common/domain/repository"
 	"github.com/opensourceways/app-cla-server/signing/domain"
 	"github.com/opensourceways/app-cla-server/signing/domain/claservice"
 	"github.com/opensourceways/app-cla-server/signing/domain/localcla"
 	"github.com/opensourceways/app-cla-server/signing/domain/repository"
+	"github.com/opensourceways/obs-sdk/go/log"
 )
 
 const (
@@ -97,11 +97,10 @@ func (s *migrationService) MigrateCommunityData(cmd *CmdToMigrateCommunity) erro
 }
 
 func (s *migrationService) migrateCLADocuments(sourceLink, targetLink *domain.Link, claIdMap map[string]string) error {
-	logs.Info("开始迁移 CLA 文档,源社区有 %d 个 CLA,目标社区有 %d 个 CLA",
-		len(sourceLink.CLAs), len(targetLink.CLAs))
+	log.Info("start migrating CLA documents", "source_cla_count", len(sourceLink.CLAs), "target_cla_count", len(targetLink.CLAs))
 
 	if len(sourceLink.CLAs) == 0 {
-		logs.Warning("源社区没有 CLA 文档")
+		log.Warn("no CLA documents in source community")
 		return nil
 	}
 
@@ -111,16 +110,17 @@ func (s *migrationService) migrateCLADocuments(sourceLink, targetLink *domain.Li
 		targetCLA := targetLink.GetCLA(sourceCLA.Type, sourceCLA.Language)
 
 		if targetCLA == nil {
-			logs.Warning("目标社区中未找到匹配的 CLA: type=%s, language=%s",
-				sourceCLA.Type.CLAType(), sourceCLA.Language.Language())
+			log.Warn("no matching CLA in target community",
+				"cla_type", sourceCLA.Type.CLAType(), "language", sourceCLA.Language.Language())
 			continue
 		}
 
 		// 建立映射关系
 		claIdMap[sourceCLA.Id] = targetCLA.Id
 
-		logs.Info("建立 CLA 映射: %s -> %s (type: %s, lang: %s)",
-			sourceCLA.Id, targetCLA.Id, sourceCLA.Type.CLAType(), sourceCLA.Language.Language())
+		log.Info("establish CLA mapping",
+			"source_cla_id", sourceCLA.Id, "target_cla_id", targetCLA.Id,
+			"cla_type", sourceCLA.Type.CLAType(), "language", sourceCLA.Language.Language())
 	}
 
 	return nil
@@ -196,7 +196,8 @@ func (s *migrationService) migrateCorpSigningData(sourceLinkId, targetLinkId str
 			newCorpSigning := s.cloneCorpSigning(&fullCorpSigning, targetLinkId, claIdMap)
 			if err := s.corpRepo.AddForMigrate(&newCorpSigning); err != nil {
 				if strings.Contains(err.Error(), "doc exists") || strings.Contains(err.Error(), "document exists") {
-					logs.Error("文档已存在错误: 可能重复迁移或ID冲突, oldId=%s, newId=%s", oldId, newCorpSigning.Id)
+					log.Error("document exists error: possible duplicate migration or ID conflict",
+						"old_id", oldId, "new_id", newCorpSigning.Id, "error", err)
 				}
 				return err
 			}
@@ -204,13 +205,13 @@ func (s *migrationService) migrateCorpSigningData(sourceLinkId, targetLinkId str
 			// 迁移 PDF 文件
 			if summary.HasPDF {
 				if err := s.migrateCorpPDF(oldId, newCorpSigning.Id); err != nil {
-					logs.Error("Failed to migrate PDF for corp signing %s: %v", oldId, err)
+					log.Error("failed to migrate corp signing PDF", "corp_signing_id", oldId, "error", err)
 				}
 			}
 		}
 		// 添加日志记录迁移进度
 		currentProgress := offset + len(corpSigningSummaries)
-		logs.Info("企业签名迁移进度: %d/%d (%.1f%%)", currentProgress, totalCount, float64(currentProgress)/float64(totalCount)*100)
+		log.Info("corp signing migration progress", "current", currentProgress, "total", totalCount)
 	}
 	return nil
 }
@@ -223,13 +224,13 @@ func (s *migrationService) migrateCorpPDF(oldCorpSigningId, newCorpSigningId str
 			return nil
 		}
 		if strings.Contains(err.Error(), "cannot decode") {
-			logs.Warning("PDF data format issue for corp signing %s, skipping: %v", oldCorpSigningId, err)
+			log.Warn("PDF data format issue", "corp_signing_id", oldCorpSigningId, "error", err)
 			return nil
 		}
 		return err
 	}
 	if len(pdfData) == 0 {
-		logs.Warning("Empty PDF data for corp signing %s, skipping", oldCorpSigningId)
+		log.Warn("empty PDF data", "corp_signing_id", oldCorpSigningId)
 		return nil
 	}
 	newCorpSigning, err := s.corpRepo.Find(newCorpSigningId)
@@ -260,14 +261,15 @@ func (s *migrationService) migrateIndividualSigningData(sourceLinkId, targetLink
 			if err := s.individualRepo.AddForMigrate(&newIndividualSigning); err != nil {
 				// 特别检查是否是文档已存在的错误
 				if strings.Contains(err.Error(), "doc exists") || strings.Contains(err.Error(), "document exists") {
-					logs.Error("文档已存在错误: 可能重复迁移或ID冲突, newId=%s", individualSigning.Link.Id)
+					log.Error("document exists error: possible duplicate migration or ID conflict",
+						"new_id", individualSigning.Link.Id, "error", err)
 				}
 				return err
 			}
 		}
 
 		// 添加日志记录迁移进度
-		logs.Info("Migrated %d/%d individual signings", offset+len(individualSignings), totalCount)
+		log.Info("individual signing migration progress", "current", offset+len(individualSignings), "total", totalCount)
 	}
 
 	return nil
@@ -321,7 +323,7 @@ func (s *migrationService) cloneCorpSigning(original *domain.CorpSigning, newLin
 	if v, ok := claIdMap[original.Link.CLAId]; ok {
 		clone.Link.CLAId = v
 	} else {
-		logs.Warning("CLA ID mapping not found for %s, setting to empty", original.Link.CLAId)
+		log.Warn("CLA ID mapping not found", "cla_id", original.Link.CLAId)
 		clone.Link.CLAId = ""
 	}
 	return clone
@@ -335,7 +337,7 @@ func (s *migrationService) cloneIndividualSigning(original *domain.IndividualSig
 	if v, ok := claIdMap[original.Link.CLAId]; ok {
 		clone.Link.CLAId = v
 	} else {
-		logs.Warning("CLA ID mapping not found for %s, setting to empty", original.Link.CLAId)
+		log.Warn("CLA ID mapping not found", "cla_id", original.Link.CLAId)
 		clone.Link.CLAId = "0"
 	}
 	return clone

@@ -21,6 +21,9 @@ func CorpSigningIndexes() []mongo.IndexModel {
 		{Keys: bson.D{{Key: fieldLinkId, Value: 1}}},
 		// Compound index for the adminAdded filter (link_id + admin.id).
 		{Keys: bson.D{{Key: fieldLinkId, Value: 1}, {Key: "admin.id", Value: 1}}},
+		// Compound index to support FindPage's $match(link_id) + $sort(date: -1),
+		// so the sort can be served by the index instead of an in-memory sort.
+		{Keys: bson.D{{Key: fieldLinkId, Value: 1}, {Key: fieldDate, Value: -1}}},
 	}
 }
 

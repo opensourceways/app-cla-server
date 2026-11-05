@@ -1,6 +1,10 @@
 package domain
 
-import "github.com/opensourceways/app-cla-server/signing/domain/dp"
+import (
+	"time"
+
+	"github.com/opensourceways/app-cla-server/signing/domain/dp"
+)
 
 const (
 	RoleAdmin   = "admin"
@@ -95,6 +99,7 @@ func (cs *CorpSigning) CanSetAdmin() error {
 func (cs *CorpSigning) SetAdmin(adminId string) {
 	cs.Admin.Id = adminId
 	cs.Admin.Representative = cs.Rep
+	cs.Admin.Date = time.Now().Format("2006-01-02")
 }
 
 func (cs *CorpSigning) AddEmailDomain(email dp.EmailAddr) error {

@@ -1,7 +1,10 @@
 package repositoryimpl
 
 import (
+	"regexp"
+
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 
 	commonRepo "github.com/opensourceways/app-cla-server/common/domain/repository"
@@ -238,10 +241,11 @@ func isEmail(query string) bool {
 func (impl *corpSigning) FindPage(linkId string, intPage, intPageSize int, adminAdded bool, searchQuery string) (repository.CorpSigningSummaryPage, error) {
 	filter := linkIdFilter(linkId)
 	if searchQuery != "" {
+		regex := primitive.Regex{Pattern: regexp.QuoteMeta(searchQuery), Options: "i"}
 		if isEmail(searchQuery) {
-			filter[childField(fieldRep, fieldEmail)] = searchQuery
+			filter[childField(fieldRep, fieldEmail)] = regex
 		} else {
-			filter[childField(fieldCorp, fieldName)] = searchQuery
+			filter[childField(fieldCorp, fieldName)] = regex
 		}
 	}
 
@@ -268,11 +272,9 @@ func (impl *corpSigning) FindPage(linkId string, intPage, intPageSize int, admin
 		fieldClaNotifyTime:  1,
 	}
 
-	// Single aggregation round-trip: $facet returns both total count and the
-	// requested page in one network call, replacing the previous two serial
-	// queries (CountDocuments + Find).
 	pipeline := bson.A{
 		bson.M{"$match": filter},
+		bson.M{"$sort": bson.D{{Key: fieldDate, Value: -1}}},
 		bson.M{"$facet": bson.M{
 			"total": bson.A{
 				bson.M{"$count": "n"},

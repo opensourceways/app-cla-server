@@ -31,7 +31,7 @@ type CorpSigningSummaryPage struct {
 
 type CorpSummary struct {
 	CorpName      dp.CorpName
-	HasManager    bool
+	HasAdmin      bool
 	CorpSigningId string
 }
 

@@ -30,13 +30,13 @@ func (f *fakeCorpSigningRepoForSummary) FindCorpSummary(linkId, domain string) (
 
 // ---- FindCorpSummary ----
 
-func TestFindCorpSummaryOnlyReturnsCorpsWithManager(t *testing.T) {
+func TestFindCorpSummaryOnlyReturnsCorpsWithAdmin(t *testing.T) {
 	repo := &fakeCorpSigningRepoForSummary{
 		findCorpSummaryFn: func(linkId, domain string) ([]repository.CorpSummary, error) {
 			return []repository.CorpSummary{
-				{CorpName: dp.CreateCorpName("approved corp"), HasManager: true, CorpSigningId: "cs1"},
+				{CorpName: dp.CreateCorpName("approved corp"), HasAdmin: true, CorpSigningId: "cs1"},
 				{CorpName: dp.CreateCorpName("pending corp"), CorpSigningId: "cs2"},
-				{CorpName: dp.CreateCorpName("approved corp 2"), HasManager: true, CorpSigningId: "cs3"},
+				{CorpName: dp.CreateCorpName("approved corp 2"), HasAdmin: true, CorpSigningId: "cs3"},
 			}, nil
 		},
 	}
@@ -71,7 +71,37 @@ func TestFindCorpSummaryOnlyReturnsCorpsWithManager(t *testing.T) {
 	}
 }
 
-func TestFindCorpSummaryAllPendingReturnsEmpty(t *testing.T) {
+func TestFindCorpSummaryReturnsCorpWithAdminButNoManagers(t *testing.T) {
+	// Regression: a corp that has a super admin email but no employee managers
+	// must still be returned, so employees can sign (the admin can approve).
+	repo := &fakeCorpSigningRepoForSummary{
+		findCorpSummaryFn: func(linkId, domain string) ([]repository.CorpSummary, error) {
+			return []repository.CorpSummary{
+				{CorpName: dp.CreateCorpName("admin only corp"), HasAdmin: true, CorpSigningId: "cs1"},
+			}, nil
+		},
+	}
+
+	s := &corpSigningService{repo: repo}
+
+	cmd := &CmdToFindCorpSummary{
+		LinkId:    "link1",
+		EmailAddr: dp.CreateEmailAddr("dev@example.com"),
+	}
+
+	r, err := s.FindCorpSummary(cmd)
+	if err != nil {
+		t.Fatalf("FindCorpSummary: unexpected error %v", err)
+	}
+	if len(r) != 1 {
+		t.Fatalf("result count: got %d, want 1 (admin-only corp must be returned)", len(r))
+	}
+	if r[0].CorpName != "admin only corp" || r[0].CorpSigningId != "cs1" {
+		t.Errorf("r[0]: got %s/%s, want admin only corp/cs1", r[0].CorpName, r[0].CorpSigningId)
+	}
+}
+
+func TestFindCorpSummaryAllWithoutAdminReturnsEmpty(t *testing.T) {
 	repo := &fakeCorpSigningRepoForSummary{
 		findCorpSummaryFn: func(linkId, domain string) ([]repository.CorpSummary, error) {
 			return []repository.CorpSummary{

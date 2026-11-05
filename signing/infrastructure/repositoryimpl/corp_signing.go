@@ -133,7 +133,7 @@ func (impl *corpSigning) FindCorpSummary(linkId, domain string) ([]repository.Co
 
 	var dos []corpSigningDO
 
-	if err := impl.dao.GetDocs(filter, bson.M{fieldCorp: 1, fieldManagers: 1}, &dos); err != nil {
+	if err := impl.dao.GetDocs(filter, bson.M{fieldCorp: 1, fieldAdmin: 1}, &dos); err != nil {
 		return nil, err
 	}
 
@@ -144,7 +144,7 @@ func (impl *corpSigning) FindCorpSummary(linkId, domain string) ([]repository.Co
 
 		v[i] = repository.CorpSummary{
 			CorpName:      corp.Name,
-			HasManager:    len(item.Managers) > 0,
+			HasAdmin:      item.Admin.Email != "",
 			CorpSigningId: item.index(),
 		}
 	}

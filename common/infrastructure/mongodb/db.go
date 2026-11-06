@@ -6,11 +6,13 @@ import (
 	"crypto/x509"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"os"
 	"time"
 
 	"github.com/opensourceways/app-cla-server/util"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/event"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -37,6 +39,12 @@ func Init(cfg *Config) error {
 
 	clientOpts := options.Client().ApplyURI(cfg.Conn)
 	clientOpts.SetTLSConfig(tlsConfig)
+	clientOpts.SetMonitor(&event.CommandMonitor{
+		Started: func(ctx context.Context, evt *event.CommandStartedEvent) {
+			log.Printf("[mongo] %s | database=%s | command=%v\n",
+				evt.CommandName, evt.DatabaseName, evt.Command)
+		},
+	})
 
 	c, err := mongo.Connect(context.TODO(), clientOpts)
 	if err != nil {

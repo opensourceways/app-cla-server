@@ -11,13 +11,15 @@ const fieldId = "id"
 func toManagerDO(m *domain.Manager) managerDO {
 	return managerDO{
 		Id:    m.Id,
+		Date:  m.Date,
 		RepDO: toRepDO(&m.Representative),
 	}
 }
 
 // managerDO
 type managerDO struct {
-	Id string `bson:"id" json:"id"`
+	Id   string `bson:"id"   json:"id"`
+	Date string `bson:"date" json:"date"`
 
 	RepDO `bson:",inline"`
 }
@@ -33,6 +35,7 @@ func (do *managerDO) toManager() domain.Manager {
 
 	return domain.Manager{
 		Id:             do.Id,
+		Date:           do.Date,
 		Representative: do.RepDO.toRep(),
 	}
 }

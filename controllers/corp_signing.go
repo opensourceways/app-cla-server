@@ -260,6 +260,51 @@ func (ctl *CorporationSigningController) GetPage() {
 	}
 }
 
+// @Title ExportCSV
+// @Description export corp signing list as csv
+// @Tags CorpSigning
+// @Accept json
+// @Param  link_id      path  string  true  "link id"
+// @Param  admin_added  query bool    false  "filter by admin added" default(false)
+// @Success 200 file
+// @Failure 400 missing_url_path_parameter: missing url path parameter
+// @Failure 401 missing_token:              token is missing
+// @Failure 402 unknown_token:              token is unknown
+// @Failure 403 expired_token:              token is expired
+// @Failure 404 unauthorized_token:         the permission of token is unmatched
+// @Failure 405 unknown_link:               unkown link id
+// @Failure 406 not_yours_org:              the link doesn't belong to your community
+// @Failure 500 system_error:               system error
+// @router /export/:link_id [get]
+func (ctl *CorporationSigningController) ExportCSV() {
+	action := "community manager exports corp signings as csv"
+	linkID := ctl.GetString(":link_id")
+	adminAdded, _ := ctl.GetBool("admin_added", false)
+
+	pl, fr := ctl.tokenPayloadBasedOnCorpManager()
+	if fr != nil {
+		ctl.sendFailedResultAsResp(fr, action)
+		return
+	}
+
+	data, merr := models.ExportCorpSigningCSV(pl.UserId, linkID, adminAdded)
+	if merr != nil {
+		ctl.sendModelErrorAsResp(merr, action)
+		return
+	}
+
+	var filename string
+	if adminAdded {
+		filename = "corp_signings_completed.csv"
+	} else {
+		filename = "corp_signings_pending.csv"
+	}
+
+	ctl.Ctx.Output.Header("Content-Type", "text/csv; charset=utf-8")
+	ctl.Ctx.Output.Header("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", filename))
+	ctl.Ctx.Output.Body(data)
+}
+
 // @Title ListDeleted
 // @Description get all the corporations which have been deleted
 // @Tags CorpSigning

@@ -95,6 +95,9 @@ func TestCorpSigningSetAdmin(t *testing.T) {
 	if cs.Admin.Representative.Name.Name() != "John" {
 		t.Errorf("Admin.Name: got %s, want John", cs.Admin.Name.Name())
 	}
+	if cs.Admin.Date == "" {
+		t.Error("Admin.Date should be set after SetAdmin")
+	}
 }
 
 func TestCorpSigningIsAdmin(t *testing.T) {

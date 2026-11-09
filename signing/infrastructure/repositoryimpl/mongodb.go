@@ -12,6 +12,7 @@ const (
 	mongodbCmdIn        = "$in"
 	mongodbCmdLt        = "$lt"
 	mongodbCmdElemMatch = "$elemMatch"
+	mongodbCmdNe        = "$ne"
 )
 
 type anyDoc = map[string]string

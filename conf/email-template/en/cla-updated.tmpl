@@ -1,4 +1,5 @@
-Dear {{.AdminName}},
+{{define "subject"}}CLA has been updated{{end}}
+{{define "body"}}Dear {{.AdminName}},
 
 A new version of CLA is published. Please login to the CLA management system to see the details.
 
@@ -8,4 +9,4 @@ The CLA management system login URL:
 Have questions or need help? Just reply to this email and the {{.Org}} Community Support Team will help you sort it out.
 
 Address of the {{.Org}} Project:
-  {{.ProjectURL}}
+  {{.ProjectURL}}{{end}}

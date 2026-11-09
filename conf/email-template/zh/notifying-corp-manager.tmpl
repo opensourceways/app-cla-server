@@ -1,0 +1,11 @@
+{{define "subject"}}有员工签署了CLA{{end}}
+{{define "body"}}尊敬的管理员，
+
+您公司邮箱为 {{.EmployeeEmail}} 的员工刚刚在"{{.Org}}"项目[1]上签署了CLA。请及时登录CLA管理系统激活该员工的贡献权限。
+
+CLA管理系统登录地址：
+  {{.URLOfCLAPlatform}}
+
+如有疑问或需要帮助，请直接回复此邮件，{{.Org}} 社区支持团队将为您提供帮助。
+
+[1]. {{.ProjectURL}}{{end}}

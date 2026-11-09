@@ -483,14 +483,14 @@ func (ctl *CorporationSigningController) UpdateAutoApproval() {
 		direction = "open"
 	}
 
-	ctl.sendAutoApprovalEmail(pl.LinkID, pl.SigningId, direction, enabled)
+	ctl.sendAutoApprovalEmail(pl.LinkID, pl.SigningId, enabled)
 
 	ctl.addOperationLog(pl.UserId, "corp admin "+direction+" auto-approval", 200)
 
 	ctl.sendSuccessResp(action, "successfully")
 }
 
-func (ctl *CorporationSigningController) sendAutoApprovalEmail(linkId, signingId, direction string, enabled bool) {
+func (ctl *CorporationSigningController) sendAutoApprovalEmail(linkId, signingId string, enabled bool) {
 	orgInfo, merr := models.GetLink(linkId)
 	if merr != nil {
 		log.ErrorContext(ctl.Ctx.Request.Context(), "failed to get org info for auto-approval email", "error", merr)
@@ -508,25 +508,29 @@ func (ctl *CorporationSigningController) sendAutoApprovalEmail(linkId, signingId
 		to = append(to, item.Email)
 	}
 
-	subject := fmt.Sprintf(
-		"Auto-approval %s on project of \"%s\"",
-		direction, orgInfo.OrgAlias,
-	)
+	lang := ""
+	if pl, fr := ctl.tokenPayloadBasedOnCorpManager(); fr == nil {
+		if _, cs, merr := models.GetCorpSigning(pl.UserId, signingId, dp.CreateEmailAddr(pl.Email)); merr == nil {
+			lang = cs.CLALanguage
+		}
+	}
 
 	if enabled {
 		msg := emailtmpl.AutoApprovalEnabled{
+			Lang:             lang,
 			Org:              orgInfo.OrgAlias,
 			ProjectURL:       orgInfo.ProjectURL,
 			URLOfCLAPlatform: config.signingURL(linkId),
 		}
-		sendEmail(to, &orgInfo, subject, &msg)
+		sendEmail(to, &orgInfo, &msg)
 	} else {
 		msg := emailtmpl.AutoApprovalDisabled{
+			Lang:             lang,
 			Org:              orgInfo.OrgAlias,
 			ProjectURL:       orgInfo.ProjectURL,
 			URLOfCLAPlatform: config.signingURL(linkId),
 		}
-		sendEmail(to, &orgInfo, subject, &msg)
+		sendEmail(to, &orgInfo, &msg)
 	}
 }
 

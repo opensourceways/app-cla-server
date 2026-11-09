@@ -1,4 +1,5 @@
-Dear {{.User}},
+{{define "subject"}}Account on project of "{{.Org}}"{{end}}
+{{define "body"}}Dear {{.User}},
 
 You are authorized by your company to manage the CLA signing of employees who will contribute to the project[1]. You will receive an email notification when an employee signs the CLA. Then you can login the CLA management system to accept or reject that CLA signing of employee.
 
@@ -11,4 +12,4 @@ The CLA management system login URL:
 
 Have questions or need help? Just reply to this email and the {{.Org}} Community Support Team will help you sort it out.
 
-[1]. {{.ProjectURL}}
+[1]. {{.ProjectURL}}{{end}}

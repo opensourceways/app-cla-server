@@ -82,8 +82,8 @@ func (ctl *PasswordRetrievalController) Post() {
 	sendEmailToIndividual(
 		info.Email,
 		&orgInfo,
-		"[CLA Sign] Retrieving Password",
 		emailtmpl.PasswordRetrieval{
+			Lang:         "",
 			Org:          orgInfo.OrgAlias,
 			Timeout:      config.PasswordRetrievalExpiry / 60,
 			ResetURL:     genURLToResetPassword(info.LinkId, key),

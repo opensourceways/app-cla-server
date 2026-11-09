@@ -2,7 +2,6 @@ package controllers
 
 import (
 	"errors"
-	"fmt"
 
 	"github.com/opensourceways/app-cla-server/models"
 	"github.com/opensourceways/app-cla-server/signing/infrastructure/emailtmpl"
@@ -43,21 +42,19 @@ func (ctl *baseController) sendVerificationCodeWhenSigning(
 
 	sendEmailToIndividual(
 		req.Email, &orgInfo,
-		fmt.Sprintf(
-			"Verification code for signing CLA on project of \"%s\"",
-			orgInfo.OrgAlias,
-		),
 		&emailtmpl.VerificationCode{
-			Email:      req.Email,
-			Org:        orgInfo.OrgAlias,
-			Code:       code,
-			ProjectURL: orgInfo.ProjectURL,
+			Lang:        req.Language,
+			Email:       req.Email,
+			Org:         orgInfo.OrgAlias,
+			Code:        code,
+			ProjectURL:  orgInfo.ProjectURL,
 		},
 	)
 }
 
 type verificationCodeRequest struct {
-	Email string `json:"email" required:"true"`
+	Email    string `json:"email" required:"true"`
+	Language string `json:"language"`
 }
 
 func (req *verificationCodeRequest) validate() error {

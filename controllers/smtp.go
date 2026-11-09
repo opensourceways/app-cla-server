@@ -39,6 +39,7 @@ func (ctl *SMTPController) Verify() {
 	}
 
 	e := emailtmpl.EmailVerification{
+		Lang: "",
 		Code: code,
 	}
 	msg, err := e.GenEmailMsg()
@@ -50,7 +51,6 @@ func (ctl *SMTPController) Verify() {
 
 	msg.From = info.Email
 	msg.To = []string{info.Email}
-	msg.Subject = "CLA Email authorization verification code"
 
 	if err = smtpimpl.SMTP().Send(info.Authorize, &msg); err != nil {
 		ctl.sendFailedResponse(400, errInvalidEmailAuthCode, err, action)

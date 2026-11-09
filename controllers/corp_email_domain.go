@@ -74,12 +74,12 @@ func (ctl *CorpEmailDomainController) Verify() {
 
 	sendEmailToIndividual(
 		req.Email, &orgInfo,
-		"Verification code for adding corporation's another email domain",
 		emailtmpl.AddingCorpEmailDomain{
-			Corp:       cs.CorporationName,
-			Org:        orgInfo.OrgAlias,
-			Code:       code,
-			ProjectURL: orgInfo.ProjectURL,
+			Lang:        "",
+			Corp:        cs.CorporationName,
+			Org:         orgInfo.OrgAlias,
+			Code:        code,
+			ProjectURL:  orgInfo.ProjectURL,
 		},
 	)
 }

@@ -1,4 +1,5 @@
-Dear {{.AdminName}},
+{{define "subject"}}Signing Corporation CLA on project of "{{.Org}}"{{end}}
+{{define "body"}}Dear {{.AdminName}},
 
 Thanks for your interests on the project[1] of {{.Org}}!
 
@@ -11,4 +12,4 @@ The CLA content signed by the {{.AdminName}} is attached to the email.
 
 Have questions or need help? Just reply to this email and the {{.Org}} Community Support Team will help you sort it out.
 
-[1]. {{.ProjectURL}}
+[1]. {{.ProjectURL}}{{end}}

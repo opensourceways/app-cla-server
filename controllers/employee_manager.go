@@ -1,8 +1,6 @@
 package controllers
 
 import (
-	"fmt"
-
 	"github.com/opensourceways/app-cla-server/models"
 	"github.com/opensourceways/app-cla-server/signing/infrastructure/emailtmpl"
 )
@@ -94,15 +92,14 @@ func (ctl *EmployeeManagerController) Delete() {
 
 	ctl.sendSuccessResp(action, "successfully")
 
-	subject := fmt.Sprintf("Revoking the authorization on project of \"%s\"", orgInfo.OrgAlias)
-
 	for _, item := range deleted {
 		msg := emailtmpl.RemovingCorpManager{
-			User:       item.Name,
-			Org:        orgInfo.OrgAlias,
-			ProjectURL: orgInfo.ProjectURL,
+			Lang:        "",
+			User:        item.Name,
+			Org:         orgInfo.OrgAlias,
+			ProjectURL:  orgInfo.ProjectURL,
 		}
-		sendEmailToIndividual(item.Email, &orgInfo, subject, &msg)
+		sendEmailToIndividual(item.Email, &orgInfo, &msg)
 	}
 }
 

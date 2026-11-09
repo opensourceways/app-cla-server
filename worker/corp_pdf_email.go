@@ -117,11 +117,12 @@ func (impl *corpPDFEmail) genEmailTmpl() {
 	signing := &impl.signing
 
 	impl.tmpl = emailtmpl.CorporationSigning{
-		Org:         orgInfo.OrgAlias,
-		Date:        signing.Date,
-		AdminName:   signing.AdminName,
-		ProjectURL:  orgInfo.ProjectURL,
-		SigningInfo: buildCorpSigningInfo(signing, impl.claInfo.Fields),
+		Lang:         signing.CLALanguage,
+		Org:          orgInfo.OrgAlias,
+		Date:         signing.Date,
+		AdminName:    signing.AdminName,
+		ProjectURL:   orgInfo.ProjectURL,
+		SigningInfo:  buildCorpSigningInfo(signing, impl.claInfo.Fields),
 	}
 
 	impl.tmplDone = true
@@ -139,9 +140,6 @@ func (impl *corpPDFEmail) genMsg() error {
 		return fmt.Errorf("error to gen email msg, err:%s", err.Error())
 	}
 
-	msg.Subject = fmt.Sprintf(
-		"Signing Corporation CLA on project of \"%s\"", impl.orgInfo.OrgAlias,
-	)
 	msg.To = []string{impl.signing.AdminEmail}
 	msg.From = impl.orgInfo.OrgEmail
 	msg.Attachment = impl.pdfFilePath

@@ -1441,6 +1441,8 @@ definitions:
     properties:
       email:
         type: string
+      language:
+        type: string
   models.CLACreateOpt:
     title: CLACreateOpt
     type: object

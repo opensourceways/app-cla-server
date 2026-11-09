@@ -130,6 +130,7 @@ func (impl *corpSigning) Find(index string) (cs domain.CorpSigning, err error) {
 func (impl *corpSigning) FindCorpSummary(linkId, domain string) ([]repository.CorpSummary, error) {
 	filter := linkIdFilter(linkId)
 	filter[childField(fieldCorp, fieldDomains)] = bson.M{mongodbCmdIn: bson.A{domain}}
+	filter[childField(fieldAdmin, fieldEmail)] = bson.M{mongodbCmdNe: ""}
 
 	var dos []corpSigningDO
 
@@ -144,7 +145,6 @@ func (impl *corpSigning) FindCorpSummary(linkId, domain string) ([]repository.Co
 
 		v[i] = repository.CorpSummary{
 			CorpName:      corp.Name,
-			HasAdmin:      item.Admin.Email != "",
 			CorpSigningId: item.index(),
 		}
 	}

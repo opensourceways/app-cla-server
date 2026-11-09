@@ -9,9 +9,8 @@ import (
 )
 
 // TestCorpSigningFindCorpSummary covers the infrastructure-layer FindCorpSummary,
-// whose projection (fieldAdmin) and HasAdmin flag (item.Admin.Email != "") were
-// changed in this round. It reuses the in-package fakeDAO so no real MongoDB is
-// required.
+// whose projection (fieldAdmin) was changed in this round. It reuses the
+// in-package fakeDAO so no real MongoDB is required.
 func TestCorpSigningFindCorpSummary(t *testing.T) {
 	t.Run("builds the expected filter and projection", func(t *testing.T) {
 		var gotFilter, gotProject bson.M
@@ -48,6 +47,16 @@ func TestCorpSigningFindCorpSummary(t *testing.T) {
 			t.Errorf("filter %s $in = %#v, want [example.com]", domainField, domainCond[mongodbCmdIn])
 		}
 
+		// 只查询通过审批的企业，即 admin.email 不为空
+		adminEmailField := childField(fieldAdmin, fieldEmail)
+		adminEmailCond, ok := gotFilter[adminEmailField].(bson.M)
+		if !ok {
+			t.Fatalf("filter %s type = %T, want bson.M", adminEmailField, gotFilter[adminEmailField])
+		}
+		if adminEmailCond["$ne"] != "" {
+			t.Errorf("filter %s $ne = %#v, want empty string", adminEmailField, adminEmailCond["$ne"])
+		}
+
 		// The projection must project corp and admin (the super admin), not the
 		// legacy managers array.
 		if gotProject[fieldCorp] != 1 || gotProject[fieldAdmin] != 1 {
@@ -58,7 +67,7 @@ func TestCorpSigningFindCorpSummary(t *testing.T) {
 		}
 	})
 
-	t.Run("HasAdmin is true when admin email is set", func(t *testing.T) {
+	t.Run("returns summary with corp name and signing id", func(t *testing.T) {
 		id := primitive.NewObjectID()
 
 		impl := NewCorpSigning(&fakeDAO{
@@ -80,41 +89,8 @@ func TestCorpSigningFindCorpSummary(t *testing.T) {
 		if len(v) != 1 {
 			t.Fatalf("result count: got %d, want 1", len(v))
 		}
-		if !v[0].HasAdmin {
-			t.Error("HasAdmin should be true when admin email is set")
-		}
 		if v[0].CorpName.CorpName() != "approved corp" {
 			t.Errorf("CorpName = %q, want approved corp", v[0].CorpName.CorpName())
-		}
-		if v[0].CorpSigningId != id.Hex() {
-			t.Errorf("CorpSigningId = %q, want %q", v[0].CorpSigningId, id.Hex())
-		}
-	})
-
-	t.Run("HasAdmin is false when admin email is empty", func(t *testing.T) {
-		id := primitive.NewObjectID()
-
-		impl := NewCorpSigning(&fakeDAO{
-			getDocsFn: func(filter, project bson.M, result interface{}) error {
-				dos := result.(*[]corpSigningDO)
-				*dos = []corpSigningDO{{
-					Id:    id,
-					Corp:  corpDO{Name: "pending corp", Domain: "example.com", Domains: []string{"example.com"}},
-					Admin: managerDO{Id: "", RepDO: RepDO{Email: ""}},
-				}}
-				return nil
-			},
-		})
-
-		v, err := impl.FindCorpSummary("link1", "example.com")
-		if err != nil {
-			t.Fatalf("FindCorpSummary: unexpected error %v", err)
-		}
-		if len(v) != 1 {
-			t.Fatalf("result count: got %d, want 1", len(v))
-		}
-		if v[0].HasAdmin {
-			t.Error("HasAdmin should be false when admin email is empty")
 		}
 		if v[0].CorpSigningId != id.Hex() {
 			t.Errorf("CorpSigningId = %q, want %q", v[0].CorpSigningId, id.Hex())
@@ -130,7 +106,7 @@ func TestCorpSigningFindCorpSummary(t *testing.T) {
 				dos := result.(*[]corpSigningDO)
 				*dos = []corpSigningDO{
 					{Id: id1, Corp: corpDO{Name: "corp a"}, Admin: managerDO{RepDO: RepDO{Email: "a@x.com"}}},
-					{Id: id2, Corp: corpDO{Name: "corp b"}, Admin: managerDO{}},
+					{Id: id2, Corp: corpDO{Name: "corp b"}, Admin: managerDO{RepDO: RepDO{Email: "b@x.com"}}},
 				}
 				return nil
 			},
@@ -143,11 +119,11 @@ func TestCorpSigningFindCorpSummary(t *testing.T) {
 		if len(v) != 2 {
 			t.Fatalf("result count: got %d, want 2", len(v))
 		}
-		if v[0].CorpName.CorpName() != "corp a" || !v[0].HasAdmin || v[0].CorpSigningId != id1.Hex() {
-			t.Errorf("v[0] = %+v, want corp a/true/%s", v[0], id1.Hex())
+		if v[0].CorpName.CorpName() != "corp a" || v[0].CorpSigningId != id1.Hex() {
+			t.Errorf("v[0] = %+v, want corp a/%s", v[0], id1.Hex())
 		}
-		if v[1].CorpName.CorpName() != "corp b" || v[1].HasAdmin || v[1].CorpSigningId != id2.Hex() {
-			t.Errorf("v[1] = %+v, want corp b/false/%s", v[1], id2.Hex())
+		if v[1].CorpName.CorpName() != "corp b" || v[1].CorpSigningId != id2.Hex() {
+			t.Errorf("v[1] = %+v, want corp b/%s", v[1], id2.Hex())
 		}
 	})
 

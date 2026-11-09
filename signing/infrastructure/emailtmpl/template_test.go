@@ -49,10 +49,15 @@ func TestNormalizeLang(t *testing.T) {
 		{"English", langEN},
 		{"", langEN},
 		{"xx", langEN},
-		{"chinese", langEN},
+		{"chinese", langZH},
+		{"CHINESE", langZH},
+		{"ChInEsE", langZH},
 		{"ENGLISH", langEN},
+		{"english", langEN},
 		{"zh", langZH},
+		{"ZH", langZH},
 		{"en", langEN},
+		{"EN", langEN},
 	}
 	for _, tt := range tests {
 		t.Run(tt.input, func(t *testing.T) {

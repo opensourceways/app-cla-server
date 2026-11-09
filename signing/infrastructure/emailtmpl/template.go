@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"os"
+	"strings"
 	"text/template"
 
 	"github.com/opensourceways/obs-sdk/go/log"
@@ -96,10 +97,10 @@ func Init() error {
 }
 
 func NormalizeLang(v string) string {
-	switch v {
-	case "Chinese", langZH:
+	switch strings.ToLower(v) {
+	case "chinese", langZH:
 		return langZH
-	case "English", langEN:
+	case "english", langEN:
 		return langEN
 	default:
 		return langEN

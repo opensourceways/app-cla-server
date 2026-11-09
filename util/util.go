@@ -142,3 +142,8 @@ func CheckContentType(data []byte, t string) bool {
 
 	return strings.Contains(strings.ToLower(s), t)
 }
+
+func FormatFileSize(bytes int) string {
+	const mb = 1024 * 1024
+	return fmt.Sprintf("%d MB", bytes/mb)
+}

@@ -16,6 +16,10 @@ type CorporationSigningController struct {
 	baseController
 }
 
+type corpSigningResp struct {
+	PDFMaxSize int `json:"pdf_max_size"`
+}
+
 func (ctl *CorporationSigningController) Prepare() {
 	v := ctl.routerPattern()
 	if strings.HasSuffix(v, ":link_id/corps/:email") || ctl.isPostRequest() {
@@ -103,10 +107,12 @@ func (ctl *CorporationSigningController) Sign() {
 	v := info.ToCorporationSigning()
 
 	worker.GetEmailWorker().GenCLAPDFForCorporationAndSendIt(
-		linkID, &orgInfo, &claInfo, &v,
+		linkID, &orgInfo, &claInfo, &v, config.MaxSizeOfCorpCLAPDF,
 	)
 
-	ctl.sendSuccessResp(action, "successfully")
+	ctl.sendSuccessResp(action, corpSigningResp{
+		PDFMaxSize: config.MaxSizeOfCorpCLAPDF,
+	})
 }
 
 // @Title Delete
@@ -174,7 +180,7 @@ func (ctl *CorporationSigningController) ResendCorpSigningEmail() {
 	}
 
 	worker.GetEmailWorker().GenCLAPDFForCorporationAndSendIt(
-		linkId, &orgInfo, &claInfo, &signingInfo,
+		linkId, &orgInfo, &claInfo, &signingInfo, config.MaxSizeOfCorpCLAPDF,
 	)
 
 	ctl.sendSuccessResp(action, "successfully")

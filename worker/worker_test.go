@@ -4,7 +4,10 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/opensourceways/app-cla-server/models"
 	"github.com/opensourceways/app-cla-server/signing/domain/emailservice"
+	"github.com/opensourceways/app-cla-server/util"
+	"github.com/stretchr/testify/assert"
 )
 
 // fakeEmailService 注册到 emailservice，替代真实 SMTP，记录调用次数并可注入返回错误。
@@ -84,4 +87,62 @@ func TestSendSimpleMessageFailure(t *testing.T) {
 	if fake.calls < 1 {
 		t.Fatalf("expected email service called at least once, got %d", fake.calls)
 	}
+}
+
+// TestCorpPDFEmailGenEmailTmplSetsPDFSizeLimit verifies that genEmailTmpl
+// sets tmpl.PDFSizeLimit to the formatted value of pdfMaxSize.
+func TestCorpPDFEmailGenEmailTmplSetsPDFSizeLimit(t *testing.T) {
+	impl := &corpPDFEmail{
+		linkID: "test-link-id",
+		orgInfo: models.OrgInfo{
+			OrgAlias:    "test-org",
+			ProjectURL:  "http://project.example.com",
+		},
+		claInfo: models.CLAInfo{
+			Fields: []models.CLAField{{ID: "corp", Title: "Corporation"}},
+		},
+		signing: models.CorporationSigning{
+			CorporationSigningBasicInfo: models.CorporationSigningBasicInfo{
+				AdminName: "admin",
+				Date:      "2024-01-01",
+			},
+			Info: models.TypeSigningInfo{"corp": "Test Corp"},
+		},
+		pdfMaxSize: 5242880,
+	}
+
+	impl.genEmailTmpl()
+
+	assert.Equal(t, util.FormatFileSize(5242880), impl.tmpl.PDFSizeLimit)
+	assert.True(t, impl.tmplDone)
+}
+
+// TestCorpPDFEmailGenEmailTmplZeroSize verifies that genEmailTmpl handles
+// zero pdfMaxSize without panicking.
+func TestCorpPDFEmailGenEmailTmplZeroSize(t *testing.T) {
+	impl := &corpPDFEmail{
+		orgInfo: models.OrgInfo{OrgAlias: "test-org"},
+		pdfMaxSize: 0,
+	}
+
+	impl.genEmailTmpl()
+
+	assert.Equal(t, "0 MB", impl.tmpl.PDFSizeLimit)
+}
+
+// TestCorpPDFEmailGenEmailTmplIsIdempotent verifies that calling genEmailTmpl
+// twice does not overwrite the already-set template.
+func TestCorpPDFEmailGenEmailTmplIsIdempotent(t *testing.T) {
+	impl := &corpPDFEmail{
+		orgInfo: models.OrgInfo{OrgAlias: "test-org"},
+		pdfMaxSize: 8388608,
+	}
+
+	impl.genEmailTmpl()
+	first := impl.tmpl.PDFSizeLimit
+
+	impl.pdfMaxSize = 5242880
+	impl.genEmailTmpl()
+
+	assert.Equal(t, first, impl.tmpl.PDFSizeLimit)
 }

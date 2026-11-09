@@ -19,12 +19,14 @@ func newCorpPDFEmail(
 	orgInfo *models.OrgInfo,
 	claInfo *models.CLAInfo,
 	signing *models.CorporationSigning,
+	pdfMaxSize int,
 ) *corpPDFEmail {
 	return &corpPDFEmail{
-		linkID:  linkID,
-		claInfo: *claInfo,
-		orgInfo: *orgInfo,
-		signing: *signing,
+		linkID:      linkID,
+		claInfo:     *claInfo,
+		orgInfo:     *orgInfo,
+		signing:     *signing,
+		pdfMaxSize:  pdfMaxSize,
 	}
 }
 
@@ -46,10 +48,11 @@ type corpPDFEmail struct {
 	tmplDone    bool
 	pdfFilePath string
 
-	linkID  string
-	claInfo models.CLAInfo
-	orgInfo models.OrgInfo
-	signing models.CorporationSigning
+	linkID      string
+	claInfo     models.CLAInfo
+	orgInfo     models.OrgInfo
+	signing     models.CorporationSigning
+	pdfMaxSize  int
 }
 
 func (impl *corpPDFEmail) do() error {
@@ -117,11 +120,12 @@ func (impl *corpPDFEmail) genEmailTmpl() {
 	signing := &impl.signing
 
 	impl.tmpl = emailtmpl.CorporationSigning{
-		Org:         orgInfo.OrgAlias,
-		Date:        signing.Date,
-		AdminName:   signing.AdminName,
-		ProjectURL:  orgInfo.ProjectURL,
-		SigningInfo: buildCorpSigningInfo(signing, impl.claInfo.Fields),
+		Org:           orgInfo.OrgAlias,
+		Date:          signing.Date,
+		AdminName:     signing.AdminName,
+		ProjectURL:    orgInfo.ProjectURL,
+		SigningInfo:   buildCorpSigningInfo(signing, impl.claInfo.Fields),
+		PDFSizeLimit:  util.FormatFileSize(impl.pdfMaxSize),
 	}
 
 	impl.tmplDone = true

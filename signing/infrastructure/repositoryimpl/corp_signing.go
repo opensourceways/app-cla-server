@@ -234,30 +234,38 @@ func (impl *corpSigning) CountByLinkId(linkId string) (int64, error) {
 	return impl.dao.CountDocs(filter)
 }
 
-// 邮箱验证辅助函数
-func isEmail(query string) bool {
-	// 使用现有的邮箱验证逻辑
-	_, err := dp.NewEmailAddr(query)
-	return err == nil
-}
 
 func (impl *corpSigning) FindPage(linkId string, intPage, intPageSize int, adminAdded bool, searchQuery string) (repository.CorpSigningSummaryPage, error) {
 	filter := linkIdFilter(linkId)
+
+	var searchCond bson.M
 	if searchQuery != "" {
 		regex := primitive.Regex{Pattern: regexp.QuoteMeta(searchQuery), Options: "i"}
-		if isEmail(searchQuery) {
-			filter[childField(fieldRep, fieldEmail)] = regex
-		} else {
-			filter[childField(fieldCorp, fieldName)] = regex
-		}
+		searchCond = bson.M{"$or": []bson.M{
+			{childField(fieldRep, fieldEmail): regex},
+			{childField(fieldCorp, fieldName): regex},
+		}}
 	}
 
+	var adminCond bson.M
 	if adminAdded {
-		filter["admin.id"] = bson.M{"$ne": ""}
+		adminCond = bson.M{"admin.id": bson.M{"$ne": ""}}
 	} else {
-		filter["$or"] = []bson.M{
+		adminCond = bson.M{"$or": []bson.M{
 			{"admin.id": ""},
 			{"admin": bson.M{"$exists": false}},
+		}}
+	}
+
+	if searchCond != nil && adminCond != nil {
+		filter["$and"] = []bson.M{searchCond, adminCond}
+	} else if searchCond != nil {
+		for k, v := range searchCond {
+			filter[k] = v
+		}
+	} else if adminCond != nil {
+		for k, v := range adminCond {
+			filter[k] = v
 		}
 	}
 

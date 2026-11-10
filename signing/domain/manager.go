@@ -11,6 +11,8 @@ type Manager struct {
 	Id string
 	Representative
 
+	Date string
+
 	// to avoid generate repeatly
 	account dp.Account
 }

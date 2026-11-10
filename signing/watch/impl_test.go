@@ -152,8 +152,8 @@ func TestHandleCollectsIndividualSignings(t *testing.T) {
 	if cs.findCalls != 2 {
 		t.Errorf("find calls = %d, want 2", cs.findCalls)
 	}
-	if cs.addEmployeeCall != 2 {
-		t.Errorf("added employees = %d, want 2 (same-day counts, later one skipped)", cs.addEmployeeCall)
+	if cs.addEmployeeCall != 3 {
+		t.Errorf("added employees = %d, want 3 (all matched records collected)", cs.addEmployeeCall)
 	}
 	if ins.removeAllCalls != 1 {
 		t.Errorf("remove calls = %d, want 1", ins.removeAllCalls)
@@ -325,7 +325,10 @@ func TestHandleAbortsWhenResetTriggeredFails(t *testing.T) {
 	}
 }
 
-func TestHandleStillRemovesLaterSignings(t *testing.T) {
+func TestHandleCollectsLaterSignings(t *testing.T) {
+	// 企业申请(cs.Date=2026-01-02)到审批完成(上传PDF触发)期间，
+	// 可能有贡献者以个人身份签署。这些记录的日期晚于cs.Date，
+	// 但仍应被归集为企业员工签署，而不是被直接删除丢失。
 	cs := &fakeCorpSigning{findVersions: []int{3, 3}}
 	ins := &fakeIndividualSigning{
 		records: []domain.IndividualSigning{newIndividual("stu1@uni.edu.cn", "2026-01-03")},
@@ -333,10 +336,9 @@ func TestHandleStillRemovesLaterSignings(t *testing.T) {
 
 	newImpl(cs, ins).handle(triggered())
 
-	if cs.addEmployeeCall != 0 {
-		t.Error("an individual signing later than the corp signing must not be collected")
+	if cs.addEmployeeCall != 1 {
+		t.Error("an individual signing later than the corp signing should still be collected")
 	}
-	// but the existing soft-delete behaviour still applies to it
 	if ins.removeAllCalls != 1 {
 		t.Error("individual signings of the corp domains must still be removed")
 	}
@@ -344,7 +346,7 @@ func TestHandleStillRemovesLaterSignings(t *testing.T) {
 		t.Errorf("removed domains = %v, want [uni.edu.cn]", ins.removedDomains[0])
 	}
 	if cs.resetCalls != 1 {
-		t.Error("trigger should be reset when nothing needs collecting")
+		t.Error("trigger should be reset after collecting")
 	}
 }
 

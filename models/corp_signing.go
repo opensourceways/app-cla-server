@@ -1,6 +1,11 @@
 package models
 
-import "github.com/opensourceways/app-cla-server/util"
+import (
+	"bytes"
+	"encoding/csv"
+
+	"github.com/opensourceways/app-cla-server/util"
+)
 
 type TypeSigningInfo map[string]string
 
@@ -43,9 +48,10 @@ type CorporationSigningPageSummary struct {
 type CorporationSigningSummary struct {
 	CorporationSigningBasicInfo
 
-	Id          string `json:"id"`
-	AdminAdded  bool   `json:"admin_added"`
-	PDFUploaded bool   `json:"pdf_uploaded"`
+	Id             string `json:"id"`
+	AdminAdded     bool   `json:"admin_added"`
+	PDFUploaded    bool   `json:"pdf_uploaded"`
+	AdminAddedDate string `json:"admin_added_date"`
 }
 
 type CorporationSigningBasicInfo struct {
@@ -85,4 +91,53 @@ func FindPendingAgreements(userId, linkId string) ([]CorporationSigningPendingIt
 // preference of a corporation signing.
 type CorpAutoApprovalOption struct {
 	Enabled bool `json:"enabled"`
+}
+
+// ExportCorpSigningCSV exports the corp signing list as CSV bytes.
+// adminAdded filters: true = only completed, false = only not-completed.
+func ExportCorpSigningCSV(userId, linkID string, adminAdded bool) ([]byte, IModelError) {
+	list, err := corpSigningAdapterInstance.List(userId, linkID)
+	if err != nil {
+		return nil, err
+	}
+
+	filtered := make([]CorporationSigningSummary, 0, len(list))
+	for i := range list {
+		if list[i].AdminAdded == adminAdded {
+			filtered = append(filtered, list[i])
+		}
+	}
+
+	return generateCorpSigningCSV(filtered), nil
+}
+
+func generateCorpSigningCSV(items []CorporationSigningSummary) []byte {
+	var buf bytes.Buffer
+	buf.Write([]byte{0xEF, 0xBB, 0xBF})
+
+	w := csv.NewWriter(&buf)
+	w.Write([]string{"企业名称", "管理员邮箱", "管理员姓名", "申请日期", "状态", "审批完成日期", "CLA语言"})
+
+	status := func(b bool) string {
+		if b {
+			return "已完成"
+		}
+		return "未完成"
+	}
+
+	for i := range items {
+		item := &items[i]
+		w.Write([]string{
+			item.CorporationName,
+			item.AdminEmail,
+			item.AdminName,
+			item.Date,
+			status(item.AdminAdded),
+			item.AdminAddedDate,
+			item.CLALanguage,
+		})
+	}
+
+	w.Flush()
+	return buf.Bytes()
 }

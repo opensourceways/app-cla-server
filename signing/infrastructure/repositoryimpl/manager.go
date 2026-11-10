@@ -19,7 +19,7 @@ func (impl *corpSigning) AddAdmin(cs *domain.CorpSigning) error {
 		return err
 	}
 
-	err = impl.dao.UpdateDoc(index, bson.M{fieldAdmin: doc}, cs.Version)
+	err = impl.dao.UpdateDoc(index, bson.M{fieldAdmin: doc, fieldTriggered: true}, cs.Version)
 	if err != nil && impl.dao.IsDocNotExists(err) {
 		err = commonRepo.NewErrorConcurrentUpdating(err)
 	}

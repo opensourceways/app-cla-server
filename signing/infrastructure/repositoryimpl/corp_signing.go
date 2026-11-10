@@ -1,7 +1,10 @@
 package repositoryimpl
 
 import (
+	"regexp"
+
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 
 	commonRepo "github.com/opensourceways/app-cla-server/common/domain/repository"
@@ -18,6 +21,9 @@ func CorpSigningIndexes() []mongo.IndexModel {
 		{Keys: bson.D{{Key: fieldLinkId, Value: 1}}},
 		// Compound index for the adminAdded filter (link_id + admin.id).
 		{Keys: bson.D{{Key: fieldLinkId, Value: 1}, {Key: "admin.id", Value: 1}}},
+		// Compound index to support FindPage's $match(link_id) + $sort(date: -1),
+		// so the sort can be served by the index instead of an in-memory sort.
+		{Keys: bson.D{{Key: fieldLinkId, Value: 1}, {Key: fieldDate, Value: -1}}},
 	}
 }
 
@@ -228,29 +234,38 @@ func (impl *corpSigning) CountByLinkId(linkId string) (int64, error) {
 	return impl.dao.CountDocs(filter)
 }
 
-// 邮箱验证辅助函数
-func isEmail(query string) bool {
-	// 使用现有的邮箱验证逻辑
-	_, err := dp.NewEmailAddr(query)
-	return err == nil
-}
 
 func (impl *corpSigning) FindPage(linkId string, intPage, intPageSize int, adminAdded bool, searchQuery string) (repository.CorpSigningSummaryPage, error) {
 	filter := linkIdFilter(linkId)
+
+	var searchCond bson.M
 	if searchQuery != "" {
-		if isEmail(searchQuery) {
-			filter[childField(fieldRep, fieldEmail)] = searchQuery
-		} else {
-			filter[childField(fieldCorp, fieldName)] = searchQuery
-		}
+		regex := primitive.Regex{Pattern: regexp.QuoteMeta(searchQuery), Options: "i"}
+		searchCond = bson.M{"$or": []bson.M{
+			{childField(fieldRep, fieldEmail): regex},
+			{childField(fieldCorp, fieldName): regex},
+		}}
 	}
 
+	var adminCond bson.M
 	if adminAdded {
-		filter["admin.id"] = bson.M{"$ne": ""}
+		adminCond = bson.M{"admin.id": bson.M{"$ne": ""}}
 	} else {
-		filter["$or"] = []bson.M{
+		adminCond = bson.M{"$or": []bson.M{
 			{"admin.id": ""},
 			{"admin": bson.M{"$exists": false}},
+		}}
+	}
+
+	if searchCond != nil && adminCond != nil {
+		filter["$and"] = []bson.M{searchCond, adminCond}
+	} else if searchCond != nil {
+		for k, v := range searchCond {
+			filter[k] = v
+		}
+	} else if adminCond != nil {
+		for k, v := range adminCond {
+			filter[k] = v
 		}
 	}
 
@@ -268,11 +283,9 @@ func (impl *corpSigning) FindPage(linkId string, intPage, intPageSize int, admin
 		fieldClaNotifyTime:  1,
 	}
 
-	// Single aggregation round-trip: $facet returns both total count and the
-	// requested page in one network call, replacing the previous two serial
-	// queries (CountDocuments + Find).
 	pipeline := bson.A{
 		bson.M{"$match": filter},
+		bson.M{"$sort": bson.D{{Key: fieldDate, Value: -1}}},
 		bson.M{"$facet": bson.M{
 			"total": bson.A{
 				bson.M{"$count": "n"},

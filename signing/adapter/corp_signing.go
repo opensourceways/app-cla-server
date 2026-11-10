@@ -160,9 +160,10 @@ func (adapter *corpSigningAdatper) List(userId, linkId string) (
 				CLALanguage:     item.Language,
 				CorporationName: item.CorpName,
 			},
-			Id:          item.Id,
-			AdminAdded:  item.HasAdminAdded,
-			PDFUploaded: item.HasPDFUploaded,
+			Id:             item.Id,
+			AdminAdded:     item.HasAdminAdded,
+			PDFUploaded:    item.HasPDFUploaded,
+			AdminAddedDate: item.AdminAddedDate,
 		}
 	}
 
@@ -194,9 +195,10 @@ func (adapter *corpSigningAdatper) ListPage(userId, linkId string, page, pageSiz
 				CLALanguage:     item.Language,
 				CorporationName: item.CorpName,
 			},
-			Id:          item.Id,
-			AdminAdded:  item.HasAdminAdded,
-			PDFUploaded: item.HasPDFUploaded,
+			Id:             item.Id,
+			AdminAdded:     item.HasAdminAdded,
+			PDFUploaded:    item.HasPDFUploaded,
+			AdminAddedDate: item.AdminAddedDate,
 		}
 	}
 	pageData.Total = v.Total

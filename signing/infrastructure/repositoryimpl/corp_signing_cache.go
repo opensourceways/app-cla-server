@@ -52,6 +52,7 @@ type cachedCorpSigningSummary struct {
 	AdminId    string `json:"admin_id"`
 	AdminName  string `json:"admin_name"`
 	AdminEmail string `json:"admin_email"`
+	AdminDate  string `json:"admin_date"`
 	// Notify
 	ClaNotifyCount int   `json:"cla_notify_count"`
 	ClaNotifyTime  int64 `json:"cla_notify_time"`
@@ -83,6 +84,7 @@ func toCache(p repository.CorpSigningSummaryPage) cachedCorpSigningPage {
 			AdminId:            s.Admin.Id,
 			AdminName:          adminName,
 			AdminEmail:         adminEmail,
+			AdminDate:          s.Admin.Date,
 			ClaNotifyCount:     s.ClaNotifyCount,
 			ClaNotifyTime:      s.ClaNotifyTime,
 		}
@@ -123,6 +125,7 @@ func fromCache(c cachedCorpSigningPage) repository.CorpSigningSummaryPage {
 					Name:      dp.CreateName(s.AdminName),
 					EmailAddr: dp.CreateEmailAddr(s.AdminEmail),
 				},
+				Date: s.AdminDate,
 			},
 		}
 	}

@@ -121,10 +121,10 @@ func (impl *watchingImpl) watch() {
 	}
 }
 
-// handle collects the historical individual signings of a triggered corp
-// into the corp as disabled employee signings, then soft-deletes them and
-// resets the trigger. Any failure aborts the remaining steps of this round,
-// keeping the data untouched so that the next round can retry safely.
+// handle collects the individual signings of a triggered corp into the corp
+// as disabled employee signings, then soft-deletes them and resets the
+// trigger. Any failure aborts the remaining steps of this round, keeping the
+// data untouched so that the next round can retry safely.
 func (impl *watchingImpl) handle(corp repositoryimpl.TriggeredCorp) {
 	cs, err := impl.cs.Find(corp.Id)
 	if err != nil {
@@ -147,14 +147,6 @@ func (impl *watchingImpl) handle(corp repositoryimpl.TriggeredCorp) {
 
 	for i := range list {
 		is := &list[i]
-
-		// only the individual signings signed no later than the corp
-		// signing are collected
-		if is.Date > cs.Date {
-			skipped++
-
-			continue
-		}
 
 		es := domain.NewCollectedEmployeeSigning(cs.Link.CLAInfo, is.Rep, is.Date, is.AllInfo)
 

@@ -3,9 +3,12 @@ package util
 import (
 	"errors"
 	"io/ioutil"
+	"net/http"
 	"strings"
 	"time"
 )
+
+const userAgent = "Mozilla/5.0"
 
 func try(f func() error) (err error) {
 	if err = f(); err == nil {
@@ -23,17 +26,26 @@ func try(f func() error) (err error) {
 	return
 }
 
-func head(url string, fileType string, maxSize int) error {
-	return try(func() error {
-		cli := newClient(2)
+func DownloadFile(url, fileType string, maxSize int) ([]byte, error) {
+	var content []byte
 
-		resp, err := cli.Head(url)
+	err := try(func() error {
+		cli := newClient(10)
+
+		req, err := http.NewRequest("GET", url, nil)
 		if err != nil {
 			return err
 		}
+		req.Header.Set("User-Agent", userAgent)
+
+		resp, err := cli.Do(req)
+		if err != nil {
+			return err
+		}
+		defer resp.Body.Close()
 
 		if c := resp.StatusCode; !(c >= 200 && c < 300) {
-			return errors.New("can't detect")
+			return errors.New("can't download")
 		}
 
 		ct := resp.Header.Get("content-type")
@@ -41,57 +53,20 @@ func head(url string, fileType string, maxSize int) error {
 			return errors.New("unknown file type")
 		}
 
-		// gitcode cannot get length
-		if !strings.HasPrefix(url, "https://raw.gitcode.com/") {
-			if resp.ContentLength == -1 {
-				return errors.New("unknown file size")
-			}
-
-			if resp.ContentLength > int64(maxSize) {
-				return errors.New("big file")
-			}
+		if resp.ContentLength == -1 {
+			return errors.New("unknown file size")
 		}
-		return nil
-	})
-}
 
-func DownloadFile(url, fileType string, maxSize int) ([]byte, error) {
-	if err := head(url, fileType, maxSize); err != nil {
-		return nil, err
-	}
+		if resp.ContentLength > int64(maxSize) {
+			return errors.New("big file")
+		}
 
-	var content []byte
-
-	err := try(func() error {
-		cli := newClient(10)
-
-		resp, err := cli.Get(url)
+		content, err = ioutil.ReadAll(resp.Body)
 		if err != nil {
 			return err
 		}
 
-		if c := resp.StatusCode; !(c >= 200 && c < 300) {
-			err := resp.Body.Close()
-
-			return MultiErrors(errors.New("can't dowload"), err)
-		}
-
-		if strings.HasPrefix(url, "https://raw.gitcode.com/") {
-			if resp.ContentLength == -1 {
-				err := resp.Body.Close()
-				return MultiErrors(errors.New("unknown file size"), err)
-			}
-
-			if resp.ContentLength > int64(maxSize) {
-				err := resp.Body.Close()
-				return MultiErrors(errors.New("big file"), err)
-			}
-		}
-
-		content, err = ioutil.ReadAll(resp.Body)
-		err1 := resp.Body.Close()
-
-		return MultiErrors(err, err1)
+		return nil
 	})
 
 	return content, err

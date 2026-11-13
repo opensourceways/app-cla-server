@@ -92,11 +92,12 @@ func genEmailMsg(tmplName string, data interface{}) (msg EmailMessage, err error
 }
 
 type CorporationSigning struct {
-	Org         string
-	Date        string
-	AdminName   string
-	ProjectURL  string
-	SigningInfo string
+	Org           string
+	Date          string
+	AdminName     string
+	ProjectURL    string
+	SigningInfo   string
+	PDFSizeLimit  string
 }
 
 func (data *CorporationSigning) GenEmailMsg() (EmailMessage, error) {

@@ -137,7 +137,7 @@ func (f *fakeEmailWorker) SendSimpleMessage(platform string, msg *worker.EmailMe
 	}
 }
 
-func (f *fakeEmailWorker) GenCLAPDFForCorporationAndSendIt(string, *models.OrgInfo, *models.CLAInfo, *models.CorporationSigning) {
+func (f *fakeEmailWorker) GenCLAPDFForCorporationAndSendIt(string, *models.OrgInfo, *models.CLAInfo, *models.CorporationSigning, int) {
 }
 
 func (f *fakeEmailWorker) Shutdown() {}

@@ -24,3 +24,23 @@ func TestMaskEmail(t *testing.T) {
 		}
 	}
 }
+
+func TestFormatFileSize(t *testing.T) {
+	cases := []struct {
+		bytes int
+		want  string
+	}{
+		{5242880, "5 MB"},
+		{1048576, "1 MB"},
+		{8388608, "8 MB"},
+		{0, "0 MB"},
+		{1048576 * 10, "10 MB"},
+		{500000, "0 MB"},
+	}
+
+	for _, c := range cases {
+		if got := FormatFileSize(c.bytes); got != c.want {
+			t.Errorf("FormatFileSize(%d) = %q, want %q", c.bytes, got, c.want)
+		}
+	}
+}

@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"github.com/opensourceways/app-cla-server/models"
+	"github.com/opensourceways/app-cla-server/signing/infrastructure/emailtmpl"
 )
 
 type IndividualSigningController struct {
@@ -62,7 +63,7 @@ func (ctl *IndividualSigningController) Sign() {
 		return
 	}
 
-	_, claInfo, merr := models.GetLinkCLA(linkID, info.CLAId)
+	orgInfo, claInfo, merr := models.GetLinkCLA(linkID, info.CLAId)
 	if merr != nil {
 		ctl.sendModelErrorAsResp(merr, action)
 		return
@@ -79,6 +80,12 @@ func (ctl *IndividualSigningController) Sign() {
 	}
 
 	ctl.sendSuccessResp(action, "successfully")
+
+	msg := emailtmpl.IndividualSigning{
+		Lang: info.CLALanguage,
+		Name: info.Name,
+	}
+	sendEmailToIndividual(info.Email, &orgInfo, &msg)
 }
 
 // @Title Agree

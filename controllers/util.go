@@ -19,11 +19,11 @@ const (
 	fileNameOfUploadingOrgSignatue = "org_signature_file"
 )
 
-func sendEmailToIndividual(to string, orgInfo *models.OrgInfo, subject string, builder emailservice.IEmailMessageBulder) {
-	sendEmail([]string{to}, orgInfo, subject, builder)
+func sendEmailToIndividual(to string, orgInfo *models.OrgInfo, builder emailservice.IEmailMessageBulder) {
+	sendEmail([]string{to}, orgInfo, builder)
 }
 
-func sendEmail(to []string, orgInfo *models.OrgInfo, subject string, builder emailservice.IEmailMessageBulder) {
+func sendEmail(to []string, orgInfo *models.OrgInfo, builder emailservice.IEmailMessageBulder) {
 	msg, err := builder.GenEmailMsg()
 	if err != nil {
 		log.Error("failed to generate email msg", "error", err)
@@ -32,7 +32,6 @@ func sendEmail(to []string, orgInfo *models.OrgInfo, subject string, builder ema
 	}
 	msg.From = orgInfo.OrgEmail
 	msg.To = to
-	msg.Subject = subject
 
 	worker.GetEmailWorker().SendSimpleMessage(orgInfo.OrgEmailPlatform, &msg)
 }
@@ -43,11 +42,11 @@ func notifyCorpAdmin(linkId string, orgInfo *models.OrgInfo, info *models.Corpor
 
 func notifyCorpManagerWhenAdding(linkId string, orgInfo *models.OrgInfo, info []models.CorporationManagerCreateOption) {
 	admin := info[0].Role == models.RoleAdmin
-	subject := fmt.Sprintf("Account on project of \"%s\"", orgInfo.OrgAlias)
 
 	for i := range info {
 		item := &info[i]
 		d := emailtmpl.AddingCorpManager{
+			Lang:             "",
 			Admin:            admin,
 			ID:               item.ID,
 			User:             item.Name,
@@ -58,7 +57,7 @@ func notifyCorpManagerWhenAdding(linkId string, orgInfo *models.OrgInfo, info []
 			URLOfCLAPlatform: config.signingURL(linkId),
 		}
 
-		sendEmailToIndividual(item.Email, orgInfo, subject, &d)
+		sendEmailToIndividual(item.Email, orgInfo, &d)
 
 		// clear password
 		for i := range item.Password {

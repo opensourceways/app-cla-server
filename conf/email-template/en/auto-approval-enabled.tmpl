@@ -1,4 +1,5 @@
-Dear manager,
+{{define "subject"}}Auto-approval enabled on project of "{{.Org}}"{{end}}
+{{define "body"}}Dear manager,
 
 The auto-approval preference for employee CLA signing has been enabled on the project[1] of "{{.Org}}". From now on, employees who sign the CLA under your corporation will be automatically approved without manual activation.
 
@@ -9,4 +10,4 @@ The CLA management system login URL:
 
 Have questions or need help? Just reply to this email and the {{.Org}} Community Support Team will help you sort it out.
 
-[1]. {{.ProjectURL}}
+[1]. {{.ProjectURL}}{{end}}

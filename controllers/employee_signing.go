@@ -7,6 +7,7 @@ import (
 	"github.com/opensourceways/obs-sdk/go/log"
 
 	"github.com/opensourceways/app-cla-server/models"
+	"github.com/opensourceways/app-cla-server/signing/domain/dp"
 	"github.com/opensourceways/app-cla-server/signing/infrastructure/emailtmpl"
 )
 
@@ -182,13 +183,15 @@ func (ctl *EmployeeSigningController) Update() {
 
 	ctl.sendSuccessResp(action, "successfully")
 
-	msg := ctl.newEmployeeNotification(employeeEmail, &orgInfo, pl.Email)
+	lang := ctl.getCorpSigningLang(pl)
+
+	msg := ctl.newEmployeeNotification(employeeEmail, &orgInfo, pl.Email, lang)
 	if info.Enabled {
 		msg.Active = true
-		sendEmailToIndividual(employeeEmail, &orgInfo, "Activate CLA signing", msg)
+		sendEmailToIndividual(employeeEmail, &orgInfo, msg)
 	} else {
 		msg.Inactive = true
-		sendEmailToIndividual(employeeEmail, &orgInfo, "Inactivate CLA signing", msg)
+		sendEmailToIndividual(employeeEmail, &orgInfo, msg)
 	}
 }
 
@@ -226,9 +229,11 @@ func (ctl *EmployeeSigningController) Delete() {
 
 	ctl.sendSuccessResp(action, "successfully")
 
-	msg := ctl.newEmployeeNotification(employeeEmail, &orgInfo, pl.Email)
+	lang := ctl.getCorpSigningLang(pl)
+
+	msg := ctl.newEmployeeNotification(employeeEmail, &orgInfo, pl.Email, lang)
 	msg.Removing = true
-	sendEmailToIndividual(employeeEmail, &orgInfo, "Remove employee", msg)
+	sendEmailToIndividual(employeeEmail, &orgInfo, msg)
 }
 
 func (ctl *EmployeeSigningController) notifyManagers(
@@ -243,26 +248,29 @@ func (ctl *EmployeeSigningController) notifyManagers(
 		ms = append(ms, fmt.Sprintf("%s: %s", item.Name, item.Email))
 	}
 
+	lang := info.CLALanguage
+
 	msg := emailtmpl.EmployeeSigning{
-		Name:       info.Name,
-		Org:        orgInfo.OrgAlias,
-		ProjectURL: orgInfo.ProjectURL,
-		Managers:   "  " + strings.Join(ms, "\n  "),
+		Lang:        lang,
+		Name:        info.Name,
+		Org:         orgInfo.OrgAlias,
+		ProjectURL:  orgInfo.ProjectURL,
+		Managers:    "  " + strings.Join(ms, "\n  "),
 	}
 	sendEmailToIndividual(
 		info.Email, orgInfo,
-		fmt.Sprintf("Signing CLA on project of \"%s\"", msg.Org),
 		&msg,
 	)
 
 	msg1 := emailtmpl.NotifyingManager{
+		Lang:             lang,
 		Org:              orgInfo.OrgAlias,
 		EmployeeEmail:    info.Email,
 		ProjectURL:       orgInfo.ProjectURL,
 		URLOfCLAPlatform: config.signingURL(linkId),
 	}
 	if len(to) > 0 {
-		sendEmail(to, orgInfo, "An employee has signed CLA", &msg1)
+		sendEmail(to, orgInfo, &msg1)
 	}
 }
 
@@ -276,35 +284,48 @@ func (ctl *EmployeeSigningController) notifyAutoApproval(
 		to = append(to, item.Email)
 	}
 
+	lang := info.CLALanguage
+
 	msg := emailtmpl.AutoApprovalEmployee{
-		Name:       info.Name,
-		Org:        orgInfo.OrgAlias,
-		ProjectURL: orgInfo.ProjectURL,
+		Lang:        lang,
+		Name:        info.Name,
+		Org:         orgInfo.OrgAlias,
+		ProjectURL:  orgInfo.ProjectURL,
 	}
 	sendEmailToIndividual(
 		info.Email, orgInfo,
-		fmt.Sprintf("CLA auto-approved on project of \"%s\"", orgInfo.OrgAlias),
 		&msg,
 	)
 
 	msg1 := emailtmpl.AutoApprovalManager{
+		Lang:             lang,
 		Org:              orgInfo.OrgAlias,
 		EmployeeEmail:    info.Email,
 		ProjectURL:       orgInfo.ProjectURL,
 		URLOfCLAPlatform: config.signingURL(linkId),
 	}
 	if len(to) > 0 {
-		sendEmail(to, orgInfo, "An employee has been auto-approved", &msg1)
+		sendEmail(to, orgInfo, &msg1)
 	}
 }
 
 func (ctl *EmployeeSigningController) newEmployeeNotification(
-	employeeName string, orgInfo *models.OrgInfo, managerEmail string,
+	employeeName string, orgInfo *models.OrgInfo, managerEmail, lang string,
 ) *emailtmpl.EmployeeNotification {
 	return &emailtmpl.EmployeeNotification{
-		Name:       employeeName,
-		Manager:    managerEmail,
-		Org:        orgInfo.OrgAlias,
-		ProjectURL: orgInfo.ProjectURL,
+		Lang:        lang,
+		Name:        employeeName,
+		Manager:     managerEmail,
+		Org:         orgInfo.OrgAlias,
+		ProjectURL:  orgInfo.ProjectURL,
 	}
+}
+
+func (ctl *EmployeeSigningController) getCorpSigningLang(pl *acForCorpManagerPayload) string {
+	_, cs, merr := models.GetCorpSigning(pl.UserId, pl.SigningId, dp.CreateEmailAddr(pl.Email))
+	if merr != nil {
+		log.Error("failed to get corp signing for lang", "error", merr)
+		return ""
+	}
+	return cs.CLALanguage
 }

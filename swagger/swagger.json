@@ -2012,6 +2012,9 @@
             "properties": {
                 "email": {
                     "type": "string"
+                },
+                "language": {
+                    "type": "string"
                 }
             }
         },

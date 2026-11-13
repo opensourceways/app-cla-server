@@ -235,6 +235,7 @@ func (impl *notifyAdminWatchImpl) handleSendEmail(link *repository.LinkCLA, corp
 		return fmt.Errorf("failed to send email msg: admin name is null: %s", link.Id)
 	}
 	builder := emailtmpl.CLAUpdated{
+		Lang:             langOf(corp.Link.Language),
 		Org:              link.Org.Alias,
 		AdminName:        corp.Admin.Name.Name(),
 		ProjectURL:       link.Org.ProjectURL,
@@ -250,7 +251,6 @@ func (impl *notifyAdminWatchImpl) handleSendEmail(link *repository.LinkCLA, corp
 	if to := impl.config.genNotifyEmailTo(); to != "" {
 		emailMsg.To = []string{to}
 	}
-	emailMsg.Subject = "CLA has been updated"
 
 	worker.GetEmailWorker().SendSimpleMessage(link.Email.Platform, &emailMsg)
 
@@ -264,6 +264,7 @@ func (impl *notifyAdminWatchImpl) handleSendEmail(link *repository.LinkCLA, corp
 		"recipient", util.MaskEmail(corp.Admin.EmailAddr.EmailAddr()),
 		"from", emailMsg.From,
 		"subject", emailMsg.Subject,
+		"lang", emailtmpl.NormalizeLang(langOf(corp.Link.Language)),
 		"new_cla_id", corp.CLANotify,
 		"signed_cla_id", corp.Link.CLAInfo.CLAId,
 		"notify_count", corp.ClaNotifyCount,
@@ -446,12 +447,13 @@ func (impl *notifyAdminWatchImpl) handleSendIndividualEmail(link *repository.Lin
 		impl.rootURL(), link.Id, is.Rep.EmailAddr.EmailAddr())
 
 	builder := emailtmpl.CLAUpdatedIndividual{
-		Name:            name,
-		Org:             link.Org.Alias,
-		UpdateDate:      updateDate,
-		GracePeriodDays: link.GetEffectiveGracePeriodDays(impl.defaultGracePeriodDays),
-		SignCLAURL:      signURL,
-		ProjectURL:      link.Org.ProjectURL,
+		Lang:             langOf(is.Link.Language),
+		Name:             name,
+		Org:              link.Org.Alias,
+		UpdateDate:       updateDate,
+		GracePeriodDays:  link.GetEffectiveGracePeriodDays(impl.defaultGracePeriodDays),
+		SignCLAURL:       signURL,
+		ProjectURL:       link.Org.ProjectURL,
 	}
 	emailMsg, err := builder.GenEmailMsg()
 	if err != nil {
@@ -463,7 +465,6 @@ func (impl *notifyAdminWatchImpl) handleSendIndividualEmail(link *repository.Lin
 	if to := impl.config.genNotifyEmailTo(); to != "" {
 		emailMsg.To = []string{to}
 	}
-	emailMsg.Subject = "CLA has been updated - Action Required"
 
 	worker.GetEmailWorker().SendSimpleMessage(link.Email.Platform, &emailMsg)
 
@@ -475,6 +476,7 @@ func (impl *notifyAdminWatchImpl) handleSendIndividualEmail(link *repository.Lin
 		"recipient", util.MaskEmail(is.Rep.EmailAddr.EmailAddr()),
 		"from", emailMsg.From,
 		"subject", emailMsg.Subject,
+		"lang", emailtmpl.NormalizeLang(langOf(is.Link.Language)),
 		"new_cla_id", latestCLA.Id,
 		"signed_cla_id", is.Link.CLAInfo.CLAId,
 		"notify_count", is.ClaNotifyCount,
@@ -525,4 +527,11 @@ func (impl *notifyAdminWatchImpl) nextDelay(interval time.Duration) time.Duratio
 		return 12 * time.Hour
 	}
 	return interval
+}
+
+func langOf(l dp.Language) string {
+	if l == nil {
+		return ""
+	}
+	return l.Language()
 }

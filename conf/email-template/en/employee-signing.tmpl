@@ -1,4 +1,5 @@
-Dear {{.Name}},
+{{define "subject"}}Signing CLA on project of "{{.Org}}"{{end}}
+{{define "body"}}Dear {{.Name}},
 
 Thank you for signing the CLA on the project[1] of "{{.Org}}". We have notified your corporation manager to activate your contribution privilege. If you have not received an email about the activation for a long time, please contact one of your corporation managers as following.
 
@@ -7,4 +8,4 @@ Corporation Managers:
 
 Have questions or need help? Just reply to this email and the {{.Org}} Community Support Team will help you sort it out.
 
-[1]. {{.ProjectURL}}
+[1]. {{.ProjectURL}}{{end}}

@@ -1,4 +1,5 @@
-Dear user,
+{{define "subject"}}Verification code for adding corporation's another email domain{{end}}
+{{define "body"}}Dear user,
 
 We have received the request to add your email's domain as another one for corporation "{{.Corp}}". Please make sure that this action is allowed by yourself.
 
@@ -6,4 +7,4 @@ The verification code is: {{.Code}}
 
 Have any questions or need help? Just reply to this email and the {{.Org}} Community Support Team will help you sort it out.
 
-[1]. {{.ProjectURL}}
+[1]. {{.ProjectURL}}{{end}}

@@ -1,7 +1,8 @@
-Dear {{.Name}},
+{{define "subject"}}Activate CLA signing{{end}}
+{{define "body"}}Dear {{.Name}},
 
 We are pleased that your corporation manager has activated the privileges for your contribution on the project[1]. If you have questions about this change, please contact your corporation manager at {{.Manager}}.
 
 Have questions or need help? Just reply to this email and the {{.Org}} Community Support Team will help you sort it out.
 
-[1]. {{.ProjectURL}}
+[1]. {{.ProjectURL}}{{end}}

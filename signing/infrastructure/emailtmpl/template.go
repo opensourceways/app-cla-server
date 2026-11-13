@@ -1,8 +1,13 @@
 package emailtmpl
 
 import (
+	"bytes"
 	"fmt"
+	"os"
+	"strings"
 	"text/template"
+
+	"github.com/opensourceways/obs-sdk/go/log"
 
 	"github.com/opensourceways/app-cla-server/signing/domain/emailservice"
 	"github.com/opensourceways/app-cla-server/util"
@@ -31,67 +36,116 @@ const (
 	TmplAutoApprovalManager   = "auto approval manager"
 )
 
-var msgTmpl = map[string]*template.Template{}
+const (
+	langEN = "en"
+	langZH = "zh"
+
+	tmplDir = "./conf/email-template/"
+)
+
+var msgTmpl = map[string]map[string]*template.Template{}
 
 type EmailMessage = emailservice.EmailMessage
 
-func Init() error {
-	items := map[string]string{
-		TmplCorporationSigning:    "./conf/email-template/corporation-signing.tmpl",
-		TmplIndividualSigning:     "./conf/email-template/individual-signing.tmpl",
-		TmplEmployeeSigning:       "./conf/email-template/employee-signing.tmpl",
-		TmplNotifyingManager:      "./conf/email-template/notifying-corp-manager.tmpl",
-		TmplVerificationCode:      "./conf/email-template/verification-code.tmpl",
-		TmplAddingCorpEmailDomain: "./conf/email-template/adding-corp-email-domain.tmpl",
-		TmplAddingCorpAdmin:       "./conf/email-template/adding-corp-admin.tmpl",
-		TmplAddingCorpManager:     "./conf/email-template/adding-corp-manager.tmpl",
-		TmplRemovingCorpManager:   "./conf/email-template/removing-corp-manager.tmpl",
-		TmplActivatingEmployee:    "./conf/email-template/activating-employee.tmpl",
-		TmplInactivaingEmployee:   "./conf/email-template/inactivating-employee.tmpl",
-		TmplRemovingingEmployee:   "./conf/email-template/removing-employee.tmpl",
-		TmplPasswordRetrieval:     "./conf/email-template/password-retrieval.tmpl",
-		TmplEmailVerification:     "./conf/email-template/email_verification.tmpl",
-		TmplCLAUpdated:            "./conf/email-template/cla-updated.tmpl",
-		TmplCLAUpdatedIndividual:  "./conf/email-template/cla-updated-individual.tmpl",
-		TmplAutoApprovalEnabled:   "./conf/email-template/auto-approval-enabled.tmpl",
-		TmplAutoApprovalDisabled:  "./conf/email-template/auto-approval-disabled.tmpl",
-		TmplAutoApprovalEmployee:  "./conf/email-template/auto-approval-employee.tmpl",
-		TmplAutoApprovalManager:   "./conf/email-template/auto-approval-manager.tmpl",
-	}
+var tmplFiles = map[string]string{
+	TmplCorporationSigning:    "corporation-signing.tmpl",
+	TmplIndividualSigning:     "individual-signing.tmpl",
+	TmplEmployeeSigning:       "employee-signing.tmpl",
+	TmplNotifyingManager:      "notifying-corp-manager.tmpl",
+	TmplVerificationCode:      "verification-code.tmpl",
+	TmplAddingCorpEmailDomain: "adding-corp-email-domain.tmpl",
+	TmplAddingCorpAdmin:       "adding-corp-admin.tmpl",
+	TmplAddingCorpManager:     "adding-corp-manager.tmpl",
+	TmplRemovingCorpManager:   "removing-corp-manager.tmpl",
+	TmplActivatingEmployee:    "activating-employee.tmpl",
+	TmplInactivaingEmployee:   "inactivating-employee.tmpl",
+	TmplRemovingingEmployee:   "removing-employee.tmpl",
+	TmplPasswordRetrieval:     "password-retrieval.tmpl",
+	TmplEmailVerification:     "email_verification.tmpl",
+	TmplCLAUpdated:            "cla-updated.tmpl",
+	TmplCLAUpdatedIndividual:  "cla-updated-individual.tmpl",
+	TmplAutoApprovalEnabled:   "auto-approval-enabled.tmpl",
+	TmplAutoApprovalDisabled:  "auto-approval-disabled.tmpl",
+	TmplAutoApprovalEmployee:  "auto-approval-employee.tmpl",
+	TmplAutoApprovalManager:   "auto-approval-manager.tmpl",
+}
 
-	for name, path := range items {
-		tmpl, err := util.NewTemplate(name, path)
+func Init() error {
+	for name, file := range tmplFiles {
+		msgTmpl[name] = map[string]*template.Template{}
+
+		enPath := tmplDir + langEN + "/" + file
+		enTmpl, err := util.NewTemplate(name, enPath)
 		if err != nil {
 			return err
 		}
-		msgTmpl[name] = tmpl
+		msgTmpl[name][langEN] = enTmpl
+
+		zhPath := tmplDir + langZH + "/" + file
+		if _, err := os.Stat(zhPath); err == nil {
+			zhTmpl, err := util.NewTemplate(name, zhPath)
+			if err != nil {
+				return err
+			}
+			msgTmpl[name][langZH] = zhTmpl
+		} else {
+			log.Warn("zh email template not found, fallback to en", "template", name, "path", zhPath)
+		}
 	}
 
 	return nil
 }
 
-func findTmpl(name string) *template.Template {
-	v, ok := msgTmpl[name]
-	if ok {
-		return v
+func NormalizeLang(v string) string {
+	switch strings.ToLower(v) {
+	case "chinese", langZH:
+		return langZH
+	case "english", langEN:
+		return langEN
+	default:
+		return langEN
+	}
+}
+
+func findTmpl(name, lang string) *template.Template {
+	if m, ok := msgTmpl[name]; ok {
+		if t, ok2 := m[lang]; ok2 {
+			return t
+		}
+		return m[langEN]
 	}
 	return nil
 }
 
-func genEmailMsg(tmplName string, data interface{}) (msg EmailMessage, err error) {
-	tmpl := findTmpl(tmplName)
+func genEmailMsg(tmplName, lang string, data interface{}) (msg EmailMessage, err error) {
+	tmpl := findTmpl(tmplName, NormalizeLang(lang))
 	if tmpl == nil {
 		err = fmt.Errorf("failed to generate email msg: didn't find msg template: %s", tmplName)
 
 		return
 	}
 
-	msg.Content, err = util.RenderTemplate(tmpl, data)
+	var subject bytes.Buffer
+	if err = tmpl.ExecuteTemplate(&subject, "subject", data); err != nil {
+		err = fmt.Errorf("failed to render email subject: %s", err.Error())
+
+		return
+	}
+	msg.Subject = subject.String()
+
+	var body bytes.Buffer
+	if err = tmpl.ExecuteTemplate(&body, "body", data); err != nil {
+		err = fmt.Errorf("failed to render email body: %s", err.Error())
+
+		return
+	}
+	msg.Content = body
 
 	return
 }
 
 type CorporationSigning struct {
+	Lang        string
 	Org         string
 	Date        string
 	AdminName   string
@@ -100,40 +154,44 @@ type CorporationSigning struct {
 }
 
 func (data *CorporationSigning) GenEmailMsg() (EmailMessage, error) {
-	return genEmailMsg(TmplCorporationSigning, data)
+	return genEmailMsg(TmplCorporationSigning, data.Lang, data)
 }
 
 type IndividualSigning struct {
+	Lang string
 	Name string
 }
 
 func (data *IndividualSigning) GenEmailMsg() (EmailMessage, error) {
-	return genEmailMsg(TmplIndividualSigning, data)
+	return genEmailMsg(TmplIndividualSigning, data.Lang, data)
 }
 
 type VerificationCode struct {
-	Email      string
-	Org        string
-	Code       string
-	ProjectURL string
+	Lang        string
+	Email       string
+	Org         string
+	Code        string
+	ProjectURL  string
 }
 
 func (data *VerificationCode) GenEmailMsg() (EmailMessage, error) {
-	return genEmailMsg(TmplVerificationCode, data)
+	return genEmailMsg(TmplVerificationCode, data.Lang, data)
 }
 
 type AddingCorpEmailDomain struct {
-	Corp       string
-	Org        string
-	Code       string
-	ProjectURL string
+	Lang        string
+	Corp        string
+	Org         string
+	Code        string
+	ProjectURL  string
 }
 
 func (cse AddingCorpEmailDomain) GenEmailMsg() (EmailMessage, error) {
-	return genEmailMsg(TmplAddingCorpEmailDomain, cse)
+	return genEmailMsg(TmplAddingCorpEmailDomain, cse.Lang, cse)
 }
 
 type AddingCorpManager struct {
+	Lang             string
 	Admin            bool
 	ID               string
 	User             string
@@ -146,9 +204,9 @@ type AddingCorpManager struct {
 
 func (data *AddingCorpManager) GenEmailMsg() (msg EmailMessage, err error) {
 	if data.Admin {
-		msg, err = genEmailMsg(TmplAddingCorpAdmin, data)
+		msg, err = genEmailMsg(TmplAddingCorpAdmin, data.Lang, data)
 	} else {
-		msg, err = genEmailMsg(TmplAddingCorpManager, data)
+		msg, err = genEmailMsg(TmplAddingCorpManager, data.Lang, data)
 	}
 
 	msg.HasSecret = true
@@ -157,27 +215,30 @@ func (data *AddingCorpManager) GenEmailMsg() (msg EmailMessage, err error) {
 }
 
 type RemovingCorpManager struct {
-	User       string
-	Org        string
-	ProjectURL string
+	Lang        string
+	User        string
+	Org         string
+	ProjectURL  string
 }
 
 func (data *RemovingCorpManager) GenEmailMsg() (EmailMessage, error) {
-	return genEmailMsg(TmplRemovingCorpManager, data)
+	return genEmailMsg(TmplRemovingCorpManager, data.Lang, data)
 }
 
 type EmployeeSigning struct {
-	Name       string
-	Org        string
-	ProjectURL string
-	Managers   string
+	Lang        string
+	Name        string
+	Org         string
+	ProjectURL  string
+	Managers    string
 }
 
 func (data *EmployeeSigning) GenEmailMsg() (EmailMessage, error) {
-	return genEmailMsg(TmplEmployeeSigning, data)
+	return genEmailMsg(TmplEmployeeSigning, data.Lang, data)
 }
 
 type NotifyingManager struct {
+	Lang             string
 	EmployeeEmail    string
 	ProjectURL       string
 	URLOfCLAPlatform string
@@ -185,10 +246,11 @@ type NotifyingManager struct {
 }
 
 func (data *NotifyingManager) GenEmailMsg() (EmailMessage, error) {
-	return genEmailMsg(TmplNotifyingManager, data)
+	return genEmailMsg(TmplNotifyingManager, data.Lang, data)
 }
 
 type EmployeeNotification struct {
+	Lang     string
 	Removing bool
 	Active   bool
 	Inactive bool
@@ -201,48 +263,50 @@ type EmployeeNotification struct {
 
 func (data *EmployeeNotification) GenEmailMsg() (EmailMessage, error) {
 	if data.Active {
-		return genEmailMsg(TmplActivatingEmployee, data)
+		return genEmailMsg(TmplActivatingEmployee, data.Lang, data)
 	}
 
 	if data.Inactive {
-		return genEmailMsg(TmplInactivaingEmployee, data)
+		return genEmailMsg(TmplInactivaingEmployee, data.Lang, data)
 	}
 
 	if data.Removing {
-		return genEmailMsg(TmplRemovingingEmployee, data)
+		return genEmailMsg(TmplRemovingingEmployee, data.Lang, data)
 	}
 
 	return EmailMessage{}, fmt.Errorf("do nothing")
 }
 
 type PasswordRetrieval struct {
+	Lang         string
 	Timeout      int64
 	Org          string
 	ResetURL     string
 	RetrievalURL string
 }
 
-func (p PasswordRetrieval) GenEmailMsg() (EmailMessage, error) {
-	msg, err := genEmailMsg(TmplPasswordRetrieval, p)
+func (p PasswordRetrieval) GenEmailMsg() (msg EmailMessage, err error) {
+	msg, err = genEmailMsg(TmplPasswordRetrieval, p.Lang, p)
 	if err != nil {
 		return msg, err
 	}
 
-	//adapter send html tmpl content
 	msg.MIME = "MIME-version: 1.0;\nContent-Type: text/html; charset=\"UTF-8\";\n\n"
 
 	return msg, nil
 }
 
 type EmailVerification struct {
+	Lang string
 	Code string
 }
 
 func (data *EmailVerification) GenEmailMsg() (EmailMessage, error) {
-	return genEmailMsg(TmplEmailVerification, data)
+	return genEmailMsg(TmplEmailVerification, data.Lang, data)
 }
 
 type CLAUpdated struct {
+	Lang             string
 	Org              string
 	AdminName        string
 	ProjectURL       string
@@ -250,53 +314,58 @@ type CLAUpdated struct {
 }
 
 func (data *CLAUpdated) GenEmailMsg() (EmailMessage, error) {
-	return genEmailMsg(TmplCLAUpdated, data)
+	return genEmailMsg(TmplCLAUpdated, data.Lang, data)
 }
 
 type CLAUpdatedIndividual struct {
-	Name            string
-	Org             string
-	UpdateDate      string
-	GracePeriodDays int
-	SignCLAURL      string
-	ProjectURL      string
+	Lang             string
+	Name             string
+	Org              string
+	UpdateDate       string
+	GracePeriodDays  int
+	SignCLAURL       string
+	ProjectURL       string
 }
 
 func (data *CLAUpdatedIndividual) GenEmailMsg() (EmailMessage, error) {
-	return genEmailMsg(TmplCLAUpdatedIndividual, data)
+	return genEmailMsg(TmplCLAUpdatedIndividual, data.Lang, data)
 }
 
 type AutoApprovalEnabled struct {
+	Lang             string
 	Org              string
 	ProjectURL       string
 	URLOfCLAPlatform string
 }
 
 func (data *AutoApprovalEnabled) GenEmailMsg() (EmailMessage, error) {
-	return genEmailMsg(TmplAutoApprovalEnabled, data)
+	return genEmailMsg(TmplAutoApprovalEnabled, data.Lang, data)
 }
 
 type AutoApprovalDisabled struct {
+	Lang             string
 	Org              string
 	ProjectURL       string
 	URLOfCLAPlatform string
 }
 
 func (data *AutoApprovalDisabled) GenEmailMsg() (EmailMessage, error) {
-	return genEmailMsg(TmplAutoApprovalDisabled, data)
+	return genEmailMsg(TmplAutoApprovalDisabled, data.Lang, data)
 }
 
 type AutoApprovalEmployee struct {
-	Name       string
-	Org        string
-	ProjectURL string
+	Lang        string
+	Name        string
+	Org         string
+	ProjectURL  string
 }
 
 func (data *AutoApprovalEmployee) GenEmailMsg() (EmailMessage, error) {
-	return genEmailMsg(TmplAutoApprovalEmployee, data)
+	return genEmailMsg(TmplAutoApprovalEmployee, data.Lang, data)
 }
 
 type AutoApprovalManager struct {
+	Lang             string
 	EmployeeEmail    string
 	Org              string
 	ProjectURL       string
@@ -304,5 +373,5 @@ type AutoApprovalManager struct {
 }
 
 func (data *AutoApprovalManager) GenEmailMsg() (EmailMessage, error) {
-	return genEmailMsg(TmplAutoApprovalManager, data)
+	return genEmailMsg(TmplAutoApprovalManager, data.Lang, data)
 }

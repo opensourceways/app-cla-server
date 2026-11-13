@@ -1,0 +1,15 @@
+{{define "subject"}}账户通知 - 项目："{{.Org}}"{{end}}
+{{define "body"}}尊敬的 {{.User}}，
+
+您已被公司授权管理将要为项目[1]贡献代码的员工的CLA签署。当员工签署CLA时，您将收到邮件通知。随后您可以登录CLA管理系统接受或拒绝该员工的CLA签署。
+
+您的账户：
+  用户名：{{.Email}}{{if .ID}} 或 {{.ID}}{{end}}
+  密码：{{printf "%s" .Password}}
+
+CLA管理系统登录地址：
+  {{.URLOfCLAPlatform}}
+
+如有疑问或需要帮助，请直接回复此邮件，{{.Org}} 社区支持团队将为您提供帮助。
+
+[1]. {{.ProjectURL}}{{end}}

@@ -1,0 +1,19 @@
+name: build-and-coverage
+
+on:
+  push:
+    branches: [review]
+  pull_request:
+    branches: [review]
+  workflow_dispatch:
+
+jobs:
+  build:
+    uses: opensourceways/agent-development-specification/.github/workflows/go-reusable.yml@main
+    env:
+      GOPROXY: https://goproxy.cn,direct
+    with:
+      runs-on: linux-amd64-cpu-4
+      go-version: '1.24.1'
+    secrets:
+      gh-token: ${{ secrets.GH_TOKEN }}

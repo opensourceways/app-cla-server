@@ -122,6 +122,11 @@ func (ctl *LinkController) ListLinks() {
 func (ctl *LinkController) GetCLAForSigning() {
 	action := "fetch signing page info"
 
+	if fr := ctl.checkVCRateLimit(); fr != nil {
+		ctl.sendFailedResultAsResp(fr, action)
+		return
+	}
+
 	result, err := models.ListCLAs(
 		ctl.GetString(":link_id"), ctl.GetString(":apply_to"),
 	)

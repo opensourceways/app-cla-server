@@ -122,6 +122,9 @@ redisdb:
   db:
     address: "{REDISDB_IP}"
     password: "{REDISDB_PASSWORD}"
+  vc_rate_limit:
+    threshold: 10
+    window: 60
 
 password:
   min_length: 8

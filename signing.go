@@ -28,6 +28,7 @@ import (
 	"github.com/opensourceways/app-cla-server/signing/infrastructure/repositoryimpl"
 	"github.com/opensourceways/app-cla-server/signing/infrastructure/smtpimpl"
 	"github.com/opensourceways/app-cla-server/signing/infrastructure/symmetricencryptionimpl"
+	"github.com/opensourceways/app-cla-server/signing/infrastructure/vcratelimitimpl"
 	"github.com/opensourceways/app-cla-server/signing/watch"
 )
 
@@ -223,6 +224,10 @@ func initSigning(cfg *config.Config) error {
 		repositoryimpl.NewPrivacyConsentRecord(
 			mongodb.DAO(cfg.Mongodb.Collections.PrivacyConsent),
 		),
+	)
+
+	controllers.InitVCRateLimiter(
+		vcratelimitimpl.NewVCRateLimiter(redisdb.DAO(), &cfg.Redisdb.VCRateLimit),
 	)
 
 	// watch

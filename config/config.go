@@ -17,6 +17,7 @@ import (
 	"github.com/opensourceways/app-cla-server/signing/infrastructure/repositoryimpl"
 	"github.com/opensourceways/app-cla-server/signing/infrastructure/smtpimpl"
 	"github.com/opensourceways/app-cla-server/signing/infrastructure/symmetricencryptionimpl"
+	"github.com/opensourceways/app-cla-server/signing/infrastructure/vcratelimitimpl"
 	"github.com/opensourceways/app-cla-server/signing/watch"
 	"github.com/opensourceways/app-cla-server/util"
 )
@@ -50,6 +51,7 @@ type redisdbConfig struct {
 	Login       loginimpl.Config       `json:"login"`
 	AccessToken accesstokenimpl.Config `json:"access_token"`
 	Captcha     captchaimpl.Config     `json:"captcha"`
+	VCRateLimit vcratelimitimpl.Config `json:"vc_rate_limit"`
 }
 
 type Config struct {
@@ -80,6 +82,7 @@ func (cfg *Config) ConfigItems() []interface{} {
 		&cfg.Redisdb.Login,
 		&cfg.Redisdb.AccessToken,
 		&cfg.Redisdb.Captcha,
+		&cfg.Redisdb.VCRateLimit,
 		&cfg.Password,
 		&cfg.LocalCLA,
 		&cfg.Symmetric,

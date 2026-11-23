@@ -48,6 +48,8 @@ const (
 	errWrongFileType            = "wrong_file_type"
 	errNoInWhiteList            = "not_in_white_list"
 	errInvalidFileName          = "invalid_file_name"
+	errCorpSigningPendingExists = "corp_signing_pending_exists"
+	errCorpSigningAlreadyApproved = "corp_signing_already_approved"
 )
 
 func parseModelError(err models.IModelError) *failedApiResult {

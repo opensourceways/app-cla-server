@@ -460,3 +460,73 @@ func (impl *corpSigning) FindPendingAgreements(linkId string) ([]repository.Corp
 
 	return r, nil
 }
+
+func (impl *corpSigning) FindByEmail(linkId string, email dp.EmailAddr) (cs domain.CorpSigning, found bool, err error) {
+	filter := linkIdFilter(linkId)
+	filter[childField(fieldRep, fieldEmail)] = email.EmailAddr()
+
+	project := bson.M{
+		fieldPDF:     0,
+		fieldDeleted: 0,
+	}
+
+	var do corpSigningDO
+
+	if err = impl.dao.GetDoc(filter, project, &do); err != nil {
+		if impl.dao.IsDocNotExists(err) {
+			return domain.CorpSigning{}, false, nil
+		}
+		return domain.CorpSigning{}, false, err
+	}
+
+	return do.toCorpSigning(), true, nil
+}
+
+func (impl *corpSigning) FindByNameAndDomain(linkId, corpName, corpDomain string, excludeId string) (bool, error) {
+	filter := linkIdFilter(linkId)
+	filter[childField(fieldCorp, fieldName)] = corpName
+	filter[childField(fieldCorp, fieldDomain)] = corpDomain
+
+	if excludeId != "" {
+		excludeFilter, err := impl.dao.DocIdFilter(excludeId)
+		if err != nil {
+			return false, err
+		}
+		filter["_id"] = bson.M{mongodbCmdNe: excludeFilter["_id"]}
+	}
+
+	var do corpSigningDO
+
+	if err := impl.dao.GetDoc(filter, bson.M{fieldLinkId: 1}, &do); err != nil {
+		if impl.dao.IsDocNotExists(err) {
+			return false, nil
+		}
+		return false, err
+	}
+
+	return true, nil
+}
+
+func (impl *corpSigning) UpdateApplication(cs *domain.CorpSigning) error {
+	filter, err := impl.toCorpSigningIndex(cs.Id)
+	if err != nil {
+		return err
+	}
+
+	updateDoc := bson.M{
+		fieldDate:     cs.Date,
+		fieldCLAId:    cs.Link.CLAId,
+		fieldLang:     cs.Link.Language.Language(),
+		fieldRep:      toRepDO(&cs.Rep),
+		fieldCorp:     toCorpDO(&cs.Corp),
+		fieldHasPDF:   cs.HasPDF,
+		fieldPDF:      "",
+		fieldAllInfo:  cs.AllInfo,
+	}
+
+	if err = impl.dao.UpdateDoc(filter, updateDoc, cs.Version); err != nil && impl.dao.IsDocNotExists(err) {
+		err = commonRepo.NewErrorConcurrentUpdating(err)
+	}
+
+	return err
+}

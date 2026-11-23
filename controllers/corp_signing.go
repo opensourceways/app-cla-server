@@ -93,6 +93,10 @@ func (ctl *CorporationSigningController) Sign() {
 	if err := models.SignCropCLA(linkID, &info, claInfo.Fields); err != nil {
 		if err.IsErrorOf(models.ErrNoLinkOrResigned) {
 			ctl.sendFailedResponse(400, errResigned, err, action)
+		} else if err.IsErrorOf(models.ErrCorpSigningPendingExists) {
+			ctl.sendFailedResponse(409, errCorpSigningPendingExists, err, action)
+		} else if err.IsErrorOf(models.ErrCorpSigningAlreadyApproved) {
+			ctl.sendFailedResponse(409, errCorpSigningAlreadyApproved, err, action)
 		} else {
 			ctl.sendModelErrorAsResp(err, action)
 		}

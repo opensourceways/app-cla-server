@@ -60,6 +60,8 @@ const (
 	ErrCLAIsLatest             ModelErrCode = "cla_is_latest"
 	ErrAutoApprovalUnchanged   ModelErrCode = "auto_approval_unchanged"
 	ErrAutoApprovalNoManager   ModelErrCode = "auto_approval_no_manager"
+	ErrCorpSigningPendingExists   ModelErrCode = "corp_signing_pending_exists"
+	ErrCorpSigningAlreadyApproved ModelErrCode = "corp_signing_already_approved"
 )
 
 type IModelError interface {

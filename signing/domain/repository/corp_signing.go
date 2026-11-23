@@ -47,6 +47,10 @@ type CorpSigning interface {
 	FindAllWithPagination(linkId string, offset, limit int) ([]CorpSigningSummary, error)
 	CountByLinkId(linkId string) (int64, error)
 
+	FindByEmail(linkId string, email dp.EmailAddr) (domain.CorpSigning, bool, error)
+	UpdateApplication(cs *domain.CorpSigning) error
+	FindByNameAndDomain(linkId, corpName, corpDomain string, excludeId string) (bool, error)
+
 	AddEmployee(*domain.CorpSigning, *domain.EmployeeSigning) error
 	SaveEmployee(*domain.CorpSigning, *domain.EmployeeSigning) error
 	FindEmployees(string) ([]domain.EmployeeSigning, error)

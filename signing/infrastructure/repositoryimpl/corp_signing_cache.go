@@ -356,10 +356,26 @@ func (c *cachedCorpSigning) Update(cs *domain.CorpSigning) error {
 	return err
 }
 
+func (c *cachedCorpSigning) UpdateApplication(cs *domain.CorpSigning) error {
+	err := c.repo.UpdateApplication(cs)
+	if err == nil {
+		go c.invalidateLink(cs.Link.Id)
+	}
+	return err
+}
+
 // --- pass-through for all other methods ---
 
 func (c *cachedCorpSigning) Find(index string) (domain.CorpSigning, error) {
 	return c.repo.Find(index)
+}
+
+func (c *cachedCorpSigning) FindByEmail(linkId string, email dp.EmailAddr) (domain.CorpSigning, bool, error) {
+	return c.repo.FindByEmail(linkId, email)
+}
+
+func (c *cachedCorpSigning) FindByNameAndDomain(linkId, corpName, corpDomain string, excludeId string) (bool, error) {
+	return c.repo.FindByNameAndDomain(linkId, corpName, corpDomain, excludeId)
 }
 
 func (c *cachedCorpSigning) FindAll(linkId string) ([]repository.CorpSigningSummary, error) {

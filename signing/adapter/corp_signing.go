@@ -104,6 +104,7 @@ func (adapter *corpSigningAdatper) cmdToSignCorpCLA(
 	}
 
 	cmd.VerificationCode = opt.VerificationCode
+	cmd.Overwrite = opt.Overwrite
 
 	return
 }

@@ -336,3 +336,14 @@ func NewRepresentative(name, email string) (Representative, error) {
 		EmailAddr: emailObj,
 	}, nil
 }
+
+func (cs *CorpSigning) OverwriteApplication(
+	newCorpName dp.CorpName, newRep Representative, newInfo AllSingingInfo, newLink LinkInfo,
+) {
+	cs.Corp = NewCorporation(newCorpName, newRep.EmailAddr)
+	cs.Rep = newRep
+	cs.AllInfo = newInfo
+	cs.Link = newLink
+	cs.Date = time.Now().Format("2006-01-02")
+	cs.HasPDF = false
+}

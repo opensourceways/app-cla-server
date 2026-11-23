@@ -37,6 +37,7 @@ func (m *mockDao) Expire(key string, expire time.Duration) error {
 	return nil
 }
 
+// 验证窗口内请求数未超阈值时全部放行
 func TestAllowUnderThreshold(t *testing.T) {
 	d := newMockDao()
 	l := NewVCRateLimiter(d, &Config{Threshold: 3, Window: 60})
@@ -52,11 +53,11 @@ func TestAllowUnderThreshold(t *testing.T) {
 	}
 }
 
+// 验证超过阈值后请求被拒绝
 func TestAllowExceedsThreshold(t *testing.T) {
 	d := newMockDao()
 	l := NewVCRateLimiter(d, &Config{Threshold: 2, Window: 60})
 
-	// First two requests are allowed
 	for i := 0; i < 2; i++ {
 		allowed, err := l.Allow("10.0.0.1")
 		if err != nil {
@@ -67,7 +68,6 @@ func TestAllowExceedsThreshold(t *testing.T) {
 		}
 	}
 
-	// Third request should be denied
 	allowed, err := l.Allow("10.0.0.1")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -77,46 +77,30 @@ func TestAllowExceedsThreshold(t *testing.T) {
 	}
 }
 
-func TestAllowSetsExpiryOnFirstRequest(t *testing.T) {
+// 验证仅在窗口第一次请求时设置过期时间
+func TestAllowSetsExpiryOnlyOnFirstRequest(t *testing.T) {
 	d := newMockDao()
 	l := NewVCRateLimiter(d, &Config{Threshold: 5, Window: 30})
 
-	allowed, err := l.Allow("192.168.1.1")
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	if !allowed {
-		t.Fatal("expected allowed on first request")
+	for i := 0; i < 3; i++ {
+		_, err := l.Allow("192.168.1.1")
+		if err != nil {
+			t.Fatalf("request %d: unexpected error: %v", i, err)
+		}
 	}
 
 	if !d.expired {
-		t.Error("expected Expire to be called on first request")
+		t.Error("expected Expire to be called")
 	}
 	if d.expiry != 30*time.Second {
 		t.Errorf("expected expiry of 30s, got %v", d.expiry)
 	}
-}
-
-func TestAllowRefreshesExpiryOnSubsequentRequests(t *testing.T) {
-	d := newMockDao()
-	l := NewVCRateLimiter(d, &Config{Threshold: 5, Window: 30})
-
-	// First request sets expiry
-	_, _ = l.Allow("192.168.1.1")
 	if d.expireCallCount != 1 {
-		t.Fatalf("expected 1 Expire call after first request, got %d", d.expireCallCount)
-	}
-
-	// Second request within quota should also refresh expiry
-	_, _ = l.Allow("192.168.1.1")
-	if d.expireCallCount != 2 {
-		t.Fatalf("expected 2 Expire calls after second request, got %d", d.expireCallCount)
-	}
-	if !d.expired {
-		t.Error("expected Expire to be called on subsequent requests within quota")
+		t.Errorf("expected 1 Expire call (first request only), got %d", d.expireCallCount)
 	}
 }
 
+// 验证Incr失败时返回错误且拒绝请求
 func TestAllowIncrError(t *testing.T) {
 	d := newMockDao()
 	d.incrErr = errors.New("redis down")
@@ -131,6 +115,7 @@ func TestAllowIncrError(t *testing.T) {
 	}
 }
 
+// 验证第一次请求设置过期时间失败时返回错误
 func TestAllowExpireErrorOnFirstRequest(t *testing.T) {
 	d := newMockDao()
 	d.expireErr = errors.New("redis down")
@@ -145,76 +130,7 @@ func TestAllowExpireErrorOnFirstRequest(t *testing.T) {
 	}
 }
 
-// TestAllowExpireFailureSelfHeals is a regression test for the bug where
-// INCR+EXPIRE non-atomicity could leave a key with no TTL, permanently
-// banning the IP. With the sliding-window fix, a failed Expire on the
-// first request is retried on subsequent requests within the quota,
-// self-healing the missing TTL.
-func TestAllowExpireFailureSelfHeals(t *testing.T) {
-	d := newMockDao()
-	l := NewVCRateLimiter(d, &Config{Threshold: 5, Window: 60})
-
-	// First request: Incr succeeds (count=1), Expire fails.
-	d.expireErr = errors.New("redis down")
-	allowed, err := l.Allow("1.2.3.4")
-	if err == nil {
-		t.Fatal("expected error when Expire fails on first request")
-	}
-	if allowed {
-		t.Error("expected not allowed when Expire fails")
-	}
-	if d.expireCallCount != 1 {
-		t.Fatalf("expected 1 Expire call, got %d", d.expireCallCount)
-	}
-
-	// Second request: Expire now succeeds, self-healing the missing TTL.
-	d.expireErr = nil
-	allowed, err = l.Allow("1.2.3.4")
-	if err != nil {
-		t.Fatalf("unexpected error on second request: %v", err)
-	}
-	if !allowed {
-		t.Error("expected allowed on second request within quota")
-	}
-	if d.expireCallCount != 2 {
-		t.Fatalf("expected 2 Expire calls, got %d", d.expireCallCount)
-	}
-	if !d.expired {
-		t.Error("expected Expire to succeed on second request, self-healing the TTL")
-	}
-}
-
-// TestAllowDoesNotSetExpiryWhenOverThreshold verifies that Expire is not
-// called once the counter exceeds the threshold. The key already has a TTL
-// from previous successful Expire calls and will expire normally.
-func TestAllowDoesNotSetExpiryWhenOverThreshold(t *testing.T) {
-	d := newMockDao()
-	l := NewVCRateLimiter(d, &Config{Threshold: 2, Window: 60})
-
-	// Exhaust the quota (2 requests within threshold).
-	for i := 0; i < 2; i++ {
-		_, err := l.Allow("10.0.0.1")
-		if err != nil {
-			t.Fatalf("request %d: unexpected error: %v", i, err)
-		}
-	}
-	if d.expireCallCount != 2 {
-		t.Fatalf("expected 2 Expire calls within quota, got %d", d.expireCallCount)
-	}
-
-	// Third request exceeds threshold; Expire should NOT be called.
-	allowed, err := l.Allow("10.0.0.1")
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	if allowed {
-		t.Error("expected denied when over threshold")
-	}
-	if d.expireCallCount != 2 {
-		t.Fatalf("expected Expire not to be called when over threshold, got %d calls", d.expireCallCount)
-	}
-}
-
+// 验证不同IP的计数互不影响
 func TestAllowDifferentIPsIndependent(t *testing.T) {
 	d := newMockDao()
 	l := NewVCRateLimiter(d, &Config{Threshold: 1, Window: 60})

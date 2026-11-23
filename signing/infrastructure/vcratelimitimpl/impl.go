@@ -19,11 +19,8 @@ type vcRateLimiterImpl struct {
 }
 
 // Allow increments the request counter for the given IP and returns true
-// when the request is within the allowed quota. The key expiry is refreshed
-// on every request within the quota so that a transient Expire failure on
-// the first request is self-healed by subsequent requests. Without this, a
-// key whose TTL was never set would persist indefinitely, permanently
-// banning the IP.
+// when the request is within the allowed quota. The TTL is set only on the
+// first request of each window (fixed window).
 func (l *vcRateLimiterImpl) Allow(ip string) (bool, error) {
 	key := vcRateLimitKeyPrefix + ip
 
@@ -32,7 +29,7 @@ func (l *vcRateLimiterImpl) Allow(ip string) (bool, error) {
 		return false, err
 	}
 
-	if count <= l.threshold {
+	if count == 1 {
 		if err := l.dao.Expire(key, l.window); err != nil {
 			return false, err
 		}

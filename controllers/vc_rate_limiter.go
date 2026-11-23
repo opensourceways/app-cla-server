@@ -4,6 +4,8 @@ import (
 	"fmt"
 
 	"github.com/opensourceways/obs-sdk/go/log"
+
+	"github.com/opensourceways/app-cla-server/signing/domain"
 )
 
 // vcRateLimiter limits verification-code requests per client IP within a
@@ -40,11 +42,11 @@ func (ctl *baseController) checkVCRateLimit() *failedApiResult {
 	allowed, err := vcLimiter.Allow(ip)
 	if err != nil {
 		log.ErrorContext(ctl.Ctx.Request.Context(), "failed to check vc rate limit", "error", err)
-		return newFailedApiResult(400, errTooManyRequest, fmt.Errorf("verification code is busy"))
+		return newFailedApiResult(400, errTooManyRequest, fmt.Errorf(domain.ErrorCodeVerificationCodeBusy))
 	}
 
 	if !allowed {
-		return newFailedApiResult(400, errTooManyRequest, fmt.Errorf("verification code is busy"))
+		return newFailedApiResult(400, errTooManyRequest, fmt.Errorf(domain.ErrorCodeVerificationCodeBusy))
 	}
 
 	return nil

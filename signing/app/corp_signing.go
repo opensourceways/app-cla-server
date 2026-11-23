@@ -66,16 +66,43 @@ func (s *corpSigningService) Sign(cmd *CmdToSignCorpCLA) error {
 		return err
 	}
 
-	v := cmd.toCorpSigning()
-
-	err := s.repo.Add(&v)
+	existing, found, err := s.repo.FindByEmail(cmd.Link.Id, cmd.Rep.EmailAddr)
 	if err != nil {
-		if commonRepo.IsErrorDuplicateCreating(err) {
-			return domain.NewDomainError(domain.ErrorCodeCorpSigningReSigning)
-		}
+		return err
 	}
 
-	return err
+	if !found {
+		v := cmd.toCorpSigning()
+		if err = s.repo.Add(&v); err != nil {
+			if commonRepo.IsErrorDuplicateCreating(err) {
+				return domain.NewDomainError(domain.ErrorCodeCorpSigningReSigning)
+			}
+		}
+		return err
+	}
+
+	if !existing.Admin.IsEmpty() {
+		return domain.NewDomainError(domain.ErrorCodeCorpSigningAlreadyApproved)
+	}
+
+	if !cmd.Overwrite {
+		return domain.NewDomainError(domain.ErrorCodeCorpSigningPendingExists)
+	}
+
+	corpDomain := cmd.Rep.EmailAddr.Domain()
+	conflict, err := s.repo.FindByNameAndDomain(
+		cmd.Link.Id, cmd.CorpName.CorpName(), corpDomain, existing.Id,
+	)
+	if err != nil {
+		return err
+	}
+	if conflict {
+		return domain.NewDomainError(domain.ErrorCodeCorpSigningReSigning)
+	}
+
+	existing.OverwriteApplication(cmd.CorpName, cmd.Rep, cmd.AllSingingInfo, cmd.Link)
+
+	return s.repo.UpdateApplication(&existing)
 }
 
 func (s *corpSigningService) Remove(userId, csId string) error {

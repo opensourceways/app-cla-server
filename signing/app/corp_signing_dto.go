@@ -12,6 +12,7 @@ type CmdToSignCorpCLA struct {
 	Rep              domain.Representative
 	AllSingingInfo   domain.AllSingingInfo
 	VerificationCode string
+	Overwrite        bool
 }
 
 func (cmd *CmdToSignCorpCLA) toCorpSigning() domain.CorpSigning {

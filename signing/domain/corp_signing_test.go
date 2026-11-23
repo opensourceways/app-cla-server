@@ -258,3 +258,85 @@ func TestCorpSigningSetAutoApprove(t *testing.T) {
 		t.Error("AutoApproveEmployees should be true after calling SetAutoApprove(true) twice")
 	}
 }
+
+func TestOverwriteApplication(t *testing.T) {
+	email := dp.CreateEmailAddr("rep@test.com")
+	cs := CorpSigning{
+		Id:   "cs1",
+		Date: "2024-01-01",
+		Link: LinkInfo{
+			Id:      "link1",
+			CLAInfo: CLAInfo{CLAId: "cla-old", Language: dp.CreateLanguage("zh")},
+		},
+		Rep: Representative{
+			Name:      dp.CreateName("OldRep"),
+			EmailAddr: email,
+		},
+		Corp:    NewCorporation(dp.CreateCorpName("OldCorp"), email),
+		AllInfo: AllSingingInfo{"f1": "old"},
+		HasPDF:  true,
+	}
+
+	newCorpName := dp.CreateCorpName("NewCorp")
+	newRep := Representative{
+		Name:      dp.CreateName("NewRep"),
+		EmailAddr: email,
+	}
+	newInfo := AllSingingInfo{"f1": "new", "f2": "val2"}
+	newLink := LinkInfo{
+		Id:      "link1",
+		CLAInfo: CLAInfo{CLAId: "cla-new", Language: dp.CreateLanguage("en")},
+	}
+
+	cs.OverwriteApplication(newCorpName, newRep, newInfo, newLink)
+
+	if cs.Corp.Name.CorpName() != "NewCorp" {
+		t.Errorf("Corp.Name: got %s, want NewCorp", cs.Corp.Name.CorpName())
+	}
+	if cs.Rep.Name.Name() != "NewRep" {
+		t.Errorf("Rep.Name: got %s, want NewRep", cs.Rep.Name.Name())
+	}
+	if cs.Rep.EmailAddr.EmailAddr() != "rep@test.com" {
+		t.Errorf("Rep.EmailAddr: got %s, want rep@test.com", cs.Rep.EmailAddr.EmailAddr())
+	}
+	if cs.AllInfo["f1"] != "new" || cs.AllInfo["f2"] != "val2" {
+		t.Errorf("AllInfo not overwritten correctly: got %v", cs.AllInfo)
+	}
+	if cs.Link.CLAId != "cla-new" {
+		t.Errorf("Link.CLAId: got %s, want cla-new", cs.Link.CLAId)
+	}
+	if cs.Link.Language.Language() != "en" {
+		t.Errorf("Link.Language: got %s, want en", cs.Link.Language.Language())
+	}
+	if cs.Date == "2024-01-01" {
+		t.Error("Date should be refreshed, still old value")
+	}
+	if cs.HasPDF {
+		t.Error("HasPDF should be false after overwrite")
+	}
+	if cs.Corp.PrimaryEmailDomain != "test.com" {
+		t.Errorf("Corp.PrimaryEmailDomain: got %s, want test.com", cs.Corp.PrimaryEmailDomain)
+	}
+}
+
+func TestOverwriteApplicationPreservesAdminAndId(t *testing.T) {
+	email := dp.CreateEmailAddr("rep@test.com")
+	cs := CorpSigning{
+		Id:   "cs1",
+		Date: "2024-01-01",
+		Link: LinkInfo{Id: "link1"},
+		Rep:  Representative{Name: dp.CreateName("OldRep"), EmailAddr: email},
+		Corp: NewCorporation(dp.CreateCorpName("OldCorp"), email),
+	}
+
+	cs.OverwriteApplication(
+		dp.CreateCorpName("NewCorp"),
+		Representative{Name: dp.CreateName("NewRep"), EmailAddr: email},
+		AllSingingInfo{"f": "v"},
+		LinkInfo{Id: "link1", CLAInfo: CLAInfo{CLAId: "cla1"}},
+	)
+
+	if cs.Id != "cs1" {
+		t.Errorf("Id should be preserved: got %s, want cs1", cs.Id)
+	}
+}

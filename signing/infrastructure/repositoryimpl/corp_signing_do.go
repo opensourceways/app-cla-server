@@ -32,6 +32,7 @@ const (
 	fieldClaNotifyCount = "cla_notify_count"
 	fieldClaNotifyTime  = "cla_notify_time"
 	fieldAutoApprove    = "auto_approve_employees"
+	fieldAllInfo        = "info"
 )
 
 func toCorpSigningDO(v *domain.CorpSigning) corpSigningDO {

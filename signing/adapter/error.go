@@ -60,6 +60,12 @@ func codeMap(code string) models.ModelErrCode {
 	case domain.ErrorCodeCorpSigningAutoApprovalNoManager:
 		return models.ErrAutoApprovalNoManager
 
+	case domain.ErrorCodeCorpSigningPendingExists:
+		return models.ErrCorpSigningPendingExists
+
+	case domain.ErrorCodeCorpSigningAlreadyApproved:
+		return models.ErrCorpSigningAlreadyApproved
+
 	// corp pdf
 	case domain.ErrorCodeCorpPDFNotFound:
 		return models.ErrUnuploaed

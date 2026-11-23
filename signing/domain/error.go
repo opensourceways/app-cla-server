@@ -23,6 +23,8 @@ const (
 	ErrorCodeCorpSigningCLAIsLatest           = "corp_signing_cla_is_latest"
 	ErrorCodeCorpSigningAutoApprovalUnchanged = "corp_signing_auto_approval_unchanged"
 	ErrorCodeCorpSigningAutoApprovalNoManager = "corp_signing_auto_approval_no_manager"
+	ErrorCodeCorpSigningPendingExists        = "corp_signing_pending_exists"
+	ErrorCodeCorpSigningAlreadyApproved      = "corp_signing_already_approved"
 
 	ErrorCodeCorpEmailDomainExists   = "corp_email_domain_exists"
 	ErrorCodeCorpEmailDomainNotMatch = "corp_email_domain_not_match"

@@ -4,6 +4,8 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/beego/beego/v2/core/logs"
+
 	"github.com/opensourceways/app-cla-server/models"
 )
 
@@ -121,6 +123,9 @@ func (ctl *LinkController) ListLinks() {
 // @router /:link_id/:apply_to [get]
 func (ctl *LinkController) GetCLAForSigning() {
 	action := "fetch signing page info"
+
+	ip, _ := ctl.getRemoteAddr()
+	logs.Error("remote ip is: ", ip)
 
 	result, err := models.ListCLAs(
 		ctl.GetString(":link_id"), ctl.GetString(":apply_to"),

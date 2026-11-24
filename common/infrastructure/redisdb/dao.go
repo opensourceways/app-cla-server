@@ -65,6 +65,22 @@ func (impl *client) IsDocNotExists(err error) bool {
 	return errors.Is(err, errDocNotExists)
 }
 
+func (cli *client) Incr(key string) (int64, error) {
+	var result int64
+	err := cli.withContext(func(ctx context.Context) error {
+		n, err := cli.redisCli.Incr(ctx, key).Result()
+		if err != nil {
+			return err
+		}
+
+		result = n
+
+		return nil
+	})
+
+	return result, err
+}
+
 func (cli *client) Del(keys ...string) error {
 	return cli.withContext(func(ctx context.Context) error {
 		return cli.redisCli.Del(ctx, keys...).Err()

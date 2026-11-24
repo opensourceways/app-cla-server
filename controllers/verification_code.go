@@ -13,6 +13,11 @@ func (ctl *baseController) sendVerificationCodeWhenSigning(
 ) {
 	action := "send verification code when signing"
 
+	if fr := ctl.checkVCRateLimit(); fr != nil {
+		ctl.sendFailedResultAsResp(fr, action)
+		return
+	}
+
 	var req verificationCodeRequest
 	if fr := ctl.fetchInputPayload(&req); fr != nil {
 		ctl.sendFailedResultAsResp(fr, action)

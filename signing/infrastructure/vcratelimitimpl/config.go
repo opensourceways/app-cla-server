@@ -13,7 +13,7 @@ type Config struct {
 
 func (cfg *Config) SetDefault() {
 	if cfg.Threshold <= 0 {
-		cfg.Threshold = 10
+		cfg.Threshold = 100
 	}
 
 	if cfg.Window <= 0 {
